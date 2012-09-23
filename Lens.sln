@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens", "Lens\Lens.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleHost", "SampleHost\SampleHost.csproj", "{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lens.Parser", "Lens.Parser\Lens.Parser.fsproj", "{8771C27C-8D41-42D4-B99C-56545E20D547}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Release|Mixed Platforms.Build.0 = Release|x86
 		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Release|x86.ActiveCfg = Release|x86
 		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Release|x86.Build.0 = Release|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|x86.ActiveCfg = Debug|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|x86.Build.0 = Debug|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|Any CPU.ActiveCfg = Release|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|Mixed Platforms.Build.0 = Release|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|x86.ActiveCfg = Release|x86
+		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
