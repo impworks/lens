@@ -1,5 +1,6 @@
 _Resharper.Lens
 bin
 obj
+*.suo
 
 TestResults
