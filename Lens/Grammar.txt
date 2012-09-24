@@ -12,7 +12,7 @@ block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
 type                = [ namespace "::" ] identifier [ ( "[]" | "<" type ">" ) ]
 local_stmt          = [ rvalue "=" ] expr
-rvalue              = ( [ "let" | "var" ] identifier | type "." identifier ) { "[" line_expr "]" }
+rvalue              = [ "let" | "var" ] identifier | type { ( "." identifier | "[" line_expr "]" ) }
 expr                = block_expr | line_expr
 block_expr          = if_expr | while_expr | try_expr | lambda_expr
 if_expr             = "if" "(" line_expr ")" block [ "else" block ]
