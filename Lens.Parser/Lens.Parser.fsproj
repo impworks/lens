@@ -55,6 +55,13 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lens.SyntaxTree\Lens.SyntaxTree.csproj">
+      <Name>Lens.SyntaxTree</Name>
+      <Project>{7987774d-17a7-4e76-ae13-c03f2cc31b9c}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">
