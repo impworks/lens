@@ -10,9 +10,8 @@ funcdef             = "fun" identifier [ func_params ] "->" block
 func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL { INDENT local_stmt NL } | line_expr
 type                = [ namespace "::" ] identifier [ ( "[]" | "<" type ">" ) ]
-local_stmt          = let_stmt | var_stmt | expr
-let_stmt            = "let" identifier "=" expr
-var_stmt            = "var" identifier "=" expr
+local_stmt          = [ rvalue "=" ] expr
+rvalue              = ( [ "let" | "var" ] identifier | type "." identifier ) [ "[" line_expr "]" ]
 expr                = block_expr | line_expr
 block_expr          = if_expr | while_expr | try_expr | lambda_expr
 if_expr             = "if" "(" line_expr ")" block [ "else" block ]
