@@ -42,17 +42,30 @@
   <ItemGroup>
     <Compile Include="ParseException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\TryCatchNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
     <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
     <Compile Include="SyntaxTree\Literals\DoubleLiteral.cs" />
     <Compile Include="SyntaxTree\Literals\IntNode.cs" />
     <Compile Include="SyntaxTree\Literals\LiteralNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\StringLiteral.cs" />
+    <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\LexemLocation.cs" />
+    <Compile Include="Utils\VariableInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
