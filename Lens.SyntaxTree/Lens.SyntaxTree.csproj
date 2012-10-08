@@ -45,12 +45,16 @@
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\FunctionArgumentNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\AnonymousFunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TryCatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewArrayNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewTupleNode.cs" />
     <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
     <Compile Include="SyntaxTree\Literals\DoubleLiteral.cs" />
     <Compile Include="SyntaxTree\Literals\IntNode.cs" />

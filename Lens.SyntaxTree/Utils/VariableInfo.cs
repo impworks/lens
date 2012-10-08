@@ -10,13 +10,5 @@ namespace Lens.SyntaxTree.Utils
 		public string Name { get; set; }
 		public Type Type { get; set; }
 		public bool IsConstant { get; set; }
-		public ArgumentType ArgumentType { get; set; }
-	}
-
-	public enum ArgumentType
-	{
-		In,
-		Ref,
-		Out
 	}
 }
