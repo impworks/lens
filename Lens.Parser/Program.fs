@@ -1,4 +1,7 @@
-﻿open FParsec
+﻿module Lens.Parser.Program
+
+open FParsec
+open Lens.Parser
 
 type Identifier = string
 
@@ -8,13 +11,8 @@ type Statement = Loop of Identifier * int * int * Statement list
 let tabStopDistance = 8 // must be a power of 2
 
 module IndentationParserWithBacktracking =
-    type UserState = 
-        {Indentation: int}
-        with
-           static member Create() = {Indentation = -1}
-
-    type CharStream = CharStream<UserState>
-    type Parser<'t> = Parser<'t, UserState>
+    type CharStream = CharStream<ParserState>
+    type Parser<'t> = Parser<'t, ParserState>
 
     let skipIndentation (stream: CharStream) =
         let mutable indentation = stream.SkipNewlineThenWhitespace(tabStopDistance, false)
@@ -64,9 +62,9 @@ module IndentationParserWithoutBacktracking =
         [<DefaultValue>]
         val mutable EndIndex: int64
 
-    type UserState = 
+    type ParserState = 
         {Indentation: int
-         // We put LastParsedIndentation into the UserState so that we 
+         // We put LastParsedIndentation into the ParserState so that we 
          // can conveniently use a separate instance for each stream.
          // The members of the LastParsedIndentation instance will be mutated
          // directly and hence won't be affected by any stream backtracking. 
@@ -75,8 +73,8 @@ module IndentationParserWithoutBacktracking =
            static member Create() = {Indentation = -1
                                      LastParsedIndentation = LastParsedIndentation(EndIndex = -1L)}
 
-    type CharStream = CharStream<UserState>
-    type Parser<'t> = Parser<'t, UserState>
+    type CharStream = CharStream<ParserState>
+    type Parser<'t> = Parser<'t, ParserState>
 
     // If this function is called at the same index in the stream
     // where the function previously stopped, then the previously
@@ -147,7 +145,7 @@ do indentedStatementsRef := indentedMany1 statement "statement"
 let document = indentedStatements .>> spaces .>> eof
 
 let test str =
-    match runParserOnString document (UserState.Create()) "" str with
+    match runParserOnString document (ParserState.Create()) "" str with
     | Success(result, _, _)   -> printfn "Success: %A" result
     | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
 
