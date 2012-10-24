@@ -33,10 +33,15 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
-		public void Error(string message, params object[] args)
+		protected void Error(string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
 			throw new ParseException(msg, StartLocation, EndLocation);
+		}
+
+		protected static void LocationSetError()
+		{
+			throw new InvalidOperationException("Compound node's location cannot be set manually!");
 		}
 	}
 }

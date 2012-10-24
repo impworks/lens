@@ -10,9 +10,11 @@ funcdef             = "fun" identifier func_params "->" block
 func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
-type                = [ namespace "::" ] identifier [ ( "[]" | "<" type ">" ) ]
-local_stmt          = [ rvalue "=" ] expr
-rvalue              = ( [ "let" | "var" ] identifier | type "." identifier ) { "[" line_expr "]" }
+type                = [ namespace "::" ] identifier [ ( { "[]" } | "<" type ">" ) ]
+local_stmt          = assign_expr | expr
+assign_expr         = ( [ "let" | "var" ] identifier | rvalue ) "=" expr
+rvalue              = ( type | "(" line_expr ")" ) accessor_expr { accessor_expr }
+accessor_expr       = "." identifier | "[" line_expr "]"
 expr                = block_expr | line_expr
 block_expr          = if_expr | while_expr | try_expr | lambda_expr
 if_expr             = "if" "(" line_expr ")" block [ "else" block ]
@@ -39,7 +41,8 @@ new_obj_expr        = type [ invoke_expr ]
 enumeration_expr    = line_expr { ";" line_expr }
 invoke_expr         = value_expr [ invoke_list ]
 invoke_list         = { value_expr } | ( { NL "<|" value_expr } NL )
-value_expr          = type | literal | "(" expr ")"
+value_expr          = type { typeof_expr | accessor_expr } | literal | "(" expr ")"
+typeof_expr         = "typeof" "(" type ")"
 literal             = "()" | "null" | "true" | "false" | string | int
 
 string              = ...
