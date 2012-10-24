@@ -43,5 +43,10 @@ namespace Lens.SyntaxTree.SyntaxTree
 		{
 			throw new InvalidOperationException("Compound node's location cannot be set manually!");
 		}
+
+		/// <summary>
+		/// A cached version for expression type.
+		/// </summary>
+		protected Type m_ExpressionType;
 	}
 }

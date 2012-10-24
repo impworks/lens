@@ -20,10 +20,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override Type GetExpressionType()
 		{
+			if (m_ExpressionType != null)
+				return m_ExpressionType;
+
 			if(Expressions.Count == 0)
 				Error("Array must contain at least one object!");
 
-			return Expressions[0].GetExpressionType().MakeArrayType();
+			m_ExpressionType = Expressions[0].GetExpressionType().MakeArrayType();
+			return m_ExpressionType;
 		}
 
 		public override void Compile()
