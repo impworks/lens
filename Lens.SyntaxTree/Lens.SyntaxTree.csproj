@@ -45,7 +45,8 @@
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\FunctionArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
+    <Compile Include="Utils\FunctionArgumentNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\AnonymousFunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
@@ -53,7 +54,11 @@
     <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TryCatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\InvocationNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\NewArrayNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewDictionaryNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewListNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewObjectNode.cs" />
     <Compile Include="SyntaxTree\Expressions\NewTupleNode.cs" />
     <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
     <Compile Include="SyntaxTree\Literals\DoubleLiteral.cs" />
@@ -63,6 +68,7 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
