@@ -45,8 +45,10 @@
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />
     <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
-    <Compile Include="Utils\FunctionArgumentNode.cs" />
+    <Compile Include="Utils\FunctionArgument.cs" />
     <Compile Include="SyntaxTree\ControlFlow\AnonymousFunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
