@@ -3,13 +3,18 @@
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
-	/// A node representing read access to a member of a type, either field or property.
+	/// A node representing assignment to an index.
 	/// </summary>
-	public class GetMemberNode : NodeBase
+	public class SetIndexNode : IndexNodeBase
 	{
+		/// <summary>
+		/// Value to save at indexed location.
+		/// </summary>
+		public NodeBase Value { get; set; }
+
 		public override Type GetExpressionType()
 		{
-			throw new NotImplementedException();
+			return Value.GetExpressionType();
 		}
 
 		public override void Compile()

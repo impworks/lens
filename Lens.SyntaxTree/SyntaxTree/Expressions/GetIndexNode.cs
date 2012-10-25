@@ -6,18 +6,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a read-access to an array or list's value.
 	/// </summary>
-	public class GetIndexNode : NodeBase
+	public class GetIndexNode : IndexNodeBase
 	{
-		/// <summary>
-		/// Expression to index.
-		/// </summary>
-		public NodeBase Expression { get; set; }
-
-		/// <summary>
-		/// The index value.
-		/// </summary>
-		public NodeBase Index { get; set; }
-
 		public override Type GetExpressionType()
 		{
 			if (m_ExpressionType != null)
