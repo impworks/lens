@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// <summary>
 	/// The base for all binary operators.
 	/// </summary>
-	public abstract class BinaryOperatorNodeBase : NodeBase
+	public abstract class BinaryOperatorNodeBase : OperatorNodeBase
 	{
 		/// <summary>
 		/// The operand to the left side.
@@ -18,11 +18,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// The operand to the right side.
 		/// </summary>
 		public NodeBase RightOperand { get; set; }
-
-		/// <summary>
-		/// A textual operator representation for error reporting.
-		/// </summary>
-		public abstract string OperatorRepresentation { get; }
 
 		public override LexemLocation StartLocation
 		{
@@ -39,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// <summary>
 		/// Available numeric types.
 		/// </summary>
-		protected static readonly Type[] NumericTypes = new[]
+		public static readonly Type[] NumericTypes = new[]
 		{
 			typeof (int),
 			typeof (float),
@@ -61,9 +56,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if (leftType == typeof (double) || rightType == typeof (double))
 				return typeof (double);
 
-			if (checkPair<float, long>(leftType, rightType))
-				return typeof(double);
-
 			if (leftType == typeof(float) || rightType == typeof(float))
 				return typeof (float);
 
@@ -74,19 +66,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		}
 
 		/// <summary>
-		/// Checks the types of an argument pair.
-		/// </summary>
-		private static bool checkPair<T1, T2>(Type left, Type right)
-		{
-			return (left == typeof (T1) && right == typeof (T2)) || (right == typeof (T1) && left == typeof (T2));
-		}
-
-		/// <summary>
 		/// Displays an error indicating that argument types are wrong.
 		/// </summary>
 		protected void TypeError(Type left, Type right)
 		{
 			Error("Cannot apply operator '{0}' to arguments of types '{1}' and '{2}' respectively.", OperatorRepresentation, left, right);
+		}
+
+		/// <summary>
+		/// Returns the typically calculated argument type or throws an error.
+		/// </summary>
+		/// <returns></returns>
+		protected Type getNumericTypeOrError()
+		{
+			var left = LeftOperand.GetExpressionType();
+			var right = RightOperand.GetExpressionType();
+
+			var numeric = getResultNumericType(left, right);
+			if (numeric == null)
+				TypeError(left, right);
+
+			return numeric;
 		}
 	}
 }

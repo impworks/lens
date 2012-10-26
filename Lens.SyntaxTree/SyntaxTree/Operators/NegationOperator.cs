@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Linq;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
-	/// An operator node that subtracts a value from another value.
+	/// A node representing the unary numeric negation operation.
 	/// </summary>
-	public class SubtractOperatorNode : BinaryOperatorNodeBase
+	public class NegationOperator : UnaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{
@@ -14,7 +15,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override Type GetExpressionType()
 		{
-			return getNumericTypeOrError();
+			var type = Operand.GetExpressionType();
+
+			if(!BinaryOperatorNodeBase.NumericTypes.Contains(type))
+				TypeError(type);
+
+			return type;
 		}
 
 		public override void Compile()

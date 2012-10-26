@@ -1,20 +1,21 @@
 ﻿using System;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
-	/// An operator node that subtracts a value from another value.
+	/// A node representing the typeof operator.
 	/// </summary>
-	public class SubtractOperatorNode : BinaryOperatorNodeBase
+	public class TypeofOperatorNode : NodeBase
 	{
-		public override string OperatorRepresentation
-		{
-			get { return "-"; }
-		}
+		/// <summary>
+		/// Type to be inspected.
+		/// </summary>
+		public TypeSignature Type { get; set; }
 
 		public override Type GetExpressionType()
 		{
-			return getNumericTypeOrError();
+			return typeof (Type);
 		}
 
 		public override void Compile()

@@ -3,13 +3,13 @@
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
-	/// An operator node that subtracts a value from another value.
+	/// An operator node that divides one value by another value.
 	/// </summary>
-	public class SubtractOperatorNode : BinaryOperatorNodeBase
+	public class RemainderOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{
-			get { return "-"; }
+			get { return "%"; }
 		}
 
 		public override Type GetExpressionType()

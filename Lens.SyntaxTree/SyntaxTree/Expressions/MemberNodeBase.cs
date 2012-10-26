@@ -18,6 +18,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		public TypeSignature StaticType { get; set; }
 
 		/// <summary>
+		/// For indeterminate cases.
+		/// (eg. A.SomeMember - A may be either a type or a local variable)
+		/// </summary>
+		public string Identifier { get; set; }
+
+		/// <summary>
 		/// The name of the member to access.
 		/// </summary>
 		public string MemberName { get; set; }

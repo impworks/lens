@@ -3,18 +3,23 @@
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
-	/// An operator node that subtracts a value from another value.
+	/// A node representing the boolean inversion operator.
 	/// </summary>
-	public class SubtractOperatorNode : BinaryOperatorNodeBase
+	public class InversionOperator : UnaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{
-			get { return "-"; }
+			get { return "not"; }
 		}
 
 		public override Type GetExpressionType()
 		{
-			return getNumericTypeOrError();
+			var type = Operand.GetExpressionType();
+
+			if(type != typeof(bool))
+				TypeError(type);
+
+			return type;
 		}
 
 		public override void Compile()
