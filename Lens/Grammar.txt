@@ -10,7 +10,7 @@ funcdef             = "fun" identifier func_params "->" block
 func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
-type                = [ namespace "::" ] identifier [ ( { "[]" } | "<" type ">" ) ]
+type                = [ namespace "." ] identifier [ ( { "[]" } | "<" type ">" ) ]
 local_stmt          = assign_expr | expr
 assign_expr         = ( [ "let" | "var" ] identifier | rvalue ) "=" expr
 rvalue              = ( type | "(" line_expr ")" ) accessor_expr { accessor_expr }
