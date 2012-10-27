@@ -4,6 +4,9 @@ open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.Literals
 open Lens.SyntaxTree.SyntaxTree.Operators
 
+// Special nodes
+let using _ = failwith "Using node is currently not exist"
+
 // Literals
 let int (value : string) = new IntNode(Value = int value)
 

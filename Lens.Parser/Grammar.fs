@@ -54,12 +54,12 @@ let typeof_expr, typeof_exprRef           = createParserForwardedToRef()
 let literal, literalRef                   = createParserForwardedToRef()
     
 let string, stringRef                     = createParserForwardedToRef()
-let identifier,identifierRef              = createParserForwardedToRef()
+let identifier, identifierRef             = createParserForwardedToRef()
     
 let main : Parser<NodeBase list, unit> = many stmt .>> eof
-stmtRef             := (* TODO: using | recorddef | typedef | funcdef | *) local_stmt
-usingRef            := pzero<NodeBase, unit> (* TODO: "using" namespace NL *)
-namespaceRef        := pzero<NodeBase, unit> (* TODO: identifier { "::" identifier } *)
+stmtRef             := using <|> recorddef <|> typedef <|> funcdef <|> local_stmt
+usingRef            := pstring "using" >>. ``namespace`` .>> newline |>> Node.using
+namespaceRef        := sepBy1 identifier <| pstring "::"
 recorddefRef        := pzero<NodeBase, unit> (* TODO: "record" identifier NL recorddef_stmt { recorddef_stmt } *)
 recorddef_stmtRef   := pzero<NodeBase, unit> (* TODO: INDENT identifier ":" type NL *)
 typedefRef          := pzero<NodeBase, unit> (* TODO: "type" identifier NL typedef_stmt { typedef_stmt } *)
@@ -107,4 +107,4 @@ typeof_exprRef      := pzero<NodeBase, unit> (* TODO: "typeof" "(" type ")" *)
 literalRef          := (* TODO: "()" | "null" | "true" | "false" | string | *) regex "\d+" |>> Node.int
 
 stringRef           := pzero<NodeBase, unit> (* TODO: ... *)
-identifierRef       := pzero<NodeBase, unit> (* TODO: ... *)
+identifierRef       := regex "[a-zA-Z_]"
