@@ -3,6 +3,6 @@
 open Lens.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree
 
-type Parser() =
+type TreeBuilder() =
     member this.Parse (source : string) : NodeBase seq =
         raise <| new ParseException "Not implemented"
