@@ -104,7 +104,7 @@ invoke_exprRef      := value_expr (* TODO: [ invoke_list ] *)
 invoke_listRef      := pzero<NodeBase, unit> (* TODO: { value_expr } | ( { NL "<|" value_expr } NL ) *)
 value_exprRef       := (* TODO: type { typeof_expr | accessor_expr } | *) literal (* TODO: | "(" expr ")" *)
 typeof_exprRef      := pzero<NodeBase, unit> (* TODO: "typeof" "(" type ")" *)
-literalRef          := (* TODO: "pzero<NodeBase, unit>" | "null" | "true" | "false" | string | *) regex "\d+" |>> Node.int
+literalRef          := (* TODO: "()" | "null" | "true" | "false" | string | *) regex "\d+" |>> Node.int
 
 stringRef           := pzero<NodeBase, unit> (* TODO: ... *)
 identifierRef       := pzero<NodeBase, unit> (* TODO: ... *)
