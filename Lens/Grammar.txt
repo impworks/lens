@@ -10,7 +10,7 @@ funcdef             = "fun" identifier func_params "->" block
 func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
-type                = [ namespace "::" ] identifier [ ( { "[]" } | "<" type ">" ) ]
+type                = [ namespace "." ] identifier [ ( { "[]" } | "<" type ">" ) ]
 local_stmt          = assign_expr | expr
 assign_expr         = ( [ "let" | "var" ] identifier | rvalue ) "=" expr
 rvalue              = ( type | "(" line_expr ")" ) accessor_expr { accessor_expr }
@@ -34,11 +34,14 @@ sign_4              = "*" | "/" | "%"
 line_expr_5         = line_expr_6 { "**" line_expr_6 }
 line_expr_6         = line_expr_7 { "[" expr "]" }
 line_expr_7         = new_expr | invoke_expr
-new_expr            = "new" ( new_array_expr | new_tuple_expr | new_obj_expr )
+new_expr            = "new" ( new_array_expr | new_tuple_expr | new_list_expr | new_dictionary_expr | new_obj_expr )
 new_array_expr      = "[" enumeration_expr "]"
 new_tuple_expr      = "(" enumeration_expr ")"
+new_list_expr       = "<" enumeration_expr ">"
+new_dict_expr       = "{" dict_entry_expr { ";" dict_entry_expr } "}"
 new_obj_expr        = type [ invoke_expr ]
 enumeration_expr    = line_expr { ";" line_expr }
+dict_entry_expr     = line_expr "=>" line_expr
 invoke_expr         = value_expr [ invoke_list ]
 invoke_list         = { value_expr } | ( { NL "<|" value_expr } NL )
 value_expr          = type { typeof_expr | accessor_expr } | literal | "(" expr ")"

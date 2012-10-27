@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -11,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Function arguments.
 		/// </summary>
-		public Dictionary<string, FunctionArgumentNode> Arguments { get; set; }
+		public Dictionary<string, FunctionArgument> Arguments { get; set; }
 
 		/// <summary>
 		/// Function body.
@@ -37,8 +38,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		protected void registerArgVariables()
 		{
-			foreach (var currArg in Arguments)
-				currArg.Value.Compile();
+			// foreach (var currArg in Arguments)
+			//     Body.RegisterVariable(currArg.Value);
 		}
 
 		#endregion
