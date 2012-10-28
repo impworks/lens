@@ -1,25 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a new dictionary.
 	/// </summary>
-	public class NewDictionaryNode : NodeBase
+	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>
 	{
-		public NewDictionaryNode()
-		{
-			Expressions = new List<KeyValuePair<NodeBase, NodeBase>>();
-		}
-
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<KeyValuePair<NodeBase, NodeBase>> Expressions { get; set; }
-
 		public override Type GetExpressionType()
 		{
 			if (m_ExpressionType != null)

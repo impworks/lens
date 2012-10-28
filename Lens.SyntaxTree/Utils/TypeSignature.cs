@@ -49,5 +49,27 @@ namespace Lens.SyntaxTree.Utils
 
 			return null;
 		}
+
+		#region Equality members
+
+		protected bool Equals(TypeSignature other)
+		{
+			return string.Equals(Signature, other.Signature);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((TypeSignature)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return (Signature != null ? Signature.GetHashCode() : 0);
+		}
+
+		#endregion
 	}
 }

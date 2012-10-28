@@ -49,5 +49,27 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			foreach(var curr in Statements)
 				curr.Compile();
 		}
+
+		#region Equality members
+
+		protected bool Equals(CodeBlockNode other)
+		{
+			return Statements.DeepEquals(other.Statements);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((CodeBlockNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return (Statements != null ? Statements.GetHashCode() : 0);
+		}
+
+		#endregion
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -22,5 +23,30 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The entries of the type node.
 		/// </summary>
 		public List<T> Entries { get; private set; }
+
+		#region Equality members
+
+		protected bool Equals(TypeDefinitionNodeBase<T> other)
+		{
+			return string.Equals(Name, other.Name) && Entries.DeepEquals(other.Entries);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((TypeDefinitionNodeBase<T>)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (Entries != null ? Entries.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

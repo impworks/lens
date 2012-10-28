@@ -88,5 +88,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			return numeric;
 		}
+
+		#region Equality members
+
+		protected bool Equals(BinaryOperatorNodeBase other)
+		{
+			return Equals(LeftOperand, other.LeftOperand) && Equals(RightOperand, other.RightOperand);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((BinaryOperatorNodeBase)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((LeftOperand != null ? LeftOperand.GetHashCode() : 0) * 397) ^ (RightOperand != null ? RightOperand.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

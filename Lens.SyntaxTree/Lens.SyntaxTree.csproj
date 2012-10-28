@@ -57,6 +57,7 @@
     <Compile Include="SyntaxTree\Expressions\MemberNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Utils\ListExtensions.cs" />
     <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />

@@ -21,5 +21,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		protected bool Equals(SetIndexNode other)
+		{
+			return base.Equals(other) && Equals(Value, other.Value);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((SetIndexNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (base.GetHashCode() * 397) ^ (Value != null ? Value.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }
