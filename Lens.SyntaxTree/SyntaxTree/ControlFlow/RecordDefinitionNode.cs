@@ -11,13 +11,18 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		public RecordDefinitionNode()
 		{
-			Fields = new List<TypeEntry>();
+			Fields = new List<RecordEntry>();
 		}
+
+		/// <summary>
+		/// Record name.
+		/// </summary>
+		public string Name { get; set; }
 
 		/// <summary>
 		/// The fields in the record.
 		/// </summary>
-		public List<TypeEntry> Fields { get; set; }
+		public List<RecordEntry> Fields { get; set; }
 
 		public override Type GetExpressionType()
 		{
