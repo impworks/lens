@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
+using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -15,6 +18,23 @@ namespace Lens.Test
 		{
 			// TODO: Test("using System", new UsingNode("System"))
 			throw new Exception("Using node not supported, test failed");
+		}
+
+		[Test]
+		public void Record()
+		{
+			Test(
+				@"record Student =
+    Name:string
+    Age:int",
+				new RecordDefinitionNode
+					{
+						Fields = new List<RecordEntry>
+							{
+								new RecordEntry {Name = "Name", Type = new TypeSignature("string")},
+								new RecordEntry {Name = "Age", Type = new TypeSignature("int")}
+							}
+					});
 		}
 
 		[Test]
