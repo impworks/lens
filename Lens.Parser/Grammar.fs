@@ -55,56 +55,57 @@ let literal, literalRef                   = createParserForwardedToRef()
     
 let string, stringRef                     = createParserForwardedToRef()
 let identifier, identifierRef             = createParserForwardedToRef()
-    
+let whitespace1 = many1 <| anyOf " \t"
+
 let main             = many stmt .>> eof
 stmtRef             := using <|> recorddef <|> typedef <|> funcdef <|> local_stmt
 usingRef            := pstring "using" >>. ``namespace`` .>> newline |>> Node.using
 namespaceRef        := sepBy1 identifier <| pstring "::"
-recorddefRef        := pstring "record" >>. identifier .>>. (skipNewline >>. many1 recorddef_stmt) |>> Node.record
-recorddef_stmtRef   := pzero<string * string, unit> (* TODO: INDENT identifier ":" type NL *)
-typedefRef          := pzero<NodeBase, unit> (* TODO: "type" identifier NL typedef_stmt { typedef_stmt } *)
-typedef_stmtRef     := pzero<NodeBase, unit> (* TODO: INDENT "|" identifier [ "of" type ] NL *)
-funcdefRef          := pzero<NodeBase, unit> (* TODO: "fun" identifier func_params "->" block *)
-func_paramsRef      := pzero<NodeBase, unit> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
-blockRef            := pzero<NodeBase, unit> (* TODO: NL block_line { block_line } | line_expr *)
-block_lineRef       := pzero<NodeBase, unit> (* TODO: INDENT local_stmt NL *)
-typeRef             := pzero<NodeBase, unit> (* TODO: [ namespace "." ] identifier [ ( { "[]" } | "<" type ">" ) ] *)
+recorddefRef        := (pstring "record" .>> whitespace1) >>. identifier .>>. IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
+recorddef_stmtRef   := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
+typedefRef          := pzero<NodeBase, ParserState> (* TODO: "type" identifier NL typedef_stmt { typedef_stmt } *)
+typedef_stmtRef     := pzero<NodeBase, ParserState> (* TODO: INDENT "|" identifier [ "of" type ] NL *)
+funcdefRef          := pzero<NodeBase, ParserState> (* TODO: "fun" identifier func_params "->" block *)
+func_paramsRef      := pzero<NodeBase, ParserState> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
+blockRef            := pzero<NodeBase, ParserState> (* TODO: NL block_line { block_line } | line_expr *)
+block_lineRef       := pzero<NodeBase, ParserState> (* TODO: INDENT local_stmt NL *)
+typeRef             := (* TODO: [ namespace "." ] *) identifier (* TODO: [ ( { "[]" } | "<" type ">" ) ] *)
 local_stmtRef       := (* TODO: assign_expr | *) expr
-assign_exprRef      := pzero<NodeBase, unit> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
-rvalueRef           := pzero<NodeBase, unit> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
-accessor_exprRef    := pzero<NodeBase, unit> (* "." identifier | "[" line_expr "]" *)
+assign_exprRef      := pzero<NodeBase, ParserState> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
+rvalueRef           := pzero<NodeBase, ParserState> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
+accessor_exprRef    := pzero<NodeBase, ParserState> (* "." identifier | "[" line_expr "]" *)
 exprRef             := (* TODO: block_expr | *) line_expr
-block_exprRef       := pzero<NodeBase, unit> (* if_expr | while_expr | try_expr | lambda_expr *)
-if_exprRef          := pzero<NodeBase, unit> (* "if" "(" line_expr ")" block [ "else" block ] *)
-while_exprRef       := pzero<NodeBase, unit> (* "while" "(" line_expr ")" block *)
-try_exprRef         := pzero<NodeBase, unit> (* "try" block catch_expr { catch_expr } *)
-catch_exprRef       := pzero<NodeBase, unit> (* "catch" [ "(" type identifier ")" ] block *)
-lambda_exprRef      := pzero<NodeBase, unit> (* [ "(" func_params ")" ] "->" block *)
+block_exprRef       := pzero<NodeBase, ParserState> (* if_expr | while_expr | try_expr | lambda_expr *)
+if_exprRef          := pzero<NodeBase, ParserState> (* "if" "(" line_expr ")" block [ "else" block ] *)
+while_exprRef       := pzero<NodeBase, ParserState> (* "while" "(" line_expr ")" block *)
+try_exprRef         := pzero<NodeBase, ParserState> (* "try" block catch_expr { catch_expr } *)
+catch_exprRef       := pzero<NodeBase, ParserState> (* "catch" [ "(" type identifier ")" ] block *)
+lambda_exprRef      := pzero<NodeBase, ParserState> (* [ "(" func_params ")" ] "->" block *)
 line_exprRef        := line_expr_1 (* TODO: [ "as" type ] *)
 line_expr_1Ref      := line_expr_2 (* TODO: { sign_1 line_expr_2 } *)
-sign_1Ref           := pzero<NodeBase, unit> (* TODO: "&&" | "||" | "^^" *)
+sign_1Ref           := pzero<NodeBase, ParserState> (* TODO: "&&" | "||" | "^^" *)
 line_expr_2Ref      := line_expr_3 (* TODO: { sign_2 line_expr_3 } *)
-sign_2Ref           := pzero<NodeBase, unit> (* TODO: "==" | "<>" | "<" | ">" | "<=" | ">=" *)
+sign_2Ref           := pzero<NodeBase, ParserState> (* TODO: "==" | "<>" | "<" | ">" | "<=" | ">=" *)
 line_expr_3Ref      := (* TODO: [ "not" | "-" ] *) (line_expr_4 .>>. (many (sign_3 .>>. line_expr_4))) |>> Node.operatorChain
 sign_3Ref           := pstring "+" <|> pstring "-"
 line_expr_4Ref      := line_expr_5 (* TODO: { sign_4 line_expr_5 } *)
-sign_4Ref           := pzero<NodeBase, unit> (* TODO: "*" | "/" | "%" *)
+sign_4Ref           := pzero<NodeBase, ParserState> (* TODO: "*" | "/" | "%" *)
 line_expr_5Ref      := line_expr_6 (* TODO: { "**" line_expr_6 } *)
 line_expr_6Ref      := line_expr_7 (* TODO: { "[" expr "]" } *)
 line_expr_7Ref      := (* TODO: new_expr | *) invoke_expr
-new_exprRef         := pzero<NodeBase, unit> (* TODO: "new" ( new_array_expr | new_tuple_expr | new_list_expr | new_dictionary_expr | new_obj_expr ) *)
-new_array_exprRef   := pzero<NodeBase, unit> (* TODO: "[" enumeration_expr "]" *)
-new_tuple_exprRef   := pzero<NodeBase, unit> (* TODO: "(" enumeration_expr ")" *)
-new_list_exprRef    := pzero<NodeBase, unit> (* TODO: "<" enumeration_expr ">" *)
-new_dict_exprRef    := pzero<NodeBase, unit> (* TODO: "{" dict_entry_expr { ";" dict_entry_expr } "}" *)
-new_obj_exprRef     := pzero<NodeBase, unit> (* TODO: type [ invoke_expr ] *)
-enumeration_exprRef := pzero<NodeBase, unit> (* TODO: line_expr { ";" line_expr } *)
-dict_entry_exprRef  := pzero<NodeBase, unit> (* TODO: line_expr "=>" line_expr *)
+new_exprRef         := pzero<NodeBase, ParserState> (* TODO: "new" ( new_array_expr | new_tuple_expr | new_list_expr | new_dictionary_expr | new_obj_expr ) *)
+new_array_exprRef   := pzero<NodeBase, ParserState> (* TODO: "[" enumeration_expr "]" *)
+new_tuple_exprRef   := pzero<NodeBase, ParserState> (* TODO: "(" enumeration_expr ")" *)
+new_list_exprRef    := pzero<NodeBase, ParserState> (* TODO: "<" enumeration_expr ">" *)
+new_dict_exprRef    := pzero<NodeBase, ParserState> (* TODO: "{" dict_entry_expr { ";" dict_entry_expr } "}" *)
+new_obj_exprRef     := pzero<NodeBase, ParserState> (* TODO: type [ invoke_expr ] *)
+enumeration_exprRef := pzero<NodeBase, ParserState> (* TODO: line_expr { ";" line_expr } *)
+dict_entry_exprRef  := pzero<NodeBase, ParserState> (* TODO: line_expr "=>" line_expr *)
 invoke_exprRef      := value_expr (* TODO: [ invoke_list ] *)
-invoke_listRef      := pzero<NodeBase, unit> (* TODO: { value_expr } | ( { NL "<|" value_expr } NL ) *)
+invoke_listRef      := pzero<NodeBase, ParserState> (* TODO: { value_expr } | ( { NL "<|" value_expr } NL ) *)
 value_exprRef       := (* TODO: type { typeof_expr | accessor_expr } | *) literal (* TODO: | "(" expr ")" *)
-typeof_exprRef      := pzero<NodeBase, unit> (* TODO: "typeof" "(" type ")" *)
+typeof_exprRef      := pzero<NodeBase, ParserState> (* TODO: "typeof" "(" type ")" *)
 literalRef          := (* TODO: "()" | "null" | "true" | "false" | string | *) regex "\d+" |>> Node.int
 
-stringRef           := pzero<NodeBase, unit> (* TODO: ... *)
-identifierRef       := regex "[a-zA-Z_]"
+stringRef           := pzero<NodeBase, ParserState> (* TODO: ... *)
+identifierRef       := regex "[a-zA-Z_]+"

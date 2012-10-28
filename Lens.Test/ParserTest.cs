@@ -24,7 +24,7 @@ namespace Lens.Test
 		public void Record()
 		{
 			Test(
-				@"record Student =
+				@"record Student
     Name:string
     Age:int",
 				new RecordDefinitionNode
