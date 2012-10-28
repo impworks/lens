@@ -29,6 +29,7 @@ namespace Lens.Test
     Age:int",
 				new RecordDefinitionNode
 					{
+						Name = "Student",
 						Fields = new List<RecordEntry>
 							{
 								new RecordEntry {Name = "Name", Type = new TypeSignature("string")},
