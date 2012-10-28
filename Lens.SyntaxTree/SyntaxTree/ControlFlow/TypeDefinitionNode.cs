@@ -7,23 +7,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the algebraic type definition construct.
 	/// </summary>
-	public class TypeDefinitionNode : NodeBase
+	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeEntry>
 	{
-		public TypeDefinitionNode()
-		{
-			Entries = new List<TypeEntry>();
-		}
-
-		/// <summary>
-		/// The entries found within a type.
-		/// </summary>
-		public List<TypeEntry> Entries { get; set; }
-
-		public override Type GetExpressionType()
-		{
-			return typeof (Unit);
-		}
-
 		public override void Compile()
 		{
 			throw new NotImplementedException();

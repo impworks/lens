@@ -7,28 +7,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the record definition construct.
 	/// </summary>
-	public class RecordDefinitionNode : NodeBase
+	public class RecordDefinitionNode : TypeDefinitionNodeBase<RecordEntry>
 	{
-		public RecordDefinitionNode()
-		{
-			Fields = new List<RecordEntry>();
-		}
-
-		/// <summary>
-		/// Record name.
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
-		/// The fields in the record.
-		/// </summary>
-		public List<RecordEntry> Fields { get; set; }
-
-		public override Type GetExpressionType()
-		{
-			return typeof (Unit);
-		}
-
 		public override void Compile()
 		{
 			throw new NotImplementedException();

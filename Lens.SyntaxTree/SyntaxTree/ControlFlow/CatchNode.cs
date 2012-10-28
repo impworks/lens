@@ -18,11 +18,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType()
-		{
-			return typeof (void);
-		}
-
 		public override void Compile()
 		{
 			throw new NotImplementedException();

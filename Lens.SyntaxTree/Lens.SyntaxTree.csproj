@@ -46,7 +46,10 @@
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\RecordDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\ThrowNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNodeBase.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />
     <Compile Include="SyntaxTree\Expressions\IndexNodeBase.cs" />
@@ -70,8 +73,8 @@
     <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\RootNode.cs" />
     <Compile Include="Utils\FunctionArgument.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\AnonymousFunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\NamedFunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />

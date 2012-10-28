@@ -30,11 +30,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { throw new InvalidOperationException("Try node's end location cannot be set manually!"); }
 		}
 
-		public override Type GetExpressionType()
-		{
-			return typeof (Unit);
-		}
-
 		public override void Compile()
 		{
 			throw new NotImplementedException();

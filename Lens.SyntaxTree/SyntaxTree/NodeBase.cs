@@ -21,7 +21,10 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <summary>
 		/// The type of the expression represented by this node.
 		/// </summary>
-		public abstract Type GetExpressionType();
+		public virtual Type GetExpressionType()
+		{
+			return typeof (Unit);
+		}
 
 		/// <summary>
 		/// Generates the IL for this node.
