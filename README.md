@@ -44,7 +44,7 @@
 Запись - то же самое, что структура. Объект, имеющий только поля. Без методов
 и модификаторов доступа. Объявляется ключевым словом record:
 
-    record Student =
+    record Student
         Name : string
         Age : int
         
@@ -58,13 +58,13 @@
 Объявляются ключевым словом type и перечислением возможных ярлыков типа. К
 каждому ярлыку может быть прикреплена метка с помощью ключевого слова of:
 
-    type Suit =
+    type Suit
         | Hearts
         | Clubs
         | Spades
         | Diamonds
 
-    type Card =
+    type Card
         | Ace of Suit
         | King of Suit
         | Queen of Suit
@@ -114,8 +114,8 @@
 Для того, чтобы вызвать функцию без параметров, ей нужно передать параметр
 типа unit - пара скобок ().
 
-    fun sum a:int b:int c:int = a + b + c
-    fun getTen = 10
+    fun sum a:int b:int c:int -> a + b + c
+    fun getTen -> 10
 
     let add1 = sum 1
     let add3 = add1 2
