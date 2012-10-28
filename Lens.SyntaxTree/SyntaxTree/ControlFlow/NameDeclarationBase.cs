@@ -13,8 +13,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name
 		{
-			get { return VariableInfo.Name; }
-			set { VariableInfo.Name = value; }
+			get { return NameInfo.Name; }
+			set { NameInfo.Name = value; }
 		}
 
 		/// <summary>
@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Variable information.
 		/// </summary>
-		public VariableInfo VariableInfo { get; protected set; }
+		public LexicalNameInfo NameInfo { get; protected set; }
 
 		public override LexemLocation EndLocation
 		{
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(NameDeclarationBase other)
 		{
-			return Equals(Value, other.Value) && Equals(VariableInfo, other.VariableInfo);
+			return Equals(Value, other.Value) && Equals(NameInfo, other.NameInfo);
 		}
 
 		public override bool Equals(object obj)
@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			unchecked
 			{
-				return ((Value != null ? Value.GetHashCode() : 0) * 397) ^ (VariableInfo != null ? VariableInfo.GetHashCode() : 0);
+				return ((Value != null ? Value.GetHashCode() : 0) * 397) ^ (NameInfo != null ? NameInfo.GetHashCode() : 0);
 			}
 		}
 

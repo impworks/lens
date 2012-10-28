@@ -101,7 +101,7 @@
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\LexemLocation.cs" />
-    <Compile Include="Utils\VariableInfo.cs" />
+    <Compile Include="Utils\LexicalNameInfo.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

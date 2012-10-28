@@ -47,5 +47,30 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// Checks whether the entry has a tag.
 		/// </summary>
 		public bool IsTagged { get { return TagType != null; } }
+
+		#region Equality members
+
+		protected bool Equals(TypeEntry other)
+		{
+			return string.Equals(Name, other.Name) && Equals(TagType, other.TagType);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((TypeEntry)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (TagType != null ? TagType.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

@@ -29,5 +29,30 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The type of the entry.
 		/// </summary>
 		public TypeSignature Type { get; set; }
+
+		#region Equality members
+
+		protected bool Equals(RecordEntry other)
+		{
+			return string.Equals(Name, other.Name) && Equals(Type, other.Type);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((RecordEntry)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

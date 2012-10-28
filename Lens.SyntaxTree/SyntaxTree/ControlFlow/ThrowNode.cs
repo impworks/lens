@@ -16,5 +16,27 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		protected bool Equals(ThrowNode other)
+		{
+			return Equals(Expression, other.Expression);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((ThrowNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return (Expression != null ? Expression.GetHashCode() : 0);
+		}
+
+		#endregion
 	}
 }
