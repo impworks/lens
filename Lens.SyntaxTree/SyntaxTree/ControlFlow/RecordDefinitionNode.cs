@@ -15,6 +15,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		}
 
 		/// <summary>
+		/// Record name.
+		/// </summary>
+		public string Name { get; set; }
+
+		/// <summary>
 		/// The fields in the record.
 		/// </summary>
 		public List<RecordEntry> Fields { get; set; }
