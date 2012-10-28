@@ -10,7 +10,7 @@ open Lens.SyntaxTree.Utils
 let using _ = failwith "Using node is currently not exist"
 
 // Definitions
-let record name body =
+let record(name, body) =
     let recordEntry entryName typeName =
         new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
     
@@ -18,7 +18,7 @@ let record name body =
     let fields =
         body
         |> Seq.map (fun(entryName, typeName) -> recordEntry entryName typeName)
-    new RecordDefinitionNode(Fields = new ResizeArray<_>(fields))
+    new RecordDefinitionNode(Fields = new ResizeArray<_>(fields)) :> NodeBase
 
 // Literals
 let int (value : string) = new IntNode(Value = int value)
