@@ -56,7 +56,7 @@ let literal, literalRef                   = createParserForwardedToRef()
 let string, stringRef                     = createParserForwardedToRef()
 let identifier, identifierRef             = createParserForwardedToRef()
     
-let main : Parser<NodeBase list, unit> = many stmt .>> eof
+let main             = many stmt .>> eof
 stmtRef             := using <|> recorddef <|> typedef <|> funcdef <|> local_stmt
 usingRef            := pstring "using" >>. ``namespace`` .>> newline |>> Node.using
 namespaceRef        := sepBy1 identifier <| pstring "::"
