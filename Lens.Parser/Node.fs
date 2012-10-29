@@ -15,8 +15,7 @@ let recordEntry(entryName, typeName) =
     new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
 
 let record(name, entries) =
-    // TODO: Name a record.
-    let node = new RecordDefinitionNode()
+    let node = new RecordDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
