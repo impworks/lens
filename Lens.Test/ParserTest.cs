@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.Parser;
+﻿using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
@@ -38,6 +37,50 @@ namespace Lens.Test
 				@"record Student
     Name:string
     Age:int",
+				result);
+		}
+
+		[Test]
+		public void Type()
+		{
+			var result = new TypeDefinitionNode {Name = "Suit"};
+			result.Entries.AddRange(new[]
+				{
+					new TypeEntry {Name = "Hearts"},
+					new TypeEntry {Name = "Clubs"},
+					new TypeEntry {Name = "Spades"},
+					new TypeEntry {Name = "Diamonds"}
+				});
+
+			Test(
+				@"type Suit
+    | Hearts
+    | Clubs
+    | Spades
+    | Diamonds",
+				result);
+		}
+
+		[Test]
+		public void ComplexType()
+		{
+			var result = new TypeDefinitionNode {Name = "Card"};
+			result.Entries.AddRange(new[]
+				{
+					new TypeEntry {Name = "Ace", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "King", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "Queen", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "Jack", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit, int>")}
+				});
+
+			Test(
+				@"type Card
+    | Ace of Suit
+    | King of Suit
+    | Queen of Suit
+    | Jack of Suit
+    | ValueCard of Tuple<Suit, int>",
 				result);
 		}
 
