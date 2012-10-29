@@ -15,8 +15,7 @@ namespace Lens.Test
 		[Test]
 		public void Using()
 		{
-			// TODO: Test("using System", new UsingNode("System"))
-			throw new Exception("Using node not supported, test failed");
+			Test("using System", new UsingNode {Namespace = "System"});
 		}
 
 		[Test]
