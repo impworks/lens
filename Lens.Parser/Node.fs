@@ -7,7 +7,8 @@ open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
 // Special nodes
-let using _ = failwith "Using node is currently not exist"
+let using nameSpace =
+    new UsingNode(Namespace = nameSpace) :> NodeBase
 
 // Definitions
 let recordEntry(entryName, typeName) =

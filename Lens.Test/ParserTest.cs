@@ -19,6 +19,12 @@ namespace Lens.Test
 		}
 
 		[Test]
+		public void MultiUsing()
+		{
+			Test("using Lens::Parser", new UsingNode {Namespace = "Lens.Parser"});
+		}
+
+		[Test]
 		public void Record()
 		{
 			var result = new RecordDefinitionNode {Name = "Student"};
