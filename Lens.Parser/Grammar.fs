@@ -7,6 +7,7 @@ open Lens.SyntaxTree.SyntaxTree
 let space = pchar ' '
 let nextLine = skipNewline <|> eof
 let keyword k = pstring k .>> many1 space
+let token t = pstring t .>> many space
 
 let createParser() =
     let parser, parserRef = createParserForwardedToRef()
@@ -67,11 +68,11 @@ let identifier, identifierRef                 = createParser()
 let main               = many stmt .>> eof
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>> nextLine)
 usingRef              := keyword "using" >>. ``namespace`` .>> nextLine |>> Node.using
-namespaceRef          := sepBy1 identifier <| pstring "::" |>> String.concat "."
+namespaceRef          := sepBy1 identifier <| token "::" |>> String.concat "."
 recorddefRef          := keyword "record" >>. identifier .>>. IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
 recorddef_stmtRef     := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
-typedefRef            := pzero<NodeBase, ParserState> (* TODO: "type" identifier NL typedef_stmt { typedef_stmt } *)
-typedef_stmtRef       := pzero<NodeBase, ParserState> (* TODO: INDENT "|" identifier [ "of" type ] NL *)
+typedefRef            := keyword "type" >>. identifier .>>. IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
+typedef_stmtRef       := token "|" >>. identifier .>>. opt (token "of" >>. ``type``) |>> Node.typeEntry
 funcdefRef            := pzero<NodeBase, ParserState> (* TODO: "fun" identifier func_params "->" block *)
 func_paramsRef        := pzero<NodeBase, ParserState> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
 blockRef              := pzero<NodeBase, ParserState> (* TODO: NL block_line { block_line } | line_expr *)

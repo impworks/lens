@@ -19,6 +19,18 @@ let record(name, entries) =
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
+let typeEntry(name, typeDefinition) =
+    let signature =
+        match typeDefinition with
+        | Some s -> new TypeSignature(s)
+        | None   -> null
+    new TypeEntry(Name = name, TagType = signature)
+
+let typeNode(name, entries) =
+    let node = new TypeDefinitionNode(Name = name)
+    entries |> Seq.iter (fun e -> node.Entries.Add e)
+    node :> NodeBase
+
 // Literals
 let int (value : string) = new IntNode(Value = int value)
 
