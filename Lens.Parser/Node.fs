@@ -13,9 +13,11 @@ let using _ = failwith "Using node is currently not exist"
 let recordEntry(entryName, typeName) =
     new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
 
-let record(name, entries : RecordEntry list) =
+let record(name, entries) =
     // TODO: Name a record.
-    new RecordDefinitionNode(Fields = new ResizeArray<RecordEntry>(entries)) :> NodeBase
+    let node = new RecordDefinitionNode()
+    entries |> Seq.iter (fun e -> node.Entries.Add e)
+    node :> NodeBase
 
 // Literals
 let int (value : string) = new IntNode(Value = int value)

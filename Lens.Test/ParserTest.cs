@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
@@ -23,19 +22,18 @@ namespace Lens.Test
 		[Test]
 		public void Record()
 		{
+			var result = new RecordDefinitionNode {Name = "Student"};
+			result.Entries.AddRange(new[]
+				{
+					new RecordEntry {Name = "Name", Type = new TypeSignature("string")},
+					new RecordEntry {Name = "Age", Type = new TypeSignature("int")}
+				});
+
 			Test(
 				@"record Student
     Name:string
     Age:int",
-				new RecordDefinitionNode
-					{
-						Name = "Student",
-						Fields = new List<RecordEntry>
-							{
-								new RecordEntry {Name = "Name", Type = new TypeSignature("string")},
-								new RecordEntry {Name = "Age", Type = new TypeSignature("int")}
-							}
-					});
+				result);
 		}
 
 		[Test]
