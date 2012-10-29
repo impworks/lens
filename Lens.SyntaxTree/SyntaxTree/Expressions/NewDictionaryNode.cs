@@ -1,24 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a new dictionary.
 	/// </summary>
-	public class NewDictionaryNode : NodeBase
+	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>
 	{
-		public NewDictionaryNode()
+		#region Equality members
+
+		protected bool Equals(NewDictionaryNode other)
 		{
-			Expressions = new List<KeyValuePair<NodeBase, NodeBase>>();
+			// KeyValuePair doesn't have Equals overridden, that's why it's so messy here:
+			return Expressions.Select(e => e.Key).SequenceEqual(other.Expressions.Select(e => e.Key))
+			       && Expressions.Select(e => e.Value).SequenceEqual(other.Expressions.Select(e => e.Value));
 		}
 
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<KeyValuePair<NodeBase, NodeBase>> Expressions { get; set; }
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((NewDictionaryNode) obj);
+		}
+
+		#endregion
 
 		public override Type GetExpressionType()
 		{

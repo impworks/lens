@@ -1,23 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a new array declaration.
 	/// </summary>
-	public class NewArrayNode : NodeBase
+	public class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
-		public NewArrayNode()
-		{
-			Expressions = new List<NodeBase>();
-		}
-
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<NodeBase> Expressions { get; set; }
-
 		public override Type GetExpressionType()
 		{
 			if (m_ExpressionType != null)

@@ -7,7 +7,7 @@
 	{
 		public LetNode()
 		{
-			VariableInfo.IsConstant = true;
+			NameInfo.IsConstant = true;
 		}
 	}
 }

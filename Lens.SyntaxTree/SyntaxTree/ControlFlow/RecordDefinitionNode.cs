@@ -7,28 +7,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the record definition construct.
 	/// </summary>
-	public class RecordDefinitionNode : NodeBase
+	public class RecordDefinitionNode : TypeDefinitionNodeBase<RecordEntry>
 	{
-		public RecordDefinitionNode()
-		{
-			Fields = new List<RecordEntry>();
-		}
-
-		/// <summary>
-		/// Record name.
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
-		/// The fields in the record.
-		/// </summary>
-		public List<RecordEntry> Fields { get; set; }
-
-		public override Type GetExpressionType()
-		{
-			return typeof (Unit);
-		}
-
 		public override void Compile()
 		{
 			throw new NotImplementedException();
@@ -49,5 +29,30 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The type of the entry.
 		/// </summary>
 		public TypeSignature Type { get; set; }
+
+		#region Equality members
+
+		protected bool Equals(RecordEntry other)
+		{
+			return string.Equals(Name, other.Name) && Equals(Type, other.Type);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((RecordEntry)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

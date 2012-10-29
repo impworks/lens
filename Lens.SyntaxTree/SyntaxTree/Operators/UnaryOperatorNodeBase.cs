@@ -19,5 +19,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			Error("Cannot apply operator '{0}' to argument of type '{1}'.", OperatorRepresentation, type);
 		}
+
+		#region Equality members
+
+		protected bool Equals(UnaryOperatorNodeBase other)
+		{
+			return Equals(Operand, other.Operand);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((UnaryOperatorNodeBase)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return (Operand != null ? Operand.GetHashCode() : 0);
+		}
+
+		#endregion
 	}
 }

@@ -6,18 +6,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new List declaration.
 	/// </summary>
-	public class NewListNode : NodeBase
+	public class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		public NewListNode()
-		{
-			Expressions = new List<NodeBase>();
-		}
-
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<NodeBase> Expressions { get; set; }
-
 		public override Type GetExpressionType()
 		{
 			if (m_ExpressionType != null)

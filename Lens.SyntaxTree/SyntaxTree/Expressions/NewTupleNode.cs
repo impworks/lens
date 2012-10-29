@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -7,19 +6,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new tuple declaration.
 	/// </summary>
-	public class NewTupleNode : NodeBase
+	public class NewTupleNode : ValueListNodeBase<NodeBase>
 	{
-		public NewTupleNode()
-		{
-			Expressions = new List<NodeBase>();
-		}
-
 		private Type m_TupleType;
-
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<NodeBase> Expressions { get; set; }
 
 		public override Type GetExpressionType()
 		{

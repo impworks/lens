@@ -28,5 +28,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		protected bool Equals(CastOperatorNode other)
+		{
+			return Equals(Expression, other.Expression) && Equals(Type, other.Type);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((CastOperatorNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Expression != null ? Expression.GetHashCode() : 0) * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
 	}
 }

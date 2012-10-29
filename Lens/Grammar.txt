@@ -16,10 +16,11 @@ assign_expr         = ( [ "let" | "var" ] identifier | rvalue ) "=" expr
 rvalue              = ( type | "(" line_expr ")" ) accessor_expr { accessor_expr }
 accessor_expr       = "." identifier | "[" line_expr "]"
 expr                = block_expr | line_expr
-block_expr          = if_expr | while_expr | try_expr | lambda_expr
+block_expr          = if_expr | while_expr | try_expr | throw_expr | lambda_expr
 if_expr             = "if" "(" line_expr ")" block [ "else" block ]
 while_expr          = "while" "(" line_expr ")" block
 try_expr            = "try" block catch_expr { catch_expr }
+throw_expr          = "throw" [ line_expr ]
 catch_expr          = "catch" [ "(" type identifier ")" ] block
 lambda_expr         = [ "(" func_params ")" ] "->" block
 line_expr           = line_expr_1 [ "as" type ]

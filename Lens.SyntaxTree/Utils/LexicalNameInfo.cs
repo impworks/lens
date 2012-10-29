@@ -1,30 +1,32 @@
-﻿namespace Lens.SyntaxTree.Utils
+﻿using System;
+
+namespace Lens.SyntaxTree.Utils
 {
 	/// <summary>
-	/// A node representing a function argument definition.
+	/// A class representing info about a local variable.
 	/// </summary>
-	public class FunctionArgument
+	public class LexicalNameInfo
 	{
 		/// <summary>
-		/// Argument name.
+		/// Variable name.
 		/// </summary>
 		public string Name { get; set; }
 
 		/// <summary>
-		/// Argument type
+		/// Variable type.
 		/// </summary>
-		public string Type { get; set; }
+		public Type Type { get; set; }
 
 		/// <summary>
-		/// Argument modifier
+		/// Is the name a constant or a variable?
 		/// </summary>
-		public ArgumentModifier Modifier { get; set; }
+		public bool IsConstant { get; set; }
 
 		#region Equality members
 
-		protected bool Equals(FunctionArgument other)
+		protected bool Equals(LexicalNameInfo other)
 		{
-			return string.Equals(Name, other.Name) && string.Equals(Type, other.Type) && Modifier == other.Modifier;
+			return string.Equals(Name, other.Name) && Type == other.Type && IsConstant.Equals(other.IsConstant);
 		}
 
 		public override bool Equals(object obj)
@@ -32,7 +34,7 @@
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((FunctionArgument)obj);
+			return Equals((LexicalNameInfo)obj);
 		}
 
 		public override int GetHashCode()
@@ -41,21 +43,11 @@
 			{
 				int hashCode = (Name != null ? Name.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (int)Modifier;
+				hashCode = (hashCode * 397) ^ IsConstant.GetHashCode();
 				return hashCode;
 			}
 		}
 
 		#endregion
-	}
-
-	/// <summary>
-	/// Argument type
-	/// </summary>
-	public enum ArgumentModifier
-	{
-		In,
-		Ref,
-		Out
 	}
 }

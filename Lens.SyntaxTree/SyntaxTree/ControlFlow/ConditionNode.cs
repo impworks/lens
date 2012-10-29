@@ -46,5 +46,33 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		protected bool Equals(ConditionNode other)
+		{
+			return Equals(Condition, other.Condition) && Equals(TrueAction, other.TrueAction) && Equals(FalseAction, other.FalseAction);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((ConditionNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hashCode = (Condition != null ? Condition.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (TrueAction != null ? TrueAction.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (FalseAction != null ? FalseAction.GetHashCode() : 0);
+				return hashCode;
+			}
+		}
+
+		#endregion
 	}
 }

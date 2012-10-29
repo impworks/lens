@@ -7,7 +7,7 @@
 	{
 		public VarNode()
 		{
-			VariableInfo.IsConstant = false;
+			NameInfo.IsConstant = false;
 		}
 	}
 }
