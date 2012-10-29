@@ -77,12 +77,16 @@ funcdefRef            := pzero<NodeBase, ParserState> (* TODO: "fun" identifier 
 func_paramsRef        := pzero<NodeBase, ParserState> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
 blockRef              := pzero<NodeBase, ParserState> (* TODO: NL block_line { block_line } | line_expr *)
 block_lineRef         := pzero<NodeBase, ParserState> (* TODO: INDENT local_stmt NL *)
-typeRef               := (* TODO: [ namespace "." ] *) identifier (* TODO: [ ( { "[]" } | type_params ) ] *)
+typeRef               := pipe3
+                         <| opt (attempt (``namespace`` .>> token "."))
+                         <| identifier
+                         <| opt (* TODO: { "[]" } | *) type_params
+                         <| Node.typeTag
 local_stmtRef         := (* TODO: assign_expr | *) expr
 assign_exprRef        := pzero<NodeBase, ParserState> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
 rvalueRef             := pzero<NodeBase, ParserState> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
 accessor_exprRef      := pzero<NodeBase, ParserState> (* "." identifier | "[" line_expr "]" *)
-type_paramsRef        := pzero<NodeBase, ParserState> (* TODO: "<" type { "," type } ">" *)
+type_paramsRef        := pzero (* TODO: "<" type { "," type } ">" *)
 exprRef               := (* TODO: block_expr | *) line_expr
 block_exprRef         := pzero<NodeBase, ParserState> (* if_expr | while_expr | try_expr | lambda_expr *)
 if_exprRef            := pzero<NodeBase, ParserState> (* "if" "(" line_expr ")" block [ "else" block ] *)

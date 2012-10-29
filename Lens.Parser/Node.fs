@@ -1,5 +1,6 @@
 ﻿module Lens.Parser.Node
 
+open System
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.ControlFlow
 open Lens.SyntaxTree.SyntaxTree.Literals
@@ -11,6 +12,12 @@ let using nameSpace =
     new UsingNode(Namespace = nameSpace) :> NodeBase
 
 // Definitions
+let typeTag nameSpace name additional =
+    [nameSpace; Some name; additional]
+    |> Seq.filter Option.isSome
+    |> Seq.map Option.get
+    |> String.concat(String.Empty)
+
 let recordEntry(entryName, typeName) =
     new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
 
