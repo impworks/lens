@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -40,7 +39,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(TryNode other)
 		{
-			return Equals(Code, other.Code) && CatchClauses.DeepEquals(other.CatchClauses);
+			return Equals(Code, other.Code) && CatchClauses.SequenceEqual(other.CatchClauses);
 		}
 
 		public override bool Equals(object obj)

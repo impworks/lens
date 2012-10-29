@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -22,7 +23,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		protected bool Equals(ValueListNodeBase<T> other)
 		{
-			return Equals(Expressions, other.Expressions);
+			return Expressions.SequenceEqual(other.Expressions);
 		}
 
 		public override bool Equals(object obj)

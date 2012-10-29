@@ -95,7 +95,7 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
-    <Compile Include="Utils\ListExtensions.cs" />
+    <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />

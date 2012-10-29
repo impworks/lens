@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -8,6 +9,25 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>
 	{
+		#region Equality members
+
+		protected bool Equals(NewDictionaryNode other)
+		{
+			// KeyValuePair doesn't have Equals overridden, that's why it's so messy here:
+			return Expressions.Select(e => e.Key).SequenceEqual(other.Expressions.Select(e => e.Key))
+			       && Expressions.Select(e => e.Value).SequenceEqual(other.Expressions.Select(e => e.Value));
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((NewDictionaryNode) obj);
+		}
+
+		#endregion
+
 		public override Type GetExpressionType()
 		{
 			if (m_ExpressionType != null)

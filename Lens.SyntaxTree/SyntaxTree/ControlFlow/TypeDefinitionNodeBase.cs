@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Lens.SyntaxTree.Utils;
+using System.Linq;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(TypeDefinitionNodeBase<T> other)
 		{
-			return string.Equals(Name, other.Name) && Entries.DeepEquals(other.Entries);
+			return string.Equals(Name, other.Name) && Entries.SequenceEqual(other.Entries);
 		}
 
 		public override bool Equals(object obj)

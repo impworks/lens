@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(CodeBlockNode other)
 		{
-			return Statements.DeepEquals(other.Statements);
+			return Statements.SequenceEqual(other.Statements);
 		}
 
 		public override bool Equals(object obj)
