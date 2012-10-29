@@ -18,6 +18,11 @@ let typeTag nameSpace name additional =
     |> Seq.map Option.get
     |> String.concat(String.Empty)
 
+let typeParams types =
+    types
+    |> String.concat ","
+    |> sprintf "<%s>"
+
 let recordEntry(entryName, typeName) =
     new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
 

@@ -71,7 +71,7 @@ namespace Lens.Test
 					new TypeEntry {Name = "King", TagType = new TypeSignature("Suit")},
 					new TypeEntry {Name = "Queen", TagType = new TypeSignature("Suit")},
 					new TypeEntry {Name = "Jack", TagType = new TypeSignature("Suit")},
-					new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit, int>")}
+					new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit,int>")}
 				});
 
 			Test(

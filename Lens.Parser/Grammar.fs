@@ -86,7 +86,7 @@ local_stmtRef         := (* TODO: assign_expr | *) expr
 assign_exprRef        := pzero<NodeBase, ParserState> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
 rvalueRef             := pzero<NodeBase, ParserState> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
 accessor_exprRef      := pzero<NodeBase, ParserState> (* "." identifier | "[" line_expr "]" *)
-type_paramsRef        := pzero (* TODO: "<" type { "," type } ">" *)
+type_paramsRef        := token "<" >>. (sepBy1 ``type`` <| token ",") .>> token ">" |>> Node.typeParams
 exprRef               := (* TODO: block_expr | *) line_expr
 block_exprRef         := pzero<NodeBase, ParserState> (* if_expr | while_expr | try_expr | lambda_expr *)
 if_exprRef            := pzero<NodeBase, ParserState> (* "if" "(" line_expr ")" block [ "else" block ] *)
