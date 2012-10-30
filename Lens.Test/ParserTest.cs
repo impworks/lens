@@ -1,4 +1,5 @@
-﻿using Lens.Parser;
+﻿using System.Collections.Generic;
+using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Operators;
@@ -101,7 +102,10 @@ namespace Lens.Test
 			var result = new NamedFunctionNode
 				{
 					Name = "negate",
-					Arguments = {{"x", new FunctionArgument {Name = "x", Type = "int"}}},
+					Arguments = new Dictionary<string, FunctionArgument>
+						{
+							{"x", new FunctionArgument {Name = "x", Type = "int"}}
+						},
 					Body = new CodeBlockNode
 						{
 							Statements = {new NegationOperator {/* TODO: Operand = new Variable("x")*/}}
@@ -117,7 +121,7 @@ namespace Lens.Test
 			var result = new NamedFunctionNode
 				{
 					Name = "hypo",
-					Arguments =
+					Arguments = new Dictionary<string, FunctionArgument>
 						{
 							{"a", new FunctionArgument {Name = "a", Type = "int"}},
 							{"b", new FunctionArgument {Name = "b", Type = "int"}}
