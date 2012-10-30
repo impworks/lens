@@ -23,6 +23,11 @@ let typeParams types =
     |> String.concat ","
     |> sprintf "<%s>"
 
+let arrayDefinition braces =
+    braces
+    |> Seq.map (fun _ -> "[]")
+    |> String.concat String.Empty
+
 let recordEntry(entryName, typeName) =
     new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
 

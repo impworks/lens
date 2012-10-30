@@ -85,6 +85,18 @@ namespace Lens.Test
 		}
 
 		[Test]
+		public void ArrayType()
+		{
+			var result = new TypeDefinitionNode {Name = "ArrayHolder"};
+			result.Entries.Add(new TypeEntry {Name = "Array", TagType = new TypeSignature("int[][]")});
+
+			Test(
+				@"type ArrayHolder
+    | Array of int[][]",
+				result);
+		}
+
+		[Test]
 		public void Sum()
 		{
 			Test(

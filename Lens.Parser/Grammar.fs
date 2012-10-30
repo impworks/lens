@@ -1,5 +1,6 @@
 ﻿module Lens.Parser.Grammar
 
+open System
 open FParsec
 open FParsec.CharParsers
 open Lens.SyntaxTree.SyntaxTree
@@ -72,7 +73,7 @@ namespaceRef          := sepBy1 identifier <| token "::" |>> String.concat "."
 recorddefRef          := keyword "record" >>. identifier .>>. IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
 recorddef_stmtRef     := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type" >>. identifier .>>. IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
-typedef_stmtRef       := token "|" >>. identifier .>>. opt (token "of" >>. ``type``) |>> Node.typeEntry
+typedef_stmtRef       := token "|" >>. identifier .>>. opt (keyword "of" >>. ``type``) |>> Node.typeEntry
 funcdefRef            := pzero<NodeBase, ParserState> (* TODO: "fun" identifier func_params "->" block *)
 func_paramsRef        := pzero<NodeBase, ParserState> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
 blockRef              := pzero<NodeBase, ParserState> (* TODO: NL block_line { block_line } | line_expr *)
@@ -80,7 +81,7 @@ block_lineRef         := pzero<NodeBase, ParserState> (* TODO: INDENT local_stmt
 typeRef               := pipe3
                          <| opt (attempt (``namespace`` .>> token "."))
                          <| identifier
-                         <| opt (* TODO: { "[]" } | *) type_params
+                         <| opt (type_params <|> (many (token "[" .>>. token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
 local_stmtRef         := (* TODO: assign_expr | *) expr
 assign_exprRef        := pzero<NodeBase, ParserState> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
