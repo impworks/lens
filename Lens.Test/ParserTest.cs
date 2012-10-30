@@ -1,7 +1,6 @@
 ﻿using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
@@ -97,15 +96,41 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void Sum()
+		public void SimpleFunction()
 		{
+			var result = new NamedFunctionNode
+				{
+					Name = "negate",
+					Arguments = {{"x", new FunctionArgument {Name = "x", Type = "int"}}},
+					Body = new CodeBlockNode
+						{
+							Statements = {new NegationOperator {/* TODO: Operand = new Variable("x")*/}}
+						}
+				};
+
+			Test("fun negate x:int -> -x", result);
+		}
+
+		[Test]
+		public void ComplexFunction()
+		{
+			var result = new NamedFunctionNode
+				{
+					Name = "hypo",
+					Arguments =
+						{
+							{"a", new FunctionArgument {Name = "a", Type = "int"}},
+							{"b", new FunctionArgument {Name = "b", Type = "int"}}
+						},
+					/* TODO: Body = ... */
+				};
+			
 			Test(
-				@"2+2",
-				new AddOperatorNode
-					{
-						LeftOperand = new IntNode {Value = 2},
-						RightOperand = new IntNode {Value = 2}
-					});
+				@"fun hypo a:int b:int ->
+    let sq1 = a * a
+    let sq2 = b * b
+    sqrt (sq1 + sq2)",
+				result);
 		}
 
 		private static void Test(string source, params NodeBase[] expected)
