@@ -65,11 +65,14 @@
     <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetIdentifierNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\IdentifierNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\IndexNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
     <Compile Include="SyntaxTree\Expressions\MemberNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\SetIdentifierNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
     <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
