@@ -8,14 +8,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	public class SetIndexNode : IndexNodeBase
 	{
 		/// <summary>
-		/// Value to save at indexed location.
+		/// Value to be assigned.
 		/// </summary>
 		public NodeBase Value { get; set; }
-
-		public override Type GetExpressionType()
-		{
-			return Value.GetExpressionType();
-		}
 
 		public override void Compile()
 		{
