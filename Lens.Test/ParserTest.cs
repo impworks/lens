@@ -2,6 +2,7 @@
 using Lens.Parser;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.SyntaxTree.Expressions;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
@@ -108,7 +109,7 @@ namespace Lens.Test
 						},
 					Body = new CodeBlockNode
 						{
-							Statements = {new NegationOperator {/* TODO: Operand = new Variable("x")*/}}
+							Statements = {new NegationOperator {Operand = new GetIdentifierNode {Identifier = "x"}}}
 						}
 				};
 
@@ -126,9 +127,44 @@ namespace Lens.Test
 							{"a", new FunctionArgument {Name = "a", Type = "int"}},
 							{"b", new FunctionArgument {Name = "b", Type = "int"}}
 						},
-					/* TODO: Body = ... */
+					Body = new CodeBlockNode
+						{
+							Statements =
+								{
+									new LetNode
+										{
+											Name = "sq1",
+											Value = new MultiplyOperatorNode
+												{
+													LeftOperand = new GetIdentifierNode {Identifier = "a"},
+													RightOperand = new GetIdentifierNode {Identifier = "a"}
+												}
+										},
+									new LetNode
+										{
+											Name = "sq2",
+											Value = new MultiplyOperatorNode
+												{
+													LeftOperand = new GetIdentifierNode {Identifier = "b"},
+													RightOperand = new GetIdentifierNode {Identifier = "b"}
+												}
+										},
+									new InvocationNode
+										{
+											MethodName = "sqrt",
+											Arguments =
+												{
+													new AddOperatorNode
+														{
+															LeftOperand = new GetIdentifierNode {Identifier = "sq1"},
+															RightOperand = new GetIdentifierNode {Identifier = "sq2"}
+														}
+												}
+										}
+								}
+						}
 				};
-			
+
 			Test(
 				@"fun hypo a:int b:int ->
     let sq1 = a * a
