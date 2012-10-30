@@ -74,10 +74,16 @@ recorddefRef          := keyword "record" >>. identifier .>>. IndentationParser.
 recorddef_stmtRef     := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type" >>. identifier .>>. IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
 typedef_stmtRef       := token "|" >>. identifier .>>. opt (keyword "of" >>. ``type``) |>> Node.typeEntry
-funcdefRef            := pzero<NodeBase, ParserState> (* TODO: "fun" identifier func_params "->" block *)
-func_paramsRef        := pzero<NodeBase, ParserState> (* TODO: { identifier ":" [ ( "ref" | "out" ) ] type } *)
-blockRef              := pzero<NodeBase, ParserState> (* TODO: NL block_line { block_line } | line_expr *)
-block_lineRef         := pzero<NodeBase, ParserState> (* TODO: INDENT local_stmt NL *)
+funcdefRef            := pipe3
+                         <| (keyword "fun" >>. identifier)
+                         <| (func_params .>> token "->")
+                         <| block
+                         <| Node.functionNode
+func_paramsRef        := many ((identifier .>> token ":") .>>. (opt (keyword "ref" <|> keyword "out")) .>>. ``type``) |>> Node.functionParameters
+blockRef              := ((IndentationParser.indentedMany1 block_line "block_line")
+                         <|> (line_expr >>= (Seq.singleton >> Seq.toList >> preturn)))
+                         |>> Node.codeBlock
+block_lineRef         := local_stmt
 typeRef               := pipe3
                          <| opt (attempt (``namespace`` .>> token "."))
                          <| identifier

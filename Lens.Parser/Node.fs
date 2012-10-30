@@ -1,6 +1,7 @@
 ﻿module Lens.Parser.Node
 
 open System
+open System.Collections.Generic
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.ControlFlow
 open Lens.SyntaxTree.SyntaxTree.Literals
@@ -47,6 +48,28 @@ let typeNode(name, entries) =
     let node = new TypeDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
+
+let functionParameters parameters =
+    let dictionary = new Dictionary<_, _>()
+    
+    parameters
+    |> Seq.map (fun((name, flag), typeTag) ->
+                    let modifier =
+                        match flag with
+                        | Some "ref" -> ArgumentModifier.Ref
+                        | Some "out" -> ArgumentModifier.Out
+                        | _          -> ArgumentModifier.In
+                    new FunctionArgument(Name = name, Modifier = modifier, Type = typeTag))
+    |> Seq.iter (fun fa -> dictionary.Add(fa.Name, fa))
+    
+    dictionary
+
+let functionNode name parameters body =
+    new NamedFunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
+
+// Code
+let codeBlock (lines : NodeBase list) =
+    new CodeBlockNode(Statements = new ResizeArray<_>(lines))
 
 // Literals
 let int (value : string) = new IntNode(Value = int value)
