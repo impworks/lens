@@ -3,13 +3,8 @@
 	/// <summary>
 	/// The base node for accessing array-like structures by index.
 	/// </summary>
-	abstract public class IndexNodeBase : NodeBase
+	abstract public class IndexNodeBase : AccessorNodeBase
 	{
-		/// <summary>
-		/// Expression to index.
-		/// </summary>
-		public NodeBase Expression { get; set; }
-
 		/// <summary>
 		/// The index value.
 		/// </summary>

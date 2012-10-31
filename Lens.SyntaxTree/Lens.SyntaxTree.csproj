@@ -61,6 +61,7 @@
     <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
     <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
+    <Compile Include="SyntaxTree\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
