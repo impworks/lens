@@ -150,17 +150,32 @@ let castNode expression typeName =
     | Some name -> CastOperatorNode(Expression = expression, Type = TypeSignature name) :> NodeBase
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
-    let kind = function
+    let booleanKind = function
     | "&&"  -> BooleanOperatorKind.And
     | "||"  -> BooleanOperatorKind.Or
     | "^^"  -> BooleanOperatorKind.Xor
     | other -> failwithf "Unknown boolean operator kind %s" other
-    
+
+    let comparisonKind = function
+    | "==" -> ComparisonOperatorKind.Equals
+    | "<>" -> ComparisonOperatorKind.NotEquals
+    | "<"  -> ComparisonOperatorKind.Less
+    | ">"  -> ComparisonOperatorKind.Greater
+    | "<=" -> ComparisonOperatorKind.LessEquals
+    | ">=" -> ComparisonOperatorKind.GreaterEquals
+    | other -> failwithf "Unknown comparison operator kind %s" other
+
     match symbol with
     | "&&"
     | "||"
-    | "^^" -> upcast BooleanOperatorNode(Kind = kind symbol)
-    | "+"  -> upcast AddOperatorNode()    
+    | "^^" -> upcast BooleanOperatorNode(Kind = booleanKind symbol)
+    | "=="
+    | "<>"
+    | "<"
+    | ">"
+    | "<="
+    | ">=" -> upcast ComparisonOperatorNode(Kind = comparisonKind symbol)
+    | "+"  -> upcast AddOperatorNode()
     | _   -> failwithf "Unknown operator %s" symbol
 
 let private binaryOperator symbol left right =
