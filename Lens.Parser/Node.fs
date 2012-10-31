@@ -4,13 +4,18 @@ open System
 open System.Collections.Generic
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.ControlFlow
+open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Literals
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
+type Accessor =
+| Member of string
+| Indexer of NodeBase
+
 // Special nodes
 let using nameSpace =
-    new UsingNode(Namespace = nameSpace) :> NodeBase
+    UsingNode(Namespace = nameSpace) :> NodeBase
 
 // Definitions
 let typeTag nameSpace name additional =
@@ -30,27 +35,27 @@ let arrayDefinition braces =
     |> String.concat String.Empty
 
 let recordEntry(entryName, typeName) =
-    new RecordEntry(Name = entryName, Type = new TypeSignature(typeName))
+    RecordEntry(Name = entryName, Type = TypeSignature(typeName))
 
 let record(name, entries) =
-    let node = new RecordDefinitionNode(Name = name)
+    let node = RecordDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
 let typeEntry(name, typeDefinition) =
     let signature =
         match typeDefinition with
-        | Some s -> new TypeSignature(s)
+        | Some s -> TypeSignature(s)
         | None   -> null
-    new TypeEntry(Name = name, TagType = signature)
+    TypeEntry(Name = name, TagType = signature)
 
 let typeNode(name, entries) =
-    let node = new TypeDefinitionNode(Name = name)
+    let node = TypeDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
 let functionParameters parameters =
-    let dictionary = new Dictionary<_, _>()
+    let dictionary = Dictionary<_, _>()
     
     parameters
     |> Seq.map (fun((name, flag), typeTag) ->
@@ -59,25 +64,63 @@ let functionParameters parameters =
                         | Some "ref" -> ArgumentModifier.Ref
                         | Some "out" -> ArgumentModifier.Out
                         | _          -> ArgumentModifier.In
-                    new FunctionArgument(Name = name, Modifier = modifier, Type = typeTag))
+                    FunctionArgument(Name = name, Modifier = modifier, Type = typeTag))
     |> Seq.iter (fun fa -> dictionary.Add(fa.Name, fa))
     
     dictionary
 
 let functionNode name parameters body =
-    new NamedFunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
+    NamedFunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
 
 // Code
 let codeBlock (lines : NodeBase list) =
-    new CodeBlockNode(Statements = new ResizeArray<_>(lines))
+    CodeBlockNode(Statements = ResizeArray<_>(lines))
+
+let variableDeclaration binding name value =
+    let node : NameDeclarationBase =
+        match binding with
+        | "let" -> upcast LetNode()
+        | "var" -> upcast VarNode()
+        | _     -> failwith "Unknown value binding type"
+    node.Name <- name
+    node.Value <- value
+    node :> NodeBase
+
+let assignment typeName identifier accessorChain value =
+    let setter : Accessor -> AccessorNodeBase = function
+        | Member(name)        -> upcast SetMemberNode(MemberName = name, Value = value)
+        | Indexer(expression) -> upcast SetIndexNode(Index = expression, Value = value)
+    let getter : Accessor -> AccessorNodeBase = function
+        | Member(name)        -> upcast GetMemberNode(MemberName = name)
+        | Indexer(expression) -> upcast GetIndexNode(Index = expression)
+
+    let accessors = List.rev accessorChain
+    let node = setter <| List.head accessors
+    let result = List.fold
+                 <| (fun (n : AccessorNodeBase) a ->
+                       let newNode = getter a
+                       n.Expression <- newNode
+                       newNode)
+                 <| node
+                 <| List.tail accessors
+                 :?> GetMemberNode
+
+    if Option.isSome identifier then
+        let memberName = Option.get identifier
+        let topNode = GetMemberNode(MemberName = memberName, StaticType = TypeSignature(typeName))
+        result.Expression <- topNode
+    else
+        result.StaticType <- TypeSignature(typeName)
+
+    result :> NodeBase
 
 // Literals
-let int (value : string) = new IntNode(Value = int value)
+let int (value : string) = IntNode(Value = int value)
 
 // Operators
 let operatorNode symbol =
     match symbol with
-    | "+" -> new AddOperatorNode()
+    | "+" -> AddOperatorNode()
     | _   -> failwithf "Unknown operator %s" symbol
 
 let private binaryOperator symbol left right =

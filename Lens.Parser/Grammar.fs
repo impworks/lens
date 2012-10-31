@@ -28,6 +28,7 @@ let block, blockRef                           = createParser()
 let block_line, block_lineRef                 = createParser()
 let ``type``, typeRef                         = createParser()
 let local_stmt, local_stmtRef                 = createParser()
+let var_decl_expr, var_decl_exprRef           = createParser()
 let assign_expr, assign_exprRef               = createParser()
 let rvalue, rvalueRef                         = createParser()
 let accessor_expr, accessor_exprRef           = createParser()
@@ -69,7 +70,7 @@ let identifier, identifierRef                 = createParser()
 let main               = many stmt .>> eof
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>> nextLine)
 usingRef              := keyword "using" >>. ``namespace`` .>> nextLine |>> Node.using
-namespaceRef          := sepBy1 identifier <| token "::" |>> String.concat "."
+namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := keyword "record" >>. identifier .>>. IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
 recorddef_stmtRef     := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type" >>. identifier .>>. IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
@@ -89,10 +90,20 @@ typeRef               := pipe3
                          <| identifier
                          <| opt (type_params <|> (many (token "[" .>>. token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
-local_stmtRef         := (* TODO: assign_expr | *) expr
-assign_exprRef        := pzero<NodeBase, ParserState> (* ( [ "let" | "var" ] identifier | rvalue ) "=" expr *)
+local_stmtRef         := var_decl_expr <|> assign_expr <|> expr
+var_decl_exprRef      := pipe3
+                         <| (keyword "let" <|> keyword "var")
+                         <| identifier
+                         <| (token "=" >>. expr)
+                         <| Node.variableDeclaration
+assign_exprRef        := pipe4
+                         <| ``type``
+                         <| opt (token "::" >>. identifier)
+                         <| many accessor_expr
+                         <| (token "=" >>. expr)
+                         <| Node.assignment
 rvalueRef             := pzero<NodeBase, ParserState> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
-accessor_exprRef      := pzero<NodeBase, ParserState> (* "." identifier | "[" line_expr "]" *)
+accessor_exprRef      := pzero<Node.Accessor, ParserState> (* "." identifier | "[" line_expr "]" *)
 type_paramsRef        := token "<" >>. (sepBy1 ``type`` <| token ",") .>> token ">" |>> Node.typeParams
 exprRef               := (* TODO: block_expr | *) line_expr
 block_exprRef         := pzero<NodeBase, ParserState> (* if_expr | while_expr | try_expr | lambda_expr *)
@@ -119,7 +130,7 @@ new_tuple_exprRef     := pzero<NodeBase, ParserState> (* TODO: "(" enumeration_e
 new_obj_exprRef       := pzero<NodeBase, ParserState> (* TODO: type [ invoke_list ] *)
 enumeration_exprRef   := pzero<NodeBase, ParserState> (* TODO: line_expr { ";" line_expr } *)
 invoke_exprRef        := value_expr (* TODO: value_expr [ invoke_list ] *)
-invoke_listRef        := pzero<NodeBase, ParserState> (* TODO: { value_expr } | ( { NL "<|" value_expr } NL ) *)
+invoke_listRef        := pzero<NodeBase, ParserState> (* TODO: ( { NL "<|" value_expr } NL ) | { value_expr } *)
 value_exprRef         := (* TODO: type { accessor_expr } | *) literal (* TODO: | type_operator_expr | "(" expr ")" *)
 type_operator_exprRef := pzero<NodeBase, ParserState> (* TODO: ( "typeof" | "default" ) "(" type ")" *)
 literalRef            := (* TODO: "()" | "null" | "true" | "false" | string | *) int |>> Node.int
