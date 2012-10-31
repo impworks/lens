@@ -114,6 +114,22 @@ let assignment typeName identifier accessorChain value =
 
     result :> NodeBase
 
+// Branch constructions
+let ifNode condition thenBlock elseBlock =
+    let falseAction =
+        match elseBlock with
+        | Some a -> a
+        | None   -> null
+    ConditionNode(Condition = condition, TrueAction = thenBlock, FalseAction = falseAction) :> NodeBase
+
+let whileNode condition block =
+    LoopNode(Condition = condition, Body = block) :> NodeBase
+
+let tryCatchNode expression catchClauses =
+    let node = TryNode(Code = expression)
+    node.CatchClauses.AddRange(catchClauses)
+    node :> NodeBase
+
 // Literals
 let int (value : string) = IntNode(Value = int value)
 

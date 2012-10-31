@@ -101,14 +101,25 @@ assign_exprRef        := pipe4
                          <| many accessor_expr
                          <| (token "=" >>. expr)
                          <| Node.assignment
-accessor_exprRef      := pzero<Node.Accessor, ParserState> (* "." identifier | "[" line_expr "]" *)
+accessor_exprRef      := ((token "." >>. identifier) |>> Node.Accessor.Member)
+                         <|> ((token "[" >>. line_expr .>> token "]") |>> Node.Accessor.Indexer)
 type_paramsRef        := token "<" >>. (sepBy1 ``type`` <| token ",") .>> token ">" |>> Node.typeParams
-exprRef               := (* TODO: block_expr | *) line_expr
-block_exprRef         := pzero<NodeBase, ParserState> (* if_expr | while_expr | try_expr | lambda_expr *)
-if_exprRef            := pzero<NodeBase, ParserState> (* "if" "(" line_expr ")" block [ "else" block ] *)
-while_exprRef         := pzero<NodeBase, ParserState> (* "while" "(" line_expr ")" block *)
-try_exprRef           := pzero<NodeBase, ParserState> (* "try" block catch_expr { catch_expr } *)
-catch_exprRef         := pzero<NodeBase, ParserState> (* "catch" [ "(" type identifier ")" ] block *)
+exprRef               := block_expr <|> line_expr
+block_exprRef         := if_expr <|> while_expr <|> try_expr <|> lambda_expr
+if_exprRef            := pipe3
+                         <| (keyword "if" >>. (token "(" >>. line_expr .>> token ")"))
+                         <| block
+                         <| opt (keyword "else" >>. block)
+                         <| Node.ifNode
+while_exprRef         := pipe2
+                         <| (keyword "while" >>. (token "(" >>. line_expr .>> token ")"))
+                         <| block
+                         <| Node.whileNode
+try_exprRef           := pipe2
+                         <| (keyword "try" >>. block)
+                         <| many1 catch_expr
+                         <| Node.tryCatchNode
+catch_exprRef         := pzero<_, ParserState> (* "catch" [ "(" type identifier ")" ] block *)
 lambda_exprRef        := pzero<NodeBase, ParserState> (* [ "(" func_params ")" ] "->" block *)
 line_exprRef          := line_expr_1 (* TODO: [ "as" type ] *)
 line_expr_1Ref        := line_expr_2 (* TODO: { sign_1 line_expr_2 } *)
