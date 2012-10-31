@@ -21,7 +21,7 @@ namespace Lens.Test
 		[Test]
 		public void MultiUsing()
 		{
-			Test("using Lens::Parser", new UsingNode {Namespace = "Lens.Parser"});
+			Test("using Lens.Parser", new UsingNode {Namespace = "Lens.Parser"});
 		}
 
 		[Test]
