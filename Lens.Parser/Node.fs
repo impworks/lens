@@ -114,6 +114,13 @@ let assignment typeName identifier accessorChain value =
 
     result :> NodeBase
 
+let lambda parameters code =
+    let arguments =
+        match parameters with
+        | Some p -> p
+        | None   -> null
+    FunctionNode(Arguments = arguments, Body = code) :> NodeBase
+
 // Branch constructions
 let ifNode condition thenBlock elseBlock =
     let falseAction =
