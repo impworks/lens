@@ -67,8 +67,8 @@
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\DivideOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ComparisonOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\InversionOperator.cs" />
-    <Compile Include="SyntaxTree\Operators\NegationOperator.cs" />
+    <Compile Include="SyntaxTree\Operators\InversionOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\NegationOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\MultiplyOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\OperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\PowOperatorNode.cs" />
