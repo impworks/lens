@@ -149,9 +149,15 @@ line_expr_3Ref        := pipe2
                              <| Node.operatorChain)
                          <| Node.unaryOperator
 sign_3Ref             := pstring "+" <|> pstring "-"
-line_expr_4Ref        := line_expr_5 (* TODO: { sign_4 line_expr_5 } *)
-sign_4Ref             := pzero<NodeBase, ParserState> (* TODO: "*" | "/" | "%" *)
-line_expr_5Ref        := line_expr_6 (* TODO: { "**" line_expr_6 } *)
+line_expr_4Ref        := pipe2
+                         <| line_expr_5
+                         <| (many (sign_4 .>>. line_expr_5))
+                         <| Node.operatorChain
+sign_4Ref             := token "*" <|> token "/" <|> token "%"
+line_expr_5Ref        := pipe2
+                         <| line_expr_6
+                         <| (many (token "**" .>>. line_expr_6))
+                         <| Node.operatorChain
 line_expr_6Ref        := line_expr_7 (* TODO: { "[" expr "]" } *)
 line_expr_7Ref        := (* TODO: new_expr | *) invoke_expr
 new_exprRef           := pzero<NodeBase, ParserState> (* TODO: "new" ( new_array_expr | new_tuple_expr | new_obj_expr ) *)

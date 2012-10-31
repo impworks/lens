@@ -175,8 +175,13 @@ let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     | ">"
     | "<="
     | ">=" -> upcast ComparisonOperatorNode(Kind = comparisonKind symbol)
+    | "**" -> upcast PowOperatorNode()
+    | "*"  -> upcast MultiplyOperatorNode()
+    | "/"  -> upcast DivideOperatorNode()
+    | "%"  -> upcast RemainderOperatorNode()
     | "+"  -> upcast AddOperatorNode()
-    | _   -> failwithf "Unknown binary operator %s" symbol
+    | "-"  -> upcast SubtractOperatorNode()
+    | _    -> failwithf "Unknown binary operator %s" symbol
 
 let unaryOperator symbol operand : NodeBase =
     match symbol with
