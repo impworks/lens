@@ -176,7 +176,14 @@ let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     | "<="
     | ">=" -> upcast ComparisonOperatorNode(Kind = comparisonKind symbol)
     | "+"  -> upcast AddOperatorNode()
-    | _   -> failwithf "Unknown operator %s" symbol
+    | _   -> failwithf "Unknown binary operator %s" symbol
+
+let unaryOperator symbol operand : NodeBase =
+    match symbol with
+    | Some "not" -> upcast InversionOperator(Operand = operand)
+    | Some "-"   -> upcast NegationOperator(Operand = operand)
+    | Some other -> failwithf "Unknown unary operator %s" other
+    | None       -> operand
 
 let private binaryOperator symbol left right =
     let node = binaryOperatorNode symbol

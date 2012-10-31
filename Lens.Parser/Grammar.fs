@@ -141,10 +141,13 @@ line_expr_2Ref        := pipe2
                          <| many (sign_2 .>>. line_expr_3)
                          <| Node.operatorChain
 sign_2Ref             := token "==" <|> token "<>" <|> token "<" <|> token ">" <|> token "<=" <|> token ">="
-line_expr_3Ref        := (* TODO: [ "not" | "-" ] *) pipe2
-                                                     <| line_expr_4
-                                                     <| (many (sign_3 .>>. line_expr_4))
-                                                     <| Node.operatorChain
+line_expr_3Ref        := pipe2
+                         <| opt (keyword "not" <|> token "-")
+                         <| (pipe2
+                             <| line_expr_4
+                             <| (many (sign_3 .>>. line_expr_4))
+                             <| Node.operatorChain)
+                         <| Node.unaryOperator
 sign_3Ref             := pstring "+" <|> pstring "-"
 line_expr_4Ref        := line_expr_5 (* TODO: { sign_4 line_expr_5 } *)
 sign_4Ref             := pzero<NodeBase, ParserState> (* TODO: "*" | "/" | "%" *)
