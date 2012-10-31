@@ -1,7 +1,7 @@
 main                = { stmt } EOF
 stmt                = using | recorddef | typedef | funcdef | ( local_stmt NL )
 using               = "using" namespace NL
-namespace           = identifier { "::" identifier }
+namespace           = identifier { "." identifier }
 recorddef           = "record" identifier NL recorddef_stmt { recorddef_stmt }
 recorddef_stmt      = INDENT identifier ":" type NL
 typedef             = "type" identifier NL typedef_stmt { typedef_stmt }
@@ -10,11 +10,11 @@ funcdef             = "fun" identifier func_params "->" block
 func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
-type                = [ namespace "." ] identifier [ ( type_params | { "[]" } ) ]
-local_stmt          = assign_expr | expr
-assign_expr         = ( [ "let" | "var" ] identifier | rvalue ) "=" expr
-rvalue              = ( type | "(" line_expr ")" ) accessor_expr { accessor_expr }
-accessor_expr       = "." identifier [ type_params ] | "[" line_expr "]"
+type                = namespace [ ( type_params | { "[]" } ) ]
+local_stmt          = var_decl_expr | assgn_expr | expr
+var_decl_expr       = "let" | "var" identifier "=" expr
+assign_expr         = type [ "::" identifier ] { accessor_expr } "=" expr
+accessor_expr       = "." identifier | "[" line_expr "]"
 type_params         = "<" type { "," type } ">"
 expr                = block_expr | line_expr
 block_expr          = if_expr | while_expr | try_expr | lambda_expr
