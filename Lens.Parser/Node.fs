@@ -144,6 +144,11 @@ let catchNode _ code =
 let int (value : string) = IntNode(Value = int value)
 
 // Operators
+let castNode expression typeName =
+    match typeName with
+    | None      -> expression
+    | Some name -> CastOperatorNode(Expression = expression, Type = TypeSignature name) :> NodeBase
+
 let operatorNode symbol =
     match symbol with
     | "+" -> AddOperatorNode()
@@ -155,9 +160,9 @@ let private binaryOperator symbol left right =
     node.RightOperand <- right
     node :> NodeBase
 
-let rec operatorChain (node, operations) =
+let rec operatorChain node operations =
     match operations with
     | [] -> node
     | (op, node2) :: other ->
         let newNode = binaryOperator op node node2
-        operatorChain(newNode, other)
+        operatorChain newNode other

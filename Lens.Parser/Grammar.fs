@@ -127,12 +127,21 @@ lambda_exprRef        := pipe2
                          <| opt (token "(" >>. func_params .>> token ")")
                          <| (token "->" >>. block)
                          <| Node.lambda
-line_exprRef          := line_expr_1 (* TODO: [ "as" type ] *)
-line_expr_1Ref        := line_expr_2 (* TODO: { sign_1 line_expr_2 } *)
-sign_1Ref             := pzero<NodeBase, ParserState> (* TODO: "&&" | "||" | "^^" *)
+line_exprRef          := pipe2
+                         <| line_expr_1
+                         <| opt (keyword "as" .>> ``type``)
+                         <| Node.castNode
+line_expr_1Ref        := pipe2
+                         <| line_expr_2
+                         <| many (sign_1 .>>. line_expr_2)
+                         <| Node.operatorChain
+sign_1Ref             := pzero<_, ParserState> (* TODO: "&&" | "||" | "^^" *)
 line_expr_2Ref        := line_expr_3 (* TODO: { sign_2 line_expr_3 } *)
 sign_2Ref             := pzero<NodeBase, ParserState> (* TODO: "==" | "<>" | "<" | ">" | "<=" | ">=" *)
-line_expr_3Ref        := (* TODO: [ "not" | "-" ] *) (line_expr_4 .>>. (many (sign_3 .>>. line_expr_4))) |>> Node.operatorChain
+line_expr_3Ref        := (* TODO: [ "not" | "-" ] *) pipe2
+                                                     <| line_expr_4
+                                                     <| (many (sign_3 .>>. line_expr_4))
+                                                     <| Node.operatorChain
 sign_3Ref             := pstring "+" <|> pstring "-"
 line_expr_4Ref        := line_expr_5 (* TODO: { sign_4 line_expr_5 } *)
 sign_4Ref             := pzero<NodeBase, ParserState> (* TODO: "*" | "/" | "%" *)
