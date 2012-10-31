@@ -119,7 +119,10 @@ try_exprRef           := pipe2
                          <| (keyword "try" >>. block)
                          <| many1 catch_expr
                          <| Node.tryCatchNode
-catch_exprRef         := pzero<_, ParserState> (* "catch" [ "(" type identifier ")" ] block *)
+catch_exprRef         := pipe2
+                         <| (keyword "catch" >>. opt (token "(" >>. ``type`` .>>. identifier .>> token ")"))
+                         <| block
+                         <| Node.catchNode
 lambda_exprRef        := pzero<NodeBase, ParserState> (* [ "(" func_params ")" ] "->" block *)
 line_exprRef          := line_expr_1 (* TODO: [ "as" type ] *)
 line_expr_1Ref        := line_expr_2 (* TODO: { sign_1 line_expr_2 } *)
