@@ -65,6 +65,7 @@
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\DefaultOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\DivideOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ComparisonOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\InversionOperatorNode.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="SyntaxTree\Operators\RemainderOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\SubtractOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\TypeofOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeOperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\RootNode.cs" />
     <Compile Include="Utils\FunctionArgument.cs" />
