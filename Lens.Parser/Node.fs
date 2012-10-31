@@ -149,13 +149,22 @@ let castNode expression typeName =
     | None      -> expression
     | Some name -> CastOperatorNode(Expression = expression, Type = TypeSignature name) :> NodeBase
 
-let operatorNode symbol =
+let binaryOperatorNode symbol : BinaryOperatorNodeBase =
+    let kind = function
+    | "&&"  -> BooleanOperatorKind.And
+    | "||"  -> BooleanOperatorKind.Or
+    | "^^"  -> BooleanOperatorKind.Xor
+    | other -> failwithf "Unknown boolean operator kind %s" other
+    
     match symbol with
-    | "+" -> AddOperatorNode()
+    | "&&"
+    | "||"
+    | "^^" -> upcast BooleanOperatorNode(Kind = kind symbol)
+    | "+"  -> upcast AddOperatorNode()    
     | _   -> failwithf "Unknown operator %s" symbol
 
 let private binaryOperator symbol left right =
-    let node = operatorNode symbol
+    let node = binaryOperatorNode symbol
     node.LeftOperand <- left
     node.RightOperand <- right
     node :> NodeBase

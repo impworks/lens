@@ -135,7 +135,7 @@ line_expr_1Ref        := pipe2
                          <| line_expr_2
                          <| many (sign_1 .>>. line_expr_2)
                          <| Node.operatorChain
-sign_1Ref             := pzero<_, ParserState> (* TODO: "&&" | "||" | "^^" *)
+sign_1Ref             := token "&&" <|> token "||" <|> token "^^"
 line_expr_2Ref        := line_expr_3 (* TODO: { sign_2 line_expr_3 } *)
 sign_2Ref             := pzero<NodeBase, ParserState> (* TODO: "==" | "<>" | "<" | ">" | "<=" | ">=" *)
 line_expr_3Ref        := (* TODO: [ "not" | "-" ] *) pipe2
