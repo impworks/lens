@@ -5,13 +5,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// The base node for 
 	/// </summary>
-	abstract public class MemberNodeBase : NodeBase
+	abstract public class MemberNodeBase : AccessorNodeBase
 	{
-		/// <summary>
-		/// Expression to access a dynamic member.
-		/// </summary>
-		public NodeBase Expression { get; set; }
-
 		/// <summary>
 		/// Type signature to access a static type.
 		/// </summary>
