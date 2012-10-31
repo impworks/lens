@@ -30,7 +30,6 @@ let ``type``, typeRef                         = createParser()
 let local_stmt, local_stmtRef                 = createParser()
 let var_decl_expr, var_decl_exprRef           = createParser()
 let assign_expr, assign_exprRef               = createParser()
-let rvalue, rvalueRef                         = createParser()
 let accessor_expr, accessor_exprRef           = createParser()
 let type_params, type_paramsRef               = createParser()
 let expr, exprRef                             = createParser()
@@ -102,7 +101,6 @@ assign_exprRef        := pipe4
                          <| many accessor_expr
                          <| (token "=" >>. expr)
                          <| Node.assignment
-rvalueRef             := pzero<NodeBase, ParserState> (* ( type | "(" line_expr ")" ) accessor_expr { accessor_expr } *)
 accessor_exprRef      := pzero<Node.Accessor, ParserState> (* "." identifier | "[" line_expr "]" *)
 type_paramsRef        := token "<" >>. (sepBy1 ``type`` <| token ",") .>> token ">" |>> Node.typeParams
 exprRef               := (* TODO: block_expr | *) line_expr
