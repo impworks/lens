@@ -151,7 +151,8 @@ let catchNode variableDefinition code =
     node
     
 // Literals
-let int (value : string) = IntNode(Value = int value)
+let int (value : string) =
+    IntNode(Value = int value) :> NodeBase
 
 // Operators
 let castNode expression typeName =
@@ -212,3 +213,17 @@ let rec operatorChain node operations =
     | (op, node2) :: other ->
         let newNode = binaryOperator op node node2
         operatorChain newNode other
+
+// New objects
+let objectNode typeName (parameters : NodeBase list option) =
+    let arguments =
+        match parameters with
+        | Some args -> ResizeArray<_> args
+        | None      -> ResizeArray<_>()
+    NewObjectNode(Type = TypeSignature typeName, Arguments = arguments) :> NodeBase
+
+let tupleNode (elements : NodeBase list) =
+    NewTupleNode(Expressions = ResizeArray<_> elements) :> NodeBase
+
+let arrayNode (elements : NodeBase list) =
+    NewArrayNode(Expressions = ResizeArray<_> elements) :> NodeBase

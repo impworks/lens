@@ -5,6 +5,8 @@ open FParsec
 open FParsec.CharParsers
 open Lens.SyntaxTree.SyntaxTree
 
+let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
+
 let space = pchar ' '
 let nextLine = skipNewline <|> eof
 let keyword k = pstring k .>> many1 space
@@ -81,7 +83,7 @@ funcdefRef            := pipe3
                          <| Node.functionNode
 func_paramsRef        := many ((identifier .>> token ":") .>>. (opt (keyword "ref" <|> keyword "out")) .>>. ``type``) |>> Node.functionParameters
 blockRef              := ((IndentationParser.indentedMany1 block_line "block_line")
-                         <|> (line_expr >>= (Seq.singleton >> Seq.toList >> preturn)))
+                         <|> (valueToList line_expr))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
 typeRef               := pipe3
@@ -159,14 +161,17 @@ line_expr_5Ref        := pipe2
                          <| (many (token "**" .>>. line_expr_6))
                          <| Node.operatorChain
 line_expr_6Ref        := token "[" >>. expr .>> token "]" |>> Node.indexNode
-line_expr_7Ref        := (* TODO: new_expr | *) invoke_expr
-new_exprRef           := pzero<NodeBase, ParserState> (* TODO: "new" ( new_array_expr | new_tuple_expr | new_obj_expr ) *)
-new_array_exprRef     := pzero<NodeBase, ParserState> (* TODO: "[" enumeration_expr "]" *)
-new_tuple_exprRef     := pzero<NodeBase, ParserState> (* TODO: "(" enumeration_expr ")" *)
-new_obj_exprRef       := pzero<NodeBase, ParserState> (* TODO: type [ invoke_list ] *)
-enumeration_exprRef   := pzero<NodeBase, ParserState> (* TODO: line_expr { ";" line_expr } *)
+line_expr_7Ref        := new_expr <|> invoke_expr
+new_exprRef           := keyword "new" >>. (new_array_expr <|> new_tuple_expr <|> new_obj_expr)
+new_array_exprRef     := token "[" >>. enumeration_expr .>> token "]" |>> Node.arrayNode
+new_tuple_exprRef     := token "(" >>. enumeration_expr .>> token ")" |>> Node.tupleNode
+new_obj_exprRef       := pipe2
+                         <| ``type``
+                         <| opt (invoke_list)
+                         <| Node.objectNode
+enumeration_exprRef   := sepBy1 line_expr <| token ";"
 invoke_exprRef        := value_expr (* TODO: value_expr [ invoke_list ] *)
-invoke_listRef        := pzero<NodeBase, ParserState> (* TODO: ( { NL "<|" value_expr } NL ) | { value_expr } *)
+invoke_listRef        := (many (newline >>. (token "<|" >>. value_expr)) .>> nextLine) <|> (many value_expr)
 value_exprRef         := (* TODO: type { accessor_expr } | *) literal (* TODO: | type_operator_expr | "(" expr ")" *)
 type_operator_exprRef := pzero<NodeBase, ParserState> (* TODO: ( "typeof" | "default" ) "(" type ")" *)
 literalRef            := (* TODO: "()" | "null" | "true" | "false" | string | *) int |>> Node.int
