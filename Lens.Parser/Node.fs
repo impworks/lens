@@ -170,8 +170,25 @@ let catchNode variableDefinition code =
     node
 
 // Literals
+let unit _ =
+    failwith<NodeBase> "Unit literal not supported"
+
+let nullNode _ =
+    failwith<NodeBase> "Null literal not supported"
+
+let boolean value =
+    let v = 
+        match value with
+        | "true"  -> true
+        | "false" -> false
+        | other   -> failwithf "Unknown boolean value %s" other
+    BooleanNode(Value = v) :> NodeBase
+
 let int (value : string) =
     IntNode(Value = int value) :> NodeBase
+
+let string value =
+    StringNode(Value = value) :> NodeBase
 
 // Operators
 let castNode expression typeName =
@@ -232,6 +249,15 @@ let rec operatorChain node operations =
     | (op, node2) :: other ->
         let newNode = binaryOperator op node node2
         operatorChain newNode other
+
+let typeOperator symbol typeName =
+    let node : TypeOperatorNodeBase =
+        match symbol with
+        | "typeof"  -> upcast TypeofOperatorNode()
+        | "default" -> upcast DefaultOperatorNode()
+        | other     -> failwithf "Unknown type operator %s" other
+    node.Type <- TypeSignature typeName
+    node :> NodeBase
 
 // New objects
 let objectNode typeName (parameters : NodeBase list option) =

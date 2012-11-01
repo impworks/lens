@@ -179,9 +179,16 @@ value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.st
                                  literal;
                                  type_operator_expr;
                                  token "(" >>. expr .>> token ")"]
-type_operator_exprRef := pzero<NodeBase, ParserState> (* TODO: ( "typeof" | "default" ) "(" type ")" *)
-literalRef            := (* TODO: "()" | "null" | "true" | "false" | string | *) int |>> Node.int
+type_operator_exprRef := pipe2
+                         <| (keyword "typeof" <|> keyword "default")
+                         <| (token "(" .>> ``type`` .>> token ")")
+                         <| Node.typeOperator
+literalRef            := choice [token "()"                         |>> Node.unit;
+                                 keyword "null"                     |>> Node.nullNode;
+                                 keyword "true" <|> keyword "false" |>> Node.boolean;
+                                 string                             |>> Node.string;
+                                 int                                |>> Node.int]
 
-stringRef             := pzero<NodeBase, ParserState> (* TODO: ... *)
+stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
 intRef                := regex "\d+"
 identifierRef         := regex "[a-zA-Z_]+"
