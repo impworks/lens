@@ -175,7 +175,10 @@ invoke_exprRef        := pipe2
                          <| opt invoke_list
                          <| Node.invocation
 invoke_listRef        := (many (newline >>. (token "<|" >>. value_expr)) .>> nextLine) <|> (many value_expr)
-value_exprRef         := (* TODO: type { accessor_expr } | *) literal (* TODO: | type_operator_expr | "(" expr ")" *)
+value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.staticAccessor;
+                                 literal;
+                                 type_operator_expr;
+                                 token "(" >>. expr .>> token ")"]
 type_operator_exprRef := pzero<NodeBase, ParserState> (* TODO: ( "typeof" | "default" ) "(" type ")" *)
 literalRef            := (* TODO: "()" | "null" | "true" | "false" | string | *) int |>> Node.int
 

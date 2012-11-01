@@ -89,24 +89,29 @@ let variableDeclaration binding name value =
 let indexNode expression =
     GetIndexNode(Index = expression)
 
+let getter : Accessor -> AccessorNodeBase = function
+| Member(name)        -> upcast GetMemberNode(MemberName = name)
+| Indexer(expression) -> upcast indexNode expression
+
+/// Generates the getter chain and connects it to node. accessors must be reversed.
+let getterChain node (accessors : Accessor list) =
+    List.fold
+    <| (fun (n : AccessorNodeBase) a ->
+        let newNode = getter a
+        n.Expression <- newNode
+        newNode)
+    <| node
+    <| accessors
+    :?> GetMemberNode
+
 let assignment typeName identifier accessorChain value =
     let setter : Accessor -> AccessorNodeBase = function
-        | Member(name)        -> upcast SetMemberNode(MemberName = name, Value = value)
-        | Indexer(expression) -> upcast SetIndexNode(Index = expression, Value = value)
-    let getter : Accessor -> AccessorNodeBase = function
-        | Member(name)        -> upcast GetMemberNode(MemberName = name)
-        | Indexer(expression) -> upcast indexNode expression
+    | Member(name)        -> upcast SetMemberNode(MemberName = name, Value = value)
+    | Indexer(expression) -> upcast SetIndexNode(Index = expression, Value = value)
 
     let accessors = List.rev accessorChain
     let node = setter <| List.head accessors
-    let result = List.fold
-                 <| (fun (n : AccessorNodeBase) a ->
-                       let newNode = getter a
-                       n.Expression <- newNode
-                       newNode)
-                 <| node
-                 <| List.tail accessors
-                 :?> GetMemberNode
+    let result = getterChain node <| List.tail accessors
 
     if Option.isSome identifier then
         let memberName = Option.get identifier
@@ -115,6 +120,13 @@ let assignment typeName identifier accessorChain value =
     else
         result.StaticType <- TypeSignature(typeName)
 
+    result :> NodeBase
+
+let staticAccessor typeName accessors =
+    let getters = List.rev accessors
+    let head = getter <| List.head getters
+    let result = getterChain head <| List.tail getters
+    result.StaticType <- TypeSignature(typeName)
     result :> NodeBase
 
 let lambda parameters code =
