@@ -137,9 +137,16 @@ let tryCatchNode expression catchClauses =
     node.CatchClauses.AddRange(catchClauses)
     node :> NodeBase
 
-let catchNode _ code =
-    CatchNode(Code = code)
-
+let catchNode variableDefinition code =
+    let node =
+        match variableDefinition with
+        | Some (typeName, variableName) -> CatchNode(
+                                               ExceptionType = TypeSignature(typeName),
+                                               ExceptionVariable = variableName)
+        | None                          -> CatchNode()
+    node.Code <- code
+    node
+    
 // Literals
 let int (value : string) = IntNode(Value = int value)
 
