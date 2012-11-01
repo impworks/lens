@@ -185,8 +185,8 @@ let binaryOperatorNode symbol : BinaryOperatorNodeBase =
 
 let unaryOperator symbol operand : NodeBase =
     match symbol with
-    | Some "not" -> upcast InversionOperator(Operand = operand)
-    | Some "-"   -> upcast NegationOperator(Operand = operand)
+    | Some "not" -> upcast InversionOperatorNode(Operand = operand)
+    | Some "-"   -> upcast NegationOperatorNode(Operand = operand)
     | Some other -> failwithf "Unknown unary operator %s" other
     | None       -> operand
 

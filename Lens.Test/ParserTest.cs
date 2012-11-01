@@ -109,7 +109,10 @@ namespace Lens.Test
 						},
 					Body = new CodeBlockNode
 						{
-							Statements = {new NegationOperator {Operand = new GetIdentifierNode {Identifier = "x"}}}
+							Statements =
+								{
+									new NegationOperatorNode {Operand = new GetIdentifierNode {Identifier = "x"}}
+								}
 						}
 				};
 
