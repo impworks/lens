@@ -124,6 +124,13 @@ let lambda parameters code =
         | None   -> null
     FunctionNode(Arguments = arguments, Body = code) :> NodeBase
 
+let invocation expression (parameters : NodeBase list option) =
+    let arguments =
+        match parameters with
+        | Some args -> ResizeArray<_> args
+        | None      -> ResizeArray<_>()
+    InvocationNode(Expression = expression, Arguments = arguments) :> NodeBase
+
 // Branch constructions
 let ifNode condition thenBlock elseBlock =
     let falseAction =
@@ -149,7 +156,7 @@ let catchNode variableDefinition code =
         | None                          -> CatchNode()
     node.Code <- code
     node
-    
+
 // Literals
 let int (value : string) =
     IntNode(Value = int value) :> NodeBase

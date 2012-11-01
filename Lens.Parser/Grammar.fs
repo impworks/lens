@@ -170,7 +170,10 @@ new_obj_exprRef       := pipe2
                          <| opt (invoke_list)
                          <| Node.objectNode
 enumeration_exprRef   := sepBy1 line_expr <| token ";"
-invoke_exprRef        := value_expr (* TODO: value_expr [ invoke_list ] *)
+invoke_exprRef        := pipe2
+                         <| value_expr
+                         <| opt invoke_list
+                         <| Node.invocation
 invoke_listRef        := (many (newline >>. (token "<|" >>. value_expr)) .>> nextLine) <|> (many value_expr)
 value_exprRef         := (* TODO: type { accessor_expr } | *) literal (* TODO: | type_operator_expr | "(" expr ")" *)
 type_operator_exprRef := pzero<NodeBase, ParserState> (* TODO: ( "typeof" | "default" ) "(" type ")" *)
