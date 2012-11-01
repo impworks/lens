@@ -158,7 +158,7 @@ line_expr_5Ref        := pipe2
                          <| line_expr_6
                          <| (many (token "**" .>>. line_expr_6))
                          <| Node.operatorChain
-line_expr_6Ref        := line_expr_7 (* TODO: { "[" expr "]" } *)
+line_expr_6Ref        := token "[" >>. expr .>> token "]" |>> Node.indexNode
 line_expr_7Ref        := (* TODO: new_expr | *) invoke_expr
 new_exprRef           := pzero<NodeBase, ParserState> (* TODO: "new" ( new_array_expr | new_tuple_expr | new_obj_expr ) *)
 new_array_exprRef     := pzero<NodeBase, ParserState> (* TODO: "[" enumeration_expr "]" *)

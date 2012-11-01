@@ -86,13 +86,16 @@ let variableDeclaration binding name value =
     node.Value <- value
     node :> NodeBase
 
+let indexNode expression =
+    GetIndexNode(Index = expression)
+
 let assignment typeName identifier accessorChain value =
     let setter : Accessor -> AccessorNodeBase = function
         | Member(name)        -> upcast SetMemberNode(MemberName = name, Value = value)
         | Indexer(expression) -> upcast SetIndexNode(Index = expression, Value = value)
     let getter : Accessor -> AccessorNodeBase = function
         | Member(name)        -> upcast GetMemberNode(MemberName = name)
-        | Indexer(expression) -> upcast GetIndexNode(Index = expression)
+        | Indexer(expression) -> upcast indexNode expression
 
     let accessors = List.rev accessorChain
     let node = setter <| List.head accessors
