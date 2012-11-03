@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Utils;
@@ -8,7 +9,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A set of consecutive code statements.
 	/// </summary>
-	public class CodeBlockNode : NodeBase
+	public class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
 	{
 		public CodeBlockNode()
 		{
@@ -68,6 +69,25 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		public override int GetHashCode()
 		{
 			return (Statements != null ? Statements.GetHashCode() : 0);
+		}
+
+		#endregion
+
+		#region IEnumerable<NodeBase> implementation
+
+		public IEnumerator<NodeBase> GetEnumerator()
+		{
+			return Statements.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		public void Add(NodeBase node)
+		{
+			Statements.Add(node);
 		}
 
 		#endregion

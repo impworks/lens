@@ -87,11 +87,11 @@ type Card
                 Name = "Card",
                 Entries =
                 {
-                    new TypeEntry {Name = "Ace", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "King", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "Queen", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "Jack", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit,int>")}
+                    new TypeEntry {Name = "Ace", TagType = "Suit"},
+                    new TypeEntry {Name = "King", TagType = "Suit"},
+                    new TypeEntry {Name = "Queen", TagType = "Suit"},
+                    new TypeEntry {Name = "Jack", TagType = "Suit"},
+                    new TypeEntry {Name = "ValueCard", TagType = "Tuple<Suit,int>"}
                 }
             };
 
@@ -108,7 +108,7 @@ type ArrayHolder
             var result = new TypeDefinitionNode
             {
                 Name = "ArrayHolder",
-                Entries = { new TypeEntry { Name = "Array", TagType = new TypeSignature("int[][]") } }
+                Entries = { new TypeEntry { Name = "Array", TagType = "int[][]" } }
             };
 
             Test(src, result);
@@ -121,13 +121,13 @@ type ArrayHolder
             var result = new NamedFunctionNode
             {
                 Name = "negate",
-                Arguments = new Dictionary<string, FunctionArgument>
+                Arguments =
                 {
-                    {"x", new FunctionArgument {Name = "x", Type = new TypeSignature("int")}}
+                    {"x", new FunctionArgument("x", "int")}
                 },
-                Body = new CodeBlockNode
+                Body =
                 {
-                    Statements = { new NegationOperatorNode {Operand = new GetIdentifierNode {Identifier = "x"}} }
+                    new NegationOperatorNode { Operand = new GetIdentifierNode {Identifier = "x"} }
                 }
             };
 
@@ -137,8 +137,7 @@ type ArrayHolder
         [Test]
         public void ComplexFunction()
         {
-            var src = @"
-fun hypo a:int b:int ->
+            var src = @"fun hypo a:int b:int ->
     let sq1 = a * a
     let sq2 = b * b
     sqrt (sq1 + sq2)";
@@ -148,41 +147,38 @@ fun hypo a:int b:int ->
                 Name = "hypo",
                 Arguments = new Dictionary<string, FunctionArgument>
                 {
-                    {"a", new FunctionArgument {Name = "a", Type = new TypeSignature("int")}},
-                    {"b", new FunctionArgument {Name = "b", Type = new TypeSignature("int")}}
+                    {"a", new FunctionArgument("a", "int")},
+                    {"b", new FunctionArgument("b", "int")}
                 },
-                Body = new CodeBlockNode
+                Body = 
                 {
-                    Statements =
+                    new LetNode
                     {
-                        new LetNode
+                        Name = "sq1",
+                        Value = new MultiplyOperatorNode
                         {
-                            Name = "sq1",
-                            Value = new MultiplyOperatorNode
-                            {
-                                LeftOperand = new GetIdentifierNode {Identifier = "a"},
-                                RightOperand = new GetIdentifierNode {Identifier = "a"}
-                            }
-                        },
-                        new LetNode
+                            LeftOperand = new GetIdentifierNode {Identifier = "a"},
+                            RightOperand = new GetIdentifierNode {Identifier = "a"}
+                        }
+                    },
+                    new LetNode
+                    {
+                        Name = "sq2",
+                        Value = new MultiplyOperatorNode
                         {
-                            Name = "sq2",
-                            Value = new MultiplyOperatorNode
-                            {
-                                LeftOperand = new GetIdentifierNode {Identifier = "b"},
-                                RightOperand = new GetIdentifierNode {Identifier = "b"}
-                            }
-                        },
-                        new InvocationNode
+                            LeftOperand = new GetIdentifierNode {Identifier = "b"},
+                            RightOperand = new GetIdentifierNode {Identifier = "b"}
+                        }
+                    },
+                    new InvocationNode
+                    {
+                        MethodName = "sqrt",
+                        Arguments =
                         {
-                            MethodName = "sqrt",
-                            Arguments =
+                            new AddOperatorNode
                             {
-                                new AddOperatorNode
-                                {
-                                    LeftOperand = new GetIdentifierNode {Identifier = "sq1"},
-                                    RightOperand = new GetIdentifierNode {Identifier = "sq2"}
-                                }
+                                LeftOperand = new GetIdentifierNode {Identifier = "sq1"},
+                                RightOperand = new GetIdentifierNode {Identifier = "sq2"}
                             }
                         }
                     }
@@ -246,6 +242,233 @@ fun hypo a:int b:int ->
 
             Test(src, result);
         }
+
+		[Test]
+		public void TupleDeclaration()
+		{
+			var src = @"new (1; 1.2; ""hello world""; true)";
+			var result = new NewTupleNode
+			{
+				Expressions =
+				{
+					new IntNode(1),
+					new DoubleNode(1.2),
+					new StringNode("hello world"),
+					new BooleanNode(true)
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void NewObjectDeclaration()
+		{
+			var src = @"new SomeObject false 13.37";
+			var result = new NewObjectNode
+			{
+				Type = "SomeObject",
+				Arguments =
+				{
+					new BooleanNode(),
+					new DoubleNode(13.37)
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void BareLambda()
+		{
+			var src = "let getFive = -> 5";
+			var result = new LetNode
+			{
+				Name = "getFive",
+				Value = new FunctionNode
+				{
+					Body = { new IntNode(5) }
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void ParametricLambda()
+		{
+			var src = "let div = (a:System.Float b:System.Float) -> a / b";
+			var result = new LetNode
+			{
+				Name = "div",
+				Value = new FunctionNode
+				{
+					Arguments =
+					{
+						{"a", new FunctionArgument("a", "System.Float") },
+						{"b", new FunctionArgument("b", "System.Float") }
+					},
+					Body =
+					{
+						new DivideOperatorNode
+						{
+							LeftOperand = new GetIdentifierNode { Identifier = "a"},
+							RightOperand = new GetIdentifierNode { Identifier = "b"},
+						}
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void AssignVariable()
+		{
+			var src = "a = b";
+			var result = new SetIdentifierNode
+			{
+				Identifier = "a",
+				Value = new GetIdentifierNode {  Identifier = "b" }
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void GetDynamicMember()
+		{
+			var src = "a = b.someShit";
+			var result = new SetIdentifierNode
+			{
+				Identifier = "a",
+				Value = new GetMemberNode
+				{
+					MemberName = "someShit",
+					Identifier = "b",
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void GetDynamicMember2()
+		{
+			var src = "a = (1 + 2).someShit";
+			var result = new SetIdentifierNode
+			{
+				Identifier = "a",
+				Value = new GetMemberNode
+				{
+					MemberName = "someShit",
+					Expression = new AddOperatorNode
+					{
+						LeftOperand = new IntNode(1),
+						RightOperand = new IntNode(2)
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void GetStaticMember()
+		{
+			var src = "a = Enumerable<int>:Empty";
+			var result = new SetIdentifierNode
+			{
+				Identifier = "a",
+				Value = new GetMemberNode
+				{
+					MemberName = "Empty",
+					StaticType = "Enumerable<int>"
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void SetDynamicMember()
+		{
+			var src = "a.b.c = false";
+			var result = new SetMemberNode
+			{
+				MemberName = "c",
+				Value = new BooleanNode(),
+				Expression = new GetMemberNode
+				{
+					MemberName = "b",
+					Identifier = "a"
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void SetStaticMember()
+		{
+			var src = "Singleton:Instance = null";
+			var result = new SetMemberNode
+			{
+				MemberName = "Instance",
+				StaticType = "Singleton",
+				Value = new NullNode()
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void GetIndex()
+		{
+			var src = "a = b[2**2]";
+			var result = new SetIdentifierNode
+			{
+				Identifier = "a",
+				Value = new GetIndexNode
+				{
+					Expression = new GetIdentifierNode {Identifier = "b"},
+					Index = new PowOperatorNode
+					{
+						LeftOperand = new IntNode(2),
+						RightOperand = new IntNode(2)
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void SetIndex()
+		{
+			var src = "a[2**2] = test 1 2 3";
+			var result = new SetIndexNode
+			{
+				Expression = new GetIdentifierNode { Identifier = "a" },
+				Index = new PowOperatorNode
+				{
+					LeftOperand = new IntNode(2),
+					RightOperand = new IntNode(2)
+				},
+				Value = new InvocationNode
+				{
+					MethodName = "test",
+					Arguments =
+					{
+						new IntNode(1),
+						new IntNode(2),
+						new IntNode(3),
+					}
+				}
+			};
+
+			Test(src, result);
+		}
 
         private static void Test(string source, params NodeBase[] expected)
         {

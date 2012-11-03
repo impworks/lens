@@ -5,6 +5,17 @@
 	/// </summary>
 	public class FunctionArgument
 	{
+		public FunctionArgument()
+		{ }
+
+		public FunctionArgument(string name, string type, ArgumentModifier modifier = ArgumentModifier.In)
+		{
+			Name = name;
+			Type = new TypeSignature(type);
+			Modifier = modifier;
+		}
+
+
 		/// <summary>
 		/// Argument name.
 		/// </summary>

@@ -50,6 +50,11 @@ namespace Lens.SyntaxTree.Utils
 			return null;
 		}
 
+		public static implicit operator TypeSignature(string type)
+		{
+			return new TypeSignature(type);
+		}
+
 		#region Equality members
 
 		protected bool Equals(TypeSignature other)
