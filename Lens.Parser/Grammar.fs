@@ -5,16 +5,41 @@ open FParsec
 open FParsec.CharParsers
 open Lens.SyntaxTree.SyntaxTree
 
+let keywords = [
+    "using"
+    "record"
+    "type"
+    "of"
+    "fun"
+    "let"
+    "var"
+    "while"
+    "if"
+    "else"
+    "try"
+    "catch"
+    "throw"
+    "new"
+    "not"
+    "typeof"
+    "default"
+    "as"
+    "ref"
+    "out"
+    "true"
+    "false"
+    "null"]
+
 let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
 let space = pchar ' '
 let nextLine = skipNewline <|> eof
-let keyword k = pstring k .>> many1 space
-let token t = pstring t .>> many space
+let keyword k = pstring k .>>? many1 space
+let token t = pstring t .>>? many space
 
 let createParser() =
     let parser, parserRef = createParserForwardedToRef()
-    let whitespaced = parser .>> many space
+    let whitespaced = parser .>>? many space
     whitespaced, parserRef
 
 let stmt, stmtRef                             = createParser()
@@ -68,103 +93,106 @@ let string, stringRef                         = createParser()
 let int, intRef                               = createParser()
 let identifier, identifierRef                 = createParser()
 
-let main               = many stmt .>> eof
-stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>> nextLine)
-usingRef              := keyword "using" >>. ``namespace`` .>> nextLine |>> Node.using
+let main               = many stmt .>>? eof
+stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
+usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
-recorddefRef          := keyword "record" >>. identifier .>>. IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
-recorddef_stmtRef     := (identifier .>>. (skipChar ':' >>. ``type``)) |>> Node.recordEntry
-typedefRef            := keyword "type" >>. identifier .>>. IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
-typedef_stmtRef       := token "|" >>. identifier .>>. opt (keyword "of" >>. ``type``) |>> Node.typeEntry
+recorddefRef          := keyword "record" >>? identifier .>>.? IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
+recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
+typedefRef            := keyword "type" >>? identifier .>>.? IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
+typedef_stmtRef       := token "|" >>? identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := pipe3
-                         <| (keyword "fun" >>. identifier)
-                         <| (func_params .>> token "->")
+                         <| (keyword "fun" >>? identifier)
+                         <| (func_params .>>? token "->")
                          <| block
                          <| Node.functionNode
-func_paramsRef        := many ((identifier .>> token ":") .>>. (opt (keyword "ref" <|> keyword "out")) .>>. ``type``) |>> Node.functionParameters
+func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
 blockRef              := ((IndentationParser.indentedMany1 block_line "block_line")
-                         <|> (valueToList line_expr))
+                          <|> (valueToList line_expr))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
 typeRef               := pipe3
-                         <| opt (attempt (``namespace`` .>> token "."))
+                         <| opt (``namespace`` .>>? token ".")
                          <| identifier
-                         <| opt (type_params <|> (many (token "[" .>>. token "]") |>> Node.arrayDefinition))
+                         <| opt (type_params <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
 local_stmtRef         := var_decl_expr <|> assign_expr <|> expr
 var_decl_exprRef      := pipe3
                          <| (keyword "let" <|> keyword "var")
                          <| identifier
-                         <| (token "=" >>. expr)
+                         <| (token "=" >>? expr)
                          <| Node.variableDeclaration
 assign_exprRef        := pipe4
                          <| ``type``
-                         <| opt (token "::" >>. identifier)
+                         <| opt (token "::" >>? identifier)
                          <| many accessor_expr
-                         <| (token "=" >>. expr)
+                         <| (token "=" >>? expr)
                          <| Node.assignment
-accessor_exprRef      := ((token "." >>. identifier) |>> Node.Accessor.Member)
-                         <|> ((token "[" >>. line_expr .>> token "]") |>> Node.Accessor.Indexer)
-type_paramsRef        := token "<" >>. (sepBy1 ``type`` <| token ",") .>> token ">" |>> Node.typeParams
+accessor_exprRef      := ((token "." >>? identifier) |>> Node.Accessor.Member)
+                         <|> ((token "[" >>? line_expr .>>? token "]") |>> Node.Accessor.Indexer)
+type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
 exprRef               := block_expr <|> line_expr
 block_exprRef         := if_expr <|> while_expr <|> try_expr <|> lambda_expr
 if_exprRef            := pipe3
-                         <| (keyword "if" >>. (token "(" >>. line_expr .>> token ")"))
+                         <| (keyword "if" >>? (token "(" >>? line_expr .>>? token ")"))
                          <| block
-                         <| opt (keyword "else" >>. block)
+                         <| opt (keyword "else" >>? block)
                          <| Node.ifNode
 while_exprRef         := pipe2
-                         <| (keyword "while" >>. (token "(" >>. line_expr .>> token ")"))
+                         <| (keyword "while" >>? (token "(" >>? line_expr .>>? token ")"))
                          <| block
                          <| Node.whileNode
 try_exprRef           := pipe2
-                         <| (keyword "try" >>. block)
+                         <| (keyword "try" >>? block)
                          <| many1 catch_expr
                          <| Node.tryCatchNode
 catch_exprRef         := pipe2
-                         <| (keyword "catch" >>. opt (token "(" >>. ``type`` .>>. identifier .>> token ")"))
+                         <| (keyword "catch" >>? opt (token "(" >>? ``type`` .>>.? identifier .>>? token ")"))
                          <| block
                          <| Node.catchNode
 lambda_exprRef        := pipe2
-                         <| opt (token "(" >>. func_params .>> token ")")
-                         <| (token "->" >>. block)
+                         <| opt (token "(" >>? func_params .>>? token ")")
+                         <| (token "->" >>? block)
                          <| Node.lambda
 line_exprRef          := pipe2
                          <| line_expr_1
-                         <| opt (keyword "as" .>> ``type``)
+                         <| opt (keyword "as" .>>? ``type``)
                          <| Node.castNode
 line_expr_1Ref        := pipe2
                          <| line_expr_2
-                         <| many (sign_1 .>>. line_expr_2)
+                         <| many (sign_1 .>>.? line_expr_2)
                          <| Node.operatorChain
 sign_1Ref             := token "&&" <|> token "||" <|> token "^^"
 line_expr_2Ref        := pipe2
                          <| line_expr_3
-                         <| many (sign_2 .>>. line_expr_3)
+                         <| many (sign_2 .>>.? line_expr_3)
                          <| Node.operatorChain
 sign_2Ref             := token "==" <|> token "<>" <|> token "<" <|> token ">" <|> token "<=" <|> token ">="
 line_expr_3Ref        := pipe2
                          <| opt (keyword "not" <|> token "-")
                          <| (pipe2
                              <| line_expr_4
-                             <| (many (sign_3 .>>. line_expr_4))
+                             <| (many (sign_3 .>>.? line_expr_4))
                              <| Node.operatorChain)
                          <| Node.unaryOperator
 sign_3Ref             := pstring "+" <|> pstring "-"
 line_expr_4Ref        := pipe2
                          <| line_expr_5
-                         <| (many (sign_4 .>>. line_expr_5))
+                         <| (many (sign_4 .>>.? line_expr_5))
                          <| Node.operatorChain
 sign_4Ref             := token "*" <|> token "/" <|> token "%"
 line_expr_5Ref        := pipe2
                          <| line_expr_6
-                         <| (many (token "**" .>>. line_expr_6))
+                         <| (many (token "**" .>>.? line_expr_6))
                          <| Node.operatorChain
-line_expr_6Ref        := token "[" >>. expr .>> token "]" |>> Node.indexNode
+line_expr_6Ref        := pipe2
+                         <| line_expr_7
+                         <| opt (token "[" >>? expr .>>? token "]")
+                         <| Node.indexNode
 line_expr_7Ref        := new_expr <|> invoke_expr
-new_exprRef           := keyword "new" >>. (new_array_expr <|> new_tuple_expr <|> new_obj_expr)
-new_array_exprRef     := token "[" >>. enumeration_expr .>> token "]" |>> Node.arrayNode
-new_tuple_exprRef     := token "(" >>. enumeration_expr .>> token ")" |>> Node.tupleNode
+new_exprRef           := keyword "new" >>? (new_array_expr <|> new_tuple_expr <|> new_obj_expr)
+new_array_exprRef     := token "[" >>? enumeration_expr .>>? token "]" |>> Node.arrayNode
+new_tuple_exprRef     := token "(" >>? enumeration_expr .>>? token ")" |>> Node.tupleNode
 new_obj_exprRef       := pipe2
                          <| ``type``
                          <| opt (invoke_list)
@@ -174,21 +202,24 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| opt invoke_list
                          <| Node.invocation
-invoke_listRef        := (many (newline >>. (token "<|" >>. value_expr)) .>> nextLine) <|> (many value_expr)
-value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.staticAccessor;
-                                 literal;
-                                 type_operator_expr;
-                                 token "(" >>. expr .>> token ")"]
+invoke_listRef        := (many (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many value_expr)
+value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.staticAccessor
+                                 literal
+                                 type_operator_expr
+                                 token "(" >>? expr .>>? token ")"]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
-                         <| (token "(" .>> ``type`` .>> token ")")
+                         <| (token "(" .>>? ``type`` .>>? token ")")
                          <| Node.typeOperator
-literalRef            := choice [token "()"                         |>> Node.unit;
-                                 keyword "null"                     |>> Node.nullNode;
-                                 keyword "true" <|> keyword "false" |>> Node.boolean;
-                                 string                             |>> Node.string;
+literalRef            := choice [token "()"                         |>> Node.unit
+                                 keyword "null"                     |>> Node.nullNode
+                                 keyword "true" <|> keyword "false" |>> Node.boolean
+                                 string                             |>> Node.string
                                  int                                |>> Node.int]
 
 stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
 intRef                := regex "\d+"
-identifierRef         := regex "[a-zA-Z_]+"
+identifierRef         := regex "[a-zA-Z_]+" >>=? (fun s -> if List.exists (fun k -> k = s) keywords then
+                                                               pzero
+                                                           else
+                                                               preturn s)

@@ -86,12 +86,15 @@ let variableDeclaration binding name value =
     node.Value <- value
     node :> NodeBase
 
-let indexNode expression =
-    GetIndexNode(Index = expression)
+let indexNode expression index : NodeBase =
+    match index with
+    | Some i -> upcast GetIndexNode(Expression = expression, Index = i)
+    | None   -> expression
+    
 
 let getter : Accessor -> AccessorNodeBase = function
 | Member(name)        -> upcast GetMemberNode(MemberName = name)
-| Indexer(expression) -> upcast indexNode expression
+| Indexer(expression) -> upcast GetIndexNode(Index = expression)
 
 /// Generates the getter chain and connects it to node. accessors must be reversed.
 let getterChain node (accessors : Accessor list) =
