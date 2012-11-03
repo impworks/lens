@@ -92,15 +92,6 @@ namespace Lens.Test
                 }
             };
 
-            result.Entries.AddRange(new[]
-                {
-                    new TypeEntry {Name = "Ace", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "King", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "Queen", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "Jack", TagType = new TypeSignature("Suit")},
-                    new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit,int>")}
-                });
-
             Test(src, result);
         }
 
