@@ -93,7 +93,7 @@ let string, stringRef                         = createParser()
 let int, intRef                               = createParser()
 let identifier, identifierRef                 = createParser()
 
-let main               = many stmt .>>? eof
+let main               = many newline >>. (many stmt .>>? eof)
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
 usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."

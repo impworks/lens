@@ -28,7 +28,8 @@ namespace Lens.Test
         [Test]
         public void Record()
         {
-            var src = @"record Student
+            var src = @"
+record Student
     Name:string
     Age:int";
 
@@ -48,7 +49,8 @@ namespace Lens.Test
         [Test]
         public void Type()
         {
-            var src = @"type Suit
+            var src = @"
+type Suit
     | Hearts
     | Clubs
     | Spades
@@ -72,7 +74,8 @@ namespace Lens.Test
         [Test]
         public void ComplexType()
         {
-            var src = @"type Card
+            var src = @"
+type Card
     | Ace of Suit
     | King of Suit
     | Queen of Suit
@@ -98,7 +101,8 @@ namespace Lens.Test
         [Test]
         public void ArrayType()
         {
-            var src = @"type ArrayHolder
+            var src = @"
+type ArrayHolder
     | Array of int[][]";
 
             var result = new TypeDefinitionNode
@@ -133,7 +137,8 @@ namespace Lens.Test
         [Test]
         public void ComplexFunction()
         {
-            var src = @"fun hypo a:int b:int ->
+            var src = @"
+fun hypo a:int b:int ->
     let sq1 = a * a
     let sq2 = b * b
     sqrt (sq1 + sq2)";
