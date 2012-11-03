@@ -219,7 +219,8 @@ literalRef            := choice [token "()"                         |>> Node.uni
 
 stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
 intRef                := regex "\d+"
-identifierRef         := regex "[a-zA-Z_]+" >>=? (fun s -> if List.exists (fun k -> k = s) keywords then
-                                                               pzero
-                                                           else
-                                                               preturn s)
+identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
+                            fun s -> if List.exists (fun k -> k = s) keywords then
+                                         pzero
+                                     else
+                                         preturn s
