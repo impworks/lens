@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class BooleanNode : LiteralNodeBase<bool>
 	{
+		public BooleanNode(bool value = false)
+		{
+			Value = value;
+		}
+
 		public override void Compile()
 		{
 			throw new NotImplementedException();

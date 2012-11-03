@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class IntNode : LiteralNodeBase<int>
 	{
+		public IntNode(int value = 0)
+		{
+			Value = value;
+		}
+
 		public override void Compile()
 		{
 			throw new NotImplementedException();

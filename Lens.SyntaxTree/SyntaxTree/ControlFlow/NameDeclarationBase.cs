@@ -8,6 +8,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class NameDeclarationBase : NodeBase
 	{
+		public NameDeclarationBase()
+		{
+			NameInfo = new LexicalNameInfo();
+		}
+
 		/// <summary>
 		/// The name of the variable.
 		/// </summary>

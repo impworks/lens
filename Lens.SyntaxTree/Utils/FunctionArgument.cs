@@ -13,7 +13,7 @@
 		/// <summary>
 		/// Argument type
 		/// </summary>
-		public string Type { get; set; }
+		public TypeSignature Type { get; set; }
 
 		/// <summary>
 		/// Argument modifier

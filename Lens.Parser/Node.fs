@@ -64,7 +64,7 @@ let functionParameters parameters =
                         | Some "ref" -> ArgumentModifier.Ref
                         | Some "out" -> ArgumentModifier.Out
                         | _          -> ArgumentModifier.In
-                    FunctionArgument(Name = name, Modifier = modifier, Type = typeTag))
+                    FunctionArgument(Name = name, Modifier = modifier, Type = TypeSignature(typeTag)))
     |> Seq.iter (fun fa -> dictionary.Add(fa.Name, fa))
     
     dictionary
