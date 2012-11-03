@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>FParsec</id>
+    <version>0.9.2.0</version>
+    <authors>Stephan Tolksdorf (FParsec),  panesofglass and khanzor (NuGet Package)</authors>
+    <owners>Stephan Tolksdorf (FParsec),  panesofglass and khanzor (NuGet Package)</owners>
+    <licenseUrl>http://quanttec.com/fparsec/license.html</licenseUrl>
+    <projectUrl>http://quanttec.com/fparsec/</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>FParsec is a parser combinator library for F#.</description>
+    <summary>FParsec is a parser combinator library for F#.</summary>
+    <tags>parser combinator parsec fsharp</tags>
+  </metadata>
+</package>

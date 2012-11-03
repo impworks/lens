@@ -15,57 +15,85 @@ namespace Lens.Test
 		[Test]
 		public void Using()
 		{
-			Test("using System", new UsingNode {Namespace = "System"});
+			Test("using System", new UsingNode { Namespace = "System" });
 		}
 
 		[Test]
 		public void MultiUsing()
 		{
-			Test("using Lens.Parser", new UsingNode {Namespace = "Lens.Parser"});
+			Test("using Lens.Parser", new UsingNode { Namespace = "Lens.Parser" });
 		}
 
 		[Test]
 		public void Record()
 		{
-			var result = new RecordDefinitionNode {Name = "Student"};
-			result.Entries.AddRange(new[]
-				{
-					new RecordEntry {Name = "Name", Type = new TypeSignature("string")},
-					new RecordEntry {Name = "Age", Type = new TypeSignature("int")}
-				});
-
-			Test(
-				@"record Student
+			var src = @"
+record Student
     Name:string
-    Age:int",
-				result);
+    Age:int";
+
+			var result = new RecordDefinitionNode
+			{
+				Name = "Student",
+				Entries =
+				{
+					new RecordEntry { Name = "Name", Type = new TypeSignature("string") },
+					new RecordEntry { Name = "Age", Type = new TypeSignature("int") }
+				}
+			};
+
+			Test(src, result);
 		}
 
 		[Test]
 		public void Type()
 		{
-			var result = new TypeDefinitionNode {Name = "Suit"};
-			result.Entries.AddRange(new[]
+			var src = @"
+type Suit
+    | Hearts
+    | Clubs
+    | Spades
+    | Diamonds";
+
+			var result = new TypeDefinitionNode
+			{
+				Name = "Suit",
+				Entries =
 				{
 					new TypeEntry {Name = "Hearts"},
 					new TypeEntry {Name = "Clubs"},
 					new TypeEntry {Name = "Spades"},
 					new TypeEntry {Name = "Diamonds"}
-				});
+				}
+			};
 
-			Test(
-				@"type Suit
-    | Hearts
-    | Clubs
-    | Spades
-    | Diamonds",
-				result);
+			Test(src, result);
 		}
 
 		[Test]
 		public void ComplexType()
 		{
-			var result = new TypeDefinitionNode {Name = "Card"};
+			var src = @"
+type Card
+    | Ace of Suit
+    | King of Suit
+    | Queen of Suit
+    | Jack of Suit
+    | ValueCard of Tuple<Suit, int>";
+
+			var result = new TypeDefinitionNode
+			{
+				Name = "Card",
+				Entries =
+				{
+					new TypeEntry {Name = "Ace", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "King", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "Queen", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "Jack", TagType = new TypeSignature("Suit")},
+					new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit,int>")}
+				}
+			};
+
 			result.Entries.AddRange(new[]
 				{
 					new TypeEntry {Name = "Ace", TagType = new TypeSignature("Suit")},
@@ -75,21 +103,14 @@ namespace Lens.Test
 					new TypeEntry {Name = "ValueCard", TagType = new TypeSignature("Tuple<Suit,int>")}
 				});
 
-			Test(
-				@"type Card
-    | Ace of Suit
-    | King of Suit
-    | Queen of Suit
-    | Jack of Suit
-    | ValueCard of Tuple<Suit, int>",
-				result);
+			Test(src, result);
 		}
 
 		[Test]
 		public void ArrayType()
 		{
-			var result = new TypeDefinitionNode {Name = "ArrayHolder"};
-			result.Entries.Add(new TypeEntry {Name = "Array", TagType = new TypeSignature("int[][]")});
+			var result = new TypeDefinitionNode { Name = "ArrayHolder" };
+			result.Entries.Add(new TypeEntry { Name = "Array", TagType = new TypeSignature("int[][]") });
 
 			Test(
 				@"type ArrayHolder
