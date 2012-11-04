@@ -30,6 +30,9 @@ namespace Lens.SyntaxTree.Utils
 		{
 			get
 			{
+				if (string.IsNullOrEmpty(Signature))
+					return null;
+
 				if (!m_IsResolved)
 				{
 					m_Type = TypeResolver.ResolveType(Signature);

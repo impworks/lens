@@ -8,6 +8,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class SetIdentifierNode : IdentifierNodeBase
 	{
+		public SetIdentifierNode(string identifier = null)
+		{
+			Identifier = identifier;
+		}
+
 		/// <summary>
 		/// Value to be assigned.
 		/// </summary>
