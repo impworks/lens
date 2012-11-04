@@ -139,12 +139,11 @@ let lambda parameters code =
         | None   -> null
     FunctionNode(Arguments = arguments, Body = code) :> NodeBase
 
-let invocation expression (parameters : NodeBase list option) =
-    let arguments =
-        match parameters with
-        | Some args -> ResizeArray<_> args
-        | None      -> ResizeArray<_>()
-    InvocationNode(Expression = expression, Arguments = arguments) :> NodeBase
+let invocation expression (parameters : NodeBase list option) : NodeBase =
+    match parameters with
+    | None
+    | Some []   -> expression
+    | Some args -> upcast InvocationNode(Expression = expression, Arguments = ResizeArray<_> args)
 
 // Branch constructions
 let ifNode condition thenBlock elseBlock =
