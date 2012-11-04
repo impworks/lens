@@ -11,7 +11,7 @@ func_params         = { identifier ":" [ ( "ref" | "out" ) ] type }
 block               = NL block_line { block_line } | line_expr
 block_line          = INDENT local_stmt NL
 type                = namespace [ ( type_params | { "[]" } ) ]
-local_stmt          = var_decl_expr | assgn_expr | expr
+local_stmt          = var_decl_expr | assign_expr | expr
 var_decl_expr       = "let" | "var" identifier "=" expr
 assign_expr         = lvalue "=" expr
 lvalue              = ( type "::" identifier | identifier ) { accessor_expr }

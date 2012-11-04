@@ -13,6 +13,10 @@ type Accessor =
 | Member of string
 | Indexer of NodeBase
 
+type Symbol =
+| Static of string * string // type * name
+| Local  of string
+
 // Special nodes
 let using nameSpace =
     UsingNode(Namespace = nameSpace) :> NodeBase
@@ -96,7 +100,7 @@ let getter : Accessor -> AccessorNodeBase = function
 | Member(name)        -> upcast GetMemberNode(MemberName = name)
 | Indexer(expression) -> upcast GetIndexNode(Index = expression)
 
-/// Generates the getter chain and connects it to node. accessors must be reversed.
+/// Generates the getter chain and connects it to the node. accessors must be reversed.
 let getterChain node (accessors : Accessor list) =
     List.fold
     <| (fun (n : AccessorNodeBase) a ->
@@ -107,30 +111,39 @@ let getterChain node (accessors : Accessor list) =
     <| accessors
     :?> GetMemberNode
 
-let assignment typeName identifier accessorChain value =
-    let setter : Accessor -> AccessorNodeBase = function
-    | Member(name)        -> upcast SetMemberNode(MemberName = name, Value = value)
-    | Indexer(expression) -> upcast SetIndexNode(Index = expression, Value = value)
+let staticSymbol(typeName, symbolName) =
+    Static(typeName, symbolName)
 
-    let accessors = List.rev accessorChain
-    let node = setter <| List.head accessors
-    let result = getterChain node <| List.tail accessors
+let localSymbol name =
+    Local name
 
-    if Option.isSome identifier then
-        let memberName = Option.get identifier
-        let topNode = GetMemberNode(MemberName = memberName, StaticType = TypeSignature(typeName))
-        result.Expression <- topNode
-    else
-        result.StaticType <- TypeSignature(typeName)
+let getterNode symbol : NodeBase =
+    match symbol with
+    | Local name             -> upcast GetIdentifierNode(Identifier = name)
+    | Static(typeName, name) -> upcast GetMemberNode(StaticType = TypeSignature typeName, MemberName = name)
 
-    result :> NodeBase
+let assignment (symbol : Symbol) accessorChain value : NodeBase =
+    let setter symbol : NodeBase =
+        match symbol with
+        | Local name             -> upcast SetIdentifierNode(Identifier = name, Value = value)
+        | Static(typeName, name) -> upcast SetMemberNode(
+                                        StaticType = TypeSignature typeName,
+                                        MemberName = name,
+                                        Value = value)
+    let accessorSetter : Accessor -> AccessorNodeBase = function
+    | Member  name       -> upcast SetMemberNode(MemberName = name, Value = value)
+    | Indexer expression -> upcast SetIndexNode(Index = expression, Value = value)
+    
+    match accessorChain with
+    | [] -> setter symbol
+    | _  -> let accessors = List.rev accessorChain
+            let root = accessorSetter <| List.head accessors
+            let last = getterChain root <| List.tail accessors
+            let top = getterNode symbol
+            last.Expression <- top
+            upcast last
 
-let staticAccessor typeName accessors =
-    let getters = List.rev accessors
-    let head = getter <| List.head getters
-    let result = getterChain head <| List.tail getters
-    result.StaticType <- TypeSignature(typeName)
-    result :> NodeBase
+
 
 let lambda parameters code =
     let arguments =
