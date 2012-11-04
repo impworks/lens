@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// </summary>
 	public class TypeofOperatorNode : TypeOperatorNodeBase
 	{
+		public TypeofOperatorNode(string type = null)
+		{
+			Type = type;
+		}
+
 		public override Type GetExpressionType()
 		{
 			return typeof (Type);

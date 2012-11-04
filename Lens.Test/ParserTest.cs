@@ -371,7 +371,7 @@ type ArrayHolder
 		[Test]
 		public void GetStaticMember()
 		{
-			var src = "a = Enumerable<int>:Empty";
+			var src = "a = Enumerable<int>::Empty";
 			var result = new SetIdentifierNode
 			{
 				Identifier = "a",
@@ -406,7 +406,7 @@ type ArrayHolder
 		[Test]
 		public void SetStaticMember()
 		{
-			var src = "Singleton:Instance = null";
+			var src = "Singleton::Instance = null";
 			var result = new SetMemberNode
 			{
 				MemberName = "Instance",
@@ -622,6 +622,30 @@ catch
 						}
 					}
 				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Typeof()
+		{
+			var src = "let a = typeof(int)";
+			var result = new LetNode("a")
+			{
+				Value = new TypeofOperatorNode("int")
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void DefaultOf()
+		{
+			var src = "let b = default (System.Collections.Generic.List<int>)";
+			var result = new LetNode("b")
+			{
+				Value = new DefaultOperatorNode("System.Collections.Generic.List<int>")
 			};
 
 			Test(src, result);
