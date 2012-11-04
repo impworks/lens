@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// </summary>
 	public class ComparisonOperatorNode : BinaryOperatorNodeBase
 	{
+		public ComparisonOperatorNode(ComparisonOperatorKind kind = default(ComparisonOperatorKind))
+		{
+			Kind = kind;
+		}
+
 		/// <summary>
 		/// The kind of equality operator.
 		/// </summary>
@@ -45,6 +50,31 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		protected bool Equals(ComparisonOperatorNode other)
+		{
+			return base.Equals(other) && Kind == other.Kind;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((ComparisonOperatorNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (base.GetHashCode() * 397) ^ (int)Kind;
+			}
+		}
+
+		#endregion
 	}
 
 	/// <summary>

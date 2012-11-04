@@ -8,6 +8,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class ConditionNode : NodeBase, IStartLocationTrackingEntity
 	{
+		public ConditionNode()
+		{
+			TrueAction = new CodeBlockNode();
+		}
+
 		/// <summary>
 		/// The condition.
 		/// </summary>

@@ -5,6 +5,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	public class LoopNode : NodeBase, IStartLocationTrackingEntity
 	{
+		public LoopNode()
+		{
+			Body = new CodeBlockNode();	
+		}
+
 		/// <summary>
 		/// The condition.
 		/// </summary>

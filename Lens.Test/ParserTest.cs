@@ -464,6 +464,67 @@ type ArrayHolder
 			Test(src, result);
 		}
 
+		[Test]
+		public void ConditionSimple()
+		{
+			var src = @"
+if (true)
+    a = 1
+    b = 2";
+			var result = new ConditionNode
+			{
+				Condition = new BooleanNode(true),
+				TrueAction =
+				{
+					new SetIdentifierNode("a") { Value = new IntNode(1) },
+					new SetIdentifierNode("b") { Value = new IntNode(2) }
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void ConditionFull()
+		{
+			var src = "if (true) a else b";
+			var result = new ConditionNode
+			{
+				Condition = new BooleanNode(true),
+				TrueAction = {new GetIdentifierNode("a")},
+				FalseAction = new CodeBlockNode {new GetIdentifierNode("b")}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Loop()
+		{
+			var src = @"while (a > 0) a = a - 1";
+			var result = new LoopNode
+			{
+				Condition = new ComparisonOperatorNode(ComparisonOperatorKind.Greater)
+				{
+					LeftOperand = new GetIdentifierNode("a"),
+					RightOperand = new IntNode()
+				},
+				Body =
+				{
+					new SetIdentifierNode("a")
+					{
+						Value = new SubtractOperatorNode
+						{
+							LeftOperand = new GetIdentifierNode("a"),
+							RightOperand = new IntNode(1)
+						}
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
         private static void Test(string source, params NodeBase[] expected)
         {
             var treeBuilder = new TreeBuilder();
