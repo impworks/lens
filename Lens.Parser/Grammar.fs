@@ -4,32 +4,37 @@ open System
 open FParsec
 open FParsec.CharParsers
 open Lens.SyntaxTree.SyntaxTree
+open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
-let keywords = [
-    "using"
-    "record"
-    "type"
-    "of"
-    "fun"
-    "let"
-    "var"
-    "while"
-    "if"
-    "else"
-    "try"
-    "catch"
-    "throw"
-    "new"
-    "not"
-    "typeof"
-    "default"
-    "as"
-    "ref"
-    "out"
-    "true"
-    "false"
-    "null"]
+let keywords = Set.ofList ["using"
+                           "record"
+                           "type"
+                           "of"
+                           "fun"
+                           "let"
+                           "var"
+                           "while"
+                           "if"
+                           "else"
+                           "try"
+                           "catch"
+                           "throw"
+                           "new"
+                           "not"
+                           "typeof"
+                           "default"
+                           "as"
+                           "ref"
+                           "out"
+                           "true"
+                           "false"
+                           "null"]
+
+let isTracked obj =
+    let notTrackedNodes = [typeof<BinaryOperatorNodeBase>]
+    let objType = obj.GetType()
+    not <| List.exists (fun (t : Type) -> t.IsAssignableFrom(objType)) notTrackedNodes
 
 let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
@@ -54,8 +59,9 @@ let createNodeParser() =
         match reply.Status with
         | Ok -> let endPosition = stream.Position
                 let result = reply.Result :> NodeBase
-                result.StartLocation <- lexemLocation startPosition
-                result.EndLocation <- lexemLocation endPosition
+                if isTracked result then
+                    result.StartLocation <- lexemLocation startPosition
+                    result.EndLocation <- lexemLocation endPosition
                 reply
         | _  -> reply
     informed, parserRef
@@ -238,7 +244,7 @@ literalRef            := choice [token "()"                         |>> Node.uni
 stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
 intRef                := regex "\d+"
 identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
-                            fun s -> if List.exists (fun k -> k = s) keywords then
+                            fun s -> if Set.contains s keywords then
                                          pzero
                                      else
                                          preturn s
