@@ -4,6 +4,7 @@ open System
 open FParsec
 open FParsec.CharParsers
 open Lens.SyntaxTree.SyntaxTree
+open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
@@ -32,7 +33,8 @@ let keywords = Set.ofList ["using"
                            "null"]
 
 let isTracked obj =
-    let notTrackedNodes = [typeof<BinaryOperatorNodeBase>]
+    let notTrackedNodes = [typeof<BinaryOperatorNodeBase>
+                           typeof<SetIdentifierNode>]
     let objType = obj.GetType()
     not <| List.exists (fun (t : Type) -> t.IsAssignableFrom(objType)) notTrackedNodes
 
@@ -152,9 +154,9 @@ var_decl_exprRef      := pipe3
                          <| identifier
                          <| (token "=" >>? expr)
                          <| Node.variableDeclaration
-assign_exprRef        := pipe4
-                         <| ``type``
-                         <| opt (token "::" >>? identifier)
+assign_exprRef        := pipe3
+                         <| choice [``type`` .>>.? identifier |>> Node.staticSymbol
+                                    identifier |>> Node.localSymbol]
                          <| many accessor_expr
                          <| (token "=" >>? expr)
                          <| Node.assignment
@@ -243,7 +245,8 @@ invoke_exprRef        := pipe2
                          <| invoke_list
                          <| Node.invocation
 invoke_listRef        := (many (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many value_expr)
-value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.staticAccessor
+value_exprRef         := choice [choice [``type`` .>>.? identifier |>> (Node.staticSymbol >> Node.getterNode)
+                                         identifier |>> (Node.localSymbol >> Node.getterNode)]
                                  literal
                                  type_operator_expr
                                  token "(" >>? expr .>>? token ")"]
