@@ -105,6 +105,9 @@ let line_expr_7, line_expr_7Ref               = createNodeParser()
 let new_expr, new_exprRef                     = createNodeParser()
 let new_array_expr, new_array_exprRef         = createNodeParser()
 let new_tuple_expr, new_tuple_exprRef         = createNodeParser()
+let new_list_expr, new_list_exprRef           = createNodeParser()
+let new_dict_expr, new_dict_exprRef           = createNodeParser()
+let dict_entry_expr, dict_entry_exprRef       = createParser()
 let new_obj_expr, new_obj_exprRef             = createNodeParser()
 let enumeration_expr, enumeration_exprRef     = createParser()
 let invoke_expr, invoke_exprRef               = createNodeParser()
@@ -215,9 +218,19 @@ line_expr_6Ref        := pipe2
                          <| opt (token "[" >>? expr .>>? token "]")
                          <| Node.indexNode
 line_expr_7Ref        := new_expr <|> value_expr <|> invoke_expr
-new_exprRef           := keyword "new" >>? (new_array_expr <|> new_tuple_expr <|> new_obj_expr)
+new_exprRef           := keyword "new" >>? choice [new_array_expr
+                                                   new_tuple_expr
+                                                   new_list_expr
+                                                   new_dict_expr
+                                                   new_obj_expr]
 new_array_exprRef     := token "[" >>? enumeration_expr .>>? token "]" |>> Node.arrayNode
 new_tuple_exprRef     := token "(" >>? enumeration_expr .>>? token ")" |>> Node.tupleNode
+new_list_exprRef      := token "<" >>? enumeration_expr .>>? token ">" |>> Node.listNode
+new_dict_exprRef      := token "{" >>? many1 dict_entry_expr .>>? token "}" |>> Node.dictNode
+dict_entry_exprRef    := pipe2
+                         <| value_expr
+                         <| (token "=>" >>? value_expr)
+                         <| Node.dictEntry
 new_obj_exprRef       := pipe2
                          <| ``type``
                          <| opt (invoke_list)

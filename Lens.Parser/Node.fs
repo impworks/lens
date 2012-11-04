@@ -262,6 +262,9 @@ let typeOperator symbol typeName =
     node :> NodeBase
 
 // New objects
+let dictEntry key value =
+    KeyValuePair(key, value)
+
 let objectNode typeName (parameters : NodeBase list option) =
     let arguments =
         match parameters with
@@ -271,6 +274,12 @@ let objectNode typeName (parameters : NodeBase list option) =
 
 let tupleNode (elements : NodeBase list) =
     NewTupleNode(Expressions = ResizeArray<_> elements) :> NodeBase
+
+let listNode (elements: NodeBase list) : NodeBase =
+    upcast NewListNode(Expressions = ResizeArray<_> elements)
+
+let dictNode (elements : KeyValuePair<NodeBase, NodeBase> list) : NodeBase =
+    upcast NewDictionaryNode(Expressions = ResizeArray<_> elements)
 
 let arrayNode (elements : NodeBase list) =
     NewArrayNode(Expressions = ResizeArray<_> elements) :> NodeBase
