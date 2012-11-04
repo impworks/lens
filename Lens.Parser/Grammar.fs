@@ -240,12 +240,12 @@ literalRef            := choice [token "()"                         |>> Node.uni
                                  keyword "null"                     |>> Node.nullNode
                                  keyword "true" <|> keyword "false" |>> Node.boolean
                                  string                             |>> Node.string
-                                 int                                |>> Node.int
-                                 double                             |>> Node.double]
+                                 double                             |>> Node.double
+                                 int                                |>> Node.int]
 
 stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
-intRef                := regex "\d+"
-doubleRef             := regex "\d+.\d+"
+intRef                := regex @"\d+"
+doubleRef             := regex @"\d+.\d+"
 identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
                             fun s -> if Set.contains s keywords then
                                          pzero
