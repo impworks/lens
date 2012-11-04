@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens.SyntaxTree.Utils
@@ -33,7 +32,7 @@ namespace Lens.SyntaxTree.Utils
 			{
 				if (!m_IsResolved)
 				{
-					m_Type = resolveType();
+					m_Type = TypeResolver.ResolveType(Signature);
 					m_IsResolved = true;
 				}
 
@@ -44,21 +43,6 @@ namespace Lens.SyntaxTree.Utils
 		#endregion
 
 		#region Methods
-
-		/// <summary>
-		/// Resolves the string version of type into a Type instance.
-		/// </summary>
-		private Type resolveType()
-		{
-			// todo: enable namespaces support
-			// todo: check in all loaded assemblies
-			var types = Assembly.GetExecutingAssembly().GetTypes();
-			foreach (var curr in types)
-				if (curr.Name == Signature)
-					return curr;
-
-			return null;
-		}
 
 		/// <summary>
 		/// Initializes a type signature with it's string representation.

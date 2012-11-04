@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeResolverTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
