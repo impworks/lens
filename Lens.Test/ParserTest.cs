@@ -465,6 +465,48 @@ type ArrayHolder
 		}
 
 		[Test]
+		public void MultilineInvocation()
+		{
+			var src = @"
+test
+    <| true
+    <| (a:double) ->
+        logger.log a
+        a ** 2
+    <| false";
+
+			var result = new InvocationNode
+			{
+				MethodName = "test",
+				Arguments =
+				{
+					new BooleanNode(true),
+					new FunctionNode
+					{
+						Arguments = {{"a", new FunctionArgument("a", "double")}},
+						Body =
+						{
+							new InvocationNode
+							{
+								Expression = new GetIdentifierNode("logger"),
+								MethodName = "log",
+								Arguments = {new GetIdentifierNode("a")}
+							},
+							new PowOperatorNode
+							{
+								LeftOperand = new GetIdentifierNode("a"),
+								RightOperand = new IntNode(2)
+							}
+						}
+					},
+					new BooleanNode()
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
 		public void ConditionSimple()
 		{
 			var src = @"
