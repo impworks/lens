@@ -256,7 +256,7 @@ literalRef            := choice [token "()"                         |>> Node.uni
                                  double                             |>> Node.double
                                  int                                |>> Node.int]
 
-stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
+stringRef             := between <| pchar '"' <| pchar '"' <| regex @"[^""]*"
 intRef                := regex @"\d+"
 doubleRef             := regex @"\d+.\d+"
 identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
