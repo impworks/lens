@@ -12,6 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		public TryNode()
 		{
+			Code = new CodeBlockNode();
 			CatchClauses = new List<CatchNode>();
 		}
 

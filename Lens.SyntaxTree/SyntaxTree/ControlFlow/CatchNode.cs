@@ -8,6 +8,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class CatchNode : NodeBase, IStartLocationTrackingEntity
 	{
+		public CatchNode()
+		{
+			Code = new CodeBlockNode();	
+		}
+
 		/// <summary>
 		/// The type of the exception this catch block handles.
 		/// Null means any exception.

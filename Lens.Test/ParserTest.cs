@@ -567,6 +567,66 @@ if (true)
 			Test(src, result);
 		}
 
+		[Test]
+		public void TryCatch()
+		{
+			var src = @"
+try
+    1 / 0
+catch (DivisionByZeroException ex)
+    log ex
+catch
+    doStuff ()
+    log ""whoopsie""
+";
+
+			var result = new TryNode
+			{
+				Code =
+				{
+					new DivideOperatorNode
+					{
+						LeftOperand = new IntNode(1),
+						RightOperand = new IntNode()
+					}
+				},
+				CatchClauses =
+				{
+					new CatchNode
+					{
+						ExceptionType = "DivisionByZeroException",
+						ExceptionVariable = "ex",
+						Code =
+						{
+							new InvocationNode
+							{
+								MethodName = "log",
+								Arguments = {new GetIdentifierNode("ex")}
+							}
+						}
+					},
+					new CatchNode
+					{
+						Code =
+						{
+							new InvocationNode
+							{
+								MethodName = "doStuff",
+								Arguments = {new UnitNode()}
+							},
+							new InvocationNode
+							{
+								MethodName = "log",
+								Arguments = {new StringNode("whoopsie")}
+							}
+						}
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
         private static void Test(string source, params NodeBase[] expected)
         {
             var treeBuilder = new TreeBuilder();
