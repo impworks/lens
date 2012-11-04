@@ -38,8 +38,8 @@ record Student
                 Name = "Student",
                 Entries =
                 {
-                    new RecordEntry { Name = "Name", Type = new TypeSignature("string") },
-                    new RecordEntry { Name = "Age", Type = new TypeSignature("int") }
+                    new RecordEntry { Name = "Name", Type = "string" },
+                    new RecordEntry { Name = "Age", Type = "int" }
                 }
             };
 
@@ -127,7 +127,7 @@ type ArrayHolder
                 },
                 Body =
                 {
-                    new NegationOperatorNode { Operand = new GetIdentifierNode {Identifier = "x"} }
+                    new NegationOperatorNode { Operand = new GetIdentifierNode("x") }
                 }
             };
 
@@ -157,8 +157,8 @@ type ArrayHolder
                         Name = "sq1",
                         Value = new MultiplyOperatorNode
                         {
-                            LeftOperand = new GetIdentifierNode {Identifier = "a"},
-                            RightOperand = new GetIdentifierNode {Identifier = "a"}
+                            LeftOperand = new GetIdentifierNode("a"),
+                            RightOperand = new GetIdentifierNode("a")
                         }
                     },
                     new LetNode
@@ -166,8 +166,8 @@ type ArrayHolder
                         Name = "sq2",
                         Value = new MultiplyOperatorNode
                         {
-                            LeftOperand = new GetIdentifierNode {Identifier = "b"},
-                            RightOperand = new GetIdentifierNode {Identifier = "b"}
+                            LeftOperand = new GetIdentifierNode("b"),
+                            RightOperand = new GetIdentifierNode("b")
                         }
                     },
                     new InvocationNode
@@ -177,8 +177,8 @@ type ArrayHolder
                         {
                             new AddOperatorNode
                             {
-                                LeftOperand = new GetIdentifierNode {Identifier = "sq1"},
-                                RightOperand = new GetIdentifierNode {Identifier = "sq2"}
+                                LeftOperand = new GetIdentifierNode("sq1"),
+                                RightOperand = new GetIdentifierNode("sq2")
                             }
                         }
                     }
@@ -192,9 +192,8 @@ type ArrayHolder
         public void VariableDeclaration()
         {
             var src = @"var v = 1 + 1";
-            var result = new VarNode
+            var result = new VarNode("v")
             {
-                Name = "v",
                 Value = new AddOperatorNode
                 {
                     LeftOperand = new IntNode(1),
@@ -209,9 +208,8 @@ type ArrayHolder
         public void ConstantDeclaration()
         {
             var src = @"let v = 1 + 1";
-            var result = new LetNode
+            var result = new LetNode("v")
             {
-                Name = "v",
                 Value = new AddOperatorNode
                 {
                     LeftOperand = new IntNode(1),
@@ -265,9 +263,8 @@ type ArrayHolder
 		public void NewObjectDeclaration()
 		{
 			var src = @"new SomeObject false 13.37";
-			var result = new NewObjectNode
+			var result = new NewObjectNode("SomeObject")
 			{
-				Type = "SomeObject",
 				Arguments =
 				{
 					new BooleanNode(),
@@ -282,9 +279,8 @@ type ArrayHolder
 		public void BareLambda()
 		{
 			var src = "let getFive = -> 5";
-			var result = new LetNode
+			var result = new LetNode("getFive")
 			{
-				Name = "getFive",
 				Value = new FunctionNode
 				{
 					Body = { new IntNode(5) }
@@ -298,9 +294,8 @@ type ArrayHolder
 		public void ParametricLambda()
 		{
 			var src = "let div = (a:System.Float b:System.Float) -> a / b";
-			var result = new LetNode
+			var result = new LetNode("div")
 			{
-				Name = "div",
 				Value = new FunctionNode
 				{
 					Arguments =
@@ -312,8 +307,8 @@ type ArrayHolder
 					{
 						new DivideOperatorNode
 						{
-							LeftOperand = new GetIdentifierNode { Identifier = "a"},
-							RightOperand = new GetIdentifierNode { Identifier = "b"},
+							LeftOperand = new GetIdentifierNode("a"),
+							RightOperand = new GetIdentifierNode("b"),
 						}
 					}
 				}
@@ -329,7 +324,7 @@ type ArrayHolder
 			var result = new SetIdentifierNode
 			{
 				Identifier = "a",
-				Value = new GetIdentifierNode {  Identifier = "b" }
+				Value = new GetIdentifierNode("b")
 			};
 
 			Test(src, result);
@@ -345,7 +340,7 @@ type ArrayHolder
 				Value = new GetMemberNode
 				{
 					MemberName = "someShit",
-					Identifier = "b",
+					Expression = new GetIdentifierNode("b")
 				}
 			};
 
@@ -401,7 +396,7 @@ type ArrayHolder
 				Expression = new GetMemberNode
 				{
 					MemberName = "b",
-					Identifier = "a"
+					Expression = new GetIdentifierNode("a")
 				}
 			};
 
@@ -426,12 +421,11 @@ type ArrayHolder
 		public void GetIndex()
 		{
 			var src = "a = b[2**2]";
-			var result = new SetIdentifierNode
+			var result = new SetIdentifierNode("a")
 			{
-				Identifier = "a",
 				Value = new GetIndexNode
 				{
-					Expression = new GetIdentifierNode {Identifier = "b"},
+					Expression = new GetIdentifierNode("b"),
 					Index = new PowOperatorNode
 					{
 						LeftOperand = new IntNode(2),
@@ -449,7 +443,7 @@ type ArrayHolder
 			var src = "a[2**2] = test 1 2 3";
 			var result = new SetIndexNode
 			{
-				Expression = new GetIdentifierNode { Identifier = "a" },
+				Expression = new GetIdentifierNode("a"),
 				Index = new PowOperatorNode
 				{
 					LeftOperand = new IntNode(2),

@@ -13,7 +13,8 @@ block_line          = INDENT local_stmt NL
 type                = namespace [ ( type_params | { "[]" } ) ]
 local_stmt          = var_decl_expr | assign_expr | expr
 var_decl_expr       = "let" | "var" identifier "=" expr
-assign_expr         = ( type "::" identifier | identifier ) { accessor_expr } "=" expr
+assign_expr         = lvalue "=" expr
+lvalue              = ( type "::" identifier | identifier ) { accessor_expr }
 accessor_expr       = "." identifier | "[" line_expr "]"
 type_params         = "<" type { "," type } ">"
 expr                = block_expr | line_expr
@@ -45,7 +46,7 @@ new_obj_expr        = type [ invoke_list ]
 enumeration_expr    = line_expr { ";" line_expr }
 invoke_expr         = value_expr invoke_list
 invoke_list         = ( { NL "<|" value_expr } NL ) | { value_expr }
-value_expr          = type { accessor_expr } | literal | type_operator_expr | "(" expr ")"
+value_expr          = literal | type_operator_expr | "(" expr ")" | lvalue
 type_operator_expr  = ( "typeof" | "default" ) "(" type ")"
 literal             = "()" | "null" | "true" | "false" | string | double | int
 

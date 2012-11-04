@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity
 	{
+		public GetIdentifierNode(string identifier = null)
+		{
+			Identifier = identifier;
+		}
+
 		public override Type GetExpressionType()
 		{
 			throw new NotImplementedException();
