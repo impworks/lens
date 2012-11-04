@@ -40,7 +40,9 @@ let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
 let space = pchar ' '
 let nextLine = skipNewline <|> eof
-let keyword k = pstring k .>>? many1 space
+let keyword k = pstring k .>>? (choice [skipMany1 space
+                                        notFollowedBy letter])
+                                                   
 let token t = pstring t .>>? many space
 
 let createParser() =
