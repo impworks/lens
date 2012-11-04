@@ -10,30 +10,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class FunctionNode : NodeBase
 	{
-		#region Equality members
-
-		protected bool Equals(FunctionNode other)
+		public FunctionNode()
 		{
-			return Arguments.SequenceEqual(other.Arguments) && Equals(Body, other.Body);
+			Arguments = new Dictionary<string, FunctionArgument>();
+			Body = new CodeBlockNode();
 		}
-
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((FunctionNode) obj);
-		}
-
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return ((Arguments != null ? Arguments.GetHashCode() : 0)*397) ^ (Body != null ? Body.GetHashCode() : 0);
-			}
-		}
-
-		#endregion
 
 		/// <summary>
 		/// Function arguments.
@@ -66,6 +47,31 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			// foreach (var currArg in Arguments)
 			//     Body.RegisterVariable(currArg.Value);
+		}
+
+		#endregion
+
+		#region Equality members
+
+		protected bool Equals(FunctionNode other)
+		{
+			return Arguments.SequenceEqual(other.Arguments) && Equals(Body, other.Body);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((FunctionNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Arguments != null ? Arguments.GetHashCode() : 0) * 397) ^ (Body != null ? Body.GetHashCode() : 0);
+			}
 		}
 
 		#endregion
