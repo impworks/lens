@@ -214,7 +214,7 @@ line_expr_6Ref        := pipe2
                          <| line_expr_7
                          <| opt (token "[" >>? expr .>>? token "]")
                          <| Node.indexNode
-line_expr_7Ref        := new_expr <|> invoke_expr
+line_expr_7Ref        := new_expr <|> value_expr <|> invoke_expr
 new_exprRef           := keyword "new" >>? (new_array_expr <|> new_tuple_expr <|> new_obj_expr)
 new_array_exprRef     := token "[" >>? enumeration_expr .>>? token "]" |>> Node.arrayNode
 new_tuple_exprRef     := token "(" >>? enumeration_expr .>>? token ")" |>> Node.tupleNode
@@ -225,7 +225,7 @@ new_obj_exprRef       := pipe2
 enumeration_exprRef   := sepBy1 line_expr <| token ";"
 invoke_exprRef        := pipe2
                          <| value_expr
-                         <| opt invoke_list
+                         <| invoke_list
                          <| Node.invocation
 invoke_listRef        := (many (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many value_expr)
 value_exprRef         := choice [pipe2 ``type`` <| many accessor_expr <| Node.staticAccessor
