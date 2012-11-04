@@ -143,14 +143,12 @@ let assignment (symbol : Symbol) accessorChain value : NodeBase =
             last.Expression <- top
             upcast last
 
-
-
-let lambda parameters code =
-    let arguments =
-        match parameters with
-        | Some p -> p
-        | None   -> null
-    FunctionNode(Arguments = arguments, Body = code) :> NodeBase
+let lambda parameters code : NodeBase =
+    let node = FunctionNode(Body = code)
+    Option.iter
+    <| fun p -> node.Arguments <- p
+    <| parameters
+    upcast node
 
 let invocation expression (parameters : NodeBase list) : NodeBase =
     upcast InvocationNode(Expression = expression, Arguments = ResizeArray<_> parameters)
