@@ -180,11 +180,11 @@ let catchNode variableDefinition code =
     node
 
 // Literals
-let unit _ =
-    failwith<NodeBase> "Unit literal not supported"
+let unit _ : NodeBase =
+    upcast UnitNode()
 
-let nullNode _ =
-    failwith<NodeBase> "Null literal not supported"
+let nullNode _ : NodeBase =
+    upcast NullNode()
 
 let boolean value =
     let v = 
