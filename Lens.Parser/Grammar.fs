@@ -115,6 +115,7 @@ let literal, literalRef                       = createNodeParser()
 
 let string, stringRef                         = createParser()
 let int, intRef                               = createParser()
+let double, doubleRef                         = createParser()
 let identifier, identifierRef                 = createParser()
 
 let main               = many newline >>. (many stmt .>>? eof)
@@ -239,10 +240,12 @@ literalRef            := choice [token "()"                         |>> Node.uni
                                  keyword "null"                     |>> Node.nullNode
                                  keyword "true" <|> keyword "false" |>> Node.boolean
                                  string                             |>> Node.string
-                                 int                                |>> Node.int]
+                                 int                                |>> Node.int
+                                 double                             |>> Node.double]
 
 stringRef             := between <| pchar '"' <| pchar '"' <| (manyChars anyChar)
 intRef                := regex "\d+"
+doubleRef             := regex "\d+.\d+"
 identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
                             fun s -> if Set.contains s keywords then
                                          pzero

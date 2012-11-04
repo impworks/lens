@@ -189,6 +189,9 @@ let boolean value =
 let int (value : string) =
     IntNode(Value = int value) :> NodeBase
 
+let double (value : string) =
+    DoubleNode(Value = double value) :> NodeBase
+
 let string value =
     StringNode(Value = value) :> NodeBase
 
