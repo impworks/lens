@@ -13,7 +13,7 @@ block_line          = INDENT local_stmt NL
 type                = namespace [ ( type_params | { "[]" } ) ]
 local_stmt          = var_decl_expr | assgn_expr | expr
 var_decl_expr       = "let" | "var" identifier "=" expr
-assign_expr         = type [ "::" identifier ] { accessor_expr } "=" expr
+assign_expr         = ( type "::" identifier | identifier ) { accessor_expr } "=" expr
 accessor_expr       = "." identifier | "[" line_expr "]"
 type_params         = "<" type { "," type } ">"
 expr                = block_expr | line_expr
