@@ -8,6 +8,12 @@ open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
+let isStartTracked obj = 
+    typeof<IStartLocationTrackingEntity>.IsAssignableFrom(obj.GetType())
+
+let isEndTracked obj = 
+    typeof<IEndLocationTrackingEntity>.IsAssignableFrom(obj.GetType())
+
 let keywords = Set.ofList ["using"
                            "record"
                            "type"
@@ -31,12 +37,6 @@ let keywords = Set.ofList ["using"
                            "true"
                            "false"
                            "null"]
-
-let isTracked obj =
-    let notTrackedNodes = [typeof<BinaryOperatorNodeBase>
-                           typeof<SetIdentifierNode>]
-    let objType = obj.GetType()
-    not <| List.exists (fun (t : Type) -> t.IsAssignableFrom(objType)) notTrackedNodes
 
 let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
@@ -63,8 +63,9 @@ let createNodeParser() =
         match reply.Status with
         | Ok -> let endPosition = stream.Position
                 let result = reply.Result :> NodeBase
-                if isTracked result then
+                if isStartTracked result then
                     result.StartLocation <- lexemLocation startPosition
+                if isEndTracked result then
                     result.EndLocation <- lexemLocation endPosition
                 reply
         | _  -> reply
