@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// The base class for literal nodes.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public abstract class LiteralNodeBase<T> : NodeBase
+	public abstract class LiteralNodeBase<T> : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		/// <summary>
 		/// The literal value.

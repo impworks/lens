@@ -1,9 +1,11 @@
-﻿namespace Lens.SyntaxTree.Utils
+﻿using Lens.SyntaxTree.SyntaxTree;
+
+namespace Lens.SyntaxTree.Utils
 {
 	/// <summary>
 	/// A node representing a function argument definition.
 	/// </summary>
-	public class FunctionArgument
+	public class FunctionArgument : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		public FunctionArgument()
 		{ }

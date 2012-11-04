@@ -1,9 +1,9 @@
-﻿namespace Lens.SyntaxTree.SyntaxTree
+﻿namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// Base class for any accessor nodes (by index or member name).
 	/// </summary>
-	public abstract class AccessorNodeBase : NodeBase
+	public abstract class AccessorNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// Expression to access a dynamic member.

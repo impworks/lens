@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -11,6 +12,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// Value to be assigned.
 		/// </summary>
 		public NodeBase Value { get; set; }
+
+		public override LexemLocation EndLocation
+		{
+			get { return Value.EndLocation; }
+			set { LocationSetError(); }
+		}
 
 		public override void Compile()
 		{

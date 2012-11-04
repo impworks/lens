@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A base class for various forms of method invocation that stores arguments.
 	/// </summary>
-	abstract public class InvocationNodeBase : NodeBase
+	abstract public class InvocationNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
 		protected InvocationNodeBase()
 		{
@@ -18,6 +19,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		public List<NodeBase> Arguments { get; set; }
 
+		public override LexemLocation EndLocation
+		{
+			// Invocation of a parameterless function still requires a 'unit' argument,
+			// so the 'Last()' method shouldn't fail.
+			get { return Arguments.Last().EndLocation; }
+			set { LocationSetError(); }
+		}
+		
 		#region Equality members
 
 		protected bool Equals(InvocationNodeBase other)

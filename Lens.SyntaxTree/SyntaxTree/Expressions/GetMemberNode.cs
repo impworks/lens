@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a member of a type, either field or property.
 	/// </summary>
-	public class GetMemberNode : MemberNodeBase
+	public class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity
 	{
 		public override Type GetExpressionType()
 		{

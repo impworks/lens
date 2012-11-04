@@ -1,11 +1,12 @@
 ﻿using System;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
 	/// The base for all unary operators.
 	/// </summary>
-	public abstract class UnaryOperatorNodeBase : OperatorNodeBase
+	public abstract class UnaryOperatorNodeBase : OperatorNodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The operand.
@@ -18,6 +19,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		protected void TypeError(Type type)
 		{
 			Error("Cannot apply operator '{0}' to argument of type '{1}'.", OperatorRepresentation, type);
+		}
+
+		public override LexemLocation EndLocation
+		{
+			get { return Operand.EndLocation; }
+			set { LocationSetError(); }
 		}
 
 		#region Equality members

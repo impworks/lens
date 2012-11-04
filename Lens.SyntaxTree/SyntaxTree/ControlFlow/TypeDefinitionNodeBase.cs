@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// A base node for algebraic types and records.
 	/// </summary>
-	public abstract class TypeDefinitionNodeBase<T> : NodeBase
+	public abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
 	{
 		protected TypeDefinitionNodeBase()
 		{
@@ -23,6 +23,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The entries of the type node.
 		/// </summary>
 		public List<T> Entries { get; private set; }
+
+		public override LexemLocation EndLocation
+		{
+			get { return Entries.Last().EndLocation; }
+			set { base.EndLocation = value; }
+		}
 
 		#region Equality members
 

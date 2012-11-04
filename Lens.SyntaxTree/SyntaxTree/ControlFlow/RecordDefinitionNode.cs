@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -18,7 +17,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// Definition of a record entry.
 	/// </summary>
-	public class RecordEntry
+	public class RecordEntry : LocationEntity, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The name of the entry.

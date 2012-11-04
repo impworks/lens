@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	public class NameDeclarationBase : NodeBase
+	public class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
 	{
 		public NameDeclarationBase()
 		{

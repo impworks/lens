@@ -76,8 +76,9 @@
     <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
     <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
-    <Compile Include="SyntaxTree\AccessorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
+    <Compile Include="SyntaxTree\LocationTrackingInterfaces.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
@@ -118,6 +119,7 @@
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
+    <Compile Include="Utils\LocationEntity.cs" />
     <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />

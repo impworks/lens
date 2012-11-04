@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a local variable or a function.
 	/// </summary>
-	public class GetIdentifierNode : IdentifierNodeBase
+	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity
 	{
 		public override Type GetExpressionType()
 		{

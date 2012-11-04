@@ -6,18 +6,8 @@ namespace Lens.SyntaxTree.SyntaxTree
 	/// <summary>
 	/// The base class for all syntax tree nodes.
 	/// </summary>
-	public abstract class NodeBase
+	public abstract class NodeBase : LocationEntity
 	{
-		/// <summary>
-		/// Current node's starting position (for error reporting).
-		/// </summary>
-		public virtual LexemLocation StartLocation { get; set; }
-
-		/// <summary>
-		/// Current node's ending position (for error reporting).
-		/// </summary>
-		public virtual LexemLocation EndLocation { get; set; }
-
 		/// <summary>
 		/// The type of the expression represented by this node.
 		/// </summary>
@@ -32,6 +22,13 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public abstract void Compile();
 
 		/// <summary>
+		/// Validates the node parameters.
+		/// </summary>
+		protected virtual void Validate()
+		{
+		}
+
+		/// <summary>
 		/// Reports an error to the compiler.
 		/// </summary>
 		/// <param name="message">Error message.</param>
@@ -42,9 +39,9 @@ namespace Lens.SyntaxTree.SyntaxTree
 			throw new ParseException(msg, StartLocation, EndLocation);
 		}
 
-		protected static void LocationSetError()
+		protected void LocationSetError()
 		{
-			throw new InvalidOperationException("Compound node's location cannot be set manually!");
+			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));
 		}
 
 		/// <summary>

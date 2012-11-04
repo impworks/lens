@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// The safe block of code.
 	/// </summary>
-	public class CatchNode : NodeBase
+	public class CatchNode : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The type of the exception this catch block handles.

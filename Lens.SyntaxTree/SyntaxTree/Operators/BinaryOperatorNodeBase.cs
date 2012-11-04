@@ -22,13 +22,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		public override LexemLocation StartLocation
 		{
 			get { return LeftOperand.StartLocation; }
-			set { throw new InvalidOperationException("Binary operator's locations are determined by operands!"); }
+			set { LocationSetError(); }
 		}
 
 		public override LexemLocation EndLocation
 		{
 			get { return RightOperand.EndLocation; }
-			set { throw new InvalidOperationException("Binary operator's locations are determined by operands!"); }
+			set { LocationSetError(); }
 		}
 
 		/// <summary>

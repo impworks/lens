@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// <summary>
 	/// A node to represent the null literal.
 	/// </summary>
-	public class NullNode : NodeBase
+	public class NullNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		public override Type GetExpressionType()
 		{
@@ -16,6 +16,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Equality members
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			return obj.GetType() == GetType();
+		}
+
+		public override int GetHashCode()
+		{
+			return 0;
+		}
+
+		#endregion
 	}
 
 	/// <summary>

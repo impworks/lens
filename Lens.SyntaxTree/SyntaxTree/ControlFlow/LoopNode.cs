@@ -3,7 +3,7 @@ using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
-	public class LoopNode : NodeBase
+	public class LoopNode : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The condition.

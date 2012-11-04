@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// The try node.
 	/// </summary>
-	public class TryNode : NodeBase
+	public class TryNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public TryNode()
 		{
@@ -24,10 +25,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<CatchNode> CatchClauses { get; private set; }
 
-		public override Utils.LexemLocation EndLocation
+		public override LexemLocation EndLocation
 		{
 			get { return CatchClauses.Last().EndLocation; }
-			set { throw new InvalidOperationException("Try node's end location cannot be set manually!"); }
+			set { LocationSetError(); }
 		}
 
 		public override void Compile()

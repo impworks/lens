@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a read-access to an array or list's value.
 	/// </summary>
-	public class GetIndexNode : IndexNodeBase
+	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity
 	{
 		public override Type GetExpressionType()
 		{

@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// An anonymous function definition node.
 	/// </summary>
-	public class FunctionNode : NodeBase
+	public class FunctionNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public FunctionNode()
 		{
@@ -25,6 +25,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// Function body.
 		/// </summary>
 		public CodeBlockNode Body { get; set; }
+
+		public override LexemLocation EndLocation
+		{
+			get { return Body.EndLocation; }
+			set { LocationSetError(); }
+		}
 
 		public override Type GetExpressionType()
 		{

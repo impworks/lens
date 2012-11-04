@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A conditional expression.
 	/// </summary>
-	public class ConditionNode : NodeBase
+	public class ConditionNode : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The condition.

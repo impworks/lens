@@ -1,21 +1,27 @@
 ﻿using System;
 using System.Reflection;
+using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens.SyntaxTree.Utils
 {
 	/// <summary>
 	/// A cache-friendly version of type signature.
 	/// </summary>
-	public class TypeSignature
+	public class TypeSignature : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		public TypeSignature(string signature)
 		{
 			Signature = signature;
 		}
 
+		#region Fields
+		
 		private bool m_IsResolved;
 		private Type m_Type;
 
+		/// <summary>
+		/// The signature of the type.
+		/// </summary>
 		public string Signature { get; private set; }
 
 		/// <summary>
@@ -35,6 +41,10 @@ namespace Lens.SyntaxTree.Utils
 			}
 		}
 
+		#endregion
+
+		#region Methods
+
 		/// <summary>
 		/// Resolves the string version of type into a Type instance.
 		/// </summary>
@@ -50,10 +60,15 @@ namespace Lens.SyntaxTree.Utils
 			return null;
 		}
 
+		/// <summary>
+		/// Initializes a type signature with it's string representation.
+		/// </summary>
 		public static implicit operator TypeSignature(string type)
 		{
 			return new TypeSignature(type);
 		}
+
+		#endregion
 
 		#region Equality members
 

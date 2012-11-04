@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// Definition of an algebraic type entry.
 	/// </summary>
-	public class TypeEntry
+	public class TypeEntry : LocationEntity
 	{
 		/// <summary>
 		/// The name of the entry.
