@@ -22,7 +22,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected bool Equals(MemberNodeBase other)
 		{
 			return Equals(Expression, other.Expression)
-				&& string.Equals(Identifier, other.Identifier)
 				&& string.Equals(MemberName, other.MemberName)
 				&& Equals(StaticType, other.StaticType);
 		}
@@ -40,7 +39,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			unchecked
 			{
 				int hashCode = (Expression != null ? Expression.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (Identifier != null ? Identifier.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (MemberName != null ? MemberName.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (StaticType != null ? StaticType.GetHashCode() : 0);
 				return hashCode;
