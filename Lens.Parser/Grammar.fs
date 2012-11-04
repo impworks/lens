@@ -47,19 +47,18 @@ let createNodeParser() =
     let lexemLocation (position : Position) =
         LexemLocation(Line = int position.Line, Offset = int position.Column)
 
-    let parser, parserRef = createParser<#NodeBase>()
-    let informed =
-        fun (stream : CharStream<ParserState>) ->
-            let startPosition = stream.Position
-            let reply = parser stream
-            match reply.Status with
-            | Ok -> let endPosition = stream.Position
-                    reply.Result.StartLocation <- lexemLocation startPosition
-                    reply.Result.EndLocation <- lexemLocation endPosition
-                    reply
-            | _  -> reply
+    let parser, parserRef = createParser()
+    let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
+        let startPosition = stream.Position
+        let reply = parser stream
+        match reply.Status with
+        | Ok -> let endPosition = stream.Position
+                let result = reply.Result :> NodeBase
+                result.StartLocation <- lexemLocation startPosition
+                result.EndLocation <- lexemLocation endPosition
+                reply
+        | _  -> reply
     informed, parserRef
-            
 
 let stmt, stmtRef                             = createNodeParser()
 let using, usingRef                           = createNodeParser()
