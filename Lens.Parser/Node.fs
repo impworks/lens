@@ -143,8 +143,6 @@ let assignment (symbol : Symbol) accessorChain value : NodeBase =
             last.Expression <- top
             upcast last
 
-
-
 let lambda parameters code : NodeBase =
     let node = FunctionNode(Body = code)
     Option.iter
