@@ -651,6 +651,22 @@ catch
 			Test(src, result);
 		}
 
+		[Test]
+		public void Not()
+		{
+			var src = "not a && b";
+			var result = new BooleanOperatorNode(BooleanOperatorKind.And)
+			{
+				LeftOperand = new InversionOperatorNode
+				{
+					Operand = new GetIdentifierNode("a")
+				},
+				RightOperand = new GetIdentifierNode("b")
+			};
+
+			Test(src, result);
+		}
+
         private static void Test(string source, params NodeBase[] expected)
         {
             var treeBuilder = new TreeBuilder();
