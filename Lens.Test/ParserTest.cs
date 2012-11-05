@@ -667,6 +667,113 @@ catch
 			Test(src, result);
 		}
 
+		[Test]
+		public void Cast()
+		{
+			var src = "let a = (b as List<int>).Count";
+			var result = new LetNode("a")
+			{
+				Value = new GetMemberNode
+				{
+					MemberName = "Count",
+					Expression = new CastOperatorNode
+					{
+						Expression = new GetIdentifierNode("b"),
+						Type = "List<int>"
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void ManyParameters()
+		{
+			var src = @"test 1337 true ""hello"" new(13.37; new [1; 2])";
+			var result = new InvocationNode
+			{
+				MethodName = "test",
+				Arguments =
+				{
+					new IntNode(1337),
+					new BooleanNode(true),
+					new StringNode("hello"),
+					new NewTupleNode
+					{
+						Expressions =
+						{
+							new DoubleNode(13.37),
+							new NewArrayNode
+							{
+								Expressions =
+								{
+									new IntNode(1),
+									new IntNode(2)
+								}
+							}
+						}
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void OperatorPriority1()
+		{
+			var src = "test a b > 10";
+			var result = new ComparisonOperatorNode(ComparisonOperatorKind.Greater)
+			{
+				LeftOperand = new InvocationNode
+				{
+					MethodName = "test",
+					Arguments =
+					{
+						new GetIdentifierNode("a"),
+						new GetIdentifierNode("b"),
+					}
+				},
+				RightOperand = new IntNode(10)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void OperatorPriority2()
+		{
+			var src = "1 + 2 - 3 * 4 / 5 % 6 ** 7";
+			var result = new AddOperatorNode
+			{
+				LeftOperand = new IntNode(1),
+				RightOperand = new SubtractOperatorNode
+				{
+					LeftOperand = new IntNode(2),
+					RightOperand = new MultiplyOperatorNode
+					{
+						LeftOperand = new IntNode(3),
+						RightOperand = new DivideOperatorNode
+						{
+							LeftOperand = new IntNode(4),
+							RightOperand = new RemainderOperatorNode
+							{
+								LeftOperand = new IntNode(5),
+								RightOperand = new PowOperatorNode
+								{
+									LeftOperand = new IntNode(6),
+									RightOperand = new IntNode(7)
+								}
+							}
+						}
+					}
+				}
+			};
+
+			Test(src, result);
+		}
+
         private static void Test(string source, params NodeBase[] expected)
         {
             var treeBuilder = new TreeBuilder();
