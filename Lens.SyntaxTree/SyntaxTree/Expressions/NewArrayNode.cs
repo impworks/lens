@@ -23,5 +23,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			throw new NotImplementedException();
 		}
+
+		public override string ToString()
+		{
+			return string.Format("array({0})", string.Join(",", Expressions));
+		}
 	}
 }

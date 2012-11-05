@@ -48,5 +48,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			throw new NotImplementedException();
 		}
+
+		public override string ToString()
+		{
+			return string.Format("dict({0})", string.Join(";", Expressions.Select(x => string.Format("{0} => {1}", x.Key, x.Value))));
+		}
 	}
 }

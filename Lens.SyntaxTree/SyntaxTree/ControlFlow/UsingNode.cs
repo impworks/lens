@@ -35,5 +35,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("using({0})", Namespace);
+		}
 	}
 }

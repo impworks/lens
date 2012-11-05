@@ -48,5 +48,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("setmbr({0} of {1} = {2})", MemberName, Expression, Value);
+		}
 	}
 }

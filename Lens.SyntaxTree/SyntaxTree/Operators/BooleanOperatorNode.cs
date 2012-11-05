@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// </summary>
 	public class BooleanOperatorNode : BinaryOperatorNodeBase
 	{
+		public BooleanOperatorNode(BooleanOperatorKind kind = default(BooleanOperatorKind))
+		{
+			Kind = kind;
+		}
+
 		/// <summary>
 		/// The kind of boolean operator.
 		/// </summary>

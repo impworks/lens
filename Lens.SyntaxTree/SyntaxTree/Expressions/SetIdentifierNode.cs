@@ -53,5 +53,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("set({0} = {1})", Identifier, Value);
+		}
 	}
 }

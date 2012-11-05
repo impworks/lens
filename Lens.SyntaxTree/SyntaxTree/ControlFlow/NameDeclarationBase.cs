@@ -67,5 +67,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("{0}({1} = {2})", NameInfo.IsConstant ? "let" : "var", Name, Value);
+		}
 	}
 }

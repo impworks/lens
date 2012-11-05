@@ -27,5 +27,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return "()";
+		}
 	}
 }
