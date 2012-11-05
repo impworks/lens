@@ -52,5 +52,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("new({0}, args: {1})", Type, string.Join(";", Arguments));
+		}
 	}
 }

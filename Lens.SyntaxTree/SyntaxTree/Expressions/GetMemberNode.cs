@@ -16,5 +16,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			throw new NotImplementedException();
 		}
+
+		public override string ToString()
+		{
+			return StaticType == null
+				? string.Format("getmbr({0} of value {1})", MemberName, Expression)
+				: string.Format("getmbr({0} of type {1})", MemberName, StaticType);
+		}
 	}
 }

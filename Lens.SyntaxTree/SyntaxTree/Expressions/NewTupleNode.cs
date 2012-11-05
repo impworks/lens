@@ -56,5 +56,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("tuple({0})", string.Join(";", Expressions));
+		}
 	}
 }

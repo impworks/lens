@@ -44,5 +44,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("throw({0})", Expression);
+		}
 	}
 }

@@ -113,5 +113,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("op{0}({1}, {2})", OperatorRepresentation, LeftOperand, RightOperand);
+		}
 	}
 }
