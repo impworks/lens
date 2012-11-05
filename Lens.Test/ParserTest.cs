@@ -276,6 +276,45 @@ type ArrayHolder
 		}
 
 		[Test]
+		public void DictionaryDeclaration()
+		{
+			var src = @"new { a => b; c => true }";
+			var result = new NewDictionaryNode
+			{
+				Expressions =
+				{
+					new KeyValuePair<NodeBase, NodeBase>(
+						new GetIdentifierNode("a"),
+						new GetIdentifierNode("b")
+					),
+					new KeyValuePair<NodeBase, NodeBase>(
+						new GetIdentifierNode("c"),
+						new BooleanNode(true)
+					)
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void ListDeclaration()
+		{
+			var src = "new <true;true;false>";
+			var result = new NewListNode
+			{
+				Expressions =
+				{
+					new BooleanNode(true),
+					new BooleanNode(true),
+					new BooleanNode(false),
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
 		public void BareLambda()
 		{
 			var src = "let getFive = -> 5";
