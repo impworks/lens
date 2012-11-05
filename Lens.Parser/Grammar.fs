@@ -142,7 +142,7 @@ funcdefRef            := pipe3
                          <| Node.functionNode
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
 blockRef              := ((IndentationParser.indentedMany1 block_line "block_line")
-                          <|> (valueToList line_expr))
+                          <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
 typeRef               := pipe2
