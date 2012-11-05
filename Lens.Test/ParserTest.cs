@@ -134,6 +134,25 @@ type ArrayHolder
             Test(src, result);
         }
 
+		[Test]
+		public void InvocationTest()
+		{
+			var result = new InvocationNode
+				{
+					Expression = new GetIdentifierNode("sqrt"),
+					Arguments =
+						{
+							new AddOperatorNode
+								{
+									LeftOperand = new GetIdentifierNode("sq1"),
+									RightOperand = new GetIdentifierNode("sq2")
+								}
+						}
+				};
+
+			Test("sqrt (sq1 + sq2)", result);
+		}
+
         [Test]
         public void ComplexFunction()
         {

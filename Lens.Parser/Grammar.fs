@@ -150,7 +150,9 @@ typeRef               := pipe3
                          <| identifier
                          <| opt (type_params <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
-local_stmtRef         := var_decl_expr <|> assign_expr <|> expr
+local_stmtRef         := choice [attempt var_decl_expr
+                                 attempt assign_expr
+                                 invoke_expr]
 var_decl_exprRef      := pipe3
                          <| (keyword "let" <|> keyword "var")
                          <| identifier
@@ -161,7 +163,7 @@ assign_exprRef        := pipe2
                          <| (token "=" >>? expr)
                          <| Node.assignment
 lvalueRef             := choice [``type`` .>>.? identifier |>> Node.staticSymbol
-                                 identifier |>> Node.localSymbol] .>>. many accessor_expr
+                                 identifier |>> Node.localSymbol] .>>.? many accessor_expr
 accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
                          <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
@@ -190,7 +192,7 @@ lambda_exprRef        := pipe2
                          <| Node.lambda
 line_exprRef          := pipe2
                          <| line_expr_1
-                         <| opt (keyword "as" .>>? ``type``)
+                         <| opt (keyword "as" >>? ``type``)
                          <| Node.castNode
 line_expr_1Ref        := pipe2
                          <| line_expr_2
@@ -209,7 +211,7 @@ line_expr_3Ref        := pipe2
                              <| (many (sign_3 .>>.? line_expr_4))
                              <| Node.operatorChain)
                          <| Node.unaryOperator
-sign_3Ref             := pstring "+" <|> pstring "-"
+sign_3Ref             := token "+" <|> token "-"
 line_expr_4Ref        := pipe2
                          <| line_expr_5
                          <| (many (sign_4 .>>.? line_expr_5))
