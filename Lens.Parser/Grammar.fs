@@ -86,6 +86,7 @@ let ``type``, typeRef                         = createParser()
 let local_stmt, local_stmtRef                 = createNodeParser()
 let var_decl_expr, var_decl_exprRef           = createNodeParser()
 let assign_expr, assign_exprRef               = createNodeParser()
+let lvalue, lvalueRef                         = createParser()
 let accessor_expr, accessor_exprRef           = createParser()
 let type_params, type_paramsRef               = createParser()
 let expr, exprRef                             = createNodeParser()
@@ -155,14 +156,14 @@ var_decl_exprRef      := pipe3
                          <| identifier
                          <| (token "=" >>? expr)
                          <| Node.variableDeclaration
-assign_exprRef        := pipe3
-                         <| choice [``type`` .>>.? identifier |>> Node.staticSymbol
-                                    identifier |>> Node.localSymbol]
-                         <| many accessor_expr
+assign_exprRef        := pipe2
+                         <| lvalue
                          <| (token "=" >>? expr)
                          <| Node.assignment
-accessor_exprRef      := ((token "." >>? identifier) |>> Node.Accessor.Member)
-                         <|> ((token "[" >>? line_expr .>>? token "]") |>> Node.Accessor.Indexer)
+lvalueRef             := choice [``type`` .>>.? identifier |>> Node.staticSymbol
+                                 identifier |>> Node.localSymbol] .>>. many accessor_expr
+accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
+                         <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
 exprRef               := block_expr <|> line_expr
 block_exprRef         := if_expr <|> while_expr <|> try_expr <|> lambda_expr
@@ -246,11 +247,10 @@ invoke_exprRef        := pipe2
                          <| invoke_list
                          <| Node.invocation
 invoke_listRef        := (many (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many value_expr)
-value_exprRef         := choice [choice [``type`` .>>.? identifier |>> (Node.staticSymbol >> Node.getterNode)
-                                         identifier |>> (Node.localSymbol >> Node.getterNode)]
-                                 literal
+value_exprRef         := choice [literal
                                  type_operator_expr
-                                 token "(" >>? expr .>>? token ")"]
+                                 token "(" >>? expr .>>? token ")"
+                                 lvalue |>> Node.getterNode]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
                          <| (token "(" .>>? ``type`` .>>? token ")")
