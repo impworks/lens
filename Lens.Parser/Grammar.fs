@@ -247,7 +247,7 @@ new_exprRef           := keyword "new" >>? choice [new_array_expr
 new_array_exprRef     := token "[" >>? enumeration_expr .>>? token "]" |>> Node.arrayNode
 new_tuple_exprRef     := token "(" >>? enumeration_expr .>>? token ")" |>> Node.tupleNode
 new_list_exprRef      := token "<" >>? enumeration_expr .>>? token ">" |>> Node.listNode
-new_dict_exprRef      := token "{" >>? many1 dict_entry_expr .>>? token "}" |>> Node.dictNode
+new_dict_exprRef      := token "{" >>? (sepBy1 dict_entry_expr <| token ";") .>>? token "}" |>> Node.dictNode
 dict_entry_exprRef    := pipe2
                          <| value_expr
                          <| (token "=>" >>? value_expr)
