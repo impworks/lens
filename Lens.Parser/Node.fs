@@ -16,11 +16,10 @@ let using nameSpace =
     UsingNode(Namespace = nameSpace) :> NodeBase
 
 // Definitions
-let typeTag nameSpace name additional =
-    [nameSpace; Some name; additional]
-    |> Seq.filter Option.isSome
-    |> Seq.map Option.get
-    |> String.concat(String.Empty)
+let typeTag (fullName : string) (additional : string option) : string =
+    match additional with
+    | Some s -> fullName + s
+    | None   -> fullName
 
 let typeParams types =
     types
