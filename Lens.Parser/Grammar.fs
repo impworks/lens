@@ -8,6 +8,18 @@ open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
+let debug = false
+
+let (<!>) (p : Parser<_,_>) label : Parser<_,_> =
+    if debug then
+        fun stream ->
+            printfn "%A: Entering %s" stream.Position label
+            let reply = p stream
+            printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
+            reply
+    else
+        p
+
 let isStartTracked obj = 
     typeof<IStartLocationTrackingEntity>.IsAssignableFrom(obj.GetType())
 
@@ -47,16 +59,16 @@ let keyword k = pstring k .>>? (choice [skipMany1 space
                                                    
 let token t = pstring t .>>? many space
 
-let createParser() =
+let createParser s =
     let parser, parserRef = createParserForwardedToRef()
     let whitespaced = parser .>>? many space
-    whitespaced, parserRef
+    whitespaced <!> s, parserRef
 
-let createNodeParser() =
+let createNodeParser s =
     let lexemLocation (position : Position) =
         LexemLocation(Line = int position.Line, Offset = int position.Column)
 
-    let parser, parserRef = createParser()
+    let parser, parserRef = createParser s
     let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
         let startPosition = stream.Position
         let reply = parser stream
@@ -71,61 +83,61 @@ let createNodeParser() =
         | _  -> reply
     informed, parserRef
 
-let stmt, stmtRef                             = createNodeParser()
-let using, usingRef                           = createNodeParser()
-let ``namespace``, namespaceRef               = createParser()
-let recorddef, recorddefRef                   = createNodeParser()
-let recorddef_stmt, recorddef_stmtRef         = createParser()
-let typedef, typedefRef                       = createNodeParser()
-let typedef_stmt, typedef_stmtRef             = createParser()
-let funcdef, funcdefRef                       = createNodeParser()
-let func_params, func_paramsRef               = createParser()
-let block, blockRef                           = createNodeParser()
-let block_line, block_lineRef                 = createNodeParser()
-let ``type``, typeRef                         = createParser()
-let local_stmt, local_stmtRef                 = createNodeParser()
-let var_decl_expr, var_decl_exprRef           = createNodeParser()
-let assign_expr, assign_exprRef               = createNodeParser()
-let lvalue, lvalueRef                         = createParser()
-let accessor_expr, accessor_exprRef           = createParser()
-let type_params, type_paramsRef               = createParser()
-let expr, exprRef                             = createNodeParser()
-let block_expr, block_exprRef                 = createNodeParser()
-let if_expr, if_exprRef                       = createNodeParser()
-let while_expr, while_exprRef                 = createNodeParser()
-let try_expr, try_exprRef                     = createNodeParser()
-let catch_expr, catch_exprRef                 = createNodeParser()
-let lambda_expr, lambda_exprRef               = createNodeParser()
-let line_expr, line_exprRef                   = createNodeParser()
-let line_expr_1, line_expr_1Ref               = createNodeParser()
-let sign_1, sign_1Ref                         = createParser()
-let line_expr_2, line_expr_2Ref               = createNodeParser()
-let sign_2, sign_2Ref                         = createParser()
-let line_expr_3, line_expr_3Ref               = createNodeParser()
-let sign_3, sign_3Ref                         = createParser()
-let line_expr_4, line_expr_4Ref               = createNodeParser()
-let sign_4, sign_4Ref                         = createParser()
-let line_expr_5, line_expr_5Ref               = createNodeParser()
-let line_expr_6, line_expr_6Ref               = createNodeParser()
-let line_expr_7, line_expr_7Ref               = createNodeParser()
-let new_expr, new_exprRef                     = createNodeParser()
-let new_array_expr, new_array_exprRef         = createNodeParser()
-let new_tuple_expr, new_tuple_exprRef         = createNodeParser()
-let new_list_expr, new_list_exprRef           = createNodeParser()
-let new_dict_expr, new_dict_exprRef           = createNodeParser()
-let dict_entry_expr, dict_entry_exprRef       = createParser()
-let new_obj_expr, new_obj_exprRef             = createNodeParser()
-let enumeration_expr, enumeration_exprRef     = createParser()
-let invoke_expr, invoke_exprRef               = createNodeParser()
-let invoke_list, invoke_listRef               = createParser()
-let value_expr, value_exprRef                 = createNodeParser()
-let type_operator_expr, type_operator_exprRef = createNodeParser()
-let literal, literalRef                       = createNodeParser()
+let stmt, stmtRef                             = createNodeParser "stmt"
+let using, usingRef                           = createNodeParser "using"
+let ``namespace``, namespaceRef               = createParser "namespace"
+let recorddef, recorddefRef                   = createNodeParser "recorddef"
+let recorddef_stmt, recorddef_stmtRef         = createParser "recorddef_stmt"
+let typedef, typedefRef                       = createNodeParser "typedef"
+let typedef_stmt, typedef_stmtRef             = createParser "typedef_stmt"
+let funcdef, funcdefRef                       = createNodeParser "funcdef"
+let func_params, func_paramsRef               = createParser "func_params"
+let block, blockRef                           = createNodeParser "block"
+let block_line, block_lineRef                 = createNodeParser "block_line"
+let ``type``, typeRef                         = createParser "type"
+let local_stmt, local_stmtRef                 = createNodeParser "local_stmt"
+let var_decl_expr, var_decl_exprRef           = createNodeParser "var_decl_expr"
+let assign_expr, assign_exprRef               = createNodeParser "assign_expr"
+let lvalue, lvalueRef                         = createParser "lvalue"
+let accessor_expr, accessor_exprRef           = createParser "accessor_expr"
+let type_params, type_paramsRef               = createParser "type_params"
+let expr, exprRef                             = createNodeParser "expr"
+let block_expr, block_exprRef                 = createNodeParser "block_expr"
+let if_expr, if_exprRef                       = createNodeParser "if_expr"
+let while_expr, while_exprRef                 = createNodeParser "while_expr"
+let try_expr, try_exprRef                     = createNodeParser "try_expr"
+let catch_expr, catch_exprRef                 = createNodeParser "catch_expr"
+let lambda_expr, lambda_exprRef               = createNodeParser "lambda_expr"
+let line_expr, line_exprRef                   = createNodeParser "line_expr"
+let line_expr_1, line_expr_1Ref               = createNodeParser "line_expr_1"
+let sign_1, sign_1Ref                         = createParser "sign_1"
+let line_expr_2, line_expr_2Ref               = createNodeParser "line_expr_2"
+let sign_2, sign_2Ref                         = createParser "sign_2"
+let line_expr_3, line_expr_3Ref               = createNodeParser "line_expr_3"
+let sign_3, sign_3Ref                         = createParser "sign_3"
+let line_expr_4, line_expr_4Ref               = createNodeParser "line_expr_4"
+let sign_4, sign_4Ref                         = createParser "sign_4"
+let line_expr_5, line_expr_5Ref               = createNodeParser "line_expr_5"
+let line_expr_6, line_expr_6Ref               = createNodeParser "line_expr_6"
+let line_expr_7, line_expr_7Ref               = createNodeParser "line_expr_7"
+let new_expr, new_exprRef                     = createNodeParser "new_expr"
+let new_array_expr, new_array_exprRef         = createNodeParser "new_array_expr"
+let new_tuple_expr, new_tuple_exprRef         = createNodeParser "new_tuple_expr"
+let new_list_expr, new_list_exprRef           = createNodeParser "new_list_expr"
+let new_dict_expr, new_dict_exprRef           = createNodeParser "new_dict_expr"
+let dict_entry_expr, dict_entry_exprRef       = createParser "dict_entry_expr"
+let new_obj_expr, new_obj_exprRef             = createNodeParser "new_obj_expr"
+let enumeration_expr, enumeration_exprRef     = createParser "enumeration_expr"
+let invoke_expr, invoke_exprRef               = createNodeParser "invoke_expr"
+let invoke_list, invoke_listRef               = createParser "invoke_list"
+let value_expr, value_exprRef                 = createNodeParser "value_expr"
+let type_operator_expr, type_operator_exprRef = createNodeParser "type_operator_expr"
+let literal, literalRef                       = createNodeParser "literal"
 
-let string, stringRef                         = createParser()
-let int, intRef                               = createParser()
-let double, doubleRef                         = createParser()
-let identifier, identifierRef                 = createParser()
+let string, stringRef                         = createParser "string"
+let int, intRef                               = createParser "int"
+let double, doubleRef                         = createParser "double"
+let identifier, identifierRef                 = createParser "identifier"
 
 let main               = many newline >>. (many stmt .>>? eof)
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
@@ -224,7 +236,9 @@ line_expr_6Ref        := pipe2
                          <| line_expr_7
                          <| opt (token "[" >>? expr .>>? token "]")
                          <| Node.indexNode
-line_expr_7Ref        := new_expr <|> value_expr <|> invoke_expr
+line_expr_7Ref        := choice [attempt new_expr
+                                 attempt invoke_expr
+                                 value_expr]
 new_exprRef           := keyword "new" >>? choice [new_array_expr
                                                    new_tuple_expr
                                                    new_list_expr
@@ -247,7 +261,7 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (many (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many value_expr)
+invoke_listRef        := (many1 (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr
                                  token "(" >>? expr .>>? token ")"
