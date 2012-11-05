@@ -748,7 +748,7 @@ catch
         [Test]
         public void ManyParameters()
         {
-            var src = @"test 1337 true ""hello"" new(13.37; new [1; 2])";
+            var src = @"test 1337 true ""hello"" (new(13.37; new [1; 2]))";
             var result = new InvocationNode
             {
                 MethodName = "test",

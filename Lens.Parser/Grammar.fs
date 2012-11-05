@@ -279,7 +279,7 @@ literalRef            := choice [token "()"                         |>> Node.uni
 
 stringRef             := between <| pchar '"' <| pchar '"' <| regex @"[^""]*"
 intRef                := regex @"\d+"
-doubleRef             := regex @"\d+.\d+"
+doubleRef             := regex @"\d+\.\d+"
 identifierRef         := regex "[a-zA-Z_][0-9a-zA-Z_]*" >>=?
                             fun s -> if Set.contains s keywords then
                                          pzero
