@@ -145,9 +145,8 @@ blockRef              := ((IndentationParser.indentedMany1 block_line "block_lin
                           <|> (valueToList line_expr))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
-typeRef               := pipe3
-                         <| opt (``namespace`` .>>? token ".")
-                         <| identifier
+typeRef               := pipe2
+                         <| ``namespace``
                          <| opt (type_params <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
 local_stmtRef         := choice [attempt var_decl_expr
@@ -255,7 +254,7 @@ value_exprRef         := choice [literal
                                  lvalue |>> Node.getterNode]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
-                         <| (token "(" .>>? ``type`` .>>? token ")")
+                         <| (token "(" >>? ``type`` .>>? token ")")
                          <| Node.typeOperator
 literalRef            := choice [token "()"                         |>> Node.unit
                                  keyword "null"                     |>> Node.nullNode
