@@ -152,7 +152,7 @@ typeRef               := pipe3
                          <| Node.typeTag
 local_stmtRef         := choice [attempt var_decl_expr
                                  attempt assign_expr
-                                 invoke_expr]
+                                 expr]
 var_decl_exprRef      := pipe3
                          <| (keyword "let" <|> keyword "var")
                          <| identifier
