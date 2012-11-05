@@ -161,7 +161,7 @@ assign_exprRef        := pipe2
                          <| lvalue
                          <| (token "=" >>? expr)
                          <| Node.assignment
-lvalueRef             := choice [``type`` .>>.? identifier |>> Node.staticSymbol
+lvalueRef             := choice [(``type`` .>>? token "::") .>>.? identifier |>> Node.staticSymbol
                                  identifier |>> Node.localSymbol] .>>.? many accessor_expr
 accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
                          <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
