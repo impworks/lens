@@ -191,7 +191,7 @@ type ArrayHolder
                     },
                     new InvocationNode
                     {
-                        MethodName = "sqrt",
+                        Expression = new GetIdentifierNode("sqrt"),
                         Arguments =
                         {
                             new AddOperatorNode
@@ -509,7 +509,7 @@ type ArrayHolder
                 },
                 Value = new InvocationNode
                 {
-                    MethodName = "test",
+                    Expression = new GetIdentifierNode("test"),
                     Arguments =
                     {
                         new IntNode(1),
@@ -535,7 +535,7 @@ test
 
             var result = new InvocationNode
             {
-                MethodName = "test",
+				Expression = new GetIdentifierNode("test"),
                 Arguments =
                 {
                     new BooleanNode(true),
@@ -546,8 +546,11 @@ test
                         {
                             new InvocationNode
                             {
-                                Expression = new GetIdentifierNode("logger"),
-                                MethodName = "log",
+                                Expression = new GetMemberNode
+								{
+									Expression = new GetIdentifierNode("logger"),
+									MemberName = "log"
+								},
                                 Arguments = {new GetIdentifierNode("a")}
                             },
                             new PowOperatorNode
@@ -658,7 +661,7 @@ catch
                         {
                             new InvocationNode
                             {
-                                MethodName = "log",
+                                Expression = new GetIdentifierNode("log"),
                                 Arguments = {new GetIdentifierNode("ex")}
                             }
                         }
@@ -669,12 +672,12 @@ catch
                         {
                             new InvocationNode
                             {
-                                MethodName = "doStuff",
+                                Expression = new GetIdentifierNode("doStuff"),
                                 Arguments = {new UnitNode()}
                             },
                             new InvocationNode
                             {
-                                MethodName = "log",
+                                Expression = new GetIdentifierNode("log"),
                                 Arguments = {new StringNode("whoopsie")}
                             }
                         }
@@ -751,7 +754,7 @@ catch
             var src = @"test 1337 true ""hello"" (new(13.37; new [1; 2]))";
             var result = new InvocationNode
             {
-                MethodName = "test",
+				Expression = new GetIdentifierNode("test"),
                 Arguments =
                 {
                     new IntNode(1337),
@@ -786,7 +789,7 @@ catch
             {
                 LeftOperand = new InvocationNode
                 {
-                    MethodName = "test",
+					Expression = new GetIdentifierNode("test"),
                     Arguments =
                     {
                         new GetIdentifierNode("a"),
