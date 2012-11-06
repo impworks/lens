@@ -528,9 +528,9 @@ type ArrayHolder
             var src = @"
 test
     <| true
-    <| (a:double) ->
+    <| ((a:double) ->
         logger.log a
-        a ** 2
+        a ** 2)
     <| false";
 
             var result = new InvocationNode

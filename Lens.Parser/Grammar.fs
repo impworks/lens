@@ -153,7 +153,7 @@ funcdefRef            := pipe3
                          <| block
                          <| Node.functionNode
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
-blockRef              := ((IndentationParser.indentedMany1 block_line "block_line")
+blockRef              := ((IndentationParser.indentedMany1 block_line "block_line" .>>? opt nextLine)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -261,10 +261,11 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (many1 (newline >>? (token "<|" >>? value_expr)) .>>? nextLine) <|> (many1 value_expr)
+invoke_listRef        := (IndentationParser.indentedMany1 (token "<|" >>? value_expr) "invoke_list_item")
+                         <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr
-                                 token "(" >>? expr .>>? token ")"
+                                 between <| token "(" <| token ")" <| expr
                                  lvalue |>> Node.getterNode]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
