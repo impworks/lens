@@ -261,7 +261,7 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (IndentationParser.indentedMany1 (token "<|" >>? value_expr) "invoke_list_item")
+invoke_listRef        := (IndentationParser.indentedMany1 (token "<|" >>? expr) "invoke_list_item")
                          <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr
