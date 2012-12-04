@@ -8,7 +8,7 @@ open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
 
-let debug = false
+let debug = true
 
 let (<!>) (p : Parser<_,_>) label : Parser<_,_> =
     if debug then
@@ -143,9 +143,9 @@ let main               = many newline >>. (many stmt .>>? eof)
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
 usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
-recorddefRef          := keyword "record" >>? identifier .>>.? IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
+recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.indentedBlock recorddef_stmt |>> Node.record
 recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
-typedefRef            := keyword "type" >>? identifier .>>.? IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
+typedefRef            := keyword "type" >>? identifier .>>.? Indentation.indentedBlock typedef_stmt |>> Node.typeNode
 typedef_stmtRef       := token "|" >>? identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := pipe3
                          <| (keyword "fun" >>? identifier)
@@ -153,7 +153,7 @@ funcdefRef            := pipe3
                          <| block
                          <| Node.functionNode
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
-blockRef              := ((IndentationParser.indentedMany1 block_line "block_line" .>>? opt nextLine)
+blockRef              := ((Indentation.indentedBlock block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -261,7 +261,7 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (IndentationParser.indentedMany1 (token "<|" >>? expr) "invoke_list_item")
+invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? expr))
                          <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr

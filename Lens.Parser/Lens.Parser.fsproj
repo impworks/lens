@@ -64,6 +64,7 @@
     <Compile Include="Symbol.fs" />
     <Compile Include="IndentationParser.fs" />
     <Compile Include="Node.fs" />
+    <Compile Include="Indentation.fs" />
     <Compile Include="Grammar.fs" />
     <Compile Include="TreeBuilder.fs" />
     <None Include="App.config">
