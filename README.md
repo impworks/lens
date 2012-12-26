@@ -227,9 +227,9 @@
 
     try
         doSomethingHorrible()
-    catch WebException ex
+    catch(WebException ex)
         notify "web exception" ex.Message
-    catch DivideByZeroException ex
+    catch(DivideByZeroException ex)
         notify "whoops!"
     catch
         notify "something weird has happened"
@@ -342,7 +342,7 @@
 
 ## 5. Ограничения
 
-* Нет возможности создавать свои классы с методами, только структуры
+* Нет возможности создавать полноценные классы с методами, только поля
 * Нет возможности управлять доступом к переменным и методам (private)
 * Нет short-circuit операторов (&& и || вычисляют оба операнда)
 * Нет цикла foreach, поскольку его можно написать средствами языка
