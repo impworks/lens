@@ -45,7 +45,7 @@ dict_entry_expr     = value_expr "=>" value_expr
 new_obj_expr        = type [ invoke_list ]
 enumeration_expr    = line_expr { ";" line_expr }
 invoke_expr         = value_expr invoke_list
-invoke_list         = ( { NL "<|" value_expr } NL ) | { value_expr }
+invoke_list         = NL { IDENT "<|" expr NL } | { value_expr }
 value_expr          = literal | type_operator_expr | "(" expr ")" | lvalue
 type_operator_expr  = ( "typeof" | "default" ) "(" type ")"
 literal             = "()" | "null" | "true" | "false" | string | double | int
