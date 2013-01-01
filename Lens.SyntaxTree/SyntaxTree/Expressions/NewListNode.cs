@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -8,7 +9,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (m_ExpressionType != null)
 				return m_ExpressionType;
@@ -16,11 +17,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if(Expressions.Count == 0)
 				Error("List must contain at least one object!");
 
-			m_ExpressionType = typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType());
+			m_ExpressionType = typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType(ctx));
 			return m_ExpressionType;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

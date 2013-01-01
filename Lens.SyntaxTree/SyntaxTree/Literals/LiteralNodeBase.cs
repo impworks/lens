@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Literals
 {
@@ -14,7 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 		/// </summary>
 		public T Value { get; set; }
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			return typeof (T);
 		}

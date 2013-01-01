@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Literals
 {
@@ -7,12 +8,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class NullNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			return typeof (NullType);
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree
@@ -11,7 +12,8 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <summary>
 		/// The type of the expression represented by this node.
 		/// </summary>
-		public virtual Type GetExpressionType()
+		/// <param name="ctx"></param>
+		public virtual Type GetExpressionType(Context ctx)
 		{
 			return typeof (Unit);
 		}
@@ -19,7 +21,9 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <summary>
 		/// Generates the IL for this node.
 		/// </summary>
-		public abstract void Compile();
+		/// <param name="ctx"></param>
+		/// <param name="mustReturn"></param>
+		public abstract void Compile(Context ctx, bool mustReturn);
 
 		/// <summary>
 		/// Validates the node parameters.

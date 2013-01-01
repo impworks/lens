@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -77,10 +78,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// Returns the typically calculated argument type or throws an error.
 		/// </summary>
 		/// <returns></returns>
-		protected Type getNumericTypeOrError()
+		protected Type getNumericTypeOrError(Context ctx)
 		{
-			var left = LeftOperand.GetExpressionType();
-			var right = RightOperand.GetExpressionType();
+			var left = LeftOperand.GetExpressionType(ctx);
+			var right = RightOperand.GetExpressionType(ctx);
 
 			var numeric = getResultNumericType(left, right);
 			if (numeric == null)

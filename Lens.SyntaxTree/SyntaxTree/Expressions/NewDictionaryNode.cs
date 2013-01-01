@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -28,7 +29,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		#endregion
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (m_ExpressionType != null)
 				return m_ExpressionType;
@@ -37,14 +38,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				Error("List must contain at least one object!");
 
 			m_ExpressionType = typeof(Dictionary<,>).MakeGenericType(
-				Expressions[0].Key.GetExpressionType(),
-				Expressions[0].Value.GetExpressionType()
+				Expressions[0].Key.GetExpressionType(ctx),
+				Expressions[0].Value.GetExpressionType(ctx)
 			);
 
 			return m_ExpressionType;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
