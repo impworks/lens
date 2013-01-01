@@ -1,4 +1,4 @@
-﻿namespace Lens.SyntaxTree.SyntaxTree
+﻿namespace Lens.SyntaxTree
 {
 	/// <summary>
 	/// The void-like class for LENS.

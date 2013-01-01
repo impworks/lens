@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Lens.SyntaxTree;
 using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
 
@@ -85,6 +86,12 @@ namespace Lens.Test
 		public void Nightmare()
 		{
 			Test("Dictionary<System.Uri, List<Tuple<int[], string>>>", typeof(Dictionary<Uri, List<Tuple<int[], string>>>));
+		}
+
+		[Test]
+		public void SelfReference()
+		{
+			Test("Lens.SyntaxTree.Unit", typeof(Unit));
 		}
 
 		private void Test(string signature, Type type)

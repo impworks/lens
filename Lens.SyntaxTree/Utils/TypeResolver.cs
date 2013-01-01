@@ -31,6 +31,11 @@ namespace Lens.SyntaxTree.Utils
 			SearchableLocations = new Dictionary<string, List<string>>
 			{
 				{
+					// Local reference?
+					"",
+					new List<string>()
+				},
+				{
 					"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 					new List<string>
 					{
@@ -121,15 +126,15 @@ namespace Lens.SyntaxTree.Utils
 
 				foreach (var currNsp in nsps)
 				{
-					var typeName = checkNamespaces
-						? string.Format("{0}.{1},{2}", currNsp, name, currLocation.Key)
-						: string.Format("{0},{1}", name, currLocation.Key);
+					var typeName = checkNamespaces ? string.Format("{0}.{1}", currNsp, name) : name;
+					if (!string.IsNullOrEmpty(currLocation.Key))
+						typeName = string.Format("{0},{1}", typeName, currLocation.Key);
 
 					var type = Type.GetType(typeName);
 					if (type == null)
 						continue;
 
-					if (foundType != null)
+					if (foundType != null && foundType != type)
 					{
 						throw new ArgumentException(
 							string.Format(
