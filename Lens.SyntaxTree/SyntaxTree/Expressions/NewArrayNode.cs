@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
-			return string.Format("array({0})", string.Join(",", Expressions));
+			return string.Format("array({0})", string.Join(";", Expressions));
 		}
 	}
 }

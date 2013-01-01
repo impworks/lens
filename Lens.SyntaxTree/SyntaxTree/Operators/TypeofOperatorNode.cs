@@ -21,5 +21,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			throw new NotImplementedException();
 		}
+
+		public override string ToString()
+		{
+			return string.Format("typeof({0})", Type);
+		}
 	}
 }
