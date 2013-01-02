@@ -1,23 +1,32 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
+	public abstract class TypeDefinitionNodeBase : NodeBase, IStartLocationTrackingEntity
+	{
+		/// <summary>
+		/// The name of the type.
+		/// </summary>
+		public string Name { get; set; }
+
+		/// <summary>
+		/// The type builder associated with this type.
+		/// </summary>
+		public TypeBuilder TypeBuilder { get; set; } 
+	}
+
 	/// <summary>
 	/// A base node for algebraic types and records.
 	/// </summary>
-	public abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
+	public abstract class TypeDefinitionNodeBase<T> : TypeDefinitionNodeBase where T : LocationEntity
 	{
 		protected TypeDefinitionNodeBase()
 		{
 			Entries = new List<T>();
 		}
-
-		/// <summary>
-		/// The name of the type.
-		/// </summary>
-		public string Name { get; set; }
 
 		/// <summary>
 		/// The entries of the type node.

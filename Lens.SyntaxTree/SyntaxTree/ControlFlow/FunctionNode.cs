@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -26,6 +27,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// Function body.
 		/// </summary>
 		public CodeBlockNode Body { get; set; }
+
+		/// <summary>
+		/// Method builder.
+		/// </summary>
+		public MethodBuilder MethodBuilder { get; set; }
 
 		public override LexemLocation EndLocation
 		{

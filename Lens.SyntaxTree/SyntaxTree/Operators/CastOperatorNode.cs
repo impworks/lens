@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override Type GetExpressionType(Context ctx)
 		{
-			return Type.Type;
+			return ctx.ResolveType(Type.Signature);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

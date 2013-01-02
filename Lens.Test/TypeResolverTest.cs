@@ -96,8 +96,7 @@ namespace Lens.Test
 
 		private void Test(string signature, Type type)
 		{
-			TypeResolver.ResetLocations();
-			Assert.AreEqual(TypeResolver.ResolveType(signature), type);
+			Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
 		}
 	}
 }

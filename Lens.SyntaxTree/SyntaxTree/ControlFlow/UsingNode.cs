@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -12,7 +11,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			// does nothing
+			// all UsingNodes are processed by Context.CreateFromNodes()
 		}
 
 		#region Equality members

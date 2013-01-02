@@ -19,11 +19,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// Gets the list of distinctive entry tag types.
 		/// </summary>
 		/// <returns></returns>
-		private IEnumerable<Type> getDistinctTagTypes()
+		private IEnumerable<Type> getDistinctTagTypes(Context ctx)
 		{
 			var types = new Dictionary<Type, bool>();
 			foreach (var curr in Entries)
-				types[curr.TagType.Type] = true;
+				types[ctx.ResolveType(curr.TagType.Signature)] = true;
 
 			return types.Keys;
 		}
@@ -34,6 +34,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class TypeEntry : LocationEntity
 	{
+		/// <summary>
+		/// The type of this label.
+		/// </summary>
+		public TypeDefinitionNode ContainingType { get; set; }
+
 		/// <summary>
 		/// The name of the entry.
 		/// </summary>

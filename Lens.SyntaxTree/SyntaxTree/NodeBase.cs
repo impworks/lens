@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		protected void Error(string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
-			throw new ParseException(msg, StartLocation, EndLocation);
+			throw new LensCompilerException(msg, StartLocation, EndLocation);
 		}
 
 		protected void LocationSetError()

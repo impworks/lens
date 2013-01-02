@@ -1,4 +1,5 @@
-﻿using Lens.SyntaxTree.SyntaxTree;
+﻿using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens.SyntaxTree.Utils
 {
@@ -17,7 +18,6 @@ namespace Lens.SyntaxTree.Utils
 			Modifier = modifier;
 		}
 
-
 		/// <summary>
 		/// Argument name.
 		/// </summary>
@@ -32,6 +32,11 @@ namespace Lens.SyntaxTree.Utils
 		/// Argument modifier
 		/// </summary>
 		public ArgumentModifier Modifier { get; set; }
+
+		/// <summary>
+		/// Parameter builder.
+		/// </summary>
+		public ParameterBuilder ParameterBuilder { get; set; }
 
 		#region Equality members
 
