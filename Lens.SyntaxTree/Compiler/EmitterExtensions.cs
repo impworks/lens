@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace Lens.SyntaxTree.Compiler
@@ -14,18 +15,22 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			switch (value)
 			{
-				case 0:  gen.Emit(OpCodes.Ldc_I4_0); break;
-				case 1:  gen.Emit(OpCodes.Ldc_I4_1); break;
-				case 2:  gen.Emit(OpCodes.Ldc_I4_2); break;
-				case 3:  gen.Emit(OpCodes.Ldc_I4_3); break;
-				case 4:  gen.Emit(OpCodes.Ldc_I4_4); break;
-				case 5:  gen.Emit(OpCodes.Ldc_I4_5); break;
-				case 6:  gen.Emit(OpCodes.Ldc_I4_6); break;
-				case 7:  gen.Emit(OpCodes.Ldc_I4_7); break;
-				case 8:  gen.Emit(OpCodes.Ldc_I4_8); break;
-				case -1: gen.Emit(OpCodes.Ldc_I4_M1); break;
-				default: gen.Emit(OpCodes.Ldc_I4, value); break;
+				case 0: gen.Emit(OpCodes.Ldc_I4_0); return;
+				case 1: gen.Emit(OpCodes.Ldc_I4_1); return;
+				case 2: gen.Emit(OpCodes.Ldc_I4_2); return;
+				case 3: gen.Emit(OpCodes.Ldc_I4_3); return;
+				case 4: gen.Emit(OpCodes.Ldc_I4_4); return;
+				case 5: gen.Emit(OpCodes.Ldc_I4_5); return;
+				case 6: gen.Emit(OpCodes.Ldc_I4_6); return;
+				case 7: gen.Emit(OpCodes.Ldc_I4_7); return;
+				case 8: gen.Emit(OpCodes.Ldc_I4_8); return;
+				case -1: gen.Emit(OpCodes.Ldc_I4_M1); return;
 			}
+
+			if(value > -127 && value < 127)
+				gen.Emit(OpCodes.Ldc_I4_S, (sbyte)value);
+			else
+				gen.Emit(OpCodes.Ldc_I4, value);
 		}
 
 		/// <summary>
@@ -67,6 +72,14 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			gen.Emit(OpCodes.Ldstr, value);
 		}
+		
+		/// <summary>
+		/// Pushes a type runtime handle onto the stack.
+		/// </summary>
+		public static void EmitConstant(this ILGenerator gen, Type type)
+		{
+			gen.Emit(OpCodes.Ldtoken, type);
+		}
 
 		/// <summary>
 		/// Pushes a null value onto the stack.
@@ -102,6 +115,30 @@ namespace Lens.SyntaxTree.Compiler
 		public static void EmitCompareGreater(this ILGenerator gen, bool signed = true)
 		{
 			gen.Emit(signed ? OpCodes.Cgt : OpCodes.Cgt_Un);
+		}
+
+		/// <summary>
+		/// Jumps to a location.
+		/// </summary>
+		public static void EmitJump(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Br, label);
+		}
+
+		/// <summary>
+		/// Jumps to a location if the top of the stack is true.
+		/// </summary>
+		public static void EmitBranchTrue(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Brtrue, label);
+		}
+
+		/// <summary>
+		/// Jumps to a location if the top of the stack is false.
+		/// </summary>
+		public static void EmitBranchFalse(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Brfalse, label);
 		}
 
 		#endregion
@@ -188,15 +225,215 @@ namespace Lens.SyntaxTree.Compiler
 			gen.Emit(OpCodes.Shr);
 		}
 
+		/// <summary>
+		/// Negates the value on the stack.
+		/// </summary>
+		public static void EmitNegate(this ILGenerator gen)
+		{
+			gen.Emit(OpCodes.Neg);
+		}
+
 		#endregion
 
 		#region Saving and loading
 
+		/// <summary>
+		/// Loads the value of the field onto the stack.
+		/// </summary>
+		public static void EmitLoadField(this ILGenerator gen, FieldInfo field)
+		{
+			gen.Emit(OpCodes.Ldfld, field);
+		}
 
+		/// <summary>
+		/// Loads the address of the field onto the stack.
+		/// </summary>
+		public static void EmitLoadFieldAddr(this ILGenerator gen, FieldInfo field)
+		{
+			gen.Emit(OpCodes.Ldflda, field);
+		}
+
+		/// <summary>
+		/// Saves the value from the stack to the field.
+		/// </summary>
+		public static void EmitSaveField(this ILGenerator gen, FieldInfo field)
+		{
+			gen.Emit(OpCodes.Stfld, field);
+		}
+
+		/// <summary>
+		/// Loads the value of an argument onto the stack.
+		/// </summary>
+		public static void EmitLoadArgument(this ILGenerator gen, int argId)
+		{
+			switch (argId)
+			{
+				case 0: gen.Emit(OpCodes.Ldarg_0); break;
+				case 1: gen.Emit(OpCodes.Ldarg_1); break;
+				case 2: gen.Emit(OpCodes.Ldarg_2); break;
+				case 3: gen.Emit(OpCodes.Ldarg_3); break;
+				default: gen.Emit(OpCodes.Ldarg, (short)argId); break;
+			}
+		}
+
+		/// <summary>
+		/// Loads the address of the field onto the stack.
+		/// </summary>
+		public static void EmitLoadArgumentAddr(this ILGenerator gen, int argId)
+		{
+			if(argId < 255)
+				gen.Emit(OpCodes.Ldarga_S, (byte)argId);
+			else
+				gen.Emit(OpCodes.Ldarga, (short)argId);
+		}
+
+		/// <summary>
+		/// Saves the value from the stack to the argument store.
+		/// </summary>
+		public static void EmitSaveArgument(this ILGenerator gen, int argId)
+		{
+			if(argId < 255)
+				gen.Emit(OpCodes.Starg, (byte)argId);
+			else
+				gen.Emit(OpCodes.Starg, (short)argId);
+		}
+
+		/// <summary>
+		/// Loads the value of a local variable onto the stack.
+		/// </summary>
+		public static void EmitLoadLocal(this ILGenerator gen, int varId)
+		{
+			switch (varId)
+			{
+				case 0: gen.Emit(OpCodes.Ldloc_0); break;
+				case 1: gen.Emit(OpCodes.Ldloc_1); break;
+				case 2: gen.Emit(OpCodes.Ldloc_2); break;
+				case 3: gen.Emit(OpCodes.Ldloc_3); break;
+				default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
+			}
+		}
+
+		/// <summary>
+		/// Saves the value from the stack to a local variable.
+		/// </summary>
+		public static void EmitSaveLocal(this ILGenerator gen, int varId)
+		{
+			gen.Emit(OpCodes.Stloc, (short)varId);
+		}
+
+		/// <summary>
+		/// Loads an array item of the specified type onto the stack.
+		/// </summary>
+		public static void EmitLoadIndex(this ILGenerator gen, Type itemType)
+		{
+			if(itemType == typeof(sbyte))
+				gen.Emit(OpCodes.Ldelem_I1);
+			else if (itemType == typeof(short))
+				gen.Emit(OpCodes.Ldelem_I2);
+			else if (itemType == typeof(int))
+				gen.Emit(OpCodes.Ldelem_I4);
+			else if (itemType == typeof(long) || itemType == typeof(ulong))
+				gen.Emit(OpCodes.Ldelem_I8);
+			else if (itemType == typeof(float))
+				gen.Emit(OpCodes.Ldelem_R4);
+			else if (itemType == typeof(double))
+				gen.Emit(OpCodes.Ldelem_R8);
+			else if (itemType == typeof(byte))
+				gen.Emit(OpCodes.Ldelem_U1);
+			else if (itemType == typeof(ushort))
+				gen.Emit(OpCodes.Ldelem_U2);
+			else if (itemType == typeof(uint))
+				gen.Emit(OpCodes.Ldelem_U4);
+			else if(itemType.IsClass || itemType.IsInterface)
+				gen.Emit(OpCodes.Ldelem_Ref);
+			else
+				throw new InvalidOperationException("Cannot use LoadIndex on value types! Use LoadIndexAddress instead.");
+		}
+
+		/// <summary>
+		/// Loads an array item address onto the stack.
+		/// </summary>
+		public static void EmitLoadIndexAddress(this ILGenerator gen, Type itemType)
+		{
+			if(itemType.IsClass || itemType.IsInterface)
+				throw new InvalidOperationException("Cannot use LoadIndexAddress on ref types! Use LoadIndex instead.");
+
+			gen.Emit(OpCodes.Ldelema, itemType);
+		}
+
+		/// <summary>
+		/// Saves an item at the given array location.
+		/// </summary>
+		public static void EmitSaveIndex(this ILGenerator gen, Type itemType)
+		{
+			if (itemType == typeof (byte) || itemType == typeof (sbyte))
+				gen.Emit(OpCodes.Stelem_I1);
+			else if (itemType == typeof(short) || itemType == typeof(ushort))
+				gen.Emit(OpCodes.Stelem_I2);
+			else if (itemType == typeof(int) || itemType == typeof(uint))
+				gen.Emit(OpCodes.Stelem_I4);
+			else if (itemType == typeof(long) || itemType == typeof(ulong))
+				gen.Emit(OpCodes.Stelem_I8);
+			else if (itemType == typeof(float))
+				gen.Emit(OpCodes.Stelem_R4);
+			else if (itemType == typeof(double))
+				gen.Emit(OpCodes.Stelem_R8);
+			else if (itemType.IsClass || itemType.IsInterface)
+				gen.Emit(OpCodes.Stelem_Ref);
+		}
+
+		/// <summary>
+		/// Saves an object at the given location in memory.
+		/// </summary>
+		public static void EmitSaveObject(this ILGenerator gen, Type itemType)
+		{
+			gen.Emit(OpCodes.Stobj, itemType);
+		}
 
 		#endregion
 
 		#region Methods and constructors
+
+		/// <summary>
+		/// Creates a new object using the given constructor.
+		/// </summary>
+		public static void EmitCreateObject(this ILGenerator gen, ConstructorInfo ctr)
+		{
+			gen.Emit(OpCodes.Newobj, ctr);
+		}
+
+		/// <summary>
+		/// Initializes a structure fields to nulls of appropriate types.
+		/// </summary>
+		public static void EmitInitStruct(this ILGenerator gen, Type type)
+		{
+			gen.Emit(OpCodes.Initobj, type);
+		}
+
+		/// <summary>
+		/// Creates a new array of the given type.
+		/// Array size is to be pushed into the stack beforehand. 
+		/// </summary>
+		public static void EmitCreateArray(this ILGenerator gen, Type type)
+		{
+			gen.Emit(OpCodes.Newarr, type);
+		}
+
+		/// <summary>
+		/// Calculates the size of the array.
+		/// </summary>
+		public static void EmitGetArrayLength(this ILGenerator gen)
+		{
+			gen.Emit(OpCodes.Ldlen);
+		}
+
+		/// <summary>
+		/// Call a method.
+		/// </summary>
+		public static void EmitCall(this ILGenerator gen, MethodInfo method, bool isVirtual = false)
+		{
+			gen.Emit(isVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
+		}
 
 		/// <summary>
 		/// Return from the method.
