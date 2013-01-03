@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -8,31 +7,27 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the algebraic type definition construct.
 	/// </summary>
-	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeEntry>
+	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
 	{
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
 
-		/// <summary>
-		/// Gets the list of distinctive entry tag types.
-		/// </summary>
-		/// <returns></returns>
-		private IEnumerable<Type> getDistinctTagTypes(Context ctx)
+		public void PrepareLabels(Context ctx)
 		{
-			var types = new Dictionary<Type, bool>();
-			foreach (var curr in Entries)
-				types[ctx.ResolveType(curr.TagType.Signature)] = true;
-
-			return types.Keys;
+			foreach (var label in Entries)
+			{
+				label.ContainingType = this;
+				label.PrepareSelf(ctx);
+			}
 		}
 	}
 
 	/// <summary>
 	/// Definition of an algebraic type entry.
 	/// </summary>
-	public class TypeEntry : LocationEntity
+	public class TypeLabel : LocationEntity
 	{
 		/// <summary>
 		/// The type of this label.
@@ -54,9 +49,17 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public bool IsTagged { get { return TagType != null; } }
 
+		/// <summary>
+		/// Register assembly entities.
+		/// </summary>
+		public void PrepareSelf(Context ctx)
+		{
+			throw new NotImplementedException();
+		}
+
 		#region Equality members
 
-		protected bool Equals(TypeEntry other)
+		protected bool Equals(TypeLabel other)
 		{
 			return string.Equals(Name, other.Name) && Equals(TagType, other.TagType);
 		}
@@ -66,7 +69,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((TypeEntry)obj);
+			return Equals((TypeLabel)obj);
 		}
 
 		public override int GetHashCode()

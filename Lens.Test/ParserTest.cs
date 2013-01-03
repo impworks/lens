@@ -38,8 +38,8 @@ record Student
                 Name = "Student",
                 Entries =
                 {
-                    new RecordEntry { Name = "Name", Type = "string" },
-                    new RecordEntry { Name = "Age", Type = "int" }
+                    new RecordField { Name = "Name", Type = "string" },
+                    new RecordField { Name = "Age", Type = "int" }
                 }
             };
 
@@ -61,10 +61,10 @@ type Suit
                 Name = "Suit",
                 Entries =
                 {
-                    new TypeEntry {Name = "Hearts"},
-                    new TypeEntry {Name = "Clubs"},
-                    new TypeEntry {Name = "Spades"},
-                    new TypeEntry {Name = "Diamonds"}
+                    new TypeLabel {Name = "Hearts"},
+                    new TypeLabel {Name = "Clubs"},
+                    new TypeLabel {Name = "Spades"},
+                    new TypeLabel {Name = "Diamonds"}
                 }
             };
 
@@ -87,11 +87,11 @@ type Card
                 Name = "Card",
                 Entries =
                 {
-                    new TypeEntry {Name = "Ace", TagType = "Suit"},
-                    new TypeEntry {Name = "King", TagType = "Suit"},
-                    new TypeEntry {Name = "Queen", TagType = "Suit"},
-                    new TypeEntry {Name = "Jack", TagType = "Suit"},
-                    new TypeEntry {Name = "ValueCard", TagType = "Tuple<Suit,int>"}
+                    new TypeLabel {Name = "Ace", TagType = "Suit"},
+                    new TypeLabel {Name = "King", TagType = "Suit"},
+                    new TypeLabel {Name = "Queen", TagType = "Suit"},
+                    new TypeLabel {Name = "Jack", TagType = "Suit"},
+                    new TypeLabel {Name = "ValueCard", TagType = "Tuple<Suit,int>"}
                 }
             };
 
@@ -108,7 +108,7 @@ type ArrayHolder
             var result = new TypeDefinitionNode
             {
                 Name = "ArrayHolder",
-                Entries = { new TypeEntry { Name = "Array", TagType = "int[][]" } }
+                Entries = { new TypeLabel { Name = "Array", TagType = "int[][]" } }
             };
 
             Test(src, result);
@@ -118,7 +118,7 @@ type ArrayHolder
         public void SimpleFunction()
         {
             var src = @"fun negate x:int -> -x";
-            var result = new NamedFunctionNode
+            var result = new FunctionNode
             {
                 Name = "negate",
                 Arguments =
@@ -161,7 +161,7 @@ type ArrayHolder
     let sq2 = b * b
     sqrt (sq1 + sq2)";
 
-            var result = new NamedFunctionNode
+            var result = new FunctionNode
             {
                 Name = "hypo",
                 Arguments = new Dictionary<string, FunctionArgument>
@@ -339,7 +339,7 @@ type ArrayHolder
             var src = "let getFive = -> 5";
             var result = new LetNode("getFive")
             {
-                Value = new FunctionNode
+                Value = new FunctionNodeBase
                 {
                     Body = { new IntNode(5) }
                 }
@@ -354,7 +354,7 @@ type ArrayHolder
             var src = "let div = (a:System.Float b:System.Float) -> a / b";
             var result = new LetNode("div")
             {
-                Value = new FunctionNode
+                Value = new FunctionNodeBase
                 {
                     Arguments =
                     {
@@ -539,7 +539,7 @@ test
                 Arguments =
                 {
                     new BooleanNode(true),
-                    new FunctionNode
+                    new FunctionNodeBase
                     {
                         Arguments = {{"a", new FunctionArgument("a", "double")}},
                         Body =

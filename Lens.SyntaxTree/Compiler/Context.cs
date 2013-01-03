@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
@@ -14,8 +13,6 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public partial class Context
 	{
-		#region Constructors
-		
 		private Context()
 		{
 			var an = new AssemblyName(getAssemblyName());
@@ -26,7 +23,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 
-			DefinedFunctions = new List<NamedFunctionNode>();
+			DefinedFunctions = new List<FunctionNode>();
 			DefinedRecords = new List<RecordDefinitionNode>();
 			DefinedTypes = new List<TypeDefinitionNode>();
 			ScriptBody = new CodeBlockNode();
@@ -45,8 +42,8 @@ namespace Lens.SyntaxTree.Compiler
 					ctx.DefinedTypes.Add(currNode as TypeDefinitionNode);
 				else if (currNode is RecordDefinitionNode)
 					ctx.DefinedRecords.Add(currNode as RecordDefinitionNode);
-				else if (currNode is NamedFunctionNode)
-					ctx.DefinedFunctions.Add(currNode as NamedFunctionNode);
+				else if (currNode is FunctionNode)
+					ctx.DefinedFunctions.Add(currNode as FunctionNode);
 				else if(currNode is UsingNode)
 					ctx._TypeResolver.AddNamespace((currNode as UsingNode).Namespace);
 				else
@@ -57,13 +54,7 @@ namespace Lens.SyntaxTree.Compiler
 			return ctx;
 		}
 
-		#endregion
-
 		#region Properties
-
-		private static int _AssemblyCounter;
-
-		private TypeResolver _TypeResolver;
 
 		/// <summary>
 		/// The assembly that's being currently built.
@@ -98,7 +89,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The defined functions.
 		/// </summary>
-		public List<NamedFunctionNode> DefinedFunctions { get; private set; }
+		public List<FunctionNode> DefinedFunctions { get; private set; }
 
 		/// <summary>
 		/// The body of the script.
@@ -107,109 +98,22 @@ namespace Lens.SyntaxTree.Compiler
 
 		#endregion
 
-		#region Methods
+		#region Fields
 
 		/// <summary>
-		/// Add a new type to the list and ensure the name is unique.
+		/// The counter that allows multiple assemblies.
 		/// </summary>
-		/// <param name="node"></param>
-		public void AddType(TypeDefinitionNode node)
-		{
-			ensureTypeNameUniqueness(node.Name);
-			DefinedTypes.Add(node);
-		}
+		private static int _AssemblyId;
 
 		/// <summary>
-		/// Add a new record to the list and ensure the name is unique.
+		/// The counter for closure types.
 		/// </summary>
-		/// <param name="node"></param>
-		public void AddRecord(RecordDefinitionNode node)
-		{
-			ensureTypeNameUniqueness(node.Name);
-			DefinedRecords.Add(node);
-		}
-		
-		/// <summary>
-		/// Resolve a type by it's string signature.
-		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
-		/// This means 
-		/// </summary>
-		/// <param name="signature"></param>
-		/// <returns></returns>
-		public Type ResolveType(string signature)
-		{
-			throw new NotImplementedException();
-		}
-		
-		#endregion
-
-		#region Helpers
+		private int _ClosureId;
 
 		/// <summary>
-		/// Generates a unique assembly name.
+		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
-		private static string getAssemblyName()
-		{
-			lock(typeof(Context))
-				_AssemblyCounter++;
-			return "_CompiledAssembly" + _AssemblyCounter;
-		}
-
-		/// <summary>
-		/// Ensure the name is not a defined type or a record.
-		/// </summary>
-		/// <param name="typeName"></param>
-		private void ensureTypeNameUniqueness(string typeName)
-		{
-			foreach (var curr in DefinedTypes)
-				if (curr.Name == typeName)
-					throw new LensCompilerException(string.Format("A type named {0} is already defined!", typeName));
-
-			foreach (var curr in DefinedRecords)
-				if (curr.Name == typeName)
-					throw new LensCompilerException(string.Format("A record named {0} is already defined!", typeName));
-		}
-
-		/// <summary>
-		/// Registers all structures in the assembly.
-		/// </summary>
-		private void prepare()
-		{
-			foreach(var type in DefinedTypes.OfType<TypeDefinitionNodeBase>().Union(DefinedRecords))
-				type.TypeBuilder = MainModule.DefineType(type.Name, TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed);
-
-			foreach (var func in DefinedFunctions)
-			{
-				var retType = func.Body.GetExpressionType(this);
-				var args = func.Arguments.Select(x => ResolveType(x.Value.Type.Signature)).ToArray();
-				func.MethodBuilder = MainType.DefineMethod(
-					func.Name,
-					MethodAttributes.Private | MethodAttributes.Static,
-					CallingConventions.Standard,
-					retType,
-					args
-				);
-
-				var argId = 1;
-				foreach (var argInfo in func.Arguments)
-				{
-					// todo: ref parameters?
-					var arg = argInfo.Value;
-					var argKind = arg.Modifier == ArgumentModifier.Out ? ParameterAttributes.Out : ParameterAttributes.In;
-					arg.ParameterBuilder = func.MethodBuilder.DefineParameter(argId, argKind, arg.Name);
-					argId++;
-				}
-			}
-
-			// after the types are initialized, we can now define fields
-			// this solves the problem of a possible circular reference between types' fields,
-			// when type A has a field of type B and type B has a field of type A
-//			foreach (var curr in DefinedTypes)
-//				prepareTypeLabels(curr);
-//
-//			foreach (var curr in DefinedRecords)
-//				prepareRecordFields(curr);
-		}
+		private readonly TypeResolver _TypeResolver;
 
 		#endregion
 	}
