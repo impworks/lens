@@ -21,7 +21,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			TypeBuilder = ctx.MainModule.DefineType(
 				Name,
-				TypeAttributes.Public | TypeAttributes.Class
+				TypeAttributes.Public | TypeAttributes.Class,
+				typeof(object),
+				new[] { typeof(ILensType) }
 			);
 		}
 
@@ -78,7 +80,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			TypeBuilder = ctx.MainModule.DefineType(
 				Name,
 				TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed,
-				ContainingType.TypeBuilder
+				ContainingType.TypeBuilder,
+				new[] { typeof(ILensTypeRecord) }
 			);
 		}
 

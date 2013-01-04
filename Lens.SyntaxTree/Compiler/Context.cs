@@ -22,10 +22,12 @@ namespace Lens.SyntaxTree.Compiler
 			EntryPoint = MainType.DefineMethod("_ScriptBody", MethodAttributes.Static | MethodAttributes.Public, typeof(object), Type.EmptyTypes);
 
 			_TypeResolver = new TypeResolver();
-			_DefinedFunctions = new List<FunctionNode>();
-			_DefinedRecords = new List<RecordDefinitionNode>();
-			_DefinedTypes = new List<TypeDefinitionNode>();
+			_DefinedFunctions = new Dictionary<string, List<FunctionNode>>();
+			_DefinedRecords = new Dictionary<string, RecordDefinitionNode>();
+			_DefinedTypes = new Dictionary<string, TypeDefinitionNode>();
 			_MainFunction = new FunctionNode {Name = "_ScriptBody"};
+
+			_TypeRegistry = new Dictionary<string, Type>();
 		}
 
 		/// <summary>
@@ -38,18 +40,17 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var currNode in nodes)
 			{
 				if (currNode is TypeDefinitionNode)
-					ctx._DefinedTypes.Add(currNode as TypeDefinitionNode);
+					ctx.AddType(currNode as TypeDefinitionNode);
 				else if (currNode is RecordDefinitionNode)
-					ctx._DefinedRecords.Add(currNode as RecordDefinitionNode);
+					ctx.AddRecord(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
-					ctx._DefinedFunctions.Add(currNode as FunctionNode);
-				else if(currNode is UsingNode)
+					ctx.AddFunction(currNode as FunctionNode);
+				else if (currNode is UsingNode)
 					ctx._TypeResolver.AddNamespace((currNode as UsingNode).Namespace);
 				else
 					ctx._MainFunction.Body.Add(currNode);
 			}
 
-			ctx.prepare();
 			return ctx;
 		}
 
@@ -97,22 +98,27 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The defined records.
 		/// </summary>
-		private List<RecordDefinitionNode> _DefinedRecords;
+		private Dictionary<string, RecordDefinitionNode> _DefinedRecords;
 
 		/// <summary>
 		/// The defined types.
 		/// </summary>
-		private List<TypeDefinitionNode> _DefinedTypes;
+		private Dictionary<string, TypeDefinitionNode> _DefinedTypes;
 
 		/// <summary>
 		/// The defined functions.
 		/// </summary>
-		private List<FunctionNode> _DefinedFunctions;
+		private Dictionary<string, List<FunctionNode>> _DefinedFunctions;
 
 		/// <summary>
 		/// The main function body.
 		/// </summary>
 		private FunctionNode _MainFunction;
+
+		/// <summary>
+		/// The type cache.
+		/// </summary>
+		private Dictionary<string, Type> _TypeRegistry;
 
 		#endregion
 	}

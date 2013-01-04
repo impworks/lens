@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -16,7 +19,23 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public Type ResolveType(string type)
 		{
-			throw new NotImplementedException();
+			Type result;
+
+			if (_TypeRegistry.TryGetValue(type, out result))
+				return result;
+
+			try
+			{
+				result = _TypeResolver.ResolveType(type);
+				_TypeRegistry.Add(type, result);
+				return result;
+			}
+			catch (Exception ex)
+			{
+				error(ex.Message);
+			}
+
+			return null;
 		}
 
 		/// <summary>
@@ -25,7 +44,37 @@ namespace Lens.SyntaxTree.Compiler
 		/// <returns></returns>
 		public FieldInfo ResolveField(string type, string fieldName)
 		{
-			throw new NotImplementedException();
+			var t = ResolveType(type);
+			FieldInfo result = null;
+
+			// type is defined internally
+			if (t is TypeBuilder)
+			{
+				if (t.Implements<ILensRecord>())
+				{
+					var rec = _DefinedRecords[type].Entries.FirstOrDefault(r => r.Name == fieldName);
+					if (rec != null)
+						result = rec.FieldBuilder;
+				}
+				else if(t.Implements<ILensTypeRecord>())
+				{
+					if (fieldName == "Tag")
+					{
+						var label = _DefinedTypes.SelectMany(dt => dt.Value.Entries).FirstOrDefault(l => l.Name == type);
+						if (label != null)
+							result = label.FieldBuilder;
+					}
+				}
+			}
+			else
+			{
+				result = t.GetField(fieldName);
+			}
+
+			if (result == null)
+				error("Type '{0}' does not contain a field named '{1}'.", type, fieldName);
+
+			return result;
 		}
 
 		/// <summary>
@@ -44,9 +93,62 @@ namespace Lens.SyntaxTree.Compiler
 			throw new NotImplementedException();
 		}
 
+		/// <summary>
+		/// Add an existing type node to the list.
+		/// </summary>
+		public void AddType(TypeDefinitionNode node)
+		{
+			var name = node.Name;
+			if(_DefinedTypes.ContainsKey(name))
+				error(node, "A type named '{0}' has already been defined!", name);
+
+			_DefinedTypes.Add(name, node);
+		}
+
+		/// <summary>
+		/// Add an existing type node to the list.
+		/// </summary>
+		public void AddRecord(RecordDefinitionNode node)
+		{
+			var name = node.Name;
+			if (_DefinedRecords.ContainsKey(name))
+				error(node, "A record named '{0}' has already been defined!", name);
+
+			_DefinedRecords.Add(name, node);
+		}
+
+		/// <summary>
+		/// Add an existing type node to the list.
+		/// </summary>
+		public void AddFunction(FunctionNode node)
+		{
+			var name = node.Name;
+			List<FunctionNode> list;
+			if(_DefinedFunctions.TryGetValue(name, out list))
+				list.Add(node);
+			else
+				_DefinedFunctions.Add(name, new List<FunctionNode> { node });
+		}
+
 		#endregion
 
 		#region Helpers
+
+		/// <summary>
+		/// Throw a new error.
+		/// </summary>
+		private void error(LocationEntity entity, string err, params object[] ps)
+		{
+			throw new LensCompilerException(string.Format(err, ps), entity);
+		}
+
+		/// <summary>
+		/// Throw a new error.
+		/// </summary>
+		private void error(string err, params object[] ps)
+		{
+			throw new LensCompilerException(string.Format(err, ps));
+		}
 
 		/// <summary>
 		/// Generates a unique assembly name.
@@ -73,37 +175,43 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void prepareTypesAndRecords()
 		{
-			var reg = new Dictionary<string,bool>();
 			Action<string, LocationEntity> check = (key, ent) =>
 			{
-				bool val;
-				if (reg.TryGetValue(key, out val))
+				Type type;
+				if (_TypeRegistry.TryGetValue(key, out type))
 				{
 					throw new LensCompilerException(
-						string.Format("A {0} named '{1}' has already been defined.", val ? "type" : "type label", key),
+						string.Format("A {0} named '{1}' has already been defined.", type.BaseType == typeof(object) ? "type" : "type label", key),
 						ent
 					);
 				}
 			};
 
-			foreach (var currType in _DefinedTypes)
+			foreach (var currTypePair in _DefinedTypes)
 			{
-				check(currType.Name, currType);
-				reg.Add(currType.Name, true);
-				currType.PrepareSelf(this);
+				var type = currTypePair.Value;
+				var typeName = currTypePair.Key;
 
-				foreach (var currLabel in currType.Entries)
+				check(typeName, type);
+				type.PrepareSelf(this);
+				_TypeRegistry.Add(typeName, type.TypeBuilder);
+
+				foreach (var currLabel in type.Entries)
 				{
 					check(currLabel.Name, currLabel);
-					reg.Add(currLabel.Name, false);
-					currLabel.PrepareSelf(currType, this);
+					currLabel.PrepareSelf(type, this);
+					_TypeRegistry.Add(currLabel.Name, currLabel.TypeBuilder);
 				}
 			}
 
-			foreach (var currRec in _DefinedRecords)
+			foreach (var currRecPair in _DefinedRecords)
 			{
-				check(currRec.Name, currRec);
-				currRec.PrepareSelf(this);
+				var rec = currRecPair.Value;
+				var recName = currRecPair.Key;
+
+				check(recName, rec);
+				rec.PrepareSelf(this);
+				_TypeRegistry.Add(recName, rec.TypeBuilder);
 			}
 		}
 
@@ -113,7 +221,7 @@ namespace Lens.SyntaxTree.Compiler
 		private void prepareTypeLabelTags()
 		{
 			foreach(var currType in _DefinedTypes)
-				foreach(var currLabel in currType.Entries)
+				foreach(var currLabel in currType.Value.Entries)
 					currLabel.PrepareTag(this);
 		}
 
@@ -123,8 +231,8 @@ namespace Lens.SyntaxTree.Compiler
 		private void prepareRecordFields()
 		{
 			foreach (var currRec in _DefinedRecords)
-				foreach(var currField in currRec.Entries)
-					currField.PrepareSelf(currRec, this);
+				foreach(var currField in currRec.Value.Entries)
+					currField.PrepareSelf(currRec.Value, this);
 		}
 
 		#endregion
