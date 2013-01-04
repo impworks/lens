@@ -22,11 +22,10 @@ namespace Lens.SyntaxTree.Compiler
 			EntryPoint = MainType.DefineMethod("_ScriptBody", MethodAttributes.Static | MethodAttributes.Public, typeof(object), Type.EmptyTypes);
 
 			_TypeResolver = new TypeResolver();
-
-			DefinedFunctions = new List<FunctionNode>();
-			DefinedRecords = new List<RecordDefinitionNode>();
-			DefinedTypes = new List<TypeDefinitionNode>();
-			ScriptBody = new CodeBlockNode();
+			_DefinedFunctions = new List<FunctionNode>();
+			_DefinedRecords = new List<RecordDefinitionNode>();
+			_DefinedTypes = new List<TypeDefinitionNode>();
+			_MainFunction = new FunctionNode {Name = "_ScriptBody"};
 		}
 
 		/// <summary>
@@ -39,15 +38,15 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var currNode in nodes)
 			{
 				if (currNode is TypeDefinitionNode)
-					ctx.DefinedTypes.Add(currNode as TypeDefinitionNode);
+					ctx._DefinedTypes.Add(currNode as TypeDefinitionNode);
 				else if (currNode is RecordDefinitionNode)
-					ctx.DefinedRecords.Add(currNode as RecordDefinitionNode);
+					ctx._DefinedRecords.Add(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
-					ctx.DefinedFunctions.Add(currNode as FunctionNode);
+					ctx._DefinedFunctions.Add(currNode as FunctionNode);
 				else if(currNode is UsingNode)
 					ctx._TypeResolver.AddNamespace((currNode as UsingNode).Namespace);
 				else
-					ctx.ScriptBody.Add(currNode);
+					ctx._MainFunction.Body.Add(currNode);
 			}
 
 			ctx.prepare();
@@ -76,26 +75,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public MethodBuilder EntryPoint { get; private set; }
 
-		/// <summary>
-		/// The defined records.
-		/// </summary>
-		public List<RecordDefinitionNode> DefinedRecords { get; private set; }
-
-		/// <summary>
-		/// The defined types.
-		/// </summary>
-		public List<TypeDefinitionNode> DefinedTypes { get; private set; }
-
-		/// <summary>
-		/// The defined functions.
-		/// </summary>
-		public List<FunctionNode> DefinedFunctions { get; private set; }
-
-		/// <summary>
-		/// The body of the script.
-		/// </summary>
-		public CodeBlockNode ScriptBody { get; private set; }
-
 		#endregion
 
 		#region Fields
@@ -114,6 +93,26 @@ namespace Lens.SyntaxTree.Compiler
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
 		private readonly TypeResolver _TypeResolver;
+
+		/// <summary>
+		/// The defined records.
+		/// </summary>
+		private List<RecordDefinitionNode> _DefinedRecords;
+
+		/// <summary>
+		/// The defined types.
+		/// </summary>
+		private List<TypeDefinitionNode> _DefinedTypes;
+
+		/// <summary>
+		/// The defined functions.
+		/// </summary>
+		private List<FunctionNode> _DefinedFunctions;
+
+		/// <summary>
+		/// The main function body.
+		/// </summary>
+		private FunctionNode _MainFunction;
 
 		#endregion
 	}

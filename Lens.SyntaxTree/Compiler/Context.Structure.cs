@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
-using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -11,33 +10,36 @@ namespace Lens.SyntaxTree.Compiler
 		#region Methods
 
 		/// <summary>
-		/// Add a new type to the list and ensure the name is unique.
-		/// </summary>
-		/// <param name="node"></param>
-		public void AddType(TypeDefinitionNode node)
-		{
-			ensureTypeNameUniqueness(node.Name);
-			DefinedTypes.Add(node);
-		}
-
-		/// <summary>
-		/// Add a new record to the list and ensure the name is unique.
-		/// </summary>
-		/// <param name="node"></param>
-		public void AddRecord(RecordDefinitionNode node)
-		{
-			ensureTypeNameUniqueness(node.Name);
-			DefinedRecords.Add(node);
-		}
-
-		/// <summary>
 		/// Resolve a type by it's string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
-		/// This means 
+		/// Therefore, you should not use GetMethod(s), GetField(s) etc. on a result of this method!
 		/// </summary>
-		/// <param name="signature"></param>
+		public Type ResolveType(string type)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Resolve a field by type and field name.
+		/// </summary>
 		/// <returns></returns>
-		public Type ResolveType(string signature)
+		public FieldInfo ResolveField(string type, string fieldName)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Resolve a constructor by type and arguments.
+		/// </summary>
+		public ConstructorInfo ResolveConstructor(string type, List<string> argTypes)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Resolve a method by type, name and argument types.
+		/// </summary>
+		public MethodInfo ResolveMethod(string type, string name, List<string> argTypes)
 		{
 			throw new NotImplementedException();
 		}
@@ -51,24 +53,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private static string getAssemblyName()
 		{
-			lock (typeof(Context))
+			lock (typeof (Context))
 				_AssemblyId++;
 			return "_CompiledAssembly" + _AssemblyId;
-		}
-
-		/// <summary>
-		/// Ensure the name is not a defined type or a record.
-		/// </summary>
-		/// <param name="typeName"></param>
-		private void ensureTypeNameUniqueness(string typeName)
-		{
-			foreach (var curr in DefinedTypes)
-				if (curr.Name == typeName)
-					throw new LensCompilerException(string.Format("A type named {0} is already defined!", typeName));
-
-			foreach (var curr in DefinedRecords)
-				if (curr.Name == typeName)
-					throw new LensCompilerException(string.Format("A record named {0} is already defined!", typeName));
 		}
 
 		/// <summary>
@@ -76,20 +63,68 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void prepare()
 		{
-			foreach (var type in DefinedTypes.OfType<TypeDefinitionNodeBase>().Union(DefinedRecords))
-				type.PrepareSelf(this);
+			prepareTypesAndRecords();
+			prepareTypeLabelTags();
+			prepareRecordFields();
+		}
 
-			foreach (var func in DefinedFunctions)
-				func.PrepareSelf(this);
+		/// <summary>
+		/// Build assembly entities for types, labels, and records.
+		/// </summary>
+		private void prepareTypesAndRecords()
+		{
+			var reg = new Dictionary<string,bool>();
+			Action<string, LocationEntity> check = (key, ent) =>
+			{
+				bool val;
+				if (reg.TryGetValue(key, out val))
+				{
+					throw new LensCompilerException(
+						string.Format("A {0} named '{1}' has already been defined.", val ? "type" : "type label", key),
+						ent
+					);
+				}
+			};
 
-			// after the types are initialized, we can now define fields
-			// this solves the problem of a possible circular reference between types' fields,
-			// when type A has a field of type B and type B has a field of type A
-			//			foreach (var curr in DefinedTypes)
-			//				prepareTypeLabels(curr);
-			//
-			//			foreach (var curr in DefinedRecords)
-			//				prepareRecordFields(curr);
+			foreach (var currType in _DefinedTypes)
+			{
+				check(currType.Name, currType);
+				reg.Add(currType.Name, true);
+				currType.PrepareSelf(this);
+
+				foreach (var currLabel in currType.Entries)
+				{
+					check(currLabel.Name, currLabel);
+					reg.Add(currLabel.Name, false);
+					currLabel.PrepareSelf(currType, this);
+				}
+			}
+
+			foreach (var currRec in _DefinedRecords)
+			{
+				check(currRec.Name, currRec);
+				currRec.PrepareSelf(this);
+			}
+		}
+
+		/// <summary>
+		/// Prepare assembly entities for all the type label tags.
+		/// </summary>
+		private void prepareTypeLabelTags()
+		{
+			foreach(var currType in _DefinedTypes)
+				foreach(var currLabel in currType.Entries)
+					currLabel.PrepareTag(this);
+		}
+
+		/// <summary>
+		/// Prepare assembly entities for all the record fields.
+		/// </summary>
+		private void prepareRecordFields()
+		{
+			foreach (var currRec in _DefinedRecords)
+				foreach(var currField in currRec.Entries)
+					currField.PrepareSelf(currRec, this);
 		}
 
 		#endregion
