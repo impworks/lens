@@ -339,7 +339,7 @@ type ArrayHolder
             var src = "let getFive = -> 5";
             var result = new LetNode("getFive")
             {
-                Value = new FunctionNodeBase
+                Value = new FunctionNode
                 {
                     Body = { new IntNode(5) }
                 }
@@ -354,7 +354,7 @@ type ArrayHolder
             var src = "let div = (a:System.Float b:System.Float) -> a / b";
             var result = new LetNode("div")
             {
-                Value = new FunctionNodeBase
+                Value = new FunctionNode
                 {
                     Arguments =
                     {
@@ -539,7 +539,7 @@ test
                 Arguments =
                 {
                     new BooleanNode(true),
-                    new FunctionNodeBase
+                    new FunctionNode
                     {
                         Arguments = {{"a", new FunctionArgument("a", "double")}},
                         Body =
