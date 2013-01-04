@@ -26,17 +26,14 @@ let skipIndent count =
         stream.UserState <- { stream.UserState with Indentation = indentation }
         Reply()*)
 
-let nextLine = skipNewline <|> eof
-
 let indentedBlock parser =
     (fun (stream : CharStream<ParserState>) ->
         let indentation = getIndent stream
-        let elementParser = (skipIndent (indentation + 1) >>? parser .>>? nextLine)
+        let elementParser = (skipNewline >>? skipIndent (indentation + 1) >>? parser)
                             <!> (sprintf "indentedLine %d" (indentation + 1))
 
         stream
-        |> (skipNewline >>?
-            Inline.Many(stateFromFirstElement = (fun x -> [x]), 
-                        foldState = (fun xs x -> x::xs),
-                        resultFromState = List.rev,
-                        elementParser = elementParser))) <!> "indentedBlock"
+        |> Inline.Many(stateFromFirstElement = (fun x -> [x]), 
+                       foldState = (fun xs x -> x::xs),
+                       resultFromState = List.rev,
+                       elementParser = elementParser)) <!> "indentedBlock"
