@@ -3,22 +3,11 @@
 open System
 open FParsec
 open FParsec.CharParsers
+open Lens.Parser.FParsecHelpers
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
-
-let debug = true
-
-let (<!>) (p : Parser<_,_>) label : Parser<_,_> =
-    if debug then
-        fun stream ->
-            printfn "%A: Entering %s" stream.Position label
-            let reply = p stream
-            printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
-            reply
-    else
-        p
 
 let isStartTracked obj = 
     typeof<IStartLocationTrackingEntity>.IsAssignableFrom(obj.GetType())
