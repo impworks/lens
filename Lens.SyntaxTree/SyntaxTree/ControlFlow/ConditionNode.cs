@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -34,12 +35,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
-			var t1 = TrueAction.GetExpressionType();
+			var t1 = TrueAction.GetExpressionType(ctx);
 			if (FalseAction != null)
 			{
-				var t2 = FalseAction.GetExpressionType();
+				var t2 = FalseAction.GetExpressionType(ctx);
 				if (t1 != t2)
 					Error("Inconsistent typing: the branches of the condition return objects of types {0} and {1} respectively.", t1.ToString(), t2.ToString());
 			}
@@ -47,7 +48,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			return t1;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.SyntaxTree;
+﻿using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens.SyntaxTree.Utils
 {
@@ -15,33 +14,10 @@ namespace Lens.SyntaxTree.Utils
 
 		#region Fields
 		
-		private bool m_IsResolved;
-		private Type m_Type;
-
 		/// <summary>
 		/// The signature of the type.
 		/// </summary>
 		public string Signature { get; private set; }
-
-		/// <summary>
-		/// The compiled type.
-		/// </summary>
-		public Type Type
-		{
-			get
-			{
-				if (string.IsNullOrEmpty(Signature))
-					return null;
-
-				if (!m_IsResolved)
-				{
-					m_Type = TypeResolver.ResolveType(Signature);
-					m_IsResolved = true;
-				}
-
-				return m_Type;
-			}
-		}
 
 		#endregion
 

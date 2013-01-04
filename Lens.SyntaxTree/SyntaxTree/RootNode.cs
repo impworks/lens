@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 
 namespace Lens.SyntaxTree.SyntaxTree
@@ -37,12 +38,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		public CodeBlockNode Code { get; private set; }
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			throw new InvalidOperationException("Root node!");
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

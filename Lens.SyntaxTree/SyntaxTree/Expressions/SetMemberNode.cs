@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -19,7 +20,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			set { LocationSetError(); }
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

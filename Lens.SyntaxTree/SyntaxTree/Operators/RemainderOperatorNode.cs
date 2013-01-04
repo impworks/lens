@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -12,12 +13,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "%"; }
 		}
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
-			return getNumericTypeOrError();
+			return getNumericTypeOrError(ctx);
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

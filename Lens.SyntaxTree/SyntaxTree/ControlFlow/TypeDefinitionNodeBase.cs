@@ -1,23 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
+	public abstract class TypeDefinitionNodeBase : NodeBase, IStartLocationTrackingEntity
+	{
+		/// <summary>
+		/// The name of the type.
+		/// </summary>
+		public string Name { get; set; }
+
+		/// <summary>
+		/// The type builder associated with this type.
+		/// </summary>
+		public TypeBuilder TypeBuilder { get; private set; }
+
+		#region Methods
+
+		/// <summary>
+		/// Prepares the assembly entities for the type.
+		/// </summary>
+		/// <param name="ctx">Context pointer.</param>
+		public void PrepareSelf(Context ctx)
+		{
+			if(TypeBuilder != null)
+				throw new InvalidOperationException(string.Format("Type {0} has already been prepared!", Name));
+
+			TypeBuilder = ctx.MainModule.DefineType(Name, TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed);
+		}
+
+		#endregion
+	}
+
 	/// <summary>
 	/// A base node for algebraic types and records.
 	/// </summary>
-	public abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
+	public abstract class TypeDefinitionNodeBase<T> : TypeDefinitionNodeBase where T : LocationEntity
 	{
 		protected TypeDefinitionNodeBase()
 		{
 			Entries = new List<T>();
 		}
-
-		/// <summary>
-		/// The name of the type.
-		/// </summary>
-		public string Name { get; set; }
 
 		/// <summary>
 		/// The entries of the type node.

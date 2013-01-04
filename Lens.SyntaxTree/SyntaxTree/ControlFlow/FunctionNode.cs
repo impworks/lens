@@ -1,58 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
-	/// An anonymous function definition node.
+	/// A function that has a name.
 	/// </summary>
-	public class FunctionNode : NodeBase, IStartLocationTrackingEntity
+	public class FunctionNode : FunctionNodeBase
 	{
-		public FunctionNode()
-		{
-			Arguments = new Dictionary<string, FunctionArgument>();
-			Body = new CodeBlockNode();
-		}
+		/// <summary>
+		/// Function name.
+		/// </summary>
+		public string Name { get; set; }
 
 		/// <summary>
-		/// Function arguments.
+		/// Define function-related assembly entities.
 		/// </summary>
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
-
-		/// <summary>
-		/// Function body.
-		/// </summary>
-		public CodeBlockNode Body { get; set; }
-
-		public override LexemLocation EndLocation
+		public override void PrepareSelf(Context ctx)
 		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
+			MethodBuilder = defineMethod(ctx);
+			defineParams();
 		}
 
-		public override Type GetExpressionType()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
-			return Body.GetExpressionType();
-		}
-
-		public override void Compile()
-		{
-			registerArgVariables();
-
 			throw new NotImplementedException();
 		}
 
-		#region Generic code for all functions, anonymous and named
+		#region Helpers
 
 		/// <summary>
-		/// Declare variables for parameters.
+		/// Define a method in the assembly.
 		/// </summary>
-		protected void registerArgVariables()
+		private MethodBuilder defineMethod(Context ctx)
 		{
-			// foreach (var currArg in Arguments)
-			//     Body.RegisterVariable(currArg.Value);
+			var retType = Body.GetExpressionType(ctx);
+			var args = Arguments.Select(x => ctx.ResolveType(x.Value.Type.Signature)).ToArray();
+			return ctx.MainType.DefineMethod(
+				Name,
+				MethodAttributes.Private | MethodAttributes.Static,
+				CallingConventions.Standard,
+				retType,
+				args
+			);
+		}
+
+		/// <summary>
+		/// Define parameters in the assembly.
+		/// </summary>
+		private void defineParams()
+		{
+			var argId = 1;
+			foreach (var argInfo in Arguments)
+			{
+				// todo: ref parameters?
+				var arg = argInfo.Value;
+				var argKind = arg.Modifier == ArgumentModifier.Out ? ParameterAttributes.Out : ParameterAttributes.In;
+				arg.ParameterBuilder = MethodBuilder.DefineParameter(argId, argKind, arg.Name);
+				argId++;
+			}
 		}
 
 		#endregion
@@ -61,7 +71,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(FunctionNode other)
 		{
-			return Arguments.SequenceEqual(other.Arguments) && Equals(Body, other.Body);
+			return base.Equals(other) && string.Equals(Name, other.Name);
 		}
 
 		public override bool Equals(object obj)
@@ -76,7 +86,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			unchecked
 			{
-				return ((Arguments != null ? Arguments.GetHashCode() : 0) * 397) ^ (Body != null ? Body.GetHashCode() : 0);
+				return (base.GetHashCode() * 397) ^ (Name != null ? Name.GetHashCode() : 0);
 			}
 		}
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -8,12 +9,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (m_ExpressionType != null)
 				return m_ExpressionType;
 
-			var exprType = Expression.GetExpressionType();
+			var exprType = Expression.GetExpressionType(ctx);
 			if (exprType.IsArray)
 			{
 				m_ExpressionType = exprType.GetElementType();
@@ -35,7 +36,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return m_ExpressionType;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

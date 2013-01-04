@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -12,9 +13,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "not"; }
 		}
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
-			var type = Operand.GetExpressionType();
+			var type = Operand.GetExpressionType(ctx);
 
 			if(type != typeof(bool))
 				TypeError(type);
@@ -22,7 +23,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			return type;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

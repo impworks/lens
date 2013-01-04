@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -10,7 +11,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		private Type m_TupleType;
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (m_TupleType == null)
 			{
@@ -21,13 +22,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
 
 				var tupleType = getTupleType();
-				m_TupleType = tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType()).ToArray());
+				m_TupleType = tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
 			}
 
 			return m_TupleType;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

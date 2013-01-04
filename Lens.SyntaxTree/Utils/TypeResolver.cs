@@ -1,35 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Lens.SyntaxTree.Utils
 {
 	/// <summary>
 	/// A class to resolve types by their string signatures.
 	/// </summary>
-	public static class TypeResolver
+	public class TypeResolver
 	{
-		static TypeResolver()
+		public TypeResolver()
 		{
 			ResetLocations();
 			ResetAliases();
 		}
 
-		private static Dictionary<string, List<string>> SearchableLocations;
+		private Dictionary<string, List<string>> _SearchableLocations;
 
 		/// <summary>
 		/// Type aliases.
 		/// </summary>
-		public static Dictionary<string, Type> TypeAliases { get; private set; }
+		public Dictionary<string, Type> TypeAliases { get; private set; }
 
 		/// <summary>
 		/// Initialize the namespaces list.
 		/// </summary>
-		public static void ResetLocations()
+		public void ResetLocations()
 		{
-			SearchableLocations = new Dictionary<string, List<string>>
+			_SearchableLocations = new Dictionary<string, List<string>>
 			{
+				{
+					// Local reference
+					"",
+					new List<string>()
+				},
 				{
 					"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 					new List<string>
@@ -53,7 +57,7 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Initialize the aliases dictionary.
 		/// </summary>
-		public static void ResetAliases()
+		public void ResetAliases()
 		{
 			TypeAliases = new Dictionary<string, Type>
 			{
@@ -70,16 +74,35 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Resolves a type by its string signature.
 		/// </summary>
-		public static Type ResolveType(string signature)
+		public Type ResolveType(string signature)
 		{
 			var trimmed = signature.Replace(" ", string.Empty);
 			return parseTypeSignature(trimmed);
 		}
 
 		/// <summary>
+		/// Add a namespace to search types in.
+		/// </summary>
+		/// <param name="nsp">Namespace.</param>
+		/// <param name="assembly">Optional assembly full name.</param>
+		public void AddNamespace(string nsp, string assembly = "")
+		{
+			if (_SearchableLocations.ContainsKey(assembly))
+			{
+				var lst = _SearchableLocations[assembly];
+				if (!lst.Contains(nsp))
+					lst.Add(nsp);
+
+				return;
+			}
+
+			_SearchableLocations[assembly] = new List<string> { nsp };
+		}
+
+		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
-		private static Type parseTypeSignature(string signature)
+		private Type parseTypeSignature(string signature)
 		{
 			// simple cases: type is an alias
 			if (TypeAliases.ContainsKey(signature))
@@ -105,7 +128,7 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Searches for the specified type in the namespaces.
 		/// </summary>
-		private static Type findType(string name)
+		private Type findType(string name)
 		{
 			var checkNamespaces = !name.Contains('.');
 
@@ -113,7 +136,7 @@ namespace Lens.SyntaxTree.Utils
 			string foundAsm = null;
 			string foundNsp = null;
 
-			foreach (var currLocation in SearchableLocations)
+			foreach (var currLocation in _SearchableLocations)
 			{
 				var nsps = checkNamespaces
 					? currLocation.Value
@@ -121,15 +144,15 @@ namespace Lens.SyntaxTree.Utils
 
 				foreach (var currNsp in nsps)
 				{
-					var typeName = checkNamespaces
-						? string.Format("{0}.{1},{2}", currNsp, name, currLocation.Key)
-						: string.Format("{0},{1}", name, currLocation.Key);
+					var typeName = checkNamespaces ? string.Format("{0}.{1}", currNsp, name) : name;
+					if (!string.IsNullOrEmpty(currLocation.Key))
+						typeName = string.Format("{0},{1}", typeName, currLocation.Key);
 
 					var type = Type.GetType(typeName);
 					if (type == null)
 						continue;
 
-					if (foundType != null)
+					if (foundType != null && foundType != type)
 					{
 						throw new ArgumentException(
 							string.Format(
@@ -158,7 +181,7 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Parses out the list of generic type arguments delimited by commas.
 		/// </summary>
-		private static IEnumerable<Type> parseTypeArgs(string args)
+		private IEnumerable<Type> parseTypeArgs(string args)
 		{
 			var depth = 0;
 			var start = 0;

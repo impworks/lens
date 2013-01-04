@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -7,12 +8,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

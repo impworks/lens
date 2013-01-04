@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -18,12 +19,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		public TypeSignature Type { get; set; }
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
-			return Type.Type;
+			return ctx.ResolveType(Type.Signature);
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
