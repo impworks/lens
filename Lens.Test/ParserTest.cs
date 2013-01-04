@@ -564,7 +564,7 @@ test
     <| (a:double) ->
         logger.log a
         a ** 2
-";
+    <| false";
 
             var result = new InvocationNode
             {
