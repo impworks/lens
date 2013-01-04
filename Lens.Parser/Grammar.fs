@@ -3,22 +3,11 @@
 open System
 open FParsec
 open FParsec.CharParsers
+open Lens.Parser.FParsecHelpers
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Utils
-
-let debug = false
-
-let (<!>) (p : Parser<_,_>) label : Parser<_,_> =
-    if debug then
-        fun stream ->
-            printfn "%A: Entering %s" stream.Position label
-            let reply = p stream
-            printfn "%A: Leaving %s (%A)" stream.Position label reply.Status
-            reply
-    else
-        p
 
 let isStartTracked obj = 
     typeof<IStartLocationTrackingEntity>.IsAssignableFrom(obj.GetType())
@@ -57,7 +46,7 @@ let nextLine = skipNewline <|> eof
 let keyword k = pstring k .>>? (choice [skipMany1 space
                                         notFollowedBy letter])
                                                    
-let token t = pstring t .>>? many space
+let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
 
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
@@ -143,9 +132,9 @@ let main               = many newline >>. (many stmt .>>? eof)
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
 usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
-recorddefRef          := keyword "record" >>? identifier .>>.? IndentationParser.indentedMany1 recorddef_stmt "recorddef_stmt" |>> Node.record
+recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.indentedBlock recorddef_stmt |>> Node.record
 recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
-typedefRef            := keyword "type" >>? identifier .>>.? IndentationParser.indentedMany1 typedef_stmt "typedef_stmt" |>> Node.typeNode
+typedefRef            := keyword "type" >>? identifier .>>.? Indentation.indentedBlock typedef_stmt |>> Node.typeNode
 typedef_stmtRef       := token "|" >>? identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := pipe3
                          <| (keyword "fun" >>? identifier)
@@ -153,7 +142,7 @@ funcdefRef            := pipe3
                          <| block
                          <| Node.functionNode
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
-blockRef              := ((IndentationParser.indentedMany1 block_line "block_line" .>>? opt nextLine)
+blockRef              := ((Indentation.indentedBlock block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -174,7 +163,8 @@ assign_exprRef        := pipe2
                          <| (token "=" >>? expr)
                          <| Node.assignment
 lvalueRef             := choice [(``type`` .>>? token "::") .>>.? identifier |>> Node.staticSymbol
-                                 identifier |>> Node.localSymbol] .>>.? many accessor_expr
+                                 identifier |>> Node.localSymbol
+                                 token "(" >>? expr .>>? token ")" .>>.? accessor_expr |>> Node.expressionSymbol] .>>.? many accessor_expr
 accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
                          <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
@@ -190,12 +180,12 @@ while_exprRef         := pipe2
                          <| block
                          <| Node.whileNode
 try_exprRef           := pipe2
-                         <| (keyword "try" >>? block)
+                         <| (keyword "try" >>? block .>>? nextLine)
                          <| many1 catch_expr
                          <| Node.tryCatchNode
 catch_exprRef         := pipe2
                          <| (keyword "catch" >>? opt (token "(" >>? ``type`` .>>.? identifier .>>? token ")"))
-                         <| block
+                         <| (block .>>? nextLine)
                          <| Node.catchNode
 lambda_exprRef        := pipe2
                          <| opt (token "(" >>? func_params .>>? token ")")
@@ -261,12 +251,12 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (IndentationParser.indentedMany1 (token "<|" >>? expr) "invoke_list_item")
+invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? expr))
                          <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr
-                                 between <| token "(" <| token ")" <| expr
-                                 lvalue |>> Node.getterNode]
+                                 lvalue |>> Node.getterNode
+                                 between <| token "(" <| token ")" <| expr]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
                          <| (token "(" >>? ``type`` .>>? token ")")

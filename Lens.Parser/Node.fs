@@ -32,7 +32,7 @@ let arrayDefinition braces =
     |> String.concat String.Empty
 
 let recordEntry(entryName, typeName) =
-    RecordEntry(Name = entryName, Type = TypeSignature(typeName))
+    RecordField(Name = entryName, Type = TypeSignature(typeName))
 
 let record(name, entries) =
     let node = RecordDefinitionNode(Name = name)
@@ -44,7 +44,7 @@ let typeEntry(name, typeDefinition) =
         match typeDefinition with
         | Some s -> TypeSignature(s)
         | None   -> null
-    TypeEntry(Name = name, TagType = signature)
+    TypeLabel(Name = name, TagType = signature)
 
 let typeNode(name, entries) =
     let node = TypeDefinitionNode(Name = name)
@@ -67,7 +67,7 @@ let functionParameters parameters =
     dictionary
 
 let functionNode name parameters body =
-    NamedFunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
+    FunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
 
 // Code
 let codeBlock (lines : NodeBase list) =
@@ -104,6 +104,9 @@ let staticSymbol(typeName, symbolName) =
 let localSymbol name =
     Local name
 
+let expressionSymbol(expression, accessor) =
+    Expression(expression, accessor)
+
 let assignment (symbol : Symbol, accessorChain) value : NodeBase =
     match accessorChain with
     | [] -> symbolSetter symbol value
@@ -112,7 +115,7 @@ let assignment (symbol : Symbol, accessorChain) value : NodeBase =
             let last = getterChain root <| List.tail accessors
             let top = symbolGetter symbol
             last.Expression <- top
-            upcast last
+            upcast root
 
 let getterNode (symbol, accessorChain) =
     match accessorChain with
@@ -122,7 +125,7 @@ let getterNode (symbol, accessorChain) =
             let last = getterChain root <| List.tail accessors
             let top = symbolGetter symbol
             last.Expression <- top
-            upcast last
+            upcast root
 
 let lambda parameters code : NodeBase =
     let node = FunctionNode(Body = code)
