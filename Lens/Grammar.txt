@@ -14,7 +14,7 @@ type                = namespace [ ( type_params | { "[]" } ) ]
 local_stmt          = var_decl_expr | assign_expr | expr
 var_decl_expr       = "let" | "var" identifier "=" expr
 assign_expr         = lvalue "=" expr
-lvalue              = ( type "::" identifier | identifier ) { accessor_expr }
+lvalue              = [ type "::" ] identifier { accessor_expr } | "(" expr ")" accessor_expr { accessor_expr }
 accessor_expr       = "." identifier | "[" line_expr "]"
 type_params         = "<" type { "," type } ">"
 expr                = block_expr | line_expr
