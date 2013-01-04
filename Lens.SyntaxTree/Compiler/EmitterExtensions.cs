@@ -456,35 +456,32 @@ namespace Lens.SyntaxTree.Compiler
 		#region Conversion and boxing
 
 		/// <summary>
-		/// Cast the top value of the stack to int.
+		/// Cast the top value of the stack to a given primitive type.
 		/// </summary>
-		public static void EmitConvertToInt(this ILGenerator gen)
+		public static void EmitConvert(this ILGenerator gen, Type targetType)
 		{
-			gen.Emit(OpCodes.Conv_I4);
-		}
-
-		/// <summary>
-		/// Cast the top value of the stack to long.
-		/// </summary>
-		public static void EmitConvertToLong(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Conv_I8);
-		}
-
-		/// <summary>
-		/// Cast the top value of the stack to float.
-		/// </summary>
-		public static void EmitConvertToFloat(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Conv_R4);
-		}
-
-		/// <summary>
-		/// Cast the top value of the stack to double.
-		/// </summary>
-		public static void EmitConvertToDouble(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Conv_R8);
+			if(targetType == typeof(byte))
+				gen.Emit(OpCodes.Conv_U1);
+			else if (targetType == typeof(short))
+				gen.Emit(OpCodes.Conv_I2);
+			else if (targetType == typeof(int))
+				gen.Emit(OpCodes.Conv_I4);
+			else if (targetType == typeof(long))
+				gen.Emit(OpCodes.Conv_I8);
+			else if (targetType == typeof(float))
+				gen.Emit(OpCodes.Conv_R4);
+			else if (targetType == typeof(short))
+				gen.Emit(OpCodes.Conv_R8);
+			else if (targetType == typeof(sbyte))
+				gen.Emit(OpCodes.Conv_I1);
+			else if (targetType == typeof(ushort))
+				gen.Emit(OpCodes.Conv_U2);
+			else if (targetType == typeof(uint))
+				gen.Emit(OpCodes.Conv_U4);
+			else if (targetType == typeof(ulong))
+				gen.Emit(OpCodes.Conv_U8);
+			else
+				throw new InvalidOperationException("Incorrect primitive numeric type!");
 		}
 
 		/// <summary>
