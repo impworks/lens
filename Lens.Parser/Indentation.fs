@@ -31,11 +31,12 @@ let nextLine = skipNewline <|> eof
 let indentedBlock parser =
     (fun (stream : CharStream<ParserState>) ->
         let indentation = getIndent stream
-        
+        let elementParser = (skipIndent (indentation + 1) >>? parser .>>? nextLine)
+                            <!> (sprintf "indentedLine %d" (indentation + 1))
+
         stream
         |> (skipNewline >>?
             Inline.Many(stateFromFirstElement = (fun x -> [x]), 
                         foldState = (fun xs x -> x::xs),
                         resultFromState = List.rev,
-                        firstElementParser = (skipIndent (indentation + 1) >>? parser .>>? nextLine),
-                        elementParser = (skipIndent (indentation + 1) >>? parser .>>? nextLine)))) <!> "indentedBlock"
+                        elementParser = elementParser))) <!> "indentedBlock"
