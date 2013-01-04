@@ -134,24 +134,24 @@ type ArrayHolder
             Test(src, result);
         }
 
-		[Test]
-		public void InvocationTest()
-		{
-			var result = new InvocationNode
-				{
-					Expression = new GetIdentifierNode("sqrt"),
-					Arguments =
-						{
-							new AddOperatorNode
-								{
-									LeftOperand = new GetIdentifierNode("sq1"),
-									RightOperand = new GetIdentifierNode("sq2")
-								}
-						}
-				};
+        [Test]
+        public void InvocationTest()
+        {
+            var result = new InvocationNode
+                {
+                    Expression = new GetIdentifierNode("sqrt"),
+                    Arguments =
+                        {
+                            new AddOperatorNode
+                                {
+                                    LeftOperand = new GetIdentifierNode("sq1"),
+                                    RightOperand = new GetIdentifierNode("sq2")
+                                }
+                        }
+                };
 
-			Test("sqrt (sq1 + sq2)", result);
-		}
+            Test("sqrt (sq1 + sq2)", result);
+        }
 
         [Test]
         public void ComplexFunction()
@@ -522,38 +522,38 @@ type ArrayHolder
             Test(src, result);
         }
 
-		[Test]
-		public void MultilineLambda()
-		{
-			var src = @"
+        [Test]
+        public void MultilineLambda()
+        {
+            var src = @"
 (a:double) ->
     logger.log a
     a ** 2";
 
-			var result = new FunctionNode
-				{
-					Arguments = { { "a", new FunctionArgument("a", "double") } },
-					Body =
-						{
-							new InvocationNode
-							{
-								Expression = new GetMemberNode
-								{
-									Expression = new GetIdentifierNode("logger"),
-									MemberName = "log"
-								},
-								Arguments = {new GetIdentifierNode("a")}
-							},
-							new PowOperatorNode
-							{
-								LeftOperand = new GetIdentifierNode("a"),
-								RightOperand = new IntNode(2)
-							}
-						}
-				};
+            var result = new FunctionNode
+                {
+                    Arguments = { { "a", new FunctionArgument("a", "double") } },
+                    Body =
+                        {
+                            new InvocationNode
+                            {
+                                Expression = new GetMemberNode
+                                {
+                                    Expression = new GetIdentifierNode("logger"),
+                                    MemberName = "log"
+                                },
+                                Arguments = {new GetIdentifierNode("a")}
+                            },
+                            new PowOperatorNode
+                            {
+                                LeftOperand = new GetIdentifierNode("a"),
+                                RightOperand = new IntNode(2)
+                            }
+                        }
+                };
 
-			Test(src, result);
-		}
+            Test(src, result);
+        }
 
         [Test]
         public void MultilineInvocation()
@@ -568,7 +568,7 @@ test
 
             var result = new InvocationNode
             {
-				Expression = new GetIdentifierNode("test"),
+                Expression = new GetIdentifierNode("test"),
                 Arguments =
                 {
                     new BooleanNode(true),
@@ -580,10 +580,10 @@ test
                             new InvocationNode
                             {
                                 Expression = new GetMemberNode
-								{
-									Expression = new GetIdentifierNode("logger"),
-									MemberName = "log"
-								},
+                                {
+                                    Expression = new GetIdentifierNode("logger"),
+                                    MemberName = "log"
+                                },
                                 Arguments = {new GetIdentifierNode("a")}
                             },
                             new PowOperatorNode
@@ -661,19 +661,19 @@ if (true)
             Test(src, result);
         }
 
-		[Test]
-		public void SingleCatch()
-		{
-			var src = @"
+        [Test]
+        public void SingleCatch()
+        {
+            var src = @"
 try
     1 / 0
 catch (DivisionByZeroException ex)
     log ex
 ";
 
-			var result = new TryNode
-			{
-				Code =
+            var result = new TryNode
+            {
+                Code =
                 {
                     new DivideOperatorNode
                     {
@@ -681,7 +681,7 @@ catch (DivisionByZeroException ex)
                         RightOperand = new IntNode()
                     }
                 },
-				CatchClauses =
+                CatchClauses =
                 {
                     new CatchNode
                     {
@@ -697,10 +697,10 @@ catch (DivisionByZeroException ex)
                         }
                     }
                 }
-			};
+            };
 
-			Test(src, result);
-		}
+            Test(src, result);
+        }
 
         [Test]
         public void MultipleCatch()
@@ -828,7 +828,7 @@ catch
             var src = @"test 1337 true ""hello"" (new(13.37; new [1; 2]))";
             var result = new InvocationNode
             {
-				Expression = new GetIdentifierNode("test"),
+                Expression = new GetIdentifierNode("test"),
                 Arguments =
                 {
                     new IntNode(1337),
@@ -863,7 +863,7 @@ catch
             {
                 LeftOperand = new InvocationNode
                 {
-					Expression = new GetIdentifierNode("test"),
+                    Expression = new GetIdentifierNode("test"),
                     Arguments =
                     {
                         new GetIdentifierNode("a"),
@@ -880,31 +880,31 @@ catch
         public void OperatorPriority2()
         {
             var src = "1 + 2 - 3 * 4 / 5 % 6 ** 7";
-            var result = new AddOperatorNode
-            {
-                LeftOperand = new IntNode(1),
-                RightOperand = new SubtractOperatorNode
+            var result = new SubtractOperatorNode
                 {
-                    LeftOperand = new IntNode(2),
-                    RightOperand = new MultiplyOperatorNode
-                    {
-                        LeftOperand = new IntNode(3),
-                        RightOperand = new DivideOperatorNode
+                    LeftOperand = new AddOperatorNode
                         {
-                            LeftOperand = new IntNode(4),
-                            RightOperand = new RemainderOperatorNode
-                            {
-                                LeftOperand = new IntNode(5),
-                                RightOperand = new PowOperatorNode
+                            LeftOperand = new IntNode(1),
+                            RightOperand = new IntNode(2)
+                        },
+                    RightOperand = new RemainderOperatorNode
+                        {
+                            LeftOperand = new DivideOperatorNode
+                                {
+                                    LeftOperand = new MultiplyOperatorNode
+                                        {
+                                            LeftOperand = new IntNode(3),
+                                            RightOperand = new IntNode(4)
+                                        },
+                                    RightOperand = new IntNode(5)
+                                },
+                            RightOperand = new PowOperatorNode
                                 {
                                     LeftOperand = new IntNode(6),
                                     RightOperand = new IntNode(7)
                                 }
-                            }
                         }
-                    }
-                }
-            };
+                };
 
             Test(src, result);
         }
