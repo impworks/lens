@@ -104,6 +104,9 @@ let staticSymbol(typeName, symbolName) =
 let localSymbol name =
     Local name
 
+let expressionSymbol(expression, accessor) =
+    Expression(expression, accessor)
+
 let assignment (symbol : Symbol, accessorChain) value : NodeBase =
     match accessorChain with
     | [] -> symbolSetter symbol value

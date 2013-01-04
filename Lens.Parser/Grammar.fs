@@ -46,7 +46,7 @@ let nextLine = skipNewline <|> eof
 let keyword k = pstring k .>>? (choice [skipMany1 space
                                         notFollowedBy letter])
                                                    
-let token t = pstring t .>>? many space
+let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
 
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
@@ -163,7 +163,8 @@ assign_exprRef        := pipe2
                          <| (token "=" >>? expr)
                          <| Node.assignment
 lvalueRef             := choice [(``type`` .>>? token "::") .>>.? identifier |>> Node.staticSymbol
-                                 identifier |>> Node.localSymbol] .>>.? many accessor_expr
+                                 identifier |>> Node.localSymbol
+                                 token "(" >>? expr .>>? token ")" .>>.? accessor_expr |>> Node.expressionSymbol] .>>.? many accessor_expr
 accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
                          <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
@@ -254,8 +255,8 @@ invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? expr))
                          <|> (many1 value_expr)
 value_exprRef         := choice [literal
                                  type_operator_expr
-                                 between <| token "(" <| token ")" <| expr
-                                 lvalue |>> Node.getterNode]
+                                 lvalue |>> Node.getterNode
+                                 between <| token "(" <| token ")" <| expr]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
                          <| (token "(" >>? ``type`` .>>? token ")")
