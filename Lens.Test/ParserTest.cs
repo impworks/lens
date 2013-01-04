@@ -661,8 +661,49 @@ if (true)
             Test(src, result);
         }
 
+		[Test]
+		public void SingleCatch()
+		{
+			var src = @"
+try
+    1 / 0
+catch (DivisionByZeroException ex)
+    log ex
+";
+
+			var result = new TryNode
+			{
+				Code =
+                {
+                    new DivideOperatorNode
+                    {
+                        LeftOperand = new IntNode(1),
+                        RightOperand = new IntNode()
+                    }
+                },
+				CatchClauses =
+                {
+                    new CatchNode
+                    {
+                        ExceptionType = "DivisionByZeroException",
+                        ExceptionVariable = "ex",
+                        Code =
+                        {
+                            new InvocationNode
+                            {
+                                Expression = new GetIdentifierNode("log"),
+                                Arguments = {new GetIdentifierNode("ex")}
+                            }
+                        }
+                    }
+                }
+			};
+
+			Test(src, result);
+		}
+
         [Test]
-        public void TryCatch()
+        public void MultipleCatch()
         {
             var src = @"
 try
