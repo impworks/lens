@@ -179,12 +179,12 @@ while_exprRef         := pipe2
                          <| block
                          <| Node.whileNode
 try_exprRef           := pipe2
-                         <| (keyword "try" >>? block)
+                         <| (keyword "try" >>? block .>>? nextLine)
                          <| many1 catch_expr
                          <| Node.tryCatchNode
 catch_exprRef         := pipe2
                          <| (keyword "catch" >>? opt (token "(" >>? ``type`` .>>.? identifier .>>? token ")"))
-                         <| block
+                         <| (block .>>? nextLine)
                          <| Node.catchNode
 lambda_exprRef        := pipe2
                          <| opt (token "(" >>? func_params .>>? token ")")
