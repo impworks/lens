@@ -18,7 +18,7 @@ let getIndent (stream : CharStream<_>) =
 let skipIndent count =
     (let spaceCount = count * 4
      let isSpace c = c = ' '
-     skipManyMinMaxSatisfy spaceCount spaceCount isSpace) <!> "skipIndent"
+     skipManyMinMaxSatisfy spaceCount spaceCount isSpace) <!> sprintf "skipIndent %d" count
 
 (*let saveIndent : Parser<_, ParserState> =
     fun stream ->

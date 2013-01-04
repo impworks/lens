@@ -522,6 +522,39 @@ type ArrayHolder
             Test(src, result);
         }
 
+		[Test]
+		public void MultilineLambda()
+		{
+			var src = @"
+(a:double) ->
+    logger.log a
+    a ** 2";
+
+			var result = new FunctionNode
+				{
+					Arguments = { { "a", new FunctionArgument("a", "double") } },
+					Body =
+						{
+							new InvocationNode
+							{
+								Expression = new GetMemberNode
+								{
+									Expression = new GetIdentifierNode("logger"),
+									MemberName = "log"
+								},
+								Arguments = {new GetIdentifierNode("a")}
+							},
+							new PowOperatorNode
+							{
+								LeftOperand = new GetIdentifierNode("a"),
+								RightOperand = new IntNode(2)
+							}
+						}
+				};
+
+			Test(src, result);
+		}
+
         [Test]
         public void MultilineInvocation()
         {
@@ -531,7 +564,7 @@ test
     <| (a:double) ->
         logger.log a
         a ** 2
-    <| false";
+";
 
             var result = new InvocationNode
             {
