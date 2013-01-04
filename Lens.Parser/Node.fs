@@ -115,7 +115,7 @@ let assignment (symbol : Symbol, accessorChain) value : NodeBase =
             let last = getterChain root <| List.tail accessors
             let top = symbolGetter symbol
             last.Expression <- top
-            upcast last
+            upcast root
 
 let getterNode (symbol, accessorChain) =
     match accessorChain with
@@ -125,7 +125,7 @@ let getterNode (symbol, accessorChain) =
             let last = getterChain root <| List.tail accessors
             let top = symbolGetter symbol
             last.Expression <- top
-            upcast last
+            upcast root
 
 let lambda parameters code : NodeBase =
     let node = FunctionNode(Body = code)
