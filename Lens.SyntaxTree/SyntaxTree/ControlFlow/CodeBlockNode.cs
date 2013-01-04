@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -8,7 +10,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A set of consecutive code statements.
 	/// </summary>
-	public class CodeBlockNode : NodeBase
+	public class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
 	{
 		public CodeBlockNode()
 		{
@@ -32,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (!Statements.Any())
 				Error("Code block contains no statements!");
@@ -41,13 +43,54 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (last is VarNode || last is LetNode)
 				Error("A {0} declaration cannot be the last statement in a code block.", last is VarNode ? "variable" : "constant");
 
-			return Statements[Statements.Count - 1].GetExpressionType();
+			return Statements[Statements.Count - 1].GetExpressionType(ctx);
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			foreach(var curr in Statements)
-				curr.Compile();
+				curr.Compile(ctx, mustReturn);
 		}
+
+		#region Equality members
+
+		protected bool Equals(CodeBlockNode other)
+		{
+			return Statements.SequenceEqual(other.Statements);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((CodeBlockNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return (Statements != null ? Statements.GetHashCode() : 0);
+		}
+
+		#endregion
+
+		#region IEnumerable<NodeBase> implementation
+
+		public IEnumerator<NodeBase> GetEnumerator()
+		{
+			return Statements.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
+		public void Add(NodeBase node)
+		{
+			Statements.Add(node);
+		}
+
+		#endregion
 	}
 }

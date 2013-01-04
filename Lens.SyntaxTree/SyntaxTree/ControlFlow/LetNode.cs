@@ -1,13 +1,19 @@
-﻿namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
+﻿using Lens.SyntaxTree.Utils;
+
+namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// The constant declaration node.
 	/// </summary>
 	public class LetNode : NameDeclarationBase
 	{
-		public LetNode()
+		public LetNode(string name = null)
 		{
-			VariableInfo.IsConstant = true;
+			NameInfo = new LexicalNameInfo
+			{
+				Name = name,
+				IsConstant = true
+			};
 		}
 	}
 }

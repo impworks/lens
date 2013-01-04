@@ -1,27 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a new tuple declaration.
 	/// </summary>
-	public class NewTupleNode : NodeBase
+	public class NewTupleNode : ValueListNodeBase<NodeBase>
 	{
-		public NewTupleNode()
-		{
-			Expressions = new List<NodeBase>();
-		}
-
 		private Type m_TupleType;
 
-		/// <summary>
-		/// The list of items in the array.
-		/// </summary>
-		public List<NodeBase> Expressions { get; set; }
-
-		public override Type GetExpressionType()
+		public override Type GetExpressionType(Context ctx)
 		{
 			if (m_TupleType == null)
 			{
@@ -32,13 +22,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
 
 				var tupleType = getTupleType();
-				m_TupleType = tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType()).ToArray());
+				m_TupleType = tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
 			}
 
 			return m_TupleType;
 		}
 
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
@@ -67,5 +57,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("tuple({0})", string.Join(";", Expressions));
+		}
 	}
 }

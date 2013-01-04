@@ -13,22 +13,37 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Debug\Lens.SyntaxTree.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Release\Lens.SyntaxTree.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -40,34 +55,85 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ParseException.cs" />
+    <Compile Include="Compiler\Context.cs" />
+    <Compile Include="Compiler\Context.Structure.cs" />
+    <Compile Include="Compiler\EmitterExtensions.cs" />
+    <Compile Include="LensCompilerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\FunctionArgumentNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\AnonymousFunctionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\LambdaNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\RecordDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\ThrowNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNodeBase.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetIdentifierNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\IdentifierNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\IndexNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\MemberNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\SetIdentifierNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Literals\NullNode.cs" />
+    <Compile Include="SyntaxTree\LocationTrackingInterfaces.cs" />
+    <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\DefaultOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\DivideOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\ComparisonOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\InversionOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\NegationOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\MultiplyOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\OperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Operators\PowOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\RemainderOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\SubtractOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeofOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeOperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\RootNode.cs" />
+    <Compile Include="Utils\FunctionArgument.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\FunctionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\TryCatchNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\TryNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\InvocationNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\NewArrayNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewDictionaryNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewListNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\NewObjectNode.cs" />
     <Compile Include="SyntaxTree\Expressions\NewTupleNode.cs" />
     <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
-    <Compile Include="SyntaxTree\Literals\DoubleLiteral.cs" />
+    <Compile Include="SyntaxTree\Literals\DoubleNode.cs" />
     <Compile Include="SyntaxTree\Literals\IntNode.cs" />
     <Compile Include="SyntaxTree\Literals\LiteralNodeBase.cs" />
-    <Compile Include="SyntaxTree\Literals\StringLiteral.cs" />
+    <Compile Include="SyntaxTree\Literals\StringNode.cs" />
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Utils\DictionaryExtensions.cs" />
+    <Compile Include="Utils\LocationEntity.cs" />
+    <Compile Include="Utils\TypeResolver.cs" />
+    <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\LexemLocation.cs" />
-    <Compile Include="Utils\VariableInfo.cs" />
+    <Compile Include="Utils\LexicalNameInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

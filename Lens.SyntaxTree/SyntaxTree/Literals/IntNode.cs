@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Literals
 {
@@ -7,7 +8,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class IntNode : LiteralNodeBase<int>
 	{
-		public override void Compile()
+		public IntNode(int value = 0)
+		{
+			Value = value;
+		}
+
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -6,15 +7,20 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	public class NameDeclarationBase : NodeBase
+	public class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
 	{
+		public NameDeclarationBase()
+		{
+			NameInfo = new LexicalNameInfo();
+		}
+
 		/// <summary>
 		/// The name of the variable.
 		/// </summary>
 		public string Name
 		{
-			get { return VariableInfo.Name; }
-			set { VariableInfo.Name = value; }
+			get { return NameInfo.Name; }
+			set { NameInfo.Name = value; }
 		}
 
 		/// <summary>
@@ -25,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Variable information.
 		/// </summary>
-		public VariableInfo VariableInfo { get; protected set; }
+		public LexicalNameInfo NameInfo { get; protected set; }
 
 		public override LexemLocation EndLocation
 		{
@@ -33,14 +39,39 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType()
-		{
-			return typeof (void);
-		}
-
-		public override void Compile()
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
+		}
+
+		#region Equality members
+
+		protected bool Equals(NameDeclarationBase other)
+		{
+			return Equals(Value, other.Value) && Equals(NameInfo, other.NameInfo);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((NameDeclarationBase)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((Value != null ? Value.GetHashCode() : 0) * 397) ^ (NameInfo != null ? NameInfo.GetHashCode() : 0);
+			}
+		}
+
+		#endregion
+
+		public override string ToString()
+		{
+			return string.Format("{0}({1} = {2})", NameInfo.IsConstant ? "let" : "var", Name, Value);
 		}
 	}
 }

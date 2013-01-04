@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree
@@ -6,27 +7,30 @@ namespace Lens.SyntaxTree.SyntaxTree
 	/// <summary>
 	/// The base class for all syntax tree nodes.
 	/// </summary>
-	public abstract class NodeBase
+	public abstract class NodeBase : LocationEntity
 	{
-		/// <summary>
-		/// Current node's starting position (for error reporting).
-		/// </summary>
-		public virtual LexemLocation StartLocation { get; set; }
-
-		/// <summary>
-		/// Current node's ending position (for error reporting).
-		/// </summary>
-		public virtual LexemLocation EndLocation { get; set; }
-
 		/// <summary>
 		/// The type of the expression represented by this node.
 		/// </summary>
-		public abstract Type GetExpressionType();
+		/// <param name="ctx"></param>
+		public virtual Type GetExpressionType(Context ctx)
+		{
+			return typeof (Unit);
+		}
 
 		/// <summary>
 		/// Generates the IL for this node.
 		/// </summary>
-		public abstract void Compile();
+		/// <param name="ctx"></param>
+		/// <param name="mustReturn"></param>
+		public abstract void Compile(Context ctx, bool mustReturn);
+
+		/// <summary>
+		/// Validates the node parameters.
+		/// </summary>
+		protected virtual void Validate()
+		{
+		}
 
 		/// <summary>
 		/// Reports an error to the compiler.
@@ -36,12 +40,17 @@ namespace Lens.SyntaxTree.SyntaxTree
 		protected void Error(string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
-			throw new ParseException(msg, StartLocation, EndLocation);
+			throw new LensCompilerException(msg, StartLocation, EndLocation);
 		}
 
-		protected static void LocationSetError()
+		protected void LocationSetError()
 		{
-			throw new InvalidOperationException("Compound node's location cannot be set manually!");
+			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));
 		}
+
+		/// <summary>
+		/// A cached version for expression type.
+		/// </summary>
+		protected Type m_ExpressionType;
 	}
 }
