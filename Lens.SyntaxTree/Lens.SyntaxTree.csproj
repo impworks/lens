@@ -124,6 +124,8 @@
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="Utils\LocationEntity.cs" />
+    <Compile Include="Utils\MarkerInterfaces.cs" />
+    <Compile Include="Utils\TypeExtensions.cs" />
     <Compile Include="Utils\TypeResolver.cs" />
     <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
