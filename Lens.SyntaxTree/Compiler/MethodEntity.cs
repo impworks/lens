@@ -1,14 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
-	internal class MethodEntity : TypeContentsBase
+	internal class MethodEntity : MethodEntityBase
 	{
+		public MethodEntity()
+		{
+			Body = new CodeBlockNode();
+		}
+
 		#region Fields
 
 		public bool IsStatic { get; set; }
@@ -17,9 +22,9 @@ namespace Lens.SyntaxTree.Compiler
 
 		public Type ReturnType { get; set; }
 
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
-
 		public MethodBuilder MethodBuilder { get; private set; }
+
+		public CodeBlockNode Body { get; private set; }
 
 		#endregion
 

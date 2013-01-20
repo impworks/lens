@@ -60,6 +60,7 @@
     <Compile Include="Compiler\Context.Structure.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
     <Compile Include="Compiler\FieldEntity.cs" />
+    <Compile Include="Compiler\MethodEntityBase.cs" />
     <Compile Include="Compiler\MethodEntity.cs" />
     <Compile Include="Compiler\TypeContentsBase.cs" />
     <Compile Include="Compiler\TypeEntity.cs" />

@@ -10,7 +10,16 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	internal class TypeEntity
 	{
+		public TypeEntity()
+		{
+			Fields = new Dictionary<string, FieldEntity>();
+			Methods = new Dictionary<string, List<MethodEntity>>();
+			Constructors = new List<ConstructorEntity>();
+		}
+
 		#region Fields
+
+		public bool GenerateDefaultConstructor { get; set; }
 
 		public string Name { get; set; }
 
@@ -44,6 +53,38 @@ namespace Lens.SyntaxTree.Compiler
 
 			foreach(var ctor in Constructors)
 				ctor.PrepareSelf(ctx);
+		}
+
+		/// <summary>
+		/// Adds a constructor entity to the list.
+		/// </summary>
+		public void AddEntity(ConstructorEntity ctor)
+		{
+			Constructors.Add(ctor);
+			ctor.ContainerType = this;
+		}
+
+		/// <summary>
+		/// Adds a method entity to the list.
+		/// </summary>
+		public void AddEntity(MethodEntity method)
+		{
+			if(Methods.ContainsKey(method.Name))
+				Methods[method.Name].Add(method);
+			else
+				Methods.Add(method.Name, new List<MethodEntity> { method });
+
+			method.ContainerType = this;
+		}
+
+		/// <summary>
+		/// Adds a field entity to the list.
+		/// </summary>
+		/// <param name="field"></param>
+		public void AddEntity(FieldEntity field)
+		{
+			Fields.Add(field.Name, field);
+			field.ContainerType = this;
 		}
 
 		#endregion

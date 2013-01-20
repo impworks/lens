@@ -8,12 +8,12 @@
 		/// <summary>
 		/// The name of the current entity.
 		/// </summary>
-		public string Name { get; protected set; }
+		public string Name { get; set; }
 
 		/// <summary>
 		/// The type that contains current entity.
 		/// </summary>
-		public TypeEntity ContainerType { get; protected set; }
+		public TypeEntity ContainerType { get; set; }
 
 		/// <summary>
 		/// Creates the assembly instances for the current entity.

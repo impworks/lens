@@ -13,20 +13,30 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public partial class Context
 	{
+		#region Constants
+
+		/// <summary>
+		/// The name of the main type in the assembly.
+		/// </summary>
+		private const string RootTypeName = "<ScriptRootType>";
+
+		/// <summary>
+		/// The name of the entry point of the assembly.
+		/// </summary>
+		private const string RootMethodName = "<ScriptBody>";
+
+		#endregion
+
 		private Context()
 		{
 			var an = new AssemblyName(getAssemblyName());
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
-			MainType = MainModule.DefineType("_ScriptRootType", TypeAttributes.Public | TypeAttributes.Class);
-			EntryPoint = MainType.DefineMethod("_ScriptBody", MethodAttributes.Static | MethodAttributes.Public, typeof(object), Type.EmptyTypes);
 
 			_TypeResolver = new TypeResolver();
+			_DefinedTypes = new Dictionary<string, TypeEntity>();
 
-			DefinedFunctions = new List<FunctionNode>();
-			DefinedRecords = new List<RecordDefinitionNode>();
-			DefinedTypes = new List<TypeDefinitionNode>();
-			ScriptBody = new CodeBlockNode();
+			declareRootType();
 		}
 
 		/// <summary>
@@ -39,15 +49,15 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var currNode in nodes)
 			{
 				if (currNode is TypeDefinitionNode)
-					ctx.DefinedTypes.Add(currNode as TypeDefinitionNode);
+					ctx.DeclareType(currNode as TypeDefinitionNode);
 				else if (currNode is RecordDefinitionNode)
-					ctx.DefinedRecords.Add(currNode as RecordDefinitionNode);
+					ctx.DeclareRecord(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
-					ctx.DefinedFunctions.Add(currNode as FunctionNode);
+					ctx.DeclareFunction(currNode as FunctionNode);
 				else if(currNode is UsingNode)
-					ctx._TypeResolver.AddNamespace((currNode as UsingNode).Namespace);
+					ctx.DeclareOpenNamespace(currNode as UsingNode);
 				else
-					ctx.ScriptBody.Add(currNode);
+					ctx.DeclareScriptNode(currNode);
 			}
 
 			ctx.prepare();
@@ -66,36 +76,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public ModuleBuilder MainModule { get; private set; }
 
-		/// <summary>
-		/// The main type of the module.
-		/// </summary>
-		public TypeBuilder MainType { get; private set; }
-
-		/// <summary>
-		/// The entry point of the assembly.
-		/// </summary>
-		public MethodBuilder EntryPoint { get; private set; }
-
-		/// <summary>
-		/// The defined records.
-		/// </summary>
-		public List<RecordDefinitionNode> DefinedRecords { get; private set; }
-
-		/// <summary>
-		/// The defined types.
-		/// </summary>
-		public List<TypeDefinitionNode> DefinedTypes { get; private set; }
-
-		/// <summary>
-		/// The defined functions.
-		/// </summary>
-		public List<FunctionNode> DefinedFunctions { get; private set; }
-
-		/// <summary>
-		/// The body of the script.
-		/// </summary>
-		public CodeBlockNode ScriptBody { get; private set; }
-
 		#endregion
 
 		#region Fields
@@ -106,14 +86,19 @@ namespace Lens.SyntaxTree.Compiler
 		private static int _AssemblyId;
 
 		/// <summary>
-		/// The counter for closure types.
-		/// </summary>
-		private int _ClosureId;
-
-		/// <summary>
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
 		private readonly TypeResolver _TypeResolver;
+
+		/// <summary>
+		/// The root of type lookup.
+		/// </summary>
+		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
+
+		/// <summary>
+		/// The function that is the body of the script.
+		/// </summary>
+		private MethodEntity _ScriptBody;
 
 		#endregion
 	}

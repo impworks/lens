@@ -1,16 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
-	internal class ConstructorEntity : TypeContentsBase
+	internal class ConstructorEntity : MethodEntityBase
 	{
 		#region Fields
-
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
 
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
 
