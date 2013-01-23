@@ -130,6 +130,7 @@
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="Utils\LocationEntity.cs" />
+    <Compile Include="Utils\Scope.cs" />
     <Compile Include="Utils\TypeResolver.cs" />
     <Compile Include="Utils\TypeSignature.cs" />
     <Compile Include="Unit.cs" />

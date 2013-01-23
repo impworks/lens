@@ -8,9 +8,20 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	abstract class MethodEntityBase : TypeContentsBase
 	{
+		protected MethodEntityBase()
+		{
+			Arguments = new Dictionary<string, FunctionArgument>();
+			Scope = new Scope();
+		}
+
 		/// <summary>
 		/// The argument list.
 		/// </summary>
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
+		public readonly Dictionary<string, FunctionArgument> Arguments;
+
+		/// <summary>
+		/// Lexical scope of the current method.
+		/// </summary>
+		public readonly Scope Scope;
 	}
 }

@@ -25,12 +25,19 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private const string RootMethodName = "<ScriptBody>";
 
+		/// <summary>
+		/// The name for the application domain to execute script in.
+		/// </summary>
+		private const string AppDomainName = "LensScriptAppDomain";
+
 		#endregion
 
 		private Context()
 		{
 			var an = new AssemblyName(getAssemblyName());
-			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
+
+			Domain = AppDomain.CreateDomain(AppDomainName);
+			MainAssembly = Domain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
 
 			_TypeResolver = new TypeResolver();
@@ -60,11 +67,39 @@ namespace Lens.SyntaxTree.Compiler
 					ctx.DeclareScriptNode(currNode);
 			}
 
-			ctx.prepare();
 			return ctx;
 		}
 
+		public void Compile()
+		{
+			// todo
+			processClosures();
+			prepareEntities();
+			compileInternal();
+			finalizeAssembly();
+
+			IsCompiled = true;
+		}
+
+		/// <summary>
+		/// Execute the script and get it's return value.
+		/// </summary>
+		/// <returns></returns>
+		public object Execute()
+		{
+			if (!IsCompiled)
+				Compile();
+
+			var method = ResolveMethod(RootTypeName, RootMethodName);
+			return method.Invoke(null, new object[0]);
+		}
+
 		#region Properties
+
+		/// <summary>
+		/// The application domain for current script.
+		/// </summary>
+		public AppDomain Domain { get; private set; }
 
 		/// <summary>
 		/// The assembly that's being currently built.
@@ -75,6 +110,26 @@ namespace Lens.SyntaxTree.Compiler
 		/// The main module of the current assembly.
 		/// </summary>
 		public ModuleBuilder MainModule { get; private set; }
+
+		/// <summary>
+		/// Checks if the source in this context has been compiled.
+		/// </summary>
+		public bool IsCompiled { get; private set; }
+
+		/// <summary>
+		/// Type that is currently processed.
+		/// </summary>
+		internal TypeEntity CurrentType { get; set; }
+
+		/// <summary>
+		/// Method that is currently processed.
+		/// </summary>
+		internal MethodEntityBase CurrentMethod { get; set; }
+
+		/// <summary>
+		/// The lexical scope of the current scope.
+		/// </summary>
+		internal Scope CurrentScope { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
 
 		#endregion
 

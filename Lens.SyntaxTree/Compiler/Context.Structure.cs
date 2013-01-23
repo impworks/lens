@@ -136,11 +136,39 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Prepare the assembly entities for the type list.
+		/// Traverses the syntactic tree, searching for closures and curried methods.
 		/// </summary>
-		private void prepare()
+		private void processClosures()
 		{
 			
+		}
+
+		/// <summary>
+		/// Prepares the assembly entities for the type list.
+		/// </summary>
+		private void prepareEntities()
+		{
+			
+		}
+
+		/// <summary>
+		/// Compiles the source code for all the declared classes.
+		/// </summary>
+		private void compileInternal()
+		{
+			foreach (var curr in _DefinedTypes)
+				curr.Value.Compile(this);
+		}
+
+		/// <summary>
+		/// Finalizes the assembly.
+		/// </summary>
+		private void finalizeAssembly()
+		{
+			var ep = ResolveMethod(RootTypeName, RootMethodName);
+			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+			foreach (var curr in _DefinedTypes)
+				curr.Value.TypeBuilder.CreateType();
 		}
 
 		/// <summary>

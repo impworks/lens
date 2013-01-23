@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Compiler
 
 		#endregion
 
-		#region
+		#region Methods
 
 		public void PrepareSelf(Context ctx)
 		{
@@ -85,6 +85,30 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Fields.Add(field.Name, field);
 			field.ContainerType = this;
+		}
+
+		/// <summary>
+		/// Compile the method bodies of the current class.
+		/// </summary>
+		public void Compile(Context ctx)
+		{
+			compileMethodList(ctx, Constructors);
+
+			foreach(var curr in Methods)
+				compileMethodList(ctx, curr.Value);
+		}
+
+		/// <summary>
+		/// Compiles a list of methods.
+		/// </summary>
+		private void compileMethodList(Context ctx, IEnumerable<MethodEntityBase> methods)
+		{
+			foreach (var curr in methods)
+			{
+				ctx.CurrentMethod = curr;
+				// curr.Compile();
+				ctx.CurrentMethod = null;
+			}
 		}
 
 		#endregion
