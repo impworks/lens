@@ -148,7 +148,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void prepareEntities()
 		{
-			
+			// prepare types first
+			foreach (var curr in _DefinedTypes)
+				curr.Value.PrepareSelf(this);
+
+			foreach (var curr in _DefinedTypes)
+				curr.Value.PrepareMembers(this);
 		}
 
 		/// <summary>

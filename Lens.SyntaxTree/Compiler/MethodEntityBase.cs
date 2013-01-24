@@ -23,5 +23,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// Lexical scope of the current method.
 		/// </summary>
 		public readonly Scope Scope;
+
+		/// <summary>
+		/// Process closures.
+		/// </summary>
+		public void ProcessClosures(Context ctx)
+		{
+			
+		}
 	}
 }

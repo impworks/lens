@@ -105,7 +105,6 @@
     <Compile Include="SyntaxTree\Operators\TypeofOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\TypeOperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
-    <Compile Include="SyntaxTree\RootNode.cs" />
     <Compile Include="Utils\FunctionArgument.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
