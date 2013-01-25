@@ -9,7 +9,7 @@ open Lens.SyntaxTree.SyntaxTree.ControlFlow
 open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Literals
 open Lens.SyntaxTree.SyntaxTree.Operators
-open Lens.SyntaxTree.Utils
+open Lens.SyntaxTree.Compiler
 
 // Special nodes
 let using nameSpace =

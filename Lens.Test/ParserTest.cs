@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Lens.Parser;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;

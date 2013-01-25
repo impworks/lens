@@ -1,7 +1,8 @@
 ﻿using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.Utils;
 
-namespace Lens.SyntaxTree.Utils
+namespace Lens.SyntaxTree.Compiler
 {
 	/// <summary>
 	/// A node representing a function argument definition.

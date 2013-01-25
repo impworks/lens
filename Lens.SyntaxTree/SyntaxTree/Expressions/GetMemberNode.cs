@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			throw new NotImplementedException();
 		}

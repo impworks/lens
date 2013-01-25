@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		public TypeSignature Type { get; set; }
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			return ctx.ResolveType(Type.Signature);
 		}

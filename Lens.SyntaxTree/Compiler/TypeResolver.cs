@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Lens.SyntaxTree.Utils
+namespace Lens.SyntaxTree.Compiler
 {
 	/// <summary>
 	/// A class to resolve types by their string signatures.
@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		private Dictionary<string, List<string>> _SearchableLocations;
-		private Dictionary<string, Type> _Cache;
+		private readonly Dictionary<string, Type> _Cache;
 
 		/// <summary>
 		/// Type aliases.

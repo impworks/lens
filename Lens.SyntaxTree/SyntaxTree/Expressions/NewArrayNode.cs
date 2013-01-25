@@ -8,16 +8,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_ExpressionType != null)
-				return m_ExpressionType;
-
 			if(Expressions.Count == 0)
 				Error("Array must contain at least one object!");
 
-			m_ExpressionType = Expressions[0].GetExpressionType(ctx).MakeArrayType();
-			return m_ExpressionType;
+			return Expressions[0].GetExpressionType(ctx).MakeArrayType();
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

@@ -112,6 +112,20 @@ namespace Lens.SyntaxTree.Compiler
 		public ModuleBuilder MainModule { get; private set; }
 
 		/// <summary>
+		/// Main type of the assembly.
+		/// </summary>
+		public TypeBuilder MainType
+		{
+			get
+			{
+				if (_MainType == null)
+					_MainType = ResolveType(RootTypeName) as TypeBuilder;
+				return _MainType;
+			}
+		}
+		private TypeBuilder _MainType;
+
+		/// <summary>
 		/// Checks if the source in this context has been compiled.
 		/// </summary>
 		public bool IsCompiled { get; private set; }
@@ -129,7 +143,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The lexical scope of the current scope.
 		/// </summary>
-		internal Scope CurrentScope { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
+		internal ScopeManager CurrentScopeManager { get { return CurrentMethod == null ? null : CurrentMethod.ScopeManager; } }
 
 		#endregion
 

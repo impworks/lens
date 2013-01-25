@@ -1,13 +1,13 @@
 ﻿using System;
 
-namespace Lens.SyntaxTree.Utils
+namespace Lens.SyntaxTree.Compiler
 {
 	/// <summary>
 	/// A class representing info about a local variable.
 	/// </summary>
-	internal class LexicalNameInfo
+	internal class LocalName
 	{
-		public LexicalNameInfo(string name, Type type, int id, bool isConst = false)
+		public LocalName(string name, Type type, int id, bool isConst = false)
 		{
 			Name = name;
 			Type = type;

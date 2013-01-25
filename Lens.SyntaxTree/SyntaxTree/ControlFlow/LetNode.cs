@@ -1,6 +1,4 @@
-﻿using Lens.SyntaxTree.Utils;
-
-namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
+﻿namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// The constant declaration node.
@@ -8,12 +6,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	public class LetNode : NameDeclarationBase
 	{
 		public LetNode(string name = null)
+			: base(true)
 		{
-			NameInfo = new LexicalNameInfo
-			{
-				Name = name,
-				IsConstant = true
-			};
+			Name = name;
 		}
 	}
 }

@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "not"; }
 		}
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			var type = Operand.GetExpressionType(ctx);
 

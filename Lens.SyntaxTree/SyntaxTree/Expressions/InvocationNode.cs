@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			throw new NotImplementedException();
 		}

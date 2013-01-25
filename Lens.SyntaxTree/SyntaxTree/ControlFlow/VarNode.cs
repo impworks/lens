@@ -1,6 +1,4 @@
-﻿using Lens.SyntaxTree.Utils;
-
-namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
+﻿namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// The variable declaration node.
@@ -8,12 +6,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	public class VarNode : NameDeclarationBase
 	{
 		public VarNode(string name = null)
+			: base(false)
 		{
-			NameInfo = new LexicalNameInfo
-			{
-				Name = name,
-				IsConstant = false
-			};
+			Name = name;
 		}
 	}
 }

@@ -105,7 +105,7 @@
     <Compile Include="SyntaxTree\Operators\TypeofOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\TypeOperatorNodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
-    <Compile Include="Utils\FunctionArgument.cs" />
+    <Compile Include="Compiler\FunctionArgument.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
@@ -128,15 +128,15 @@
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
-    <Compile Include="Utils\LocationEntity.cs" />
-    <Compile Include="Utils\Scope.cs" />
-    <Compile Include="Utils\TypeResolver.cs" />
-    <Compile Include="Utils\TypeSignature.cs" />
+    <Compile Include="SyntaxTree\LocationEntity.cs" />
+    <Compile Include="Compiler\ScopeManager.cs" />
+    <Compile Include="Compiler\TypeResolver.cs" />
+    <Compile Include="Compiler\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
-    <Compile Include="Utils\LexemLocation.cs" />
-    <Compile Include="Utils\LexicalNameInfo.cs" />
+    <Compile Include="SyntaxTree\LexemLocation.cs" />
+    <Compile Include="Compiler\LocalName.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

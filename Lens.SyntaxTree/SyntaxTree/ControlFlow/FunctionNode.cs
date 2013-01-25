@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -40,6 +39,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var retType = Body.GetExpressionType(ctx);
 			var args = Arguments.Select(x => ctx.ResolveType(x.Value.Type.Signature)).ToArray();
+
 			return ctx.MainType.DefineMethod(
 				Name,
 				MethodAttributes.Private | MethodAttributes.Static,

@@ -3,7 +3,7 @@
 open Lens.Parser.Accessor
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.Expressions
-open Lens.SyntaxTree.Utils
+open Lens.SyntaxTree.Compiler
 
 type Symbol =
 | Static     of string * string // type * name

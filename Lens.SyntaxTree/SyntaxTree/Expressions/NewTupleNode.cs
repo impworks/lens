@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		private Type m_TupleType;
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			if (m_TupleType == null)
 			{

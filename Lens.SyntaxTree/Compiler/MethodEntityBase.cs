@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -11,7 +10,7 @@ namespace Lens.SyntaxTree.Compiler
 		protected MethodEntityBase()
 		{
 			Arguments = new Dictionary<string, FunctionArgument>();
-			Scope = new Scope();
+			ScopeManager = new ScopeManager();
 		}
 
 		/// <summary>
@@ -22,7 +21,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Lexical scope of the current method.
 		/// </summary>
-		public readonly Scope Scope;
+		public readonly ScopeManager ScopeManager;
 
 		/// <summary>
 		/// Process closures.

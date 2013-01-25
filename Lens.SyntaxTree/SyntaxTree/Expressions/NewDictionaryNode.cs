@@ -29,20 +29,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		#endregion
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_ExpressionType != null)
-				return m_ExpressionType;
-
 			if(Expressions.Count == 0)
 				Error("List must contain at least one object!");
 
-			m_ExpressionType = typeof(Dictionary<,>).MakeGenericType(
+			return typeof(Dictionary<,>).MakeGenericType(
 				Expressions[0].Key.GetExpressionType(ctx),
 				Expressions[0].Value.GetExpressionType(ctx)
 			);
-
-			return m_ExpressionType;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
