@@ -52,8 +52,8 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		public virtual void ProcessClosures(Context ctx)
 		{
-			foreach(var curr in GetChildNodes())
-				curr.ProcessClosures(ctx);
+			foreach(var child in GetChildNodes())
+				child.ProcessClosures(ctx);
 		}
 
 		/// <summary>

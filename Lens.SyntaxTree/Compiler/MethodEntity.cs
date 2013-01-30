@@ -2,18 +2,11 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
 	internal class MethodEntity : MethodEntityBase
 	{
-		public MethodEntity()
-		{
-			Body = new CodeBlockNode();
-		}
-
 		#region Fields
 
 		public bool IsStatic { get; set; }
@@ -24,14 +17,15 @@ namespace Lens.SyntaxTree.Compiler
 
 		public MethodBuilder MethodBuilder { get; private set; }
 
-		public CodeBlockNode Body { get; private set; }
-
 		#endregion
 
 		#region Methods
 
 		public override void PrepareSelf(Context ctx)
 		{
+			if (_IsPrepared)
+				return;
+
 			var attrs = MethodAttributes.Public;
 			if(IsStatic)
 				attrs |= MethodAttributes.Static;
@@ -48,6 +42,8 @@ namespace Lens.SyntaxTree.Compiler
 				param.ParameterBuilder = MethodBuilder.DefineParameter(idx, pa, param.Name);
 				idx++;
 			}
+
+			_IsPrepared = true;
 		}
 
 		#endregion

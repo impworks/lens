@@ -33,13 +33,19 @@ namespace Lens.SyntaxTree.Compiler
 
 		public List<ConstructorEntity> Constructors { get; private set; }
 
+		protected bool _IsPrepared;
+
 		#endregion
 
 		#region Methods
 
 		public void PrepareSelf(Context ctx)
 		{
+			if (_IsPrepared)
+				return;
+
 			TypeBuilder = ctx.MainModule.DefineType(Name, TypeAttributes.Public, Parent);
+			_IsPrepared = true;
 		}
 
 		public void PrepareMembers(Context ctx)
@@ -80,7 +86,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Adds a field entity to the list.
 		/// </summary>
-		/// <param name="field"></param>
 		public void AddEntity(FieldEntity field)
 		{
 			Fields.Add(field.Name, field);
@@ -96,6 +101,16 @@ namespace Lens.SyntaxTree.Compiler
 
 			foreach(var curr in Methods)
 				compileMethodList(ctx, curr.Value);
+		}
+
+		/// <summary>
+		/// Process the closured for the current type.
+		/// </summary>
+		public void ProcessClosures(Context ctx)
+		{
+			foreach (var currGroup in Methods.Values)
+				foreach (var currMethod in currGroup)
+					currMethod.ProcessClosures(ctx);
 		}
 
 		/// <summary>

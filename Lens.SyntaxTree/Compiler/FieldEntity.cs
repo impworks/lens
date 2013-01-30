@@ -23,11 +23,15 @@ namespace Lens.SyntaxTree.Compiler
 
 		public override void PrepareSelf(Context ctx)
 		{
+			if (_IsPrepared)
+				return;
+
 			var attrs = FieldAttributes.Public;
 			if(IsStatic)
 				attrs |= FieldAttributes.Static;
 
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
+			_IsPrepared = true;
 		}
 
 		#endregion

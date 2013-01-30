@@ -140,7 +140,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void processClosures()
 		{
-			
+			var types = _DefinedTypes.ToArray();
+
+			foreach (var currType in types)
+				currType.Value.ProcessClosures(this);
 		}
 
 		/// <summary>
@@ -212,3 +215,4 @@ namespace Lens.SyntaxTree.Compiler
 		#endregion
 	}
 }
+ 

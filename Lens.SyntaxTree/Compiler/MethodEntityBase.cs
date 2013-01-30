@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -9,6 +10,7 @@ namespace Lens.SyntaxTree.Compiler
 	{
 		protected MethodEntityBase()
 		{
+			Body = new CodeBlockNode();
 			Arguments = new Dictionary<string, FunctionArgument>();
 			ScopeManager = new ScopeManager();
 		}
@@ -23,12 +25,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public readonly ScopeManager ScopeManager;
 
+		public CodeBlockNode Body { get; private set; }
+
 		/// <summary>
 		/// Process closures.
 		/// </summary>
 		public void ProcessClosures(Context ctx)
 		{
-			
+			var oldMethod = ctx.CurrentMethod;
+			ctx.CurrentMethod = this;
+			Body.ProcessClosures(ctx);
+			ctx.CurrentMethod = oldMethod;
 		}
 	}
 }

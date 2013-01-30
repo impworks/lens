@@ -16,8 +16,12 @@ namespace Lens.SyntaxTree.Compiler
 
 		public override void PrepareSelf(Context ctx)
 		{
+			if (_IsPrepared)
+				return;
+
 			var paramTypes = Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, paramTypes);
+			_IsPrepared = true;
 		}
 
 		#endregion

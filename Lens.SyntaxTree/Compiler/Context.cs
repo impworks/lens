@@ -73,6 +73,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void Compile()
 		{
 			// todo
+			prepareEntities();
 			processClosures();
 			prepareEntities();
 			compileInternal();
