@@ -19,6 +19,8 @@ namespace Lens.SyntaxTree.Compiler
 
 		#region Fields
 
+		public bool IsSealed { get; set; }
+
 		public bool GenerateDefaultConstructor { get; set; }
 
 		public string Name { get; set; }
@@ -44,7 +46,11 @@ namespace Lens.SyntaxTree.Compiler
 			if (_IsPrepared)
 				return;
 
-			TypeBuilder = ctx.MainModule.DefineType(Name, TypeAttributes.Public, Parent);
+			var attrs = TypeAttributes.Public;
+			if(IsSealed)
+				attrs |= TypeAttributes.Sealed;
+
+			TypeBuilder = ctx.MainModule.DefineType(Name, attrs, Parent);
 			_IsPrepared = true;
 		}
 

@@ -12,7 +12,6 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Body = new CodeBlockNode();
 			Arguments = new Dictionary<string, FunctionArgument>();
-			ScopeManager = new ScopeManager();
 		}
 
 		/// <summary>
@@ -21,11 +20,11 @@ namespace Lens.SyntaxTree.Compiler
 		public readonly Dictionary<string, FunctionArgument> Arguments;
 
 		/// <summary>
-		/// Lexical scope of the current method.
+		/// The body of the method.
 		/// </summary>
-		public readonly ScopeManager ScopeManager;
-
 		public CodeBlockNode Body { get; private set; }
+
+		public string ClosureTypeName { get; private set; }
 
 		/// <summary>
 		/// Process closures.

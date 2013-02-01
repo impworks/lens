@@ -61,31 +61,5 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		#endregion
-
-		#region Scope entry
-		
-		/// <summary>
-		/// The lexical score state of current method.
-		/// </summary>
-		private class Scope
-		{
-			public Scope()
-			{
-				EntryCounter = 0;
-				Entries = new Dictionary<string, LocalName>();
-			}
-
-			/// <summary>
-			/// The ID for local name counters.
-			/// </summary>
-			public int EntryCounter;
-
-			/// <summary>
-			/// The dictionary with local names.
-			/// </summary>
-			public readonly Dictionary<string, LocalName> Entries;
-		}
-
-		#endregion
 	}
 }

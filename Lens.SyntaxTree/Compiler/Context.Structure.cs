@@ -13,6 +13,24 @@ namespace Lens.SyntaxTree.Compiler
 		#region Methods
 
 		/// <summary>
+		/// Creates a new type entity with given name.
+		/// </summary>
+		public void CreateType(string name, Type parent = null, bool isSealed = false)
+		{
+			if(_DefinedTypes.ContainsKey(name))
+				throw new LensCompilerException(string.Format("Type '{0}' has already been defined!", name));
+
+			var ent = new TypeEntity
+			{
+				Name = name,
+				Parent = parent,
+				IsSealed = isSealed
+			};
+
+			_DefinedTypes.Add(name, ent);
+		}
+
+		/// <summary>
 		/// Resolves a type by it's string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
