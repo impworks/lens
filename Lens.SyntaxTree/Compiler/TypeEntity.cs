@@ -25,7 +25,9 @@ namespace Lens.SyntaxTree.Compiler
 
 		public string Name { get; set; }
 
-		public Type Parent { get; set; }
+		public TypeSignature ParentSignature { get; set; }
+
+		public Type Parent { get; private set; }
 
 		public TypeBuilder TypeBuilder { get; private set; }
 
@@ -50,7 +52,18 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
-			TypeBuilder = ctx.MainModule.DefineType(Name, attrs, Parent);
+			if (ParentSignature != null)
+			{
+				Parent = ctx.ResolveType(ParentSignature.Signature);
+				TypeBuilder = ctx.MainModule.DefineType(Name, attrs, Parent);
+			}
+			else
+			{
+				TypeBuilder = ctx.MainModule.DefineType(Name, attrs);
+			}
+
+			// todo: generate default ctor?
+
 			_IsPrepared = true;
 		}
 

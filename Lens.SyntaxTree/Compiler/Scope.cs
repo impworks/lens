@@ -56,17 +56,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ReferenceName(string name)
 		{
-			find(
-				name,
-				(loc, idx) =>
-				{
-					if (idx > 0 && !loc.IsClosured)
-					{
-						loc.IsClosured = true;
-						// todo: create entity
-					}
-				}
-			);
+			find(name, (loc, idx) => loc.IsClosured |= idx > 0);
+		}
+
+		/// <summary>
+		/// Creates a closure type for current closure.
+		/// </summary>
+		public void CreateClosureType(Context ctx)
+		{
+			ClosureClassName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
+			ctx.ClosureId++;
+			ctx.CreateType(ClosureClassName, null, true);
 		}
 
 		/// <summary>
@@ -77,12 +77,22 @@ namespace Lens.SyntaxTree.Compiler
 			var idx = 0;
 			foreach (var curr in Names.Values)
 			{
-				if (!curr.IsClosured)
+				if (curr.IsClosured)
 				{
+					// create a field in the closured class
+					var name = string.Format("<f_{0}>", curr.Name);
+					ctx.CreateField(ClosureClassName, name, curr.Type);
+				}
+				else
+				{
+					// assign local id to the current variable
 					curr.LocalId = idx;
 					idx++;
 				}
 			}
+
+			if(OuterScope != null)
+				ctx.CreateField(ClosureClassName, "<root>", OuterScope.ClosureClassName);
 		}
 
 		/// <summary>

@@ -15,19 +15,41 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new type entity with given name.
 		/// </summary>
-		public void CreateType(string name, Type parent = null, bool isSealed = false)
+		public void CreateType(string name, string parent = null, bool isSealed = false)
 		{
 			if(_DefinedTypes.ContainsKey(name))
-				throw new LensCompilerException(string.Format("Type '{0}' has already been defined!", name));
+				Error("Type '{0}' has already been defined!", name);
 
 			var ent = new TypeEntity
 			{
 				Name = name,
-				Parent = parent,
+				ParentSignature = parent,
 				IsSealed = isSealed
 			};
 
 			_DefinedTypes.Add(name, ent);
+		}
+
+		/// <summary>
+		/// Creates a new field in the type with the given name.
+		/// </summary>
+		public void CreateField(string baseType, string name, string type, bool isStatic = false)
+		{
+			TypeEntity typeInfo;
+			if(!_DefinedTypes.TryGetValue(baseType, out typeInfo))
+				Error("Type '{0}' does not exist!", baseType);
+
+			if(typeInfo.Fields.ContainsKey(name))
+				Error("Type '{0}' already contains field '{1}'!", baseType, name);
+
+			var fe = new FieldEntity
+			{
+				Name = name,
+				TypeSignature = type,
+				IsStatic = isStatic,
+				ContainerType = typeInfo,
+			};
+			typeInfo.Fields.Add(name, fe);
 		}
 
 		/// <summary>

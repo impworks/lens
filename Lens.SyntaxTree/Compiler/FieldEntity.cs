@@ -13,7 +13,9 @@ namespace Lens.SyntaxTree.Compiler
 
 		public bool IsStatic { get; set; }
 
-		public Type Type { get; set; }
+		public TypeSignature TypeSignature { get; set; }
+
+		public Type Type { get; private set; }
 
 		public FieldBuilder FieldBuilder { get; private set; }
 
@@ -30,6 +32,7 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsStatic)
 				attrs |= FieldAttributes.Static;
 
+			Type = ctx.ResolveType(TypeSignature.Signature);
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
 			_IsPrepared = true;
 		}

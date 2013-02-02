@@ -12,6 +12,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Body = new CodeBlockNode();
 			Arguments = new Dictionary<string, FunctionArgument>();
+			Scope = new Scope();
 		}
 
 		/// <summary>
@@ -24,7 +25,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public CodeBlockNode Body { get; private set; }
 
-		public string ClosureTypeName { get; private set; }
+		/// <summary>
+		/// The scope of the method.
+		/// </summary>
+		public Scope Scope { get; private set; }
 
 		/// <summary>
 		/// Process closures.

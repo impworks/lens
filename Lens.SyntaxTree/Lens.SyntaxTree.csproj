@@ -128,9 +128,9 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Utils\Annotations.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="SyntaxTree\LocationEntity.cs" />
-    <Compile Include="Compiler\ScopeManager.cs" />
     <Compile Include="Compiler\TypeResolver.cs" />
     <Compile Include="Compiler\TypeSignature.cs" />
     <Compile Include="Unit.cs" />

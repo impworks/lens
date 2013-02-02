@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -12,10 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 	{
 		public Type GetExpressionType(Context ctx)
 		{
-			if (m_ExpressionType == null)
-				m_ExpressionType = resolveExpressionType(ctx);
-
-			return m_ExpressionType;
+			return m_ExpressionType ?? (m_ExpressionType = resolveExpressionType(ctx));
 		}
 
 		/// <summary>
@@ -61,6 +59,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
+		[ContractAnnotation("=> halt")]
 		protected void Error(string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
@@ -70,6 +69,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <summary>
 		/// Throw a generic error for incorrect location setting.
 		/// </summary>
+		[ContractAnnotation("=> halt")]
 		protected void LocationSetError()
 		{
 			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));

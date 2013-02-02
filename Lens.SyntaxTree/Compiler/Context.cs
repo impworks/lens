@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using JetBrains.Annotations;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Utils;
@@ -70,6 +71,9 @@ namespace Lens.SyntaxTree.Compiler
 			return ctx;
 		}
 
+		/// <summary>
+		/// Compiles the assembly.
+		/// </summary>
 		public void Compile()
 		{
 			// todo
@@ -85,7 +89,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Execute the script and get it's return value.
 		/// </summary>
-		/// <returns></returns>
 		public object Execute()
 		{
 			if (!IsCompiled)
@@ -93,6 +96,15 @@ namespace Lens.SyntaxTree.Compiler
 
 			var method = ResolveMethod(RootTypeName, RootMethodName);
 			return method.Invoke(null, new object[0]);
+		}
+
+		/// <summary>
+		/// Throws a new error.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		public void Error(string msg, params object[] args)
+		{
+			throw new LensCompilerException(string.Format(msg, args));
 		}
 
 		#region Properties
@@ -144,7 +156,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The lexical scope of the current scope.
 		/// </summary>
-		internal ScopeManager CurrentScopeManager { get { return CurrentMethod == null ? null : CurrentMethod.ScopeManager; } }
+		internal Scope CurrentScopeManager { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
+
+		/// <summary>
+		/// An ID for closure types.
+		/// </summary>
+		internal int ClosureId;
 
 		#endregion
 

@@ -13,7 +13,9 @@ namespace Lens.SyntaxTree.Compiler
 
 		public bool IsVirtual { get; set; }
 
-		public Type ReturnType { get; set; }
+		public TypeSignature ReturnTypeSignature { get; set; }
+
+		public Type ReturnType { get; private set; }
 
 		public MethodBuilder MethodBuilder { get; private set; }
 
@@ -31,6 +33,8 @@ namespace Lens.SyntaxTree.Compiler
 				attrs |= MethodAttributes.Static;
 			else if(IsVirtual)
 				attrs |= MethodAttributes.Virtual;
+
+			ReturnType = ctx.ResolveType(ReturnTypeSignature.Signature);
 
 			var paramTypes = Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
 			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, paramTypes);
