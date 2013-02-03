@@ -53,6 +53,21 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Creates a new method in the type with the given name.
+		/// </summary>
+		public void CreateMethod(string baseType, string name, string[] args = null, bool isStatic = false, bool isVirtual = false)
+		{
+			TypeEntity typeInfo;
+			if (!_DefinedTypes.TryGetValue(baseType, out typeInfo))
+				Error("Type '{0}' does not exist!", baseType);
+
+			var me = new MethodEntity
+			{
+				Name = name,
+			}
+		}
+
+		/// <summary>
 		/// Resolves a type by it's string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
