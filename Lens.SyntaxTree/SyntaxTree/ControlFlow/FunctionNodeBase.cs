@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -14,14 +15,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		protected FunctionNodeBase()
 		{
-			Arguments = new Dictionary<string, FunctionArgument>();
+			Arguments = new HashList<FunctionArgument>();
 			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
 		/// Function arguments.
 		/// </summary>
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
+		public HashList<FunctionArgument> Arguments { get; set; }
 
 		/// <summary>
 		/// Function body.
@@ -43,8 +44,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			return Body.GetExpressionType(ctx);
 		}
-
-		public abstract void PrepareSelf(Context ctx);
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

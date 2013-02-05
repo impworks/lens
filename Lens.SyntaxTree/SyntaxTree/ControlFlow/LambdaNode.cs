@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -8,12 +9,24 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class LambdaNode : FunctionNodeBase
 	{
-		public override void Compile(Context ctx, bool mustReturn)
+		public override void ProcessClosures(Context ctx)
 		{
-			throw new NotImplementedException();
+			var argTypes = Arguments.Values.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
+			var methodBackup = ctx.CurrentMethod;
+			ctx.CurrentMethod = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes);
+
+			base.ProcessClosures(ctx);
+
+			ctx.CurrentMethod = methodBackup;
 		}
 
-		public override void PrepareSelf(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
+		{
+			// todo!
+			return base.resolveExpressionType(ctx);
+		}
+
+		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

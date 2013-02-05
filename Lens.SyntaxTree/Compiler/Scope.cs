@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The name of the closure class.
 		/// </summary>
-		public Type ClosureType { get; private set; }
+		public TypeEntity ClosureType { get; private set; }
 
 		#region Methods
 
@@ -62,11 +62,28 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a closure type for current closure.
 		/// </summary>
-		public void CreateClosureType(Context ctx)
+		public TypeEntity CreateClosureType(Context ctx)
 		{
 			var closureName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
 			ctx.ClosureId++;
-			ClosureType = ctx.CreateType(closureName, null, true).TypeBuilder;
+			ClosureType = ctx.CreateType(closureName, null, true);
+			return ClosureType;
+		}
+
+		/// <summary>
+		/// Creates a closured method in the current scope's closure type.
+		/// </summary>
+		public MethodEntity CreateClosureMethod(Context ctx, Type[] args)
+		{
+			if (ClosureType == null)
+				ClosureType = CreateClosureType(ctx);
+
+			var closureName = string.Format("<ClosuredMethod{0}>", ClosureType.ClosureMethodId);
+			ClosureType.ClosureMethodId++;
+
+			var method = ctx.CreateMethod(ClosureType.TypeBuilder, closureName, args);
+			method.Scope.OuterScope = this;
+			return method;
 		}
 
 		/// <summary>
@@ -81,7 +98,7 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					// create a field in the closured class
 					var name = string.Format("<f_{0}>", curr.Name);
-					ctx.CreateField(ClosureType, name, curr.Type);
+					ctx.CreateField(ClosureType.TypeBuilder, name, curr.Type);
 				}
 				else
 				{
@@ -92,7 +109,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			if(OuterScope != null)
-				ctx.CreateField(ClosureType, "<root>", OuterScope.ClosureType);
+				ctx.CreateField(ClosureType.TypeBuilder, "<root>", OuterScope.ClosureType.TypeBuilder);
 		}
 
 		/// <summary>

@@ -7,6 +7,7 @@ using Lens.SyntaxTree.SyntaxTree.Expressions;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
+using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -165,7 +166,7 @@ type ArrayHolder
             var result = new FunctionNode
             {
                 Name = "hypo",
-                Arguments = new Dictionary<string, FunctionArgument>
+                Arguments = new HashList<FunctionArgument>
                 {
                     {"a", new FunctionArgument("a", "int")},
                     {"b", new FunctionArgument("b", "int")}

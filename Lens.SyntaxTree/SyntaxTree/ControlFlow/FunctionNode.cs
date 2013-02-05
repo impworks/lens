@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -16,56 +13,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name { get; set; }
 
-		/// <summary>
-		/// Define function-related assembly entities.
-		/// </summary>
-		public override void PrepareSelf(Context ctx)
-		{
-			MethodBuilder = defineMethod(ctx);
-			defineParams();
-		}
-
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
-
-		#region Helpers
-
-		/// <summary>
-		/// Define a method in the assembly.
-		/// </summary>
-		private MethodBuilder defineMethod(Context ctx)
-		{
-			var retType = Body.GetExpressionType(ctx);
-			var args = Arguments.Select(x => ctx.ResolveType(x.Value.Type.Signature)).ToArray();
-
-			return ctx.MainType.DefineMethod(
-				Name,
-				MethodAttributes.Private | MethodAttributes.Static,
-				CallingConventions.Standard,
-				retType,
-				args
-			);
-		}
-
-		/// <summary>
-		/// Define parameters in the assembly.
-		/// </summary>
-		private void defineParams()
-		{
-			var argId = 1;
-			foreach (var argInfo in Arguments)
-			{
-				// todo: ref parameters?
-				var arg = argInfo.Value;
-				var argKind = arg.Modifier == ArgumentModifier.Out ? ParameterAttributes.Out : ParameterAttributes.In;
-				arg.ParameterBuilder = MethodBuilder.DefineParameter(argId, argKind, arg.Name);
-				argId++;
-			}
-		}
-
-		#endregion
 
 		#region Equality members
 

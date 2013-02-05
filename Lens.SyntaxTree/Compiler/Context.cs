@@ -156,7 +156,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The lexical scope of the current scope.
 		/// </summary>
-		internal Scope CurrentScopeManager { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
+		internal Scope CurrentScope { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
 
 		/// <summary>
 		/// An ID for closure types.

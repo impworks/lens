@@ -32,6 +32,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			get { return CatchClauses.Last().EndLocation; }
 			set { LocationSetError(); }
 		}
+		
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Code.GetChildNodes().Union(CatchClauses);
+		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{

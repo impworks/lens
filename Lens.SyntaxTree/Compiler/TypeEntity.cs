@@ -15,6 +15,7 @@ namespace Lens.SyntaxTree.Compiler
 			Fields = new Dictionary<string, FieldEntity>();
 			Methods = new Dictionary<string, List<MethodEntity>>();
 			Constructors = new List<ConstructorEntity>();
+			ClosureMethodId = 1;
 		}
 
 		#region Fields
@@ -36,6 +37,8 @@ namespace Lens.SyntaxTree.Compiler
 		public Dictionary<string, List<MethodEntity>> Methods { get; set; }
 
 		public List<ConstructorEntity> Constructors { get; private set; }
+
+		public int ClosureMethodId { get; set; }
 
 		protected bool _IsPrepared;
 
