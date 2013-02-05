@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -14,6 +15,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				Error("Array must contain at least one object!");
 
 			return Expressions[0].GetExpressionType(ctx).MakeArrayType();
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Expressions;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

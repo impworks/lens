@@ -40,6 +40,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			);
 		}
 
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			foreach (var curr in Expressions)
+			{
+				yield return curr.Key;
+				yield return curr.Value;
+			}
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();

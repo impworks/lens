@@ -46,6 +46,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public abstract void PrepareSelf(Context ctx);
 
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Body;
+		}
+
 		#region Equality members
 
 		protected bool Equals(FunctionNodeBase other)

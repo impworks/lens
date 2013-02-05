@@ -46,6 +46,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			return Statements[Statements.Count - 1].GetExpressionType(ctx);
 		}
 
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Statements;
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			foreach(var curr in Statements)

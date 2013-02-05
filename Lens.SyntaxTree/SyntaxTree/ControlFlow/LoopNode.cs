@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -30,6 +31,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			return Body.GetExpressionType(ctx);
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Condition;
+			yield return Body;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

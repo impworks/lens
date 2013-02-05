@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -16,6 +17,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			if (Expression != null)
+				yield return Expression;
+
+			foreach (var curr in Arguments)
+				yield return curr;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

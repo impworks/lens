@@ -32,6 +32,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return base.resolveExpressionType(ctx);
 		}
 
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Index;
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();

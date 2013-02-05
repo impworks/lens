@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -18,6 +19,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			get { return Value.EndLocation; }
 			set { LocationSetError(); }
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Index;
+			yield return Value;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

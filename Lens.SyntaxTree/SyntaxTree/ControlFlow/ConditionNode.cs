@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -46,6 +47,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			}
 
 			return t1;
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Condition;
+			yield return TrueAction;
+			if (FalseAction != null)
+				yield return FalseAction;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

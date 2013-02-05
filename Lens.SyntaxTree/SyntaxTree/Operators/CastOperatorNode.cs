@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -19,7 +19,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		public TypeSignature Type { get; set; }
 
-
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Expression;
+		}
+		
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			return ctx.ResolveType(Type.Signature);

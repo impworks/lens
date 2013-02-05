@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -22,6 +23,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			return ctx.ResolveType(Type.Signature);
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Arguments;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

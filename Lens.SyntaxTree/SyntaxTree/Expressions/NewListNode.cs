@@ -17,6 +17,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType(ctx));
 		}
 
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Expressions;
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
