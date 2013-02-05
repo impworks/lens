@@ -15,28 +15,29 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new type entity with given name.
 		/// </summary>
-		public void CreateType(string name, string parent = null, bool isSealed = false)
+		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false)
 		{
 			if(_DefinedTypes.ContainsKey(name))
 				Error("Type '{0}' has already been defined!", name);
 
-			var ent = new TypeEntity
+			var te = new TypeEntity
 			{
 				Name = name,
 				ParentSignature = parent,
 				IsSealed = isSealed
 			};
-
-			_DefinedTypes.Add(name, ent);
+			te.PrepareSelf(this);
+			_DefinedTypes.Add(name, te);
+			return te;
 		}
 
 		/// <summary>
 		/// Creates a new field in the type with the given name.
 		/// </summary>
-		public void CreateField(string baseType, string name, string type, bool isStatic = false)
+		internal FieldEntity CreateField(Type baseType, string name, Type type, bool isStatic = false)
 		{
 			TypeEntity typeInfo;
-			if(!_DefinedTypes.TryGetValue(baseType, out typeInfo))
+			if(!_DefinedTypes.TryGetValue(baseType.Name, out typeInfo))
 				Error("Type '{0}' does not exist!", baseType);
 
 			if(typeInfo.Fields.ContainsKey(name))
@@ -45,26 +46,48 @@ namespace Lens.SyntaxTree.Compiler
 			var fe = new FieldEntity
 			{
 				Name = name,
-				TypeSignature = type,
+				Type = type,
 				IsStatic = isStatic,
 				ContainerType = typeInfo,
 			};
 			typeInfo.Fields.Add(name, fe);
+			fe.PrepareSelf(this);
+			return fe;
 		}
 
 		/// <summary>
 		/// Creates a new method in the type with the given name.
 		/// </summary>
-		public void CreateMethod(string baseType, string name, string[] args = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(Type baseType, string name, Type[] args = null, bool isStatic = false, bool isVirtual = false)
 		{
 			TypeEntity typeInfo;
-			if (!_DefinedTypes.TryGetValue(baseType, out typeInfo))
+			if (!_DefinedTypes.TryGetValue(baseType.Name, out typeInfo))
 				Error("Type '{0}' does not exist!", baseType);
+
+			if (typeInfo.Methods.ContainsKey(name))
+			{
+				var exists = (args == null || args.Length == 0)
+						? typeInfo.Methods[name].Count > 0
+					    : typeInfo.Methods[name].Any(m => argTypesEqual(args, m));
+
+				if (exists)
+					Error("A function named '{0}' with the same set of arguments is already defined in type '{1}'!", name, baseType);
+			}
+			else
+			{
+				typeInfo.Methods.Add(name, new List<MethodEntity>());
+			}
 
 			var me = new MethodEntity
 			{
 				Name = name,
-			}
+				IsStatic = isStatic,
+				IsVirtual = isVirtual,
+				ContainerType = typeInfo,
+			};
+			typeInfo.Methods[name].Add(me);
+			me.PrepareSelf(this);
+			return me;
 		}
 
 		/// <summary>
@@ -242,7 +265,6 @@ namespace Lens.SyntaxTree.Compiler
 			var type = new TypeEntity
 			{
 				Name = RootTypeName,
-				Parent = typeof (object),
 				GenerateDefaultConstructor = true
 			};
 
@@ -265,6 +287,19 @@ namespace Lens.SyntaxTree.Compiler
 		private MethodEntityBase findMethodByArgs(IEnumerable<MethodEntityBase> methods, Type[] argTypes)
 		{
 			throw new NotImplementedException();
+		}
+
+		private bool argTypesEqual(Type[] args, MethodEntity entity)
+		{
+			var foundArgs = entity.Arguments.Values.Select(fa => ResolveType(fa.Type.Signature)).ToArray();
+			if (args.Length != foundArgs.Length)
+				return false;
+
+			for (var idx = args.Length - 1; idx >= 0; idx--)
+				if (args[idx] != foundArgs[idx])
+					return false;
+
+			return true;
 		}
 
 		#endregion

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Lens.Utils
 {
@@ -7,7 +8,7 @@ namespace Lens.Utils
 	/// Dictionary, учитывающий также порядок добавления элементов.
 	/// </summary>
 	/// <typeparam name="T">Тип данных</typeparam>
-	public class HashList<T> : IEnumerable
+	public class HashList<T> : IEnumerable<string>
 	{
 		private readonly Dictionary<string, T> _Data;
 		private readonly List<string> _Keys;
@@ -87,6 +88,16 @@ namespace Lens.Utils
 		public IEnumerator<string> GetEnumerator()
 		{
 			return _Keys.GetEnumerator();
+		}
+
+		public IEnumerable<string> Keys
+		{
+			get { return _Keys.OfType<string>(); }
+		}
+
+		public IEnumerable<T> Values
+		{
+			get { return _Keys.Select(curr => _Data[curr]); }
 		}
 	}
 }

@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The name of the closure class.
 		/// </summary>
-		public string ClosureClassName { get; private set; }
+		public Type ClosureType { get; private set; }
 
 		#region Methods
 
@@ -64,9 +64,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void CreateClosureType(Context ctx)
 		{
-			ClosureClassName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
+			var closureName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
 			ctx.ClosureId++;
-			ctx.CreateType(ClosureClassName, null, true);
+			ClosureType = ctx.CreateType(closureName, null, true).TypeBuilder;
 		}
 
 		/// <summary>
@@ -81,7 +81,7 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					// create a field in the closured class
 					var name = string.Format("<f_{0}>", curr.Name);
-					ctx.CreateField(ClosureClassName, name, curr.Type);
+					ctx.CreateField(ClosureType, name, curr.Type);
 				}
 				else
 				{
@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			if(OuterScope != null)
-				ctx.CreateField(ClosureClassName, "<root>", OuterScope.ClosureClassName);
+				ctx.CreateField(ClosureType, "<root>", OuterScope.ClosureType);
 		}
 
 		/// <summary>

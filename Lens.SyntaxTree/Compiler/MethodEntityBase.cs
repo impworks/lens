@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+﻿using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -11,14 +11,14 @@ namespace Lens.SyntaxTree.Compiler
 		protected MethodEntityBase()
 		{
 			Body = new CodeBlockNode();
-			Arguments = new Dictionary<string, FunctionArgument>();
+			Arguments = new HashList<FunctionArgument>();
 			Scope = new Scope();
 		}
 
 		/// <summary>
 		/// The argument list.
 		/// </summary>
-		public readonly Dictionary<string, FunctionArgument> Arguments;
+		public readonly HashList<FunctionArgument> Arguments;
 
 		/// <summary>
 		/// The body of the method.
