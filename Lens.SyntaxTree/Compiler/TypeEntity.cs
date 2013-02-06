@@ -119,10 +119,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void Compile(Context ctx)
 		{
-			compileMethodList(ctx, Constructors);
+			foreach (var curr in Constructors)
+				curr.Compile(ctx);
 
-			foreach(var curr in Methods)
-				compileMethodList(ctx, curr.Value);
+			foreach (var currGroup in Methods)
+				foreach (var curr in currGroup.Value)
+					curr.Compile(ctx);
+				
 		}
 
 		/// <summary>
@@ -141,11 +144,7 @@ namespace Lens.SyntaxTree.Compiler
 		private void compileMethodList(Context ctx, IEnumerable<MethodEntityBase> methods)
 		{
 			foreach (var curr in methods)
-			{
-				ctx.CurrentMethod = curr;
-				// curr.Compile();
-				ctx.CurrentMethod = null;
-			}
+				curr.Compile(ctx);
 		}
 
 		#endregion

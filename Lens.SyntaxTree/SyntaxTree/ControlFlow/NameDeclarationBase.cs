@@ -41,6 +41,13 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			yield return Value;
 		}
 
+		public override void ProcessClosures(Context ctx)
+		{
+			base.ProcessClosures(ctx);
+
+			ctx.CurrentScope.DeclareName(Name, Value.GetExpressionType(ctx), IsConstant);
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();

@@ -220,6 +220,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var types = _DefinedTypes.ToArray();
 
+			// ProcessClosures() usually processes new types, hence the caching to array
 			foreach (var currType in types)
 				currType.Value.ProcessClosures(this);
 		}

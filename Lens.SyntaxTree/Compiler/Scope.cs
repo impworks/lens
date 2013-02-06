@@ -28,6 +28,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public TypeEntity ClosureType { get; private set; }
 
+		/// <summary>
+		/// The ID for the type closured in current scope.
+		/// </summary>
+		public int ClosureTypeId { get; private set; }
+
 		#region Methods
 
 		/// <summary>
@@ -43,12 +48,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Declares a new name in the current scope.
 		/// </summary>
-		public void DeclareName(string name, Type type, bool isConst)
+		public LocalName DeclareName(string name, Type type, bool isConst)
 		{
 			if(find(name))
 				throw new LensCompilerException(string.Format("A variable named '{0}' is already defined!", name));
 
-			Names[name] = new LocalName(name, type, isConst);
+			var n = new LocalName(name, type, isConst);
+			Names[name] = n;
+			return n;
 		}
 
 		/// <summary>
@@ -65,8 +72,11 @@ namespace Lens.SyntaxTree.Compiler
 		public TypeEntity CreateClosureType(Context ctx)
 		{
 			var closureName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
-			ctx.ClosureId++;
+			ClosureTypeId = ctx.ClosureId;
 			ClosureType = ctx.CreateType(closureName, null, true);
+
+			ctx.ClosureId++;
+
 			return ClosureType;
 		}
 
@@ -108,8 +118,16 @@ namespace Lens.SyntaxTree.Compiler
 				}
 			}
 
+			// create a field for base scope in the current type
 			if(OuterScope != null)
 				ctx.CreateField(ClosureType.TypeBuilder, "<root>", OuterScope.ClosureType.TypeBuilder);
+
+			// register a variable for closure instance in the scope
+			if (ClosureType != null)
+			{
+				var n = DeclareName(string.Format("<inst_{0}>", ClosureTypeId), ClosureType.TypeBuilder, false);
+				n.LocalId = idx;
+			}
 		}
 
 		/// <summary>

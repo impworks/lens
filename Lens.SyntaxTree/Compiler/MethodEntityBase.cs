@@ -40,5 +40,19 @@ namespace Lens.SyntaxTree.Compiler
 			Body.ProcessClosures(ctx);
 			ctx.CurrentMethod = oldMethod;
 		}
+
+		/// <summary>
+		/// Compiles the curent method.
+		/// </summary>
+		public void Compile(Context ctx)
+		{
+			var backup = ctx.CurrentMethod;
+			ctx.CurrentMethod = this;
+
+			// todo: false?
+			Body.Compile(ctx, false);
+
+			ctx.CurrentMethod = backup;
+		}
 	}
 }

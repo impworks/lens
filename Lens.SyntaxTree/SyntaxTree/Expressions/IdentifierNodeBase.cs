@@ -10,6 +10,13 @@
 		/// </summary>
 		public string Identifier { get; set; }
 
+		public override void ProcessClosures(Compiler.Context ctx)
+		{
+			base.ProcessClosures(ctx);
+
+			ctx.CurrentScope.ReferenceName(Identifier);
+		}
+
 		#region Equality members
 
 		protected bool Equals(IdentifierNodeBase other)

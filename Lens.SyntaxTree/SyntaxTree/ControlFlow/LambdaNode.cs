@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -22,17 +23,16 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx)
 		{
-			// todo!
-			return base.resolveExpressionType(ctx);
+			var retType = Body.GetExpressionType(ctx);
+			var argTypes = Arguments.Values.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
+			return retType == typeof (Unit)
+				? FunctionalHelper.CreateActionType(argTypes)
+				: FunctionalHelper.CreateFuncType(retType, argTypes);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}
-
-		#region Helpers
-
-		#endregion
 	}
 }
