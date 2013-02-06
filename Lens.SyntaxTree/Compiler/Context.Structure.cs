@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree.Compiler
 			if(_DefinedTypes.ContainsKey(name))
 				Error("Type '{0}' has already been defined!", name);
 
-			var te = new TypeEntity
+			var te = new TypeEntity(this)
 			{
 				Name = name,
 				ParentSignature = parent,
@@ -31,139 +31,95 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Creates a new field in the type with the given name.
-		/// </summary>
-		internal FieldEntity CreateField(Type baseType, string name, Type type, bool isStatic = false)
-		{
-			TypeEntity typeInfo;
-			if(!_DefinedTypes.TryGetValue(baseType.Name, out typeInfo))
-				Error("Type '{0}' does not exist!", baseType);
-
-			if(typeInfo.Fields.ContainsKey(name))
-				Error("Type '{0}' already contains field '{1}'!", baseType, name);
-
-			var fe = new FieldEntity
-			{
-				Name = name,
-				Type = type,
-				IsStatic = isStatic,
-				ContainerType = typeInfo,
-			};
-			typeInfo.AddEntity(fe);
-			fe.PrepareSelf(this);
-			return fe;
-		}
-
-		/// <summary>
-		/// Creates a new method in the type with the given name.
-		/// </summary>
-		internal MethodEntity CreateMethod(Type baseType, string name, Type[] args = null, bool isStatic = false, bool isVirtual = false)
-		{
-			TypeEntity typeInfo;
-			if (!_DefinedTypes.TryGetValue(baseType.Name, out typeInfo))
-				Error("Type '{0}' does not exist!", baseType);
-
-			if (typeInfo.Methods.ContainsKey(name))
-			{
-				var exists = (args == null || args.Length == 0)
-						? typeInfo.Methods[name].Count > 0
-					    : typeInfo.Methods[name].Any(m => argTypesEqual(args, m));
-
-				if (exists)
-					Error("A function named '{0}' with the same set of arguments is already defined in type '{1}'!", name, baseType);
-			}
-			else
-			{
-				typeInfo.Methods.Add(name, new List<MethodEntity>());
-			}
-
-			var me = new MethodEntity
-			{
-				Name = name,
-				IsStatic = isStatic,
-				IsVirtual = isVirtual,
-				ContainerType = typeInfo,
-			};
-			typeInfo.AddEntity(me);
-			me.PrepareSelf(this);
-			return me;
-		}
-
-		/// <summary>
-		/// Creates a new constructor for the type.
-		/// </summary>
-		internal ConstructorEntity CreateConstructor(Type baseType, Type[] args = null)
-		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary>
-		/// Resolves a type by it's string signature.
+		/// Resolves a type by its string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
 		public Type ResolveType(string signature)
 		{
-			// todo: error reporting!
-			TypeEntity type;
-			return _DefinedTypes.TryGetValue(signature, out type)
-				? type.TypeBuilder
-				: _TypeResolver.ResolveType(signature);
+			try
+			{
+				TypeEntity type;
+				return _DefinedTypes.TryGetValue(signature, out type)
+					       ? type.TypeBuilder
+					       : _TypeResolver.ResolveType(signature);
+			}
+			catch (ArgumentException ex)
+			{
+				throw new LensCompilerException(ex.Message);
+			}
+		}
+
+		/// <summary>
+		/// Tries to search for a declared type.
+		/// </summary>
+		internal TypeEntity FindType(string name)
+		{
+			TypeEntity entity;
+			_DefinedTypes.TryGetValue(name, out entity);
+			return entity;
 		}
 
 		/// <summary>
 		/// Resolves a method by it's name and agrument list.
 		/// </summary>
-		/// <param name="type">Type to search in.</param>
-		/// <param name="method">Method name.</param>
-		/// <param name="args">A list of argument types.</param>
-		/// <returns></returns>
-		public MethodInfo ResolveMethod(string type, string method, string[] args = null)
+		public MethodInfo ResolveMethod(string typeName, string methodName, Type[] args = null)
 		{
-			// todo: error reporting!
-			var argTypes = args.Select(ResolveType).ToArray();
-			var t = ResolveType(type);
-			if (t is TypeBuilder)
-			{
-				var meth = findMethodByArgs(_DefinedTypes[type].Methods[method], argTypes);
-				return (meth as MethodEntity).MethodBuilder;
-			}
+			if(args == null)
+				args = new Type[0];
 
-			return t.GetMethod(method, argTypes);
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveMethod(methodName, args);
+
+			var type = ResolveType(typeName);
+			return type.GetMethod(methodName, args);
 		}
 
 		/// <summary>
 		/// Resolves a field by it's name.
 		/// </summary>
-		/// <param name="type">Type to search in.</param>
-		/// <param name="field">Field name.</param>
-		/// <returns></returns>
-		public FieldInfo ResolveField(string type, string field)
+		public FieldInfo ResolveField(string typeName, string fieldName)
 		{
-			// todo: error reporting!
-			var t = ResolveType(type);
-			return t is TypeBuilder
-				? _DefinedTypes[type].Fields[field].FieldBuilder
-				: t.GetField(field);
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveField(fieldName);
+
+			var type = ResolveType(typeName);
+			return type.GetField(fieldName);
 		}
 
 		/// <summary>
 		/// Resolves a constructor by it's argument list.
 		/// </summary>
-		/// <param name="type">Type to search in.</param>
-		/// <param name="args">A list of argument types.</param>
-		/// <returns></returns>
-		public ConstructorInfo ResolveConstructor(string type, string[] args = null)
+		public ConstructorInfo ResolveConstructor(string typeName, Type[] args = null)
 		{
-			// todo: error reporting!
-			var argTypes = args.Select(ResolveType).ToArray();
-			var t = ResolveType(type);
-			if (t is TypeBuilder)
-			{
-				var ctor = findMethodByArgs(_DefinedTypes[type].Constructors, argTypes);
-				return (ctor as ConstructorEntity).ConstructorBuilder;
-			}
+			if (args == null)
+				args = new Type[0];
 
-			return t.GetConstructor(argTypes);
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveConstructor(args);
+
+			var type = ResolveType(typeName);
+			return type.GetConstructor(args);
+		}
+
+		/// <summary>
+		/// Resolves a type by its signature.
+		/// </summary>
+		/// <param name="signature"></param>
+		/// <returns></returns>
+		public Type ResolveType(TypeSignature signature)
+		{
+			try
+			{
+				return ResolveType(signature.Signature);
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(signature);
+				throw;
+			}
 		}
 
 		/// <summary>
@@ -229,7 +185,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			// ProcessClosures() usually processes new types, hence the caching to array
 			foreach (var currType in types)
-				currType.Value.ProcessClosures(this);
+				currType.Value.ProcessClosures();
 		}
 
 		/// <summary>
@@ -239,10 +195,10 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			// prepare types first
 			foreach (var curr in _DefinedTypes)
-				curr.Value.PrepareSelf(this);
+				curr.Value.PrepareSelf();
 
 			foreach (var curr in _DefinedTypes)
-				curr.Value.PrepareMembers(this);
+				curr.Value.PrepareMembers();
 		}
 
 		/// <summary>
@@ -251,7 +207,7 @@ namespace Lens.SyntaxTree.Compiler
 		private void compileInternal()
 		{
 			foreach (var curr in _DefinedTypes)
-				curr.Value.Compile(this);
+				curr.Value.Compile();
 		}
 
 		/// <summary>
@@ -270,37 +226,18 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void declareRootType()
 		{
-			var type = new TypeEntity
-			{
-				Name = RootTypeName,
-				GenerateDefaultConstructor = true
-			};
-
-			var me = new MethodEntity
-			{
-				Name = RootMethodName,
-				IsStatic = true,
-				IsVirtual = false,
-			};
-
-			type.AddEntity(me);
-		}
-
-		/// <summary>
-		/// Resolve the best-matching method of the list.
-		/// </summary>
-		/// <param name="methods">Source list of methods.</param>
-		/// <param name="argTypes">List of argument types.</param>
-		/// <returns></returns>
-		private MethodEntityBase findMethodByArgs(IEnumerable<MethodEntityBase> methods, Type[] argTypes)
-		{
-			throw new NotImplementedException();
-		}
-
-		private bool argTypesEqual(Type[] args, MethodEntity entity)
-		{
-			var foundArgs = entity.Arguments.Values.Select(fa => ResolveType(fa.Type.Signature));
-			return args.SequenceEqual(foundArgs);
+//			var type = new TypeEntity
+//			{
+//				Name = RootTypeName,
+//				GenerateDefaultConstructor = true
+//			};
+//
+//			var me = new MethodEntity
+//			{
+//				Name = RootMethodName,
+//				IsStatic = true,
+//				IsVirtual = false,
+//			};
 		}
 
 		#endregion

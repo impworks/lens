@@ -12,12 +12,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Checks if the method belongs to the type, not its instances.
 		/// </summary>
-		public bool IsStatic { get; set; }
+		public bool IsStatic;
 
 		/// <summary>
 		/// Checks if the method can be overridden in derived types or is overriding a parent method itself.
 		/// </summary>
-		public bool IsVirtual { get; set; }
+		public bool IsVirtual;
 
 		/// <summary>
 		/// The return type of the method.
@@ -37,10 +37,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// Creates a MethodBuilder for current method entity.
 		/// </summary>
 		/// <param name="ctx"></param>
-		public override void PrepareSelf(Context ctx)
+		public override void PrepareSelf()
 		{
 			if (_IsPrepared)
 				return;
+
+			var ctx = ContainerType.Context;
 
 			var attrs = MethodAttributes.Public;
 			if(IsStatic)
@@ -50,15 +52,22 @@ namespace Lens.SyntaxTree.Compiler
 
 			ReturnType = Body.GetExpressionType(ctx);
 
-			var paramTypes = Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
-			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, paramTypes);
+			if (ArgumentTypes == null)
+				ArgumentTypes = Arguments == null
+					? new Type[0]
+					: Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
 
-			var idx = 1;
-			foreach (var param in Arguments.Values)
+			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, ArgumentTypes);
+
+			if (Arguments != null)
 			{
-				var pa = param.Modifier == ArgumentModifier.In ? ParameterAttributes.In : ParameterAttributes.Out;
-				param.ParameterBuilder = MethodBuilder.DefineParameter(idx, pa, param.Name);
-				idx++;
+				var idx = 1;
+				foreach (var param in Arguments.Values)
+				{
+					var pa = param.Modifier == ArgumentModifier.In ? ParameterAttributes.In : ParameterAttributes.Out;
+					param.ParameterBuilder = MethodBuilder.DefineParameter(idx, pa, param.Name);
+					idx++;
+				}
 			}
 
 			_IsPrepared = true;

@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		protected void Error(string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
-			throw new LensCompilerException(msg, StartLocation, EndLocation);
+			throw new LensCompilerException(msg, this);
 		}
 
 		/// <summary>

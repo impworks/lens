@@ -14,12 +14,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Flag indicating the field belongs to the type, not its instances.
 		/// </summary>
-		public bool IsStatic { get; set; }
+		public bool IsStatic;
+
+		/// <summary>
+		/// A string representation of the field's 
+		/// </summary>
+		public TypeSignature TypeSignature;
 
 		/// <summary>
 		/// Type of the values that can be saved in the field.
 		/// </summary>
-		public Type Type { get; set; }
+		public Type Type;
 
 		/// <summary>
 		/// Assembly-level field builder.
@@ -33,8 +38,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a FieldBuilder for current field entity.
 		/// </summary>
-		/// <param name="ctx"></param>
-		public override void PrepareSelf(Context ctx)
+		public override void PrepareSelf()
 		{
 			if (_IsPrepared)
 				return;
@@ -42,6 +46,9 @@ namespace Lens.SyntaxTree.Compiler
 			var attrs = FieldAttributes.Public;
 			if(IsStatic)
 				attrs |= FieldAttributes.Static;
+
+			if(Type == null)
+				Type = ContainerType.Context.ResolveType(TypeSignature);
 
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
 			_IsPrepared = true;

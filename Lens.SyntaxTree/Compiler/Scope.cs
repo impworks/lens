@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format("<ClosuredMethod{0}>", ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;
 
-			var method = ctx.CreateMethod(ClosureType.TypeBuilder, closureName, args);
+			var method = ClosureType.CreateMethod(closureName, args);
 			method.Scope.OuterScope = this;
 			return method;
 		}
@@ -99,7 +99,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Registers closure entities and assigns IDs to variables.
 		/// </summary>
-		public void FinalizeScope(Context ctx)
+		public void FinalizeScope()
 		{
 			var idx = 0;
 			foreach (var curr in Names.Values)
@@ -108,7 +108,7 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					// create a field in the closured class
 					var name = string.Format("<f_{0}>", curr.Name);
-					ctx.CreateField(ClosureType.TypeBuilder, name, curr.Type);
+					ClosureType.CreateField(name, curr.Type);
 				}
 				else
 				{
@@ -120,7 +120,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			// create a field for base scope in the current type
 			if(OuterScope != null)
-				ctx.CreateField(ClosureType.TypeBuilder, "<root>", OuterScope.ClosureType.TypeBuilder);
+				ClosureType.CreateField("<root>", OuterScope.ClosureType.TypeBuilder);
 
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)

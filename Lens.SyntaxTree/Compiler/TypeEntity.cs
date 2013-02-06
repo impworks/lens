@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -10,15 +12,24 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	internal class TypeEntity
 	{
-		public TypeEntity()
+		public TypeEntity(Context ctx)
 		{
-			Fields = new Dictionary<string, FieldEntity>();
-			Methods = new Dictionary<string, List<MethodEntity>>();
-			Constructors = new List<ConstructorEntity>();
+			Context = ctx;
+
+			_Fields = new Dictionary<string, FieldEntity>();
+			_Methods = new Dictionary<string, List<MethodEntity>>();
+			_Constructors = new List<ConstructorEntity>();
+			_MethodList = new List<MethodEntity>();
+
 			ClosureMethodId = 1;
 		}
 
 		#region Fields
+
+		/// <summary>
+		/// Pointer to context.
+		/// </summary>
+		public Context Context { get; private set; }
 
 		/// <summary>
 		/// Checks if the type cannot be inherited from.
@@ -53,17 +64,22 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Fields of the type.
 		/// </summary>
-		public Dictionary<string, FieldEntity> Fields { get; set; }
+		private Dictionary<string, FieldEntity> _Fields;
+
+		/// <summary>
+		/// Temporary cache of methods.
+		/// </summary>
+		private List<MethodEntity> _MethodList;
 
 		/// <summary>
 		/// Method groups of the type.
 		/// </summary>
-		public Dictionary<string, List<MethodEntity>> Methods { get; set; }
+		private Dictionary<string, List<MethodEntity>> _Methods;
 
 		/// <summary>
 		/// Constructors of the type.
 		/// </summary>
-		public List<ConstructorEntity> Constructors { get; private set; }
+		private List<ConstructorEntity> _Constructors;
 
 		/// <summary>
 		/// The current ID of closured methods (if the type entity is a closure backbone).
@@ -75,19 +91,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		protected bool _IsPrepared;
 
-		/// <summary>
-		/// Flag indicating the type-dependent members of this type has been created.
-		/// </summary>
-		protected bool _MembersGenerated;
-
 		#endregion
 
-		#region Methods
+		#region Preparation & Compilation
 
 		/// <summary>
 		/// Generates a TypeBuilder for current type entity.
 		/// </summary>
-		public void PrepareSelf(Context ctx)
+		public void PrepareSelf()
 		{
 			if (_IsPrepared)
 				return;
@@ -98,12 +109,16 @@ namespace Lens.SyntaxTree.Compiler
 
 			if (ParentSignature != null)
 			{
-				Parent = ctx.ResolveType(ParentSignature.Signature);
-				TypeBuilder = ctx.MainModule.DefineType(Name, attrs, Parent);
+				var parent = Context.FindType(ParentSignature.Signature);
+				if (parent != null)
+					parent.PrepareSelf();
+
+				Parent = Context.ResolveType(ParentSignature.Signature);
+				TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
 			}
 			else
 			{
-				TypeBuilder = ctx.MainModule.DefineType(Name, attrs);
+				TypeBuilder = Context.MainModule.DefineType(Name, attrs);
 			}
 
 			// todo: generate default ctor?
@@ -112,93 +127,186 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Protects dynamic member generation from double execution.
-		/// </summary>
-		public void GenerateMembers(Context ctx)
-		{
-			if(!_MembersGenerated)
-				generateMembers(ctx);
-
-			_MembersGenerated = true;
-		}
-
-		/// <summary>
 		/// Invokes generation of FieldBuilder, MethodBuilder and ConstructorBuilder objects for type members.
 		/// </summary>
-		public void PrepareMembers(Context ctx)
+		public void PrepareMembers()
 		{
-			foreach(var field in Fields)
-				field.Value.PrepareSelf(ctx);
+			foreach(var field in _Fields)
+				field.Value.PrepareSelf();
 
-			foreach (var methodGroup in Methods)
-				foreach(var method in methodGroup.Value)
-					method.PrepareSelf(ctx);
+			foreach (var ctor in _Constructors)
+				ctor.PrepareSelf();
 
-			foreach(var ctor in Constructors)
-				ctor.PrepareSelf(ctx);
-		}
-
-		/// <summary>
-		/// Adds a constructor entity to the list.
-		/// </summary>
-		public void AddEntity(ConstructorEntity ctor)
-		{
-			Constructors.Add(ctor);
-			ctor.ContainerType = this;
-		}
-
-		/// <summary>
-		/// Adds a method entity to the list.
-		/// </summary>
-		public void AddEntity(MethodEntity method)
-		{
-			if(Methods.ContainsKey(method.Name))
-				Methods[method.Name].Add(method);
-			else
-				Methods.Add(method.Name, new List<MethodEntity> { method });
-
-			method.ContainerType = this;
-		}
-
-		/// <summary>
-		/// Adds a field entity to the list.
-		/// </summary>
-		public void AddEntity(FieldEntity field)
-		{
-			Fields.Add(field.Name, field);
-			field.ContainerType = this;
+			foreach (var method in _MethodList)
+				method.PrepareSelf();
 		}
 
 		/// <summary>
 		/// Compile the method bodies of the current class.
 		/// </summary>
-		public void Compile(Context ctx)
+		public void Compile()
 		{
-			foreach (var curr in Constructors)
-				curr.Compile(ctx);
+			foreach (var curr in _Constructors)
+				curr.Compile();
 
-			foreach (var currGroup in Methods)
+			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
-					curr.Compile(ctx);
+					curr.Compile();
 				
 		}
 
 		/// <summary>
 		/// Process the closured for the current type.
 		/// </summary>
-		public void ProcessClosures(Context ctx)
+		public void ProcessClosures()
 		{
-			foreach (var currGroup in Methods.Values)
-				foreach (var currMethod in currGroup)
-					currMethod.ProcessClosures(ctx);
+			foreach (var curr in _MethodList)
+				curr.ProcessClosures();
+		}
+
+		#endregion
+
+		#region Structure methods
+
+		/// <summary>
+		/// Creates a new field by type signature.
+		/// </summary>
+		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false)
+		{
+			var fe = createFieldCore(name, isStatic);
+			fe.TypeSignature = signature;
+			return fe;
 		}
 
 		/// <summary>
-		/// Generate the dynamic members of this type.
+		/// Creates a new field by resolved type.
 		/// </summary>
-		protected virtual void generateMembers(Context ctx)
+		internal FieldEntity CreateField(string name, Type type, bool isStatic = false)
 		{
-			
+			var fe = createFieldCore(name, isStatic);
+			fe.Type = type;
+			return fe;
+		}
+
+		/// <summary>
+		/// Creates a new method by resolved argument types.
+		/// </summary>
+		internal MethodEntity CreateMethod(string name, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		{
+			var me = createMethodCore(name, isStatic, isVirtual);
+			me.ArgumentTypes = argTypes;
+			return me;
+		}
+
+		/// <summary>
+		/// Creates a new method with argument types given by signatures.
+		/// </summary>
+		internal MethodEntity CreateMethod(string name, string[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		{
+			var args = argTypes == null
+				? null
+				: argTypes.Select((a, idx) => new FunctionArgument("f" + idx.ToString(), a)).ToArray();
+
+			return CreateMethod(name, args, isStatic, isVirtual);
+		}
+
+		/// <summary>
+		/// Creates a new method with argument types given by function arguments.
+		/// </summary>
+		internal MethodEntity CreateMethod(string name, FunctionArgument[] args = null, bool isStatic = false, bool isVirtual = false)
+		{
+			var argHash = new HashList<FunctionArgument>();
+			if(args != null)
+				foreach (var curr in args)
+					argHash.Add(curr.Name, curr);
+
+			var me = createMethodCore(name, isStatic, isVirtual);
+			me.Arguments = argHash;
+			return me;
+		}
+
+		/// <summary>
+		/// Creates a new constructor with the given argument types.
+		/// </summary>
+		internal ConstructorEntity CreateConstructor(string[] argTypes = null)
+		{
+			var ce = new ConstructorEntity
+			{
+				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
+				ContainerType = this,
+			};
+			_Constructors.Add(ce);
+			return ce;
+		}
+
+		/// <summary>
+		/// Resolves a field assembly entity.
+		/// </summary>
+		internal FieldInfo ResolveField(string name)
+		{
+			FieldEntity fe;
+			if (!_Fields.TryGetValue(name, out fe))
+				Context.Error("Type '{0}' does not contain definition for a field '{1}'.", Name, name);
+
+			if(fe.FieldBuilder == null)
+				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
+
+			return fe.FieldBuilder;
+		}
+
+		/// <summary>
+		/// Resolves a method assembly entity.
+		/// </summary>
+		internal MethodInfo ResolveMethod(string name, Type[] args)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Resolves a method assembly entity.
+		/// </summary>
+		internal ConstructorInfo ResolveConstructor(Type[] args)
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Create a field without setting type info.
+		/// </summary>
+		private FieldEntity createFieldCore(string name, bool isStatic)
+		{
+			if (_Fields.ContainsKey(name))
+				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
+
+			var fe = new FieldEntity
+			{
+				Name = name,
+				IsStatic = isStatic,
+				ContainerType = this,
+			};
+			_Fields.Add(name, fe);
+			return fe;
+		}
+
+		/// <summary>
+		/// Creates a method without setting argument type info.
+		/// </summary>
+		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual)
+		{
+			var me = new MethodEntity
+			{
+				Name = name,
+				IsStatic = isStatic,
+				IsVirtual = isVirtual,
+				ContainerType = this,
+			};
+
+			_MethodList.Add(me);
+			return me;
 		}
 
 		#endregion

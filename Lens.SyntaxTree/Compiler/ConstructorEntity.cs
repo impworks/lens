@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -20,13 +21,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a ConstructorBuilder for current constructor entity.
 		/// </summary>
-		public override void PrepareSelf(Context ctx)
+		public override void PrepareSelf()
 		{
 			if (_IsPrepared)
 				return;
 
-			var paramTypes = Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
-			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, paramTypes);
+			if (ArgumentTypes == null)
+				ArgumentTypes = Arguments == null
+					? new Type[0]
+					: Arguments.Values.Select(fa => ContainerType.Context.ResolveType(fa.Type.Signature)).ToArray();
+
+			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			_IsPrepared = true;
 		}
 

@@ -1,4 +1,5 @@
-﻿using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+﻿using System;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -18,7 +19,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The argument list.
 		/// </summary>
-		public readonly HashList<FunctionArgument> Arguments;
+		public HashList<FunctionArgument> Arguments;
+
+		/// <summary>
+		/// The types of arguments.
+		/// </summary>
+		public Type[] ArgumentTypes;
 
 		/// <summary>
 		/// The body of the method.
@@ -33,8 +39,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Process closures.
 		/// </summary>
-		public void ProcessClosures(Context ctx)
+		public void ProcessClosures()
 		{
+			var ctx = ContainerType.Context;
+
 			var oldMethod = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
 			Body.ProcessClosures(ctx);
@@ -44,8 +52,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Compiles the curent method.
 		/// </summary>
-		public void Compile(Context ctx)
+		public void Compile()
 		{
+			var ctx = ContainerType.Context;
+
 			var backup = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
 
