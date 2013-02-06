@@ -10,6 +10,7 @@ open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Literals
 open Lens.SyntaxTree.SyntaxTree.Operators
 open Lens.SyntaxTree.Compiler
+open Lens.Utils
 
 // Special nodes
 let using nameSpace =
@@ -52,7 +53,7 @@ let typeNode(name, entries) =
     node :> NodeBase
 
 let functionParameters parameters =
-    let dictionary = Dictionary<_, _>()
+    let hashList = HashList<_>()
     
     parameters
     |> Seq.map (fun((name, flag), typeTag) ->
@@ -62,9 +63,9 @@ let functionParameters parameters =
                         | Some "out" -> ArgumentModifier.Out
                         | _          -> ArgumentModifier.In
                     FunctionArgument(Name = name, Modifier = modifier, Type = TypeSignature(typeTag)))
-    |> Seq.iter (fun fa -> dictionary.Add(fa.Name, fa))
+    |> Seq.iter (fun fa -> hashList.Add(fa.Name, fa))
     
-    dictionary
+    hashList
 
 let functionNode name parameters body =
     FunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase

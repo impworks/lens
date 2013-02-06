@@ -27,6 +27,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return Equals((NewDictionaryNode) obj);
 		}
 
+		public override int GetHashCode()
+		{
+			return (Expressions != null ? Expressions.GetHashCode() : 0);
+		}
+
 		#endregion
 
 		protected override Type resolveExpressionType(Context ctx)

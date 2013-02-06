@@ -34,6 +34,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
+			if (Expression != null)
+				yield return Expression;
 			yield return Index;
 		}
 

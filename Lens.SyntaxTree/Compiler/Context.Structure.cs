@@ -291,15 +291,8 @@ namespace Lens.SyntaxTree.Compiler
 
 		private bool argTypesEqual(Type[] args, MethodEntity entity)
 		{
-			var foundArgs = entity.Arguments.Values.Select(fa => ResolveType(fa.Type.Signature)).ToArray();
-			if (args.Length != foundArgs.Length)
-				return false;
-
-			for (var idx = args.Length - 1; idx >= 0; idx--)
-				if (args[idx] != foundArgs[idx])
-					return false;
-
-			return true;
+			var foundArgs = entity.Arguments.Values.Select(fa => ResolveType(fa.Type.Signature));
+			return args.SequenceEqual(foundArgs);
 		}
 
 		#endregion

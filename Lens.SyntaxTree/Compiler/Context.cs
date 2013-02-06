@@ -43,6 +43,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
+			_ScriptBody = new MethodEntity(); // todob
 
 			declareRootType();
 		}
