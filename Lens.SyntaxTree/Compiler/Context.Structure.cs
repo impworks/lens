@@ -26,7 +26,6 @@ namespace Lens.SyntaxTree.Compiler
 				ParentSignature = parent,
 				IsSealed = isSealed
 			};
-			te.PrepareSelf(this);
 			_DefinedTypes.Add(name, te);
 			return te;
 		}
@@ -50,7 +49,7 @@ namespace Lens.SyntaxTree.Compiler
 				IsStatic = isStatic,
 				ContainerType = typeInfo,
 			};
-			typeInfo.Fields.Add(name, fe);
+			typeInfo.AddEntity(fe);
 			fe.PrepareSelf(this);
 			return fe;
 		}
@@ -85,9 +84,17 @@ namespace Lens.SyntaxTree.Compiler
 				IsVirtual = isVirtual,
 				ContainerType = typeInfo,
 			};
-			typeInfo.Methods[name].Add(me);
+			typeInfo.AddEntity(me);
 			me.PrepareSelf(this);
 			return me;
+		}
+
+		/// <summary>
+		/// Creates a new constructor for the type.
+		/// </summary>
+		internal ConstructorEntity CreateConstructor(Type baseType, Type[] args = null)
+		{
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -164,7 +171,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
-			
+
 		}
 
 		/// <summary>

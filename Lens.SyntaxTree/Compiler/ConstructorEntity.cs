@@ -8,12 +8,18 @@ namespace Lens.SyntaxTree.Compiler
 	{
 		#region Fields
 
+		/// <summary>
+		/// Assembly-level constructor builder.
+		/// </summary>
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
 
 		#endregion
 
 		#region Methods
 
+		/// <summary>
+		/// Creates a ConstructorBuilder for current constructor entity.
+		/// </summary>
 		public override void PrepareSelf(Context ctx)
 		{
 			if (_IsPrepared)

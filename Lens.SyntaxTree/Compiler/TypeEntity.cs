@@ -20,32 +20,73 @@ namespace Lens.SyntaxTree.Compiler
 
 		#region Fields
 
+		/// <summary>
+		/// Checks if the type cannot be inherited from.
+		/// </summary>
 		public bool IsSealed { get; set; }
 
+		/// <summary>
+		/// Checks if the compiler should generate a parameterless constructor for the type.
+		/// </summary>
 		public bool GenerateDefaultConstructor { get; set; }
 
+		/// <summary>
+		/// Type name.
+		/// </summary>
 		public string Name { get; set; }
 
+		/// <summary>
+		/// A signature for parent type that might be declared later.
+		/// </summary>
 		public TypeSignature ParentSignature { get; set; }
 
+		/// <summary>
+		/// The resolved parent type.
+		/// </summary>
 		public Type Parent { get; private set; }
 
+		/// <summary>
+		/// The typebuilder for current type.
+		/// </summary>
 		public TypeBuilder TypeBuilder { get; private set; }
 
+		/// <summary>
+		/// Fields of the type.
+		/// </summary>
 		public Dictionary<string, FieldEntity> Fields { get; set; }
 
+		/// <summary>
+		/// Method groups of the type.
+		/// </summary>
 		public Dictionary<string, List<MethodEntity>> Methods { get; set; }
 
+		/// <summary>
+		/// Constructors of the type.
+		/// </summary>
 		public List<ConstructorEntity> Constructors { get; private set; }
 
+		/// <summary>
+		/// The current ID of closured methods (if the type entity is a closure backbone).
+		/// </summary>
 		public int ClosureMethodId { get; set; }
 
+		/// <summary>
+		/// Flag indicating the TypeBuilder for current entity has been already defined.
+		/// </summary>
 		protected bool _IsPrepared;
+
+		/// <summary>
+		/// Flag indicating the type-dependent members of this type has been created.
+		/// </summary>
+		protected bool _MembersGenerated;
 
 		#endregion
 
 		#region Methods
 
+		/// <summary>
+		/// Generates a TypeBuilder for current type entity.
+		/// </summary>
 		public void PrepareSelf(Context ctx)
 		{
 			if (_IsPrepared)
@@ -70,6 +111,20 @@ namespace Lens.SyntaxTree.Compiler
 			_IsPrepared = true;
 		}
 
+		/// <summary>
+		/// Protects dynamic member generation from double execution.
+		/// </summary>
+		public void GenerateMembers(Context ctx)
+		{
+			if(!_MembersGenerated)
+				generateMembers(ctx);
+
+			_MembersGenerated = true;
+		}
+
+		/// <summary>
+		/// Invokes generation of FieldBuilder, MethodBuilder and ConstructorBuilder objects for type members.
+		/// </summary>
 		public void PrepareMembers(Context ctx)
 		{
 			foreach(var field in Fields)
@@ -139,12 +194,11 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Compiles a list of methods.
+		/// Generate the dynamic members of this type.
 		/// </summary>
-		private void compileMethodList(Context ctx, IEnumerable<MethodEntityBase> methods)
+		protected virtual void generateMembers(Context ctx)
 		{
-			foreach (var curr in methods)
-				curr.Compile(ctx);
+			
 		}
 
 		#endregion

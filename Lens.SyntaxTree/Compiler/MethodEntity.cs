@@ -9,18 +9,34 @@ namespace Lens.SyntaxTree.Compiler
 	{
 		#region Fields
 
+		/// <summary>
+		/// Checks if the method belongs to the type, not its instances.
+		/// </summary>
 		public bool IsStatic { get; set; }
 
+		/// <summary>
+		/// Checks if the method can be overridden in derived types or is overriding a parent method itself.
+		/// </summary>
 		public bool IsVirtual { get; set; }
 
+		/// <summary>
+		/// The return type of the method.
+		/// </summary>
 		public Type ReturnType { get; private set; }
 
+		/// <summary>
+		/// Assembly-level method builder.
+		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
 		#endregion
 
 		#region Methods
 
+		/// <summary>
+		/// Creates a MethodBuilder for current method entity.
+		/// </summary>
+		/// <param name="ctx"></param>
 		public override void PrepareSelf(Context ctx)
 		{
 			if (_IsPrepared)
