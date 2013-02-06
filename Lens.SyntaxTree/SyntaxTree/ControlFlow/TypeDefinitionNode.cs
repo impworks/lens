@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -9,18 +11,25 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
 	{
+		/// <summary>
+		/// Prepares the assembly entities for the type.
+		/// </summary>
+		public void PrepareSelf(Context ctx)
+		{
+			if (TypeBuilder != null)
+				throw new InvalidOperationException(string.Format("Type {0} has already been prepared!", Name));
+
+			TypeBuilder = ctx.MainModule.DefineType(
+				Name,
+				TypeAttributes.Public | TypeAttributes.Class,
+				typeof(object),
+				new[] { typeof(ILensType) }
+			);
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
-		}
-
-		public void PrepareLabels(Context ctx)
-		{
-			foreach (var label in Entries)
-			{
-				label.ContainingType = this;
-				label.PrepareSelf(ctx);
-			}
 		}
 	}
 
@@ -50,11 +59,48 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		public bool IsTagged { get { return TagType != null; } }
 
 		/// <summary>
-		/// Register assembly entities.
+		/// The type builder.
 		/// </summary>
-		public void PrepareSelf(Context ctx)
+		public TypeBuilder TypeBuilder { get; private set; }
+
+		/// <summary>
+		/// The field builder for the tag.
+		/// </summary>
+		public FieldBuilder FieldBuilder { get; private set; }
+
+		/// <summary>
+		/// Registers the subtype for this label.
+		/// </summary>
+		public void PrepareSelf(TypeDefinitionNode root, Context ctx)
 		{
-			throw new NotImplementedException();
+			if (TypeBuilder != null)
+				throw new InvalidOperationException(string.Format("Label {0} has already been prepared!", Name));
+
+			ContainingType = root;
+			TypeBuilder = ctx.MainModule.DefineType(
+				Name,
+				TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed,
+				ContainingType.TypeBuilder,
+				new[] { typeof(ILensTypeRecord) }
+			);
+		}
+
+		/// <summary>
+		/// Registers a field for this label.
+		/// </summary>
+		public void PrepareTag(Context ctx)
+		{
+			if (!IsTagged)
+				return;
+
+			if (FieldBuilder != null)
+				throw new InvalidOperationException(string.Format("Tag for label {0} has already been prepared!", Name));
+
+			FieldBuilder = TypeBuilder.DefineField(
+				"Tag",
+				ctx.ResolveType(TagType.Signature),
+				FieldAttributes.Public
+			);
 		}
 
 		#region Equality members

@@ -66,6 +66,7 @@
     <Compile Include="FParsecHelpers.fs" />
     <Compile Include="Indentation.fs" />
     <Compile Include="Grammar.fs" />
+    <Compile Include="ErrorProvider.fs" />
     <Compile Include="TreeBuilder.fs" />
     <None Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

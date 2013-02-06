@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Emit;
-using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -18,23 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// <summary>
 		/// The type builder associated with this type.
 		/// </summary>
-		public TypeBuilder TypeBuilder { get; private set; }
-
-		#region Methods
-
-		/// <summary>
-		/// Prepares the assembly entities for the type.
-		/// </summary>
-		/// <param name="ctx">Context pointer.</param>
-		public void PrepareSelf(Context ctx)
-		{
-			if(TypeBuilder != null)
-				throw new InvalidOperationException(string.Format("Type {0} has already been prepared!", Name));
-
-			TypeBuilder = ctx.MainModule.DefineType(Name, TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed);
-		}
-
-		#endregion
+		public TypeBuilder TypeBuilder { get; protected set; }
 	}
 
 	/// <summary>

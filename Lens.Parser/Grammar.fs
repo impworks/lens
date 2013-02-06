@@ -53,11 +53,11 @@ let createParser s =
     let whitespaced = parser .>>? many space
     whitespaced <!> s, parserRef
 
-let createNodeParser s =
+let createNodeParser name =
     let lexemLocation (position : Position) =
         LexemLocation(Line = int position.Line, Offset = int position.Column)
 
-    let parser, parserRef = createParser s
+    let parser, parserRef = createParser name
     let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
         let startPosition = stream.Position
         let reply = parser stream
@@ -72,61 +72,72 @@ let createNodeParser s =
         | _  -> reply
     informed, parserRef
 
-let stmt, stmtRef                             = createNodeParser "stmt"
-let using, usingRef                           = createNodeParser "using"
-let ``namespace``, namespaceRef               = createParser "namespace"
-let recorddef, recorddefRef                   = createNodeParser "recorddef"
-let recorddef_stmt, recorddef_stmtRef         = createParser "recorddef_stmt"
-let typedef, typedefRef                       = createNodeParser "typedef"
-let typedef_stmt, typedef_stmtRef             = createParser "typedef_stmt"
-let funcdef, funcdefRef                       = createNodeParser "funcdef"
-let func_params, func_paramsRef               = createParser "func_params"
-let block, blockRef                           = createNodeParser "block"
-let block_line, block_lineRef                 = createNodeParser "block_line"
-let ``type``, typeRef                         = createParser "type"
-let local_stmt, local_stmtRef                 = createNodeParser "local_stmt"
-let var_decl_expr, var_decl_exprRef           = createNodeParser "var_decl_expr"
-let assign_expr, assign_exprRef               = createNodeParser "assign_expr"
-let lvalue, lvalueRef                         = createParser "lvalue"
-let accessor_expr, accessor_exprRef           = createParser "accessor_expr"
-let type_params, type_paramsRef               = createParser "type_params"
-let expr, exprRef                             = createNodeParser "expr"
-let block_expr, block_exprRef                 = createNodeParser "block_expr"
-let if_expr, if_exprRef                       = createNodeParser "if_expr"
-let while_expr, while_exprRef                 = createNodeParser "while_expr"
-let try_expr, try_exprRef                     = createNodeParser "try_expr"
-let catch_expr, catch_exprRef                 = createNodeParser "catch_expr"
-let lambda_expr, lambda_exprRef               = createNodeParser "lambda_expr"
-let line_expr, line_exprRef                   = createNodeParser "line_expr"
-let line_expr_1, line_expr_1Ref               = createNodeParser "line_expr_1"
-let sign_1, sign_1Ref                         = createParser "sign_1"
-let line_expr_2, line_expr_2Ref               = createNodeParser "line_expr_2"
-let sign_2, sign_2Ref                         = createParser "sign_2"
-let line_expr_3, line_expr_3Ref               = createNodeParser "line_expr_3"
-let sign_3, sign_3Ref                         = createParser "sign_3"
-let line_expr_4, line_expr_4Ref               = createNodeParser "line_expr_4"
-let sign_4, sign_4Ref                         = createParser "sign_4"
-let line_expr_5, line_expr_5Ref               = createNodeParser "line_expr_5"
-let line_expr_6, line_expr_6Ref               = createNodeParser "line_expr_6"
-let line_expr_7, line_expr_7Ref               = createNodeParser "line_expr_7"
-let new_expr, new_exprRef                     = createNodeParser "new_expr"
-let new_array_expr, new_array_exprRef         = createNodeParser "new_array_expr"
-let new_tuple_expr, new_tuple_exprRef         = createNodeParser "new_tuple_expr"
-let new_list_expr, new_list_exprRef           = createNodeParser "new_list_expr"
-let new_dict_expr, new_dict_exprRef           = createNodeParser "new_dict_expr"
-let dict_entry_expr, dict_entry_exprRef       = createParser "dict_entry_expr"
-let new_obj_expr, new_obj_exprRef             = createNodeParser "new_obj_expr"
-let enumeration_expr, enumeration_exprRef     = createParser "enumeration_expr"
-let invoke_expr, invoke_exprRef               = createNodeParser "invoke_expr"
-let invoke_list, invoke_listRef               = createParser "invoke_list"
-let value_expr, value_exprRef                 = createNodeParser "value_expr"
-let type_operator_expr, type_operator_exprRef = createNodeParser "type_operator_expr"
-let literal, literalRef                       = createNodeParser "literal"
+let annotate parser annotation =
+    parser <?> annotation
 
-let string, stringRef                         = createParser "string"
-let int, intRef                               = createParser "int"
-let double, doubleRef                         = createParser "double"
-let identifier, identifierRef                 = createParser "identifier"
+let createAnnotatedParser name annotation =
+    let parser, ref = createParser name
+    annotate parser annotation, ref
+
+let createAnnotatedNodeParser name annotation =
+    let parser, ref = createNodeParser name
+    annotate parser annotation, ref
+
+let stmt, stmtRef                             = createAnnotatedNodeParser "stmt" "statement"
+let using, usingRef                           = createAnnotatedNodeParser "using" "using statement"
+let ``namespace``, namespaceRef               = createAnnotatedParser "namespace" "namespace declaration"
+let recorddef, recorddefRef                   = createAnnotatedNodeParser "recorddef" "record definition"
+let recorddef_stmt, recorddef_stmtRef         = createAnnotatedParser "recorddef_stmt" "record definition statement"
+let typedef, typedefRef                       = createAnnotatedNodeParser "typedef" "type definition"
+let typedef_stmt, typedef_stmtRef             = createAnnotatedParser "typedef_stmt" "type definition statement"
+let funcdef, funcdefRef                       = createAnnotatedNodeParser "funcdef" "function definition"
+let func_params, func_paramsRef               = createAnnotatedParser "func_params" "function parameters"
+let block, blockRef                           = createAnnotatedNodeParser "block" "code block"
+let block_line, block_lineRef                 = createAnnotatedNodeParser "block_line" "code block line"
+let ``type``, typeRef                         = createAnnotatedParser "type" "type"
+let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local_stmt" "local statement"
+let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" "variable declaration"
+let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" "assignment expression"
+let lvalue, lvalueRef                         = createAnnotatedParser "lvalue" "lvalue"
+let accessor_expr, accessor_exprRef           = createAnnotatedParser "accessor_expr" "accessor expression"
+let type_params, type_paramsRef               = createAnnotatedParser "type_params" "type parameters"
+let expr, exprRef                             = createAnnotatedNodeParser "expr" "expression"
+let block_expr, block_exprRef                 = createAnnotatedNodeParser "block_expr" "block expression"
+let if_expr, if_exprRef                       = createAnnotatedNodeParser "if_expr" "if expression"
+let while_expr, while_exprRef                 = createAnnotatedNodeParser "while_expr" "while expression"
+let try_expr, try_exprRef                     = createAnnotatedNodeParser "try_expr" "try expression"
+let catch_expr, catch_exprRef                 = createAnnotatedNodeParser "catch_expr" "catch expression"
+let lambda_expr, lambda_exprRef               = createAnnotatedNodeParser "lambda_expr" "lambda expression"
+let line_expr, line_exprRef                   = createAnnotatedNodeParser "line_expr" "line expression"
+let line_expr_1, line_expr_1Ref               = createAnnotatedNodeParser "line_expr_1" "line expression"
+let sign_1, sign_1Ref                         = createAnnotatedParser "sign_1" "operator"
+let line_expr_2, line_expr_2Ref               = createAnnotatedNodeParser "line_expr_2" "line expression"
+let sign_2, sign_2Ref                         = createAnnotatedParser "sign_2" "operator"
+let line_expr_3, line_expr_3Ref               = createAnnotatedNodeParser "line_expr_3" "line expression"
+let sign_3, sign_3Ref                         = createAnnotatedParser "sign_3" "operator"
+let line_expr_4, line_expr_4Ref               = createAnnotatedNodeParser "line_expr_4" "line expression"
+let sign_4, sign_4Ref                         = createAnnotatedParser "sign_4" "operator"
+let line_expr_5, line_expr_5Ref               = createAnnotatedNodeParser "line_expr_5" "line expression"
+let line_expr_6, line_expr_6Ref               = createAnnotatedNodeParser "line_expr_6" "line expression"
+let line_expr_7, line_expr_7Ref               = createAnnotatedNodeParser "line_expr_7" "line expression"
+let new_expr, new_exprRef                     = createAnnotatedNodeParser "new_expr" "constructor invocation"
+let new_array_expr, new_array_exprRef         = createAnnotatedNodeParser "new_array_expr" "array expression"
+let new_tuple_expr, new_tuple_exprRef         = createAnnotatedNodeParser "new_tuple_expr" "tuple expression"
+let new_list_expr, new_list_exprRef           = createAnnotatedNodeParser "new_list_expr" "list expression"
+let new_dict_expr, new_dict_exprRef           = createAnnotatedNodeParser "new_dict_expr" "dict expression"
+let dict_entry_expr, dict_entry_exprRef       = createAnnotatedParser "dict_entry_expr" "dict entry"
+let new_obj_expr, new_obj_exprRef             = createAnnotatedNodeParser "new_obj_expr" "new object expression"
+let enumeration_expr, enumeration_exprRef     = createAnnotatedParser "enumeration_expr" "enumeration expression"
+let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invoke_expr" "invocation"
+let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" "invocation list"
+let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" "value"
+let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" "type operator"
+let literal, literalRef                       = createAnnotatedNodeParser "literal" "literal"
+
+let string, stringRef                         = createAnnotatedParser "string" "string literal"
+let int, intRef                               = createAnnotatedParser "int" "integer literal"
+let double, doubleRef                         = createAnnotatedParser "double" "double literal"
+let identifier, identifierRef                 = createAnnotatedParser "identifier" "identifier"
 
 let main               = many newline >>. (many stmt .>>? eof)
 stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
