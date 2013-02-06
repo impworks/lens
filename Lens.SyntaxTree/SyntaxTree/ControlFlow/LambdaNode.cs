@@ -30,5 +30,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			throw new NotImplementedException();
 		}
+
+		#region Helpers
+
+		#endregion
 	}
 }
