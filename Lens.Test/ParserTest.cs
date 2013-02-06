@@ -461,6 +461,27 @@ type ArrayHolder
             Test(src, result);
         }
 
+		[Test]
+		public void SetDynamicMember2()
+		{
+			var src = "(1 + 2).someShit = a";
+			var result = new SetMemberNode
+			{
+				Expression = new AddOperatorNode
+					{
+						LeftOperand = new IntNode(1),
+						RightOperand = new IntNode(2)
+					},
+				MemberName = "someShit",
+				Value = new GetIdentifierNode
+				{
+					Identifier = "a"
+				}
+			};
+
+			Test(src, result);
+		}
+
         [Test]
         public void SetStaticMember()
         {
