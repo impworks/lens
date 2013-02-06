@@ -24,7 +24,15 @@ namespace Lens.SyntaxTree.Compiler
 			ClosureMethodId = 1;
 		}
 
-		#region Fields
+		private Dictionary<string, FieldEntity> _Fields;
+		private Dictionary<string, List<MethodEntity>> _Methods;
+		private List<ConstructorEntity> _Constructors;
+
+		private List<MethodEntity> _MethodList;
+
+		protected bool _IsPrepared;
+
+		#region Properties
 
 		/// <summary>
 		/// Pointer to context.
@@ -34,27 +42,27 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Checks if the type cannot be inherited from.
 		/// </summary>
-		public bool IsSealed { get; set; }
+		public bool IsSealed;
 
 		/// <summary>
 		/// Checks if the compiler should generate a parameterless constructor for the type.
 		/// </summary>
-		public bool GenerateDefaultConstructor { get; set; }
+		public bool GenerateDefaultConstructor;
 
 		/// <summary>
 		/// Type name.
 		/// </summary>
-		public string Name { get; set; }
+		public string Name;
 
 		/// <summary>
 		/// A signature for parent type that might be declared later.
 		/// </summary>
-		public TypeSignature ParentSignature { get; set; }
+		public TypeSignature ParentSignature;
 
 		/// <summary>
 		/// The resolved parent type.
 		/// </summary>
-		public Type Parent { get; private set; }
+		public Type Parent;
 
 		/// <summary>
 		/// The typebuilder for current type.
@@ -62,34 +70,14 @@ namespace Lens.SyntaxTree.Compiler
 		public TypeBuilder TypeBuilder { get; private set; }
 
 		/// <summary>
-		/// Fields of the type.
-		/// </summary>
-		private Dictionary<string, FieldEntity> _Fields;
-
-		/// <summary>
-		/// Temporary cache of methods.
-		/// </summary>
-		private List<MethodEntity> _MethodList;
-
-		/// <summary>
-		/// Method groups of the type.
-		/// </summary>
-		private Dictionary<string, List<MethodEntity>> _Methods;
-
-		/// <summary>
-		/// Constructors of the type.
-		/// </summary>
-		private List<ConstructorEntity> _Constructors;
-
-		/// <summary>
 		/// The current ID of closured methods (if the type entity is a closure backbone).
 		/// </summary>
-		public int ClosureMethodId { get; set; }
+		public int ClosureMethodId;
 
 		/// <summary>
-		/// Flag indicating the TypeBuilder for current entity has been already defined.
+		/// A kind of LENS type this entity represents.
 		/// </summary>
-		protected bool _IsPrepared;
+		public TypeEntityKind Kind;
 
 		#endregion
 
@@ -310,5 +298,16 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		#endregion
+	}
+
+	/// <summary>
+	/// A kind of type entity defined in the type manager.
+	/// </summary>
+	internal enum TypeEntityKind
+	{
+		Internal,
+		Type,
+		TypeLabel,
+		Record
 	}
 }

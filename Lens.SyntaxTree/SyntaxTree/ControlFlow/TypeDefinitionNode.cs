@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -8,21 +7,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// A node representing the algebraic type definition construct.
 	/// </summary>
 	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
-	{
-		public override void Compile(Context ctx, bool mustReturn)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void PrepareLabels(Context ctx)
-		{
-			foreach (var label in Entries)
-			{
-				label.ContainingType = this;
-				label.PrepareSelf(ctx);
-			}
-		}
-	}
+	{ }
 
 	/// <summary>
 	/// Definition of an algebraic type entry.
@@ -48,14 +33,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// Checks whether the entry has a tag.
 		/// </summary>
 		public bool IsTagged { get { return TagType != null; } }
-
-		/// <summary>
-		/// Register assembly entities.
-		/// </summary>
-		public void PrepareSelf(Context ctx)
-		{
-			throw new NotImplementedException();
-		}
 
 		#region Equality members
 

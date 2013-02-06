@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -24,7 +23,8 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				Name = name,
 				ParentSignature = parent,
-				IsSealed = isSealed
+				IsSealed = isSealed,
+				GenerateDefaultConstructor = true
 			};
 			_DefinedTypes.Add(name, te);
 			return te;
@@ -127,7 +127,16 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
+			var root = CreateType(node.Name);
+			root.Kind = TypeEntityKind.Type;
 
+			foreach (var curr in node.Entries)
+			{
+				var currType = CreateType(curr.Name, node.Name, true);
+				currType.Kind = TypeEntityKind.TypeLabel;
+				if (curr.IsTagged)
+					currType.CreateField("Tag", curr.TagType);
+			}
 		}
 
 		/// <summary>
@@ -135,7 +144,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
-			
+			var root = CreateType(node.Name, null, true);
+			root.Kind = TypeEntityKind.Record;
+
+			foreach (var curr in node.Entries)
+				root.CreateField(curr.Name, curr.Type);
 		}
 
 		/// <summary>
@@ -222,22 +235,12 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Declare the root type of the assembly.
+		/// Declare the root type and method of the assembly.
 		/// </summary>
-		private void declareRootType()
+		private void declareRoot()
 		{
-//			var type = new TypeEntity
-//			{
-//				Name = RootTypeName,
-//				GenerateDefaultConstructor = true
-//			};
-//
-//			var me = new MethodEntity
-//			{
-//				Name = RootMethodName,
-//				IsStatic = true,
-//				IsVirtual = false,
-//			};
+			var type = CreateType(RootTypeName, null, true);
+			_ScriptBody = type.CreateMethod(RootMethodName, Type.EmptyTypes, true);
 		}
 
 		#endregion

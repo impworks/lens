@@ -5,7 +5,6 @@ using System.Reflection.Emit;
 using JetBrains.Annotations;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -43,9 +42,8 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
-			_ScriptBody = new MethodEntity(); // todob
 
-			declareRootType();
+			declareRoot();
 		}
 
 		/// <summary>

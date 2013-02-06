@@ -1,15 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
-	public abstract class TypeDefinitionNodeBase : NodeBase, IStartLocationTrackingEntity
+	/// <summary>
+	/// A base node for algebraic types and records.
+	/// </summary>
+	public abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
 	{
+		protected TypeDefinitionNodeBase()
+		{
+			Entries = new List<T>();
+		}
+
 		/// <summary>
 		/// The name of the type.
 		/// </summary>
@@ -20,33 +26,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public TypeBuilder TypeBuilder { get; private set; }
 
-		#region Methods
-
-		/// <summary>
-		/// Prepares the assembly entities for the type.
-		/// </summary>
-		/// <param name="ctx">Context pointer.</param>
-		public void PrepareSelf(Context ctx)
-		{
-			if(TypeBuilder != null)
-				throw new InvalidOperationException(string.Format("Type {0} has already been prepared!", Name));
-
-			TypeBuilder = ctx.MainModule.DefineType(Name, TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed);
-		}
-
-		#endregion
-	}
-
-	/// <summary>
-	/// A base node for algebraic types and records.
-	/// </summary>
-	public abstract class TypeDefinitionNodeBase<T> : TypeDefinitionNodeBase where T : LocationEntity
-	{
-		protected TypeDefinitionNodeBase()
-		{
-			Entries = new List<T>();
-		}
-
 		/// <summary>
 		/// The entries of the type node.
 		/// </summary>
@@ -56,6 +35,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			get { return Entries.Last().EndLocation; }
 			set { base.EndLocation = value; }
+		}
+
+		public override void Compile(Context ctx, bool mustReturn)
+		{
+			throw new System.NotImplementedException();
 		}
 
 		#region Equality members
