@@ -36,7 +36,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a MethodBuilder for current method entity.
 		/// </summary>
-		/// <param name="ctx"></param>
 		public override void PrepareSelf()
 		{
 			if (_IsPrepared)

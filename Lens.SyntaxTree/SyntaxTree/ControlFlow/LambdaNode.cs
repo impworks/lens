@@ -12,9 +12,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		public override void ProcessClosures(Context ctx)
 		{
-			var argTypes = Arguments.Values.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
+			var argTypes = Arguments.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
 			var methodBackup = ctx.CurrentMethod;
 			ctx.CurrentMethod = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes);
+			ctx.CurrentMethod.Body = Body;
 
 			base.ProcessClosures(ctx);
 
@@ -25,7 +26,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			var retType = Body.GetExpressionType(ctx);
-			var argTypes = Arguments.Values.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
+			var argTypes = Arguments.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();
 			return retType == typeof (Unit)
 				? FunctionalHelper.CreateActionType(argTypes)
 				: FunctionalHelper.CreateFuncType(retType, argTypes);

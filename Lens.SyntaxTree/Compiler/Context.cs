@@ -43,7 +43,8 @@ namespace Lens.SyntaxTree.Compiler
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 
-			declareRoot();
+			_RootType = CreateType(RootTypeName, null, true);
+			_RootMethod = _RootType.CreateMethod(RootMethodName, Type.EmptyTypes, true);
 		}
 
 		/// <summary>
@@ -182,9 +183,14 @@ namespace Lens.SyntaxTree.Compiler
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
 
 		/// <summary>
+		/// The main type in which all "global" functions are stored.
+		/// </summary>
+		private TypeEntity _RootType;
+
+		/// <summary>
 		/// The function that is the body of the script.
 		/// </summary>
-		private MethodEntity _ScriptBody;
+		private MethodEntity _RootMethod;
 
 		#endregion
 	}

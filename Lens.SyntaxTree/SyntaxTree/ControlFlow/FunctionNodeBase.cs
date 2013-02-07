@@ -15,14 +15,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		protected FunctionNodeBase()
 		{
-			Arguments = new HashList<FunctionArgument>();
+			Arguments = new List<FunctionArgument>();
 			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
 		/// Function arguments.
 		/// </summary>
-		public HashList<FunctionArgument> Arguments { get; set; }
+		public List<FunctionArgument> Arguments { get; set; }
 
 		/// <summary>
 		/// Function body.

@@ -126,7 +126,29 @@ namespace Lens.SyntaxTree.Compiler
 				ctor.PrepareSelf();
 
 			foreach (var method in _MethodList)
+			{
 				method.PrepareSelf();
+
+				var exists = true;
+				try
+				{
+					ResolveMethod(method.Name, method.ArgumentTypes, true);
+				}
+				catch (LensCompilerException)
+				{
+					exists = false;
+				}
+				
+				if(exists)
+					Context.Error("Type '{0}' already contains a method named '{1}' with identical set of arguments!", Name, method.Name);
+
+				if(!_Methods.ContainsKey(method.Name))
+					_Methods.Add(method.Name, new List<MethodEntity>());
+
+				_Methods[method.Name].Add(method);
+			}
+
+			_MethodList.Clear();
 		}
 
 		/// <summary>
@@ -201,7 +223,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new method with argument types given by function arguments.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, FunctionArgument[] args = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false)
 		{
 			var argHash = new HashList<FunctionArgument>();
 			if(args != null)
@@ -245,9 +267,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a method assembly entity.
 		/// </summary>
-		internal MethodInfo ResolveMethod(string name, Type[] args)
+		internal MethodInfo ResolveMethod(string name, Type[] args, bool exact = false)
 		{
-			throw new NotImplementedException();
+			List<MethodEntity> group;
+			if(!_Methods.TryGetValue(name, out group))
+				Context.Error("Type '{0}' does not contain any method named '{1}'.", Name, name);
+
+			var info = resolveMethodByArgs(group, args);
+			if(exact && info.Item2 != 0)
+				Context.Error("Type '{0}' does not  contain a method named '{1}' with given exact arguments!", Name, name);
+
+			return (info.Item1 as MethodEntity).MethodBuilder;
 		}
 
 		/// <summary>
@@ -255,7 +285,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal ConstructorInfo ResolveConstructor(Type[] args)
 		{
-			throw new NotImplementedException();
+			var info = resolveMethodByArgs(_Constructors, args);
+			return (info.Item1 as ConstructorEntity).ConstructorBuilder;
 		}
 
 		#endregion
@@ -295,6 +326,55 @@ namespace Lens.SyntaxTree.Compiler
 
 			_MethodList.Add(me);
 			return me;
+		}
+
+		/// <summary>
+		/// Resolve a method within a list by closest distance to the given parameters.
+		/// </summary>
+		private Tuple<MethodEntityBase, int> resolveMethodByArgs(IEnumerable<MethodEntityBase> list, Type[] args)
+		{
+			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent => new Tuple<MethodEntityBase, int>(ent, getArgumentsDistance(ent.ArgumentTypes, args));
+			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
+			
+			if(result.Length == 0 || result[0].Item2 == int.MaxValue)
+				Context.Error("No suitable method was found!");
+
+			if (result.Length > 2)
+			{
+				var ambiCount = result.Skip(1).TakeWhile(i => i.Item2 == result[0].Item2).Count();
+				if(ambiCount > 0)
+					Context.Error("Ambigious reference: {0} matching methods found.", ambiCount);
+			}
+
+			return result[0];
+		}
+
+		/// <summary>
+		/// Calculates the compound distance between desired and existing lists of argument types.
+		/// </summary>
+		private int getArgumentsDistance(Type[] src, Type[] dst)
+		{
+			if (src.Length != dst.Length)
+				return int.MaxValue;
+
+			var sum = 0;
+			for (var idx = 0; idx < src.Length; idx++)
+			{
+				var curr = getTypeDistance(src[idx], dst[idx]);
+				if (curr == int.MaxValue)
+					return int.MaxValue;
+				sum += curr;
+			}
+
+			return sum;
+		}
+
+		/// <summary>
+		/// Calculates a distance between two types, if they are castable.
+		/// </summary>
+		private int getTypeDistance(Type src, Type dst)
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion

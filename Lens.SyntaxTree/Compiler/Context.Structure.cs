@@ -107,8 +107,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a type by its signature.
 		/// </summary>
-		/// <param name="signature"></param>
-		/// <returns></returns>
 		public Type ResolveType(TypeSignature signature)
 		{
 			try
@@ -156,7 +154,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareFunction(FunctionNode node)
 		{
-			
+			var method = _RootType.CreateMethod(node.Name, node.Arguments, true);
+			method.Body = node.Body;
 		}
 
 		/// <summary>
@@ -172,7 +171,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareScriptNode(NodeBase node)
 		{
-			_ScriptBody.Body.Add(node);
+			_RootMethod.Body.Add(node);
 		}
 
 		#endregion
@@ -232,15 +231,6 @@ namespace Lens.SyntaxTree.Compiler
 			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
-		}
-
-		/// <summary>
-		/// Declare the root type and method of the assembly.
-		/// </summary>
-		private void declareRoot()
-		{
-			var type = CreateType(RootTypeName, null, true);
-			_ScriptBody = type.CreateMethod(RootMethodName, Type.EmptyTypes, true);
 		}
 
 		#endregion

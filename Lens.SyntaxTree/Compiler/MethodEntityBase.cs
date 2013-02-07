@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The body of the method.
 		/// </summary>
-		public CodeBlockNode Body { get; private set; }
+		public CodeBlockNode Body;
 
 		/// <summary>
 		/// The scope of the method.
