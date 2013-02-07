@@ -9,31 +9,34 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_ExpressionType != null)
-				return m_ExpressionType;
-
 			var exprType = Expression.GetExpressionType(ctx);
 			if (exprType.IsArray)
-			{
-				m_ExpressionType = exprType.GetElementType();
-			}
-			else if (exprType.IsGenericType)
+				return exprType.GetElementType();
+
+			if (exprType.IsGenericType)
 			{
 				var gt = exprType.GetGenericTypeDefinition();
 				var args = exprType.GetGenericArguments();
 				if (gt == typeof (List<>))
-					m_ExpressionType = args[0];
-				else if (gt == typeof (Dictionary<,>))
-					m_ExpressionType = args[1];
+					return args[0];
+				if (gt == typeof (Dictionary<,>))
+					return args[1];
 			}
 			else
 			{
 				Error("Type '{0}' cannot be indexed.", exprType);
 			}
 
-			return m_ExpressionType;
+			return base.resolveExpressionType(ctx);
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			if (Expression != null)
+				yield return Expression;
+			yield return Index;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

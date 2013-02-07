@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.Utils;
+using Lens.SyntaxTree.Compiler;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -94,7 +94,7 @@ namespace Lens.Test
 			Test("Lens.SyntaxTree.Unit", typeof(Unit));
 		}
 
-		private void Test(string signature, Type type)
+		private static void Test(string signature, Type type)
 		{
 			Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
 		}

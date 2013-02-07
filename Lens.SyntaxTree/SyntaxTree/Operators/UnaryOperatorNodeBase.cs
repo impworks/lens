@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -25,6 +26,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			get { return Operand.EndLocation; }
 			set { LocationSetError(); }
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Operand;
 		}
 
 		#region Equality members

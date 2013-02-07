@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using Lens.Parser;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
+using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -123,7 +125,7 @@ type ArrayHolder
                 Name = "negate",
                 Arguments =
                 {
-                    {"x", new FunctionArgument("x", "int")}
+                    new FunctionArgument("x", "int")
                 },
                 Body =
                 {
@@ -164,10 +166,10 @@ type ArrayHolder
             var result = new FunctionNode
             {
                 Name = "hypo",
-                Arguments = new Dictionary<string, FunctionArgument>
+                Arguments = new List<FunctionArgument>
                 {
-                    {"a", new FunctionArgument("a", "int")},
-                    {"b", new FunctionArgument("b", "int")}
+                    new FunctionArgument("a", "int"),
+                    new FunctionArgument("b", "int")
                 },
                 Body = 
                 {
@@ -358,8 +360,8 @@ type ArrayHolder
                 {
                     Arguments =
                     {
-                        {"a", new FunctionArgument("a", "System.Float") },
-                        {"b", new FunctionArgument("b", "System.Float") }
+                        new FunctionArgument("a", "System.Float"),
+                        new FunctionArgument("b", "System.Float")
                     },
                     Body =
                     {
@@ -553,7 +555,7 @@ type ArrayHolder
 
             var result = new FunctionNode
                 {
-                    Arguments = { { "a", new FunctionArgument("a", "double") } },
+                    Arguments = { new FunctionArgument("a", "double") },
                     Body =
                         {
                             new InvocationNode
@@ -595,7 +597,7 @@ test
                     new BooleanNode(true),
                     new FunctionNode
                     {
-                        Arguments = {{"a", new FunctionArgument("a", "double")}},
+                        Arguments = { new FunctionArgument("a", "double") },
                         Body =
                         {
                             new InvocationNode

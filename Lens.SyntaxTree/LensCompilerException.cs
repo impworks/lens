@@ -13,14 +13,7 @@ namespace Lens.SyntaxTree
 
 		public LensCompilerException(string msg, LocationEntity entity) : base(msg)
 		{
-			StartLocation = entity.StartLocation;
-			EndLocation = entity.EndLocation;
-		}
-
-		public LensCompilerException(string msg, LexemLocation start, LexemLocation end) : base(msg)
-		{
-			StartLocation = start;
-			EndLocation = end;
+			BindToLocation(entity);
 		}
 
 		/// <summary>
@@ -49,6 +42,16 @@ namespace Lens.SyntaxTree
 					EndLocation.Offset
 				);
 			}
+		}
+
+		/// <summary>
+		/// Bind exception to a location.
+		/// </summary>
+		/// <param name="entity"></param>
+		public void BindToLocation(LocationEntity entity)
+		{
+			StartLocation = entity.StartLocation;
+			EndLocation = entity.EndLocation;
 		}
 	}
 }

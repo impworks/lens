@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			Type = type;
 		}
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			return ctx.ResolveType(Type.Signature);
 		}

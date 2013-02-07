@@ -27,22 +27,31 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return Equals((NewDictionaryNode) obj);
 		}
 
+		public override int GetHashCode()
+		{
+			return (Expressions != null ? Expressions.GetHashCode() : 0);
+		}
+
 		#endregion
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_ExpressionType != null)
-				return m_ExpressionType;
-
 			if(Expressions.Count == 0)
 				Error("List must contain at least one object!");
 
-			m_ExpressionType = typeof(Dictionary<,>).MakeGenericType(
+			return typeof(Dictionary<,>).MakeGenericType(
 				Expressions[0].Key.GetExpressionType(ctx),
 				Expressions[0].Value.GetExpressionType(ctx)
 			);
+		}
 
-			return m_ExpressionType;
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			foreach (var curr in Expressions)
+			{
+				yield return curr.Key;
+				yield return curr.Value;
+			}
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

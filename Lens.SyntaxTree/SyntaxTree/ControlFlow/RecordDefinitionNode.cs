@@ -10,28 +10,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// A node representing the record definition construct.
 	/// </summary>
 	public class RecordDefinitionNode : TypeDefinitionNodeBase<RecordField>
-	{
-		/// <summary>
-		/// Prepares the assembly entities for the record.
-		/// </summary>
-		public void PrepareSelf(Context ctx)
-		{
-			if (TypeBuilder != null)
-				throw new InvalidOperationException(string.Format("Type {0} has already been prepared!", Name));
-
-			TypeBuilder = ctx.MainModule.DefineType(
-				Name,
-				TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed,
-				typeof(object),
-				new[] { typeof(ILensRecord) }
-			);
-		}
-
-		public override void Compile(Context ctx, bool mustReturn)
-		{
-			throw new NotImplementedException();
-		}
-	}
+	{ }
 
 	/// <summary>
 	/// Definition of a record entry.
@@ -52,24 +31,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The type of the entry.
 		/// </summary>
 		public TypeSignature Type { get; set; }
-
-		/// <summary>
-		/// The field builder.
-		/// </summary>
-		public FieldBuilder FieldBuilder { get; private set; }
-
-		public void PrepareSelf(RecordDefinitionNode root, Context ctx)
-		{
-			if(FieldBuilder != null)
-				throw new InvalidOperationException(string.Format("Field '{0}' of type '{1}' has already been prepared.", Name, ContainingRecord.Name));
-
-			ContainingRecord = root;
-			FieldBuilder = ContainingRecord.TypeBuilder.DefineField(
-				Name,
-				ctx.ResolveType(Type.Signature),
-				FieldAttributes.Public
-			);
-		}
 
 		#region Equality members
 

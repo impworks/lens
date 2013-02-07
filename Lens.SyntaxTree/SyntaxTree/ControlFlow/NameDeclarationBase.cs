@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -7,21 +8,17 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	public class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
+	public abstract class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
 	{
-		public NameDeclarationBase()
+		protected NameDeclarationBase(bool isConst)
 		{
-			NameInfo = new LexicalNameInfo();
+			IsConstant = isConst;
 		}
 
 		/// <summary>
 		/// The name of the variable.
 		/// </summary>
-		public string Name
-		{
-			get { return NameInfo.Name; }
-			set { NameInfo.Name = value; }
-		}
+		public string Name { get; set; }
 
 		/// <summary>
 		/// The value to assign to the variable.
@@ -29,14 +26,26 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		public NodeBase Value { get; set; }
 
 		/// <summary>
-		/// Variable information.
+		/// A flag indicating that the current value is contant.
 		/// </summary>
-		public LexicalNameInfo NameInfo { get; protected set; }
+		public readonly bool IsConstant;
 
 		public override LexemLocation EndLocation
 		{
 			get { return Value.EndLocation; }
 			set { LocationSetError(); }
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Value;
+		}
+
+		public override void ProcessClosures(Context ctx)
+		{
+			base.ProcessClosures(ctx);
+
+			ctx.CurrentScope.DeclareName(Name, Value.GetExpressionType(ctx), IsConstant);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -48,7 +57,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(NameDeclarationBase other)
 		{
-			return Equals(Value, other.Value) && Equals(NameInfo, other.NameInfo);
+			return IsConstant.Equals(other.IsConstant) && string.Equals(Name, other.Name) && Equals(Value, other.Value);
 		}
 
 		public override bool Equals(object obj)
@@ -56,14 +65,17 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((NameDeclarationBase)obj);
+			return Equals((NameDeclarationBase) obj);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return ((Value != null ? Value.GetHashCode() : 0) * 397) ^ (NameInfo != null ? NameInfo.GetHashCode() : 0);
+				int hashCode = IsConstant.GetHashCode();
+				hashCode = (hashCode*397) ^ (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode*397) ^ (Value != null ? Value.GetHashCode() : 0);
+				return hashCode;
 			}
 		}
 
@@ -71,7 +83,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override string ToString()
 		{
-			return string.Format("{0}({1} = {2})", NameInfo.IsConstant ? "let" : "var", Name, Value);
+			return string.Format("{0}({1} = {2})", IsConstant ? "let" : "var", Name, Value);
 		}
 	}
 }

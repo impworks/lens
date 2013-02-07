@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Lens.SyntaxTree.SyntaxTree.Operators
+﻿namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
 	/// <summary>
 	/// A base node for all operators.

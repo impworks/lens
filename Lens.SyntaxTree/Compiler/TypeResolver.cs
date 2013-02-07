@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Lens.SyntaxTree.Utils
+namespace Lens.SyntaxTree.Compiler
 {
 	/// <summary>
 	/// A class to resolve types by their string signatures.
@@ -11,16 +11,19 @@ namespace Lens.SyntaxTree.Utils
 	{
 		public TypeResolver()
 		{
+			_Cache = new Dictionary<string, Type>();
 			ResetLocations();
 			ResetAliases();
 		}
 
 		private Dictionary<string, List<string>> _SearchableLocations;
+		private readonly Dictionary<string, Type> _Cache;
 
 		/// <summary>
 		/// Type aliases.
 		/// </summary>
 		public Dictionary<string, Type> TypeAliases { get; private set; }
+
 
 		/// <summary>
 		/// Initialize the namespaces list.
@@ -77,7 +80,15 @@ namespace Lens.SyntaxTree.Utils
 		public Type ResolveType(string signature)
 		{
 			var trimmed = signature.Replace(" ", string.Empty);
-			return parseTypeSignature(trimmed);
+			Type cached;
+			if (_Cache.TryGetValue(trimmed, out cached))
+				return cached;
+			
+			var type = parseTypeSignature(trimmed);
+			if(type != null)
+				_Cache.Add(trimmed, type);
+
+			return type;
 		}
 
 		/// <summary>

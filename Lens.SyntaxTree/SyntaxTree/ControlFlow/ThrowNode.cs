@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -13,10 +15,15 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override Utils.LexemLocation EndLocation
+		public override LexemLocation EndLocation
 		{
 			get { return Expression.EndLocation; }
 			set { LocationSetError(); }
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Expression;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

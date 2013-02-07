@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Identifier = identifier;
 		}
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			throw new NotImplementedException();
 		}

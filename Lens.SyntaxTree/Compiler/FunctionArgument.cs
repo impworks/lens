@@ -1,7 +1,8 @@
 ﻿using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.Utils;
 
-namespace Lens.SyntaxTree.Utils
+namespace Lens.SyntaxTree.Compiler
 {
 	/// <summary>
 	/// A node representing a function argument definition.
@@ -12,9 +13,13 @@ namespace Lens.SyntaxTree.Utils
 		{ }
 
 		public FunctionArgument(string name, string type, ArgumentModifier modifier = ArgumentModifier.In)
+			: this(name, new TypeSignature(type), modifier)
+		{ }
+
+		public FunctionArgument(string name, TypeSignature type, ArgumentModifier modifier = ArgumentModifier.In)
 		{
 			Name = name;
-			Type = new TypeSignature(type);
+			Type = type;
 			Modifier = modifier;
 		}
 

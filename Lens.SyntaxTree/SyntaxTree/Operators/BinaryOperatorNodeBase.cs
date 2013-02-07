@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
@@ -30,6 +31,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			get { return RightOperand.EndLocation; }
 			set { LocationSetError(); }
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return LeftOperand;
+			yield return RightOperand;
 		}
 
 		/// <summary>

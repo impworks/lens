@@ -25,6 +25,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			set { LocationSetError(); }
 		}
 
+		public override System.Collections.Generic.IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Value;
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();

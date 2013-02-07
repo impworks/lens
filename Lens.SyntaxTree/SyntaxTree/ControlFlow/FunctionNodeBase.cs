@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
@@ -14,14 +15,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		protected FunctionNodeBase()
 		{
-			Arguments = new Dictionary<string, FunctionArgument>();
+			Arguments = new List<FunctionArgument>();
 			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
 		/// Function arguments.
 		/// </summary>
-		public Dictionary<string, FunctionArgument> Arguments { get; set; }
+		public List<FunctionArgument> Arguments { get; set; }
 
 		/// <summary>
 		/// Function body.
@@ -39,12 +40,15 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			return Body.GetExpressionType(ctx);
 		}
 
-		public abstract void PrepareSelf(Context ctx);
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return Body;
+		}
 
 		#region Equality members
 

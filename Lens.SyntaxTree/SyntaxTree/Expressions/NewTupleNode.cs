@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 
@@ -9,23 +10,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewTupleNode : ValueListNodeBase<NodeBase>
 	{
-		private Type m_TupleType;
-
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_TupleType == null)
-			{
-				if (Expressions.Count == 0)
-					Error("Tuple must contain at least one object!");
+			if (Expressions.Count == 0)
+				Error("Tuple must contain at least one object!");
 
-				if (Expressions.Count > 8)
-					Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
+			if (Expressions.Count > 8)
+				Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
 
-				var tupleType = getTupleType();
-				m_TupleType = tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
-			}
+			var tupleType = getTupleType();
+			return tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
+		}
 
-			return m_TupleType;
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Expressions;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

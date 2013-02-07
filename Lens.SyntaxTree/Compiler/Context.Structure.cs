@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -13,121 +12,166 @@ namespace Lens.SyntaxTree.Compiler
 		#region Methods
 
 		/// <summary>
-		/// Resolve a type by it's string signature.
-		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
-		/// Therefore, you should not use GetMethod(s), GetField(s) etc. on a result of this method!
+		/// Creates a new type entity with given name.
 		/// </summary>
-		public Type ResolveType(string type)
+		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false)
 		{
-			Type result;
+			if(_DefinedTypes.ContainsKey(name))
+				Error("Type '{0}' has already been defined!", name);
 
-			if (_TypeRegistry.TryGetValue(type, out result))
-				return result;
+			var te = new TypeEntity(this)
+			{
+				Name = name,
+				ParentSignature = parent,
+				IsSealed = isSealed,
+				GenerateDefaultConstructor = true
+			};
+			_DefinedTypes.Add(name, te);
+			return te;
+		}
 
+		/// <summary>
+		/// Resolves a type by its string signature.
+		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
+		/// </summary>
+		public Type ResolveType(string signature)
+		{
 			try
 			{
-				result = _TypeResolver.ResolveType(type);
-				_TypeRegistry.Add(type, result);
-				return result;
+				TypeEntity type;
+				return _DefinedTypes.TryGetValue(signature, out type)
+					       ? type.TypeBuilder
+					       : _TypeResolver.ResolveType(signature);
 			}
-			catch (Exception ex)
+			catch (ArgumentException ex)
 			{
-				error(ex.Message);
+				throw new LensCompilerException(ex.Message);
 			}
-
-			return null;
 		}
 
 		/// <summary>
-		/// Resolve a field by type and field name.
+		/// Tries to search for a declared type.
 		/// </summary>
-		/// <returns></returns>
-		public FieldInfo ResolveField(string type, string fieldName)
+		internal TypeEntity FindType(string name)
 		{
-			var t = ResolveType(type);
-			FieldInfo result = null;
+			TypeEntity entity;
+			_DefinedTypes.TryGetValue(name, out entity);
+			return entity;
+		}
 
-			// type is defined internally
-			if (t is TypeBuilder)
+		/// <summary>
+		/// Resolves a method by it's name and agrument list.
+		/// </summary>
+		public MethodInfo ResolveMethod(string typeName, string methodName, Type[] args = null)
+		{
+			if(args == null)
+				args = new Type[0];
+
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveMethod(methodName, args);
+
+			var type = ResolveType(typeName);
+			return type.GetMethod(methodName, args);
+		}
+
+		/// <summary>
+		/// Resolves a field by it's name.
+		/// </summary>
+		public FieldInfo ResolveField(string typeName, string fieldName)
+		{
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveField(fieldName);
+
+			var type = ResolveType(typeName);
+			return type.GetField(fieldName);
+		}
+
+		/// <summary>
+		/// Resolves a constructor by it's argument list.
+		/// </summary>
+		public ConstructorInfo ResolveConstructor(string typeName, Type[] args = null)
+		{
+			if (args == null)
+				args = new Type[0];
+
+			var te = FindType(typeName);
+			if (te != null)
+				return te.ResolveConstructor(args);
+
+			var type = ResolveType(typeName);
+			return type.GetConstructor(args);
+		}
+
+		/// <summary>
+		/// Resolves a type by its signature.
+		/// </summary>
+		public Type ResolveType(TypeSignature signature)
+		{
+			try
 			{
-				if (t.Implements<ILensRecord>())
-				{
-					var rec = _DefinedRecords[type].Entries.FirstOrDefault(r => r.Name == fieldName);
-					if (rec != null)
-						result = rec.FieldBuilder;
-				}
-				else if(t.Implements<ILensTypeRecord>())
-				{
-					if (fieldName == "Tag")
-					{
-						var label = _DefinedTypes.SelectMany(dt => dt.Value.Entries).FirstOrDefault(l => l.Name == type);
-						if (label != null)
-							result = label.FieldBuilder;
-					}
-				}
+				return ResolveType(signature.Signature);
 			}
-			else
+			catch (LensCompilerException ex)
 			{
-				result = t.GetField(fieldName);
+				ex.BindToLocation(signature);
+				throw;
 			}
-
-			if (result == null)
-				error("Type '{0}' does not contain a field named '{1}'.", type, fieldName);
-
-			return result;
 		}
 
 		/// <summary>
-		/// Resolve a constructor by type and arguments.
+		/// Declares a new type.
 		/// </summary>
-		public ConstructorInfo ResolveConstructor(string type, List<string> argTypes)
+		public void DeclareType(TypeDefinitionNode node)
 		{
-			throw new NotImplementedException();
+			var root = CreateType(node.Name);
+			root.Kind = TypeEntityKind.Type;
+
+			foreach (var curr in node.Entries)
+			{
+				var currType = CreateType(curr.Name, node.Name, true);
+				currType.Kind = TypeEntityKind.TypeLabel;
+				if (curr.IsTagged)
+					currType.CreateField("Tag", curr.TagType);
+			}
 		}
 
 		/// <summary>
-		/// Resolve a method by type, name and argument types.
+		/// Declares a new record.
 		/// </summary>
-		public MethodInfo ResolveMethod(string type, string name, List<string> argTypes)
+		public void DeclareRecord(RecordDefinitionNode node)
 		{
-			throw new NotImplementedException();
+			var root = CreateType(node.Name, null, true);
+			root.Kind = TypeEntityKind.Record;
+
+			foreach (var curr in node.Entries)
+				root.CreateField(curr.Name, curr.Type);
 		}
 
 		/// <summary>
-		/// Add an existing type node to the list.
+		/// Declares a new function.
 		/// </summary>
-		public void AddType(TypeDefinitionNode node)
+		public void DeclareFunction(FunctionNode node)
 		{
-			var name = node.Name;
-			if(_DefinedTypes.ContainsKey(name))
-				error(node, "A type named '{0}' has already been defined!", name);
-
-			_DefinedTypes.Add(name, node);
+			var method = _RootType.CreateMethod(node.Name, node.Arguments, true);
+			method.Body = node.Body;
 		}
 
 		/// <summary>
-		/// Add an existing type node to the list.
+		/// Opens a new namespace for current script.
 		/// </summary>
-		public void AddRecord(RecordDefinitionNode node)
+		public void DeclareOpenNamespace(UsingNode node)
 		{
-			var name = node.Name;
-			if (_DefinedRecords.ContainsKey(name))
-				error(node, "A record named '{0}' has already been defined!", name);
-
-			_DefinedRecords.Add(name, node);
+			_TypeResolver.AddNamespace(node.Namespace);
 		}
 
 		/// <summary>
-		/// Add an existing type node to the list.
+		/// Adds a new node to the main script's body.
 		/// </summary>
-		public void AddFunction(FunctionNode node)
+		public void DeclareScriptNode(NodeBase node)
 		{
-			var name = node.Name;
-			List<FunctionNode> list;
-			if(_DefinedFunctions.TryGetValue(name, out list))
-				list.Add(node);
-			else
-				_DefinedFunctions.Add(name, new List<FunctionNode> { node });
+			_RootMethod.Body.Add(node);
 		}
 
 		#endregion
@@ -135,106 +179,61 @@ namespace Lens.SyntaxTree.Compiler
 		#region Helpers
 
 		/// <summary>
-		/// Throw a new error.
-		/// </summary>
-		private void error(LocationEntity entity, string err, params object[] ps)
-		{
-			throw new LensCompilerException(string.Format(err, ps), entity);
-		}
-
-		/// <summary>
-		/// Throw a new error.
-		/// </summary>
-		private void error(string err, params object[] ps)
-		{
-			throw new LensCompilerException(string.Format(err, ps));
-		}
-
-		/// <summary>
 		/// Generates a unique assembly name.
 		/// </summary>
 		private static string getAssemblyName()
 		{
-			lock (typeof (Context))
+			lock (typeof(Context))
 				_AssemblyId++;
 			return "_CompiledAssembly" + _AssemblyId;
 		}
 
 		/// <summary>
-		/// Registers all structures in the assembly.
+		/// Traverses the syntactic tree, searching for closures and curried methods.
 		/// </summary>
-		private void prepare()
+		private void processClosures()
 		{
-			prepareTypesAndRecords();
-			prepareTypeLabelTags();
-			prepareRecordFields();
+			var types = _DefinedTypes.ToArray();
+
+			// ProcessClosures() usually processes new types, hence the caching to array
+			foreach (var currType in types)
+				currType.Value.ProcessClosures();
 		}
 
 		/// <summary>
-		/// Build assembly entities for types, labels, and records.
+		/// Prepares the assembly entities for the type list.
 		/// </summary>
-		private void prepareTypesAndRecords()
+		private void prepareEntities()
 		{
-			Action<string, LocationEntity> check = (key, ent) =>
-			{
-				Type type;
-				if (_TypeRegistry.TryGetValue(key, out type))
-				{
-					throw new LensCompilerException(
-						string.Format("A {0} named '{1}' has already been defined.", type.BaseType == typeof(object) ? "type" : "type label", key),
-						ent
-					);
-				}
-			};
+			// prepare types first
+			foreach (var curr in _DefinedTypes)
+				curr.Value.PrepareSelf();
 
-			foreach (var currTypePair in _DefinedTypes)
-			{
-				var type = currTypePair.Value;
-				var typeName = currTypePair.Key;
-
-				check(typeName, type);
-				type.PrepareSelf(this);
-				_TypeRegistry.Add(typeName, type.TypeBuilder);
-
-				foreach (var currLabel in type.Entries)
-				{
-					check(currLabel.Name, currLabel);
-					currLabel.PrepareSelf(type, this);
-					_TypeRegistry.Add(currLabel.Name, currLabel.TypeBuilder);
-				}
-			}
-
-			foreach (var currRecPair in _DefinedRecords)
-			{
-				var rec = currRecPair.Value;
-				var recName = currRecPair.Key;
-
-				check(recName, rec);
-				rec.PrepareSelf(this);
-				_TypeRegistry.Add(recName, rec.TypeBuilder);
-			}
+			foreach (var curr in _DefinedTypes)
+				curr.Value.PrepareMembers();
 		}
 
 		/// <summary>
-		/// Prepare assembly entities for all the type label tags.
+		/// Compiles the source code for all the declared classes.
 		/// </summary>
-		private void prepareTypeLabelTags()
+		private void compileInternal()
 		{
-			foreach(var currType in _DefinedTypes)
-				foreach(var currLabel in currType.Value.Entries)
-					currLabel.PrepareTag(this);
+			foreach (var curr in _DefinedTypes)
+				curr.Value.Compile();
 		}
 
 		/// <summary>
-		/// Prepare assembly entities for all the record fields.
+		/// Finalizes the assembly.
 		/// </summary>
-		private void prepareRecordFields()
+		private void finalizeAssembly()
 		{
-			foreach (var currRec in _DefinedRecords)
-				foreach(var currField in currRec.Value.Entries)
-					currField.PrepareSelf(currRec.Value, this);
+			var ep = ResolveMethod(RootTypeName, RootMethodName);
+			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+			foreach (var curr in _DefinedTypes)
+				curr.Value.TypeBuilder.CreateType();
 		}
 
 		#endregion
 	}
 }
+ 

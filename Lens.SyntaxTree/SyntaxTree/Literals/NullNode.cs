@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class NullNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			return typeof (NullType);
 		}

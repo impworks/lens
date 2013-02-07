@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
 			if (!Statements.Any())
 				Error("Code block contains no statements!");
@@ -44,6 +44,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				Error("A {0} declaration cannot be the last statement in a code block.", last is VarNode ? "variable" : "constant");
 
 			return Statements[Statements.Count - 1].GetExpressionType(ctx);
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Statements;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

@@ -1,4 +1,4 @@
-﻿using Lens.SyntaxTree.Utils;
+﻿using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {

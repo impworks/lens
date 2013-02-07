@@ -9,16 +9,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		public override Type GetExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx)
 		{
-			if (m_ExpressionType != null)
-				return m_ExpressionType;
-
 			if(Expressions.Count == 0)
 				Error("List must contain at least one object!");
 
-			m_ExpressionType = typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType(ctx));
-			return m_ExpressionType;
+			return typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType(ctx));
+		}
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			return Expressions;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
