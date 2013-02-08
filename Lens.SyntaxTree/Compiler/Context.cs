@@ -166,7 +166,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Gets an IL Generator for current method.
 		/// </summary>
-		internal ILGenerator Generator { get { return CurrentMethod == null ? null : CurrentMethod.Generator; } }
+		internal ILGenerator CurrentILGenerator { get { return CurrentMethod == null ? null : CurrentMethod.Generator; } }
 
 		/// <summary>
 		/// An ID for closure types.
