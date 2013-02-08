@@ -23,12 +23,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The name of the entry point of the assembly.
 		/// </summary>
-		private const string RootMethodName = "<ScriptBody>";
-
-		/// <summary>
-		/// The name for the application domain to execute script in.
-		/// </summary>
-		private const string AppDomainName = "LensScriptAppDomain";
+		private const string RootMethodName = "Run";
 
 		/// <summary>
 		/// The default size of a method's IL Generator stream.
@@ -41,15 +36,16 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var an = new AssemblyName(getAssemblyName());
 
-			Domain = AppDomain.CreateDomain(AppDomainName);
-			MainAssembly = Domain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
+			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 
-			_RootType = CreateType(RootTypeName, null, true);
-			_RootMethod = _RootType.CreateMethod(RootMethodName, Type.EmptyTypes, true);
+			_RootType = CreateType(RootTypeName);
+			_RootType.Interfaces = new [] { typeof(IScript) };
+			_RootMethod = _RootType.CreateMethod(RootMethodName, Type.EmptyTypes, false, true);
+			_RootMethod.ReturnType = typeof (object);
 		}
 
 		/// <summary>
@@ -85,7 +81,7 @@ namespace Lens.SyntaxTree.Compiler
 			prepareEntities();
 			processClosures();
 			prepareEntities();
-			compileInternal();
+			compileCore();
 			finalizeAssembly();
 
 			IsCompiled = true;
@@ -99,8 +95,8 @@ namespace Lens.SyntaxTree.Compiler
 			if (!IsCompiled)
 				Compile();
 
-			var method = ResolveMethod(RootTypeName, RootMethodName);
-			return method.Invoke(null, new object[0]);
+			var inst = Activator.CreateInstance(ResolveType(RootTypeName));
+			return (inst as IScript).Run();
 		}
 
 		/// <summary>
@@ -113,11 +109,6 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		#region Properties
-
-		/// <summary>
-		/// The application domain for current script.
-		/// </summary>
-		public AppDomain Domain { get; private set; }
 
 		/// <summary>
 		/// The assembly that's being currently built.

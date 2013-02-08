@@ -65,10 +65,18 @@ namespace Lens.SyntaxTree.Compiler
 			var backup = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
 
-			// todo: false?
 			Body.Compile(ctx, false);
+
+			emitTrailer();
+			Generator.EmitReturn();
 
 			ctx.CurrentMethod = backup;
 		}
+
+		/// <summary>
+		/// Emit trailing code for method (differs in Constructors and Methods)
+		/// </summary>
+		protected virtual void emitTrailer()
+		{ }
 	}
 }

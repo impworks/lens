@@ -16,17 +16,18 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false)
 		{
-			if(_DefinedTypes.ContainsKey(name))
-				Error("Type '{0}' has already been defined!", name);
+			var te = createTypeCore(name, isSealed);
+			te.ParentSignature = parent;
+			return te;
+		}
 
-			var te = new TypeEntity(this)
-			{
-				Name = name,
-				ParentSignature = parent,
-				IsSealed = isSealed,
-				GenerateDefaultConstructor = true
-			};
-			_DefinedTypes.Add(name, te);
+		/// <summary>
+		/// Creates a new type entity with given name and a resolved type for parent.
+		/// </summary>
+		internal TypeEntity CreateType(string name, Type parent, bool isSealed = false)
+		{
+			var te = createTypeCore(name, isSealed);
+			te.Parent = parent;
 			return te;
 		}
 
@@ -142,7 +143,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
-			var root = CreateType(node.Name, null, true);
+			var root = CreateType(node.Name, isSealed: true);
 			root.Kind = TypeEntityKind.Record;
 
 			foreach (var curr in node.Entries)
@@ -216,10 +217,28 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Compiles the source code for all the declared classes.
 		/// </summary>
-		private void compileInternal()
+		private void compileCore()
 		{
 			foreach (var curr in _DefinedTypes)
 				curr.Value.Compile();
+		}
+
+		/// <summary>
+		/// Create a type entry without setting its parent info.
+		/// </summary>
+		private TypeEntity createTypeCore(string name, bool isSealed)
+		{
+			if (_DefinedTypes.ContainsKey(name))
+				Error("Type '{0}' has already been defined!", name);
+
+			var te = new TypeEntity(this)
+			{
+				Name = name,
+				IsSealed = isSealed,
+				GenerateDefaultConstructor = true
+			};
+			_DefinedTypes.Add(name, te);
+			return te;
 		}
 
 		/// <summary>
@@ -227,8 +246,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void finalizeAssembly()
 		{
-			var ep = ResolveMethod(RootTypeName, RootMethodName);
-			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+//			var ep = ResolveMethod(RootTypeName, RootMethodName);
+//			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
 		}

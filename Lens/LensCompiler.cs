@@ -1,4 +1,6 @@
 ﻿using System;
+using Lens.Parser;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens
 {
@@ -41,9 +43,12 @@ namespace Lens
 		/// Run the script and get a return value.
 		/// </summary>
 		/// <returns>The last expression of the script, evaluated.</returns>
-		public object Run()
+		public object Run(string src)
 		{
-			throw new NotImplementedException();
+			var tb = new TreeBuilder();
+			var nodes = tb.Parse(src);
+			var ctx = Context.CreateFromNodes(nodes);
+			return ctx.Execute();
 		}
 	}
 }

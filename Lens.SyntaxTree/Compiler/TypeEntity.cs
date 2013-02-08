@@ -24,6 +24,9 @@ namespace Lens.SyntaxTree.Compiler
 			ClosureMethodId = 1;
 		}
 
+		// todo!
+		public Type[] Interfaces;
+
 		private Dictionary<string, FieldEntity> _Fields;
 		private Dictionary<string, List<MethodEntity>> _Methods;
 		private List<ConstructorEntity> _Constructors;
@@ -95,19 +98,27 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
-			if (ParentSignature != null)
+			if (Parent != null || (ParentSignature != null && ParentSignature.Signature != null))
 			{
-				var parent = Context.FindType(ParentSignature.Signature);
-				if (parent != null)
-					parent.PrepareSelf();
+				if (Parent == null)
+				{
+					var parentType = Context.FindType(ParentSignature.Signature);
+					if (parentType != null)
+						parentType.PrepareSelf();
 
-				Parent = Context.ResolveType(ParentSignature.Signature);
+					Parent = Context.ResolveType(ParentSignature.Signature);
+				}
+
 				TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
 			}
 			else
 			{
 				TypeBuilder = Context.MainModule.DefineType(Name, attrs);
 			}
+
+			if(Interfaces != null)
+				foreach(var iface in Interfaces)
+					TypeBuilder.AddInterfaceImplementation(iface);
 
 			// todo: generate default ctor?
 

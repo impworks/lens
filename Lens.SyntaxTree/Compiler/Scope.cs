@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var closureName = string.Format("<ClosuredClass{0}>", ctx.ClosureId);
 			ClosureTypeId = ctx.ClosureId;
-			ClosureType = ctx.CreateType(closureName, null, true);
+			ClosureType = ctx.CreateType(closureName, isSealed: true);
 
 			ctx.ClosureId++;
 

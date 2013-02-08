@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The return type of the method.
 		/// </summary>
-		public Type ReturnType { get; private set; }
+		public Type ReturnType;
 
 		/// <summary>
 		/// Assembly-level method builder.
@@ -46,10 +46,11 @@ namespace Lens.SyntaxTree.Compiler
 			var attrs = MethodAttributes.Public;
 			if(IsStatic)
 				attrs |= MethodAttributes.Static;
-			else if(IsVirtual)
-				attrs |= MethodAttributes.Virtual;
+			if(IsVirtual)
+				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
-			ReturnType = Body.GetExpressionType(ctx);
+			if(ReturnType == null)
+				ReturnType = Body.GetExpressionType(ctx);
 
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
@@ -71,6 +72,17 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			_IsPrepared = true;
+		}
+
+		protected override void emitTrailer()
+		{
+			var ctx = ContainerType.Context;
+			var actualType = Body.GetExpressionType(ctx);
+			if (ReturnType != actualType)
+			{
+				var gen = ctx.CurrentILGenerator;
+				gen.EmitBox(actualType);
+			}
 		}
 
 		#endregion
