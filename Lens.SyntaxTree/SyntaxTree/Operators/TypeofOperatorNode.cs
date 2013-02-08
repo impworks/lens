@@ -20,7 +20,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-
+			var gen = ctx.CurrentILGenerator;
+			gen.EmitConstant(ctx.ResolveType(Type));
 		}
 
 		public override string ToString()

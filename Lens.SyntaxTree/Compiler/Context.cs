@@ -30,6 +30,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private const string AppDomainName = "LensScriptAppDomain";
 
+		/// <summary>
+		/// The default size of a method's IL Generator stream.
+		/// </summary>
+		public const int ILStreamSize = 1024;
+
 		#endregion
 
 		private Context()
@@ -157,6 +162,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// The lexical scope of the current scope.
 		/// </summary>
 		internal Scope CurrentScope { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
+
+		/// <summary>
+		/// Gets an IL Generator for current method.
+		/// </summary>
+		internal ILGenerator Generator { get { return CurrentMethod == null ? null : CurrentMethod.Generator; } }
 
 		/// <summary>
 		/// An ID for closure types.

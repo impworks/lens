@@ -15,7 +15,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+			gen.EmitNull();
 		}
 
 		#region Equality members

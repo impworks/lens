@@ -33,6 +33,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public int ClosureTypeId { get; private set; }
 
+		/// <summary>
+		/// The autoincrement id of a local implicitly named variable.
+		/// </summary>
+		private int _AutoVariableId;
+
 		#region Methods
 
 		/// <summary>
@@ -59,11 +64,23 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Declares a new variable with random name.
+		/// </summary>
+		public LocalName DeclareImplicitName(Type type, bool isConst)
+		{
+			var ln = DeclareName(string.Format("<loc_{0}>", _AutoVariableId), type, isConst);
+			_AutoVariableId++;
+			return ln;
+		}
+
+		/// <summary>
 		/// Checks if the variable is being referenced in another scope.
 		/// </summary>
 		public void ReferenceName(string name)
 		{
-			find(name, (loc, idx) => loc.IsClosured |= idx > 0);
+			var found = find(name, (loc, idx) => loc.IsClosured |= idx > 0);
+			if(!found)
+				throw new LensCompilerException(string.Format("A variable named '{0}' does not exist in the scope!", name));
 		}
 
 		/// <summary>

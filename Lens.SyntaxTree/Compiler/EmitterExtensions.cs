@@ -279,7 +279,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads the address of the field onto the stack.
 		/// </summary>
-		public static void EmitLoadArgumentAddr(this ILGenerator gen, int argId)
+		public static void EmitLoadArgumentAddress(this ILGenerator gen, int argId)
 		{
 			if(argId < 255)
 				gen.Emit(OpCodes.Ldarga_S, (byte)argId);
@@ -293,7 +293,7 @@ namespace Lens.SyntaxTree.Compiler
 		public static void EmitSaveArgument(this ILGenerator gen, int argId)
 		{
 			if(argId < 255)
-				gen.Emit(OpCodes.Starg, (byte)argId);
+				gen.Emit(OpCodes.Starg_S, (byte)argId);
 			else
 				gen.Emit(OpCodes.Starg, (short)argId);
 		}
@@ -311,6 +311,14 @@ namespace Lens.SyntaxTree.Compiler
 				case 3: gen.Emit(OpCodes.Ldloc_3); break;
 				default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
 			}
+		}
+
+		public static void EmitLoadLocalAddress(this ILGenerator gen, int varId)
+		{
+			if (varId < 255)
+				gen.Emit(OpCodes.Ldloca_S, (byte)varId);
+			else
+				gen.Emit(OpCodes.Ldloca, (short)varId);
 		}
 
 		/// <summary>
@@ -405,7 +413,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Initializes a structure fields to nulls of appropriate types.
 		/// </summary>
-		public static void EmitInitStruct(this ILGenerator gen, Type type)
+		public static void EmitInitObject(this ILGenerator gen, Type type)
 		{
 			gen.Emit(OpCodes.Initobj, type);
 		}

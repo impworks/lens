@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
@@ -35,6 +36,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// The scope of the method.
 		/// </summary>
 		public Scope Scope { get; private set; }
+
+		/// <summary>
+		/// The MSIL Generator stream to which commands are emitted.
+		/// </summary>
+		public ILGenerator Generator { get; protected set; }
 
 		/// <summary>
 		/// Process closures.

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Literals
 {
@@ -10,7 +9,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	{
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			// does nothing
 		}
 
 		#region Equality members

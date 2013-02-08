@@ -32,6 +32,7 @@ namespace Lens.SyntaxTree.Compiler
 					: Arguments.Values.Select(fa => ContainerType.Context.ResolveType(fa.Type.Signature)).ToArray();
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
+			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
 			_IsPrepared = true;
 		}
 
