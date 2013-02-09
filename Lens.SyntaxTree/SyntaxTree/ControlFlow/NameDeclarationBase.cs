@@ -1,6 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Expressions;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -10,8 +11,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public abstract class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
 	{
-		protected NameDeclarationBase(bool isConst)
+		protected NameDeclarationBase(string name, bool isConst)
 		{
+			Name = name;
 			IsConstant = isConst;
 		}
 
@@ -45,12 +47,28 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			base.ProcessClosures(ctx);
 
-			ctx.CurrentScope.DeclareName(Name, Value.GetExpressionType(ctx), IsConstant);
+			var type = Value.GetExpressionType(ctx);
+
+			if(type == typeof(NullType))
+				Error("Value type cannot be inferred from usage. Please cast the null value to a type!");
+
+			if(type == typeof(Unit) || type == typeof(void))
+				Error("A function that does not return any value cannot be used as assignment source!");
+
+			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var assignNode = new SetIdentifierNode(Name)
+			{
+				Value = Value,
+				IsInitialization = true,
+				StartLocation = StartLocation,
+				EndLocation = EndLocation
+			};
+
+			assignNode.Compile(ctx, mustReturn);
 		}
 
 		#region Equality members

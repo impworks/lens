@@ -5,10 +5,7 @@
 	/// </summary>
 	public class VarNode : NameDeclarationBase
 	{
-		public VarNode(string name = null)
-			: base(false)
-		{
-			Name = name;
-		}
+		public VarNode(string name = null) : base(name, false)
+		{ }
 	}
 }

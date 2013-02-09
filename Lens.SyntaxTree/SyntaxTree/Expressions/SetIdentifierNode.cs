@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -15,6 +16,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		/// <summary>
+		/// A flag indicating that assignment to a constant variable is legal
+		/// because it's being instantiated.
+		/// </summary>
+		public bool IsInitialization { get; set; }
+
+		/// <summary>
 		/// Value to be assigned.
 		/// </summary>
 		public NodeBase Value { get; set; }
@@ -25,14 +32,57 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			set { LocationSetError(); }
 		}
 
-		public override System.Collections.Generic.IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeBase> GetChildNodes()
 		{
 			yield return Value;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var nameInfo = ctx.CurrentScope.FindName(Identifier);
+			if(nameInfo == null)
+				Error("Variable '{0}' is undefined in current scope!", Identifier);
+
+			if(nameInfo.IsConstant && !IsInitialization)
+				Error("'{0}' is a constant and cannot be assigned after definition!", Identifier);
+
+			var exprType = Value.GetExpressionType(ctx);
+			if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
+				Error("Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.", exprType, nameInfo.Type);
+
+			if(nameInfo.IsClosured)
+				assignClosured(ctx, nameInfo);
+			else
+				assignLocal(ctx, nameInfo);
+		}
+
+		private void assignLocal(Context ctx, LocalName name)
+		{
+			Value.Compile(ctx, true);
+			var gen = ctx.CurrentILGenerator;
+			gen.EmitSaveLocal(name.LocalId.Value);
+		}
+
+		private void assignClosured(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariableId.Value);
+
+			var dist = name.ClosureDistance;
+			var scope = ctx.CurrentScope;
+			while (dist > 0)
+			{
+				var rootField = scope.ClosureType.ResolveField(Scope.ParentScopeFieldName);
+				gen.EmitLoadField(rootField);
+
+				scope = scope.OuterScope;
+				dist--;
+			}
+
+			Value.Compile(ctx, true);
+
+			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
+			gen.EmitSaveField(clsField);
 		}
 
 		#region Equality members

@@ -141,6 +141,7 @@
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
     <Compile Include="Compiler\LocalName.cs" />
+    <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

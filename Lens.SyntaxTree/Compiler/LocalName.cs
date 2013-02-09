@@ -45,6 +45,11 @@ namespace Lens.SyntaxTree.Compiler
 		public int? ClosureDistance;
 
 		/// <summary>
+		/// The name of the field in closured class.
+		/// </summary>
+		public string ClosureFieldName;
+
+		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.
 		/// </summary>
 		/// <param name="distance"></param>

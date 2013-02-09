@@ -5,10 +5,7 @@
 	/// </summary>
 	public class LetNode : NameDeclarationBase
 	{
-		public LetNode(string name = null)
-			: base(true)
-		{
-			Name = name;
-		}
+		public LetNode(string name = null) : base(name, true)
+		{ }
 	}
 }
