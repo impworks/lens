@@ -58,8 +58,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		private void assignLocal(Context ctx, LocalName name)
 		{
-			Value.Compile(ctx, true);
 			var gen = ctx.CurrentILGenerator;
+
+			Value.Compile(ctx, true);
+			convertIfNeeded(ctx, name);
+
 			gen.EmitSaveLocal(name.LocalId.Value);
 		}
 
@@ -80,9 +83,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			Value.Compile(ctx, true);
+			convertIfNeeded(ctx, name);
 
 			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitSaveField(clsField);
+		}
+
+		/// <summary>
+		/// Boxes value types to object and upcasts numeric types if required.
+		/// </summary>
+		private void convertIfNeeded(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var varType = name.Type;
+			var exprType = Value.GetExpressionType(ctx);
+
+			if(varType == typeof(object) && exprType.IsValueType)
+				gen.EmitBox(exprType);
+
+			if (varType != exprType && varType.IsNumericType() && exprType.IsNumericType())
+				gen.EmitConvert(varType);
 		}
 
 		#region Equality members
