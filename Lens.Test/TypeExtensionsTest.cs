@@ -17,6 +17,13 @@ namespace Lens.Test
 		}
 
 		[Test]
+		public void BoxTest()
+		{
+			TestDistanceFrom<object, int>(1);
+			TestDistanceFrom<object, Struct>(1);
+		}
+
+		[Test]
 		public void ParentTest()
 		{
 			TestDistanceFrom<ParentClass, DerivedClass>(1);

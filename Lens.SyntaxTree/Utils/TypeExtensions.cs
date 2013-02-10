@@ -91,6 +91,11 @@ namespace Lens.SyntaxTree.Utils
 				return 0;
 			}
 
+			if (varType == typeof(object) && exprType.IsValueType)
+			{
+				return 1;
+			}
+
 			return int.MaxValue;
 		}
 	}
