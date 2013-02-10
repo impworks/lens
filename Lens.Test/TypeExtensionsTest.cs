@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Utils;
+using Lens.Test.TestClassHierarchy;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -13,6 +14,13 @@ namespace Lens.Test
 			TestDistanceFrom<int, int>(0);
 			TestDistanceFrom<object, object>(0);
 			TestDistanceFrom<List<int>, List<int>>(0);
+		}
+
+		[Test]
+		public void ParentTest()
+		{
+			TestDistanceFrom<ParentClass, DerivedClass>(1);
+			TestDistanceFrom<DerivedClass, ParentClass>(int.MaxValue);
 		}
 
 		/// <summary>
