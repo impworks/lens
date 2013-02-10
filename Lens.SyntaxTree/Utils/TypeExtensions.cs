@@ -86,7 +86,12 @@ namespace Lens.SyntaxTree.Utils
 		/// </summary>
 		public static int DistanceFrom(this Type varType, Type exprType)
 		{
-			throw new NotImplementedException();
+			if (varType == exprType)
+			{
+				return 0;
+			}
+
+			return int.MaxValue;
 		}
 	}
 }
