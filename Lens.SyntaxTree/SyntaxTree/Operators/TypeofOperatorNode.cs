@@ -21,7 +21,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
+			var method = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
+
 			gen.EmitConstant(ctx.ResolveType(Type));
+			gen.EmitCall(method);
 		}
 
 		public override string ToString()

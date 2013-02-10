@@ -46,7 +46,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			LeftOperand.Compile(ctx, true);
+			RightOperand.Compile(ctx, true);
+
+			if(Kind == BooleanOperatorKind.And)
+				gen.EmitAnd();
+			else if (Kind == BooleanOperatorKind.Or)
+				gen.EmitOr();
+			else if (Kind == BooleanOperatorKind.Xor)
+				gen.EmitXor();
 		}
 	}
 

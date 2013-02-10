@@ -388,6 +388,8 @@ namespace Lens.SyntaxTree.Compiler
 				gen.Emit(OpCodes.Stelem_R8);
 			else if (itemType.IsClass || itemType.IsInterface)
 				gen.Emit(OpCodes.Stelem_Ref);
+			else
+				throw new InvalidOperationException("SaveIndex cannot be used on valuetype objects!");
 		}
 
 		/// <summary>
@@ -395,6 +397,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public static void EmitSaveObject(this ILGenerator gen, Type itemType)
 		{
+			if(!itemType.IsValueType)
+				throw new InvalidOperationException("SaveObject can only be used on valuetype objects!");
+
 			gen.Emit(OpCodes.Stobj, itemType);
 		}
 

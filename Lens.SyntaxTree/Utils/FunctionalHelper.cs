@@ -51,10 +51,23 @@ namespace Lens.SyntaxTree.Utils
 				typeof(Func<,,,,,,,,,,,,,,,>),
 				typeof(Func<,,,,,,,,,,,,,,,,>),
 			};
+
+			_TupleBaseTypes = new[]
+			{
+				typeof(Tuple<>),
+				typeof(Tuple<,>),
+				typeof(Tuple<,,>),
+				typeof(Tuple<,,,>),
+				typeof(Tuple<,,,,>),
+				typeof(Tuple<,,,,,>),
+				typeof(Tuple<,,,,,,>),
+				typeof(Tuple<,,,,,,,>),
+			};
 		}
 
 		private static readonly Type[] _ActionBaseTypes;
 		private static readonly Type[] _FuncBaseTypes;
+		private static readonly Type[] _TupleBaseTypes;
 
 		/// <summary>
 		/// Checks if a type is a function type.
@@ -73,6 +86,14 @@ namespace Lens.SyntaxTree.Utils
 				return true;
 
 			return type.IsGenericType && _ActionBaseTypes.Contains(type.GetGenericTypeDefinition());
+		}
+
+		/// <summary>
+		/// Checks if a type is a tuple type.
+		/// </summary>
+		public static bool IsTupleType(this Type type)
+		{
+			return type.IsGenericType && _TupleBaseTypes.Contains(type.GetGenericTypeDefinition());
 		}
 
 		/// <summary>
@@ -103,7 +124,7 @@ namespace Lens.SyntaxTree.Utils
 
 			throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
 		}
-
+		
 		/// <summary>
 		/// Gets the return type of a function.
 		/// </summary>
@@ -141,6 +162,19 @@ namespace Lens.SyntaxTree.Utils
 				return typeof (Action);
 
 			var baseType = _ActionBaseTypes[args.Length-1];
+			return baseType.MakeGenericType(args);
+		}
+
+		/// <summary>
+		/// Creates a new tuple type with given argument types.
+		/// </summary>
+		public static Type CreateTupleType(params Type[] args)
+		{
+			// todo: infinitive tuples using TRest
+			if(args.Length > 8)
+				throw new LensCompilerException("Tuple<> can have up to 8 type arguments!");
+
+			var baseType = _TupleBaseTypes[args.Length - 1];
 			return baseType.MakeGenericType(args);
 		}
 

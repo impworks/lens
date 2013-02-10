@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -38,41 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			yield return LeftOperand;
 			yield return RightOperand;
 		}
-
-		/// <summary>
-		/// Available numeric types.
-		/// </summary>
-		public static readonly Type[] NumericTypes = new[]
-		{
-			typeof (int),
-			typeof (float),
-			typeof (long),
-			typeof (double)
-		};
-
-		/// <summary>
-		/// Gets the best-suiting common type for current argument types.
-		/// </summary>
-		protected Type getResultNumericType(Type leftType, Type rightType)
-		{
-			if (!NumericTypes.Contains(leftType) || !NumericTypes.Contains(rightType))
-				return null;
-
-			if (leftType == rightType)
-				return leftType;
-
-			if (leftType == typeof (double) || rightType == typeof (double))
-				return typeof (double);
-
-			if (leftType == typeof(float) || rightType == typeof(float))
-				return typeof (float);
-
-			if (leftType == typeof(long) || rightType == typeof(long))
-				return typeof(long);
-
-			return typeof(int);
-		}
-
+		
 		/// <summary>
 		/// Displays an error indicating that argument types are wrong.
 		/// </summary>
@@ -87,14 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// <returns></returns>
 		protected Type getNumericTypeOrError(Context ctx)
 		{
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
-
-			var numeric = getResultNumericType(left, right);
-			if (numeric == null)
-				TypeError(left, right);
-
-			return numeric;
+			throw new NotImplementedException();
 		}
 
 		#region Equality members

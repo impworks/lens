@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -8,7 +9,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// </summary>
 	public class DefaultOperatorNode : TypeOperatorNodeBase
 	{
-		private string _ValueTypeLocalVariableName;
+		/// <summary>
+		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
+		/// </summary>
+		private static readonly Type[] I4Types = new[]
+		{
+			typeof (bool),
+			typeof (byte),
+			typeof (sbyte),
+			typeof (short),
+			typeof (ushort),
+			typeof (int),
+			typeof (uint)
+		};
+
+		/// <summary>
+		/// Temp variable used to instantiate a valuetype object.
+		/// </summary>
+		private LocalName _TempLocalVariable;
 
 		public DefaultOperatorNode(string type = null)
 		{
@@ -23,7 +41,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		public override void ProcessClosures(Context ctx)
 		{
 			// register a local variable for current node if it's a value type.
-			_ValueTypeLocalVariableName = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), false).Name;
+			var type = GetExpressionType(ctx);
+			if (type.IsValueType)
+				_TempLocalVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), false);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -31,22 +51,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 			var type = GetExpressionType(ctx);
 
-			if(type == typeof(bool))
-				gen.EmitConstant(false);
-			else if(type == typeof(int))
+			if (I4Types.Contains(type))
 				gen.EmitConstant(0);
-			else if (type == typeof (long))
+
+			else if(type == typeof(long) || type == typeof(ulong))
 				gen.EmitConstant(0L);
-			else if (type == typeof (float))
-				gen.EmitConstant(0f);
-			else if (type == typeof (double))
+
+			else if(type == typeof(float))
+				gen.EmitConstant(0.0f);
+
+			else if(type == typeof(double))
 				gen.EmitConstant(0.0);
-			else if(!type.IsValueType)
+
+			else if (type == typeof (decimal))
+			{
+				gen.EmitConstant(0);
+				gen.EmitCreateObject(typeof(decimal).GetConstructor(new [] { typeof(int) }));
+			}
+
+			else if (!type.IsValueType)
 				gen.EmitNull();
+
 			else
 			{
-				var id = ctx.CurrentScope.FindName(_ValueTypeLocalVariableName);
-				gen.EmitLoadLocalAddress(id.LocalId.Value);
+				gen.EmitLoadLocalAddress(_TempLocalVariable.LocalId.Value);
 				gen.EmitInitObject(type);
 			}
 		}

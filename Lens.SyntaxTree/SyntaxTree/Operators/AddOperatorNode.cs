@@ -21,11 +21,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if (left == typeof (string) && left == right)
 				return typeof (string);
 
-			var numeric = getResultNumericType(left, right);
-			if (numeric == null)
-				TypeError(left, right);
-
-			return numeric;
+			throw new NotImplementedException();
+//			var numeric = getResultNumericType(left, right);
+//			if (numeric == null)
+//				TypeError(left, right);
+//
+//			return numeric;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

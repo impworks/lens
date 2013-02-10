@@ -9,6 +9,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
+		/// <summary>
+		/// Temp variable used to instantiate the array.
+		/// </summary>
+		private LocalName _TempVariable;
+
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			if(Expressions.Count == 0)
@@ -22,9 +27,48 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return Expressions;
 		}
 
+		public override void ProcessClosures(Context ctx)
+		{
+			base.ProcessClosures(ctx);
+
+			_TempVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true);
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+			var itemType = Expressions[0].GetExpressionType(ctx);
+			var varId = _TempVariable.LocalId.Value;
+
+			// create array
+			var count = Expressions.Count;
+			gen.EmitConstant(count);
+			gen.EmitCreateArray(itemType);
+			gen.EmitSaveLocal(varId);
+
+			for (var idx = 0; idx < count; idx++)
+			{
+				var currType = Expressions[idx].GetExpressionType(ctx);
+				if(currType != itemType)
+					Error("Cannot add object of type '{0}' to array of type '{1}': item types must match exactly.", currType, itemType);
+
+				gen.EmitLoadLocal(varId);
+				gen.EmitConstant(idx);
+
+				if (itemType.IsValueType)
+				{
+					gen.EmitLoadIndexAddress(itemType);
+					Expressions[idx].Compile(ctx, true);
+					gen.EmitSaveObject(itemType);
+				}
+				else
+				{
+					Expressions[idx].Compile(ctx, true);
+					gen.EmitSaveIndex(itemType);
+				}
+			}
+
+			gen.EmitLoadLocal(varId);
 		}
 
 		public override string ToString()

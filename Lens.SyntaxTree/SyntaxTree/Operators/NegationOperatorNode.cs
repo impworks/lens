@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			var type = Operand.GetExpressionType(ctx);
 
-			if(!BinaryOperatorNodeBase.NumericTypes.Contains(type))
+			if(!type.IsNumericType())
 				TypeError(type);
 
 			return type;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -18,8 +19,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (Expressions.Count > 8)
 				Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
 
-			var tupleType = getTupleType();
-			return tupleType.MakeGenericType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
+			return FunctionalHelper.CreateTupleType(Expressions.Select(x => x.GetExpressionType(ctx)).ToArray());
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -29,33 +29,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+			var types = Expressions.Select(x => x.GetExpressionType(ctx)).ToArray();
+
+			foreach(var curr in Expressions)
+				curr.Compile(ctx, true);
+
+			var ctor = GetExpressionType(ctx).GetConstructor(types);
+			gen.EmitCreateObject(ctor);
 		}
-
-		#region Helpers
-
-		/// <summary>
-		/// Detecting tuple type by the number of arguments.
-		/// </summary>
-		/// <returns></returns>
-		private Type getTupleType()
-		{
-			switch(Expressions.Count)
-			{
-				case 1: return typeof (Tuple<>);
-				case 2: return typeof (Tuple<,>);
-				case 3: return typeof (Tuple<,,>);
-				case 4: return typeof (Tuple<,,,>);
-				case 5: return typeof (Tuple<,,,,>);
-				case 6: return typeof (Tuple<,,,,,>);
-				case 7: return typeof (Tuple<,,,,,,>);
-				case 8: return typeof (Tuple<,,,,,,,>);
-			}
-
-			throw new InvalidOperationException("Tuples cannot have more than 8 objects!");
-		}
-
-		#endregion
 
 		public override string ToString()
 		{
