@@ -96,6 +96,11 @@ namespace Lens.SyntaxTree.Utils
 				return 1;
 			}
 
+			if (varType.IsInterface && IsImplementedBy(varType, exprType))
+			{
+				return 1;
+			}
+			
 			int result;
 			if (IsDerivedFrom(exprType, varType, out result))
 			{
@@ -105,6 +110,11 @@ namespace Lens.SyntaxTree.Utils
 			return int.MaxValue;
 		}
 
+		private static bool IsImplementedBy(Type interfaceType, Type implementor)
+		{
+			return implementor.GetInterfaces().Contains(interfaceType);
+		}
+		
 		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
 		{
 			distance = 0;
