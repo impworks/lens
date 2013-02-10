@@ -39,13 +39,13 @@ namespace Lens.SyntaxTree.Compiler
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
 
+			MainType = CreateType(RootTypeName);
+			MainType.Interfaces = new[] {typeof (IScript)};
+			MainMethod = MainType.CreateMethod(RootMethodName, Type.EmptyTypes, false, true);
+			MainMethod.ReturnType = typeof (object);
+
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
-
-			_RootType = CreateType(RootTypeName);
-			_RootType.Interfaces = new [] { typeof(IScript) };
-			_RootMethod = _RootType.CreateMethod(RootMethodName, Type.EmptyTypes, false, true);
-			_RootMethod.ReturnType = typeof (object);
 		}
 
 		/// <summary>
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Compiler
 					ctx.DeclareRecord(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
 					ctx.DeclareFunction(currNode as FunctionNode);
-				else if(currNode is UsingNode)
+				else if (currNode is UsingNode)
 					ctx.DeclareOpenNamespace(currNode as UsingNode);
 				else
 					ctx.DeclareScriptNode(currNode);
@@ -121,18 +121,14 @@ namespace Lens.SyntaxTree.Compiler
 		public ModuleBuilder MainModule { get; private set; }
 
 		/// <summary>
-		/// Main type of the assembly.
+		/// The main type in which all "global" functions are stored.
 		/// </summary>
-		public TypeBuilder MainType
-		{
-			get
-			{
-				if (_MainType == null)
-					_MainType = ResolveType(RootTypeName) as TypeBuilder;
-				return _MainType;
-			}
-		}
-		private TypeBuilder _MainType;
+		internal TypeEntity MainType { get; private set; }
+
+		/// <summary>
+		/// The function that is the body of the script.
+		/// </summary>
+		internal MethodEntity MainMethod { get; private set; }
 
 		/// <summary>
 		/// Checks if the source in this context has been compiled.
@@ -150,14 +146,30 @@ namespace Lens.SyntaxTree.Compiler
 		internal MethodEntityBase CurrentMethod { get; set; }
 
 		/// <summary>
+		/// The current most nested loop.
+		/// </summary>
+		internal LoopNode CurrentLoop { get; set; }
+
+		/// <summary>
+		/// The current most nested catch block.
+		/// </summary>
+		internal CatchNode CurrentCatchClause { get; set; }
+
+		/// <summary>
 		/// The lexical scope of the current scope.
 		/// </summary>
-		internal Scope CurrentScope { get { return CurrentMethod == null ? null : CurrentMethod.Scope; } }
+		internal Scope CurrentScope
+		{
+			get { return CurrentMethod == null ? null : CurrentMethod.Scope; }
+		}
 
 		/// <summary>
 		/// Gets an IL Generator for current method.
 		/// </summary>
-		internal ILGenerator CurrentILGenerator { get { return CurrentMethod == null ? null : CurrentMethod.Generator; } }
+		internal ILGenerator CurrentILGenerator
+		{
+			get { return CurrentMethod == null ? null : CurrentMethod.Generator; }
+		}
 
 		/// <summary>
 		/// An ID for closure types.
@@ -182,16 +194,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// The root of type lookup.
 		/// </summary>
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
-
-		/// <summary>
-		/// The main type in which all "global" functions are stored.
-		/// </summary>
-		private TypeEntity _RootType;
-
-		/// <summary>
-		/// The function that is the body of the script.
-		/// </summary>
-		private MethodEntity _RootMethod;
 
 		#endregion
 	}

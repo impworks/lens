@@ -449,7 +449,7 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Return from the method.
+		/// Returns from the method.
 		/// </summary>
 		public static void EmitReturn(this ILGenerator gen)
 		{
@@ -457,11 +457,19 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Pop an unneeded value from the top of the stack.
+		/// Pops an unneeded value from the top of the stack.
 		/// </summary>
 		public static void EmitPop(this ILGenerator gen)
 		{
 			gen.Emit(OpCodes.Pop);
+		}
+
+		/// <summary>
+		/// Pushes an unmanaged method pointer to the stack.
+		/// </summary>
+		public static void EmitLoadFunctionPointer(this ILGenerator gen, MethodInfo method)
+		{
+			gen.Emit(OpCodes.Ldftn, method);
 		}
 
 		#endregion

@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareFunction(FunctionNode node)
 		{
-			var method = _RootType.CreateMethod(node.Name, node.Arguments, true);
+			var method = MainType.CreateMethod(node.Name, node.Arguments, true);
 			method.Body = node.Body;
 		}
 
@@ -172,7 +172,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareScriptNode(NodeBase node)
 		{
-			_RootMethod.Body.Add(node);
+			MainMethod.Body.Add(node);
 		}
 
 		#endregion

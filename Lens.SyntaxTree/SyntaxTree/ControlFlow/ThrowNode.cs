@@ -28,7 +28,25 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			if (Expression == null)
+			{
+				if(ctx.CurrentCatchClause == null)
+					Error("An exception can only be rethrown from a catch clause.");
+
+				gen.EmitRethrow();
+			}
+			else
+			{
+				var type = Expression.GetExpressionType(ctx);
+
+				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
+					Error("Throw argument must be derived from System.Exception!");
+
+				Expression.Compile(ctx, true);
+				gen.EmitThrow();
+			}
 		}
 
 		#region Equality members
