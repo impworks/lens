@@ -96,7 +96,26 @@ namespace Lens.SyntaxTree.Utils
 				return 1;
 			}
 
+			int result;
+			if (IsDerivedFrom(exprType, varType, out result))
+			{
+				return result;
+			}
+
 			return int.MaxValue;
+		}
+
+		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
+		{
+			distance = 0;
+			var current = derivedType;
+			while (current != null && current != baseType)
+			{
+				current = current.BaseType;
+				++distance;
+			}
+
+			return current == baseType;
 		}
 	}
 }
