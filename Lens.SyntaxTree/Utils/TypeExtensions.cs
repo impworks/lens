@@ -92,7 +92,12 @@ namespace Lens.SyntaxTree.Utils
 				return 0;
 			}
 
-			if (varType == typeof(object) && exprType.IsValueType)
+			if (varType.IsNumericType() && exprType.IsNumericType())
+			{
+				return NumericTypeConversion(varType, exprType);
+			}
+
+			if (varType == typeof (object) && exprType.IsValueType)
 			{
 				return 1;
 			}
@@ -101,7 +106,7 @@ namespace Lens.SyntaxTree.Utils
 			{
 				return 1;
 			}
-			
+
 			int result;
 			if (IsDerivedFrom(exprType, varType, out result))
 			{
@@ -116,11 +121,106 @@ namespace Lens.SyntaxTree.Utils
 			return int.MaxValue;
 		}
 
+		private static int NumericTypeConversion(Type varType, Type exprType)
+		{
+			if (varType.IsSignedIntegerType() && exprType.IsSignedIntegerType())
+			{
+				return SimpleNumericConversion(varType, exprType, SignedIntegerTypes);
+			}
+			else if (varType.IsUnsignedIntegerType() && exprType.IsUnsignedIntegerType())
+			{
+				return SimpleNumericConversion(varType, exprType, UnsignedIntegerTypes);
+			}
+			else if (varType.IsFloatType() && exprType.IsFloatType())
+			{
+				return SimpleNumericConversion(varType, exprType, FloatTypes);
+			}
+			else if (varType.IsSignedIntegerType() && exprType.IsUnsignedIntegerType())
+			{
+				return UnsignedToSignedConversion(varType, exprType);
+			}
+			else if (varType.IsFloatType() && exprType.IsSignedIntegerType())
+			{
+				return SignedToFloatConversion(varType, exprType);
+			}
+			else if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
+			{
+				var correspondingSignedType = GetCorrespondingSignedType(varType);
+				return UnsignedToSignedConversion(correspondingSignedType, exprType);
+			}
+
+			return int.MaxValue;
+		}
+
+		private static int SimpleNumericConversion(Type varType, Type exprType, Type[] conversionChain)
+		{
+			int varTypeIndex = Array.IndexOf(conversionChain, varType);
+			int exprTypeIndex = Array.IndexOf(conversionChain, exprType);
+			if (varTypeIndex < exprTypeIndex)
+			{
+				return int.MaxValue;
+			}
+
+			return varTypeIndex - exprTypeIndex;
+		}
+
+		private static int UnsignedToSignedConversion(Type varType, Type exprType)
+		{
+			if (varType == typeof (decimal))
+			{
+				return int.MaxValue;
+			}
+
+			int index = Array.IndexOf(SignedIntegerTypes, varType);
+			var correspondingUnsignedType = UnsignedIntegerTypes[index];
+
+			int result = SimpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
+			if (result == int.MaxValue)
+			{
+				return int.MaxValue;
+			}
+
+			checked
+			{
+				return result + 1;
+			}
+		}
+
+		private static int SignedToFloatConversion(Type varType, Type exprType)
+		{
+			var targetType = GetCorrespondingSignedType(varType);
+
+			int result = SimpleNumericConversion(targetType, exprType, SignedIntegerTypes);
+			if (result == int.MaxValue)
+			{
+				return int.MaxValue;
+			}
+
+			checked
+			{
+				return result + 1;
+			}
+		}
+
+		private static Type GetCorrespondingSignedType(Type floatType)
+		{
+			if (floatType == typeof (float))
+			{
+				return typeof (int);
+			}
+			else if (floatType == typeof (double))
+			{
+				return typeof (long);
+			}
+
+			return null;
+		}
+
 		private static bool IsImplementedBy(Type interfaceType, Type implementor)
 		{
 			return implementor.GetInterfaces().Contains(interfaceType);
 		}
-		
+
 		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
 		{
 			distance = 0;
@@ -155,7 +255,7 @@ namespace Lens.SyntaxTree.Utils
 				{
 					continue;
 				}
-				
+
 				var argument = arguments[i];
 				var attributes = argument.GenericParameterAttributes;
 
@@ -181,7 +281,10 @@ namespace Lens.SyntaxTree.Utils
 					return int.MaxValue;
 				}
 
-				result += conversionResult;
+				checked
+				{
+					result += conversionResult;
+				}
 			}
 
 			return result;

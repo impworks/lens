@@ -60,6 +60,27 @@ namespace Lens.Test
 			TestDistanceFrom<Func<DerivedClass, ParentClass>, Func<ParentClass, DerivedClass>>(2);
 		}
 
+		[Test]
+		public void IntegralTypeConversion()
+		{
+			TestDistanceFrom<long, sbyte>(3);
+			TestDistanceFrom<decimal, sbyte>(4);
+		}
+
+		[Test]
+		public void FloatingPointTypeConversion()
+		{
+			TestDistanceFrom<double, float>(1);
+		}
+
+		[Test]
+		public void CrossDomainNumberConversion()
+		{
+			TestDistanceFrom<float, int>(1);
+			TestDistanceFrom<double, long>(1);
+			TestDistanceFrom<double, short>(3);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
