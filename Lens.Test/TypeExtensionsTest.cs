@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Utils;
 using Lens.Test.TestClassHierarchy;
 using NUnit.Framework;
@@ -36,6 +37,20 @@ namespace Lens.Test
 			TestDistanceFrom<IInterface, InterfaceImplementer>(1);
 			TestDistanceFrom<IInterface, InterfaceDerivedImplementer>(1);
 			TestDistanceFrom<IInterface, DerivedInterfaceImplementer>(1);
+		}
+
+		[Test]
+		public void ContravarianceTest()
+		{
+			TestDistanceFrom<Action<DerivedClass>, Action<ParentClass>>(1);
+			TestDistanceFrom<Action<int>, Action<object>>(1);
+		}
+
+		[Test]
+		public void CovarianceTest()
+		{
+			TestDistanceFrom<IEnumerable<ParentClass>, IEnumerable<DerivedClass>>(1);
+			TestDistanceFrom<IEnumerable<object>, IEnumerable<bool>>(1);
 		}
 
 		/// <summary>

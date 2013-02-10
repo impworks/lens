@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace Lens.SyntaxTree.Utils
 {
@@ -107,6 +108,11 @@ namespace Lens.SyntaxTree.Utils
 				return result;
 			}
 
+			if (varType.IsGenericType && exprType.IsGenericType)
+			{
+				return GenericDistance(varType, exprType);
+			}
+
 			return int.MaxValue;
 		}
 
@@ -126,6 +132,59 @@ namespace Lens.SyntaxTree.Utils
 			}
 
 			return current == baseType;
+		}
+
+		private static int GenericDistance(Type varType, Type exprType)
+		{
+			var definition = varType.GetGenericTypeDefinition();
+			if (definition != exprType.GetGenericTypeDefinition())
+			{
+				return int.MaxValue;
+			}
+
+			var arguments = definition.GetGenericArguments();
+			var arguments1 = varType.GetGenericArguments();
+			var arguments2 = exprType.GetGenericArguments();
+
+			int result = 0;
+			for (int i = 0; i < arguments1.Length; ++i)
+			{
+				var argument1 = arguments1[i];
+				var argument2 = arguments2[i];
+				if (argument1 == argument2)
+				{
+					continue;
+				}
+				
+				var argument = arguments[i];
+				var attributes = argument.GenericParameterAttributes;
+
+				int conversionResult;
+				if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
+				{
+					// dist(X<in T1>, X<in T2>) = dist(T2, T1)
+					conversionResult = argument2.DistanceFrom(argument1);
+				}
+				else if (attributes.HasFlag(GenericParameterAttributes.Covariant))
+				{
+					// dist(X<out T1>, X<out T2>) = dist(T1, T2)
+					conversionResult = argument1.DistanceFrom(argument2);
+				}
+				else
+				{
+					// No possible conversion found.
+					return int.MaxValue;
+				}
+
+				if (conversionResult == int.MaxValue)
+				{
+					return int.MaxValue;
+				}
+
+				result += conversionResult;
+			}
+
+			return result;
 		}
 	}
 }
