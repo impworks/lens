@@ -53,6 +53,13 @@ namespace Lens.Test
 			TestDistanceFrom<IEnumerable<object>, IEnumerable<bool>>(1);
 		}
 
+		[Test]
+		public void MultiArgumentGeneric()
+		{
+			TestDistanceFrom<Action<DerivedClass, DerivedClass>, Action<ParentClass, ParentClass>>(2);
+			TestDistanceFrom<Func<DerivedClass, ParentClass>, Func<ParentClass, DerivedClass>>(2);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
