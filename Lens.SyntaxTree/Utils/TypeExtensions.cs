@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Utils
 	/// <summary>
 	/// A collection of helpful methods for types.
 	/// </summary>
-	internal static class TypeExtensions
+	public static class TypeExtensions
 	{
 		static TypeExtensions()
 		{

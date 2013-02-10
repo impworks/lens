@@ -58,6 +58,7 @@
     <Compile Include="LiteralsTest.cs" />
     <Compile Include="ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeExtensionsTest.cs" />
     <Compile Include="TypeResolverTest.cs" />
   </ItemGroup>
   <ItemGroup>
