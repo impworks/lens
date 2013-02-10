@@ -59,6 +59,11 @@
     <Compile Include="ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestClassHierarchy\DerivedClass.cs" />
+    <Compile Include="TestClassHierarchy\DerivedInterfaceImplementer.cs" />
+    <Compile Include="TestClassHierarchy\InterfaceDerivedImplementer.cs" />
+    <Compile Include="TestClassHierarchy\IDerivedInterface.cs" />
+    <Compile Include="TestClassHierarchy\IInterface.cs" />
+    <Compile Include="TestClassHierarchy\InterfaceImplementer.cs" />
     <Compile Include="TestClassHierarchy\ParentClass.cs" />
     <Compile Include="TestClassHierarchy\Struct.cs" />
     <Compile Include="TypeExtensionsTest.cs" />

@@ -30,6 +30,14 @@ namespace Lens.Test
 			TestDistanceFrom<object, Struct>(1);
 		}
 
+		[Test]
+		public void InterfaceTest()
+		{
+			TestDistanceFrom<IInterface, InterfaceImplementer>(1);
+			TestDistanceFrom<IInterface, InterfaceDerivedImplementer>(1);
+			TestDistanceFrom<IInterface, DerivedInterfaceImplementer>(1);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
