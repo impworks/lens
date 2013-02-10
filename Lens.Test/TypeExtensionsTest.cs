@@ -81,6 +81,54 @@ namespace Lens.Test
 			TestDistanceFrom<double, short>(3);
 		}
 
+		[Test]
+		public void IllegalConversionsTest()
+		{
+			TestDistanceFrom<sbyte, short>(int.MaxValue);
+			TestDistanceFrom<sbyte, int>(int.MaxValue);
+			TestDistanceFrom<sbyte, long>(int.MaxValue);
+			TestDistanceFrom<sbyte, decimal>(int.MaxValue);
+			TestDistanceFrom<sbyte, float>(int.MaxValue);
+			TestDistanceFrom<sbyte, double>(int.MaxValue);
+			TestDistanceFrom<sbyte, byte>(int.MaxValue);
+			TestDistanceFrom<sbyte, ushort>(int.MaxValue);
+			TestDistanceFrom<sbyte, uint>(int.MaxValue);
+			TestDistanceFrom<sbyte, ulong>(int.MaxValue);
+
+			TestDistanceFrom<short, int>(int.MaxValue);
+			TestDistanceFrom<short, long>(int.MaxValue);
+			TestDistanceFrom<short, decimal>(int.MaxValue);
+			TestDistanceFrom<short, float>(int.MaxValue);
+			TestDistanceFrom<short, double>(int.MaxValue);
+			TestDistanceFrom<short, ushort>(int.MaxValue);
+			TestDistanceFrom<short, uint>(int.MaxValue);
+			TestDistanceFrom<short, ulong>(int.MaxValue);
+
+			TestDistanceFrom<int, long>(int.MaxValue);
+			TestDistanceFrom<int, decimal>(int.MaxValue);
+			TestDistanceFrom<int, float>(int.MaxValue);
+			TestDistanceFrom<int, double>(int.MaxValue);
+			TestDistanceFrom<int, uint>(int.MaxValue);
+			TestDistanceFrom<int, ulong>(int.MaxValue);
+
+			TestDistanceFrom<long, ulong>(int.MaxValue);
+			TestDistanceFrom<long, float>(int.MaxValue);
+			TestDistanceFrom<long, double>(int.MaxValue);
+			TestDistanceFrom<long, decimal>(int.MaxValue);
+		}
+
+		[Test]
+		public void ArrayAsObjectDistance()
+		{
+			TestDistanceFrom<object, int[]>(1);
+		}
+
+		[Test]
+		public void ArrayCovariance()
+		{
+			TestDistanceFrom<object[], string[]>(1);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
