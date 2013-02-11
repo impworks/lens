@@ -146,7 +146,16 @@ namespace Lens.SyntaxTree.Utils
 			else if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
 			{
 				var correspondingSignedType = GetCorrespondingSignedType(varType);
-				return UnsignedToSignedConversion(correspondingSignedType, exprType);
+				int result = UnsignedToSignedConversion(correspondingSignedType, exprType);
+				if (result == int.MaxValue)
+				{
+					return int.MaxValue;
+				}
+
+				checked
+				{
+					return result + 1;
+				}
 			}
 
 			return int.MaxValue;
@@ -166,13 +175,14 @@ namespace Lens.SyntaxTree.Utils
 
 		private static int UnsignedToSignedConversion(Type varType, Type exprType)
 		{
-			if (varType == typeof (decimal))
+			if (varType == typeof (byte))
 			{
+				// No unsigned type can be converted to the signed byte.
 				return int.MaxValue;
 			}
 
 			int index = Array.IndexOf(SignedIntegerTypes, varType);
-			var correspondingUnsignedType = UnsignedIntegerTypes[index];
+			var correspondingUnsignedType = UnsignedIntegerTypes[index - 1]; // only expanding conversions allowed
 
 			int result = SimpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
 			if (result == int.MaxValue)

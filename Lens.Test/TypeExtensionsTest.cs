@@ -82,6 +82,21 @@ namespace Lens.Test
 		}
 
 		[Test]
+		public void UnsignedToSignedConversion()
+		{
+			TestDistanceFrom<long, uint>(1);
+			TestDistanceFrom<uint, int>(int.MaxValue);
+			TestDistanceFrom<decimal, ulong>(1);
+		}
+
+		[Test]
+		public void UnsignedToFloatConversion()
+		{
+			TestDistanceFrom<float, ushort>(2);
+			TestDistanceFrom<double, uint>(2);
+		}
+
+		[Test]
 		public void IllegalConversionsTest()
 		{
 			TestDistanceFrom<sbyte, short>(int.MaxValue);
