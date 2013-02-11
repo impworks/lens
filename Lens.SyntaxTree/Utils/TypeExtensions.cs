@@ -12,27 +12,27 @@ namespace Lens.SyntaxTree.Utils
 		static TypeExtensions()
 		{
 			SignedIntegerTypes = new[]
-				                     {
-					                     typeof (sbyte),
-					                     typeof (short),
-					                     typeof (int),
-					                     typeof (long),
-					                     typeof (decimal)
-				                     };
+			{
+				typeof (sbyte),
+				typeof (short),
+				typeof (int),
+				typeof (long),
+				typeof (decimal)
+			};
 
 			UnsignedIntegerTypes = new[]
-				                       {
-					                       typeof (byte),
-					                       typeof (ushort),
-					                       typeof (uint),
-					                       typeof (ulong),
-				                       };
+			{
+				typeof (byte),
+				typeof (ushort),
+				typeof (uint),
+				typeof (ulong),
+			};
 
 			FloatTypes = new[]
-				             {
-					             typeof (float),
-					             typeof (double)
-				             };
+			{
+				typeof (float),
+				typeof (double)
+			};
 		}
 
 		public static Type[] SignedIntegerTypes { get; private set; }
@@ -103,14 +103,10 @@ namespace Lens.SyntaxTree.Utils
 			if (type1.IsFloatType() || type2.IsFloatType())
 			{
 				if (type1 == typeof (decimal) || type2 == typeof (decimal))
-				{
 					return null;
-				}
 				
 				if (type1 == typeof(long) || type2 == typeof(long))
-				{
 					return typeof (double);
-				}
 
 				return MostWideType(FloatTypes, type1, type2);
 			}
@@ -123,13 +119,11 @@ namespace Lens.SyntaxTree.Utils
 
 			if (type1.IsUnsignedIntegerType() && type2.IsUnsignedIntegerType())
 			{
-				int index1 = Array.IndexOf(UnsignedIntegerTypes, type1);
-				int index2 = Array.IndexOf(UnsignedIntegerTypes, type2);
-				int uintIndex = Array.IndexOf(UnsignedIntegerTypes, typeof (uint));
+				var index1 = Array.IndexOf(UnsignedIntegerTypes, type1);
+				var index2 = Array.IndexOf(UnsignedIntegerTypes, type2);
+				var uintIndex = Array.IndexOf(UnsignedIntegerTypes, typeof (uint));
 				if (index1 < uintIndex && index2 < uintIndex)
-				{
 					return typeof (int);
-				}
 
 				return MostWideType(UnsignedIntegerTypes, type1, type2);
 			}
@@ -144,92 +138,66 @@ namespace Lens.SyntaxTree.Utils
 		public static int DistanceFrom(this Type varType, Type exprType)
 		{
 			if (varType == exprType)
-			{
 				return 0;
-			}
 
 			if (varType.IsNullable() && exprType == Nullable.GetUnderlyingType(varType))
-			{
 				return 1;
-			}
 
 			if (varType.IsNumericType() && exprType.IsNumericType())
-			{
 				return NumericTypeConversion(varType, exprType);
-			}
 
 			if (varType == typeof (object) && exprType.IsValueType)
-			{
 				return 1;
-			}
 
 			if (varType.IsInterface && IsImplementedBy(varType, exprType))
-			{
 				return 1;
-			}
 
 			int result;
 			if (IsDerivedFrom(exprType, varType, out result))
-			{
 				return result;
-			}
 
 			if (varType.IsArray && exprType.IsArray)
-			{
 				return varType.GetElementType().DistanceFrom(exprType.GetElementType());
-			}
 
 			if (varType.IsGenericType && exprType.IsGenericType)
-			{
 				return GenericDistance(varType, exprType);
-			}
 
 			return int.MaxValue;
 		}
 
 		private static Type MostWideType(Type[] types, Type type1, Type type2)
 		{
-			int index1 = Array.IndexOf(types, type1);
-			int index2 = Array.IndexOf(types, type2);
-			int index = Math.Max(index1, index2);
+			var index1 = Array.IndexOf(types, type1);
+			var index2 = Array.IndexOf(types, type2);
+			var index = Math.Max(index1, index2);
 			return types[index < 0 ? 0 : index];
 		}
 
 		private static int NumericTypeConversion(Type varType, Type exprType)
 		{
 			if (varType.IsSignedIntegerType() && exprType.IsSignedIntegerType())
-			{
 				return SimpleNumericConversion(varType, exprType, SignedIntegerTypes);
-			}
-			else if (varType.IsUnsignedIntegerType() && exprType.IsUnsignedIntegerType())
-			{
+
+			if (varType.IsUnsignedIntegerType() && exprType.IsUnsignedIntegerType())
 				return SimpleNumericConversion(varType, exprType, UnsignedIntegerTypes);
-			}
-			else if (varType.IsFloatType() && exprType.IsFloatType())
-			{
+			
+			if (varType.IsFloatType() && exprType.IsFloatType())
 				return SimpleNumericConversion(varType, exprType, FloatTypes);
-			}
-			else if (varType.IsSignedIntegerType() && exprType.IsUnsignedIntegerType())
-			{
+			
+			if (varType.IsSignedIntegerType() && exprType.IsUnsignedIntegerType())
 				return UnsignedToSignedConversion(varType, exprType);
-			}
-			else if (varType.IsFloatType() && exprType.IsSignedIntegerType())
-			{
+			
+			if (varType.IsFloatType() && exprType.IsSignedIntegerType())
 				return SignedToFloatConversion(varType, exprType);
-			}
-			else if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
+
+			if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
 			{
 				var correspondingSignedType = GetCorrespondingSignedType(varType);
-				int result = UnsignedToSignedConversion(correspondingSignedType, exprType);
-				if (result == int.MaxValue)
-				{
-					return int.MaxValue;
-				}
+				var result = UnsignedToSignedConversion(correspondingSignedType, exprType);
 
-				checked
-				{
-					return result + 1;
-				}
+				return result == int.MaxValue
+					? int.MaxValue
+					: result + 1;
 			}
 
 			return int.MaxValue;
@@ -237,65 +205,46 @@ namespace Lens.SyntaxTree.Utils
 
 		private static int SimpleNumericConversion(Type varType, Type exprType, Type[] conversionChain)
 		{
-			int varTypeIndex = Array.IndexOf(conversionChain, varType);
-			int exprTypeIndex = Array.IndexOf(conversionChain, exprType);
+			var varTypeIndex = Array.IndexOf(conversionChain, varType);
+			var exprTypeIndex = Array.IndexOf(conversionChain, exprType);
 			if (varTypeIndex < exprTypeIndex)
-			{
 				return int.MaxValue;
-			}
 
 			return varTypeIndex - exprTypeIndex;
 		}
 
 		private static int UnsignedToSignedConversion(Type varType, Type exprType)
 		{
+			// No unsigned type can be converted to the signed byte.
 			if (varType == typeof (sbyte))
-			{
-				// No unsigned type can be converted to the signed byte.
 				return int.MaxValue;
-			}
 
-			int index = Array.IndexOf(SignedIntegerTypes, varType);
+			var index = Array.IndexOf(SignedIntegerTypes, varType);
 			var correspondingUnsignedType = UnsignedIntegerTypes[index - 1]; // only expanding conversions allowed
 
-			int result = SimpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
-			if (result == int.MaxValue)
-			{
-				return int.MaxValue;
-			}
-
-			checked
-			{
-				return result + 1;
-			}
+			var result = SimpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
+			return result == int.MaxValue
+				? int.MaxValue
+				: result + 1;
 		}
 
 		private static int SignedToFloatConversion(Type varType, Type exprType)
 		{
 			var targetType = GetCorrespondingSignedType(varType);
 
-			int result = SimpleNumericConversion(targetType, exprType, SignedIntegerTypes);
-			if (result == int.MaxValue)
-			{
-				return int.MaxValue;
-			}
-
-			checked
-			{
-				return result + 1;
-			}
+			var result = SimpleNumericConversion(targetType, exprType, SignedIntegerTypes);
+			return result == int.MaxValue
+				? int.MaxValue
+				: result + 1;
 		}
 
 		private static Type GetCorrespondingSignedType(Type floatType)
 		{
 			if (floatType == typeof (float))
-			{
 				return typeof (int);
-			}
-			else if (floatType == typeof (double))
-			{
+
+			if (floatType == typeof (double))
 				return typeof (long);
-			}
 
 			return null;
 		}
@@ -322,23 +271,19 @@ namespace Lens.SyntaxTree.Utils
 		{
 			var definition = varType.GetGenericTypeDefinition();
 			if (definition != exprType.GetGenericTypeDefinition())
-			{
 				return int.MaxValue;
-			}
 
 			var arguments = definition.GetGenericArguments();
 			var arguments1 = varType.GetGenericArguments();
 			var arguments2 = exprType.GetGenericArguments();
 
-			int result = 0;
-			for (int i = 0; i < arguments1.Length; ++i)
+			var result = 0;
+			for (var i = 0; i < arguments1.Length; ++i)
 			{
 				var argument1 = arguments1[i];
 				var argument2 = arguments2[i];
 				if (argument1 == argument2)
-				{
 					continue;
-				}
 
 				var argument = arguments[i];
 				var attributes = argument.GenericParameterAttributes;
@@ -361,9 +306,7 @@ namespace Lens.SyntaxTree.Utils
 				}
 
 				if (conversionResult == int.MaxValue)
-				{
 					return int.MaxValue;
-				}
 
 				checked
 				{

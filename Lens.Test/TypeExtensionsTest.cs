@@ -135,7 +135,8 @@ namespace Lens.Test
 		[Test]
 		public void ArrayAsObjectDistance()
 		{
-			TestDistanceFrom<object, int[]>(1);
+			// int[] -> Array -> object
+			TestDistanceFrom<object, int[]>(2);
 		}
 
 		[Test]
