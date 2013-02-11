@@ -129,6 +129,12 @@ namespace Lens.Test
 			TestDistanceFrom<object[], string[]>(1);
 		}
 
+		[Test]
+		public void Nullable()
+		{
+			TestDistanceFrom<int?, int>(1);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
