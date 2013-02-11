@@ -40,6 +40,16 @@ namespace Lens.SyntaxTree.Utils
 		public static Type[] FloatTypes { get; private set; }
 
 		/// <summary>
+		/// Checks if a type is a <see cref="Nullable{T}"/>.
+		/// </summary>
+		/// <param name="type">Checked type.</param>
+		/// <returns><c>true</c> if type is a <see cref="Nullable{T}"/>.</returns>
+		public static bool IsNullable(this Type type)
+		{
+			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof (Nullable<>);
+		}
+
+		/// <summary>
 		/// Checks if a type is a signed integer type.
 		/// </summary>
 		public static bool IsSignedIntegerType(this Type type)
@@ -147,6 +157,11 @@ namespace Lens.SyntaxTree.Utils
 			if (varType == exprType)
 			{
 				return 0;
+			}
+
+			if (varType.IsNullable() && exprType == Nullable.GetUnderlyingType(varType))
+			{
+				return 1;
 			}
 
 			if (varType.IsNumericType() && exprType.IsNumericType())
