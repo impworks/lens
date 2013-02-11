@@ -135,18 +135,7 @@ namespace Lens.SyntaxTree.Utils
 			}
 
 			// type1.IsSignedIntegerType() && type2.IsUnsignedIntegerType() or vice versa:
-			if (type1 == typeof (decimal) || type2 == typeof (decimal))
-			{
-				return typeof (decimal);
-			}
-
-			var signedType = type1.IsSignedIntegerType() ? type1 : type2;
-			var unsignedType = signedType == type1 ? type2 : type1;
-
-			int signedIndex = Array.IndexOf(SignedIntegerTypes, signedType);
-			int unsignedIndex = Array.IndexOf(UnsignedIntegerTypes, unsignedType);
-
-			return SignedIntegerTypes[Math.Max(signedIndex, unsignedIndex) + 1];
+			return null;
 		}
 
 		/// <summary>

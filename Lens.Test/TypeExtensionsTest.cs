@@ -160,13 +160,12 @@ namespace Lens.Test
 			AssertNumericOperationType<byte, byte, int>();
 			AssertNumericOperationType<short, short, int>();
 
-			AssertNumericOperationType<int, uint, long>();
-			AssertNumericOperationType<int, ulong, decimal>();
-
 			AssertNumericOperationType<float, int, float>();
 			AssertNumericOperationType<float, long, double>();
 
-			Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof (float), typeof (decimal)));
+			AssertNumericOperationNotPermitted<int, uint>();
+			AssertNumericOperationNotPermitted<int, ulong>();
+			AssertNumericOperationNotPermitted<float, decimal>();
 		}
 
 		/// <summary>
@@ -185,6 +184,11 @@ namespace Lens.Test
 		private static void AssertNumericOperationType<T1, T2, TResult>()
 		{
 			Assert.AreEqual(typeof (TResult), TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
+		}
+
+		private static void AssertNumericOperationNotPermitted<T1, T2>()
+		{
+			Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
 		}
 	}
 }
