@@ -150,6 +150,25 @@ namespace Lens.Test
 			TestDistanceFrom<int?, int>(1);
 		}
 
+		[Test]
+		public void NumericOperationTypes()
+		{
+			AssertNumericOperationType<int, int, int>();
+			AssertNumericOperationType<long, long, long>();
+			AssertNumericOperationType<float, float, float>();
+			AssertNumericOperationType<double, double, double>();
+			AssertNumericOperationType<byte, byte, int>();
+			AssertNumericOperationType<short, short, int>();
+
+			AssertNumericOperationType<int, uint, long>();
+			AssertNumericOperationType<int, ulong, decimal>();
+
+			AssertNumericOperationType<float, int, float>();
+			AssertNumericOperationType<float, long, double>();
+
+			Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof (float), typeof (decimal)));
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.
@@ -161,6 +180,11 @@ namespace Lens.Test
 		{
 			var result = typeof (T1).DistanceFrom(typeof (T2));
 			Assert.AreEqual(expected, result);
+		}
+
+		private static void AssertNumericOperationType<T1, T2, TResult>()
+		{
+			Assert.AreEqual(typeof (TResult), TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
 		}
 	}
 }

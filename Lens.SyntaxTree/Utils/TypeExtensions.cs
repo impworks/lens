@@ -83,6 +83,63 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
+		/// Get the best numeric operation type for two operands.
+		/// </summary>
+		/// <param name="type1">First operand type.</param>
+		/// <param name="type2">Second operand type.</param>
+		/// <returns>Operation type. <c>null</c> if operation not permitted.</returns>
+		public static Type GetNumericOperationType(Type type1, Type type2)
+		{
+			if (type1.IsFloatType() || type2.IsFloatType())
+			{
+				if (type1 == typeof (decimal) || type2 == typeof (decimal))
+				{
+					return null;
+				}
+				
+				if (type1 == typeof(long) || type2 == typeof(long))
+				{
+					return typeof (double);
+				}
+
+				return MostWideType(FloatTypes, type1, type2);
+			}
+
+			if (type1.IsSignedIntegerType() && type2.IsSignedIntegerType())
+			{
+				var types = SignedIntegerTypes.SkipWhile(type => type != typeof (int)).ToArray();
+				return MostWideType(types, type1, type2);
+			}
+
+			if (type1.IsUnsignedIntegerType() && type2.IsUnsignedIntegerType())
+			{
+				int index1 = Array.IndexOf(UnsignedIntegerTypes, type1);
+				int index2 = Array.IndexOf(UnsignedIntegerTypes, type2);
+				int uintIndex = Array.IndexOf(UnsignedIntegerTypes, typeof (uint));
+				if (index1 < uintIndex && index2 < uintIndex)
+				{
+					return typeof (int);
+				}
+
+				return MostWideType(UnsignedIntegerTypes, type1, type2);
+			}
+
+			// type1.IsSignedIntegerType() && type2.IsUnsignedIntegerType() or vice versa:
+			if (type1 == typeof (decimal) || type2 == typeof (decimal))
+			{
+				return typeof (decimal);
+			}
+
+			var signedType = type1.IsSignedIntegerType() ? type1 : type2;
+			var unsignedType = signedType == type1 ? type2 : type1;
+
+			int signedIndex = Array.IndexOf(SignedIntegerTypes, signedType);
+			int unsignedIndex = Array.IndexOf(UnsignedIntegerTypes, unsignedType);
+
+			return SignedIntegerTypes[Math.Max(signedIndex, unsignedIndex) + 1];
+		}
+
+		/// <summary>
 		/// Gets assignment type distance.
 		/// </summary>
 		public static int DistanceFrom(this Type varType, Type exprType)
@@ -119,6 +176,14 @@ namespace Lens.SyntaxTree.Utils
 			}
 
 			return int.MaxValue;
+		}
+
+		private static Type MostWideType(Type[] types, Type type1, Type type2)
+		{
+			int index1 = Array.IndexOf(types, type1);
+			int index2 = Array.IndexOf(types, type2);
+			int index = Math.Max(index1, index2);
+			return types[index < 0 ? 0 : index];
 		}
 
 		private static int NumericTypeConversion(Type varType, Type exprType)
