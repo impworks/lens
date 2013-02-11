@@ -170,6 +170,11 @@ namespace Lens.SyntaxTree.Utils
 				return result;
 			}
 
+			if (varType.IsArray && exprType.IsArray)
+			{
+				return varType.GetElementType().DistanceFrom(exprType.GetElementType());
+			}
+
 			if (varType.IsGenericType && exprType.IsGenericType)
 			{
 				return GenericDistance(varType, exprType);
