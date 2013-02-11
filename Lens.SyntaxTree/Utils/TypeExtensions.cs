@@ -245,7 +245,7 @@ namespace Lens.SyntaxTree.Utils
 
 		private static int UnsignedToSignedConversion(Type varType, Type exprType)
 		{
-			if (varType == typeof (byte))
+			if (varType == typeof (sbyte))
 			{
 				// No unsigned type can be converted to the signed byte.
 				return int.MaxValue;
