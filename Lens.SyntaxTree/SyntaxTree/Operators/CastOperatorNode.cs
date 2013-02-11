@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -26,12 +28,63 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		
 		protected override Type resolveExpressionType(Context ctx)
 		{
-			return ctx.ResolveType(Type.Signature);
+			return ctx.ResolveType(Type);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var fromType = Expression.GetExpressionType(ctx);
+			var toType = ctx.ResolveType(Type);
+
+			if(!toType.IsExtendablyAssignableFrom(fromType) && !fromType.IsExtendablyAssignableFrom(toType))
+				Error("Cannot cast object of type '{0}' to type '{1}'!");
+
+			Expression.Compile(ctx, true);
+
+			if (fromType == toType)
+				return;
+
+			if (fromType.IsValueType && toType == typeof(object))
+				gen.EmitBox(fromType);
+
+			else if (fromType == typeof(object) && toType.IsValueType)
+				gen.EmitUnbox(toType);
+
+			else if (fromType.IsNumericType() && toType.IsNumericType())
+			{
+				// convert to decimal using a constructor that accepts the biggest suiting type
+				if (toType == typeof (decimal))
+				{
+					if (fromType.IsFloatType())
+					{
+						gen.EmitConvert(typeof (double));
+						var ctor = typeof (decimal).GetConstructor(new[] {typeof (double)});
+						gen.EmitCreateObject(ctor);
+					}
+					else
+					{
+						gen.EmitConvert(typeof(long));
+						var ctor = typeof(decimal).GetConstructor(new[] { typeof(long) });
+						gen.EmitCreateObject(ctor);
+					}
+				}
+
+				// convert from decimal to int using op_Explicit
+				else if (toType == typeof (decimal))
+				{
+					// todo!
+					throw new NotImplementedException();
+				}
+				else
+				{
+					gen.EmitConvert(toType);
+				}
+			}
+
+			else
+				gen.EmitCast(toType, false);
 		}
 
 		#region Equality members

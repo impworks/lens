@@ -74,8 +74,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			else
 			{
-				gen.EmitLoadLocalAddress(_TempLocalVariable.LocalId.Value);
+				var id = _TempLocalVariable.LocalId.Value;
+
+				gen.EmitLoadLocalAddress(id);
 				gen.EmitInitObject(type);
+
+				gen.EmitLoadLocal(id);
 			}
 		}
 

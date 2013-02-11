@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public static void EmitConstant(this ILGenerator gen, long value)
 		{
-			gen.Emit(OpCodes.Ldc_R8, value);
+			gen.Emit(OpCodes.Ldc_I8, value);
 		}
 
 		/// <summary>
@@ -519,6 +519,17 @@ namespace Lens.SyntaxTree.Compiler
 		public static void EmitUnbox(this ILGenerator gen, Type type)
 		{
 			gen.Emit(OpCodes.Box, type);
+		}
+
+		/// <summary>
+		/// Casts an object to the desired type, throwing an InvalidCastException if the cast fails.
+		/// </summary>
+		public static void EmitCast(this ILGenerator gen, Type type, bool throwOnFail = true)
+		{
+			if(throwOnFail)
+				gen.Emit(OpCodes.Castclass, type);
+			else
+				gen.Emit(OpCodes.Isinst, type);
 		}
 	
 		#endregion

@@ -43,7 +43,15 @@ namespace Lens.Test
 		{
 			var result = Compile("new [1; 2; 3]");
 			Assert.IsInstanceOf<int[]>(result);
-			Assert.True((result as IEnumerable<int>).SequenceEqual(new [] { 1, 2, 3 }));
+			Assert.True((result as IEnumerable<int>).SequenceEqual(new[] { 1, 2, 3 }));
+		}
+
+		[Test]
+		public void TupleTest()
+		{
+			var result = Compile(@"new (1; true; ""hello"")");
+			var tuple = result as Tuple<int, bool, string>;
+			Assert.True(tuple != null && tuple.Item1 == 1 && tuple.Item2 == true && tuple.Item3 == "hello");
 		}
 
 		private void Test(string src, object expected)
