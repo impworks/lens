@@ -181,8 +181,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ProcessClosures()
 		{
-			foreach (var curr in _MethodList)
-				curr.ProcessClosures();
+			foreach (var currGroup in _Methods)
+				foreach(var currMethod in currGroup.Value)
+					currMethod.ProcessClosures();
 		}
 
 		#endregion

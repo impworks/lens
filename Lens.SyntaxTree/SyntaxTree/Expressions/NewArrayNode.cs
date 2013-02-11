@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// <summary>
 		/// Temp variable used to instantiate the array.
 		/// </summary>
-		private LocalName _TempVariable;
+		private string _TempVariable;
 
 		protected override Type resolveExpressionType(Context ctx)
 		{
@@ -31,14 +31,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			base.ProcessClosures(ctx);
 
-			_TempVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true);
+			_TempVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true).Name;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			var itemType = Expressions[0].GetExpressionType(ctx);
-			var varId = _TempVariable.LocalId.Value;
+			var varId = ctx.CurrentScope.FindName(_TempVariable).LocalId.Value;
 
 			// create array
 			var count = Expressions.Count;

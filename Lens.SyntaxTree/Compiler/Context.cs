@@ -36,6 +36,9 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var an = new AssemblyName(getAssemblyName());
 
+			_TypeResolver = new TypeResolver();
+			_DefinedTypes = new Dictionary<string, TypeEntity>();
+
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
 
@@ -43,9 +46,6 @@ namespace Lens.SyntaxTree.Compiler
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(RootMethodName, Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
-
-			_TypeResolver = new TypeResolver();
-			_DefinedTypes = new Dictionary<string, TypeEntity>();
 		}
 
 		/// <summary>

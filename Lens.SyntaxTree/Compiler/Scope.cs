@@ -151,7 +151,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Registers closure entities and assigns IDs to variables.
 		/// </summary>
-		public void FinalizeScope()
+		public void FinalizeScope(Context ctx)
 		{
 			var idx = 0;
 			foreach (var curr in Names.Values)
@@ -166,7 +166,11 @@ namespace Lens.SyntaxTree.Compiler
 				else
 				{
 					// assign local id to the current variable
+					var lb = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
+					// lb.SetLocalSymInfo(curr.Name);
+
 					curr.LocalId = idx;
+					curr.LocalBuilder = lb;
 					idx++;
 				}
 			}

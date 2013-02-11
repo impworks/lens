@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Emit;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -12,6 +13,18 @@ namespace Lens.SyntaxTree.Compiler
 			Name = name;
 			Type = type;
 			IsConstant = isConst;
+		}
+
+		private LocalName(LocalName other, int dist = 0)
+		{
+			Name = other.Name;
+			Type = other.Type;
+			IsClosured = other.IsClosured;
+			IsConstant = other.IsConstant;
+			ClosureFieldName = other.ClosureFieldName;
+			LocalId = other.LocalId;
+
+			ClosureDistance = dist;
 		}
 
 		/// <summary>
@@ -50,17 +63,18 @@ namespace Lens.SyntaxTree.Compiler
 		public string ClosureFieldName;
 
 		/// <summary>
+		/// The local builder identifier.
+		/// </summary>
+		public LocalBuilder LocalBuilder { get; set; }
+
+		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.
 		/// </summary>
 		/// <param name="distance"></param>
 		/// <returns></returns>
 		public LocalName GetClosuredCopy(int distance)
 		{
-			return new LocalName(Name, Type, IsConstant)
-			{
-				ClosureDistance = distance,
-				IsClosured = IsClosured
-			};
+			return new LocalName(this, distance);
 		}
 	}
 }

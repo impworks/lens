@@ -51,7 +51,10 @@ namespace Lens.SyntaxTree.Compiler
 
 			var oldMethod = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
+
 			Body.ProcessClosures(ctx);
+			Scope.FinalizeScope(ctx);
+
 			ctx.CurrentMethod = oldMethod;
 		}
 
