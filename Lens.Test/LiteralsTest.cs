@@ -51,7 +51,7 @@ namespace Lens.Test
 		{
 			var result = Compile(@"new (1; true; ""hello"")");
 			var tuple = result as Tuple<int, bool, string>;
-			Assert.AreEqual(tuple, new Tuple<int, bool, string>(1, true, "hello"));
+			Assert.AreEqual(new Tuple<int, bool, string>(1, true, "hello"), tuple);
 		}
 
 		[Test]
@@ -59,7 +59,16 @@ namespace Lens.Test
 		{
 			var result = Compile(@"new <1; 42; 1337>");
 			var list = result as List<int>;
-			Assert.AreEqual(list, new List<int> { 1, 42, 1337 });
+			Assert.AreEqual(new List<int> { 1, 42, 1337 }, list);
+		}
+
+		[Test]
+		public void DictTest()
+		{
+			var result = Compile(@"new { 1 => true; 2 => false; 42 => true }");
+			var list = result as Dictionary<int, bool>;
+			var expected = new Dictionary<int, bool> {{1, true}, {2, false}, {42, true}};
+			Assert.AreEqual(expected, list);
 		}
 
 		private void Test(string src, object expected)
