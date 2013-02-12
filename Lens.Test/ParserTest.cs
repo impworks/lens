@@ -837,7 +837,7 @@ catch
 					Expression = new CastOperatorNode
 					{
 						Expression = new GetIdentifierNode("b"),
-						Type = "List<int>"
+						TypeSignature = "List<int>"
 					}
 				}
 			};

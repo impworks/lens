@@ -51,7 +51,15 @@ namespace Lens.Test
 		{
 			var result = Compile(@"new (1; true; ""hello"")");
 			var tuple = result as Tuple<int, bool, string>;
-			Assert.True(tuple != null && tuple.Item1 == 1 && tuple.Item2 == true && tuple.Item3 == "hello");
+			Assert.AreEqual(tuple, new Tuple<int, bool, string>(1, true, "hello"));
+		}
+
+		[Test]
+		public void ListTest()
+		{
+			var result = Compile(@"new <1; 42; 1337>");
+			var list = result as List<int>;
+			Assert.AreEqual(list, new List<int> { 1, 42, 1337 });
 		}
 
 		private void Test(string src, object expected)

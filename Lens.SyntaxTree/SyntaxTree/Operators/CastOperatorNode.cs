@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -17,9 +16,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		public NodeBase Expression { get; set; }
 
 		/// <summary>
-		/// The type to cast to.
+		/// The type signature to cast to.
 		/// </summary>
-		public TypeSignature Type { get; set; }
+		public TypeSignature TypeSignature { get; set; }
+
+		/// <summary>
+		/// A resolved type to cast to.
+		/// </summary>
+		public Type Type { get; set; }
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
@@ -28,7 +32,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		
 		protected override Type resolveExpressionType(Context ctx)
 		{
-			return ctx.ResolveType(Type);
+			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -36,7 +40,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 
 			var fromType = Expression.GetExpressionType(ctx);
-			var toType = ctx.ResolveType(Type);
+			var toType = Type ?? ctx.ResolveType(TypeSignature);
 
 			if(!toType.IsExtendablyAssignableFrom(fromType) && !fromType.IsExtendablyAssignableFrom(toType))
 				Error("Cannot cast object of type '{0}' to type '{1}'!");
@@ -52,36 +56,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			else if (fromType == typeof(object) && toType.IsValueType)
 				gen.EmitUnbox(toType);
 
-			else if (fromType.IsNumericType() && toType.IsNumericType())
+			else if (toType.IsNullable() && Nullable.GetUnderlyingType(toType) == fromType)
 			{
-				// convert to decimal using a constructor that accepts the biggest suiting type
-				if (toType == typeof (decimal))
-				{
-					if (fromType.IsFloatType())
-					{
-						gen.EmitConvert(typeof (double));
-						var ctor = typeof (decimal).GetConstructor(new[] {typeof (double)});
-						gen.EmitCreateObject(ctor);
-					}
-					else
-					{
-						gen.EmitConvert(typeof(long));
-						var ctor = typeof(decimal).GetConstructor(new[] { typeof(long) });
-						gen.EmitCreateObject(ctor);
-					}
-				}
-
-				// convert from decimal to int using op_Explicit
-				else if (toType == typeof (decimal))
-				{
-					// todo!
-					throw new NotImplementedException();
-				}
-				else
-				{
-					gen.EmitConvert(toType);
-				}
+				var ctor = toType.GetConstructor(new[] { fromType });
+				gen.EmitCreateObject(ctor);
 			}
+
+			else if (fromType.IsNumericType() && toType.IsNumericType())
+				gen.EmitConvert(toType);
 
 			else
 				gen.EmitCast(toType, false);
@@ -91,7 +73,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected bool Equals(CastOperatorNode other)
 		{
-			return Equals(Expression, other.Expression) && Equals(Type, other.Type);
+			return Equals(Expression, other.Expression) && Equals(TypeSignature, other.TypeSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -106,7 +88,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			unchecked
 			{
-				return ((Expression != null ? Expression.GetHashCode() : 0) * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+				return ((Expression != null ? Expression.GetHashCode() : 0) * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
 			}
 		}
 

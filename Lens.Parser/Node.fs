@@ -192,7 +192,7 @@ let string value =
 let castNode expression typeName =
     match typeName with
     | None      -> expression
-    | Some name -> CastOperatorNode(Expression = expression, Type = TypeSignature name) :> NodeBase
+    | Some name -> CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name) :> NodeBase
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     let booleanKind = function

@@ -21,9 +21,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override LexemLocation EndLocation
 		{
-			// Invocation of a parameterless function still requires a 'unit' argument,
-			// so the 'Last()' method shouldn't fail.
-			get { return Arguments.Last().EndLocation; }
+			get { return Arguments.Any() ? Arguments.Last().EndLocation : StartLocation; }
 			set { LocationSetError(); }
 		}
 		

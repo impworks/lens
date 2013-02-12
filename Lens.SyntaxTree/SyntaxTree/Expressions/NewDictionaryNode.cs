@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx)
 		{
 			if(Expressions.Count == 0)
-				Error("List must contain at least one object!");
+				Error("Use explicit constructor to create an empty dictionary!");
 
 			return typeof(Dictionary<,>).MakeGenericType(
 				Expressions[0].Key.GetExpressionType(ctx),

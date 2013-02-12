@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -35,9 +36,19 @@ namespace Lens.Test
 		{
 			Test("0 as float", 0.0f);
 			Test("0.0 as int", 0);
+			Test("1.23 as long", 1L);
+			Test("1 as Nullable<int>", 1);
+		}
 
-			Test("123 as System.Decimal", new Decimal(123));
-			Test("1.23 as int", 1);
+		[Test]
+		public void NewObjectTest()
+		{
+			Assert.IsInstanceOf<StringBuilder>(Compile("new System.Text.StringBuilder ()"));
+			Assert.IsInstanceOf<List<int>>(Compile("new List<int> ()"));
+
+			Test("new Decimal 1", new Decimal(1));
+			Test(@"new Uri ""http://test.ru""", new Uri("http://test.ru"));
+			Test(@"new Tuple<int, string> 1 ""hello""", new Tuple<int, string>(1, "hello"));
 		}
 
 		private void Test(string src, object value)
