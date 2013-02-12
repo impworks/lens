@@ -50,7 +50,8 @@ let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
 
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
-    let whitespaced = parser .>>? many space
+    let whitespaced = choice [parser .>>? many space
+                              many1 space >>. fail "wrong indentation"]
     whitespaced <!> s, parserRef
 
 let createNodeParser name =
