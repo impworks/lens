@@ -77,12 +77,15 @@ namespace Lens.SyntaxTree.Compiler
 		protected override void emitTrailer()
 		{
 			var ctx = ContainerType.Context;
+			var gen = ctx.CurrentILGenerator;
 			var actualType = Body.GetExpressionType(ctx);
-			if (ReturnType != actualType)
-			{
-				var gen = ctx.CurrentILGenerator;
+
+			if (ReturnType == typeof(object) && actualType.IsValueType)
 				gen.EmitBox(actualType);
-			}
+
+			// special hack: if the main method's implicit type is Unit, it should still return null
+			if(this == ctx.MainMethod && actualType == typeof(Unit))
+				gen.EmitNull();
 		}
 
 		#endregion
