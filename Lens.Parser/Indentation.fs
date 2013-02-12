@@ -20,12 +20,6 @@ let skipIndent count =
      let isSpace c = c = ' '
      skipManyMinMaxSatisfy spaceCount spaceCount isSpace) <!> sprintf "skipIndent %d" count
 
-(*let saveIndent : Parser<_, ParserState> =
-    fun stream ->
-        let indentation = (indentCount stream).Result
-        stream.UserState <- { stream.UserState with Indentation = indentation }
-        Reply()*)
-
 let indentedBlock parser =
     (fun (stream : CharStream<ParserState>) ->
         let indentation = getIndent stream

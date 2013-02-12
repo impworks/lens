@@ -50,7 +50,8 @@ let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
 
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
-    let whitespaced = parser .>>? many space
+    let whitespaced = choice [parser .>>? many space
+                              many1 space >>. fail "wrong indentation"]
     whitespaced <!> s, parserRef
 
 let createNodeParser name =
@@ -179,7 +180,8 @@ lvalueRef             := choice [(``type`` .>>? token "::") .>>.? identifier |>>
 accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
                          <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
-exprRef               := block_expr <|> line_expr
+exprRef               := choice [attempt block_expr
+                                 line_expr]
 block_exprRef         := if_expr <|> while_expr <|> try_expr <|> lambda_expr
 if_exprRef            := pipe3
                          <| (keyword "if" >>? (token "(" >>? line_expr .>>? token ")"))

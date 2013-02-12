@@ -6,8 +6,6 @@ using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
-using Lens.SyntaxTree.Utils;
-using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -32,8 +30,8 @@ namespace Lens.Test
 		{
 			var src = @"
 record Student
-	Name:string
-	Age:int";
+    Name:string
+    Age:int";
 
 			var result = new RecordDefinitionNode
 			{
@@ -53,10 +51,10 @@ record Student
 		{
 			var src = @"
 type Suit
-	| Hearts
-	| Clubs
-	| Spades
-	| Diamonds";
+    | Hearts
+    | Clubs
+    | Spades
+    | Diamonds";
 
 			var result = new TypeDefinitionNode
 			{
@@ -78,11 +76,11 @@ type Suit
 		{
 			var src = @"
 type Card
-	| Ace of Suit
-	| King of Suit
-	| Queen of Suit
-	| Jack of Suit
-	| ValueCard of Tuple<Suit, int>";
+    | Ace of Suit
+    | King of Suit
+    | Queen of Suit
+    | Jack of Suit
+    | ValueCard of Tuple<Suit, int>";
 
 			var result = new TypeDefinitionNode
 			{
@@ -105,7 +103,7 @@ type Card
 		{
 			var src = @"
 type ArrayHolder
-	| Array of int[][]";
+    | Array of int[][]";
 
 			var result = new TypeDefinitionNode
 			{
@@ -159,9 +157,9 @@ type ArrayHolder
 		public void ComplexFunction()
 		{
 			var src = @"fun hypo a:int b:int ->
-	let sq1 = a * a
-	let sq2 = b * b
-	sqrt (sq1 + sq2)";
+    let sq1 = a * a
+    let sq2 = b * b
+    sqrt (sq1 + sq2)";
 
 			var result = new FunctionNode
 			{
@@ -550,8 +548,8 @@ type ArrayHolder
 		{
 			var src = @"
 (a:double) ->
-	logger.log a
-	a ** 2";
+    logger.log a
+    a ** 2";
 
 			var result = new FunctionNode
 				{
@@ -583,11 +581,11 @@ type ArrayHolder
 		{
 			var src = @"
 test
-	<| true
-	<| (a:double) ->
-		logger.log a
-		a ** 2
-	<| false";
+    <| true
+    <| (a:double) ->
+        logger.log a
+        a ** 2
+    <| false";
 
 			var result = new InvocationNode
 			{
@@ -628,8 +626,8 @@ test
 		{
 			var src = @"
 if (true)
-	a = 1
-	b = 2";
+    a = 1
+    b = 2";
 			var result = new ConditionNode
 			{
 				Condition = new BooleanNode(true),
@@ -689,9 +687,9 @@ if (true)
 		{
 			var src = @"
 try
-	1 / 0
+    1 / 0
 catch (DivisionByZeroException ex)
-	log ex
+    log ex
 ";
 
 			var result = new TryNode
@@ -730,12 +728,12 @@ catch (DivisionByZeroException ex)
 		{
 			var src = @"
 try
-	1 / 0
+    1 / 0
 catch (DivisionByZeroException ex)
-	log ex
+    log ex
 catch
-	doStuff ()
-	log ""whoopsie""
+    doStuff ()
+    log ""whoopsie""
 ";
 
 			var result = new TryNode
@@ -837,7 +835,7 @@ catch
 					Expression = new CastOperatorNode
 					{
 						Expression = new GetIdentifierNode("b"),
-						TypeSignature = "List<int>"
+						Type = "List<int>"
 					}
 				}
 			};
