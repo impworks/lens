@@ -12,11 +12,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>
 	{
-		/// <summary>
-		/// Temp variable used to instantiate the array.
-		/// </summary>
-		private string _TempVariable;
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
@@ -37,20 +32,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		public override void ProcessClosures(Context ctx)
-		{
-			base.ProcessClosures(ctx);
-
-			_TempVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true).Name;
-		}
-
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			var keyType = Expressions[0].Key.GetExpressionType(ctx);
 			var valType = Expressions[0].Value.GetExpressionType(ctx);
 			var dictType = GetExpressionType(ctx);
-			var varId = ctx.CurrentScope.FindName(_TempVariable).LocalId.Value;
+
+			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
+			var varId = tmpVar.LocalId.Value;
 
 			var ctor = dictType.GetConstructor(new[] {typeof (int)});
 			var addMethod = dictType.GetMethod("Add", new[] {keyType, valType});

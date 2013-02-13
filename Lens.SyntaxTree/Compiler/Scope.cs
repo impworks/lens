@@ -68,11 +68,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public int? ClosureVariableId { get; private set; }
 
-		/// <summary>
-		/// The autoincrement id of a local implicitly named variable.
-		/// </summary>
-		private int _AutoVariableId;
-
 		#region Methods
 
 		/// <summary>
@@ -100,11 +95,14 @@ namespace Lens.SyntaxTree.Compiler
 
 		/// <summary>
 		/// Declares a new variable with random name.
+		/// This name cannot be closured.
 		/// </summary>
-		public LocalName DeclareImplicitName(Type type, bool isConst)
+		public LocalName DeclareImplicitName(Context ctx, Type type, bool isConst)
 		{
-			var ln = DeclareName(string.Format(ImplicitVariableNameTemplate, _AutoVariableId), type, isConst);
-			_AutoVariableId++;
+			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
+			var name = string.Format(ImplicitVariableNameTemplate, lb.LocalIndex);
+			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
+			Names[name] = ln;
 			return ln;
 		}
 
@@ -113,7 +111,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ReferenceName(string name)
 		{
-			var found = find(name, (loc, idx) => loc.IsClosured |= idx > 0);
+			var found = find(
+				name,
+				(loc, idx) =>
+				{
+					if (loc.LocalBuilder != null && idx > 0)
+						throw new InvalidOperationException("Cannot closure an implicit variable!");
+
+					loc.IsClosured |= idx > 0;
+				}
+			);
+
 			if(!found)
 				throw new LensCompilerException(string.Format("A variable named '{0}' does not exist in the scope!", name));
 		}
@@ -153,7 +161,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void FinalizeScope(Context ctx)
 		{
-			var idx = 0;
 			foreach (var curr in Names.Values)
 			{
 				if (curr.IsClosured)
@@ -165,13 +172,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else
 				{
-					// assign local id to the current variable
-					var lb = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
-					// lb.SetLocalSymInfo(curr.Name);
-
-					curr.LocalId = idx;
-					curr.LocalBuilder = lb;
-					idx++;
+					curr.LocalBuilder = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
 				}
 			}
 
@@ -183,8 +184,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ClosureType != null)
 			{
 				var n = DeclareName(string.Format(ClosureInstanceVariableNameTemplate, ClosureTypeId), ClosureType.TypeBuilder, false);
-				n.LocalId = idx;
-				ClosureVariableId = idx;
+				ClosureVariableId = n.LocalId;
 			}
 		}
 

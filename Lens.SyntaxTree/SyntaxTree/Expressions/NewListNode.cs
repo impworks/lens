@@ -12,11 +12,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		/// <summary>
-		/// Temp variable used to instantiate the list.
-		/// </summary>
-		private string _TempVariable;
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
@@ -30,18 +25,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return Expressions;
 		}
 
-		public override void ProcessClosures(Context ctx)
-		{
-			base.ProcessClosures(ctx);
-
-			_TempVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true).Name;
-		}
-
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			var itemType = Expressions[0].GetExpressionType(ctx);
-			var varId = ctx.CurrentScope.FindName(_TempVariable).LocalId.Value;
+			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+			var varId = tmpVar.LocalId.Value;
 
 			var listType = GetExpressionType(ctx);
 			var ctor = listType.GetConstructor(new[] {typeof (int)});

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -30,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			yield return Expression;
 		}
-		
+
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
@@ -43,24 +44,46 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var fromType = Expression.GetExpressionType(ctx);
 			var toType = Type ?? ctx.ResolveType(TypeSignature);
 
-			Expression.Compile(ctx, true);
-
 			if (fromType == toType)
-				return;
+				Expression.Compile(ctx, true);
 
-			if (fromType.IsNumericType() && toType.IsNumericType())
+			else if (fromType.IsNumericType() && toType.IsNumericType())
 			{
+				Expression.Compile(ctx, true);
 				gen.EmitConvert(toType);
-				return;
 			}
 
-			if (toType.IsExtendablyAssignableFrom(fromType))
+			else if (fromType == typeof (NullType))
 			{
+				if (toType.IsNullable())
+				{
+					var temp = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
+					var id = temp.LocalId.Value;
+
+					gen.EmitLoadLocalAddress(id);
+					gen.EmitInitObject(toType);
+					gen.EmitLoadLocal(id);
+				}
+
+				else if (!toType.IsValueType)
+				{
+					Expression.Compile(ctx, true);
+					gen.EmitCast(toType);
+				}
+
+				else
+					Error("Cannot cast a null to a value type!");
+			}
+
+			else if (toType.IsExtendablyAssignableFrom(fromType))
+			{
+				Expression.Compile(ctx, true);
+
 				// box
 				if (fromType.IsValueType && toType == typeof (object))
 					gen.EmitBox(fromType);
 
-				// nullable
+					// nullable
 				else if (toType.IsNullable() && Nullable.GetUnderlyingType(toType) == fromType)
 				{
 					var ctor = toType.GetConstructor(new[] {fromType});
@@ -70,29 +93,31 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				else
 				{
 					var explicitOp = fromType.GetMethods().FirstOrDefault(m => m.Name == "op_Explicit" && m.ReturnType == toType);
-					if(explicitOp != null)
+					if (explicitOp != null)
 						gen.EmitCall(explicitOp);
 					else
 						gen.EmitCast(toType);
 				}
 			}
+
 			else if (fromType.IsExtendablyAssignableFrom(toType))
 			{
+				Expression.Compile(ctx, true);
+
 				// unbox
 				if (fromType == typeof (object) && toType.IsValueType)
 					gen.EmitUnbox(toType);
 
-				// cast ancestor to descendant
-				else if(!fromType.IsValueType && !toType.IsValueType)
+					// cast ancestor to descendant
+				else if (!fromType.IsValueType && !toType.IsValueType)
 					gen.EmitCast(toType);
 
 				else
 					error(fromType, toType);
 			}
+
 			else
-			{
 				error(fromType, toType);
-			}
 		}
 
 		private void error(Type from, Type to)

@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Compiler
 			IsClosured = other.IsClosured;
 			IsConstant = other.IsConstant;
 			ClosureFieldName = other.ClosureFieldName;
-			LocalId = other.LocalId;
+			LocalBuilder = other.LocalBuilder;
 
 			ClosureDistance = dist;
 		}
@@ -45,7 +45,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The ID of the variable if it is local.
 		/// </summary>
-		public int? LocalId;
+		public int? LocalId
+		{
+			get { return LocalBuilder == null ? (int?)null : LocalBuilder.LocalIndex; }
+		}
 
 		/// <summary>
 		/// Is the name referenced in nested scopes?

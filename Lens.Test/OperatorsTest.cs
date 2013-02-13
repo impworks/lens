@@ -39,6 +39,7 @@ namespace Lens.Test
 			Test("1.23 as long", 1L);
 			Test("1 as Nullable<int>", 1);
 			Test("null as string", null);
+			Test("null as Nullable<int>", new int?());
 		}
 
 		[Test]

@@ -23,11 +23,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			typeof (uint)
 		};
 
-		/// <summary>
-		/// Temp variable used to instantiate a valuetype object.
-		/// </summary>
-		private LocalName _TempLocalVariable;
-
 		public DefaultOperatorNode(string type = null)
 		{
 			Type = type;
@@ -36,14 +31,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return ctx.ResolveType(Type.Signature);
-		}
-
-		public override void ProcessClosures(Context ctx)
-		{
-			// register a local variable for current node if it's a value type.
-			var type = GetExpressionType(ctx);
-			if (type.IsValueType)
-				_TempLocalVariable = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), false);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -74,12 +61,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			else
 			{
-				var id = _TempLocalVariable.LocalId.Value;
+				var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+				var varId = tmpVar.LocalId.Value;
 
-				gen.EmitLoadLocalAddress(id);
+				gen.EmitLoadLocalAddress(varId);
 				gen.EmitInitObject(type);
 
-				gen.EmitLoadLocal(id);
+				gen.EmitLoadLocal(varId);
 			}
 		}
 
