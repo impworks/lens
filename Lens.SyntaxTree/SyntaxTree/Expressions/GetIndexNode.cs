@@ -24,12 +24,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (gt == typeof (Dictionary<,>))
 					return args[1];
 			}
-			else
-			{
-				Error("Type '{0}' cannot be indexed.", exprType);
-			}
 
-			return base.resolveExpressionType(ctx);
+			var idxType = Index.GetExpressionType(ctx);
+			var getter = exprType.GetMethod("get_Index", new[] {idxType});
+			if (getter != null)
+				return getter.ReturnType;
+
+			Error("Type '{0}' cannot be indexed.", exprType);
+			return null;
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
