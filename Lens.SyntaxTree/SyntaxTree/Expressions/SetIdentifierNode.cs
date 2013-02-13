@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -48,7 +49,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var exprType = Value.GetExpressionType(ctx);
 			if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-				Error("Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.", exprType, nameInfo.Type);
+				Error("Cannot assign a value of type '{0}' to a variable of type '{1}'!\nAn explicit cast might be required.", exprType, nameInfo.Type);
 
 			if(nameInfo.IsClosured)
 				assignClosured(ctx, nameInfo);
@@ -59,10 +60,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private void assignLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
+			var cast = new CastOperatorNode
+			{
+				Expression = Value,
+				Type = name.Type
+			};
 
-			Value.Compile(ctx, true);
-			convertIfNeeded(ctx, name);
-
+			cast.Compile(ctx, true);
 			gen.EmitSaveLocal(name.LocalId.Value);
 		}
 
@@ -82,28 +86,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				dist--;
 			}
 
-			Value.Compile(ctx, true);
-			convertIfNeeded(ctx, name);
+			var cast = new CastOperatorNode
+			{
+				Expression = Value,
+				Type = name.Type
+			};
+			cast.Compile(ctx, true);
 
 			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitSaveField(clsField);
-		}
-
-		/// <summary>
-		/// Boxes value types to object and upcasts numeric types if required.
-		/// </summary>
-		private void convertIfNeeded(Context ctx, LocalName name)
-		{
-			var gen = ctx.CurrentILGenerator;
-
-			var varType = name.Type;
-			var exprType = Value.GetExpressionType(ctx);
-
-			if(varType == typeof(object) && exprType.IsValueType)
-				gen.EmitBox(exprType);
-
-			if (varType != exprType && varType.IsNumericType() && exprType.IsNumericType())
-				gen.EmitConvert(varType);
 		}
 
 		#region Equality members

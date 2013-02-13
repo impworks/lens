@@ -146,7 +146,7 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					ResolveMethod(method.Name, method.ArgumentTypes, true);
 				}
-				catch (LensCompilerException)
+				catch (KeyNotFoundException)
 				{
 					exists = false;
 				}

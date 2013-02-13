@@ -64,8 +64,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			{
 				Value = Value,
 				IsInitialization = true,
-				StartLocation = StartLocation,
-				EndLocation = EndLocation
+				StartLocation = StartLocation
 			};
 
 			assignNode.Compile(ctx, mustReturn);
