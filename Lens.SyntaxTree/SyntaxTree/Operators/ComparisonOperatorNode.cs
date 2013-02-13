@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			}
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var left = LeftOperand.GetExpressionType(ctx);
 			var right = RightOperand.GetExpressionType(ctx);

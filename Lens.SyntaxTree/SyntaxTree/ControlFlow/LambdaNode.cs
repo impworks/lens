@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			ctx.CurrentMethod = methodBackup;
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var retType = Body.GetExpressionType(ctx);
 			var argTypes = Arguments.Select(a => ctx.ResolveType(a.Type.Signature)).ToArray();

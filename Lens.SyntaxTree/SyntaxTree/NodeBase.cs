@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 	/// </summary>
 	public abstract class NodeBase : LocationEntity
 	{
-		public Type GetExpressionType(Context ctx)
+		public Type GetExpressionType(Context ctx, bool mustReturn = false)
 		{
 			return m_ExpressionType ?? (m_ExpressionType = resolveExpressionType(ctx));
 		}
@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <summary>
 		/// The type of the expression represented by this node.
 		/// </summary>
-		protected virtual Type resolveExpressionType(Context ctx)
+		protected virtual Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return typeof (Unit);
 		}

@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 		/// </summary>
 		public T Value { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return typeof (T);
 		}

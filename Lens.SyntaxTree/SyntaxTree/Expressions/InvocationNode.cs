@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			throw new NotImplementedException();
 		}

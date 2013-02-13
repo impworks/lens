@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return Body.GetExpressionType(ctx);
 		}

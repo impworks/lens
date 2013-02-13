@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var t1 = TrueAction.GetExpressionType(ctx);
 			if (FalseAction != null)

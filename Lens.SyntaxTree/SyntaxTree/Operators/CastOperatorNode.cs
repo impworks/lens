@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			yield return Expression;
 		}
 		
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}

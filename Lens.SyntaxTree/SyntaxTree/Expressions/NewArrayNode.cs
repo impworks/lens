@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// </summary>
 		private string _TempVariable;
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
 				Error("Array must contain at least one object!");

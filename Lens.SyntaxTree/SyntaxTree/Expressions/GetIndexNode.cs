@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity
 	{
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var exprType = Expression.GetExpressionType(ctx);
 			if (exprType.IsArray)

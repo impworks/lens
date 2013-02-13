@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "*"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return getNumericTypeOrError(ctx);
 		}

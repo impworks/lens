@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			Type = type;
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return typeof (Type);
 		}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -268,7 +269,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			FieldEntity fe;
 			if (!_Fields.TryGetValue(name, out fe))
-				Context.Error("Type '{0}' does not contain definition for a field '{1}'.", Name, name);
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain definition for a field '{1}'.", Name, name));
 
 			if(fe.FieldBuilder == null)
 				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
@@ -283,11 +284,11 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			List<MethodEntity> group;
 			if(!_Methods.TryGetValue(name, out group))
-				Context.Error("Type '{0}' does not contain any method named '{1}'.", Name, name);
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", Name, name));
 
 			var info = resolveMethodByArgs(group, args);
 			if(exact && info.Item2 != 0)
-				Context.Error("Type '{0}' does not  contain a method named '{1}' with given exact arguments!", Name, name);
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
 
 			return (info.Item1 as MethodEntity).MethodBuilder;
 		}
@@ -349,13 +350,13 @@ namespace Lens.SyntaxTree.Compiler
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 			
 			if(result.Length == 0 || result[0].Item2 == int.MaxValue)
-				Context.Error("No suitable method was found!");
+				throw new KeyNotFoundException("No suitable method was found!");
 
 			if (result.Length > 2)
 			{
 				var ambiCount = result.Skip(1).TakeWhile(i => i.Item2 == result[0].Item2).Count();
 				if(ambiCount > 0)
-					Context.Error("Ambigious reference: {0} matching methods found.", ambiCount);
+					throw new AmbiguousMatchException();
 			}
 
 			return result[0];
@@ -372,21 +373,13 @@ namespace Lens.SyntaxTree.Compiler
 			var sum = 0;
 			for (var idx = 0; idx < src.Length; idx++)
 			{
-				var curr = getTypeDistance(src[idx], dst[idx]);
-				if (curr == int.MaxValue)
+				var currDist = dst[idx].DistanceFrom(src[idx]);
+				if (currDist == int.MaxValue)
 					return int.MaxValue;
-				sum += curr;
+				sum += currDist;
 			}
 
 			return sum;
-		}
-
-		/// <summary>
-		/// Calculates a distance between two types, if they are castable.
-		/// </summary>
-		private int getTypeDistance(Type src, Type dst)
-		{
-			throw new NotImplementedException();
 		}
 
 		#endregion

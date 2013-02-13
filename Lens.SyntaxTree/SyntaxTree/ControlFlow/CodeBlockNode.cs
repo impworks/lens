@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { LocationSetError(); }
 		}
 
-		protected override Type resolveExpressionType(Context ctx)
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (!Statements.Any())
 				Error("Code block contains no statements!");
@@ -53,8 +53,18 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			foreach(var curr in Statements)
-				curr.Compile(ctx, mustReturn);
+			var gen = ctx.CurrentILGenerator;
+
+			for (var idx = 0; idx < Statements.Count; idx++)
+			{
+				var subReturn = mustReturn && idx == Statements.Count - 1;
+				var curr = Statements[idx];
+				curr.Compile(ctx, subReturn);
+
+				var retType = curr.GetExpressionType(ctx, subReturn);
+				if(subReturn && retType != typeof(Unit) && retType != typeof(void))
+					gen.EmitPop();
+			}
 		}
 
 		#region Equality members
