@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -42,31 +43,61 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var fromType = Expression.GetExpressionType(ctx);
 			var toType = Type ?? ctx.ResolveType(TypeSignature);
 
-			if(!toType.IsExtendablyAssignableFrom(fromType) && !fromType.IsExtendablyAssignableFrom(toType))
-				Error("Cannot cast object of type '{0}' to type '{1}'!");
-
 			Expression.Compile(ctx, true);
 
 			if (fromType == toType)
 				return;
 
-			if (fromType.IsValueType && toType == typeof(object))
-				gen.EmitBox(fromType);
-
-			else if (fromType == typeof(object) && toType.IsValueType)
-				gen.EmitUnbox(toType);
-
-			else if (toType.IsNullable() && Nullable.GetUnderlyingType(toType) == fromType)
+			if (fromType.IsNumericType() && toType.IsNumericType())
 			{
-				var ctor = toType.GetConstructor(new[] { fromType });
-				gen.EmitCreateObject(ctor);
+				gen.EmitConvert(toType);
+				return;
 			}
 
-			else if (fromType.IsNumericType() && toType.IsNumericType())
-				gen.EmitConvert(toType);
+			if (toType.IsExtendablyAssignableFrom(fromType))
+			{
+				// box
+				if (fromType.IsValueType && toType == typeof (object))
+					gen.EmitBox(fromType);
 
+				// nullable
+				else if (toType.IsNullable() && Nullable.GetUnderlyingType(toType) == fromType)
+				{
+					var ctor = toType.GetConstructor(new[] {fromType});
+					gen.EmitCreateObject(ctor);
+				}
+
+				else
+				{
+					var explicitOp = fromType.GetMethods().FirstOrDefault(m => m.Name == "op_Explicit" && m.ReturnType == toType);
+					if(explicitOp != null)
+						gen.EmitCall(explicitOp);
+					else
+						gen.EmitCast(toType);
+				}
+			}
+			else if (fromType.IsExtendablyAssignableFrom(toType))
+			{
+				// unbox
+				if (fromType == typeof (object) && toType.IsValueType)
+					gen.EmitUnbox(toType);
+
+				// cast ancestor to descendant
+				else if(!fromType.IsValueType && !toType.IsValueType)
+					gen.EmitCast(toType);
+
+				else
+					error(fromType, toType);
+			}
 			else
-				gen.EmitCast(toType, false);
+			{
+				error(fromType, toType);
+			}
+		}
+
+		private void error(Type from, Type to)
+		{
+			Error("Cannot cast object of type '{0}' to type '{1}'.", from, to);
 		}
 
 		#region Equality members
