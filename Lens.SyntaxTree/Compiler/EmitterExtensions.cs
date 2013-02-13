@@ -393,6 +393,17 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Loads the object from a given location in memory.
+		/// </summary>
+		public static void EmitLoadObject(this ILGenerator gen, Type itemType)
+		{
+			if (!itemType.IsValueType)
+				throw new InvalidOperationException("LoadObject can only be used on valuetype objects!");
+
+			gen.Emit(OpCodes.Ldobj, itemType);
+		}
+
+		/// <summary>
 		/// Saves an object at the given location in memory.
 		/// </summary>
 		public static void EmitSaveObject(this ILGenerator gen, Type itemType)
@@ -550,6 +561,14 @@ namespace Lens.SyntaxTree.Compiler
 		public static void EmitRethrow(this ILGenerator gen)
 		{
 			gen.Emit(OpCodes.Rethrow);
+		}
+
+		/// <summary>
+		/// Leaves a protected section.
+		/// </summary>
+		public static void EmitLeave(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Leave, label);
 		}
 
 		#endregion
