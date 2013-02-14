@@ -67,6 +67,20 @@ namespace Lens.SyntaxTree.SyntaxTree
 		}
 
 		/// <summary>
+		/// Reports an error to the compiler.
+		/// </summary>
+		/// <param name="message">Error message.</param>
+		/// <param name="args">Optional error arguments.</param>
+		[ContractAnnotation("=> halt")]
+		protected void Error(LocationEntity entity, string message, params object[] args)
+		{
+			var msg = string.Format(message, args);
+			var ex = new LensCompilerException(msg, this);
+			ex.BindToLocation(entity);
+			throw ex;
+		}
+
+		/// <summary>
 		/// Throw a generic error for incorrect location setting.
 		/// </summary>
 		[ContractAnnotation("=> halt")]

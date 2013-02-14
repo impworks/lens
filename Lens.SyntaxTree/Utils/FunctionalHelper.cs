@@ -130,8 +130,11 @@ namespace Lens.SyntaxTree.Utils
 		/// </summary>
 		public static Type GetReturnType(this Type type)
 		{
+			if (type.IsActionType())
+				return typeof (void);
+
 			if(!type.IsFuncType())
-				throw new LensCompilerException(string.Format("Type '{0}' is not a Func!", type.Name));
+				throw new LensCompilerException(string.Format("Type '{0}' is not a callable type!", type.Name));
 
 			var args = type.GetGenericArguments();
 			return args[args.Length - 1];
