@@ -65,14 +65,23 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public MethodInfo ResolveMethod(string typeName, string methodName, Type[] args = null)
 		{
+			return ResolveMethod(ResolveType(typeName), methodName, args);
+		}
+
+		/// <summary>
+		/// Resolves a method by it's name and agrument list.
+		/// </summary>
+		public MethodInfo ResolveMethod(Type type, string methodName, Type[] args = null)
+		{
 			if(args == null)
 				args = new Type[0];
 
-			var te = FindType(typeName);
-			if (te != null)
-				return te.ResolveMethod(methodName, args);
+			if (type is TypeBuilder)
+			{
+				var entity = _DefinedTypes[type.Name];
+				return entity.ResolveMethod(methodName, args);
+			}
 
-			var type = ResolveType(typeName);
 			return type.GetMethod(methodName, args);
 		}
 
@@ -81,11 +90,20 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public FieldInfo ResolveField(string typeName, string fieldName)
 		{
-			var te = FindType(typeName);
-			if (te != null)
-				return te.ResolveField(fieldName);
+			return ResolveField(ResolveType(typeName), fieldName);
+		}
 
-			var type = ResolveType(typeName);
+		/// <summary>
+		/// Resolves a field
+		/// </summary>
+		public FieldInfo ResolveField(Type type, string fieldName)
+		{
+			if (type is TypeBuilder)
+			{
+				var entity = _DefinedTypes[type.Name];
+				return entity.ResolveField(fieldName);
+			}
+
 			return type.GetField(fieldName);
 		}
 
@@ -94,14 +112,23 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public ConstructorInfo ResolveConstructor(string typeName, Type[] args = null)
 		{
+			return ResolveConstructor(ResolveType(typeName), args);
+		}
+
+		/// <summary>
+		/// Resolves a constructor by agrument list.
+		/// </summary>
+		public ConstructorInfo ResolveConstructor(Type type, Type[] args = null)
+		{
 			if (args == null)
 				args = new Type[0];
 
-			var te = FindType(typeName);
-			if (te != null)
-				return te.ResolveConstructor(args);
+			if (type is TypeBuilder)
+			{
+				var entity = _DefinedTypes[type.Name];
+				return entity.ResolveConstructor(args);
+			}
 
-			var type = ResolveType(typeName);
 			return type.GetConstructor(args);
 		}
 

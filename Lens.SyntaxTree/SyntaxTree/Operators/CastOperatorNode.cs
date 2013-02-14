@@ -57,12 +57,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			{
 				if (toType.IsNullable())
 				{
-					var temp = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
-					var id = temp.LocalId.Value;
-
-					gen.EmitLoadLocalAddress(id);
+					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
+					gen.EmitLoadLocalAddress(tmpVar);
 					gen.EmitInitObject(toType);
-					gen.EmitLoadLocal(id);
+					gen.EmitLoadLocal(tmpVar);
 				}
 
 				else if (!toType.IsValueType)

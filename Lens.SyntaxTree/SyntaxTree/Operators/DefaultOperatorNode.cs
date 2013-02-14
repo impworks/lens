@@ -62,12 +62,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			else
 			{
 				var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
-				var varId = tmpVar.LocalId.Value;
 
-				gen.EmitLoadLocalAddress(varId);
+				gen.EmitLoadLocalAddress(tmpVar);
 				gen.EmitInitObject(type);
 
-				gen.EmitLoadLocal(varId);
+				gen.EmitLoadLocal(tmpVar);
 			}
 		}
 

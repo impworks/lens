@@ -30,8 +30,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 			var itemType = Expressions[0].GetExpressionType(ctx);
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
-			var varId = tmpVar.LocalId.Value;
-
+			
 			var listType = GetExpressionType(ctx);
 			var ctor = listType.GetConstructor(new[] {typeof (int)});
 			var addMethod = listType.GetMethod("Add", new[] {itemType});
@@ -39,7 +38,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateObject(ctor);
-			gen.EmitSaveLocal(varId);
+			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
 			{
@@ -47,7 +46,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (listType.IsExtendablyAssignableFrom(currType))
 					Error("Cannot add an object of type '{0}' to List<{1}>!", currType, itemType);
 
-				gen.EmitLoadLocal(varId);
+				gen.EmitLoadLocal(tmpVar);
 				var cast = new CastOperatorNode
 				{
 					Expression = curr,
@@ -57,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				gen.EmitCall(addMethod);
 			}
 
-			gen.EmitLoadLocal(varId);
+			gen.EmitLoadLocal(tmpVar);
 		}
 
 		public override string ToString()

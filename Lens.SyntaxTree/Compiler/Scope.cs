@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The local variable ID that stores a pointer to current closure object.
 		/// </summary>
-		public int? ClosureVariableId { get; private set; }
+		public LocalName ClosureVariable { get; private set; }
 
 		#region Methods
 
@@ -182,10 +182,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)
-			{
-				var n = DeclareName(string.Format(ClosureInstanceVariableNameTemplate, ClosureTypeId), ClosureType.TypeBuilder, false);
-				ClosureVariableId = n.LocalId;
-			}
+				ClosureVariable = DeclareName(string.Format(ClosureInstanceVariableNameTemplate, ClosureTypeId), ClosureType.TypeBuilder, false);
 		}
 
 		/// <summary>

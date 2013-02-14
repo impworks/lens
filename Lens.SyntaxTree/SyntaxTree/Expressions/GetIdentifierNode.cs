@@ -27,10 +27,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
 				return FunctionalHelper.CreateFuncType(method.ReturnType);
 			}
-			catch (KeyNotFoundException) { }
-			catch (AmbiguousMatchException) { }
+			catch (KeyNotFoundException)
+			{
+				Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+			}
 
-			Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
 			return typeof (Unit);
 		}
 
@@ -61,14 +62,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				gen.EmitLoadFunctionPointer(method);
 				gen.EmitCreateObject(ctor);
 			}
-			catch (KeyNotFoundException) { }
-			catch (AmbiguousMatchException) { }
+			catch (KeyNotFoundException)
+			{
+				Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+			}
 		}
 
 		private void getClosured(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariableId.Value);
+			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
 			var dist = name.ClosureDistance;
 			var scope = ctx.CurrentScope;
@@ -88,7 +91,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private void getLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
-			gen.EmitLoadLocal(name.LocalId.Value);
+			gen.EmitLoadLocal(name);
 		}
 
 		public override string ToString()

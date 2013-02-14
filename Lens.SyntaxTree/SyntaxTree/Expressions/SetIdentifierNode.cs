@@ -67,13 +67,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			};
 
 			cast.Compile(ctx, true);
-			gen.EmitSaveLocal(name.LocalId.Value);
+			gen.EmitSaveLocal(name);
 		}
 
 		private void assignClosured(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariableId.Value);
+			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
 			var dist = name.ClosureDistance;
 			var scope = ctx.CurrentScope;

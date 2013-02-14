@@ -27,13 +27,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 			var itemType = Expressions[0].GetExpressionType(ctx);
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
-			var varId = tmpVar.LocalId.Value;
 
 			// create array
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateArray(itemType);
-			gen.EmitSaveLocal(varId);
+			gen.EmitSaveLocal(tmpVar);
 
 			for (var idx = 0; idx < count; idx++)
 			{
@@ -41,7 +40,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if(currType != itemType)
 					Error("Cannot add object of type '{0}' to array of type '{1}': item types must match exactly.", currType, itemType);
 
-				gen.EmitLoadLocal(varId);
+				gen.EmitLoadLocal(tmpVar);
 				gen.EmitConstant(idx);
 
 				if (itemType.IsValueType)
@@ -57,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				}
 			}
 
-			gen.EmitLoadLocal(varId);
+			gen.EmitLoadLocal(tmpVar);
 		}
 
 		public override string ToString()

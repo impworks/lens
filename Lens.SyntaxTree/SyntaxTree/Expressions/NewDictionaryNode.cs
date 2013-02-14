@@ -40,7 +40,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var dictType = GetExpressionType(ctx);
 
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
-			var varId = tmpVar.LocalId.Value;
 
 			var ctor = dictType.GetConstructor(new[] {typeof (int)});
 			var addMethod = dictType.GetMethod("Add", new[] {keyType, valType});
@@ -48,7 +47,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateObject(ctor);
-			gen.EmitSaveLocal(varId);
+			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
 			{
@@ -61,7 +60,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if(!valType.IsExtendablyAssignableFrom(currValType))
 					Error("Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, keyType, valType);
 
-				gen.EmitLoadLocal(varId);
+				gen.EmitLoadLocal(tmpVar);
 
 				var cast = new CastOperatorNode
 				{
@@ -75,7 +74,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				gen.EmitCall(addMethod);
 			}
 
-			gen.EmitLoadLocal(varId);
+			gen.EmitLoadLocal(tmpVar);
 		}
 
 		#region Equality members

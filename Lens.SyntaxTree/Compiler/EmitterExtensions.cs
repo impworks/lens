@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 
 namespace Lens.SyntaxTree.Compiler
 {
-	public static class EmitterExtensions
+	internal static class EmitterExtensions
 	{
 		#region Constants
 		
@@ -301,8 +301,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads the value of a local variable onto the stack.
 		/// </summary>
-		public static void EmitLoadLocal(this ILGenerator gen, int varId)
+		public static void EmitLoadLocal(this ILGenerator gen, LocalName loc)
 		{
+			var varId = loc.LocalId.Value;
 			switch (varId)
 			{
 				case 0: gen.Emit(OpCodes.Ldloc_0); break;
@@ -313,8 +314,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
-		public static void EmitLoadLocalAddress(this ILGenerator gen, int varId)
+		public static void EmitLoadLocalAddress(this ILGenerator gen, LocalName loc)
 		{
+			var varId = loc.LocalId.Value;
 			if (varId < 255)
 				gen.Emit(OpCodes.Ldloca_S, (byte)varId);
 			else
@@ -324,8 +326,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Saves the value from the stack to a local variable.
 		/// </summary>
-		public static void EmitSaveLocal(this ILGenerator gen, int varId)
+		public static void EmitSaveLocal(this ILGenerator gen, LocalName loc)
 		{
+			var varId = loc.LocalId.Value;
 			gen.Emit(OpCodes.Stloc, (short)varId);
 		}
 
@@ -454,8 +457,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Call a method.
 		/// </summary>
-		public static void EmitCall(this ILGenerator gen, MethodInfo method, bool isVirtual = false)
+		public static void EmitCall(this ILGenerator gen, MethodInfo method, bool isVirtual = false, Type constraint = null)
 		{
+			if (constraint != null)
+			{
+				isVirtual = true;
+				gen.Emit(OpCodes.Constrained, constraint);
+			}
+
 			gen.Emit(isVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
 		}
 
