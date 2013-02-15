@@ -71,19 +71,44 @@ namespace Lens.Test
 
 			Test("92 % 50", 42);
 
+			Test("2 ** 2", 4);
+			Test("1.5 ** 5", 7.59375);
+
 			Assert.Throws<LensCompilerException>(() => Compile("1 + (1 as UInt32)"));
+			Assert.Throws<LensCompilerException>(() => Compile(@"1 + ""hello"""));
 		}
 
 		[Test]
-		public void StringConcat()
+		public void StringConcatTest()
 		{
 			Test(@"""a"" + ""b""", "ab");
 			Test(@"""a"" + ""b"" + ""c""", "abc");
 		}
 
+		[Test]
+		public void NegationTest()
+		{
+			Test("-1", -1);
+			Test("-1.5", -1.5);
+
+			var src = @"
+var a = 1
+-(a * 2)
+";
+			Test(src, -2);
+		}
+
+		[Test]
+		public void OperatorPrecedenceTest()
+		{
+			Test("2 + 2 * 2", 6);
+			Test("2 / 2 + 1", 2);
+			Test("1 + 2 * 3 ** 4", 163);
+		}
+
 		private void Test(string src, object value)
 		{
-			Assert.AreEqual(Compile(src), value);
+			Assert.AreEqual(value, Compile(src));
 		}
 
 		private void TestType<T>(string src)

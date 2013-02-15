@@ -26,7 +26,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			Operand.Compile(ctx, true);
+			gen.EmitNegate();
 		}
 	}
 }

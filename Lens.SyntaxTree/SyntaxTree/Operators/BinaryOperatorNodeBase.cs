@@ -70,13 +70,18 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// <summary>
 		/// Loads both arguments and converts them to the biggest common type.
 		/// </summary>
-		protected void loadAndConvertNumerics(Context ctx)
+		protected void loadAndConvertNumerics(Context ctx, Type type = null)
 		{
 			var gen = ctx.CurrentILGenerator;
 
 			var left = LeftOperand.GetExpressionType(ctx);
 			var right = RightOperand.GetExpressionType(ctx);
-			var type = TypeExtensions.GetNumericOperationType(left, right);
+
+			if(!left.IsNumericType() || !right.IsNumericType())
+				TypeError(left, right);
+
+			if(type == null)
+				type = TypeExtensions.GetNumericOperationType(left, right);
 
 			LeftOperand.Compile(ctx, true);
 			if (left != type)

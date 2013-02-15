@@ -20,7 +20,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+			var method = typeof (Math).GetMethod("Pow", new[] {typeof (double), typeof (double)});
+
+			loadAndConvertNumerics(ctx, typeof(double));
+			gen.EmitCall(method);
 		}
 	}
 }
