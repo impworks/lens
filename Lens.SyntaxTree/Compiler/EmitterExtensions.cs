@@ -511,7 +511,7 @@ namespace Lens.SyntaxTree.Compiler
 				gen.Emit(OpCodes.Conv_I8);
 			else if (targetType == typeof(float))
 				gen.Emit(OpCodes.Conv_R4);
-			else if (targetType == typeof(short))
+			else if (targetType == typeof(double))
 				gen.Emit(OpCodes.Conv_R8);
 			else if (targetType == typeof(sbyte))
 				gen.Emit(OpCodes.Conv_I1);

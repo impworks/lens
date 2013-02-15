@@ -47,12 +47,44 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		}
 
 		/// <summary>
-		/// Returns the typically calculated argument type or throws an error.
+		/// Resolves a common numeric type.
 		/// </summary>
-		/// <returns></returns>
-		protected Type getNumericTypeOrError(Context ctx)
+		protected Type resolveNumericType(Context ctx)
 		{
-			throw new NotImplementedException();
+			var left = LeftOperand.GetExpressionType(ctx);
+			var right = RightOperand.GetExpressionType(ctx);
+
+			if (left.IsNumericType() && right.IsNumericType())
+			{
+				var type = TypeExtensions.GetNumericOperationType(left, right);
+				if(type == null)
+					Error("Cannot apply apply math operations to arguments of different signedness.");
+
+				return type;
+			}
+
+			TypeError(left, right);
+			return null;
+		}
+
+		/// <summary>
+		/// Loads both arguments and converts them to the biggest common type.
+		/// </summary>
+		protected void loadAndConvertNumerics(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var left = LeftOperand.GetExpressionType(ctx);
+			var right = RightOperand.GetExpressionType(ctx);
+			var type = TypeExtensions.GetNumericOperationType(left, right);
+
+			LeftOperand.Compile(ctx, true);
+			if (left != type)
+				gen.EmitConvert(type);
+
+			RightOperand.Compile(ctx, true);
+			if (right != type)
+				gen.EmitConvert(type);
 		}
 
 		#region Equality members

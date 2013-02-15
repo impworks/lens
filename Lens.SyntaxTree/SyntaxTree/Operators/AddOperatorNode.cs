@@ -21,17 +21,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if (left == typeof (string) && left == right)
 				return typeof (string);
 
-			throw new NotImplementedException();
-//			var numeric = getResultNumericType(left, right);
-//			if (numeric == null)
-//				TypeError(left, right);
-//
-//			return numeric;
+			return resolveNumericType(ctx);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var type = GetExpressionType(ctx);
+			if (type == typeof (string))
+			{
+				var method = typeof (string).GetMethod("Concat", new[] {typeof (string), typeof (string)});
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
+
+				gen.EmitCall(method);
+			}
+			else
+			{
+				loadAndConvertNumerics(ctx);
+				gen.EmitAdd();
+			}
 		}
 	}
 }

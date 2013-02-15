@@ -15,12 +15,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return getNumericTypeOrError(ctx);
+			return resolveNumericType(ctx);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+			GetExpressionType(ctx);
+			loadAndConvertNumerics(ctx);
+			gen.EmitDivide();
 		}
 	}
 }
