@@ -106,6 +106,34 @@ var a = 1
 			Test("1 + 2 * 3 ** 4", 163);
 		}
 
+		[Test]
+		public void BooleanOperatorsTest()
+		{
+			Test("true || true", true);
+			Test("true || false", true);
+			Test("false || true", true);
+			Test("false || false", false);
+
+			Test("true && true", true);
+			Test("true && false", false);
+			Test("false && true", false);
+			Test("false && false", false);
+
+			Test("true ^^ true", false);
+			Test("true ^^ false", true);
+			Test("false ^^ true", true);
+			Test("false ^^ false", false);
+		}
+
+		[Test]
+		public void InversionTest()
+		{
+			Test("!true", false);
+			Test("not false", true);
+
+			Test("not true || true", true);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
