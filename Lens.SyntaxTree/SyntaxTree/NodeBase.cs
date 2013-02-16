@@ -11,9 +11,9 @@ namespace Lens.SyntaxTree.SyntaxTree
 	/// </summary>
 	public abstract class NodeBase : LocationEntity
 	{
-		public Type GetExpressionType(Context ctx, bool mustReturn = false)
+		public Type GetExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return m_ExpressionType ?? (m_ExpressionType = resolveExpressionType(ctx));
+			return m_ExpressionType ?? (m_ExpressionType = resolveExpressionType(ctx, mustReturn));
 		}
 
 		/// <summary>
@@ -60,10 +60,9 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
-		protected void Error(string message, params object[] args)
+		public void Error(string message, params object[] args)
 		{
-			var msg = string.Format(message, args);
-			throw new LensCompilerException(msg, this);
+			Error(this, message, args);
 		}
 
 		/// <summary>
@@ -72,12 +71,10 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
-		protected void Error(LocationEntity entity, string message, params object[] args)
+		public void Error(LocationEntity entity, string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
-			var ex = new LensCompilerException(msg, this);
-			ex.BindToLocation(entity);
-			throw ex;
+			throw new LensCompilerException(msg, entity);
 		}
 
 		/// <summary>

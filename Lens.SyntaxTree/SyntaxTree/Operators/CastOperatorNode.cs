@@ -123,6 +123,28 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			Error("Cannot cast object of type '{0}' to type '{1}'.", from, to);
 		}
 
+		public static bool IsImplicitlyBoolean(Type type)
+		{
+			return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof (bool));
+		}
+
+		public static void CompileAsBoolean(NodeBase node, Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var type = node.GetExpressionType(ctx);
+
+			node.Compile(ctx, true);
+
+			if (type != typeof (bool))
+			{
+				var implConv = type.GetMethods().FirstOrDefault(m => m.Name == "op_Implicit" && m.ReturnType == typeof (bool));
+				if (implConv == null)
+					node.Error("Type '{0}' cannot be used in boolean context!", type);
+
+				gen.EmitCall(implConv);
+			}
+		}
+
 		#region Equality members
 
 		protected bool Equals(CastOperatorNode other)

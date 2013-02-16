@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			var type = Operand.GetExpressionType(ctx);
 
-			if(type != typeof(bool))
+			if(!CastOperatorNode.IsImplicitlyBoolean(type))
 				TypeError(type);
 
 			return type;
@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			Operand.Compile(ctx, true);
+			CastOperatorNode.CompileAsBoolean(Operand, ctx);
 
 			gen.EmitConstant(0);
 			gen.EmitCompareEqual();

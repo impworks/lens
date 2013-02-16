@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				switch (Kind)
 				{
 					case BooleanOperatorKind.And: return "&&";
-					case BooleanOperatorKind.Or: return "||";
+					case BooleanOperatorKind.Or:  return "||";
 					case BooleanOperatorKind.Xor: return "^^";
 
 					default: throw new ArgumentException("Boolean operator kind is invalid!");
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var left = LeftOperand.GetExpressionType(ctx);
 			var right = RightOperand.GetExpressionType(ctx);
 
-			if(left != typeof(bool) || right != typeof(bool))
+			if(!CastOperatorNode.IsImplicitlyBoolean(left) || !CastOperatorNode.IsImplicitlyBoolean(right))
 				TypeError(left, right);
 
 			return typeof (bool);
@@ -48,8 +48,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			LeftOperand.Compile(ctx, true);
-			RightOperand.Compile(ctx, true);
+			// validate nodes
+			GetExpressionType(ctx);
+
+			CastOperatorNode.CompileAsBoolean(LeftOperand, ctx);
+			CastOperatorNode.CompileAsBoolean(RightOperand, ctx);
 
 			if(Kind == BooleanOperatorKind.And)
 				gen.EmitAnd();
