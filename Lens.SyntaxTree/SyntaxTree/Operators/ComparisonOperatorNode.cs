@@ -54,9 +54,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if(!canCompare(left, right, isEquality))
 				TypeError(left, right);
 
-			LeftOperand.Compile(ctx, true);
-			RightOperand.Compile(ctx, true);
-
 			if (isEquality)
 				compileEquality(ctx, left, right);
 			else
@@ -74,7 +71,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			// numeric .. numeric
 			if (left.IsNumericType() && right.IsNumericType())
-				return left.IsSignedIntegerType() == right.IsSignedIntegerType();
+				return left.IsUnsignedIntegerType() == right.IsUnsignedIntegerType();
 
 			if (equalityOnly)
 			{
@@ -115,19 +112,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				return;
 			}
 
-			// compare a reftype against a null
-			if (left == typeof (NullType) || right == typeof (NullType))
-			{
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
-				gen.EmitCompareEqual();
-
-				if (Kind == ComparisonOperatorKind.NotEquals)
-					emitInversion(gen);
-
-				return;
-			}
-
 			// compare two numerics
 			if (left.IsNumericType() && right.IsNumericType())
 			{
@@ -160,6 +144,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 				return;
 			}
+
+			// compare a reftype against a null
+			if (left == typeof(NullType) || right == typeof(NullType))
+			{
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
+				gen.EmitCompareEqual();
+
+				if (Kind == ComparisonOperatorKind.NotEquals)
+					emitInversion(gen);
+
+				return;
+			}
 		}
 
 		/// <summary>
@@ -173,7 +170,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var otherType = otherValue.GetExpressionType(ctx);
 			var otherNull = otherType.IsNullableType();
 
-			var getValOrDefault = nullType.GetMethod("GetValueOrDefault");
+			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
 			var hasValueGetter = nullType.GetMethod("get_HasValue");
 
 			var falseLabel = gen.DefineLabel();
@@ -251,7 +248,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			gen.EmitLoadLocalAddress(nullVar);
 			gen.EmitCall(hasValueGetter);
 
-			if(Kind == ComparisonOperatorKind.NotEquals)
+			// sic! get_HasValue == true when value != null
+			if(Kind == ComparisonOperatorKind.Equals)
 				emitInversion(gen);
 		}
 

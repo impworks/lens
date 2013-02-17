@@ -128,10 +128,38 @@ var a = 1
 		[Test]
 		public void InversionTest()
 		{
-			Test("!true", false);
+			Test("not true", false);
 			Test("not false", true);
 
 			Test("not true || true", true);
+		}
+
+		[Test]
+		public void ComparisonTest()
+		{
+			Test("1 == 1", true);
+			Test("1 == 2", false);
+			Test("1 <> 1", false);
+			Test("1 <> 2", true);
+
+			Test("1 == 1.0", true);
+			Test("1 == 1.2", false);
+			Test("1 <> 1.0", false);
+			Test("1 <> 1.2", true);
+
+			Test("1.0 == 1.0", true);
+			Test("1.0 <> 1.0", false);
+
+			Test("1 == (1 as Nullable<int>)", true);
+			Test("1 <> (1 as Nullable<int>)", false);
+			Test("(1 as Nullable<int>) == (1 as Nullable<int>)", true);
+			Test("(1 as Nullable<int>) <> (1 as Nullable<int>)", false);
+
+			Test("(1 as Nullable<int>) == null", false);
+			Test("(1 as Nullable<int>) <> null", true);
+
+			Test("null == null", true);
+			Test("null == new object ()", false);
 		}
 
 		private void Test(string src, object value)
