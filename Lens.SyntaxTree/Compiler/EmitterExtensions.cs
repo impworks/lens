@@ -89,6 +89,15 @@ namespace Lens.SyntaxTree.Compiler
 			gen.Emit(OpCodes.Ldnull);
 		}
 
+		/// <summary>
+		/// Does nothing.
+		/// Is  used for marking labels.
+		/// </summary>
+		public static void EmitNop(this ILGenerator gen)
+		{
+			gen.Emit(OpCodes.Nop);
+		}
+
 		#endregion
 
 		#region Comparison and branching
@@ -139,6 +148,22 @@ namespace Lens.SyntaxTree.Compiler
 		public static void EmitBranchFalse(this ILGenerator gen, Label label)
 		{
 			gen.Emit(OpCodes.Brfalse, label);
+		}
+
+		/// <summary>
+		/// Jumps to a location if the top of the stack is true.
+		/// </summary>
+		public static void EmitBranchEquals(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Beq, label);
+		}
+
+		/// <summary>
+		/// Jumps to a location if the top of the stack is false.
+		/// </summary>
+		public static void EmitBranchNotEquals(this ILGenerator gen, Label label)
+		{
+			gen.Emit(OpCodes.Bne_Un, label);
 		}
 
 		#endregion

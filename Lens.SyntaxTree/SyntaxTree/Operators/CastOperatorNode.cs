@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			else if (fromType == typeof (NullType))
 			{
-				if (toType.IsNullable())
+				if (toType.IsNullableType())
 				{
 					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
 					gen.EmitLoadLocalAddress(tmpVar);
@@ -81,8 +81,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				if (fromType.IsValueType && toType == typeof (object))
 					gen.EmitBox(fromType);
 
-					// nullable
-				else if (toType.IsNullable() && Nullable.GetUnderlyingType(toType) == fromType)
+				// nullable
+				else if (toType.IsNullableType() && Nullable.GetUnderlyingType(toType) == fromType)
 				{
 					var ctor = toType.GetConstructor(new[] {fromType});
 					gen.EmitCreateObject(ctor);

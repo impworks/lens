@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Utils
 		/// </summary>
 		/// <param name="type">Checked type.</param>
 		/// <returns><c>true</c> if type is a <see cref="Nullable{T}"/>.</returns>
-		public static bool IsNullable(this Type type)
+		public static bool IsNullableType(this Type type)
 		{
 			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof (Nullable<>);
 		}
@@ -140,7 +140,7 @@ namespace Lens.SyntaxTree.Utils
 			if (varType == exprType)
 				return 0;
 
-			if (varType.IsNullable() && exprType == Nullable.GetUnderlyingType(varType))
+			if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
 				return 1;
 
 			if (varType.IsNumericType() && exprType.IsNumericType())
