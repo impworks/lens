@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -40,7 +38,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			var nameInfo = ctx.CurrentScope.FindName(Identifier);
+			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if(nameInfo == null)
 				Error("Variable '{0}' is undefined in current scope!", Identifier);
 

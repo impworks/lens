@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var nameInfo = ctx.CurrentScope.FindName(Identifier);
+			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)
 				return nameInfo.Type;
 
@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			// load local variable
-			var nameInfo = ctx.CurrentScope.FindName(Identifier);
+			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsClosured)

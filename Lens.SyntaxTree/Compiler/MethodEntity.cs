@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -74,7 +75,14 @@ namespace Lens.SyntaxTree.Compiler
 			_IsPrepared = true;
 		}
 
-		protected override void emitTrailer()
+		protected override void compileCore(Context ctx)
+		{
+			Body.Compile(ctx, ReturnType.IsNotVoid());
+
+			emitTrailer();
+		}
+
+		protected void emitTrailer()
 		{
 			var ctx = ContainerType.Context;
 			var gen = ctx.CurrentILGenerator;

@@ -83,6 +83,14 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
+		/// Checks if the type is returnable.
+		/// </summary>
+		public static bool IsNotVoid(this Type type)
+		{
+			return type != typeof (void) && type != typeof (Unit);
+		}
+
+		/// <summary>
 		/// Checks if a variable of given type can be assigned from other type (including type extension).
 		/// </summary>
 		/// <returns></returns>

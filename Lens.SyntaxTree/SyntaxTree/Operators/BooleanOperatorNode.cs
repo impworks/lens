@@ -51,15 +51,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			// validate nodes
 			GetExpressionType(ctx);
 
-			CastOperatorNode.CompileAsBoolean(LeftOperand, ctx);
-			CastOperatorNode.CompileAsBoolean(RightOperand, ctx);
-
-			if(Kind == BooleanOperatorKind.And)
-				gen.EmitAnd();
+			if (Kind == BooleanOperatorKind.And)
+			{
+				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.Bool()));
+				cond.Compile(ctx, true);
+			}
 			else if (Kind == BooleanOperatorKind.Or)
-				gen.EmitOr();
+			{
+				var cond = Expr.If(LeftOperand, Expr.Block(Expr.Bool(true)), Expr.Block(RightOperand));
+				cond.Compile(ctx, true);
+			}
 			else if (Kind == BooleanOperatorKind.Xor)
+			{
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
 				gen.EmitXor();
+			}
 		}
 	}
 

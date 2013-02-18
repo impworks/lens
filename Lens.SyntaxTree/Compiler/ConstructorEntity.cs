@@ -36,6 +36,11 @@ namespace Lens.SyntaxTree.Compiler
 			_IsPrepared = true;
 		}
 
+		protected override void compileCore(Context ctx)
+		{
+			Body.Compile(ctx, false);
+		}
+
 		#endregion
 	}
 }

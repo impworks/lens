@@ -1,4 +1,6 @@
-﻿namespace Lens.SyntaxTree.SyntaxTree.Expressions
+﻿using Lens.SyntaxTree.Compiler;
+
+namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// The base node for identifier access.
@@ -10,11 +12,13 @@
 		/// </summary>
 		public string Identifier { get; set; }
 
-		public override void ProcessClosures(Compiler.Context ctx)
+		public LocalName LocalName { get; set; }
+
+		public override void ProcessClosures(Context ctx)
 		{
 			base.ProcessClosures(ctx);
 
-			ctx.CurrentScope.ReferenceName(Identifier);
+			ctx.CurrentScope.ReferenceName(Identifier ?? LocalName.Name);
 		}
 
 		#region Equality members

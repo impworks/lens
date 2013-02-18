@@ -22,6 +22,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name { get; set; }
 
+		public LocalName LocalName { get; set; }
+
 		/// <summary>
 		/// The value to assign to the variable.
 		/// </summary>
@@ -60,8 +62,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			var assignNode = new SetIdentifierNode(Name)
+			var assignNode = new SetIdentifierNode
 			{
+				Identifier = Name,
+				LocalName = LocalName,
 				Value = Value,
 				IsInitialization = true,
 				StartLocation = StartLocation

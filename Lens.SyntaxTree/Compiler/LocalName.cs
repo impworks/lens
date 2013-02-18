@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Compiler
 	/// <summary>
 	/// A class representing info about a local variable.
 	/// </summary>
-	internal class LocalName
+	public class LocalName
 	{
 		public LocalName(string name, Type type, bool isConst = false)
 		{

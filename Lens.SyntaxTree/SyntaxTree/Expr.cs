@@ -108,6 +108,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new CastOperatorNode { Expression = node, Type = type };
 		}
 
+		public static BinaryOperatorNodeBase Binary(BooleanOperatorKind kind, NodeBase left, NodeBase right)
+		{
+			return new BooleanOperatorNode { Kind = kind, LeftOperand = left, RightOperand = right };
+		}
+
 		public static BinaryOperatorNodeBase And(NodeBase left, NodeBase right)
 		{
 			return new BooleanOperatorNode {LeftOperand = left, RightOperand = right};
@@ -121,6 +126,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static BinaryOperatorNodeBase Xor(NodeBase left, NodeBase right)
 		{
 			return new BooleanOperatorNode { Kind = BooleanOperatorKind.Xor, LeftOperand = left, RightOperand = right };
+		}
+
+		public static ComparisonOperatorNode Compare(ComparisonOperatorKind kind, NodeBase left, NodeBase right)
+		{
+			return new ComparisonOperatorNode { Kind = kind, LeftOperand = left, RightOperand = right };
 		}
 
 		public static ComparisonOperatorNode Equal(NodeBase left, NodeBase right)
@@ -206,6 +216,16 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new SetIdentifierNode { Identifier = name, Value = value };
 		}
 
+		public static GetIdentifierNode GetIdentifier(LocalName name)
+		{
+			return new GetIdentifierNode { LocalName = name };
+		}
+
+		public static SetIdentifierNode SetIdentifier(LocalName name, NodeBase value)
+		{
+			return new SetIdentifierNode { LocalName = name, Value = value };
+		}
+
 		public static GetMemberNode GetMember(NodeBase expr, string name)
 		{
 			return new GetMemberNode { Expression = expr, MemberName = name };
@@ -270,9 +290,19 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new VarNode(name) {Value = expr};
 		}
 
+		public static VarNode Var(LocalName name, NodeBase expr)
+		{
+			return new VarNode { LocalName = name, Value = expr };
+		}
+
 		public static LetNode Let(string name, NodeBase expr)
 		{
 			return new LetNode(name) { Value = expr };
+		}
+
+		public static LetNode Let(LocalName name, NodeBase expr)
+		{
+			return new LetNode { LocalName = name, Value = expr };
 		}
 
 		public static LoopNode Loop(NodeBase condition, CodeBlockNode body)

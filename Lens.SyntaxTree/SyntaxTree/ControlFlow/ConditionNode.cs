@@ -38,6 +38,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
+			if (!mustReturn)
+				return typeof (Unit);
+
 			var t1 = TrueAction.GetExpressionType(ctx);
 			if (FalseAction != null)
 			{
@@ -59,7 +62,40 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var endLabel = gen.DefineLabel();
+			var falseLabel = gen.DefineLabel();
+
+			Condition.Compile(ctx, true);
+			if (FalseAction == null)
+			{
+				gen.EmitBranchFalse(endLabel);
+				TrueAction.Compile(ctx, mustReturn);
+				gen.MarkLabel(endLabel);
+				if(!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
+				else
+					gen.EmitNop();
+			}
+			else
+			{
+				gen.EmitBranchFalse(falseLabel);
+				TrueAction.Compile(ctx, mustReturn);
+
+				if (!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
+
+				gen.EmitJump(endLabel);
+
+				gen.MarkLabel(falseLabel);
+				FalseAction.Compile(ctx, mustReturn);
+				gen.MarkLabel(endLabel);
+				if (!mustReturn && FalseAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
+				else
+					gen.EmitNop();
+			}
 		}
 
 		#region Equality members

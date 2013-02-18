@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				curr.Compile(ctx, subReturn);
 
 				var retType = curr.GetExpressionType(ctx, subReturn);
-				if(subReturn && retType != typeof(Unit) && retType != typeof(void))
+				if(!subReturn && retType.IsNotVoid())
 					gen.EmitPop();
 			}
 		}
