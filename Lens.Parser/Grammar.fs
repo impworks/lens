@@ -100,6 +100,7 @@ let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local
 let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" "variable declaration"
 let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" "assignment expression"
 let lvalue, lvalueRef                         = createAnnotatedParser "lvalue" "lvalue"
+let atomar_expr, atomar_exprRef               = createAnnotatedParser "atomar_expr" "atomar_expr"
 let accessor_expr, accessor_exprRef           = createAnnotatedParser "accessor_expr" "accessor expression"
 let type_params, type_paramsRef               = createAnnotatedParser "type_params" "type parameters"
 let expr, exprRef                             = createAnnotatedNodeParser "expr" "expression"
@@ -141,7 +142,11 @@ let double, doubleRef                         = createAnnotatedParser "double" "
 let identifier, identifierRef                 = createAnnotatedParser "identifier" "identifier"
 
 let main               = many newline >>. (many stmt .>>? eof)
-stmtRef               := using <|> recorddef <|> typedef <|> funcdef <|> (local_stmt .>>? nextLine)
+stmtRef               := choice [attempt using
+                                 attempt recorddef
+                                 attempt typedef
+                                 attempt funcdef
+                                 attempt (local_stmt .>>? nextLine)]
 usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.indentedBlock recorddef_stmt |>> Node.record
@@ -164,7 +169,7 @@ typeRef               := pipe2
                          <| Node.typeTag
 local_stmtRef         := choice [attempt var_decl_expr
                                  attempt assign_expr
-                                 expr]
+                                 attempt expr]
 var_decl_exprRef      := pipe3
                          <| (keyword "let" <|> keyword "var")
                          <| identifier
@@ -174,15 +179,21 @@ assign_exprRef        := pipe2
                          <| lvalue
                          <| (token "=" >>? expr)
                          <| Node.assignment
-lvalueRef             := choice [(``type`` .>>? token "::") .>>.? identifier |>> Node.staticSymbol
-                                 identifier |>> Node.localSymbol
-                                 token "(" >>? expr .>>? token ")" .>>.? accessor_expr |>> Node.expressionSymbol] .>>.? many accessor_expr
-accessor_exprRef      := ((token "." >>? identifier) |>> Accessor.Member)
-                         <|> ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)
+lvalueRef             := choice [attempt (``type`` .>>? token "::") .>>.? identifier |>> Node.staticSymbol
+                                 attempt identifier |>> Node.localSymbol
+                                 attempt <| atomar_expr .>>.? accessor_expr |>> Node.expressionSymbol] .>>.? many accessor_expr
+atomar_exprRef        := choice [attempt literal
+                                 attempt type_operator_expr
+                                 attempt <| token "(" >>? expr .>>? token ")"]
+accessor_exprRef      := choice [attempt ((token "." >>? identifier) |>> Accessor.Member)
+                                 attempt ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)]
 type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
 exprRef               := choice [attempt block_expr
-                                 line_expr]
-block_exprRef         := if_expr <|> while_expr <|> try_expr <|> lambda_expr
+                                 attempt line_expr]
+block_exprRef         := choice [attempt if_expr
+                                 attempt while_expr
+                                 attempt try_expr
+                                 attempt lambda_expr]
 if_exprRef            := pipe3
                          <| (keyword "if" >>? (token "(" >>? line_expr .>>? token ")"))
                          <| block
@@ -237,16 +248,16 @@ line_expr_5Ref        := pipe2
                          <| Node.operatorChain
 line_expr_6Ref        := pipe2
                          <| line_expr_7
-                         <| opt (token "[" >>? expr .>>? token "]")
+                         <| opt (attempt <| token "[" >>? expr .>>? token "]")
                          <| Node.indexNode
 line_expr_7Ref        := choice [attempt new_expr
                                  attempt invoke_expr
-                                 value_expr]
-new_exprRef           := keyword "new" >>? choice [new_array_expr
-                                                   new_tuple_expr
-                                                   new_list_expr
-                                                   new_dict_expr
-                                                   new_obj_expr]
+                                 attempt value_expr]
+new_exprRef           := keyword "new" >>? choice [attempt new_array_expr
+                                                   attempt new_tuple_expr
+                                                   attempt new_list_expr
+                                                   attempt new_dict_expr
+                                                   attempt new_obj_expr]
 new_array_exprRef     := token "[" >>? enumeration_expr .>>? token "]" |>> Node.arrayNode
 new_tuple_exprRef     := token "(" >>? enumeration_expr .>>? token ")" |>> Node.tupleNode
 new_list_exprRef      := token "<" >>? enumeration_expr .>>? token ">" |>> Node.listNode
@@ -266,20 +277,18 @@ invoke_exprRef        := pipe2
                          <| Node.invocation
 invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? expr))
                          <|> (many1 value_expr)
-value_exprRef         := choice [literal
-                                 type_operator_expr
-                                 lvalue |>> Node.getterNode
-                                 between <| token "(" <| token ")" <| expr]
+value_exprRef         := choice [attempt lvalue      |>> Node.getterNode
+                                 attempt atomar_expr]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
                          <| (token "(" >>? ``type`` .>>? token ")")
                          <| Node.typeOperator
-literalRef            := choice [token "()"                         |>> Node.unit
-                                 keyword "null"                     |>> Node.nullNode
-                                 keyword "true" <|> keyword "false" |>> Node.boolean
-                                 string                             |>> Node.string
-                                 double                             |>> Node.double
-                                 int                                |>> Node.int]
+literalRef            := choice [attempt <| token "()"                         |>> Node.unit
+                                 attempt <| keyword "null"                     |>> Node.nullNode
+                                 attempt <| keyword "true" <|> keyword "false" |>> Node.boolean
+                                 attempt <| string                             |>> Node.string
+                                 attempt <| double                             |>> Node.double
+                                 attempt <| int                                |>> Node.int]
 
 stringRef             := between <| pchar '"' <| pchar '"' <| regex @"[^""]*"
 intRef                := regex @"\d+"

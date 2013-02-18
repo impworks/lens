@@ -389,6 +389,26 @@ type ArrayHolder
 		}
 
 		[Test]
+		public void GetLiteralMember()
+		{
+			var src = "1.GetHashCode()";
+			var result = new InvocationNode
+			{
+				Expression = new GetMemberNode
+				{
+					Expression = new IntNode(1),
+					MemberName = "GetHashCode"
+				},
+				Arguments =
+				{
+					new UnitNode()
+				}
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
 		public void GetDynamicMember()
 		{
 			var src = "a = b.someShit";
