@@ -138,7 +138,7 @@ namespace Lens.SyntaxTree.Utils
 
 			if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
 				return 1;
-
+			
 			if (varType.IsNumericType() && exprType.IsNumericType())
 				return NumericTypeConversion(varType, exprType);
 
@@ -146,6 +146,9 @@ namespace Lens.SyntaxTree.Utils
 				return 1;
 
 			if (varType.IsInterface && IsImplementedBy(varType, exprType))
+				return 1;
+
+			if (IsImplicitCastable(varType, exprType))
 				return 1;
 
 			int result;
@@ -159,6 +162,11 @@ namespace Lens.SyntaxTree.Utils
 				return GenericDistance(varType, exprType);
 
 			return int.MaxValue;
+		}
+
+		private static bool IsImplicitCastable(Type varType, Type exprType)
+		{
+			return exprType.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == varType);
 		}
 
 		private static Type MostWideType(Type[] types, Type type1, Type type2)

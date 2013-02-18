@@ -173,6 +173,12 @@ namespace Lens.Test
 			AssertNumericOperationNotPermitted<int, ulong>();
 		}
 
+		[Test]
+		public void ImplicitCast()
+		{
+			TestDistanceFrom<int, ImplicitCastable>(1);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.

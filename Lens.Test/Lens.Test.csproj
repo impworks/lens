@@ -62,6 +62,7 @@
     <Compile Include="Snippets.cs" />
     <Compile Include="TestClassHierarchy\DerivedClass.cs" />
     <Compile Include="TestClassHierarchy\DerivedInterfaceImplementer.cs" />
+    <Compile Include="TestClassHierarchy\ImplicitCastable.cs" />
     <Compile Include="TestClassHierarchy\InterfaceDerivedImplementer.cs" />
     <Compile Include="TestClassHierarchy\IDerivedInterface.cs" />
     <Compile Include="TestClassHierarchy\IInterface.cs" />
