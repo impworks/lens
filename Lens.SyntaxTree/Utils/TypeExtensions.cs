@@ -16,8 +16,7 @@ namespace Lens.SyntaxTree.Utils
 				typeof (sbyte),
 				typeof (short),
 				typeof (int),
-				typeof (long),
-				typeof (decimal)
+				typeof (long)
 			};
 
 			UnsignedIntegerTypes = new[]
@@ -102,9 +101,6 @@ namespace Lens.SyntaxTree.Utils
 		{
 			if (type1.IsFloatType() || type2.IsFloatType())
 			{
-				if (type1 == typeof (decimal) || type2 == typeof (decimal))
-					return null;
-				
 				if (type1 == typeof(long) || type2 == typeof(long))
 					return typeof (double);
 

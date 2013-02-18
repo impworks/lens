@@ -61,10 +61,16 @@ namespace Lens.Test
 		}
 
 		[Test]
+		public void DecimalNotSupported()
+		{
+			TestDistanceFrom<decimal, sbyte>(int.MaxValue);
+			TestDistanceFrom<decimal, ulong>(int.MaxValue);
+		}
+
+		[Test]
 		public void IntegralTypeConversion()
 		{
 			TestDistanceFrom<long, sbyte>(3);
-			TestDistanceFrom<decimal, sbyte>(4);
 		}
 
 		[Test]
@@ -86,7 +92,6 @@ namespace Lens.Test
 		{
 			TestDistanceFrom<long, uint>(1);
 			TestDistanceFrom<uint, int>(int.MaxValue);
-			TestDistanceFrom<decimal, ulong>(1);
 		}
 
 		[Test]
@@ -166,7 +171,6 @@ namespace Lens.Test
 
 			AssertNumericOperationNotPermitted<int, uint>();
 			AssertNumericOperationNotPermitted<int, ulong>();
-			AssertNumericOperationNotPermitted<float, decimal>();
 		}
 
 		/// <summary>
