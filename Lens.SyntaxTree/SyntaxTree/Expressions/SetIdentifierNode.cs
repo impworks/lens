@@ -60,13 +60,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private void assignLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var cast = new CastOperatorNode
-			{
-				Expression = Value,
-				Type = name.Type
-			};
 
-			cast.Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Compile(ctx, true);
 			gen.EmitSaveLocal(name);
 		}
 
@@ -86,12 +81,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				dist--;
 			}
 
-			var cast = new CastOperatorNode
-			{
-				Expression = Value,
-				Type = name.Type
-			};
-			cast.Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
 			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitSaveField(clsField);

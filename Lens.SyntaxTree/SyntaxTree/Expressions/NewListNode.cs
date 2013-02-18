@@ -47,12 +47,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					Error("Cannot add an object of type '{0}' to List<{1}>!", currType, itemType);
 
 				gen.EmitLoadLocal(tmpVar);
-				var cast = new CastOperatorNode
-				{
-					Expression = curr,
-					Type = currType
-				};
-				cast.Compile(ctx, true);
+				
+				Expr.Cast(curr, currType).Compile(ctx, true);
 				gen.EmitCall(addMethod);
 			}
 

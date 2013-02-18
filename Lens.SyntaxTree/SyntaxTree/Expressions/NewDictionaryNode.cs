@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new dictionary.
 	/// </summary>
-	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>
+	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
 	{
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -62,14 +62,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				gen.EmitLoadLocal(tmpVar);
 
-				var cast = new CastOperatorNode
-				{
-					Expression = curr.Value,
-					Type = valType
-				};
-
 				curr.Key.Compile(ctx, true);
-				cast.Compile(ctx, true);
+				Expr.Cast(curr.Value, valType).Compile(ctx, true);
 
 				gen.EmitCall(addMethod);
 			}
@@ -99,11 +93,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return (Expressions != null ? Expressions.GetHashCode() : 0);
 		}
 
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
+		}
+
 		#endregion
 
 		public void Add(NodeBase key, NodeBase value)
 		{
 			Expressions.Add(new KeyValuePair<NodeBase, NodeBase>(key, value));
+		}
+
+		public IEnumerator<KeyValuePair<NodeBase, NodeBase>> GetEnumerator()
+		{
+			return Expressions.GetEnumerator();
 		}
 
 		public override string ToString()

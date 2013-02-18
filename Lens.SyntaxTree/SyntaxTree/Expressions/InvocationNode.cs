@@ -166,15 +166,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var toTypes = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 				for (var idx = 0; idx < Arguments.Count; idx++)
-				{
-					var castNode = new CastOperatorNode
-					{
-						Expression = Arguments[idx],
-						Type = toTypes[idx]
-					};
-
-					castNode.Compile(ctx, true);
-				}
+					Expr.Cast(Arguments[idx], toTypes[idx]).Compile(ctx, true);
 			}
 
 			if (m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsValueType)

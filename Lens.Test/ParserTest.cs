@@ -127,7 +127,7 @@ type ArrayHolder
 				},
 				Body =
 				{
-					new NegationOperatorNode { Operand = new GetIdentifierNode("x") }
+					Expr.Negate(Expr.GetIdentifier("x"))
 				}
 			};
 
@@ -137,18 +137,13 @@ type ArrayHolder
 		[Test]
 		public void InvocationTest()
 		{
-			var result = new InvocationNode
-				{
-					Expression = new GetIdentifierNode("sqrt"),
-					Arguments =
-					{
-						new AddOperatorNode
-						{
-							LeftOperand = new GetIdentifierNode("sq1"),
-							RightOperand = new GetIdentifierNode("sq2")
-						}
-					}
-				};
+			var result = Expr.Invoke(
+				Expr.GetIdentifier("sqrt"),
+				Expr.Add(
+					Expr.GetIdentifier("sq1"),
+					Expr.GetIdentifier("sq2")
+					)
+				);
 
 			Test("sqrt (sq1 + sq2)", result);
 		}
@@ -171,36 +166,27 @@ type ArrayHolder
 				},
 				Body = 
 				{
-					new LetNode
-					{
-						Name = "sq1",
-						Value = new MultiplyOperatorNode
-						{
-							LeftOperand = new GetIdentifierNode("a"),
-							RightOperand = new GetIdentifierNode("a")
-						}
-					},
-					new LetNode
-					{
-						Name = "sq2",
-						Value = new MultiplyOperatorNode
-						{
-							LeftOperand = new GetIdentifierNode("b"),
-							RightOperand = new GetIdentifierNode("b")
-						}
-					},
-					new InvocationNode
-					{
-						Expression = new GetIdentifierNode("sqrt"),
-						Arguments =
-						{
-							new AddOperatorNode
-							{
-								LeftOperand = new GetIdentifierNode("sq1"),
-								RightOperand = new GetIdentifierNode("sq2")
-							}
-						}
-					}
+					Expr.Let(
+						"sq1",
+						Expr.Mult(
+							Expr.GetIdentifier("a"),
+							Expr.GetIdentifier("a")
+						)
+					),
+					Expr.Let(
+						"sq2",
+						Expr.Mult(
+							Expr.GetIdentifier("b"),
+							Expr.GetIdentifier("b")
+						)
+					),
+					Expr.Invoke(
+						"sqrt",
+						Expr.Add(
+							Expr.GetIdentifier("sq1"),
+							Expr.GetIdentifier("sq2")
+						)
+					)
 				}
 			};
 
@@ -211,14 +197,7 @@ type ArrayHolder
 		public void VariableDeclaration()
 		{
 			var src = @"var v = 1 + 1";
-			var result = new VarNode("v")
-			{
-				Value = new AddOperatorNode
-				{
-					LeftOperand = new IntNode(1),
-					RightOperand = new IntNode(1)
-				}
-			};
+			var result = Expr.Var("v", Expr.Add(Expr.Int(1), Expr.Int(1)));
 
 			Test(src, result);
 		}
@@ -227,14 +206,7 @@ type ArrayHolder
 		public void ConstantDeclaration()
 		{
 			var src = @"let v = 1 + 1";
-			var result = new LetNode("v")
-			{
-				Value = new AddOperatorNode
-				{
-					LeftOperand = new IntNode(1),
-					RightOperand = new IntNode(1)
-				}
-			};
+			var result = Expr.Let("v", Expr.Add(Expr.Int(1), Expr.Int(1)));
 
 			Test(src, result);
 		}
@@ -243,19 +215,11 @@ type ArrayHolder
 		public void ArrayDeclaration()
 		{
 			var src = @"new [1; 2; 1 + 2]";
-			var result = new NewArrayNode
-			{
-				Expressions =
-				{
-					new IntNode(1),
-					new IntNode(2),
-					new AddOperatorNode
-					{
-						LeftOperand = new IntNode(1),
-						RightOperand = new IntNode(2)
-					}
-				}
-			};
+			var result = Expr.Array(
+				Expr.Int(1),
+				Expr.Int(2),
+				Expr.Add(Expr.Int(1), Expr.Int(2))
+			);
 
 			Test(src, result);
 		}
@@ -264,16 +228,12 @@ type ArrayHolder
 		public void TupleDeclaration()
 		{
 			var src = @"new (1; 1.2; ""hello world""; true)";
-			var result = new NewTupleNode
-			{
-				Expressions =
-				{
-					new IntNode(1),
-					new DoubleNode(1.2),
-					new StringNode("hello world"),
-					new BooleanNode(true)
-				}
-			};
+			var result = Expr.Tuple(
+				Expr.Int(1),
+				Expr.Double(1.2),
+				Expr.String("hello world"),
+				Expr.Bool(true)
+			);
 
 			Test(src, result);
 		}
@@ -282,14 +242,11 @@ type ArrayHolder
 		public void NewObjectDeclaration()
 		{
 			var src = @"new SomeObject false 13.37";
-			var result = new NewObjectNode("SomeObject")
-			{
-				Arguments =
-				{
-					new BooleanNode(),
-					new DoubleNode(13.37)
-				}
-			};
+			var result = Expr.NewObject(
+				"SomeObject",
+				Expr.Bool(),
+				Expr.Double(13.37)
+			);
 
 			Test(src, result);
 		}
@@ -300,17 +257,8 @@ type ArrayHolder
 			var src = @"new { a => b; c => true }";
 			var result = new NewDictionaryNode
 			{
-				Expressions =
-				{
-					new KeyValuePair<NodeBase, NodeBase>(
-						new GetIdentifierNode("a"),
-						new GetIdentifierNode("b")
-					),
-					new KeyValuePair<NodeBase, NodeBase>(
-						new GetIdentifierNode("c"),
-						new BooleanNode(true)
-					)
-				}
+				{ Expr.GetIdentifier("a"), Expr.GetIdentifier("b")},
+				{ Expr.GetIdentifier("c"), Expr.Bool(true)}
 			};
 
 			Test(src, result);
@@ -320,15 +268,11 @@ type ArrayHolder
 		public void ListDeclaration()
 		{
 			var src = "new <true;true;false>";
-			var result = new NewListNode
-			{
-				Expressions =
-				{
-					new BooleanNode(true),
-					new BooleanNode(true),
-					new BooleanNode(false),
-				}
-			};
+			var result = Expr.List(
+				Expr.Bool(true),
+				Expr.Bool(true),
+				Expr.Bool()
+			);
 
 			Test(src, result);
 		}
@@ -341,7 +285,7 @@ type ArrayHolder
 			{
 				Value = new FunctionNode
 				{
-					Body = { new IntNode(5) }
+					Body = { Expr.Int(5) }
 				}
 			};
 
@@ -363,11 +307,7 @@ type ArrayHolder
 					},
 					Body =
 					{
-						new DivideOperatorNode
-						{
-							LeftOperand = new GetIdentifierNode("a"),
-							RightOperand = new GetIdentifierNode("b"),
-						}
+						Expr.Div(Expr.GetIdentifier("a"), Expr.GetIdentifier("b"))
 					}
 				}
 			};
@@ -379,11 +319,7 @@ type ArrayHolder
 		public void AssignVariable()
 		{
 			var src = "a = b";
-			var result = new SetIdentifierNode
-			{
-				Identifier = "a",
-				Value = new GetIdentifierNode("b")
-			};
+			var result = Expr.SetIdentifier("a", Expr.GetIdentifier("b"));
 
 			Test(src, result);
 		}
@@ -392,18 +328,10 @@ type ArrayHolder
 		public void GetLiteralMember()
 		{
 			var src = "1.GetHashCode()";
-			var result = new InvocationNode
-			{
-				Expression = new GetMemberNode
-				{
-					Expression = new IntNode(1),
-					MemberName = "GetHashCode"
-				},
-				Arguments =
-				{
-					new UnitNode()
-				}
-			};
+			var result = Expr.Invoke(
+				Expr.Int(1),
+				"GetHashCode"
+			);
 
 			Test(src, result);
 		}
@@ -412,15 +340,13 @@ type ArrayHolder
 		public void GetDynamicMember()
 		{
 			var src = "a = b.someShit";
-			var result = new SetIdentifierNode
-			{
-				Identifier = "a",
-				Value = new GetMemberNode
-				{
-					MemberName = "someShit",
-					Expression = new GetIdentifierNode("b")
-				}
-			};
+			var result = Expr.SetIdentifier(
+				"a",
+				Expr.GetMember(
+					Expr.GetIdentifier("b"),
+					"someShit"
+				)
+			);
 
 			Test(src, result);
 		}

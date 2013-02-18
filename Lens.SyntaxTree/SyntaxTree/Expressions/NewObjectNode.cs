@@ -52,15 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var destTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
 				for (var idx = 0; idx < Arguments.Count; idx++)
-				{
-					var castNode = new CastOperatorNode
-					{
-						Expression = Arguments[idx],
-						Type = destTypes[idx]
-					};
-
-					castNode.Compile(ctx, true);
-				}
+					Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
 			}
 
 			gen.EmitCreateObject(ctor);
@@ -93,7 +85,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
-			return string.Format("new({0}, args: {1})", Type, string.Join(";", Arguments));
+			return string.Format("new({0}, args: {1})", Type.Signature, string.Join(";", Arguments));
 		}
 	}
 }

@@ -103,6 +103,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new CastOperatorNode {Expression = node, TypeSignature = type};
 		}
 
+		public static CastOperatorNode Cast(NodeBase node, Type type)
+		{
+			return new CastOperatorNode { Expression = node, Type = type };
+		}
+
 		public static BinaryOperatorNodeBase And(NodeBase left, NodeBase right)
 		{
 			return new BooleanOperatorNode {LeftOperand = left, RightOperand = right};
