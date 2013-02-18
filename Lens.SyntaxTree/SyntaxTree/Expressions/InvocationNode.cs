@@ -177,7 +177,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				}
 			}
 
-			gen.EmitCall(m_Method, true, constraint);
+			if (m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsValueType)
+				gen.EmitCall(m_Method, true, constraint);	
+			else
+				gen.EmitCall(m_Method);
 		}
 
 		#endregion
