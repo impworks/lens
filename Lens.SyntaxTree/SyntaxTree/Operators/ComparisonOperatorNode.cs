@@ -164,112 +164,114 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		private void compileNullable(Context ctx, NodeBase nullValue, NodeBase otherValue)
 		{
-//			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentILGenerator;
 
 			var nullType = nullValue.GetExpressionType(ctx);
 			var otherType = otherValue.GetExpressionType(ctx);
 			var otherNull = otherType.IsNullableType();
 
-//			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
-//			var hasValueGetter = nullType.GetMethod("get_HasValue");
-//
-//			var falseLabel = gen.DefineLabel();
-//			var endLabel = gen.DefineLabel();
+			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
+			var hasValueGetter = nullType.GetMethod("get_HasValue");
+
+			var falseLabel = gen.DefineLabel();
+			var endLabel = gen.DefineLabel();
 
 			LocalName nullVar, otherVar = null;
 			nullVar = ctx.CurrentScope.DeclareImplicitName(ctx, nullType, true);
 			if (otherNull)
-			{
 				otherVar = ctx.CurrentScope.DeclareImplicitName(ctx, otherType, true);
-
-				var code = Expr.Block(
-					Expr.Let(nullVar, nullValue),
-					Expr.Let(otherVar, otherValue),
-					Expr.Binary(
-						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
-						Expr.Compare(
-							Kind,
-							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
-							Expr.Invoke(Expr.GetIdentifier(otherVar), "GetValueOrDefault")
-						),
-						Expr.Compare(
-							Kind,
-							Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue"),
-							Expr.Invoke(Expr.GetIdentifier(otherVar), "get_HasValue")
-						)
-					)
-				);
-
-				code.Compile(ctx, true);
-			}
-			else
-			{
-				var code = Expr.Block(
-					Expr.Let(nullVar, nullValue),
-					Expr.Binary(
-						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
-						Expr.Compare(
-							Kind,
-							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
-							Expr.Cast(otherValue, Nullable.GetUnderlyingType(nullType))
-						),
-						Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue")
-					)
-				);
-
-				code.Compile(ctx, true);
-			}
-				
-
-//			// $tmp = nullValue
-//			nullValue.Compile(ctx, true);
-//			gen.EmitSaveLocal(nullVar);
-//
 //			if (otherNull)
 //			{
-//				// $tmp2 = otherValue
-//				otherValue.Compile(ctx, true);
-//				gen.EmitSaveLocal(otherVar);
-//			}
+//				otherVar = ctx.CurrentScope.DeclareImplicitName(ctx, otherType, true);
 //
-//			// $tmp == $tmp2
-//			gen.EmitLoadLocalAddress(nullVar);
-//			gen.EmitCall(getValOrDefault);
+//				var code = Expr.Block(
+//					Expr.Let(nullVar, nullValue),
+//					Expr.Let(otherVar, otherValue),
+//					Expr.Binary(
+//						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
+//						Expr.Compare(
+//							Kind,
+//							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
+//							Expr.Invoke(Expr.GetIdentifier(otherVar), "GetValueOrDefault")
+//						),
+//						Expr.Compare(
+//							Kind,
+//							Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue"),
+//							Expr.Invoke(Expr.GetIdentifier(otherVar), "get_HasValue")
+//						)
+//					)
+//				);
 //
-//			if (otherNull)
-//			{
-//				gen.EmitLoadLocalAddress(otherVar);
-//				gen.EmitCall(getValOrDefault);
+//				code.Compile(ctx, true);
 //			}
 //			else
 //			{
-//				otherValue.Compile(ctx, true);
+//				var code = Expr.Block(
+//					Expr.Let(nullVar, nullValue),
+//					Expr.Binary(
+//						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
+//						Expr.Compare(
+//							Kind,
+//							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
+//							Expr.Cast(otherValue, Nullable.GetUnderlyingType(nullType))
+//						),
+//						Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue")
+//					)
+//				);
+//
+//				code.Compile(ctx, true);
 //			}
-//
-//			gen.EmitBranchNotEquals(falseLabel);
-//
-//			// otherwise, compare HasValues
-//			gen.EmitLoadLocalAddress(nullVar);
-//			gen.EmitCall(hasValueGetter);
-//
-//			if (otherNull)
-//			{
-//				gen.EmitLoadLocalAddress(otherVar);
-//				gen.EmitCall(hasValueGetter);
-//
-//				gen.EmitCompareEqual();
-//			}
-//
-//			if(Kind == ComparisonOperatorKind.NotEquals)
-//				emitInversion(gen);
-//
-//			gen.EmitJump(endLabel);
-//
-//			gen.MarkLabel(falseLabel);
-//			gen.EmitConstant(false);
-//
-//			gen.MarkLabel(endLabel);
-//			gen.EmitNop();
+				
+
+			// $tmp = nullValue
+			nullValue.Compile(ctx, true);
+			gen.EmitSaveLocal(nullVar);
+
+			if (otherNull)
+			{
+				// $tmp2 = otherValue
+				otherValue.Compile(ctx, true);
+				gen.EmitSaveLocal(otherVar);
+			}
+
+			// $tmp == $tmp2
+			gen.EmitLoadLocalAddress(nullVar);
+			gen.EmitCall(getValOrDefault);
+
+			if (otherNull)
+			{
+				gen.EmitLoadLocalAddress(otherVar);
+				gen.EmitCall(getValOrDefault);
+			}
+			else
+			{
+				otherValue.Compile(ctx, true);
+			}
+
+			gen.EmitBranchNotEquals(falseLabel);
+
+			// otherwise, compare HasValues
+			gen.EmitLoadLocalAddress(nullVar);
+			gen.EmitCall(hasValueGetter);
+
+			if (otherNull)
+			{
+				gen.EmitLoadLocalAddress(otherVar);
+				gen.EmitCall(hasValueGetter);
+
+				gen.EmitCompareEqual();
+			}
+
+			if(Kind == ComparisonOperatorKind.NotEquals)
+				emitInversion(gen);
+
+			gen.EmitJump(endLabel);
+
+			gen.MarkLabel(falseLabel);
+			gen.EmitConstant(false);
+
+			gen.MarkLabel(endLabel);
+			gen.EmitNop();
 		}
 
 		/// <summary>

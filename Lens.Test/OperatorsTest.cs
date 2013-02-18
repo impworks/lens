@@ -150,7 +150,7 @@ var a = 1
 			Test("1.0 == 1.0", true);
 			Test("1.0 <> 1.0", false);
 
-//			Test("1 == (1 as Nullable<int>)", true);
+			Test("1 == (1 as Nullable<int>)", true);
 			Test("1 <> (1 as Nullable<int>)", false);
 			Test("(1 as Nullable<int>) == (1 as Nullable<int>)", true);
 			Test("(1 as Nullable<int>) <> (1 as Nullable<int>)", false);
