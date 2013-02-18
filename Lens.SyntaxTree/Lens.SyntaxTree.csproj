@@ -77,6 +77,7 @@
     <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
+    <Compile Include="SyntaxTree\Expr.cs" />
     <Compile Include="SyntaxTree\Expressions\GetIdentifierNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />

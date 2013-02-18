@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// <summary>
 		/// The list of catch clauses.
 		/// </summary>
-		public List<CatchNode> CatchClauses { get; private set; }
+		public List<CatchNode> CatchClauses { get; set; }
 
 		public override LexemLocation EndLocation
 		{
