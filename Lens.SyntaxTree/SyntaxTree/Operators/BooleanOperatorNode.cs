@@ -53,12 +53,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			if (Kind == BooleanOperatorKind.And)
 			{
-				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.Bool()));
+				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.False()));
 				cond.Compile(ctx, true);
 			}
 			else if (Kind == BooleanOperatorKind.Or)
 			{
-				var cond = Expr.If(LeftOperand, Expr.Block(Expr.Bool(true)), Expr.Block(RightOperand));
+				var cond = Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(RightOperand));
 				cond.Compile(ctx, true);
 			}
 			else if (Kind == BooleanOperatorKind.Xor)
