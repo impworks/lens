@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
@@ -24,7 +23,17 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new DoubleNode(value);
 		}
 
-		public static BooleanNode Bool(bool value = false)
+		public static BooleanNode True()
+		{
+			return Bool(true);
+		}
+
+		public static BooleanNode False()
+		{
+			return Bool(false);
+		}
+
+		public static BooleanNode Bool(bool value)
 		{
 			return new BooleanNode(value);
 		}
@@ -78,7 +87,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return Op<PowOperatorNode>(left, right);
 		}
 
-		public static InversionOperatorNode Inverse(NodeBase node)
+		public static InversionOperatorNode Not(NodeBase node)
 		{
 			return new InversionOperatorNode {Operand = node};
 		}
@@ -206,22 +215,22 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new SetIndexNode { Expression = expr, Index = index, Value = value};
 		}
 
-		public static GetIdentifierNode GetIdentifier(string name)
+		public static GetIdentifierNode Get(string name)
 		{
 			return new GetIdentifierNode { Identifier = name };
 		}
 
-		public static SetIdentifierNode SetIdentifier(string name, NodeBase value)
+		public static SetIdentifierNode Set(string name, NodeBase value)
 		{
 			return new SetIdentifierNode { Identifier = name, Value = value };
 		}
 
-		public static GetIdentifierNode GetIdentifier(LocalName name)
+		public static GetIdentifierNode Get(LocalName name)
 		{
 			return new GetIdentifierNode { LocalName = name };
 		}
 
-		public static SetIdentifierNode SetIdentifier(LocalName name, NodeBase value)
+		public static SetIdentifierNode Set(LocalName name, NodeBase value)
 		{
 			return new SetIdentifierNode { LocalName = name, Value = value };
 		}
@@ -249,7 +258,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static InvocationNode Invoke(string name, params NodeBase[] args)
 		{
 
-			return invoke(GetIdentifier(name), args);
+			return invoke(Get(name), args);
 		}
 
 		public static InvocationNode Invoke(TypeSignature type, string name, params NodeBase[] args)
@@ -305,7 +314,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new LetNode { LocalName = name, Value = expr };
 		}
 
-		public static LoopNode Loop(NodeBase condition, CodeBlockNode body)
+		public static LoopNode While(NodeBase condition, CodeBlockNode body)
 		{
 			return new LoopNode {Condition = condition, Body = body};
 		}
@@ -340,9 +349,9 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new CatchNode { Code = body, ExceptionType = excType };
 		}
 
-		public static CatchNode CatchAll(CodeBlockNode body)
+		public static CatchNode CatchAll(params NodeBase[] stmts)
 		{
-			return new CatchNode { Code = body };
+			return new CatchNode { Code = Block(stmts) };
 		}
 
 		#endregion
