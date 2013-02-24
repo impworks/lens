@@ -50,6 +50,9 @@ namespace Lens.SyntaxTree
 		/// <param name="entity"></param>
 		public void BindToLocation(LocationEntity entity)
 		{
+			if (entity == null)
+				return;
+
 			StartLocation = entity.StartLocation;
 			EndLocation = entity.EndLocation;
 		}

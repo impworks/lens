@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -71,6 +72,10 @@ namespace Lens.SyntaxTree.Compiler
 					idx++;
 				}
 			}
+
+			// an empty script is allowed and it's return is null
+			if (this == ctx.MainMethod && Body.Statements.Count == 0)
+				Body.Statements.Add(new UnitNode());
 
 			_IsPrepared = true;
 		}

@@ -36,6 +36,15 @@ b";
 			Test(@"(1).GetHashCode ()", 1);
 		}
 
+		[Test]
+		public void DeclareAndInvoke()
+		{
+			var src = @"
+fun test -> 10
+test ()";
+			Test(src, null);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(Compile(src), value);
