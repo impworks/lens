@@ -25,12 +25,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public DefaultOperatorNode(string type = null)
 		{
-			Type = type;
+			TypeSignature = type;
 		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return ctx.ResolveType(Type.Signature);
+			return ctx.ResolveType(TypeSignature.Signature);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override string ToString()
 		{
-			return string.Format("default({0})", Type);
+			return string.Format("default({0})", TypeSignature);
 		}
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
@@ -10,28 +9,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing a cast expression.
 	/// </summary>
-	public class CastOperatorNode : NodeBase
+	public class CastOperatorNode : TypeCheckOperatorNodeBase
 	{
-		/// <summary>
-		/// The expression to cast.
-		/// </summary>
-		public NodeBase Expression { get; set; }
-
-		/// <summary>
-		/// The type signature to cast to.
-		/// </summary>
-		public TypeSignature TypeSignature { get; set; }
-
-		/// <summary>
-		/// A resolved type to cast to.
-		/// </summary>
-		public Type Type { get; set; }
-
-		public override IEnumerable<NodeBase> GetChildNodes()
-		{
-			yield return Expression;
-		}
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
@@ -42,7 +21,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 
 			var fromType = Expression.GetExpressionType(ctx);
-			var toType = Type ?? ctx.ResolveType(TypeSignature);
+			var toType = GetExpressionType(ctx);
 
 			if (fromType == toType)
 				Expression.Compile(ctx, true);
@@ -144,30 +123,5 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				gen.EmitCall(implConv);
 			}
 		}
-
-		#region Equality members
-
-		protected bool Equals(CastOperatorNode other)
-		{
-			return Equals(Expression, other.Expression) && Equals(TypeSignature, other.TypeSignature);
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((CastOperatorNode)obj);
-		}
-
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return ((Expression != null ? Expression.GetHashCode() : 0) * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
-			}
-		}
-
-		#endregion
 	}
 }

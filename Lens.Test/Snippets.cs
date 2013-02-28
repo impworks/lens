@@ -33,7 +33,7 @@ b";
 		[Test]
 		public void InvokeDynamic()
 		{
-			Test(@"(1).GetHashCode ()", 1);
+			Test(@"1.GetHashCode ()", 1);
 		}
 
 		[Test]

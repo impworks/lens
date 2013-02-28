@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	{
 		public TypeofOperatorNode(string type = null)
 		{
-			Type = type;
+			TypeSignature = type;
 		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
@@ -23,13 +23,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 			var method = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
 
-			gen.EmitConstant(ctx.ResolveType(Type));
+			gen.EmitConstant(ctx.ResolveType(TypeSignature));
 			gen.EmitCall(method);
 		}
 
 		public override string ToString()
 		{
-			return string.Format("typeof({0})", Type);
+			return string.Format("typeof({0})", TypeSignature);
 		}
 	}
 }

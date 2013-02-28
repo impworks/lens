@@ -254,7 +254,7 @@ let typeOperator symbol typeName =
         | "typeof"  -> upcast TypeofOperatorNode()
         | "default" -> upcast DefaultOperatorNode()
         | other     -> failwithf "Unknown type operator %s" other
-    node.Type <- TypeSignature typeName
+    node.TypeSignature <- TypeSignature typeName
     node :> NodeBase
 
 // New objects

@@ -99,12 +99,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		public static DefaultOperatorNode Default(TypeSignature type)
 		{
-			return new DefaultOperatorNode {Type = type};
+			return new DefaultOperatorNode {TypeSignature = type};
 		}
 
 		public static TypeofOperatorNode Typeof(TypeSignature type)
 		{
-			return new TypeofOperatorNode {Type = type};
+			return new TypeofOperatorNode {TypeSignature = type};
 		}
 
 		public static CastOperatorNode Cast(NodeBase node, TypeSignature type)
@@ -115,6 +115,16 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static CastOperatorNode Cast(NodeBase node, Type type)
 		{
 			return new CastOperatorNode { Expression = node, Type = type };
+		}
+
+		public static IsOperatorNode IsType(NodeBase node, TypeSignature type)
+		{
+			return new IsOperatorNode { Expression = node, TypeSignature = type };
+		}
+
+		public static IsOperatorNode IsType(NodeBase node, Type type)
+		{
+			return new IsOperatorNode { Expression = node, Type = type };
 		}
 
 		public static BinaryOperatorNodeBase Binary(BooleanOperatorKind kind, NodeBase left, NodeBase right)
