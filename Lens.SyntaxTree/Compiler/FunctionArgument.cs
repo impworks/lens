@@ -34,6 +34,11 @@ namespace Lens.SyntaxTree.Compiler
 		public TypeSignature TypeSignature { get; set; }
 
 		/// <summary>
+		/// Is the argument passed by reference?
+		/// </summary>
+		public bool IsRefArgument { get; set; }
+
+		/// <summary>
 		/// Argument modifier
 		/// </summary>
 		public ArgumentModifier Modifier { get; set; }

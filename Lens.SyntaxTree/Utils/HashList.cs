@@ -77,9 +77,16 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
+		/// Get index of key.
+		/// </summary>
+		public int IndexOf(string key)
+		{
+			return _Keys.IndexOf(key);
+		}
+
+		/// <summary>
 		/// Proxied enumerator
 		/// </summary>
-		/// <returns></returns>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return _Keys.GetEnumerator();

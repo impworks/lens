@@ -59,8 +59,23 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			Expr.Cast(Value, name.Type).Compile(ctx, true);
-			gen.EmitSaveLocal(name);
+			var castNode = Expr.Cast(Value, name.Type);
+
+			if (!name.IsRefArgument)
+			{
+				castNode.Compile(ctx, true);
+				gen.EmitSaveLocal(name);
+			}
+			else
+			{
+				var argId = ctx.CurrentMethod.Arguments.IndexOf(name.Name);
+				if (!ctx.CurrentMethod.IsStatic)
+					argId++;
+
+				gen.EmitLoadArgument(argId);
+				castNode.Compile(ctx, true);
+				gen.EmitSaveObject(name.Type);
+			}
 		}
 
 		private void assignClosured(Context ctx, LocalName name)

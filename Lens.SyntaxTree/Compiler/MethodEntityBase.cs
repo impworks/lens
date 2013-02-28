@@ -104,7 +104,7 @@ namespace Lens.SyntaxTree.Compiler
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
 					var arg = Arguments[idx];
-					if (arg.Modifier != ArgumentModifier.In)
+					if (arg.IsRefArgument)
 						continue;
 
 					var local = Scope.FindName(arg.Name);

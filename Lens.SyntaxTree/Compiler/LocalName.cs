@@ -8,11 +8,12 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public class LocalName
 	{
-		public LocalName(string name, Type type, bool isConst = false)
+		public LocalName(string name, Type type, bool isConst = false, bool isRefArg = false)
 		{
 			Name = name;
 			Type = type;
 			IsConstant = isConst;
+			IsRefArgument = isRefArg;
 		}
 
 		private LocalName(LocalName other, int dist = 0)
@@ -41,6 +42,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// Is the name a constant or a variable?
 		/// </summary>
 		public readonly bool IsConstant;
+
+		/// <summary>
+		/// Does the variable represent a function argument that is passed by ref?
+		/// </summary>
+		public readonly bool IsRefArgument;
 
 		/// <summary>
 		/// The ID of the variable if it is local.

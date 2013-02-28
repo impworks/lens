@@ -436,10 +436,22 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public static void EmitSaveObject(this ILGenerator gen, Type itemType)
 		{
-			if(!itemType.IsValueType)
-				throw new InvalidOperationException("SaveObject can only be used on valuetype objects!");
-
-			gen.Emit(OpCodes.Stobj, itemType);
+			if (itemType == typeof(byte) || itemType == typeof(sbyte))
+				gen.Emit(OpCodes.Stind_I1);
+			else if (itemType == typeof(short) || itemType == typeof(ushort))
+				gen.Emit(OpCodes.Stind_I2);
+			else if (itemType == typeof(int) || itemType == typeof(uint))
+				gen.Emit(OpCodes.Stind_I4);
+			else if (itemType == typeof(long) || itemType == typeof(ulong))
+				gen.Emit(OpCodes.Stind_I8);
+			else if (itemType == typeof(float))
+				gen.Emit(OpCodes.Stind_R4);
+			else if (itemType == typeof(double))
+				gen.Emit(OpCodes.Stind_R8);
+			else if (itemType.IsClass || itemType.IsInterface)
+				gen.Emit(OpCodes.Stind_Ref);
+			else if(itemType.IsValueType)
+				gen.Emit(OpCodes.Stobj, itemType);
 		}
 
 		#endregion

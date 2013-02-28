@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The template for closure method names.
 		/// </summary>
-		public const string ClosuremethodNameTemplate = "<ClosuredMethod{0}>";
+		public const string ClosureMethodNameTemplate = "<ClosuredMethod{0}>";
 
 		public Scope()
 		{
@@ -82,8 +82,7 @@ namespace Lens.SyntaxTree.Compiler
 			for(var idx = 0; idx < method.Arguments.Count; idx++)
 			{
 				var arg = method.Arguments[idx];
-				if(arg.Modifier == ArgumentModifier.In)
-					DeclareName(arg.Name, ctx.ResolveType(arg.TypeSignature), false);
+				DeclareName(arg.Name, ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
 			}
 		}
 
@@ -100,12 +99,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Declares a new name in the current scope.
 		/// </summary>
-		public LocalName DeclareName(string name, Type type, bool isConst)
+		public LocalName DeclareName(string name, Type type, bool isConst, bool isRefArg = false)
 		{
 			if(find(name))
 				throw new LensCompilerException(string.Format("A variable named '{0}' is already defined!", name));
 
-			var n = new LocalName(name, type, isConst);
+			var n = new LocalName(name, type, isConst, isRefArg);
 			Names[name] = n;
 			return n;
 		}
@@ -132,10 +131,17 @@ namespace Lens.SyntaxTree.Compiler
 				name,
 				(loc, idx) =>
 				{
-					if (loc.LocalBuilder != null && idx > 0)
-						throw new InvalidOperationException("Cannot closure an implicit variable!");
+					var closured = idx > 0;
+					if (closured)
+					{
+						if (loc.LocalBuilder != null)
+							throw new InvalidOperationException("Cannot closure an implicit variable!");
 
-					loc.IsClosured |= idx > 0;
+						if(loc.IsRefArgument)
+							throw new LensCompilerException("A ref argument cannot be closured!");
+					}
+
+					loc.IsClosured |= closured;
 				}
 			);
 
@@ -163,7 +169,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ClosureType == null)
 				ClosureType = CreateClosureType(ctx);
 
-			var closureName = string.Format(ClosuremethodNameTemplate, ClosureType.ClosureMethodId);
+			var closureName = string.Format(ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;
 
 			var method = ClosureType.CreateMethod(closureName, args);
