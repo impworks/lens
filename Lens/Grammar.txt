@@ -46,7 +46,8 @@ dict_entry_expr     = value_expr "=>" value_expr
 new_obj_expr        = type [ invoke_list ]
 enumeration_expr    = line_expr { ";" line_expr }
 invoke_expr         = value_expr invoke_list
-invoke_list         = NL { IDENT "<|" expr NL } | { value_expr }
+invoke_list         = NL { IDENT "<|" ( byref_arg | expr ) NL } | { byref_arg | value_expr }
+byref_arg           = "ref" lvalue
 value_expr          = lvalue | atomar_expr
 type_operator_expr  = ( "typeof" | "default" ) type
 literal             = "()" | "null" | "true" | "false" | string | double | int
