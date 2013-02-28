@@ -71,6 +71,23 @@ namespace Lens.SyntaxTree.Compiler
 		#region Methods
 
 		/// <summary>
+		/// Register arguments as local variables.
+		/// </summary>
+		public void InitializeScope(Context ctx)
+		{
+			var method = ctx.CurrentMethod;
+			if (method.Arguments == null)
+				return;
+
+			for(var idx = 0; idx < method.Arguments.Count; idx++)
+			{
+				var arg = method.Arguments[idx];
+				if(arg.Modifier == ArgumentModifier.In)
+					DeclareName(arg.Name, ctx.ResolveType(arg.TypeSignature), false);
+			}
+		}
+
+		/// <summary>
 		/// Gets information about a local name.
 		/// </summary>
 		public LocalName FindName(string name)
@@ -134,9 +151,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format(ClosureTypeNameTemplate, ctx.ClosureId);
 			ClosureTypeId = ctx.ClosureId;
 			ClosureType = ctx.CreateType(closureName, isSealed: true);
-
 			ctx.ClosureId++;
-
 			return ClosureType;
 		}
 

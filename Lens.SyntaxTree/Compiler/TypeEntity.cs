@@ -49,11 +49,6 @@ namespace Lens.SyntaxTree.Compiler
 		public bool IsSealed;
 
 		/// <summary>
-		/// Checks if the compiler should generate a parameterless constructor for the type.
-		/// </summary>
-		public bool GenerateDefaultConstructor;
-
-		/// <summary>
 		/// Type name.
 		/// </summary>
 		public string Name;
@@ -120,8 +115,6 @@ namespace Lens.SyntaxTree.Compiler
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
-
-			// todo: generate default ctor?
 
 			_IsPrepared = true;
 		}

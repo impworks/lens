@@ -494,6 +494,14 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Call a constructor as a method.
+		/// </summary>
+		public static void EmitCall(this ILGenerator gen, ConstructorInfo method)
+		{
+			gen.Emit(OpCodes.Call, method);
+		}
+
+		/// <summary>
 		/// Returns from the method.
 		/// </summary>
 		public static void EmitReturn(this ILGenerator gen)

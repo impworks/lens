@@ -14,9 +14,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new type entity with given name.
 		/// </summary>
-		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false)
+		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false, bool defaultCtor = true)
 		{
-			var te = createTypeCore(name, isSealed);
+			var te = createTypeCore(name, isSealed, defaultCtor);
 			te.ParentSignature = parent;
 			return te;
 		}
@@ -24,9 +24,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new type entity with given name and a resolved type for parent.
 		/// </summary>
-		internal TypeEntity CreateType(string name, Type parent, bool isSealed = false)
+		internal TypeEntity CreateType(string name, Type parent, bool isSealed = false, bool defaultCtor = true)
 		{
-			var te = createTypeCore(name, isSealed);
+			var te = createTypeCore(name, isSealed, defaultCtor);
 			te.Parent = parent;
 			return te;
 		}
@@ -253,7 +253,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Create a type entry without setting its parent info.
 		/// </summary>
-		private TypeEntity createTypeCore(string name, bool isSealed)
+		private TypeEntity createTypeCore(string name, bool isSealed, bool defaultCtor)
 		{
 			if (_DefinedTypes.ContainsKey(name))
 				Error("Type '{0}' has already been defined!", name);
@@ -262,9 +262,12 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				Name = name,
 				IsSealed = isSealed,
-				GenerateDefaultConstructor = true
 			};
 			_DefinedTypes.Add(name, te);
+
+			if (defaultCtor)
+				te.CreateConstructor();
+
 			return te;
 		}
 

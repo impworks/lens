@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Compiler
 		public FunctionArgument(string name, TypeSignature type, ArgumentModifier modifier = ArgumentModifier.In)
 		{
 			Name = name;
-			Type = type;
+			TypeSignature = type;
 			Modifier = modifier;
 		}
 
@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Argument type
 		/// </summary>
-		public TypeSignature Type { get; set; }
+		public TypeSignature TypeSignature { get; set; }
 
 		/// <summary>
 		/// Argument modifier
@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Compiler
 
 		protected bool Equals(FunctionArgument other)
 		{
-			return string.Equals(Name, other.Name) && string.Equals(Type, other.Type) && Modifier == other.Modifier;
+			return string.Equals(Name, other.Name) && string.Equals(TypeSignature, other.TypeSignature) && Modifier == other.Modifier;
 		}
 
 		public override bool Equals(object obj)
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Compiler
 			unchecked
 			{
 				int hashCode = (Name != null ? Name.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (int)Modifier;
 				return hashCode;
 			}

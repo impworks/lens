@@ -18,6 +18,11 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Checks if the method belongs to the type, not its instances.
+		/// </summary>
+		public bool IsStatic;
+
+		/// <summary>
 		/// The argument list.
 		/// </summary>
 		public HashList<FunctionArgument> Arguments;
@@ -68,13 +73,60 @@ namespace Lens.SyntaxTree.Compiler
 			var backup = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
 
+			emitPrelude(ctx);
 			compileCore(ctx);
+			emitTrailer(ctx);
 
 			Generator.EmitReturn();
 
 			ctx.CurrentMethod = backup;
 		}
 
+		/// <summary>
+		/// Creates closure instances.
+		/// </summary>
+		protected virtual void emitPrelude(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var closure = Scope.ClosureVariable;
+			var closureType = Scope.ClosureType;
+
+			if (closure != null)
+			{
+				var ctor = closureType.ResolveConstructor(Type.EmptyTypes);
+
+				gen.EmitCreateObject(ctor);
+				gen.EmitSaveLocal(closure);
+			}
+
+			if (Arguments != null)
+			{
+				for (var idx = 0; idx < Arguments.Count; idx++)
+				{
+					var arg = Arguments[idx];
+					if (arg.Modifier != ArgumentModifier.In)
+						continue;
+
+					var local = Scope.FindName(arg.Name);
+					if (local.IsClosured)
+					{
+						var fi = closureType.ResolveField(local.ClosureFieldName);
+						gen.EmitLoadLocal(closure);
+						gen.EmitLoadArgument(idx);
+						gen.EmitSaveField(fi);
+					}
+					else
+					{
+						gen.EmitLoadArgument(idx);
+						gen.EmitSaveLocal(local);
+					}
+				}
+			}
+		}
+
 		protected abstract void compileCore(Context ctx);
+
+		protected virtual void emitTrailer(Context ctx)
+		{ }
 	}
 }

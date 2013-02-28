@@ -23,13 +23,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public override void PrepareSelf()
 		{
+			// todo: remove when we support static ctors
+			if(IsStatic)
+				throw new LensCompilerException("A constructor must not be marked as static!");
+
 			if (_IsPrepared)
 				return;
 
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
 					? new Type[0]
-					: Arguments.Values.Select(fa => ContainerType.Context.ResolveType(fa.Type.Signature)).ToArray();
+					: Arguments.Values.Select(fa => ContainerType.Context.ResolveType(fa.TypeSignature.Signature)).ToArray();
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
@@ -39,6 +43,18 @@ namespace Lens.SyntaxTree.Compiler
 		protected override void compileCore(Context ctx)
 		{
 			Body.Compile(ctx, false);
+		}
+
+		// call default constructor
+		protected override void emitPrelude(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var ctor = typeof (object).GetConstructor(Type.EmptyTypes);
+
+			gen.EmitLoadArgument(0);
+			gen.EmitCall(ctor);
+
+			base.emitPrelude(ctx);
 		}
 
 		#endregion

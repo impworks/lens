@@ -12,11 +12,6 @@ namespace Lens.SyntaxTree.Compiler
 		#region Fields
 
 		/// <summary>
-		/// Checks if the method belongs to the type, not its instances.
-		/// </summary>
-		public bool IsStatic;
-
-		/// <summary>
 		/// Checks if the method can be overridden in derived types or is overriding a parent method itself.
 		/// </summary>
 		public bool IsVirtual;
@@ -57,7 +52,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
 					? new Type[0]
-					: Arguments.Values.Select(fa => ctx.ResolveType(fa.Type.Signature)).ToArray();
+					: Arguments.Values.Select(fa => ctx.ResolveType(fa.TypeSignature.Signature)).ToArray();
 
 			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, ArgumentTypes);
 			Generator = MethodBuilder.GetILGenerator(Context.ILStreamSize);
