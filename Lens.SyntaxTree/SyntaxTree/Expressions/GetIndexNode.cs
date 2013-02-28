@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -26,9 +29,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			var idxType = Index.GetExpressionType(ctx);
-			var getter = exprType.GetMethod("get_Index", new[] {idxType});
-			if (getter != null)
-				return getter.ReturnType;
+			var indexPty = findGetter(exprType, idxType);
+			if (indexPty != null)
+				return indexPty.GetGetMethod().ReturnType;
 
 			Error("Type '{0}' cannot be indexed.", exprType);
 			return null;
@@ -38,12 +41,62 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			if (Expression != null)
 				yield return Expression;
+
 			yield return Index;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			// ensure validation
+			GetExpressionType(ctx);
+
+			var exprType = Expression.GetExpressionType(ctx);
+
+			if (exprType.IsArray)
+				compileArray(ctx);
+			else
+				compileCustom(ctx);
+		}
+
+		private void compileArray(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var exprType = Expression.GetExpressionType(ctx);
+			var itemType = exprType.GetElementType();
+
+			Expression.Compile(ctx, true);
+			Index.Compile(ctx, true);
+			gen.EmitLoadIndex(itemType);
+		}
+
+		private void compileCustom(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var exprType = Expression.GetExpressionType(ctx);
+			var idxType = Index.GetExpressionType(ctx);
+
+			var indexPty = findGetter(exprType, idxType);
+			var method = indexPty.GetGetMethod();
+
+			Expression.Compile(ctx, true);
+
+			var cast = Expr.Cast(Index, method.GetParameters()[0].ParameterType);
+			cast.Compile(ctx, true);
+
+			gen.EmitCall(method);
+		}
+
+		private PropertyInfo findGetter(Type exprType, Type idxType)
+		{
+			return exprType.GetProperties().FirstOrDefault(
+				p =>
+				{
+					var args = p.GetIndexParameters();
+					return args.Length == 1 && args[0].ParameterType.IsExtendablyAssignableFrom(idxType);
+				}
+			);
 		}
 
 		public override string ToString()

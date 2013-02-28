@@ -162,6 +162,14 @@ var a = 1
 			Test("null == new object ()", false);
 		}
 
+		[Test]
+		public void GetIndexTest()
+		{
+			Test("new [1; 2; 3][1]", 2);
+			Test(@"new <""a""; ""b""; ""c"">[1]", "b");
+			Test(@"new { ""a"" => 1; ""b"" => 2}[""a""]", 1);
+		}
+
 		private void Test(string src, object value)
 		{
 			var result = Compile(src);
