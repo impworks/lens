@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -25,13 +24,53 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			if (Expression != null)
 				yield return Expression;
+
 			yield return Index;
 			yield return Value;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var exprType = Expression.GetExpressionType(ctx);
+
+			if (exprType.IsArray)
+				compileArray(ctx);
+			else
+				compileCustom(ctx);
+		}
+
+		private void compileArray(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var exprType = Expression.GetExpressionType(ctx);
+			var itemType = exprType.GetElementType();
+
+			Expression.Compile(ctx, true);
+			Index.Compile(ctx, true);
+			Value.Compile(ctx, true);
+			gen.EmitSaveIndex(itemType);
+		}
+
+		private void compileCustom(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var exprType = Expression.GetExpressionType(ctx);
+			var idxType = Index.GetExpressionType(ctx);
+
+			var pty = findIndexer(exprType, idxType, true);
+			var method = pty.GetSetMethod();
+			var args = method.GetParameters();
+			var idxDest = args[0].ParameterType;
+			var valDest = args[1].ParameterType;
+
+			Expression.Compile(ctx, true);
+
+			Expr.Cast(Index, idxDest).Compile(ctx, true);
+			Expr.Cast(Value, valDest).Compile(ctx, true);
+
+			gen.EmitCall(method);
 		}
 
 		#region Equality members

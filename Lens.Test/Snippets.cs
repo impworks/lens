@@ -45,6 +45,37 @@ test ()";
 			Test(src, null);
 		}
 
+		[Test]
+		public void ArrayIndexSetter()
+		{
+			var src = @"
+var arr = new [1; 2; 3]
+arr[1] = 10
+arr[1] + arr[0]";
+			Test(src, 11);
+		}
+
+		[Test]
+		public void ListIndexSetter()
+		{
+			var src = @"
+var list = new <1; 2; 3>
+list[1] = 10
+list[1] + list[0]";
+			Test(src, 11);
+		}
+
+		[Test]
+		public void DictIndexSetter()
+		{
+			var src = @"
+var dict = new { ""a"" => 1; ""b"" => 2 }
+dict[""a""] = 2
+dict[""a""] + dict[""b""]
+";
+			Test(src, 4);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(Compile(src), value);
