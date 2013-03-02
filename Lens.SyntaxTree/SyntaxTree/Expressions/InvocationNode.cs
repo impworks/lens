@@ -147,19 +147,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			if (m_InvocationSource != null)
 			{
-				m_InvocationSource.Compile(ctx, true);
-
 				var type = m_InvocationSource.GetExpressionType(ctx);
-				if (type.IsValueType)
+
+				if (m_InvocationSource is IPointerProvider)
 				{
-					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
-					gen.EmitSaveLocal(tmpVar);
-
-					gen.EmitLoadLocalAddress(tmpVar);
-
-					if (!type.IsNumericType())
-						constraint = type;
+					(m_InvocationSource as IPointerProvider).PointerRequired = true;
+					m_InvocationSource.Compile(ctx, true);
 				}
+				else
+				{
+					m_InvocationSource.Compile(ctx, true);
+
+					if (type.IsValueType)
+					{
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
+						gen.EmitSaveLocal(tmpVar);
+						gen.EmitLoadLocalAddress(tmpVar);
+					}
+				}
+
+				if (type.IsValueType && !type.IsNumericType())
+					constraint = type;
 			}
 
 			if (m_ArgTypes.Length > 0)

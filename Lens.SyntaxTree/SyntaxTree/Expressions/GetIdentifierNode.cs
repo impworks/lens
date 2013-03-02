@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -9,8 +8,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a local variable or a function.
 	/// </summary>
-	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity
+	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
+		/// <summary>
+		/// Local and closured variables can provide a location pointer.
+		/// </summary>
+		public bool PointerRequired { get; set; }
+
 		public GetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
@@ -85,13 +89,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitLoadField(clsField);
+
+			if(PointerRequired)
+				gen.EmitLoadFieldAddress(clsField);
+			else
+				gen.EmitLoadField(clsField);
 		}
 
 		private void getLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
-			gen.EmitLoadLocal(name);
+
+			if(PointerRequired)
+				gen.EmitLoadLocalAddress(name);
+			else
+				gen.EmitLoadLocal(name);	
 		}
 
 		public override string ToString()

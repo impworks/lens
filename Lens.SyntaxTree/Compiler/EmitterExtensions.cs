@@ -263,19 +263,19 @@ namespace Lens.SyntaxTree.Compiler
 		#region Saving and loading
 
 		/// <summary>
-		/// Loads the value of the field onto the stack.
+		/// Loads the value of the instance field onto the stack.
 		/// </summary>
 		public static void EmitLoadField(this ILGenerator gen, FieldInfo field)
 		{
-			gen.Emit(OpCodes.Ldfld, field);
+			gen.Emit(field.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld, field);
 		}
 
 		/// <summary>
-		/// Loads the address of the field onto the stack.
+		/// Loads the address of the instance field onto the stack.
 		/// </summary>
-		public static void EmitLoadFieldAddr(this ILGenerator gen, FieldInfo field)
+		public static void EmitLoadFieldAddress(this ILGenerator gen, FieldInfo field)
 		{
-			gen.Emit(OpCodes.Ldflda, field);
+			gen.Emit(field.IsStatic ? OpCodes.Ldsflda : OpCodes.Ldflda, field);
 		}
 
 		/// <summary>
@@ -283,7 +283,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public static void EmitSaveField(this ILGenerator gen, FieldInfo field)
 		{
-			gen.Emit(OpCodes.Stfld, field);
+			gen.Emit(field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, field);
 		}
 
 		/// <summary>

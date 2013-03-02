@@ -8,9 +8,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a read-access to an array or list's value.
 	/// </summary>
-	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity
+	public class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
+		/// <summary>
+		/// Cached property information.
+		/// </summary>
 		private PropertyInfo IndexProperty;
+
+		/// <summary>
+		/// Array indexer can return a pointer.
+		/// </summary>
+		public bool PointerRequired { get; set; }
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -53,7 +61,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			Expression.Compile(ctx, true);
 			Index.Compile(ctx, true);
-			gen.EmitLoadIndex(itemType);
+
+			if(PointerRequired)
+				gen.EmitLoadIndexAddress(itemType);
+			else
+				gen.EmitLoadIndex(itemType);
 		}
 
 		private void compileCustom(Context ctx)
@@ -61,6 +73,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 			var method = IndexProperty.GetGetMethod();
 
+			if (Expression is IPointerProvider)
+				(Expression as IPointerProvider).PointerRequired = PointerRequired;
 			Expression.Compile(ctx, true);
 
 			var cast = Expr.Cast(Index, method.GetParameters()[0].ParameterType);
