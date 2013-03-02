@@ -104,10 +104,19 @@ res";
 		}
 	
 		[Test]
-		public void Throw()
+		public void ThrowNew()
 		{
 			var src = "throw new NotImplementedException ()";
 			Assert.Throws<NotImplementedException>(() =>Compile(src));
+		}
+
+		[Test]
+		public void ThrowExisting()
+		{
+			var src = @"
+var ex = new NotImplementedException ()
+throw ex";
+			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
 		private void Test(string src, object value)
