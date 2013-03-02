@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -30,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return Body.GetExpressionType(ctx);
+			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -41,7 +42,36 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var beginLabel = gen.DefineLabel();
+			var endLabel = gen.DefineLabel();
+
+			var loopType = GetExpressionType(ctx);
+			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
+
+			LocalName tmpVar = null;
+			if (saveLast)
+				tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, loopType, false);
+
+			gen.MarkLabel(beginLabel);
+
+			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			gen.EmitConstant(false);
+			gen.EmitBranchEquals(endLabel);
+
+			Body.Compile(ctx, mustReturn);
+
+			if (saveLast)
+				gen.EmitSaveLocal(tmpVar);
+
+			gen.EmitJump(beginLabel);
+
+			gen.MarkLabel(endLabel);
+			if (saveLast)
+				gen.EmitLoadLocal(tmpVar);
+			else
+				gen.EmitNop();
 		}
 
 		#region Equality members

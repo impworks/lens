@@ -76,6 +76,32 @@ dict[""a""] + dict[""b""]
 			Test(src, 4);
 		}
 
+		[Test]
+		public void Loop()
+		{
+			var src = @"
+var a = 1
+var idx = 0
+while(idx < 5)
+    a = a * 2
+    idx = idx + 1
+a";
+
+			Test(src, 32);
+		}
+
+		[Test]
+		public void LoopResult()
+		{
+			var src = @"
+var a = 1
+var res = while (a < 10)
+    a = a * 2
+    a
+res";
+			Test(src, 16);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(Compile(src), value);
