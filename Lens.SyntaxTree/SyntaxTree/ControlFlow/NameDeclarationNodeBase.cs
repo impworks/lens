@@ -9,9 +9,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	public abstract class NameDeclarationBase : NodeBase, IStartLocationTrackingEntity
+	public abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
-		protected NameDeclarationBase(string name, bool isConst)
+		protected NameDeclarationNodeBase(string name, bool isConst)
 		{
 			Name = name;
 			IsConstant = isConst;
@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				Error("Value type cannot be inferred from usage. Please cast the null value to a type!");
 
 			if(type == typeof(Unit) || type == typeof(void))
-				Error("A function that does not return any value cannot be used as assignment source!");
+				Error("A function or expression that does not return any value cannot be used as assignment source!");
 
 			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
 		}
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		#region Equality members
 
-		protected bool Equals(NameDeclarationBase other)
+		protected bool Equals(NameDeclarationNodeBase other)
 		{
 			return IsConstant.Equals(other.IsConstant) && string.Equals(Name, other.Name) && Equals(Value, other.Value);
 		}
@@ -86,7 +86,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((NameDeclarationBase) obj);
+			return Equals((NameDeclarationNodeBase) obj);
 		}
 
 		public override int GetHashCode()

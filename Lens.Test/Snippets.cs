@@ -1,4 +1,5 @@
-﻿using Lens.SyntaxTree;
+﻿using System;
+using Lens.SyntaxTree;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -100,6 +101,13 @@ var res = while (a < 10)
     a
 res";
 			Test(src, 16);
+		}
+	
+		[Test]
+		public void Throw()
+		{
+			var src = "throw new NotImplementedException ()";
+			Assert.Throws<NotImplementedException>(() =>Compile(src));
 		}
 
 		private void Test(string src, object value)

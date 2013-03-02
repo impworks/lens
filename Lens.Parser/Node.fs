@@ -75,7 +75,7 @@ let codeBlock (lines : NodeBase list) =
     CodeBlockNode(Statements = ResizeArray<_>(lines))
 
 let variableDeclaration binding name value =
-    let node : NameDeclarationBase =
+    let node : NameDeclarationNodeBase =
         match binding with
         | "let" -> upcast LetNode()
         | "var" -> upcast VarNode()

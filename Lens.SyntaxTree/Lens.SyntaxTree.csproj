@@ -114,7 +114,7 @@
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\NameDeclarationBase.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\NameDeclarationNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TryNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
     <Compile Include="SyntaxTree\Expressions\InvocationNodeBase.cs" />
