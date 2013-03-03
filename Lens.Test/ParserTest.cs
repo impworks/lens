@@ -283,7 +283,7 @@ type ArrayHolder
 			var src = "let getFive = -> 5";
 			var result = new LetNode("getFive")
 			{
-				Value = new FunctionNode
+				Value = new LambdaNode
 				{
 					Body = { Expr.Int(5) }
 				}
@@ -298,7 +298,7 @@ type ArrayHolder
 			var src = "let div = (a:System.Float b:System.Float) -> a / b";
 			var result = new LetNode("div")
 			{
-				Value = new FunctionNode
+				Value = new LambdaNode
 				{
 					Arguments =
 					{
@@ -457,7 +457,7 @@ type ArrayHolder
     logger.log a
     a ** 2";
 
-			var result = new FunctionNode
+			var result = new LambdaNode
 				{
 					Arguments = { new FunctionArgument("a", "double") },
 					Body = Expr.Block(
@@ -490,7 +490,7 @@ test
 			var result = Expr.Invoke(
 				"test",
 				Expr.True(),
-				new FunctionNode
+				new LambdaNode
 				{
 					Arguments = { new FunctionArgument("a", "double") },
 					Body = Expr.Block(

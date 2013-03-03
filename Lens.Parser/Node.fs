@@ -129,7 +129,7 @@ let getterNode (symbol, accessorChain) =
             upcast root
 
 let lambda parameters code : NodeBase =
-    let node = FunctionNode(Body = code)
+    let node = LambdaNode(Body = code)
     Option.iter
     <| fun p -> node.Arguments <- p
     <| parameters
