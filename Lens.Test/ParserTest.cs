@@ -671,6 +671,14 @@ catch
 		}
 
 		[Test]
+		public void IsOperator()
+		{
+			var src = "1 is double";
+			var result = Expr.IsType(Expr.Int(1), new TypeSignature("double"));
+			Test(src, result);
+		}
+
+		[Test]
 		public void ManyParameters()
 		{
 			var src = @"test 1337 true ""hello"" (new(13.37; new [1; 2]))";

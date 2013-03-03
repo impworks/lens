@@ -189,10 +189,12 @@ let string value =
     StringNode(Value = value) :> NodeBase
 
 // Operators
-let castNode expression typeName =
-    match typeName with
-    | None      -> expression
-    | Some name -> CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name) :> NodeBase
+let castNode expression castOption : NodeBase =
+    match castOption with
+    | None              -> expression
+    | Some ("is", name) -> upcast IsOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
+    | Some ("as", name) -> upcast CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
+    | Some (op, name)   -> failwithf "Unknown cast operator kind %s" op
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     let booleanKind = function

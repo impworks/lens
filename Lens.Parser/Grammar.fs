@@ -32,6 +32,7 @@ let keywords = Set.ofList ["using"
                            "not"
                            "typeof"
                            "default"
+                           "is"
                            "as"
                            "ref"
                            "out"
@@ -218,7 +219,7 @@ lambda_exprRef        := pipe2
                          <| Node.lambda
 line_exprRef          := pipe2
                          <| line_expr_1
-                         <| opt (keyword "as" >>? ``type``)
+                         <| opt ((keyword "as" <|> keyword "is") .>>.? ``type``)
                          <| Node.castNode
 line_expr_1Ref        := pipe2
                          <| line_expr_2
