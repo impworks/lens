@@ -281,7 +281,7 @@ value_exprRef         := choice [attempt lvalue      |>> Node.getterNode
                                  attempt atomar_expr]
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
-                         <| (token "(" >>? ``type`` .>>? token ")")
+                         <| ``type``
                          <| Node.typeOperator
 literalRef            := choice [attempt <| token "()"                         |>> Node.unit
                                  attempt <| keyword "null"                     |>> Node.nullNode

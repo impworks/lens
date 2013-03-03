@@ -627,7 +627,7 @@ catch
 		[Test]
 		public void Typeof()
 		{
-			var src = "let a = typeof(int)";
+			var src = "let a = typeof int";
 			var result = Expr.Let("a", Expr.Typeof("int"));
 			Test(src, result);
 		}
@@ -635,7 +635,7 @@ catch
 		[Test]
 		public void DefaultOf()
 		{
-			var src = "let b = default (System.Collections.Generic.List<int>)";
+			var src = "let b = default System.Collections.Generic.List<int>";
 			var result = Expr.Let("b", Expr.Default("System.Collections.Generic.List<int>"));
 			Test(src, result);
 		}

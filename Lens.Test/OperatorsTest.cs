@@ -12,24 +12,24 @@ namespace Lens.Test
 		[Test]
 		public void TypeofTest()
 		{
-			TestType<int>("typeof(int)");
-			TestType<float>("typeof(float)");
-			TestType<object>("typeof(object)");
+			TestType<int>("typeof int");
+			TestType<float>("typeof float");
+			TestType<object>("typeof object");
 
-			TestType<Dictionary<int, Exception>>("typeof(Dictionary<int, System.Exception>)");
+			TestType<Dictionary<int, Exception>>("typeof Dictionary<int, System.Exception>");
 		}
 
 		[Test]
 		public void DefaultTest()
 		{
-			Test("default(int)", 0);
-			Test("default(float)", 0.0f);
-			Test("default(long)", 0L);
-			Test("default(bool)", false);
+			Test("default int", 0);
+			Test("default float", 0.0f);
+			Test("default long", 0L);
+			Test("default bool", false);
 
-			Test("default(string)", null);
+			Test("default string", null);
 
-			Test("default(Nullable<int>)", default(int?));
+			Test("default Nullable<int>", default(int?));
 		}
 
 		[Test]
