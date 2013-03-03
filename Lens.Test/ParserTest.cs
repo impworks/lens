@@ -750,6 +750,21 @@ catch
 			Test(src, result);
 		}
 
+		[Test]
+		public void DefinitionAndInvocation()
+		{
+			var src = @"fun test -> 10
+test ()";
+			var definition = new FunctionNode
+			{
+				Name = "test",
+				Body = Expr.Block(Expr.Int(10))
+			};
+			var invocation = Expr.Invoke("test", Expr.Unit());
+
+			Test(src, definition, invocation);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();

@@ -153,11 +153,11 @@ recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.inden
 recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type" >>? identifier .>>.? Indentation.indentedBlock typedef_stmt |>> Node.typeNode
 typedef_stmtRef       := token "|" >>? identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
-funcdefRef            := pipe3
-                         <| (keyword "fun" >>? identifier)
-                         <| (func_params .>>? token "->")
-                         <| block
-                         <| Node.functionNode
+funcdefRef            := (pipe3
+                          <| (keyword "fun" >>? identifier)
+                          <| (func_params .>>? token "->")
+                          <| block
+                          <| Node.functionNode) .>>? nextLine
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
 blockRef              := ((Indentation.indentedBlock block_line)
                           <|> (valueToList local_stmt))
