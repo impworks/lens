@@ -162,7 +162,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					{
 						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
 						gen.EmitSaveLocal(tmpVar);
-						gen.EmitLoadLocalAddress(tmpVar);
+						gen.EmitLoadLocal(tmpVar, true);
 					}
 				}
 

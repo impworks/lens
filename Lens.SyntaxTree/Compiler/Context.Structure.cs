@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -61,7 +62,7 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Resolves a method by it's name and agrument list.
+		/// Resolves a method by its name and agrument list.
 		/// </summary>
 		public MethodInfo ResolveMethod(string typeName, string methodName, Type[] args = null)
 		{
@@ -69,24 +70,40 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Resolves a method by it's name and agrument list.
+		/// Resolves a method by its name and agrument list.
 		/// </summary>
 		public MethodInfo ResolveMethod(Type type, string methodName, Type[] args = null)
 		{
 			if(args == null)
 				args = new Type[0];
 
-			if (type is TypeBuilder)
-			{
-				var entity = _DefinedTypes[type.Name];
-				return entity.ResolveMethod(methodName, args);
-			}
+			var method = type is TypeBuilder
+				? _DefinedTypes[type.Name].ResolveMethod(methodName, args)
+				: type.GetMethod(methodName, args);
 
-			return type.GetMethod(methodName, args);
+			if(method == null)
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
+
+			return method;
 		}
 
 		/// <summary>
-		/// Resolves a field by it's name.
+		/// Resolves a group of methods by the name.
+		/// </summary>
+		public MethodInfo[] ResolveMethodGroup(Type type, string methodName)
+		{
+			var group = type is TypeBuilder
+				? _DefinedTypes[type.Name].ResolveMethodGroup(methodName)
+				: type.GetMethods().Where(m => m.Name == methodName).ToArray();
+
+			if(group == null || group.Length == 0)
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
+
+			return group;
+		}
+
+		/// <summary>
+		/// Resolves a field by its name.
 		/// </summary>
 		public FieldInfo ResolveField(string typeName, string fieldName)
 		{
@@ -94,17 +111,33 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Resolves a field
+		/// Resolves a field by its name.
 		/// </summary>
 		public FieldInfo ResolveField(Type type, string fieldName)
 		{
-			if (type is TypeBuilder)
-			{
-				var entity = _DefinedTypes[type.Name];
-				return entity.ResolveField(fieldName);
-			}
+			var field = type is TypeBuilder
+				? _DefinedTypes[type.Name].ResolveField(fieldName)
+				: type.GetField(fieldName);
 
-			return type.GetField(fieldName);
+			if(field == null)
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any field named '{1}'.", type, fieldName));
+
+			return field;
+		}
+
+		/// <summary>
+		/// Resolves a property by its name.
+		/// </summary>
+		public PropertyInfo ResolveProperty(Type type, string propertyName)
+		{
+			var pty = type is TypeBuilder
+				? null
+				: type.GetProperty(propertyName);
+
+			if(pty == null)
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any property named '{1}'.", type, propertyName));
+
+			return pty;
 		}
 
 		/// <summary>
@@ -123,13 +156,14 @@ namespace Lens.SyntaxTree.Compiler
 			if (args == null)
 				args = new Type[0];
 
-			if (type is TypeBuilder)
-			{
-				var entity = _DefinedTypes[type.Name];
-				return entity.ResolveConstructor(args);
-			}
+			var ctor = type is TypeBuilder
+				? _DefinedTypes[type.Name].ResolveConstructor(args)
+				: type.GetConstructor(args);
 
-			return type.GetConstructor(args);
+			if(ctor == null)
+				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a constructor with the given arguments.", type));
+
+			return ctor;
 		}
 
 		/// <summary>
@@ -285,4 +319,3 @@ namespace Lens.SyntaxTree.Compiler
 		#endregion
 	}
 }
- 

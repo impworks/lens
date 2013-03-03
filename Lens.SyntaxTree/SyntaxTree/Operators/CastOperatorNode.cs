@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				if (toType.IsNullableType())
 				{
 					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
-					gen.EmitLoadLocalAddress(tmpVar);
+					gen.EmitLoadLocal(tmpVar, true);
 					gen.EmitInitObject(toType);
 					gen.EmitLoadLocal(tmpVar);
 				}

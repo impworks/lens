@@ -265,17 +265,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads the value of the instance field onto the stack.
 		/// </summary>
-		public static void EmitLoadField(this ILGenerator gen, FieldInfo field)
+		public static void EmitLoadField(this ILGenerator gen, FieldInfo field, bool getPointer = false)
 		{
-			gen.Emit(field.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld, field);
-		}
-
-		/// <summary>
-		/// Loads the address of the instance field onto the stack.
-		/// </summary>
-		public static void EmitLoadFieldAddress(this ILGenerator gen, FieldInfo field)
-		{
-			gen.Emit(field.IsStatic ? OpCodes.Ldsflda : OpCodes.Ldflda, field);
+			if (getPointer)
+				gen.Emit(field.IsStatic ? OpCodes.Ldsflda : OpCodes.Ldflda, field);
+			else
+				gen.Emit(field.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld, field);
 		}
 
 		/// <summary>
@@ -289,27 +284,26 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads the value of an argument onto the stack.
 		/// </summary>
-		public static void EmitLoadArgument(this ILGenerator gen, int argId)
+		public static void EmitLoadArgument(this ILGenerator gen, int argId, bool getPointer = false)
 		{
-			switch (argId)
+			if (getPointer)
 			{
-				case 0: gen.Emit(OpCodes.Ldarg_0); break;
-				case 1: gen.Emit(OpCodes.Ldarg_1); break;
-				case 2: gen.Emit(OpCodes.Ldarg_2); break;
-				case 3: gen.Emit(OpCodes.Ldarg_3); break;
-				default: gen.Emit(OpCodes.Ldarg, (short)argId); break;
+				if (argId < 255)
+					gen.Emit(OpCodes.Ldarga_S, (byte)argId);
+				else
+					gen.Emit(OpCodes.Ldarga, (short)argId);
 			}
-		}
-
-		/// <summary>
-		/// Loads the address of the field onto the stack.
-		/// </summary>
-		public static void EmitLoadArgumentAddress(this ILGenerator gen, int argId)
-		{
-			if(argId < 255)
-				gen.Emit(OpCodes.Ldarga_S, (byte)argId);
 			else
-				gen.Emit(OpCodes.Ldarga, (short)argId);
+			{
+				switch (argId)
+				{
+					case 0: gen.Emit(OpCodes.Ldarg_0); break;
+					case 1: gen.Emit(OpCodes.Ldarg_1); break;
+					case 2: gen.Emit(OpCodes.Ldarg_2); break;
+					case 3: gen.Emit(OpCodes.Ldarg_3); break;
+					default: gen.Emit(OpCodes.Ldarg, (short)argId); break;
+				}
+			}
 		}
 
 		/// <summary>
@@ -326,26 +320,28 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads the value of a local variable onto the stack.
 		/// </summary>
-		public static void EmitLoadLocal(this ILGenerator gen, LocalName loc)
+		public static void EmitLoadLocal(this ILGenerator gen, LocalName loc, bool getPointer = false)
 		{
 			var varId = loc.LocalId.Value;
-			switch (varId)
-			{
-				case 0: gen.Emit(OpCodes.Ldloc_0); break;
-				case 1: gen.Emit(OpCodes.Ldloc_1); break;
-				case 2: gen.Emit(OpCodes.Ldloc_2); break;
-				case 3: gen.Emit(OpCodes.Ldloc_3); break;
-				default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
-			}
-		}
 
-		public static void EmitLoadLocalAddress(this ILGenerator gen, LocalName loc)
-		{
-			var varId = loc.LocalId.Value;
-			if (varId < 255)
-				gen.Emit(OpCodes.Ldloca_S, (byte)varId);
+			if (getPointer)
+			{
+				if (varId < 255)
+					gen.Emit(OpCodes.Ldloca_S, (byte)varId);
+				else
+					gen.Emit(OpCodes.Ldloca, (short)varId);
+			}
 			else
-				gen.Emit(OpCodes.Ldloca, (short)varId);
+			{
+				switch (varId)
+				{
+					case 0: gen.Emit(OpCodes.Ldloc_0); break;
+					case 1: gen.Emit(OpCodes.Ldloc_1); break;
+					case 2: gen.Emit(OpCodes.Ldloc_2); break;
+					case 3: gen.Emit(OpCodes.Ldloc_3); break;
+					default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
+				}
+			}
 		}
 
 		/// <summary>
@@ -360,41 +356,40 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Loads an array item of the specified type onto the stack.
 		/// </summary>
-		public static void EmitLoadIndex(this ILGenerator gen, Type itemType)
+		public static void EmitLoadIndex(this ILGenerator gen, Type itemType, bool getPointer = false)
 		{
-			if(itemType == typeof(sbyte))
-				gen.Emit(OpCodes.Ldelem_I1);
-			else if (itemType == typeof(short))
-				gen.Emit(OpCodes.Ldelem_I2);
-			else if (itemType == typeof(int))
-				gen.Emit(OpCodes.Ldelem_I4);
-			else if (itemType == typeof(long) || itemType == typeof(ulong))
-				gen.Emit(OpCodes.Ldelem_I8);
-			else if (itemType == typeof(float))
-				gen.Emit(OpCodes.Ldelem_R4);
-			else if (itemType == typeof(double))
-				gen.Emit(OpCodes.Ldelem_R8);
-			else if (itemType == typeof(byte))
-				gen.Emit(OpCodes.Ldelem_U1);
-			else if (itemType == typeof(ushort))
-				gen.Emit(OpCodes.Ldelem_U2);
-			else if (itemType == typeof(uint))
-				gen.Emit(OpCodes.Ldelem_U4);
-			else if(itemType.IsClass || itemType.IsInterface)
-				gen.Emit(OpCodes.Ldelem_Ref);
+			if (getPointer)
+			{
+				if (itemType.IsClass || itemType.IsInterface)
+					throw new InvalidOperationException("Cannot use LoadIndex in address mode on ref types!");
+
+				gen.Emit(OpCodes.Ldelema, itemType);
+			}
 			else
-				throw new InvalidOperationException("Cannot use LoadIndex on value types! Use LoadIndexAddress instead.");
-		}
-
-		/// <summary>
-		/// Loads an array item address onto the stack.
-		/// </summary>
-		public static void EmitLoadIndexAddress(this ILGenerator gen, Type itemType)
-		{
-			if(itemType.IsClass || itemType.IsInterface)
-				throw new InvalidOperationException("Cannot use LoadIndexAddress on ref types! Use LoadIndex instead.");
-
-			gen.Emit(OpCodes.Ldelema, itemType);
+			{
+				if (itemType == typeof (sbyte))
+					gen.Emit(OpCodes.Ldelem_I1);
+				else if (itemType == typeof (short))
+					gen.Emit(OpCodes.Ldelem_I2);
+				else if (itemType == typeof (int))
+					gen.Emit(OpCodes.Ldelem_I4);
+				else if (itemType == typeof (long) || itemType == typeof (ulong))
+					gen.Emit(OpCodes.Ldelem_I8);
+				else if (itemType == typeof (float))
+					gen.Emit(OpCodes.Ldelem_R4);
+				else if (itemType == typeof (double))
+					gen.Emit(OpCodes.Ldelem_R8);
+				else if (itemType == typeof (byte))
+					gen.Emit(OpCodes.Ldelem_U1);
+				else if (itemType == typeof (ushort))
+					gen.Emit(OpCodes.Ldelem_U2);
+				else if (itemType == typeof (uint))
+					gen.Emit(OpCodes.Ldelem_U4);
+				else if (itemType.IsClass || itemType.IsInterface)
+					gen.Emit(OpCodes.Ldelem_Ref);
+				else
+					gen.Emit(OpCodes.Ldelem, itemType);
+			}
 		}
 
 		/// <summary>

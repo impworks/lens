@@ -235,12 +235,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			}
 
 			// $tmp == $tmp2
-			gen.EmitLoadLocalAddress(nullVar);
+			gen.EmitLoadLocal(nullVar, true);
 			gen.EmitCall(getValOrDefault);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocalAddress(otherVar);
+				gen.EmitLoadLocal(otherVar, true);
 				gen.EmitCall(getValOrDefault);
 			}
 			else
@@ -251,12 +251,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			gen.EmitBranchNotEquals(falseLabel);
 
 			// otherwise, compare HasValues
-			gen.EmitLoadLocalAddress(nullVar);
+			gen.EmitLoadLocal(nullVar, true);
 			gen.EmitCall(hasValueGetter);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocalAddress(otherVar);
+				gen.EmitLoadLocal(otherVar, true);
 				gen.EmitCall(hasValueGetter);
 
 				gen.EmitCompareEqual();
@@ -287,7 +287,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			nullValue.Compile(ctx, true);
 			gen.EmitSaveLocal(nullVar);
 
-			gen.EmitLoadLocalAddress(nullVar);
+			gen.EmitLoadLocal(nullVar, true);
 			gen.EmitCall(hasValueGetter);
 
 			// sic! get_HasValue == true when value != null

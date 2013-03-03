@@ -119,9 +119,37 @@ throw ex";
 			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
+		[Test]
+		public void GetProperty()
+		{
+			var src = @"(new (1; 2)).Item1";
+			Test(src, 1);
+		}
+
+		[Test]
+		public void GetStaticField()
+		{
+			var src = @"Type::EmptyTypes";
+			Test(src, Type.EmptyTypes);
+		}
+
+		[Test]
+		public void GetArrayLength()
+		{
+			var src = @"(new [13; 37]).Length";
+			Test(src, 2);
+		}
+
+		[Test]
+		public void WTF()
+		{
+			var src = @"int::MaxValue";
+			Test(src, int.MaxValue);
+		}
+
 		private void Test(string src, object value)
 		{
-			Assert.AreEqual(Compile(src), value);
+			Assert.AreEqual(value, Compile(src));
 		}
 
 		private object Compile(string src)

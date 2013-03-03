@@ -45,7 +45,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				if (itemType.IsValueType)
 				{
-					gen.EmitLoadIndexAddress(itemType);
+					gen.EmitLoadIndex(itemType, true);
 					Expressions[idx].Compile(ctx, true);
 					gen.EmitSaveObject(itemType);
 				}

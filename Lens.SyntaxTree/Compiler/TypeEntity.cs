@@ -134,17 +134,14 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				method.PrepareSelf();
 
-				var exists = true;
+				MethodInfo mi = null;
 				try
 				{
-					ResolveMethod(method.Name, method.ArgumentTypes, true);
+					mi = ResolveMethod(method.Name, method.ArgumentTypes, true);
 				}
-				catch (KeyNotFoundException)
-				{
-					exists = false;
-				}
+				catch (KeyNotFoundException) { }
 				
-				if(exists)
+				if(mi != null)
 					Context.Error("Type '{0}' already contains a method named '{1}' with identical set of arguments!", Name, method.Name);
 
 				if(!_Methods.ContainsKey(method.Name))
@@ -262,7 +259,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			FieldEntity fe;
 			if (!_Fields.TryGetValue(name, out fe))
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain definition for a field '{1}'.", Name, name));
+				return null;
 
 			if(fe.FieldBuilder == null)
 				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
@@ -276,14 +273,25 @@ namespace Lens.SyntaxTree.Compiler
 		internal MethodInfo ResolveMethod(string name, Type[] args, bool exact = false)
 		{
 			List<MethodEntity> group;
-			if(!_Methods.TryGetValue(name, out group))
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", Name, name));
+			if (!_Methods.TryGetValue(name, out group))
+				return null;
 
 			var info = resolveMethodByArgs(group, args);
 			if(exact && info.Item2 != 0)
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
 
 			return (info.Item1 as MethodEntity).MethodBuilder;
+		}
+
+		/// <summary>
+		/// Resolves a group of methods by their name.
+		/// </summary>
+		internal MethodInfo[] ResolveMethodGroup(string name)
+		{
+			List<MethodEntity> group;
+			return _Methods.TryGetValue(name, out group)
+				? group.Select(m => m.MethodBuilder).ToArray()
+				: new MethodInfo[0];
 		}
 
 		/// <summary>

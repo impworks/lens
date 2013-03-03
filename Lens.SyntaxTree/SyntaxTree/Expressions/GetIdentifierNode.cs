@@ -90,20 +90,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
 
-			if(PointerRequired)
-				gen.EmitLoadFieldAddress(clsField);
-			else
-				gen.EmitLoadField(clsField);
+			gen.EmitLoadField(clsField, PointerRequired);
 		}
 
 		private void getLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			if(PointerRequired)
-				gen.EmitLoadLocalAddress(name);
-			else
-				gen.EmitLoadLocal(name);	
+			gen.EmitLoadLocal(name, PointerRequired);
 		}
 
 		public override string ToString()

@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			{
 				var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
 
-				gen.EmitLoadLocalAddress(tmpVar);
+				gen.EmitLoadLocal(tmpVar, true);
 				gen.EmitInitObject(type);
 
 				gen.EmitLoadLocal(tmpVar);

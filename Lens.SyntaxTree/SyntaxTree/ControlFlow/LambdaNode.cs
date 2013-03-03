@@ -45,20 +45,13 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentILGenerator;
 
 			// find constructor
-			ConstructorInfo ctor;
 			var retType = Body.GetExpressionType(ctx);
-			if (retType == typeof (Unit) || retType == typeof (void))
-			{
-				var type = FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
-				ctor = type.GetConstructor(_Method.ArgumentTypes);
-			}
-			else
-			{
-				var type = FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes);
-				var ctorArgs = _Method.ArgumentTypes.Union(new[] {retType}).ToArray();
-				ctor = type.GetConstructor(ctorArgs);
-			}
+			var type = retType.IsNotVoid()
+				? FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes)
+				: FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
+			var ctor = type.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
+			gen.EmitNull();
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor);
 		}

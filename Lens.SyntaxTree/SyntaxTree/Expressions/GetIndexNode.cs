@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Index.Compile(ctx, true);
 
 			if(PointerRequired)
-				gen.EmitLoadIndexAddress(itemType);
+				gen.EmitLoadIndex(itemType, true);
 			else
 				gen.EmitLoadIndex(itemType);
 		}
