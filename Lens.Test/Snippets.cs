@@ -147,6 +147,16 @@ throw ex";
 			Test(src, int.MaxValue);
 		}
 
+		[Test]
+		public void GetFunc()
+		{
+			var src = @"
+var fx = double::IsInfinity
+fx (1.0 / 0)";
+
+			Test(src, true);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

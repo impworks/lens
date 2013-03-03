@@ -149,7 +149,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var type = m_InvocationSource.GetExpressionType(ctx);
 
-				if (m_InvocationSource is IPointerProvider)
+				if (m_InvocationSource is IPointerProvider && type.IsValueType && !type.IsNumericType())
 				{
 					(m_InvocationSource as IPointerProvider).PointerRequired = true;
 					m_InvocationSource.Compile(ctx, true);
