@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Compiler
 	internal static class EmitterExtensions
 	{
 		#region Constants
-		
+	
 		/// <summary>
 		/// Pushes an integer value onto the top of the stack.
 		/// </summary>

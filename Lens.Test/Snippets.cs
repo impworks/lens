@@ -141,10 +141,43 @@ throw ex";
 		}
 
 		[Test]
-		public void WTF()
+		public void Dates()
 		{
-			var src = @"int::MaxValue";
-			Test(src, int.MaxValue);
+			Test("DateTime::MaxValue", DateTime.MaxValue);
+			Test("DateTime::MinValue", DateTime.MinValue);
+		}
+
+		[Test]
+		public void Literals()
+		{
+			Test("int::MaxValue", int.MaxValue);
+			Test("int::MinValue", int.MinValue);
+
+			Test("long::MaxValue", long.MaxValue);
+			Test("long::MinValue", long.MinValue);
+
+			Test("float::MaxValue", float.MaxValue);
+			Test("float::MinValue", float.MinValue);
+
+			Test("double::MaxValue", double.MaxValue);
+			Test("double::MinValue", double.MinValue);
+
+			Test("Byte::MaxValue", byte.MaxValue);
+			Test("Byte::MinValue", byte.MinValue);
+			Test("SByte::MaxValue", sbyte.MaxValue);
+			Test("SByte::MinValue", sbyte.MinValue);
+			Test("Int16::MaxValue", short.MaxValue);
+			Test("Int16::MinValue", short.MinValue);
+			Test("UInt16::MaxValue", ushort.MaxValue);
+			Test("UInt16::MinValue", ushort.MinValue);
+			Test("UInt32::MaxValue", uint.MaxValue);
+			Test("UInt32::MinValue", uint.MinValue);
+			Test("UInt64::MaxValue", ulong.MaxValue);
+			Test("UInt64::MinValue", ulong.MinValue);
+
+			Test("double::PositiveInfinity", double.PositiveInfinity);
+			Test("double::NegativeInfinity", double.NegativeInfinity);
+			Test("double::NaN", double.NaN);
 		}
 
 		[Test]

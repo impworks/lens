@@ -15,6 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		private bool m_IsResolved;
 
+		private Type m_Type;
 		private PropertyInfo m_Property;
 		private FieldInfo m_Field;
 		private MethodInfo m_Method;
@@ -56,12 +57,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_IsResolved = true;
 			};
 
-			var type = StaticType != null
+			m_Type = StaticType != null
 				? ctx.ResolveType(StaticType)
 				: Expression.GetExpressionType(ctx);
 
 			// special case: array length
-			if (type.IsArray && MemberName == "Length")
+			if (m_Type.IsArray && MemberName == "Length")
 			{
 				checkStatic();
 				return;
@@ -70,7 +71,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			// check for field
 			try
 			{
-				m_Field = ctx.ResolveField(type, MemberName);
+				m_Field = ctx.ResolveField(m_Type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 
 				checkStatic();
@@ -81,9 +82,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			// check for property
 			try
 			{
-				m_Property = ctx.ResolveProperty(type, MemberName);
+				m_Property = ctx.ResolveProperty(m_Type, MemberName);
 				if (!m_Property.CanRead)
-					Error("Property '{0}' of type '{1}' does not have a getter!", m_Property.Name, type);
+					Error("Property '{0}' of type '{1}' does not have a getter!", m_Property.Name, m_Type);
 
 				m_IsStatic = m_Property.GetGetMethod().IsStatic;
 
@@ -95,9 +96,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var methods = ctx.ResolveMethodGroup(type, MemberName);
+				var methods = ctx.ResolveMethodGroup(m_Type, MemberName);
 				if (methods.Length > 1)
-					Error("Type '{0}' has more than one suitable override of '{1}'!", type.Name, MemberName);
+					Error("Type '{0}' has more than one suitable override of '{1}'!", m_Type.Name, MemberName);
 
 				m_Method = methods[0];
 				if (m_Method.GetParameters().Count() > 16)
@@ -109,7 +110,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' does not have any field, property or method called '{1}'!", type.Name, MemberName);
+				Error("Type '{0}' does not have any field, property or method called '{1}'!", m_Type.Name, MemberName);
 			}
 		}
 
@@ -140,7 +141,45 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	
 			if (m_Field != null)
 			{
-				gen.EmitLoadField(m_Field, PointerRequired);
+				if (m_Field.IsLiteral)
+				{
+					var fieldType = m_Field.FieldType;
+					var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
+
+					var value = m_Field.GetValue(null);
+
+					if (dataType == typeof(int))
+						gen.EmitConstant((int) value);
+					else if (dataType == typeof(long))
+						gen.EmitConstant((long)value);
+					else if (dataType == typeof(double))
+						gen.EmitConstant((double)value);
+					else if (dataType == typeof(float))
+						gen.EmitConstant((float)value);
+
+					else if(dataType == typeof(uint))
+						gen.EmitConstant(unchecked((int)(uint)value));
+					else if (dataType == typeof(ulong))
+						gen.EmitConstant(unchecked((long)(ulong)value));
+
+					else if (dataType == typeof(byte))
+						gen.EmitConstant((byte)value);
+					else if (dataType == typeof(sbyte))
+						gen.EmitConstant((sbyte)value);
+					else if (dataType == typeof(short))
+						gen.EmitConstant((short)value);
+					else if (dataType == typeof(ushort))
+						gen.EmitConstant((ushort)value);
+					else
+						throw new NotImplementedException("Unknown literal field type!");
+
+					if(fieldType.IsEnum)
+						gen.EmitBox(fieldType);
+				}
+				else
+				{ 
+					gen.EmitLoadField(m_Field, PointerRequired);
+				}
 				return;
 			}
 
