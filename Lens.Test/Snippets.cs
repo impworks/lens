@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Lens.SyntaxTree;
 using NUnit.Framework;
 
@@ -188,6 +189,12 @@ var fx = double::IsInfinity
 fx (1.0 / 0)";
 
 			Test(src, true);
+		}
+
+		[Test]
+		public void MethodGenerics()
+		{
+			Test("Enumerable::Empty<int> ()", Enumerable.Empty<int>());
 		}
 
 		private void Test(string src, object value)

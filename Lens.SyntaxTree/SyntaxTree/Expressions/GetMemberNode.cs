@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Reflection;
 using Lens.SyntaxTree.Compiler;
@@ -13,6 +12,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
+		public GetMemberNode()
+		{
+			TypeSignatures = new List<TypeSignature>();
+		}
+
 		private bool m_IsResolved;
 
 		private Type m_Type;
@@ -26,6 +30,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// If the member is a field, its pointer can be returned.
 		/// </summary>
 		public bool PointerRequired { get; set; }
+
+		/// <summary>
+		/// The list of type signatures if the given identifier is a method.
+		/// </summary>
+		public List<TypeSignature> TypeSignatures { get; set; }
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -49,10 +58,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		private void resolve(Context ctx)
 		{
-			Action checkStatic = () =>
+			Action check = () =>
 			{
 				if (Expression == null && !m_IsStatic)
-					Error("'{0}' cannot be accessed from static context!");
+					Error("'{0}' cannot be accessed from static context!", MemberName);
+
+				if(m_Method == null && TypeSignatures.Count > 0)
+					Error("Type arguments can only be applied to methods, and '{0}' is a field or a property!", MemberName);
 
 				m_IsResolved = true;
 			};
@@ -64,7 +76,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			// special case: array length
 			if (m_Type.IsArray && MemberName == "Length")
 			{
-				checkStatic();
+				check();
 				return;
 			}
 
@@ -74,7 +86,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Field = ctx.ResolveField(m_Type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 
-				checkStatic();
+				check();
 				return;
 			}
 			catch (KeyNotFoundException) { }
@@ -88,7 +100,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				m_IsStatic = m_Property.GetGetMethod().IsStatic;
 
-				checkStatic();
+				check();
 				return;
 			}
 			catch (KeyNotFoundException)
@@ -96,9 +108,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var methods = ctx.ResolveMethodGroup(m_Type, MemberName);
+				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, m)).ToArray();
 				if (methods.Length > 1)
-					Error("Type '{0}' has more than one suitable override of '{1}'!", m_Type.Name, MemberName);
+					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
 
 				m_Method = methods[0];
 				if (m_Method.GetParameters().Count() > 16)
@@ -106,12 +118,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				m_IsStatic = m_Method.IsStatic;
 
-				checkStatic();
+				check();
 			}
 			catch (KeyNotFoundException)
 			{
 				Error("Type '{0}' does not have any field, property or method called '{1}'!", m_Type.Name, MemberName);
 			}
+		}
+
+		private bool checkMethodArgs(Context ctx, MethodInfo method)
+		{
+			if (TypeSignatures.Count == 0)
+				return true;
+
+			var argTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+			if (TypeSignatures.Count != argTypes.Length)
+				return false;
+
+			return !argTypes.Where((t, idx) => TypeSignatures[idx].Signature != "_" && ctx.ResolveType(TypeSignatures[idx]) != t).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()

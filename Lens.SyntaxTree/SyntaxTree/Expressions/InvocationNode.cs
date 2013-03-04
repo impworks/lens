@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Operators;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -57,8 +56,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			m_InvocationSource = node.Expression;
 			var type = node.Expression != null
-						   ? node.Expression.GetExpressionType(ctx)
-						   : ctx.ResolveType(node.StaticType);
+				? node.Expression.GetExpressionType(ctx)
+				: ctx.ResolveType(node.StaticType);
 
 			try
 			{
