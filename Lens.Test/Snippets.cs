@@ -197,6 +197,29 @@ fx (1.0 / 0)";
 			Test("Enumerable::Empty<int> ()", Enumerable.Empty<int>());
 		}
 
+		[Test]
+		public void ImplicitValueTypeCtors()
+		{
+			Test("new int ()", 0);
+			Test("new long ()", 0);
+			Test("new float ()", 0.0f);
+			Test("new double ()", 0.0);
+
+			Test("(new Point ()).IsEmpty", true);
+		}
+
+		[Test]
+		public void SetField()
+		{
+			var src = @"
+var pt = new Point ()
+pt.X = 10
+pt.Y = 20
+pt.IsEmpty";
+
+			Test(src, false);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

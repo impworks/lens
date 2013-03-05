@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -10,6 +10,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class SetMemberNode : MemberNodeBase
 	{
+		private bool m_IsStatic;
+		private PropertyInfo m_Property;
+		private FieldInfo m_Field;
+
 		/// <summary>
 		/// Value to be assigned.
 		/// </summary>
@@ -30,7 +34,70 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			resolve(ctx);
+
+			var gen = ctx.CurrentILGenerator;
+
+			var destType = m_Field != null ? m_Field.FieldType : m_Property.PropertyType;
+			var valType = Value.GetExpressionType(ctx);
+
+			if (valType.IsVoid())
+				Error("Cannot use a function or expression that does not return anything as assignment source!");
+
+			// todo: extract, add check for null
+			if(!destType.IsExtendablyAssignableFrom(valType))
+				Error("Cannot implicitly convert an object of type '{0}' to required type '{1}'!", valType, destType);
+
+			if (!m_IsStatic)
+			{
+				var exprType = Expression.GetExpressionType(ctx);
+				if (Expression is IPointerProvider && exprType.IsValueType && !exprType.IsNumericType())
+					(Expression as IPointerProvider).PointerRequired = true;
+
+				Expression.Compile(ctx, true);
+			}
+
+			Expr.Cast(Value, destType).Compile(ctx, true);
+
+			if(m_Field != null)
+				gen.EmitSaveField(m_Field);
+			else
+				gen.EmitCall(m_Property.GetSetMethod(), true);
+		}
+
+		private void resolve(Context ctx)
+		{
+			var type = StaticType != null
+				? ctx.ResolveType(StaticType)
+				: Expression.GetExpressionType(ctx);
+
+			// check for field
+			try
+			{
+				m_Field = ctx.ResolveField(type, MemberName);
+				m_IsStatic = m_Field.IsStatic;
+				if (Expression == null && !m_IsStatic)
+					Error("Field '{1}' of type '{0}' cannot be used in static context!", type, MemberName);
+
+				return;
+			}
+			catch (KeyNotFoundException) { }
+
+			try
+			{
+				m_Property = ctx.ResolveProperty(type, MemberName);
+				var setMbr = m_Property.GetSetMethod();
+				if(setMbr == null)
+					Error("Property '{0}' of type '{1}' does not have a public setter!");
+
+				m_IsStatic = setMbr.IsStatic;
+				if (Expression == null && !m_IsStatic)
+					Error("Property '{0}' of type '{1}' cannot be used in static context!", type, MemberName);
+			}
+			catch (KeyNotFoundException)
+			{
+				Error("Type '{0}' does not contain a field or a property named '{1}'!", type, MemberName);
+			}
 		}
 
 		#region Equality members

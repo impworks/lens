@@ -9,12 +9,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new object creation.
 	/// </summary>
-	public class NewObjectNode : InvocationNodeBase
+	public class NewObjectNode : InvocationNodeBase, IPointerProvider
 	{
 		public NewObjectNode(string type = null)
 		{
 			Type = type;
 		}
+
+		public bool PointerRequired { get; set; }
 
 		/// <summary>
 		/// The type of the object to create.
@@ -43,19 +45,28 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var argTypes = isParameterless
 				? System.Type.EmptyTypes
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
-
-			var ctor = ctx.ResolveConstructor(Type.Signature, argTypes);
-			if(ctor == null)
-				Error("Type {0} does not have a constructor that accepts {1} arguments of given types.", Type.Signature, argTypes.Length);
-
-			if (!isParameterless)
+			try
 			{
-				var destTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
-				for (var idx = 0; idx < Arguments.Count; idx++)
-					Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
-			}
+				var ctor = ctx.ResolveConstructor(Type.Signature, argTypes);
 
-			gen.EmitCreateObject(ctor);
+				if (!isParameterless)
+				{
+					var destTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+					for (var idx = 0; idx < Arguments.Count; idx++)
+						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
+				}
+
+				gen.EmitCreateObject(ctor);
+			}
+			catch (KeyNotFoundException)
+			{
+				var type = ctx.ResolveType(Type);
+				if (!isParameterless || !type.IsValueType)
+					throw;
+				var castExpr = Expr.Default(Type);
+				castExpr.PointerRequired = PointerRequired;
+				castExpr.Compile(ctx, true);
+			}
 		}
 
 		#region Equality members

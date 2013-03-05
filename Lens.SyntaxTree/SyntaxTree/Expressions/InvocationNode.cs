@@ -214,7 +214,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
-			return string.Format("invoke({0}, args: ({1}))", Expression, string.Join(",", Arguments));
+			return string.Format("invoke({0}, args: {1})", Expression, string.Join(",", Arguments));
 		}
 	}
 }

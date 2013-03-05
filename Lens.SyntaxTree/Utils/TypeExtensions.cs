@@ -91,6 +91,14 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
+		/// Checks if the type is void.
+		/// </summary>
+		public static bool IsVoid(this Type type)
+		{
+			return type == typeof(void) || type == typeof(Unit);
+		}
+
+		/// <summary>
 		/// Checks if a variable of given type can be assigned from other type (including type extension).
 		/// </summary>
 		/// <returns></returns>
