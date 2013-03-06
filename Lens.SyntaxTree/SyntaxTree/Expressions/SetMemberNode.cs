@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!m_IsStatic)
 			{
 				var exprType = Expression.GetExpressionType(ctx);
-				if (Expression is IPointerProvider && exprType.IsValueType && !exprType.IsNumericType())
+				if (Expression is IPointerProvider && exprType.IsStruct())
 					(Expression as IPointerProvider).PointerRequired = true;
 
 				Expression.Compile(ctx, true);

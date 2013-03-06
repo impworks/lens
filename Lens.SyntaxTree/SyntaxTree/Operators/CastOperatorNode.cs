@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				if (fromType == typeof (object) && toType.IsValueType)
 					gen.EmitUnbox(toType);
 
-					// cast ancestor to descendant
+				// cast ancestor to descendant
 				else if (!fromType.IsValueType && !toType.IsValueType)
 					gen.EmitCast(toType);
 

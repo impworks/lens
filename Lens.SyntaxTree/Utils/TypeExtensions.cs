@@ -99,6 +99,14 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
+		/// Checks if the type is a struct.
+		/// </summary>
+		public static bool IsStruct(this Type type)
+		{
+			return type.IsValueType && !type.IsNumericType();
+		}
+
+		/// <summary>
 		/// Checks if a variable of given type can be assigned from other type (including type extension).
 		/// </summary>
 		/// <returns></returns>

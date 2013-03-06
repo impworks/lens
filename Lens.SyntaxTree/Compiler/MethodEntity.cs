@@ -88,11 +88,11 @@ namespace Lens.SyntaxTree.Compiler
 			var gen = ctx.CurrentILGenerator;
 			var actualType = Body.GetExpressionType(ctx);
 
-			if (ReturnType == typeof(object) && actualType.IsValueType && actualType != typeof(void))
+			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())
 				gen.EmitBox(actualType);
 
 			// special hack: if the main method's implicit type is Unit, it should still return null
-			if(this == ctx.MainMethod && (actualType == typeof(Unit) || actualType == typeof(void)))
+			if(this == ctx.MainMethod && actualType.IsVoid())
 				gen.EmitNull();
 		}
 

@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var exprType = Expression.GetExpressionType(ctx);
 				if (Expression is IPointerProvider)
-					(Expression as IPointerProvider).PointerRequired = exprType.IsValueType && !exprType.IsNumericType();
+					(Expression as IPointerProvider).PointerRequired = exprType.IsStruct();
 
 				Expression.Compile(ctx, true);
 
