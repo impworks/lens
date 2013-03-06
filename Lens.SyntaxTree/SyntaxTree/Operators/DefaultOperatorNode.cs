@@ -7,10 +7,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing the operator that returns a default value for the type.
 	/// </summary>
-	public class DefaultOperatorNode : TypeOperatorNodeBase, IPointerProvider
+	public class DefaultOperatorNode : TypeOperatorNodeBase
 	{
-		public bool PointerRequired { get; set; }
-
 		/// <summary>
 		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
 		/// </summary>
@@ -67,8 +65,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 				gen.EmitLoadLocal(tmpVar, true);
 				gen.EmitInitObject(type);
-
-				gen.EmitLoadLocal(tmpVar, PointerRequired);
+				gen.EmitLoadLocal(tmpVar);
 			}
 		}
 

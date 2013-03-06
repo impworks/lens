@@ -148,25 +148,29 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var type = m_InvocationSource.GetExpressionType(ctx);
 
-				if (m_InvocationSource is IPointerProvider && type.IsStruct())
+				if (type.IsValueType)
 				{
-					(m_InvocationSource as IPointerProvider).PointerRequired = true;
-					m_InvocationSource.Compile(ctx, true);
+					constraint = type;
+					if (m_InvocationSource is IPointerProvider)
+					{
+						(m_InvocationSource as IPointerProvider).PointerRequired = true;
+						m_InvocationSource.Compile(ctx, true);
+					}
+					else
+					{
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
+						gen.EmitLoadLocal(tmpVar, true);
+
+						m_InvocationSource.Compile(ctx, true);
+						gen.EmitSaveObject(type);
+						
+						gen.EmitLoadLocal(tmpVar, true);
+					}
 				}
 				else
 				{
 					m_InvocationSource.Compile(ctx, true);
-
-					if (type.IsValueType)
-					{
-						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
-						gen.EmitSaveLocal(tmpVar);
-						gen.EmitLoadLocal(tmpVar, true);
-					}
 				}
-
-				if (type.IsStruct())
-					constraint = type;
 			}
 
 			if (m_ArgTypes.Length > 0)
@@ -176,7 +180,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					Expr.Cast(Arguments[idx], toTypes[idx]).Compile(ctx, true);
 			}
 
-			if (m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsValueType)
+			if (constraint != null)
 				gen.EmitCall(m_Method, true, constraint);	
 			else
 				gen.EmitCall(m_Method);

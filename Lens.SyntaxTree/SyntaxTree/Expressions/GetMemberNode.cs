@@ -154,10 +154,25 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!m_IsStatic)
 			{
 				var exprType = Expression.GetExpressionType(ctx);
-				if (Expression is IPointerProvider)
-					(Expression as IPointerProvider).PointerRequired = exprType.IsStruct();
-
-				Expression.Compile(ctx, true);
+				if (exprType.IsStruct())
+				{
+					if (Expression is IPointerProvider)
+					{
+						(Expression as IPointerProvider).PointerRequired = true;
+						Expression.Compile(ctx, true);
+					}
+					else
+					{
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, exprType, false);
+						Expression.Compile(ctx, true);
+						gen.EmitSaveLocal(tmpVar);
+						gen.EmitLoadLocal(tmpVar, true);
+					}
+				}
+				else
+				{
+					Expression.Compile(ctx, true);
+				}
 
 				if (exprType.IsArray && MemberName == "Length")
 					gen.EmitGetArrayLength();

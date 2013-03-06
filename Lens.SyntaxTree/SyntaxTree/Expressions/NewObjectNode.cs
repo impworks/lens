@@ -2,21 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Operators;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a new object creation.
 	/// </summary>
-	public class NewObjectNode : InvocationNodeBase, IPointerProvider
+	public class NewObjectNode : InvocationNodeBase
 	{
 		public NewObjectNode(string type = null)
 		{
 			Type = type;
 		}
-
-		public bool PointerRequired { get; set; }
 
 		/// <summary>
 		/// The type of the object to create.
@@ -64,7 +61,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (!isParameterless || !type.IsValueType)
 					throw;
 				var castExpr = Expr.Default(Type);
-				castExpr.PointerRequired = PointerRequired;
 				castExpr.Compile(ctx, true);
 			}
 		}
