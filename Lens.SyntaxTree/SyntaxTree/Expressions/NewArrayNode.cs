@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -13,6 +15,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			if(Expressions.Count == 0)
 				Error("Array must contain at least one object!");
+
+			var itemType = Expressions[0].GetExpressionType(ctx);
+			if (itemType == typeof(NullType))
+				Error(Expressions[0], "Cannot infer type of the first item of the array. Please use casting to specify array type!");
+
+			if (itemType.IsVoid())
+				Error(Expressions[0], "An expression that returns a value is expected!");
 
 			return Expressions[0].GetExpressionType(ctx).MakeArrayType();
 		}
@@ -37,21 +46,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			for (var idx = 0; idx < count; idx++)
 			{
 				var currType = Expressions[idx].GetExpressionType(ctx);
-				if(currType != itemType)
-					Error("Cannot add object of type '{0}' to array of type '{1}': item types must match exactly.", currType, itemType);
+
+				if (currType.IsVoid())
+					Error(Expressions[idx], "An expression that returns a value is expected!");
+
+				if(!itemType.IsExtendablyAssignableFrom(currType))
+					Error(Expressions[idx], "Cannot add object of type '{0}' to array of type '{1}'!", currType, itemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				gen.EmitConstant(idx);
 
+				var cast = Expr.Cast(Expressions[idx], itemType);
+
 				if (itemType.IsValueType)
 				{
 					gen.EmitLoadIndex(itemType, true);
-					Expressions[idx].Compile(ctx, true);
+					cast.Compile(ctx, true);
 					gen.EmitSaveObject(itemType);
 				}
 				else
 				{
-					Expressions[idx].Compile(ctx, true);
+					cast.Compile(ctx, true);
 					gen.EmitSaveIndex(itemType);
 				}
 			}

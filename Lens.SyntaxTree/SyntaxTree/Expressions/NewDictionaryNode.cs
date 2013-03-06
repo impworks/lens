@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -17,10 +18,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if(Expressions.Count == 0)
 				Error("Use explicit constructor to create an empty dictionary!");
 
-			return typeof(Dictionary<,>).MakeGenericType(
-				Expressions[0].Key.GetExpressionType(ctx),
-				Expressions[0].Value.GetExpressionType(ctx)
-			);
+			var keyType = Expressions[0].Key.GetExpressionType(ctx);
+			var valType = Expressions[0].Value.GetExpressionType(ctx);
+
+			if (keyType == typeof(NullType))
+				Error(Expressions[0].Key, "Cannot infer type of the first record of the directory. Please use casting to specify the type!");
+
+			if (keyType.IsVoid())
+				Error(Expressions[0].Key, "An expression that returns a value is expected!");
+
+			if (valType == typeof(NullType))
+				Error(Expressions[0].Value, "Cannot infer type of the first record of the directory. Please use casting to specify the type!");
+
+			if (valType.IsVoid())
+				Error(Expressions[0].Value, "An expression that returns a value is expected!");
+
+			return typeof(Dictionary<,>).MakeGenericType(keyType, valType);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -54,11 +67,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var currKeyType = curr.Key.GetExpressionType(ctx);
 				var currValType = curr.Value.GetExpressionType(ctx);
 
-				if(currKeyType != keyType)
-					Error("Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, keyType, valType);
+				if (currKeyType != keyType)
+					Error(curr.Key, "Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, keyType, valType);
 
-				if(!valType.IsExtendablyAssignableFrom(currValType))
-					Error("Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, keyType, valType);
+				if (currKeyType.IsVoid())
+					Error(curr.Key, "An expression that returns a value is expected!");
+
+				if (!valType.IsExtendablyAssignableFrom(currValType))
+					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, keyType, valType);
+
+				if (currValType.IsVoid())
+					Error(curr.Value, "An expression that returns a value is expected!");
 
 				gen.EmitLoadLocal(tmpVar);
 

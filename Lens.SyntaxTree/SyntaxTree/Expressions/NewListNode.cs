@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Operators;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -17,7 +16,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if(Expressions.Count == 0)
 				Error("Use explicit constructor to create an empty list!");
 
-			return typeof(List<>).MakeGenericType(Expressions[0].GetExpressionType(ctx));
+			var itemType = Expressions[0].GetExpressionType(ctx);
+			if(itemType == typeof(NullType))
+				Error(Expressions[0], "Cannot infer type of the first item of the list. Please use casting to specify list type!");
+
+			if(itemType.IsVoid())
+				Error(Expressions[0], "An expression that returns a value is expected!");
+
+			return typeof(List<>).MakeGenericType(itemType);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -43,8 +49,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			foreach (var curr in Expressions)
 			{
 				var currType = curr.GetExpressionType(ctx);
-				if (listType.IsExtendablyAssignableFrom(currType))
-					Error("Cannot add an object of type '{0}' to List<{1}>!", currType, itemType);
+
+				if (currType.IsVoid())
+					Error(curr, "An expression that returns a value is expected!");
+
+				if (!itemType.IsExtendablyAssignableFrom(currType))
+					Error(curr, "Cannot add an object of type '{0}' to List<{1}>!", currType, itemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				
