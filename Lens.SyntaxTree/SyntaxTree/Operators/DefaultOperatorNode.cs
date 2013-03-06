@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var type = ctx.ResolveType(TypeSignature.Signature);
+			return ctx.ResolveType(TypeSignature.Signature);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
