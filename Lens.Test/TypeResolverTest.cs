@@ -96,7 +96,18 @@ namespace Lens.Test
 
 		private static void Test(string signature, Type type)
 		{
-			Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
+			var casts = 100;
+			var to1 = DateTime.Now;
+			for (var idx = 0; idx < casts; idx++)
+				Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
+			var to2 = DateTime.Now;
+
+			var tn1 = DateTime.Now;
+			for (var idx = 0; idx < casts; idx++)
+				Assert.AreEqual(new TypeResolver2().ResolveType(signature), type);
+			var tn2 = DateTime.Now;
+
+			Console.WriteLine("{0}: old = {1}, new = {2}", signature, (to2 - to1).TotalSeconds, (tn2 - tn1).TotalSeconds);
 		}
 	}
 }
