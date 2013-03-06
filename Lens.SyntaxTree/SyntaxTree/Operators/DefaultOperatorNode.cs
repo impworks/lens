@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -30,13 +31,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return ctx.ResolveType(TypeSignature.Signature);
+			var type = ctx.ResolveType(TypeSignature.Signature);
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			var type = GetExpressionType(ctx);
+
+			if(type.IsVoid())
+				Error("Unit and void types cannot have instances.");
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);
