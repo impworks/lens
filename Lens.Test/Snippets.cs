@@ -220,6 +220,21 @@ pt.IsEmpty";
 			Test(src, false);
 		}
 
+		[Test]
+		public void TryCatch()
+		{
+			var src = @"
+var msg = 1
+try
+    var zero = 0
+    1 / zero
+catch (DivisionByZeroException ex)
+    msg = 2
+msg
+";
+			Test(src, 2);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

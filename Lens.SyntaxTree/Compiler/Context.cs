@@ -151,6 +151,11 @@ namespace Lens.SyntaxTree.Compiler
 		internal LoopNode CurrentLoop { get; set; }
 
 		/// <summary>
+		/// The current most nested try block.
+		/// </summary>
+		internal TryNode CurrentTryBlock { get; set; }
+
+		/// <summary>
 		/// The current most nested catch block.
 		/// </summary>
 		internal CatchNode CurrentCatchClause { get; set; }

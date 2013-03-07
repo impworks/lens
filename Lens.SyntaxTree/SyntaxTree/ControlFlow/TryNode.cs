@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -27,6 +27,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<CatchNode> CatchClauses { get; set; }
 
+		public Label EndLabel { get; private set; }
+
 		public override LexemLocation EndLocation
 		{
 			get { return CatchClauses.Last().EndLocation; }
@@ -35,12 +37,29 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
-			return Code.GetChildNodes().Union(CatchClauses);
+			yield return Code;
+			foreach(var curr in CatchClauses)
+				yield return curr;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var backup = ctx.CurrentTryBlock;
+			ctx.CurrentTryBlock = this;
+
+			EndLabel = gen.BeginExceptionBlock();
+
+			Code.Compile(ctx, false);
+			gen.EmitLeave(EndLabel);
+
+			foreach(var curr in CatchClauses)
+				curr.Compile(ctx, false);
+
+			gen.EndExceptionBlock();
+
+			ctx.CurrentTryBlock = backup;
 		}
 
 		#region Equality members

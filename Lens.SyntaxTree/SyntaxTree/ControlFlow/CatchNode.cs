@@ -44,7 +44,28 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			var gen = ctx.CurrentILGenerator;
+
+			var backup = ctx.CurrentCatchClause;
+			ctx.CurrentCatchClause = this;
+
+			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
+			if(!type.IsSubclassOf(typeof(Exception)))
+				Error("Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!", type);
+
+			gen.BeginCatchBlock(type);
+
+			if (string.IsNullOrEmpty(ExceptionVariable))
+			{
+				var tmpVar = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
+				gen.EmitSaveLocal(tmpVar);
+			}
+
+			Code.Compile(ctx, false);
+
+			gen.EmitLeave(ctx.CurrentTryBlock.EndLabel);
+
+			ctx.CurrentCatchClause = backup;
 		}
 
 		#region Equality members
