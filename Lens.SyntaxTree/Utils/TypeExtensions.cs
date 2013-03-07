@@ -72,14 +72,18 @@ namespace Lens.SyntaxTree.Utils
 			return FloatTypes.Contains(type);
 		}
 
+		public static bool IsIntegerType(this Type type)
+		{
+			return type.IsSignedIntegerType() || type.IsUnsignedIntegerType();
+		}
+
 		/// <summary>
 		/// Checks if a type is any of the numeric types.
 		/// </summary>
 		public static bool IsNumericType(this Type type)
 		{
-			return type.IsSignedIntegerType()
-			       || type.IsFloatType()
-			       || type.IsUnsignedIntegerType();
+			return type.IsIntegerType()
+			       || type.IsFloatType();
 		}
 
 		/// <summary>
