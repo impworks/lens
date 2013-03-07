@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExtensionMethodResolverTest.cs" />
     <Compile Include="FunctionalHelperTest.cs" />
     <Compile Include="LiteralsTest.cs" />
     <Compile Include="OperatorsTest.cs" />

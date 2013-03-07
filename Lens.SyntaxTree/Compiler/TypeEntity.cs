@@ -347,7 +347,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private Tuple<MethodEntityBase, int> resolveMethodByArgs(IEnumerable<MethodEntityBase> list, Type[] args)
 		{
-			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent => new Tuple<MethodEntityBase, int>(ent, getArgumentsDistance(ent.ArgumentTypes, args));
+			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent => new Tuple<MethodEntityBase, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(ent.ArgumentTypes, args));
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 			
 			if(result.Length == 0 || result[0].Item2 == int.MaxValue)
@@ -361,26 +361,6 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			return result[0];
-		}
-
-		/// <summary>
-		/// Calculates the compound distance between desired and existing lists of argument types.
-		/// </summary>
-		private int getArgumentsDistance(Type[] src, Type[] dst)
-		{
-			if (src.Length != dst.Length)
-				return int.MaxValue;
-
-			var sum = 0;
-			for (var idx = 0; idx < src.Length; idx++)
-			{
-				var currDist = dst[idx].DistanceFrom(src[idx]);
-				if (currDist == int.MaxValue)
-					return int.MaxValue;
-				sum += currDist;
-			}
-
-			return sum;
 		}
 
 		#endregion

@@ -235,6 +235,17 @@ msg
 			Test(src, 2);
 		}
 
+		[Test]
+		public void LongArgumentPassing()
+		{
+			var src = @"
+string::Compare
+    <| ""a""
+    <| ""b""
+";
+			Test(src, -1);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
