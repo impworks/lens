@@ -189,6 +189,9 @@ namespace Lens.SyntaxTree.Utils
 			if (varType.IsGenericType && exprType.IsGenericType)
 				return GenericDistance(varType, exprType);
 
+			if (varType.IsGenericParameter)
+				return DistanceFrom(varType.BaseType, exprType);
+
 			return int.MaxValue;
 		}
 

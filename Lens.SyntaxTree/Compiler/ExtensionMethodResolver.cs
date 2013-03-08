@@ -51,30 +51,38 @@ namespace Lens.SyntaxTree.Compiler
 			return result[0].Method;
 		}
 
-		private static void findMethodsForType(Type type)
+		private static void findMethodsForType(Type forType)
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
-			var asms = AppDomain.CurrentDomain.GetAssemblies();
+			var asms = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name == "System.Core");
 			foreach (var asm in asms)
 			{
 				var types = asm.GetTypes();
-				var exms = from currType in types
-				           where currType.IsSealed && !currType.IsNested && currType.IsDefined(typeof (ExtensionAttribute), false)
-				           from method in currType.GetMethods(BindingFlags.Static | BindingFlags.Public)
-				           where method.IsDefined(typeof (ExtensionAttribute), false) && method.GetParameters()[0].ParameterType.IsExtendablyAssignableFrom(type)
-				           select method;
-
-				foreach (var curr in exms)
+				foreach (var type in types)
 				{
-					if (dict.ContainsKey(curr.Name))
-						dict[curr.Name].Add(curr);
-					else
-						dict[curr.Name] = new List<MethodInfo> {curr};
+					if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
+						continue;
+
+					var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
+					foreach (var method in methods)
+					{
+						if (!method.IsDefined(typeof (ExtensionAttribute), false))
+							continue;
+
+						var argType = method.GetParameters()[0].ParameterType;
+						if (!argType.IsExtendablyAssignableFrom(forType))
+							continue;
+
+						if (!dict.ContainsKey(method.Name))
+							dict[method.Name] = new List<MethodInfo>();
+
+						dict[method.Name].Add(method);
+					}
 				}
 			}
 
-			_Cache[type] = dict;
+			_Cache[forType] = dict;
 		}
 
 		/// <summary>
