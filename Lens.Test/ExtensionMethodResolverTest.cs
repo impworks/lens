@@ -21,7 +21,7 @@ namespace Lens.Test
 		[Test]
 		public void TestEnumerable2()
 		{
-			var found = typeof(IEnumerable<string>).FindExtensionMethod("Select", new[] { typeof(Func<string, int>) });
+			var found = typeof(string[]).FindExtensionMethod("Select", new[] { typeof(Func<string, int>) });
 			var bucket = typeof(Enumerable).GetMethods().Where(m => m.Name == "Select").ToArray();
 			Assert.Contains(found, bucket);
 		}

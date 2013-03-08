@@ -179,6 +179,21 @@ namespace Lens.Test
 			TestDistanceFrom<int, ImplicitCastable>(1);
 		}
 
+		[Test]
+		public void ArrayInterface()
+		{
+			TestDistanceFrom<IEnumerable<int>, int[]>(1);
+		}
+
+		[Test]
+		public void GenericParameter()
+		{
+			var from = typeof(bool[]);
+			var to = typeof (IEnumerable<>);
+			Assert.AreEqual(to.DistanceFrom(from), 1);
+
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.

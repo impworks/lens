@@ -289,7 +289,7 @@ namespace Lens.SyntaxTree.Utils
 
 		private static bool IsImplementedBy(Type interfaceType, Type implementor)
 		{
-			return implementor.GetInterfaces().Contains(interfaceType);
+			return implementor.GetInterfaces().Any(i => i.IsExtendablyAssignableFrom(interfaceType));
 		}
 
 		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
