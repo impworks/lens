@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
-			var asms = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name == "System.Core");
+			var asms = AppDomain.CurrentDomain.GetAssemblies(); //.Where(a => a.GetName().Name == "System.Core");
 			foreach (var asm in asms)
 			{
 				var types = asm.GetTypes();
