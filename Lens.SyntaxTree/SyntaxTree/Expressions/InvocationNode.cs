@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -55,23 +56,31 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private void resolveGetMember(Context ctx, GetMemberNode node)
 		{
 			m_InvocationSource = node.Expression;
-			var type = node.Expression != null
-				? node.Expression.GetExpressionType(ctx)
+			var type = m_InvocationSource != null
+				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
 			try
 			{
-				m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes);
-				if(m_Method == null)
-					throw new KeyNotFoundException();
-			}
-			catch (KeyNotFoundException)
-			{
-				Error("Type '{0}' has no method named '{1}' with suitable argument types!", type, node.MemberName);
+				try
+				{
+					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes);
+				}
+				catch (KeyNotFoundException)
+				{
+					if (m_InvocationSource != null)
+						throw;
+
+					m_Method = type.FindExtensionMethod(node.MemberName, m_ArgTypes);
+				}
 			}
 			catch (AmbiguousMatchException)
 			{
 				Error("Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.", type, node.MemberName);
+			}
+			catch (KeyNotFoundException)
+			{
+				Error("Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!", type, node.MemberName);
 			}
 		}
 
@@ -147,6 +156,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (m_InvocationSource != null)
 			{
 				var type = m_InvocationSource.GetExpressionType(ctx);
+
+				// cast source for extension type
+				if (m_Method.IsDefined(typeof (ExtensionAttribute), false))
+					m_InvocationSource = Expr.Cast(m_InvocationSource, m_Method.GetParameters()[0].ParameterType);
 
 				if (type.IsValueType)
 				{

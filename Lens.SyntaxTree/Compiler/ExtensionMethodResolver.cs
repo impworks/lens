@@ -58,28 +58,33 @@ namespace Lens.SyntaxTree.Compiler
 			var asms = AppDomain.CurrentDomain.GetAssemblies();
 			foreach (var asm in asms)
 			{
-				var types = asm.GetTypes();
-				foreach (var type in types)
+				try
 				{
-					if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
-						continue;
-
-					var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-					foreach (var method in methods)
+					var types = asm.GetTypes();
+					foreach (var type in types)
 					{
-						if (!method.IsDefined(typeof (ExtensionAttribute), false))
+						if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
 							continue;
 
-						var argType = method.GetParameters()[0].ParameterType;
-						if (!argType.IsExtendablyAssignableFrom(forType))
-							continue;
+						var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
+						foreach (var method in methods)
+						{
+							if (!method.IsDefined(typeof (ExtensionAttribute), false))
+								continue;
 
-						if (!dict.ContainsKey(method.Name))
-							dict[method.Name] = new List<MethodInfo>();
+							var argType = method.GetParameters()[0].ParameterType;
+							if (!argType.IsExtendablyAssignableFrom(forType))
+								continue;
 
-						dict[method.Name].Add(method);
+							if (!dict.ContainsKey(method.Name))
+								dict[method.Name] = new List<MethodInfo>();
+
+							dict[method.Name].Add(method);
+						}
 					}
 				}
+				catch
+				{ }
 			}
 
 			_Cache[forType] = dict;

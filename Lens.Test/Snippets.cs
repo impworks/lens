@@ -246,6 +246,13 @@ string::Compare
 			Test(src, -1);
 		}
 
+		[Test]
+		public void ExtensionMethod()
+		{
+			var src = @"(new [1; 2; 3; 4; 5]).Where(a:int -> a > 2)";
+			Test(src, new [] { 3, 5, 5});
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
