@@ -11,10 +11,19 @@ namespace Lens.Test
 	public class ExtensionMethodResolverTest
 	{
 		[Test]
-		public void TestEnumerable()
+		public void TestEnumerable1()
 		{
-			var m = typeof (IEnumerable<int>).FindExtensionMethod("Where", new[] {typeof (Func<int, bool>)});
-			Assert.IsNotNull(m);
+			var found = typeof (IEnumerable<int>).FindExtensionMethod("Where", new[] {typeof (Func<int, bool>)});
+			var bucket = typeof (Enumerable).GetMethods().Where(m => m.Name == "Where").ToArray();
+			Assert.Contains(found, bucket);
+		}
+
+		[Test]
+		public void TestEnumerable2()
+		{
+			var found = typeof(IEnumerable<string>).FindExtensionMethod("Select", new[] { typeof(Func<string, int>) });
+			var bucket = typeof(Enumerable).GetMethods().Where(m => m.Name == "Select").ToArray();
+			Assert.Contains(found, bucket);
 		}
 	}
 }
