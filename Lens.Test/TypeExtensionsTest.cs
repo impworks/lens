@@ -43,14 +43,14 @@ namespace Lens.Test
 		public void ContravarianceTest()
 		{
 			TestDistanceFrom<Action<DerivedClass>, Action<ParentClass>>(1);
-			TestDistanceFrom<Action<int>, Action<object>>(1);
+			TestDistanceFrom<Action<int>, Action<object>>(int.MaxValue);
 		}
 
 		[Test]
 		public void CovarianceTest()
 		{
 			TestDistanceFrom<IEnumerable<ParentClass>, IEnumerable<DerivedClass>>(1);
-			TestDistanceFrom<IEnumerable<object>, IEnumerable<bool>>(1);
+			TestDistanceFrom<IEnumerable<object>, IEnumerable<bool>>(int.MaxValue);
 		}
 
 		[Test]
@@ -190,8 +190,16 @@ namespace Lens.Test
 		{
 			var from = typeof(bool[]);
 			var to = typeof (IEnumerable<>);
-			Assert.AreEqual(to.DistanceFrom(from), 1);
+			Assert.AreEqual(2, to.DistanceFrom(from));
+		}
 
+		[Test]
+		public void Generic()
+		{
+//			TestDistanceFrom<List<float>, List<int>>(int.MaxValue);
+//			TestDistanceFrom<List<ParentClass>, List<DerivedClass>>(int.MaxValue);
+//			TestDistanceFrom<IEnumerable<float>, IEnumerable<int>>(int.MaxValue);
+			TestDistanceFrom<IEnumerable<ParentClass>, IEnumerable<DerivedClass>>(1);
 		}
 
 		/// <summary>

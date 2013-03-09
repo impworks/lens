@@ -247,10 +247,20 @@ string::Compare
 		}
 
 		[Test]
-		public void ExtensionMethod()
+		public void Linq()
 		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where(a:int -> a > 2)";
+			var src = @"new [1; 2; 3; 4; 5].Where a:int -> a > 2";
 			Test(src, new [] { 3, 5, 5});
+		}
+
+		[Test]
+		public void ExtensionMethods()
+		{
+			var src = @"
+var a = new [1; 2; 3; 4; 5]
+a.Max ()";
+
+			Test(src, 5);
 		}
 
 		private void Test(string src, object value)

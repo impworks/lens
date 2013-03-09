@@ -173,29 +173,64 @@ namespace Lens.SyntaxTree.Utils
 			if (varType == typeof (object) && exprType.IsValueType)
 				return 1;
 
-			if (varType.IsInterface && IsImplementedBy(varType, exprType))
-				return 1;
+			if (varType.IsInterface)
+			{
+				if (exprType.IsInterface)
+					return InterfaceDistance(varType, new[] {exprType});
 
-			if (IsImplicitCastable(varType, exprType))
-				return 1;
+				var dist = InterfaceDistance(varType, exprType.GetInterfaces());
+				if (dist < int.MaxValue)
+					return dist + 1;
+			}
+
+			if (varType.IsGenericParameter || exprType.IsGenericParameter)
+				return GenericParameterDistance(varType, exprType);
+
+			if (varType.IsGenericType && exprType.IsGenericType)
+				return GenericDistance(varType, exprType);
 
 			int result;
 			if (IsDerivedFrom(exprType, varType, out result))
 				return result;
 
+			if (IsImplicitCastable(varType, exprType))
+				return 1;
+
 			if (varType.IsArray && exprType.IsArray)
-				return varType.GetElementType().DistanceFrom(exprType.GetElementType());
-
-			if (varType.IsGenericType && exprType.IsGenericType)
-				return GenericDistance(varType, exprType);
-
-			if (varType.IsGenericParameter)
-				return DistanceFrom(varType.BaseType, exprType);
-
-			if (exprType.IsGenericParameter)
-				return DistanceFrom(exprType.BaseType, varType);
+			{
+				var varElType = varType.GetElementType();
+				var exprElType = exprType.GetElementType();
+				if(!varElType.IsValueType && !exprElType.IsValueType)
+					return varElType.DistanceFrom(exprElType);
+			}
 
 			return int.MaxValue;
+		}
+
+		private static int InterfaceDistance(Type interfaceType, Type[] ifaces)
+		{
+			var min = int.MaxValue;
+			foreach (var iface in ifaces)
+			{
+				if (iface == interfaceType)
+					return 0;
+
+				if (interfaceType.IsGenericType && iface.IsGenericType)
+				{
+					var dist = GenericDistance(interfaceType, iface);
+					if (dist < min)
+						min = dist;
+				}
+			}
+
+			return min;
+		}
+
+		private static int GenericParameterDistance(Type varType, Type exprType)
+		{
+			return varType.IsGenericParameter
+				? DistanceFrom(varType.BaseType, exprType)
+				: DistanceFrom(exprType.BaseType, varType);
 		}
 
 		private static bool IsImplicitCastable(Type varType, Type exprType)
@@ -289,7 +324,7 @@ namespace Lens.SyntaxTree.Utils
 
 		private static bool IsImplementedBy(Type interfaceType, Type implementor)
 		{
-			return implementor.GetInterfaces().Any(i => i.IsExtendablyAssignableFrom(interfaceType));
+			return implementor.GetInterfaces().Contains(interfaceType);
 		}
 
 		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
@@ -327,13 +362,27 @@ namespace Lens.SyntaxTree.Utils
 				var attributes = argument.GenericParameterAttributes;
 
 				int conversionResult;
-				if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
+				if (argument1.IsGenericParameter)
 				{
+					conversionResult = GenericParameterDistance(argument1, argument2);
+				}
+				else if (argument2.IsGenericParameter)
+				{
+					conversionResult = GenericParameterDistance(argument2, argument1);
+				}
+				else if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
+				{
+					if (argument1.IsValueType)
+						return int.MaxValue;
+
 					// dist(X<in T1>, X<in T2>) = dist(T2, T1)
 					conversionResult = argument2.DistanceFrom(argument1);
 				}
 				else if (attributes.HasFlag(GenericParameterAttributes.Covariant))
 				{
+					if (argument2.IsValueType)
+						return int.MaxValue;
+
 					// dist(X<out T1>, X<out T2>) = dist(T1, T2)
 					conversionResult = argument1.DistanceFrom(argument2);
 				}

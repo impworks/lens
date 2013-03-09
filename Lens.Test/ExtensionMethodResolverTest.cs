@@ -25,5 +25,13 @@ namespace Lens.Test
 			var bucket = typeof(Enumerable).GetMethods().Where(m => m.Name == "Select").ToArray();
 			Assert.Contains(found, bucket);
 		}
+
+		[Test]
+		public void TestEnumerable3()
+		{
+			var found = typeof (int[]).FindExtensionMethod("Max", Type.EmptyTypes);
+			var bucket = typeof (Enumerable).GetMethods().Where(m => m.Name == "Max").ToArray();
+			Assert.Contains(found, bucket);
+		}
 	}
 }

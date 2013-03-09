@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.Compiler
 			var methods = cache.ContainsKey(name) ? cache[name] : new List<MethodInfo>();
 
 			var result = methods.Where(m => m.Name == name)
-								.Select(mi => new { Method = mi, Distance = GetArgumentsDistance(mi.GetParameters().Skip(1).Select(p => p.ParameterType).ToArray(), args) })
+								.Select(mi => new { Method = mi, Distance = GetExtensionDistance(mi, type, args) })
 								.OrderBy(p => p.Distance)
 								.ToArray();
 
@@ -88,6 +88,22 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			_Cache[forType] = dict;
+		}
+
+		public static int GetExtensionDistance(MethodInfo method, Type type, Type[] args)
+		{
+			var methodArgs = method.GetParameters().Select(p => p.ParameterType);
+			var baseDist = methodArgs.First().DistanceFrom(type);
+			var argsDist = GetArgumentsDistance(methodArgs.Skip(1).ToArray(), args);
+
+			try
+			{
+				return checked(baseDist + argsDist);
+			}
+			catch (OverflowException)
+			{
+				return int.MaxValue;
+			}
 		}
 
 		/// <summary>
