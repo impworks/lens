@@ -178,6 +178,7 @@ namespace Lens.SyntaxTree.Utils
 				if (exprType.IsInterface)
 					return InterfaceDistance(varType, new[] {exprType});
 
+				// casting expression to interface takes 1 step
 				var dist = InterfaceDistance(varType, exprType.GetInterfaces());
 				if (dist < int.MaxValue)
 					return dist + 1;
@@ -228,6 +229,8 @@ namespace Lens.SyntaxTree.Utils
 
 		private static int GenericParameterDistance(Type varType, Type exprType)
 		{
+			// generic parameter is on the same level of inheritance as the expression
+			// therefore getting its parent type does not take a step
 			return varType.IsGenericParameter
 				? DistanceFrom(varType.BaseType, exprType)
 				: DistanceFrom(exprType.BaseType, varType);
@@ -288,7 +291,7 @@ namespace Lens.SyntaxTree.Utils
 
 		private static int UnsignedToSignedConversion(Type varType, Type exprType)
 		{
-			// No unsigned type can be converted to the signed byte.
+			// no unsigned type can be converted to the signed byte.
 			if (varType == typeof (sbyte))
 				return int.MaxValue;
 
@@ -320,11 +323,6 @@ namespace Lens.SyntaxTree.Utils
 				return typeof (long);
 
 			return null;
-		}
-
-		private static bool IsImplementedBy(Type interfaceType, Type implementor)
-		{
-			return implementor.GetInterfaces().Contains(interfaceType);
 		}
 
 		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
@@ -364,6 +362,8 @@ namespace Lens.SyntaxTree.Utils
 				int conversionResult;
 				if (argument1.IsGenericParameter)
 				{
+					// generic parameter may be substituted with anything
+					// including value types
 					conversionResult = GenericParameterDistance(argument1, argument2);
 				}
 				else if (argument2.IsGenericParameter)
@@ -372,6 +372,7 @@ namespace Lens.SyntaxTree.Utils
 				}
 				else if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
 				{
+					// generic variance applies to ref-types only
 					if (argument1.IsValueType)
 						return int.MaxValue;
 
