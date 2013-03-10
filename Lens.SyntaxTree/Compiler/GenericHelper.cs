@@ -33,8 +33,11 @@ namespace Lens.SyntaxTree.Compiler
 				if (value == null && hint == null)
 					throw new TypeMatchException(string.Format("Generic argument '{0}' could not be resolved!", def));
 
-				if(hint != value)
+				if(hint != null && value != null && hint != value)
 					throw new TypeMatchException(string.Format("Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!", def, hint, value));
+
+				if (value == null)
+					genericValues[idx] = hint;
 			}
 
 			return applyGenerics(method.ReturnType, genericDefs, genericValues);
@@ -42,10 +45,13 @@ namespace Lens.SyntaxTree.Compiler
 
 		private static void resolveGenerics(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
 		{
-			if(expectedTypes.Length != actualTypes.Length)
+			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
+			var actLen = actualTypes != null ? actualTypes.Length : 0;
+
+			if(exLen != actLen)
 				throw new ArgumentException("Number of arguments does not match!");
 
-			for (var idx = 0; idx < expectedTypes.Length; idx++)
+			for (var idx = 0; idx < exLen; idx++)
 			{
 				var expected = expectedTypes[idx];
 				var actual = actualTypes[idx];
@@ -90,7 +96,7 @@ namespace Lens.SyntaxTree.Compiler
 				return type;
 
 			var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
-			return type.MakeGenericType(args);
+			return type.GetGenericTypeDefinition().MakeGenericType(args);
 		}
 	}
 
