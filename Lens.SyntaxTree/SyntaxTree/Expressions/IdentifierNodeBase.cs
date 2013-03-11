@@ -18,7 +18,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			base.ProcessClosures(ctx);
 
-			ctx.CurrentScope.ReferenceName(Identifier ?? LocalName.Name);
+			try
+			{
+				ctx.CurrentScope.ReferenceName(Identifier ?? LocalName.Name);
+			}
+			catch { }
 		}
 
 		#region Equality members

@@ -24,6 +24,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private MethodInfo m_Method;
 
 		private Type[] m_ArgTypes;
+		private Type[] m_TypeHints;
 
 		#region Resolve
 		
@@ -32,7 +33,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!m_IsResolved)
 				resolve(ctx);
 
-			return m_Method.ReturnType;
+			return GenericHelper.ResolveReturnType(m_Method, m_ArgTypes, m_TypeHints);
 		}
 
 		private void resolve(Context ctx)
@@ -60,6 +61,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
+			m_TypeHints = node.TypeHints.Select(ctx.ResolveType).ToArray();
+
 			try
 			{
 				try
@@ -68,7 +71,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				}
 				catch (KeyNotFoundException)
 				{
-					if (m_InvocationSource != null)
+					if (m_InvocationSource == null)
 						throw;
 
 					m_Method = type.FindExtensionMethod(node.MemberName, m_ArgTypes);

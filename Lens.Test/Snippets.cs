@@ -44,7 +44,7 @@ b";
 			var src = @"
 fun test -> 10
 test ()";
-			Test(src, null);
+			Test(src, 10);
 		}
 
 		[Test]
@@ -250,7 +250,7 @@ string::Compare
 		public void Linq()
 		{
 			var src = @"new [1; 2; 3; 4; 5].Where a:int -> a > 2";
-			Test(src, new [] { 3, 5, 5});
+			Test(src, new [] {3, 5, 5});
 		}
 
 		[Test]
@@ -259,7 +259,6 @@ string::Compare
 			var src = @"
 var a = new [1; 2; 3; 4; 5]
 a.Max ()";
-
 			Test(src, 5);
 		}
 

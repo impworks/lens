@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		public GetMemberNode()
 		{
-			TypeSignatures = new List<TypeSignature>();
+			TypeHints = new List<TypeSignature>();
 		}
 
 		private bool m_IsResolved;
@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// <summary>
 		/// The list of type signatures if the given identifier is a method.
 		/// </summary>
-		public List<TypeSignature> TypeSignatures { get; set; }
+		public List<TypeSignature> TypeHints { get; set; }
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (Expression == null && !m_IsStatic)
 					Error("'{0}' cannot be accessed from static context!", MemberName);
 
-				if(m_Method == null && TypeSignatures.Count > 0)
+				if(m_Method == null && TypeHints.Count > 0)
 					Error("Type arguments can only be applied to methods, and '{0}' is a field or a property!", MemberName);
 
 				m_IsResolved = true;
@@ -128,14 +128,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		private bool checkMethodArgs(Context ctx, MethodInfo method)
 		{
-			if (TypeSignatures.Count == 0)
+			if (TypeHints.Count == 0)
 				return true;
 
 			var argTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
-			if (TypeSignatures.Count != argTypes.Length)
+			if (TypeHints.Count != argTypes.Length)
 				return false;
 
-			return !argTypes.Where((t, idx) => TypeSignatures[idx].Signature != "_" && ctx.ResolveType(TypeSignatures[idx]) != t).Any();
+			return !argTypes.Where((t, idx) => TypeHints[idx].Signature != "_" && ctx.ResolveType(TypeHints[idx]) != t).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
