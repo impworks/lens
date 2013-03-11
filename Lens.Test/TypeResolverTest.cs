@@ -10,104 +10,82 @@ namespace Lens.Test
 	[TestFixture]
 	public class TypeResolverTest
 	{
+		private static TypeResolver2 Resolver;
+		static TypeResolverTest()
+		{
+			Resolver = new TypeResolver2();	
+		}
+
 		[Test]
 		public void BasicName()
 		{
-			Test("Uri", typeof(Uri));
+			Test<Uri>("Uri");
+			Test<Regex>("Regex");
 		}
 
 		[Test]
-		public void ObjectAlias()
+		public void Aliases()
 		{
-			Test("object", typeof(object));
-		}
-
-		[Test]
-		public void BoolAlias()
-		{
-			Test("bool", typeof(bool));
-		}
-
-		[Test]
-		public void IntAlias()
-		{
-			Test("int", typeof(int));
-		}
-
-		[Test]
-		public void DoubleAlias()
-		{
-			Test("double", typeof(double));
-		}
-
-		[Test]
-		public void StringAlias()
-		{
-			Test("string", typeof(string));
+			Test<object>("object");
+			Test<bool>("bool");
+			Test<int>("int");
+			Test<double>("double");
+			Test<string>("string");
 		}
 
 		[Test]
 		public void Array()
 		{
-			Test("int[]", typeof(int[]));
-		}
-
-		[Test]
-		public void MultipleArray()
-		{
-			Test("int[][][]", typeof(int[][][]));
+			Test<int[]>("int[]");
+			Test<int[][][]>("int[][][]");
 		}
 
 		[Test]
 		public void LongName()
 		{
-			Test("System.Text.RegularExpressions.Regex", typeof(Regex));
-		}
-
-		[Test]
-		public void NameFromNamespace()
-		{
-			Test("Regex", typeof(Regex));
+			Test<Regex>("System.Text.RegularExpressions.Regex");
 		}
 
 		[Test]
 		public void GenericSimple()
 		{
-			Test("Dictionary<int, string>", typeof(Dictionary<int, string>));
+			Test<Dictionary<int, string>>("Dictionary<int, string>");
 		}
 
 		[Test]
 		public void GenericFull()
 		{
-			Test("System.Collections.Generic.Dictionary<System.Int32, System.String>", typeof(Dictionary<int, string>));
+			Test<Dictionary<int, string>>("System.Collections.Generic.Dictionary<System.Int32, System.String>");
 		}
 
 		[Test]
 		public void Nightmare()
 		{
-			Test("Dictionary<System.Uri, List<Tuple<int[], string>>>", typeof(Dictionary<Uri, List<Tuple<int[], string>>>));
+			Test<Dictionary<Uri, List<Tuple<int[], string>>>>("Dictionary<System.Uri, List<Tuple<int[], string>>>");
 		}
 
 		[Test]
 		public void SelfReference()
 		{
-			Test("Lens.SyntaxTree.Unit", typeof(Unit));
+			Test<Unit>("Lens.SyntaxTree.Unit");
 		}
 
-		private static void Test(string signature, Type type)
+		private static void Test<T>(string signature)
 		{
-			var casts = 100;
-			var to1 = DateTime.Now;
-			for (var idx = 0; idx < casts; idx++)
-				Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
-			var to2 = DateTime.Now;
+			Assert.AreEqual(new TypeResolver2().ResolveType(signature), typeof(T));
 
-			var tn1 = DateTime.Now;
-			for (var idx = 0; idx < casts; idx++)
-				Assert.AreEqual(new TypeResolver2().ResolveType(signature), type);
-			var tn2 = DateTime.Now;
-
-			Console.WriteLine("{0}: old = {1}, new = {2}", signature, (to2 - to1).TotalSeconds, (tn2 - tn1).TotalSeconds);
+//			var casts = 100;
+//			var to1 = DateTime.Now;
+//			for (var idx = 0; idx < casts; idx++)
+//				Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
+//			var to2 = DateTime.Now;
+//
+//			var tn1 = DateTime.Now;
+//			for (var idx = 0; idx < casts; idx++)
+//				Assert.AreEqual(new TypeResolver2().ResolveType(signature), type);
+//			var tn2 = DateTime.Now;
+//
+//			Console.WriteLine("{0}: old = {1}, new = {2}", signature, (to2 - to1).TotalSeconds, (tn2 - tn1).TotalSeconds);
 		}
 	}
 }
