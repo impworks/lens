@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -14,14 +15,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		public NodeBase Operand { get; set; }
 
-		/// <summary>
-		/// Displays an error indicating that argument types are wrong.
-		/// </summary>
-		protected void TypeError(Type type)
-		{
-			Error("Cannot apply operator '{0}' to argument of type '{1}'.", OperatorRepresentation, type);
-		}
-
 		public override LexemLocation EndLocation
 		{
 			get { return Operand.EndLocation; }
@@ -32,6 +25,55 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			yield return Operand;
 		}
+
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		{
+			var type = Operand.GetExpressionType(ctx);
+
+			var result = resolveOperatorType(ctx);
+			if (result != null)
+				return result;
+
+			if (OverloadedMethodName != null)
+			{
+				try
+				{
+					m_OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] { type });
+
+					// cannot be generic
+					if (m_OverloadedMethod != null)
+						return m_OverloadedMethod.ReturnType;
+				}
+				catch { }
+			}
+
+			Error("Cannot apply operator '{0}' to argument of type '{1}'.", OperatorRepresentation, type);
+			return null;
+		}
+
+		public override void Compile(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			GetExpressionType(ctx);
+
+			if (m_OverloadedMethod == null)
+			{
+				compileOperator(ctx);
+				return;
+			}
+
+			var ps = m_OverloadedMethod.GetParameters();
+			Expr.Cast(Operand, ps[0].ParameterType).Compile(ctx, true);
+			gen.EmitCall(m_OverloadedMethod);
+		}
+
+		protected Type resolveOperatorType(Context ctx)
+		{
+			return null;
+		}
+
+		protected abstract void compileOperator(Context ctx);
 
 		#region Equality members
 

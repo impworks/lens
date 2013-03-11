@@ -14,17 +14,18 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "-"; }
 		}
 
+		public override string OverloadedMethodName
+		{
+			get { return "op_UnaryNegation"; }
+		}
+
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var type = Operand.GetExpressionType(ctx);
-
-			if(!type.IsNumericType())
-				TypeError(type);
-
-			return type;
+			return type.IsNumericType() ? type : null;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 

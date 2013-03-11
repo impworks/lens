@@ -39,25 +39,44 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			}
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		public override string  OverloadedMethodName
 		{
-			return typeof(bool);
+			get
+			{
+				switch (Kind)
+				{
+					case ComparisonOperatorKind.Equals: return "op_Equality";
+					case ComparisonOperatorKind.NotEquals: return "op_Inequality";
+					case ComparisonOperatorKind.Less: return "op_LessThan";
+					case ComparisonOperatorKind.LessEquals: return "op_LessThanOrEqual";
+					case ComparisonOperatorKind.Greater: return "op_GreaterThan";
+					case ComparisonOperatorKind.GreaterEquals: return "op_GreaterThanOrEqual";
+
+					default: throw new ArgumentException("Comparison operator kind is invalid!");
+				}
+			}
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override Type  resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
+			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
+			return canCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
+		}
+
+		protected override void compileOperator(Context ctx)
+		{
+			var leftType = LeftOperand.GetExpressionType(ctx);
+			var rightType = RightOperand.GetExpressionType(ctx);
 
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
-			if(!canCompare(left, right, isEquality))
-				TypeError(left, right);
+			if(!canCompare(leftType, rightType, isEquality))
+				Error("Types '{0}' and '{1}' cannot be compared.", leftType, rightType);
 
 			if (isEquality)
-				compileEquality(ctx, left, right);
+				compileEquality(ctx, leftType, rightType);
 			else
-				compileRelation(ctx, left, right);
+				compileRelation(ctx, leftType, rightType);
 		}
 
 		/// <summary>
@@ -65,6 +84,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		private bool canCompare(Type left, Type right, bool equalityOnly)
 		{
+			// there's an overridden method
+			if (m_OverloadedMethod != null)
+				return true;
+
 			// string .. string
 			if (left == typeof(string) && right == left)
 				return true;

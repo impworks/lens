@@ -170,6 +170,23 @@ var a = 1
 			Test(@"new { ""a"" => 1; ""b"" => 2}[""a""]", 1);
 		}
 
+		[Test]
+		public void OverloadedOperators()
+		{
+			Test("(new Decimal 1) + (new Decimal 2)", 3);
+			Test("(new Decimal 2) - (new Decimal 1)", 1);
+			Test("(new Decimal 2) * (new Decimal 2)", 4);
+			Test("(new Decimal 42) / (new Decimal 2)", 21);
+			Test("(new Decimal 100) % (new Decimal 3)", 1);
+
+			Test("(new Decimal 1) == (new Decimal 2)", false);
+			Test("(new Decimal 1) <> (new Decimal 2)", true);
+			Test("(new Decimal 1) < (new Decimal 2)", true);
+			Test("(new Decimal 1) <= (new Decimal 2)", true);
+			Test("(new Decimal 1) > (new Decimal 2)", false);
+			Test("(new Decimal 1) >= (new Decimal 2)", false);
+		}
+
 		private void Test(string src, object value)
 		{
 			var result = Compile(src);

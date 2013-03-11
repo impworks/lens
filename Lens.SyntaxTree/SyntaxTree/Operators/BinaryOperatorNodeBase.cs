@@ -37,34 +37,74 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			yield return LeftOperand;
 			yield return RightOperand;
 		}
-		
-		/// <summary>
-		/// Displays an error indicating that argument types are wrong.
-		/// </summary>
-		protected void TypeError(Type left, Type right)
+
+		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			Error("Cannot apply operator '{0}' to arguments of types '{1}' and '{2}' respectively.", OperatorRepresentation, left, right);
+			var leftType = LeftOperand.GetExpressionType(ctx);
+			var rightType = RightOperand.GetExpressionType(ctx);
+
+			var result = resolveOperatorType(ctx, leftType, rightType);
+			if (result != null)
+				return result;
+
+			if (leftType.IsNumericType() && rightType.IsNumericType())
+				return resolveNumericType(ctx);
+
+			if (OverloadedMethodName != null)
+			{
+				try
+				{
+					m_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
+
+					// cannot be generic
+					if (m_OverloadedMethod != null)
+						return m_OverloadedMethod.ReturnType;
+				}
+				catch { }
+			}
+
+			Error("Cannot apply operator '{0}' to arguments of types '{1}' and '{2}' respectively.", OperatorRepresentation, leftType, rightType);
+			return null;
 		}
+
+		public override void Compile(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			GetExpressionType(ctx);
+
+			if (m_OverloadedMethod == null)
+			{
+				compileOperator(ctx);
+				return;
+			}
+
+			var ps = m_OverloadedMethod.GetParameters();
+			Expr.Cast(LeftOperand, ps[0].ParameterType).Compile(ctx, true);
+			Expr.Cast(RightOperand, ps[1].ParameterType).Compile(ctx, true);
+			gen.EmitCall(m_OverloadedMethod);
+		}
+
+		protected virtual Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			return null;
+		}
+
+		protected abstract void compileOperator(Context ctx);
 
 		/// <summary>
 		/// Resolves a common numeric type.
 		/// </summary>
-		protected Type resolveNumericType(Context ctx)
+		private Type resolveNumericType(Context ctx)
 		{
 			var left = LeftOperand.GetExpressionType(ctx);
 			var right = RightOperand.GetExpressionType(ctx);
 
-			if (left.IsNumericType() && right.IsNumericType())
-			{
-				var type = TypeExtensions.GetNumericOperationType(left, right);
-				if(type == null)
-					Error("Cannot apply apply math operations to arguments of different signedness.");
+			var type = TypeExtensions.GetNumericOperationType(left, right);
+			if(type == null)
+				Error("Cannot apply apply math operations to arguments of different signedness.");
 
-				return type;
-			}
-
-			TypeError(left, right);
-			return null;
+			return type;
 		}
 
 		/// <summary>
@@ -76,9 +116,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			var left = LeftOperand.GetExpressionType(ctx);
 			var right = RightOperand.GetExpressionType(ctx);
-
-			if(!left.IsNumericType() || !right.IsNumericType())
-				TypeError(left, right);
 
 			if(type == null)
 				type = TypeExtensions.GetNumericOperationType(left, right);

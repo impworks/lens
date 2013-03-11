@@ -13,18 +13,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "+"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		public override string OverloadedMethodName
 		{
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
-
-			if (left == typeof (string) && left == right)
-				return typeof (string);
-
-			return resolveNumericType(ctx);
+			get { return "op_Addition"; }
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			return leftType == typeof (string) && rightType == typeof (string) ? typeof (string) : null;
+		}
+
+		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 

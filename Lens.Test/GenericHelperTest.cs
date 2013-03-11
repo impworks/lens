@@ -14,7 +14,7 @@ namespace Lens.Test
 		public void Basic()
 		{
 			Test(typeof(void), "Basic1");
-			Test(typeof(int), "Basic1");
+			Test(typeof(int), "Basic2");
 		}
 
 		[Test]

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
@@ -15,12 +14,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "/"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		public override string OverloadedMethodName
 		{
-			return resolveNumericType(ctx);
+			get { return "op_Division"; }
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compileOperator(Context ctx)
 		{
 			if(LeftOperand.GetExpressionType(ctx).IsIntegerType() && RightOperand is IntNode && (RightOperand as IntNode).Value == 0)
 				Error("Constant division by zero!");

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -13,12 +12,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "%"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		public override string OverloadedMethodName
 		{
-			return resolveNumericType(ctx);
+			get { return "op_Modulus"; }
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 			GetExpressionType(ctx);

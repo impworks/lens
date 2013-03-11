@@ -33,18 +33,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			}
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
-
-			if(!CastOperatorNode.IsImplicitlyBoolean(left) || !CastOperatorNode.IsImplicitlyBoolean(right))
-				TypeError(left, right);
-
-			return typeof (bool);
+			return CastOperatorNode.IsImplicitlyBoolean(leftType) && CastOperatorNode.IsImplicitlyBoolean(rightType)
+				       ? typeof (bool)
+				       : null;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void  compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 

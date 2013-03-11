@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -13,17 +14,18 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "**"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return typeof (double);
+			return leftType.IsNumericType() && rightType.IsNumericType() ? typeof (double) : null;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var method = typeof (Math).GetMethod("Pow", new[] {typeof (double), typeof (double)});
 
 			loadAndConvertNumerics(ctx, typeof(double));
+
+			var method = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
 			gen.EmitCall(method);
 		}
 	}

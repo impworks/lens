@@ -69,9 +69,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 				else
 				{
-					var explicitOp = fromType.GetMethods().FirstOrDefault(m => m.Name == "op_Explicit" && m.ReturnType == toType);
-					if (explicitOp != null)
-						gen.EmitCall(explicitOp);
+					// todo: a more elegant approach maybe?
+					var castOp = fromType.GetMethods().Where(m => m.Name == "op_Explicit" || m.Name == "op_Implicit" && m.ReturnType == toType)
+													  .OrderBy(m => m.Name == "op_Implicit" ? 0 : 1)
+													  .FirstOrDefault();
+					if (castOp != null)
+						gen.EmitCall(castOp);
 					else
 						gen.EmitCast(toType);
 				}
@@ -105,23 +108,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		public static bool IsImplicitlyBoolean(Type type)
 		{
 			return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof (bool));
-		}
-
-		public static void CompileAsBoolean(NodeBase node, Context ctx)
-		{
-			var gen = ctx.CurrentILGenerator;
-			var type = node.GetExpressionType(ctx);
-
-			node.Compile(ctx, true);
-
-			if (type != typeof (bool))
-			{
-				var implConv = type.GetMethods().FirstOrDefault(m => m.Name == "op_Implicit" && m.ReturnType == typeof (bool));
-				if (implConv == null)
-					node.Error("Type '{0}' cannot be used in boolean context!", type);
-
-				gen.EmitCall(implConv);
-			}
 		}
 	}
 }
