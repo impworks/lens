@@ -209,6 +209,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 						gen.EmitConstant((short)value);
 					else if (dataType == typeof(ushort))
 						gen.EmitConstant((ushort)value);
+					else if (dataType == typeof(string))
+						gen.EmitConstant((string)value);
 					else
 						throw new NotImplementedException("Unknown literal field type!");
 
