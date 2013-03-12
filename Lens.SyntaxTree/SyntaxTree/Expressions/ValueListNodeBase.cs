@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -17,6 +21,18 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// The list of items.
 		/// </summary>
 		public List<T> Expressions { get; set; }
+
+		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
+		{
+			foreach (var node in nodes)
+			{
+				var type = node.GetExpressionType(ctx);
+				if (type != typeof(NullType) && !type.IsVoid())
+					return type;
+			}
+
+			return null;
+		}
 
 		#region Equality members
 

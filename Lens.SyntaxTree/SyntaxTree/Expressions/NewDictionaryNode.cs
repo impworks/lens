@@ -13,27 +13,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
 	{
+		private Type m_KeyType;
+		private Type m_ValueType;
+
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
 				Error("Use explicit constructor to create an empty dictionary!");
 
-			var keyType = Expressions[0].Key.GetExpressionType(ctx);
-			var valType = Expressions[0].Value.GetExpressionType(ctx);
+			m_KeyType = Expressions[0].Key.GetExpressionType(ctx);
+			m_ValueType = resolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
-			if (keyType == typeof(NullType))
-				Error(Expressions[0].Key, "Cannot infer type of the first record of the directory. Please use casting to specify the type!");
+			if (m_KeyType == typeof(NullType))
+				Error(Expressions[0].Key, "Dictionary cannot be initialized with null keys!");
 
-			if (keyType.IsVoid())
+			if (m_KeyType.IsVoid())
 				Error(Expressions[0].Key, "An expression that returns a value is expected!");
 
-			if (valType == typeof(NullType))
-				Error(Expressions[0].Value, "Cannot infer type of the first record of the directory. Please use casting to specify the type!");
+			if (m_ValueType == null)
+				Error(Expressions[0].Value, "Dictionary value type cannot be inferred, at least one value must be non-null!");
 
-			if (valType.IsVoid())
+			if (m_ValueType.IsVoid())
 				Error(Expressions[0].Value, "An expression that returns a value is expected!");
 
-			return typeof(Dictionary<,>).MakeGenericType(keyType, valType);
+			return typeof(Dictionary<,>).MakeGenericType(m_KeyType, m_ValueType);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -48,14 +51,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var keyType = Expressions[0].Key.GetExpressionType(ctx);
-			var valType = Expressions[0].Value.GetExpressionType(ctx);
 			var dictType = GetExpressionType(ctx);
 
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
 
 			var ctor = dictType.GetConstructor(new[] {typeof (int)});
-			var addMethod = dictType.GetMethod("Add", new[] {keyType, valType});
+			var addMethod = dictType.GetMethod("Add", new[] { m_KeyType, m_ValueType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
@@ -67,14 +68,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var currKeyType = curr.Key.GetExpressionType(ctx);
 				var currValType = curr.Value.GetExpressionType(ctx);
 
-				if (currKeyType != keyType)
-					Error(curr.Key, "Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, keyType, valType);
+				if (currKeyType == typeof(NullType))
+					Error(curr.Key, "Dictionary cannot be initialized with null keys!");
+
+				if (currKeyType != m_KeyType)
+					Error(curr.Key, "Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, m_KeyType, m_ValueType);
 
 				if (currKeyType.IsVoid())
 					Error(curr.Key, "An expression that returns a value is expected!");
 
-				if (!valType.IsExtendablyAssignableFrom(currValType))
-					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, keyType, valType);
+				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
+					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, m_KeyType, m_ValueType);
 
 				if (currValType.IsVoid())
 					Error(curr.Value, "An expression that returns a value is expected!");
@@ -82,7 +86,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				gen.EmitLoadLocal(tmpVar);
 
 				curr.Key.Compile(ctx, true);
-				Expr.Cast(curr.Value, valType).Compile(ctx, true);
+				Expr.Cast(curr.Value, m_ValueType).Compile(ctx, true);
 
 				gen.EmitCall(addMethod);
 			}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 
 namespace Lens.SyntaxTree.Utils
 {
@@ -165,6 +166,9 @@ namespace Lens.SyntaxTree.Utils
 				return 0;
 
 			if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
+				return 1;
+
+			if((varType.IsClass || varType.IsNullableType()) && exprType == typeof(NullType))
 				return 1;
 			
 			if (varType.IsNumericType() && exprType.IsNumericType())

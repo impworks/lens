@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
 using NUnit.Framework;
@@ -260,6 +261,14 @@ string::Compare
 var a = new [1; 2; 3; 4; 5]
 a.Max ()";
 			Test(src, 5);
+		}
+
+		[Test]
+		public void CollectionTypeInference()
+		{
+			Test(@"new [null; null; ""test""]", new[] {null, null, "test"});
+			Test(@"new <null; ""test2"">", new[] { null, "test2" });
+			Test(@"new {1 => null; 2 => ""test2""}[2]", "test2");
 		}
 
 		private void Test(string src, object value)

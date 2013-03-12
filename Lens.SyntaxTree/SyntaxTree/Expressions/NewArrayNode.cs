@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -11,17 +10,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
+		private Type m_ItemType;
+
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
 				Error("Array must contain at least one object!");
 
-			var itemType = Expressions[0].GetExpressionType(ctx);
-			if (itemType == typeof(NullType))
-				Error(Expressions[0], "Cannot infer type of the first item of the array. Please use casting to specify array type!");
-
-			if (itemType.IsVoid())
-				Error(Expressions[0], "An expression that returns a value is expected!");
+			m_ItemType = resolveItemType(Expressions, ctx);
+			if (m_ItemType == null)
+				Error(Expressions[0], "Array type cannot be inferred, at least one value must be non-null.");
 
 			return Expressions[0].GetExpressionType(ctx).MakeArrayType();
 		}
@@ -34,13 +32,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var itemType = Expressions[0].GetExpressionType(ctx);
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
 
 			// create array
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateArray(itemType);
+			gen.EmitCreateArray(m_ItemType);
 			gen.EmitSaveLocal(tmpVar);
 
 			for (var idx = 0; idx < count; idx++)
@@ -50,24 +47,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (currType.IsVoid())
 					Error(Expressions[idx], "An expression that returns a value is expected!");
 
-				if(!itemType.IsExtendablyAssignableFrom(currType))
-					Error(Expressions[idx], "Cannot add object of type '{0}' to array of type '{1}'!", currType, itemType);
+				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
+					Error(Expressions[idx], "Cannot add object of type '{0}' to array of type '{1}'!", currType, m_ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				gen.EmitConstant(idx);
 
-				var cast = Expr.Cast(Expressions[idx], itemType);
+				var cast = Expr.Cast(Expressions[idx], m_ItemType);
 
-				if (itemType.IsValueType)
+				if (m_ItemType.IsValueType)
 				{
-					gen.EmitLoadIndex(itemType, true);
+					gen.EmitLoadIndex(m_ItemType, true);
 					cast.Compile(ctx, true);
-					gen.EmitSaveObject(itemType);
+					gen.EmitSaveObject(m_ItemType);
 				}
 				else
 				{
 					cast.Compile(ctx, true);
-					gen.EmitSaveIndex(itemType);
+					gen.EmitSaveIndex(m_ItemType);
 				}
 			}
 
