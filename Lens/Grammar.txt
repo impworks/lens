@@ -30,7 +30,7 @@ line_expr_0         = line_expr_1 [ ( "as" | "is" ) type ]
 line_expr_1         = line_expr_2 { sign_1 line_expr_2 }
 sign_1              = "&&" | "||" | "^^"
 line_expr_2         = line_expr_3 { sign_2 line_expr_3 }
-sign_2              = "==" | "<>" | "<" | ">" | "<=" | ">="
+sign_2              = "==" | "<>" | "<=" | ">=" | "<" | ">"
 line_expr_3         = [ "not" | "-" ] line_expr_4 { sign_3 line_expr_4 }
 sign_3              = "+" | "-"
 line_expr_4         = line_expr_5 { sign_4 line_expr_5 }

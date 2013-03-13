@@ -230,7 +230,12 @@ line_expr_2Ref        := pipe2
                          <| line_expr_3
                          <| many (sign_2 .>>.? line_expr_3)
                          <| Node.operatorChain
-sign_2Ref             := token "==" <|> token "<>" <|> token "<" <|> token ">" <|> token "<=" <|> token ">="
+sign_2Ref             := choice [attempt <| token "=="
+                                 attempt <| token "<>"
+                                 attempt <| token "<="
+                                 attempt <| token ">="
+                                 attempt <| token "<"
+                                 attempt <| token ">"]
 line_expr_3Ref        := pipe2
                          <| opt (keyword "not" <|> token "-")
                          <| (pipe2
