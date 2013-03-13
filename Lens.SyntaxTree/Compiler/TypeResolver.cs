@@ -16,7 +16,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				{
 					"mscorlib",
-					new List<string> { "System.Collections", "System.Collections.Generic", "System.Text" }
+					new List<string> { "System.Collections", "System.Collections.Generic", "System.Text", "System.Threading" }
 				},
 				{
 					"System",

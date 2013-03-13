@@ -271,6 +271,15 @@ a.Max ()";
 			Test(@"new {1 => null; 2 => ""test2""}[2]", "test2");
 		}
 
+		[Test]
+		public void DelegateCasting()
+		{
+			var src = @"
+var ts = (-> Console::WriteLine 1) as ThreadStart
+ts ()";
+			Test(src, null);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

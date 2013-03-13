@@ -27,6 +27,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			base.ProcessClosures(ctx);
 
+			// finalize inner scope
 			ctx.CurrentScope.FinalizeScope(ctx);
 			ctx.CurrentMethod = methodBackup;
 		}

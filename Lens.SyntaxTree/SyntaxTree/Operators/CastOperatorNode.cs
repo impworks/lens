@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
@@ -31,6 +32,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				Expression.Compile(ctx, true);
 				gen.EmitConvert(toType);
 			}
+
+			else if(fromType.IsCallableType() && toType.IsCallableType())
+				castDelegate(ctx, fromType, toType);
 
 			else if (fromType == typeof (NullType))
 			{
@@ -93,14 +97,36 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 					gen.EmitCast(toType);
 
 				else
-					error(fromType, toType);
+					castError(fromType, toType);
 			}
 
 			else
-				error(fromType, toType);
+				castError(fromType, toType);
 		}
 
-		private void error(Type from, Type to)
+		private void castDelegate(Context ctx, Type from, Type to)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var toCtor = to.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
+			var fromMethod = from.GetMethod("Invoke");
+			var toMethod = to.GetMethod("Invoke");
+
+			var fromArgs = fromMethod.GetParameters().Select(p => p.ParameterType).ToArray();
+			var toArgs = toMethod.GetParameters().Select(p => p.ParameterType).ToArray();
+
+			if(!fromArgs.SequenceEqual(toArgs))
+				Error("Delegate types '{0}' and '{1}' do not have matching argument types!", from, to);
+
+			if(toMethod.ReturnType != fromMethod.ReturnType)
+				Error("Delegate types '{0}' and '{1}' do not have matching return types!", from, to);
+
+			Expression.Compile(ctx, true);
+			gen.EmitLoadFunctionPointer(fromMethod);
+			gen.EmitCreateObject(toCtor);
+		}
+
+		private void castError(Type from, Type to)
 		{
 			Error("Cannot cast object of type '{0}' to type '{1}'.", from, to);
 		}

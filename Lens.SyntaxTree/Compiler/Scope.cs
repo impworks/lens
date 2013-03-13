@@ -198,7 +198,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			// create a field for base scope in the current type
-			if(OuterScope != null)
+			if(OuterScope != null && ClosureType != null)
 				ClosureType.CreateField(ParentScopeFieldName, OuterScope.ClosureType.TypeBuilder);
 
 			// register a variable for closure instance in the scope
