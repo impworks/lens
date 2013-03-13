@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
@@ -146,6 +147,16 @@ namespace Lens.Test
 			Assert.AreEqual(t3.AddParameters(typeof(string), typeof(Tuple<int, int>)), t4);
 
 			Assert.Throws<LensCompilerException>(() => t1.AddParameters(new Type[20]));
+		}
+
+		[Test]
+		public void ExternalDelegates()
+		{
+			Assert.IsTrue(typeof(ThreadStart).IsCallableType());
+			Assert.IsTrue(typeof(ParameterizedThreadStart).IsCallableType());
+
+			Assert.AreEqual(typeof(ThreadStart).GetArgumentTypes(), Type.EmptyTypes);
+			Assert.AreEqual(typeof(ParameterizedThreadStart).GetArgumentTypes(), new [] { typeof(object) });
 		}
 	}
 }

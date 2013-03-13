@@ -101,7 +101,14 @@ namespace Lens.SyntaxTree.Utils
 		/// </summary>
 		public static bool IsCallableType(this Type type)
 		{
-			return type.IsFuncType() || type.IsActionType();
+			while (type != null)
+			{
+				if (type == typeof(MulticastDelegate))
+					return true;
+				type = type.BaseType;
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -109,20 +116,10 @@ namespace Lens.SyntaxTree.Utils
 		/// </summary>
 		public static Type[] GetArgumentTypes(this Type type)
 		{
-			if (type.IsActionType())
-			{
-				return type == typeof(Action)
-					? new Type[0] 
-					: type.GetGenericArguments();
-			}
+			if(!type.IsCallableType())
+				throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
 
-			if (type.IsFuncType())
-			{
-				var args = type.GetGenericArguments();
-				return args.Take(args.Length - 1).ToArray();
-			}
-
-			throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
+			return type.GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
 		}
 		
 		/// <summary>
