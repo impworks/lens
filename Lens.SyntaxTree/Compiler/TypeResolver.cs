@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -9,67 +10,34 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public class TypeResolver
 	{
-		public TypeResolver()
+		static TypeResolver()
 		{
-			_Cache = new Dictionary<string, Type>();
-			ResetLocations();
-			ResetAliases();
-		}
-
-		private Dictionary<string, List<string>> _SearchableLocations;
-		private readonly Dictionary<string, Type> _Cache;
-
-		/// <summary>
-		/// Type aliases.
-		/// </summary>
-		public Dictionary<string, Type> TypeAliases { get; private set; }
-
-
-		/// <summary>
-		/// Initialize the namespaces list.
-		/// </summary>
-		public void ResetLocations()
-		{
-			_SearchableLocations = new Dictionary<string, List<string>>
+			_Locations = new Dictionary<string, List<string>>
 			{
 				{
-					// Local reference
-					"",
-					new List<string>()
+					"mscorlib",
+					new List<string> { "System.Collections", "System.Collections.Generic", "System.Text" }
 				},
 				{
-					"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-					new List<string>
-					{
-						"System",
-						"System.Collections.Generic",
-						"System.Text"
-					}
+					"System",
+					new List<string> { "System.Text.RegularExpressions" }
 				},
 				{
-					"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-					new List<string>
-					{
-						"System",
-						"System.Text.RegularExpressions"
-					}
+					"System.Drawing",
+					new List<string> { "System.Drawing" }
 				},
 				{
-					"System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a",
-					new List<string>
-					{
-						"System.Drawing"
-					}
+					"System.Core",
+					new List<string> { "System.Linq" }
 				}
 			};
-		}
 
-		/// <summary>
-		/// Initialize the aliases dictionary.
-		/// </summary>
-		public void ResetAliases()
-		{
-			TypeAliases = new Dictionary<string, Type>
+			_Namespaces = new List<string>
+			{
+				"System"
+			};
+
+			_TypeAliases = new Dictionary<string, Type>
 			{
 				{"object", typeof (Object)},
 				{"bool", typeof (Boolean)},
@@ -79,6 +47,45 @@ namespace Lens.SyntaxTree.Compiler
 				{"double", typeof (Double)},
 				{"string", typeof (String)},
 			};
+
+			loadAssemblies();
+		}
+
+		public TypeResolver()
+		{
+			_Cache = new Dictionary<string, Type>();
+		}
+
+		private static IEnumerable<string> _EmptyNamespaces = new[] { string.Empty };
+		private static Dictionary<string, List<string>> _Locations;
+		private static List<string> _Namespaces;
+		private readonly Dictionary<string, Type> _Cache;
+		private static List<Assembly> _Assemblies;
+		private static readonly Dictionary<string, Type> _TypeAliases;
+
+		private static void loadAssemblies()
+		{
+			_Assemblies = new List<Assembly>();
+			var fullNames = new[]
+			{
+				"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+				"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+				"System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+				"System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+			};
+
+			foreach (var name in fullNames)
+			{
+				try
+				{
+					_Assemblies.Add(Assembly.Load(name));
+				}
+				catch { }
+			}
+
+			foreach(var asm in AppDomain.CurrentDomain.GetAssemblies())
+				if(!_Assemblies.Contains(asm))
+					_Assemblies.Add(asm);
 		}
 
 		/// <summary>
@@ -90,9 +97,9 @@ namespace Lens.SyntaxTree.Compiler
 			Type cached;
 			if (_Cache.TryGetValue(trimmed, out cached))
 				return cached;
-			
+
 			var type = parseTypeSignature(trimmed);
-			if(type != null)
+			if (type != null)
 				_Cache.Add(trimmed, type);
 
 			return type;
@@ -102,19 +109,10 @@ namespace Lens.SyntaxTree.Compiler
 		/// Add a namespace to search types in.
 		/// </summary>
 		/// <param name="nsp">Namespace.</param>
-		/// <param name="assembly">Optional assembly full name.</param>
-		public void AddNamespace(string nsp, string assembly = "")
+		public void AddNamespace(string nsp)
 		{
-			if (_SearchableLocations.ContainsKey(assembly))
-			{
-				var lst = _SearchableLocations[assembly];
-				if (!lst.Contains(nsp))
-					lst.Add(nsp);
-
-				return;
-			}
-
-			_SearchableLocations[assembly] = new List<string> { nsp };
+			if(!_Namespaces.Contains(nsp))
+				_Namespaces.Add(nsp);
 		}
 
 		/// <summary>
@@ -123,8 +121,8 @@ namespace Lens.SyntaxTree.Compiler
 		private Type parseTypeSignature(string signature)
 		{
 			// simple cases: type is an alias
-			if (TypeAliases.ContainsKey(signature))
-				return TypeAliases[signature];
+			if (_TypeAliases.ContainsKey(signature))
+				return _TypeAliases[signature];
 
 			// array
 			if (signature.EndsWith("[]"))
@@ -132,11 +130,10 @@ namespace Lens.SyntaxTree.Compiler
 
 			// generic type
 			var open = signature.IndexOf('<');
-			var close = signature.LastIndexOf('>');
-
 			if (open == -1)
 				return findType(signature);
 
+			var close = signature.LastIndexOf('>');
 			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
 			var typeName = signature.Substring(0, open) + '`' + args.Length;
 			var type = findType(typeName);
@@ -149,23 +146,22 @@ namespace Lens.SyntaxTree.Compiler
 		private Type findType(string name)
 		{
 			var checkNamespaces = !name.Contains('.');
-
+			
 			Type foundType = null;
-			string foundAsm = null;
-			string foundNsp = null;
 
-			foreach (var currLocation in _SearchableLocations)
+			foreach (var currAsm in _Assemblies)
 			{
-				var nsps = checkNamespaces
-					? currLocation.Value
-					: (IEnumerable<string>) new[] {string.Empty};
-
-				foreach (var currNsp in nsps)
+				var namespaces = checkNamespaces ? _Namespaces : _EmptyNamespaces;
+				if (checkNamespaces)
 				{
-					var typeName = checkNamespaces ? string.Format("{0}.{1}", currNsp, name) : name;
-					if (!string.IsNullOrEmpty(currLocation.Key))
-						typeName = string.Format("{0},{1}", typeName, currLocation.Key);
+					List<string> extras;
+					if (_Locations.TryGetValue(currAsm.GetName().Name, out extras))
+						namespaces = namespaces.Union(extras);
+				}
 
+				foreach (var currNsp in namespaces)
+				{
+					var typeName = (checkNamespaces ? currNsp + "." + name : name)  + "," + currAsm.FullName;
 					var type = Type.GetType(typeName);
 					if (type == null)
 						continue;
@@ -176,21 +172,19 @@ namespace Lens.SyntaxTree.Compiler
 							string.Format(
 								"Ambigious type reference: type '{0}' is found in the following namespaces:\n{1} in assembly {2}\n{3} in assembly {4}",
 								name,
-								foundNsp,
-								foundAsm,
-								currNsp,
-								currLocation.Key
+								foundType.Namespace,
+								foundType.Assembly.GetName().Name,
+								type.Namespace,
+								currAsm.FullName
 							)
 						);
 					}
 
 					foundType = type;
-					foundNsp = currNsp;
-					foundAsm = currLocation.Key;
 				}
 			}
 
-			if(foundType == null)
+			if (foundType == null)
 				throw new ArgumentException(string.Format("Type '{0}' could not be found.", name));
 
 			return foundType;
@@ -203,11 +197,12 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var depth = 0;
 			var start = 0;
-			for (var idx = 0; idx < args.Length; idx++)
+			var len = args.Length;
+			for (var idx = 0; idx < len; idx++)
 			{
 				if (args[idx] == '<') depth++;
 				if (args[idx] == '>') depth--;
-				if (args[idx] == ',' && depth == 0)
+				if (depth == 0 && args[idx] == ',')
 				{
 					yield return parseTypeSignature(args.Substring(start, idx - start));
 					start = idx + 1;

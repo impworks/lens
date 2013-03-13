@@ -10,11 +10,7 @@ namespace Lens.Test
 	[TestFixture]
 	public class TypeResolverTest
 	{
-		private static TypeResolver2 Resolver;
-		static TypeResolverTest()
-		{
-			Resolver = new TypeResolver2();	
-		}
+		private static readonly TypeResolver Resolver = new TypeResolver();
 
 		[Test]
 		public void BasicName()
@@ -70,22 +66,16 @@ namespace Lens.Test
 			Test<Unit>("Lens.SyntaxTree.Unit");
 		}
 
+		[Test]
+		public void DefaultNamespaces()
+		{
+			Test<System.Drawing.Point>("Point");
+			Assert.AreEqual(Resolver.ResolveType("Enumerable"), typeof(System.Linq.Enumerable));
+		}
+
 		private static void Test<T>(string signature)
 		{
-			Assert.AreEqual(new TypeResolver2().ResolveType(signature), typeof(T));
-
-//			var casts = 100;
-//			var to1 = DateTime.Now;
-//			for (var idx = 0; idx < casts; idx++)
-//				Assert.AreEqual(new TypeResolver().ResolveType(signature), type);
-//			var to2 = DateTime.Now;
-//
-//			var tn1 = DateTime.Now;
-//			for (var idx = 0; idx < casts; idx++)
-//				Assert.AreEqual(new TypeResolver2().ResolveType(signature), type);
-//			var tn2 = DateTime.Now;
-//
-//			Console.WriteLine("{0}: old = {1}, new = {2}", signature, (to2 - to1).TotalSeconds, (tn2 - tn1).TotalSeconds);
+			Assert.AreEqual(Resolver.ResolveType(signature), typeof(T));
 		}
 	}
 }

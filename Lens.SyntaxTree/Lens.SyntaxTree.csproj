@@ -67,7 +67,7 @@
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\TypeContentsBase.cs" />
     <Compile Include="Compiler\TypeEntity.cs" />
-    <Compile Include="Compiler\TypeResolver2.cs" />
+    <Compile Include="Compiler\TypeResolver.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -137,7 +137,6 @@
     <Compile Include="Utils\Annotations.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="SyntaxTree\LocationEntity.cs" />
-    <Compile Include="Compiler\TypeResolver.cs" />
     <Compile Include="Compiler\TypeSignature.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Utils\EnumerableExtensions.cs" />
