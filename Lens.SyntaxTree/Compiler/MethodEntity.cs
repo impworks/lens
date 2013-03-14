@@ -40,6 +40,13 @@ namespace Lens.SyntaxTree.Compiler
 
 			var ctx = ContainerType.Context;
 
+			if (ctx.MethodResolutionStack.Contains(this))
+				throw new LensCompilerException(
+					string.Format("The return type of method '{0}' cannot be inferred due to recursion! Please use type casting to specify the return type.", Name)
+				);
+
+			ctx.MethodResolutionStack.Push(this);
+
 			var attrs = MethodAttributes.Public;
 			if(IsStatic)
 				attrs |= MethodAttributes.Static;
@@ -71,6 +78,8 @@ namespace Lens.SyntaxTree.Compiler
 			// an empty script is allowed and it's return is null
 			if (this == ctx.MainMethod && Body.Statements.Count == 0)
 				Body.Statements.Add(new UnitNode());
+
+			ctx.MethodResolutionStack.Pop();
 		}
 
 		protected override void compileCore(Context ctx)

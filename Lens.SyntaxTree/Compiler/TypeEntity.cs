@@ -343,7 +343,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private Tuple<MethodEntityBase, int> resolveMethodByArgs(IEnumerable<MethodEntityBase> list, Type[] args)
 		{
-			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent => new Tuple<MethodEntityBase, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(ent.ArgumentTypes, args));
+			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent =>
+			{
+				ent.PrepareSelf();
+				return new Tuple<MethodEntityBase, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(ent.ArgumentTypes, args));
+			};
+
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 			
 			if(result.Length == 0 || result[0].Item2 == int.MaxValue)

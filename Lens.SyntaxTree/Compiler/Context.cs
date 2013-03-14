@@ -39,6 +39,8 @@ namespace Lens.SyntaxTree.Compiler
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 
+			MethodResolutionStack = new Stack<MethodEntity>();
+
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
 
@@ -159,6 +161,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// The current most nested catch block.
 		/// </summary>
 		internal CatchNode CurrentCatchClause { get; set; }
+
+		internal Stack<MethodEntity> MethodResolutionStack { get; private set; }
 
 		/// <summary>
 		/// The lexical scope of the current scope.

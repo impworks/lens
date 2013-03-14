@@ -291,6 +291,13 @@ Array::FindAll arr filter";
 			Test(src, new [] { 3, 4, 5});
 		}
 
+		[Test]
+		public void RecursiveDeclararion()
+		{
+			var src = @"fun fact a:int -> if (a == 0) 1 else 1 * fact(a-1)";
+			Test(src, null);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
