@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
 using NUnit.Framework;
@@ -250,7 +249,7 @@ string::Compare
 		[Test]
 		public void Linq()
 		{
-			var src = @"new [1; 2; 3; 4; 5].Where (a:int -> a > 2)";
+			var src = @"new [1; 2; 3; 4; 5].Where (a:int) -> a > 2";
 			Test(src, new [] {3, 5, 5});
 		}
 
@@ -284,7 +283,7 @@ ts ()";
 		public void DelegateCasting2()
 		{
 			var src = @"
-var filter = (x:int -> x > 2) as Predicate<int>
+var filter = ((x:int) -> x > 2) as Predicate<int>
 var arr = new [1; 2; 3; 4; 5]
 Array::FindAll arr filter";
 
