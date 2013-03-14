@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsStatic)
 				throw new LensCompilerException("A constructor must not be marked as static!");
 
-			if (_IsPrepared)
+			if (ConstructorBuilder != null)
 				return;
 
 			if (ArgumentTypes == null)
@@ -37,7 +37,6 @@ namespace Lens.SyntaxTree.Compiler
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
-			_IsPrepared = true;
 		}
 
 		protected override void compileCore(Context ctx)

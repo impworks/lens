@@ -19,10 +19,5 @@
 		/// Creates the assembly instances for the current entity.
 		/// </summary>
 		public abstract void PrepareSelf();
-
-		/// <summary>
-		/// A flag indicating the current method has already been prepared.
-		/// </summary>
-		protected bool _IsPrepared;
 	}
 }

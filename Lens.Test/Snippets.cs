@@ -201,10 +201,10 @@ fx (1.0 / 0)";
 		[Test]
 		public void ImplicitValueTypeCtors()
 		{
-//			Test("new int ()", 0);
-//			Test("new long ()", 0);
-//			Test("new float ()", 0.0f);
-//			Test("new double ()", 0.0);
+			Test("new int ()", 0);
+			Test("new long ()", 0);
+			Test("new float ()", 0.0f);
+			Test("new double ()", 0.0);
 
 			Test("(new Point ()).IsEmpty", true);
 		}
@@ -250,7 +250,7 @@ string::Compare
 		[Test]
 		public void Linq()
 		{
-			var src = @"new [1; 2; 3; 4; 5].Where a:int -> a > 2";
+			var src = @"new [1; 2; 3; 4; 5].Where (a:int -> a > 2)";
 			Test(src, new [] {3, 5, 5});
 		}
 
@@ -278,6 +278,17 @@ a.Max ()";
 var ts = (-> Console::WriteLine 1) as ThreadStart
 ts ()";
 			Test(src, null);
+		}
+
+		[Test]
+		public void DelegateCasting2()
+		{
+			var src = @"
+var filter = (x:int -> x > 2) as Predicate<int>
+var arr = new [1; 2; 3; 4; 5]
+Array::FindAll arr filter";
+
+			Test(src, new [] { 3, 4, 5});
 		}
 
 		private void Test(string src, object value)

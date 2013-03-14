@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -25,10 +24,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var methodBackup = ctx.CurrentMethod;
 			ctx.CurrentMethod = _Method;
 
+			var scope = _Method.Scope;
+			scope.InitializeScope(ctx);
 			base.ProcessClosures(ctx);
+			scope.FinalizeScope(ctx);
 
-			// finalize inner scope
-			ctx.CurrentScope.FinalizeScope(ctx);
 			ctx.CurrentMethod = methodBackup;
 		}
 
@@ -52,7 +52,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				: FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
 			var ctor = type.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
-			gen.EmitNull();
+			var closureInstance = ctx.CurrentScope.ClosureVariable;
+			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor);
 		}

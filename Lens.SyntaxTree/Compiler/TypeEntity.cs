@@ -34,8 +34,6 @@ namespace Lens.SyntaxTree.Compiler
 
 		private List<MethodEntity> _MethodList;
 
-		protected bool _IsPrepared;
-
 		#region Properties
 
 		/// <summary>
@@ -87,7 +85,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void PrepareSelf()
 		{
-			if (_IsPrepared)
+			if (TypeBuilder != null)
 				return;
 
 			var attrs = TypeAttributes.Public;
@@ -115,8 +113,6 @@ namespace Lens.SyntaxTree.Compiler
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
-
-			_IsPrepared = true;
 		}
 
 		/// <summary>

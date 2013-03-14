@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public override void PrepareSelf()
 		{
-			if (_IsPrepared)
+			if (FieldBuilder != null)
 				return;
 
 			var attrs = FieldAttributes.Public;
@@ -51,7 +51,6 @@ namespace Lens.SyntaxTree.Compiler
 				Type = ContainerType.Context.ResolveType(TypeSignature);
 
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
-			_IsPrepared = true;
 		}
 
 		#endregion

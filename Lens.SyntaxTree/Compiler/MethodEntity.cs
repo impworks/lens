@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public override void PrepareSelf()
 		{
-			if (_IsPrepared)
+			if (MethodBuilder != null)
 				return;
 
 			var ctx = ContainerType.Context;
@@ -71,8 +71,6 @@ namespace Lens.SyntaxTree.Compiler
 			// an empty script is allowed and it's return is null
 			if (this == ctx.MainMethod && Body.Statements.Count == 0)
 				Body.Statements.Add(new UnitNode());
-
-			_IsPrepared = true;
 		}
 
 		protected override void compileCore(Context ctx)
