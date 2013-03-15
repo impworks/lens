@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Parser;
+using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens
@@ -10,33 +12,45 @@ namespace Lens
 	/// </summary>
 	public class LensCompiler
 	{
+		public LensCompiler()
+		{
+			m_RegisteredTypes = new Dictionary<string, Type>();
+			m_RegisteredFunctions = new Dictionary<string, Delegate>();
+		}
+
+		private Dictionary<string, Type> m_RegisteredTypes;
+		private Dictionary<string, Delegate> m_RegisteredFunctions;
+
 		/// <summary>
 		/// Register a type to be used by LENS script.
 		/// </summary>
 		/// <param name="type">Type to register.</param>
 		public void RegisterType(Type type)
 		{
-			RegisterType(null, type);
+			RegisterType(type.Name, type);
 		}
 
 		/// <summary>
 		/// Register an aliased type to be used by LENS script.
 		/// </summary>
-		/// <param name="alias">Alias name.</param>
-		/// <param name="type">Type to register.</param>
 		public void RegisterType(string alias, Type type)
 		{
-			throw new NotImplementedException();
+			if(m_RegisteredTypes.ContainsKey(alias))
+				throw new LensCompilerException(string.Format("Type '{0}' has already been registered.", alias));
+
+			m_RegisteredTypes.Add(alias, type);
 		}
 
 		/// <summary>
 		/// Register a method to be used by LENS script.
 		/// </summary>
-		/// <param name="name">Method name.</param>
-		/// <param name="func">Method code.</param>
 		public void RegisterFunction(string name, Delegate func)
 		{
-			throw new NotImplementedException();
+			// todo: allow for overloading
+			if(m_RegisteredFunctions.ContainsKey(name))
+				throw new LensCompilerException(string.Format("Type '{0}' has already been registered.", name));
+
+			m_RegisteredFunctions.Add(name, func);
 		}
 
 		/// <summary>
@@ -47,8 +61,8 @@ namespace Lens
 		{
 			var tb = new TreeBuilder();
 			var nodes = tb.Parse(src);
-			var ctx = Context.CreateFromNodes(nodes);
-			return ctx.Execute();
+			var script = Context.CompileNodes(nodes);
+			return script.Run();
 		}
 	}
 }
