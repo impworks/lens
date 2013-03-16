@@ -75,7 +75,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
 					? new Type[0]
-					: Arguments.Values.Select(fa => ctx.ResolveType(fa.TypeSignature.Signature)).ToArray();
+					: Arguments.Values.Select(fa => fa.Type ?? ctx.ResolveType(fa.TypeSignature.Signature)).ToArray();
 
 			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, ArgumentTypes);
 			Generator = MethodBuilder.GetILGenerator(Context.ILStreamSize);

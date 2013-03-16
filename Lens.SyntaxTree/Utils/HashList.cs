@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,6 +18,12 @@ namespace Lens.Utils
 		{
 			_Data = new Dictionary<string, T>();
 			_Keys = new List<string>();
+		}
+
+		public HashList(IEnumerable<T> src, Func<T, string> nameGetter)
+		{
+			foreach (var curr in src)
+				Add(nameGetter(curr), curr);
 		}
 
 		/// <summary>

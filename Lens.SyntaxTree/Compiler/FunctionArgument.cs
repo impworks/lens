@@ -1,4 +1,5 @@
-﻿using System.Reflection.Emit;
+﻿using System;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.Utils;
 
@@ -12,9 +13,12 @@ namespace Lens.SyntaxTree.Compiler
 		public FunctionArgument()
 		{ }
 
-		public FunctionArgument(string name, string type, ArgumentModifier modifier = ArgumentModifier.In)
-			: this(name, new TypeSignature(type), modifier)
-		{ }
+		public FunctionArgument(string name, Type type, ArgumentModifier modifier = ArgumentModifier.In)
+		{
+			Name = name;
+			Modifier = modifier;
+			Type = type;
+		}
 
 		public FunctionArgument(string name, TypeSignature type, ArgumentModifier modifier = ArgumentModifier.In)
 		{
@@ -27,6 +31,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// Argument name.
 		/// </summary>
 		public string Name { get; set; }
+
+		/// <summary>
+		/// Argument resolved type.
+		/// </summary>
+		public Type Type { get; set; }
 
 		/// <summary>
 		/// Argument type
@@ -68,6 +77,7 @@ namespace Lens.SyntaxTree.Compiler
 			unchecked
 			{
 				int hashCode = (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (int)Modifier;
 				return hashCode;

@@ -204,13 +204,16 @@ namespace Lens.SyntaxTree.Compiler
 		internal void ImportMethod(string name, Delegate method)
 		{
 			var info = method.GetType().GetMethod("Invoke");
+			var args = info.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef ? ArgumentModifier.Ref : ArgumentModifier.In));
+
 			var me = new MethodEntity
 			{
 				Name = name,
 				IsStatic = info.IsStatic,
 				IsVirtual = info.IsVirtual,
 				ContainerType = this,
-				MethodInfo = info
+				MethodInfo = info,
+				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
 			};
 
 			_MethodList.Add(me);
