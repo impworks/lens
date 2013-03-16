@@ -9,6 +9,9 @@ namespace Lens.SyntaxTree.Compiler
 {
 	internal class MethodEntity : MethodEntityBase
 	{
+		public MethodEntity(bool isImported = false) : base(isImported)
+		{ }
+
 		#region Fields
 
 		/// <summary>
@@ -26,6 +29,19 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
+		private MethodInfo m_MethodInfo;
+		public MethodInfo MethodInfo
+		{
+			get { return IsImported ? m_MethodInfo : MethodBuilder; }
+			set
+			{
+				if (!IsImported)
+					throw new LensCompilerException(string.Format("Method '{0}' is not imported!", Name));
+
+				m_MethodInfo = value;
+			}
+		}
+
 		#endregion
 
 		#region Methods
@@ -35,7 +51,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public override void PrepareSelf()
 		{
-			if (MethodBuilder != null)
+			if (MethodBuilder != null || IsImported)
 				return;
 
 			var ctx = ContainerType.Context;

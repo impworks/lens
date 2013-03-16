@@ -13,6 +13,30 @@ namespace Lens.SyntaxTree.Compiler
 		#region Methods
 
 		/// <summary>
+		/// Imports an existing external type with given name.
+		/// </summary>
+		public void ImportType(string name, Type type)
+		{
+			if (_DefinedTypes.ContainsKey(name))
+				Error("Type '{0}' has already been defined!", name);
+
+			var te = new TypeEntity(this, true)
+			{
+				Name = name,
+				TypeInfo = type
+			};
+			_DefinedTypes.Add(name, te);
+		}
+
+		/// <summary>
+		/// Imports an existing external method with given name.
+		/// </summary>
+		public void ImportMethod(string name, Delegate method)
+		{
+			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+		}
+
+		/// <summary>
 		/// Creates a new type entity with given name.
 		/// </summary>
 		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false, bool defaultCtor = true, bool prepare = false)
@@ -42,7 +66,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				TypeEntity type;
 				return _DefinedTypes.TryGetValue(signature, out type)
-					       ? type.TypeBuilder
+					       ? type.TypeInfo
 					       : _TypeResolver.ResolveType(signature);
 			}
 			catch (ArgumentException ex)

@@ -112,7 +112,15 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
-		/// Counts the number of arguments of a function or action type.
+		/// Gets the argument types of a delegate.
+		/// </summary>
+		public static Type[] GetArgumentTypes(this Delegate method)
+		{
+			return method.GetType().GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
+		}
+
+		/// <summary>
+		/// Gets the argument types of a function or action type.
 		/// </summary>
 		public static Type[] GetArgumentTypes(this Type type)
 		{
@@ -121,7 +129,15 @@ namespace Lens.SyntaxTree.Utils
 
 			return type.GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
 		}
-		
+
+		/// <summary>
+		/// Gets the return type of a function.
+		/// </summary>
+		public static Type GetReturnType(this Delegate del)
+		{
+			return del.GetType().GetMethod("Invoke").ReturnType;
+		}
+
 		/// <summary>
 		/// Gets the return type of a function.
 		/// </summary>

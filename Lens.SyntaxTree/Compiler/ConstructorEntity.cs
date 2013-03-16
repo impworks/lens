@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsStatic)
 				throw new LensCompilerException("A constructor must not be marked as static!");
 
-			if (ConstructorBuilder != null)
+			if (ConstructorBuilder != null || IsImported)
 				return;
 
 			if (ArgumentTypes == null)

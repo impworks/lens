@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	internal class TypeEntity
 	{
-		public TypeEntity(Context ctx)
+		public TypeEntity(Context ctx, bool isImported = false)
 		{
 			Context = ctx;
 
@@ -23,6 +23,7 @@ namespace Lens.SyntaxTree.Compiler
 			_MethodList = new List<MethodEntity>();
 
 			ClosureMethodId = 1;
+			IsImported = isImported;
 		}
 
 		// todo!
@@ -40,6 +41,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// Pointer to context.
 		/// </summary>
 		public Context Context { get; private set; }
+
+		/// <summary>
+		/// Checks if the type is imported from outside.
+		/// </summary>
+		public readonly bool IsImported;
 
 		/// <summary>
 		/// Checks if the type cannot be inherited from.
@@ -60,6 +66,19 @@ namespace Lens.SyntaxTree.Compiler
 		/// The resolved parent type.
 		/// </summary>
 		public Type Parent;
+
+		private Type m_TypeInfo;
+		public Type TypeInfo
+		{
+			get { return IsImported ? m_TypeInfo : TypeBuilder; }
+			set
+			{
+				if(!IsImported)
+					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
+
+				m_TypeInfo = value;
+			}
+		}
 
 		/// <summary>
 		/// The typebuilder for current type.
@@ -85,7 +104,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void PrepareSelf()
 		{
-			if (TypeBuilder != null)
+			if (TypeBuilder != null || IsImported)
 				return;
 
 			var attrs = TypeAttributes.Public;
@@ -176,6 +195,26 @@ namespace Lens.SyntaxTree.Compiler
 		#endregion
 
 		#region Structure methods
+
+		/// <summary>
+		/// Imports a new method to the given type.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="method"></param>
+		internal void ImportMethod(string name, Delegate method)
+		{
+			var info = method.GetType().GetMethod("Invoke");
+			var me = new MethodEntity
+			{
+				Name = name,
+				IsStatic = info.IsStatic,
+				IsVirtual = info.IsVirtual,
+				ContainerType = this,
+				MethodInfo = info
+			};
+
+			_MethodList.Add(me);
+		}
 
 		/// <summary>
 		/// Creates a new field by type signature.

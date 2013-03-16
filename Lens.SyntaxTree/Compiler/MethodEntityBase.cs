@@ -10,12 +10,16 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	abstract class MethodEntityBase : TypeContentsBase
 	{
-		protected MethodEntityBase()
+		protected MethodEntityBase(bool isImported = false)
 		{
 			Body = new CodeBlockNode();
 			Arguments = new HashList<FunctionArgument>();
 			Scope = new Scope();
+
+			IsImported = isImported;
 		}
+
+		public bool IsImported;
 
 		/// <summary>
 		/// Checks if the method belongs to the type, not its instances.

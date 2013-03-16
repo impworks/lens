@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens
 {
@@ -15,11 +17,11 @@ namespace Lens
 		public LensCompiler()
 		{
 			m_RegisteredTypes = new Dictionary<string, Type>();
-			m_RegisteredFunctions = new Dictionary<string, Delegate>();
+			m_RegisteredFunctions = new Dictionary<string, List<Delegate>>();
 		}
 
 		private Dictionary<string, Type> m_RegisteredTypes;
-		private Dictionary<string, Delegate> m_RegisteredFunctions;
+		private Dictionary<string, List<Delegate>> m_RegisteredFunctions;
 
 		/// <summary>
 		/// Register a type to be used by LENS script.
@@ -36,7 +38,7 @@ namespace Lens
 		public void RegisterType(string alias, Type type)
 		{
 			if(m_RegisteredTypes.ContainsKey(alias))
-				throw new LensCompilerException(string.Format("Type '{0}' has already been registered.", alias));
+				throw new LensCompilerException(string.Format("Type '{0}' has already been registered!", alias));
 
 			m_RegisteredTypes.Add(alias, type);
 		}
@@ -44,25 +46,46 @@ namespace Lens
 		/// <summary>
 		/// Register a method to be used by LENS script.
 		/// </summary>
-		public void RegisterFunction(string name, Delegate func)
+		public void RegisterFunction(string name, Delegate method)
 		{
-			// todo: allow for overloading
-			if(m_RegisteredFunctions.ContainsKey(name))
-				throw new LensCompilerException(string.Format("Type '{0}' has already been registered.", name));
+			if (m_RegisteredFunctions.ContainsKey(name))
+			{
+				var types = method.GetType().GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
+				var overloads = m_RegisteredFunctions[name];
+				if(overloads.Any(d => d.GetArgumentTypes().SequenceEqual(types)))
+					throw new LensCompilerException(string.Format("Method '{0}' with identical argument types has already been registered!", name));
 
-			m_RegisteredFunctions.Add(name, func);
+				overloads.Add(method);
+			}
+			else
+			{
+				m_RegisteredFunctions.Add(name, new List<Delegate> {method});
+			}
+		}
+
+		/// <summary>
+		/// Compile the script for many invocations.
+		/// </summary>
+		public Func<object> Compile(string src)
+		{
+			var tb = new TreeBuilder();
+			var nodes = tb.Parse(src);
+			var ctx = Context.CreateFromNodes(nodes);
+
+			foreach (var curr in m_RegisteredTypes)
+				ctx.ImportType(curr.Key, curr.Value);
+
+			var script = ctx.Compile();
+			
+			return script.Run;
 		}
 
 		/// <summary>
 		/// Run the script and get a return value.
 		/// </summary>
-		/// <returns>The last expression of the script, evaluated.</returns>
 		public object Run(string src)
 		{
-			var tb = new TreeBuilder();
-			var nodes = tb.Parse(src);
-			var script = Context.CompileNodes(nodes);
-			return script.Run();
+			return Compile(src)();
 		}
 	}
 }

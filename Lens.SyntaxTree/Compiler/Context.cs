@@ -53,36 +53,37 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates the context from a stream of nodes.
 		/// </summary>
-		public static IScript CompileNodes(IEnumerable<NodeBase> nodes)
+		public static Context CreateFromNodes(IEnumerable<NodeBase> nodes)
 		{
 			var ctx = new Context();
 
-			ctx.loadNodes(nodes);
-			ctx.prepareEntities();
-			ctx.processClosures();
-			ctx.prepareEntities();
-			ctx.compileCore();
-			ctx.finalizeAssembly();
-
-			var inst = Activator.CreateInstance(ctx.ResolveType(RootTypeName));
-			return inst as IScript;
-		}
-
-		private void loadNodes(IEnumerable<NodeBase> nodes)
-		{
 			foreach (var currNode in nodes)
 			{
 				if (currNode is TypeDefinitionNode)
-					DeclareType(currNode as TypeDefinitionNode);
+					ctx.DeclareType(currNode as TypeDefinitionNode);
 				else if (currNode is RecordDefinitionNode)
-					DeclareRecord(currNode as RecordDefinitionNode);
+					ctx.DeclareRecord(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
-					DeclareFunction(currNode as FunctionNode);
+					ctx.DeclareFunction(currNode as FunctionNode);
 				else if (currNode is UsingNode)
-					DeclareOpenNamespace(currNode as UsingNode);
+					ctx.DeclareOpenNamespace(currNode as UsingNode);
 				else
-					DeclareScriptNode(currNode);
+					ctx.DeclareScriptNode(currNode);
 			}
+
+			return ctx;
+		}
+
+		public IScript Compile()
+		{
+			prepareEntities();
+			processClosures();
+			prepareEntities();
+			compileCore();
+			finalizeAssembly();
+
+			var inst = Activator.CreateInstance(ResolveType(RootTypeName));
+			return inst as IScript;
 		}
 
 		/// <summary>
