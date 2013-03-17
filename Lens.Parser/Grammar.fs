@@ -35,7 +35,6 @@ let keywords = Set.ofList ["using"
                            "is"
                            "as"
                            "ref"
-                           "out"
                            "true"
                            "false"
                            "null"]
@@ -161,7 +160,7 @@ funcdefRef            := (pipe4
                           <| (func_params .>>? token "->")
                           <| block
                           <| Node.functionNode) .>>? nextLine
-func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt (keyword "ref" <|> keyword "out")) .>>.? ``type``) |>> Node.functionParameters
+func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt <| keyword "ref") .>>.? ``type``) |>> Node.functionParameters
 blockRef              := ((Indentation.indentedBlock block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
