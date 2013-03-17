@@ -286,7 +286,9 @@ invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? choice [atte
                                                                             attempt byref_arg]))
                          <|> (many1 <| choice [attempt value_expr
                                                attempt byref_arg])
-byref_argRef          := token "ref" >>. lvalue |>> Node.getterNode
+byref_argRef          := choice [attempt <| token "(" >>. keyword "ref" .>> token ")"
+                                 attempt <| keyword "ref"]
+                         >>. lvalue |>> Node.getterNode
 value_exprRef         := choice [attempt lvalue      |>> Node.getterNode
                                  attempt atomar_expr]
 type_operator_exprRef := pipe2
