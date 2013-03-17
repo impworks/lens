@@ -42,7 +42,7 @@ b";
 		public void DeclareAndInvoke()
 		{
 			var src = @"
-fun test -> 10
+fun test of int -> 10
 test ()";
 			Test(src, 10);
 		}
@@ -108,7 +108,7 @@ res";
 		public void ThrowNew()
 		{
 			var src = "throw new NotImplementedException ()";
-			Assert.Throws<NotImplementedException>(() =>Compile(src));
+			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
 		[Test]
@@ -249,7 +249,7 @@ string::Compare
 		[Test]
 		public void Linq()
 		{
-			var src = @"new [1; 2; 3; 4; 5].Where (a:int) -> a > 2";
+			var src = @"new [1; 2; 3; 4; 5].Where ((a:int) -> a > 2)";
 			Test(src, new [] {3, 5, 5});
 		}
 
@@ -287,13 +287,13 @@ var filter = ((x:int) -> x > 2) as Predicate<int>
 var arr = new [1; 2; 3; 4; 5]
 Array::FindAll arr filter";
 
-			Test(src, new [] { 3, 4, 5});
+			Test(src, new [] { 3, 4, 5 });
 		}
 
 		[Test]
 		public void RecursiveDeclararion()
 		{
-			var src = @"fun fact a:int -> if (a == 0) 1 else 1 * fact(a-1)";
+			var src = @"fun fact of int a:int -> if (a == 0) 1 else 1 * fact(a-1)";
 			Test(src, null);
 		}
 

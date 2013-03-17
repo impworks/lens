@@ -92,11 +92,19 @@ namespace Lens.SyntaxTree.Compiler
 						return values[idx];
 			}
 
-			if (!type.IsGenericType)
-				return type;
+			if (type.IsGenericType)
+			{
+				var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
+				return type.GetGenericTypeDefinition().MakeGenericType(args);
+			}
 
-			var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
-			return type.GetGenericTypeDefinition().MakeGenericType(args);
+			if (type.IsArray)
+			{
+				var arrType = type.GetElementType();
+				return applyGenerics(arrType, genericDefs, values).MakeArrayType();
+			}
+
+			return type;
 		}
 	}
 

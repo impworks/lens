@@ -199,8 +199,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Imports a new method to the given type.
 		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="method"></param>
 		internal void ImportMethod(string name, Delegate method)
 		{
 			var info = method.GetType().GetMethod("Invoke");
@@ -242,29 +240,30 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new method by resolved argument types.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false)
 		{
 			var me = createMethodCore(name, isStatic, isVirtual);
 			me.ArgumentTypes = argTypes;
+			me.ReturnType = returnType;
 			return me;
 		}
 
 		/// <summary>
 		/// Creates a new method with argument types given by signatures.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, string[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false)
 		{
 			var args = argTypes == null
 				? null
-				: argTypes.Select((a, idx) => new FunctionArgument("f" + idx.ToString(), a)).ToArray();
+				: argTypes.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
 
-			return CreateMethod(name, args, isStatic, isVirtual);
+			return CreateMethod(name, returnType, args, isStatic, isVirtual);
 		}
 
 		/// <summary>
 		/// Creates a new method with argument types given by function arguments.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false)
 		{
 			var argHash = new HashList<FunctionArgument>();
 			if(args != null)
@@ -272,6 +271,7 @@ namespace Lens.SyntaxTree.Compiler
 					argHash.Add(curr.Name, curr);
 
 			var me = createMethodCore(name, isStatic, isVirtual);
+			me.ReturnTypeSignature = returnType;
 			me.Arguments = argHash;
 			return me;
 		}
@@ -314,7 +314,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (!_Methods.TryGetValue(name, out group))
 				return null;
 
-			var info = resolveMethodByArgs(group, args);
+			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
 			if(exact && info.Item2 != 0)
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
 
@@ -337,8 +337,21 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal ConstructorInfo ResolveConstructor(Type[] args)
 		{
-			var info = resolveMethodByArgs(_Constructors, args);
-			return (info.Item1 as ConstructorEntity).ConstructorBuilder;
+			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
+			return info.Item1.ConstructorBuilder;
+		}
+
+		/// <summary>
+		/// Finds information about a method in the type.
+		/// </summary>
+		internal MethodEntity FindMethod(MethodInfo method)
+		{
+			foreach(var currGroup in _Methods)
+				foreach(var currMethod in currGroup.Value)
+					if (currMethod.MethodBuilder == method)
+						return currMethod;
+
+			throw new KeyNotFoundException();
 		}
 
 		#endregion
@@ -378,32 +391,6 @@ namespace Lens.SyntaxTree.Compiler
 
 			_MethodList.Add(me);
 			return me;
-		}
-
-		/// <summary>
-		/// Resolve a method within a list by closest distance to the given parameters.
-		/// </summary>
-		private Tuple<MethodEntityBase, int> resolveMethodByArgs(IEnumerable<MethodEntityBase> list, Type[] args)
-		{
-			Func<MethodEntityBase, Tuple<MethodEntityBase, int>> methodEvaluator = ent =>
-			{
-				ent.PrepareSelf();
-				return new Tuple<MethodEntityBase, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(ent.ArgumentTypes, args));
-			};
-
-			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
-			
-			if(result.Length == 0 || result[0].Item2 == int.MaxValue)
-				throw new KeyNotFoundException("No suitable method was found!");
-
-			if (result.Length > 2)
-			{
-				var ambiCount = result.Skip(1).TakeWhile(i => i.Item2 == result[0].Item2).Count();
-				if(ambiCount > 0)
-					throw new AmbiguousMatchException();
-			}
-
-			return result[0];
 		}
 
 		#endregion

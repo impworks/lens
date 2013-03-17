@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.Utils;
@@ -85,6 +86,14 @@ namespace Lens.SyntaxTree.Compiler
 			Generator.EmitReturn();
 
 			ctx.CurrentMethod = backup;
+		}
+
+		/// <summary>
+		/// Gets the information about argument types.
+		/// </summary>
+		public Type[] GetArgumentTypes(Context ctx)
+		{
+			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
 		}
 
 		/// <summary>

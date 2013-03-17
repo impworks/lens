@@ -86,6 +86,22 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Tries to search for a method by it's method info.
+		/// </summary>
+		internal MethodEntity FindMethod(MethodInfo method)
+		{
+			if(!(method is MethodBuilder))
+				Error("Method '{0}' is not defined within the script!", method.Name);
+
+			var typeName = method.DeclaringType.Name;
+			var type = FindType(typeName);
+			if(type == null)
+				Error("Type '{0}' could not be found within the script!", typeName);
+
+			return type.FindMethod(method);
+		}
+
+		/// <summary>
 		/// Resolves a method by its name and agrument list.
 		/// </summary>
 		public MethodInfo ResolveMethod(string typeName, string methodName, Type[] args = null)
@@ -103,7 +119,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			var method = type is TypeBuilder
 				? _DefinedTypes[type.Name].ResolveMethod(methodName, args)
-				: type.GetMethod(methodName, args);
+				: ResolveMethodByArgs(type.GetMethods().Where(m => m.Name == methodName), m => m.GetParameters().Select(p => p.ParameterType).ToArray(), args).Item1;
 
 			if(method == null)
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
@@ -240,7 +256,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareFunction(FunctionNode node)
 		{
-			var method = MainType.CreateMethod(node.Name, node.Arguments, true);
+			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true);
 			method.Body = node.Body;
 		}
 
@@ -258,6 +274,32 @@ namespace Lens.SyntaxTree.Compiler
 		public void DeclareScriptNode(NodeBase node)
 		{
 			MainMethod.Body.Add(node);
+		}
+
+		/// <summary>
+		/// Resolves the best-matching method-like entity within a generic list.
+		/// </summary>
+		/// <typeparam name="T">Type of method-like entity.</typeparam>
+		/// <param name="list">List of method-like entitites.</param>
+		/// <param name="argsGetter">A function that gets method entity arguments.</param>
+		/// <param name="args">Desired argument types.</param>
+		public static Tuple<T, int> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
+		{
+			Func<T, Tuple<T, int>> methodEvaluator = ent => new Tuple<T, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(argsGetter(ent), args));
+
+			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
+
+			if (result.Length == 0 || result[0].Item2 == int.MaxValue)
+				throw new KeyNotFoundException("No suitable method was found!");
+
+			if (result.Length > 2)
+			{
+				var ambiCount = result.Skip(1).TakeWhile(i => i.Item2 == result[0].Item2).Count();
+				if (ambiCount > 0)
+					throw new AmbiguousMatchException();
+			}
+
+			return result[0];
 		}
 
 		#endregion

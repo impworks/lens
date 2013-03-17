@@ -114,10 +114,13 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Checks if a variable of given type can be assigned from other type (including type extension).
 		/// </summary>
+		/// <param name="varType">Type of assignment target (ex. variable)</param>
+		/// <param name="exprType">Type of assignment source (ex. expression)</param>
+		/// <param name="exactly">Checks whether types must be compatible as-is, or additional code may be implicitly issued by the compiler.</param>
 		/// <returns></returns>
-		public static bool IsExtendablyAssignableFrom(this Type varType, Type exprType)
+		public static bool IsExtendablyAssignableFrom(this Type varType, Type exprType, bool exactly = false)
 		{
-			return varType.DistanceFrom(exprType) < int.MaxValue;
+			return varType.DistanceFrom(exprType, exactly) < int.MaxValue;
 		}
 
 		/// <summary>
@@ -160,22 +163,25 @@ namespace Lens.SyntaxTree.Utils
 		/// <summary>
 		/// Gets assignment type distance.
 		/// </summary>
-		public static int DistanceFrom(this Type varType, Type exprType)
+		public static int DistanceFrom(this Type varType, Type exprType, bool exactly = false)
 		{
 			if (varType == exprType)
 				return 0;
 
-			if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
-				return 1;
+			if (!exactly)
+			{
+				if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
+					return 1;
 
-			if((varType.IsClass || varType.IsNullableType()) && exprType == typeof(NullType))
-				return 1;
-			
-			if (varType.IsNumericType() && exprType.IsNumericType())
-				return NumericTypeConversion(varType, exprType);
+				if ((varType.IsClass || varType.IsNullableType()) && exprType == typeof (NullType))
+					return 1;
 
-			if (varType == typeof (object) && exprType.IsValueType)
-				return 1;
+				if (varType.IsNumericType() && exprType.IsNumericType())
+					return NumericTypeConversion(varType, exprType);
+
+				if (varType == typeof (object) && exprType.IsValueType)
+					return 1;
+			}
 
 			if (varType.IsInterface)
 			{
@@ -198,21 +204,24 @@ namespace Lens.SyntaxTree.Utils
 			if (IsDerivedFrom(exprType, varType, out result))
 				return result;
 
-			if (IsImplicitCastable(varType, exprType))
+			if (!exactly && IsImplicitCastable(varType, exprType))
 				return 1;
 
 			if (varType.IsArray && exprType.IsArray)
 			{
 				var varElType = varType.GetElementType();
 				var exprElType = exprType.GetElementType();
-				if(!varElType.IsValueType && !exprElType.IsValueType)
-					return varElType.DistanceFrom(exprElType);
+
+				var areRefs = !varElType.IsValueType && !exprElType.IsValueType;
+				var generic = varElType.IsGenericParameter || exprElType.IsGenericParameter;
+				if(areRefs || generic)
+					return varElType.DistanceFrom(exprElType, exactly);
 			}
 
 			return int.MaxValue;
 		}
 
-		private static int InterfaceDistance(Type interfaceType, Type[] ifaces)
+		private static int InterfaceDistance(Type interfaceType, Type[] ifaces, bool exactly = false)
 		{
 			var min = int.MaxValue;
 			foreach (var iface in ifaces)
@@ -222,7 +231,7 @@ namespace Lens.SyntaxTree.Utils
 
 				if (interfaceType.IsGenericType && iface.IsGenericType)
 				{
-					var dist = GenericDistance(interfaceType, iface);
+					var dist = GenericDistance(interfaceType, iface, exactly);
 					if (dist < min)
 						min = dist;
 				}
@@ -231,13 +240,13 @@ namespace Lens.SyntaxTree.Utils
 			return min;
 		}
 
-		private static int GenericParameterDistance(Type varType, Type exprType)
+		private static int GenericParameterDistance(Type varType, Type exprType, bool exactly = false)
 		{
 			// generic parameter is on the same level of inheritance as the expression
 			// therefore getting its parent type does not take a step
 			return varType.IsGenericParameter
-				? DistanceFrom(varType.BaseType, exprType)
-				: DistanceFrom(exprType.BaseType, varType);
+				? DistanceFrom(varType.BaseType, exprType, exactly)
+				: DistanceFrom(exprType.BaseType, varType, exactly);
 		}
 
 		private static bool IsImplicitCastable(Type varType, Type exprType)
@@ -342,7 +351,7 @@ namespace Lens.SyntaxTree.Utils
 			return current == baseType;
 		}
 
-		private static int GenericDistance(Type varType, Type exprType)
+		private static int GenericDistance(Type varType, Type exprType, bool exactly = false)
 		{
 			var definition = varType.GetGenericTypeDefinition();
 			if (definition != exprType.GetGenericTypeDefinition())
@@ -368,11 +377,11 @@ namespace Lens.SyntaxTree.Utils
 				{
 					// generic parameter may be substituted with anything
 					// including value types
-					conversionResult = GenericParameterDistance(argument1, argument2);
+					conversionResult = GenericParameterDistance(argument1, argument2, exactly);
 				}
 				else if (argument2.IsGenericParameter)
 				{
-					conversionResult = GenericParameterDistance(argument2, argument1);
+					conversionResult = GenericParameterDistance(argument2, argument1, exactly);
 				}
 				else if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
 				{
@@ -381,7 +390,7 @@ namespace Lens.SyntaxTree.Utils
 						return int.MaxValue;
 
 					// dist(X<in T1>, X<in T2>) = dist(T2, T1)
-					conversionResult = argument2.DistanceFrom(argument1);
+					conversionResult = argument2.DistanceFrom(argument1, exactly);
 				}
 				else if (attributes.HasFlag(GenericParameterAttributes.Covariant))
 				{
@@ -389,7 +398,7 @@ namespace Lens.SyntaxTree.Utils
 						return int.MaxValue;
 
 					// dist(X<out T1>, X<out T2>) = dist(T1, T2)
-					conversionResult = argument1.DistanceFrom(argument2);
+					conversionResult = argument1.DistanceFrom(argument2, exactly);
 				}
 				else
 				{

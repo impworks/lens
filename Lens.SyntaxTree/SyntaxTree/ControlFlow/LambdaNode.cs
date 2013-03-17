@@ -17,8 +17,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature.Signature)).ToArray();
-			_Method = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes);
+			_Method = ctx.CurrentScope.CreateClosureMethod(ctx, Arguments);
 			_Method.Body = Body;
 
 			var methodBackup = ctx.CurrentMethod;
@@ -27,6 +26,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var scope = _Method.Scope;
 			scope.InitializeScope(ctx);
 			base.ProcessClosures(ctx);
+			
+			// get evaluated return type
+			var retType = Body.GetExpressionType(ctx);
+			_Method.ReturnType = retType;
+			_Method.PrepareSelf();
+
 			scope.FinalizeScope(ctx);
 
 			ctx.CurrentMethod = methodBackup;

@@ -29,6 +29,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			try
 			{
 				var method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
+				if(method == null)
+					throw new KeyNotFoundException();
+
 				return FunctionalHelper.CreateFuncType(method.ReturnType);
 			}
 			catch (KeyNotFoundException)

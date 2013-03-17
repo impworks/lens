@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.SyntaxTree.Utils;
 using Lens.Test.TestClassHierarchy;
 using NUnit.Framework;
@@ -196,10 +197,22 @@ namespace Lens.Test
 		[Test]
 		public void Generic()
 		{
-//			TestDistanceFrom<List<float>, List<int>>(int.MaxValue);
-//			TestDistanceFrom<List<ParentClass>, List<DerivedClass>>(int.MaxValue);
-//			TestDistanceFrom<IEnumerable<float>, IEnumerable<int>>(int.MaxValue);
+			TestDistanceFrom<List<float>, List<int>>(int.MaxValue);
+			TestDistanceFrom<List<ParentClass>, List<DerivedClass>>(int.MaxValue);
+			TestDistanceFrom<IEnumerable<float>, IEnumerable<int>>(int.MaxValue);
 			TestDistanceFrom<IEnumerable<ParentClass>, IEnumerable<DerivedClass>>(1);
+		}
+
+		[Test]
+		public void GenericParameter2()
+		{
+			var from1 = typeof (int[]);
+			var from2 = typeof (Predicate<int>);
+
+			var to = typeof (Array).GetMethod("FindAll").GetParameters().Select(p => p.ParameterType).ToArray();
+
+			Assert.AreEqual(1, to[0].DistanceFrom(from1));
+			Assert.AreEqual(1, to[1].DistanceFrom(from2));
 		}
 
 		/// <summary>

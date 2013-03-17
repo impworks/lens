@@ -20,7 +20,12 @@ namespace Lens.SyntaxTree.Compiler
 		public bool IsVirtual;
 
 		/// <summary>
-		/// The return type of the method.
+		/// The signature of method's return type.
+		/// </summary>
+		public TypeSignature ReturnTypeSignature;
+
+		/// <summary>
+		/// Compiled return type.
 		/// </summary>
 		public Type ReturnType;
 
@@ -69,8 +74,8 @@ namespace Lens.SyntaxTree.Compiler
 			if(IsVirtual)
 				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
-			if(ReturnType == null)
-				ReturnType = Body.GetExpressionType(ctx);
+			if (ReturnType == null)
+				ReturnType = ctx.ResolveType(ReturnTypeSignature);
 
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
@@ -100,13 +105,10 @@ namespace Lens.SyntaxTree.Compiler
 		protected override void compileCore(Context ctx)
 		{
 			Body.Compile(ctx, ReturnType.IsNotVoid());
-
-			emitTrailer();
 		}
 
-		protected void emitTrailer()
+		protected override void emitTrailer(Context ctx)
 		{
-			var ctx = ContainerType.Context;
 			var gen = ctx.CurrentILGenerator;
 			var actualType = Body.GetExpressionType(ctx);
 

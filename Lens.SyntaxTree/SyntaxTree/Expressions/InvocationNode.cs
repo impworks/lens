@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
@@ -61,7 +62,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
-			m_TypeHints = node.TypeHints.Select(ctx.ResolveType).ToArray();
+			if (node.TypeHints.Any())
+				m_TypeHints = node.TypeHints.Select(ctx.ResolveType).ToArray();
 
 			try
 			{
@@ -191,7 +193,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			if (m_ArgTypes.Length > 0)
 			{
-				var toTypes = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
+				var toTypes = m_Method is MethodBuilder
+					? ctx.FindMethod(m_Method).GetArgumentTypes(ctx)
+					: m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
+
 				for (var idx = 0; idx < Arguments.Count; idx++)
 					Expr.Cast(Arguments[idx], toTypes[idx]).Compile(ctx, true);
 			}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -175,7 +176,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a closured method in the current scope's closure type.
 		/// </summary>
-		public MethodEntity CreateClosureMethod(Context ctx, Type[] args)
+		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args)
 		{
 			if (ClosureType == null)
 				ClosureType = CreateClosureType(ctx);
@@ -183,7 +184,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format(ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;
 
-			var method = ClosureType.CreateMethod(closureName, args);
+			var method = ClosureType.CreateMethod(closureName, "Unit", args);
 			method.Scope.OuterScope = this;
 			return method;
 		}
