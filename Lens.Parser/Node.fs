@@ -63,7 +63,7 @@ let functionParameters parameters =
     
     list
 
-let functionNode name parameters body =
+let functionNode name ``type`` parameters body =
     FunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
 
 // Code

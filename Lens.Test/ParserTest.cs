@@ -117,7 +117,7 @@ type ArrayHolder
 		[Test]
 		public void SimpleFunction()
 		{
-			var src = @"fun negate x:int -> -x";
+			var src = @"fun negate of int x:int -> -x";
 			var result = new FunctionNode
 			{
 				Name = "negate",
@@ -151,7 +151,7 @@ type ArrayHolder
 		[Test]
 		public void ComplexFunction()
 		{
-			var src = @"fun hypo a:int b:int ->
+			var src = @"fun hypo of double a:int b:int ->
     let sq1 = a * a
     let sq2 = b * b
     sqrt (sq1 + sq2)";
@@ -761,7 +761,7 @@ catch
 		[Test]
 		public void DefinitionAndInvocation()
 		{
-			var src = @"fun test -> 10
+			var src = @"fun test of int -> 10
 test ()";
 			var definition = new FunctionNode
 			{

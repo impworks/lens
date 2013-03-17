@@ -155,8 +155,9 @@ recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.inden
 recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type" >>? identifier .>>.? Indentation.indentedBlock typedef_stmt |>> Node.typeNode
 typedef_stmtRef       := identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
-funcdefRef            := (pipe3
+funcdefRef            := (pipe4
                           <| (keyword "fun" >>? identifier)
+                          <| (keyword "of" >>? ``type``)
                           <| (func_params .>>? token "->")
                           <| block
                           <| Node.functionNode) .>>? nextLine
