@@ -13,6 +13,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name { get; set; }
 
+		/// <summary>
+		/// Signature of function return type.
+		/// </summary>
+		public TypeSignature ReturnTypeSignature { get; set; }
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
@@ -22,7 +27,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(FunctionNode other)
 		{
-			return base.Equals(other) && string.Equals(Name, other.Name);
+			return base.Equals(other) && string.Equals(Name, other.Name) && Equals(ReturnTypeSignature, other.ReturnTypeSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -30,14 +35,17 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((FunctionNode)obj);
+			return Equals((FunctionNode) obj);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return (base.GetHashCode() * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+				int hashCode = base.GetHashCode();
+				hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (ReturnTypeSignature != null ? ReturnTypeSignature.GetHashCode() : 0);
+				return hashCode;
 			}
 		}
 

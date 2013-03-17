@@ -64,7 +64,10 @@ let functionParameters parameters =
     list
 
 let functionNode name ``type`` parameters body =
-    FunctionNode(Name = name, Arguments = parameters, Body = body) :> NodeBase
+    FunctionNode(
+        Name = name,
+        ReturnTypeSignature = TypeSignature ``type``,
+        Arguments = parameters, Body = body) :> NodeBase
 
 // Code
 let codeBlock (lines : NodeBase list) =

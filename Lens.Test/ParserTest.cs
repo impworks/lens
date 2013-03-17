@@ -121,6 +121,7 @@ type ArrayHolder
 			var result = new FunctionNode
 			{
 				Name = "negate",
+				ReturnTypeSignature = new TypeSignature("int"),
 				Arguments =
 				{
 					new FunctionArgument("x", "int")
@@ -159,6 +160,7 @@ type ArrayHolder
 			var result = new FunctionNode
 			{
 				Name = "hypo",
+				ReturnTypeSignature = new TypeSignature("double"),
 				Arguments = new List<FunctionArgument>
 				{
 					new FunctionArgument("a", "int"),
@@ -766,6 +768,7 @@ test ()";
 			var definition = new FunctionNode
 			{
 				Name = "test",
+				ReturnTypeSignature = new TypeSignature("int"),
 				Body = Expr.Block(Expr.Int(10))
 			};
 			var invocation = Expr.Invoke("test", Expr.Unit());
