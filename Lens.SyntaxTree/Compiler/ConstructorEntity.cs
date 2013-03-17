@@ -30,10 +30,12 @@ namespace Lens.SyntaxTree.Compiler
 			if (ConstructorBuilder != null || IsImported)
 				return;
 
+			var ctx = ContainerType.Context;
+
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
 					? new Type[0]
-					: Arguments.Values.Select(fa => fa.Type ?? ContainerType.Context.ResolveType(fa.TypeSignature.Signature)).ToArray();
+					: Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);

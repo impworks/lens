@@ -57,12 +57,8 @@ let functionParameters parameters =
     
     parameters
     |> Seq.map (fun((name, flag), typeTag) ->
-                    let modifier =
-                        match flag with
-                        | Some "ref" -> ArgumentModifier.Ref
-                        | Some "out" -> ArgumentModifier.Out
-                        | _          -> ArgumentModifier.In
-                    FunctionArgument(Name = name, Modifier = modifier, TypeSignature = TypeSignature(typeTag)))
+        let isRef = flag = Some "ref"
+        FunctionArgument(Name = name, IsRefArgument = isRef, TypeSignature = TypeSignature(typeTag)))
     |> Seq.iter (fun fa -> list.Add(fa))
     
     list

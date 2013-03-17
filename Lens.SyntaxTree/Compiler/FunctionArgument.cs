@@ -13,18 +13,18 @@ namespace Lens.SyntaxTree.Compiler
 		public FunctionArgument()
 		{ }
 
-		public FunctionArgument(string name, Type type, ArgumentModifier modifier = ArgumentModifier.In)
+		public FunctionArgument(string name, Type type, bool isRefArg = false)
 		{
 			Name = name;
-			Modifier = modifier;
 			Type = type;
+			IsRefArgument = isRefArg;
 		}
 
-		public FunctionArgument(string name, TypeSignature type, ArgumentModifier modifier = ArgumentModifier.In)
+		public FunctionArgument(string name, TypeSignature type, bool isRefArg = false)
 		{
 			Name = name;
 			TypeSignature = type;
-			Modifier = modifier;
+			IsRefArgument = isRefArg;
 		}
 
 		/// <summary>
@@ -48,20 +48,30 @@ namespace Lens.SyntaxTree.Compiler
 		public bool IsRefArgument { get; set; }
 
 		/// <summary>
-		/// Argument modifier
-		/// </summary>
-		public ArgumentModifier Modifier { get; set; }
-
-		/// <summary>
 		/// Parameter builder.
 		/// </summary>
 		public ParameterBuilder ParameterBuilder { get; set; }
+
+		/// <summary>
+		/// Calculates argument type.
+		/// </summary>
+		public Type GetArgumentType(Context ctx)
+		{
+			if (Type != null)
+				return Type;
+
+			var type = ctx.ResolveType(TypeSignature);
+			if (IsRefArgument)
+				type = type.MakeByRefType();
+
+			return type;
+		}
 
 		#region Equality members
 
 		protected bool Equals(FunctionArgument other)
 		{
-			return string.Equals(Name, other.Name) && string.Equals(TypeSignature, other.TypeSignature) && Modifier == other.Modifier;
+			return string.Equals(Name, other.Name) && string.Equals(TypeSignature, other.TypeSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -79,21 +89,10 @@ namespace Lens.SyntaxTree.Compiler
 				int hashCode = (Name != null ? Name.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (int)Modifier;
 				return hashCode;
 			}
 		}
 
 		#endregion
-	}
-
-	/// <summary>
-	/// Argument type
-	/// </summary>
-	public enum ArgumentModifier
-	{
-		In,
-		Ref,
-		Out
 	}
 }
