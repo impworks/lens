@@ -51,10 +51,10 @@ record Student
 		{
 			var src = @"
 type Suit
-    | Hearts
-    | Clubs
-    | Spades
-    | Diamonds";
+    Hearts
+    Clubs
+    Spades
+    Diamonds";
 
 			var result = new TypeDefinitionNode
 			{
@@ -76,11 +76,11 @@ type Suit
 		{
 			var src = @"
 type Card
-    | Ace of Suit
-    | King of Suit
-    | Queen of Suit
-    | Jack of Suit
-    | ValueCard of Tuple<Suit, int>";
+    Ace of Suit
+    King of Suit
+    Queen of Suit
+    Jack of Suit
+    ValueCard of Tuple<Suit, int>";
 
 			var result = new TypeDefinitionNode
 			{
@@ -103,7 +103,7 @@ type Card
 		{
 			var src = @"
 type ArrayHolder
-    | Array of int[][]";
+    Array of int[][]";
 
 			var result = new TypeDefinitionNode
 			{
