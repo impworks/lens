@@ -829,6 +829,35 @@ catch DivisionByZeroException
 			Test(src, result);
 		}
 
+		[Test]
+		public void TypeHints1()
+		{
+			var src = "Enumerable::Empty<int> ()";
+			var result = Expr.Invoke(
+				Expr.GetMember("Enumerable", "Empty", "int"),
+				Expr.Unit()
+			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void TypeHints2()
+		{
+			var src = @"expr.CallStuff<int, TestType, _> 1 ""hello""";
+			var result = Expr.Invoke(
+				Expr.GetMember(
+					Expr.Get("expr"),
+					"CallStuff",
+					"int", "TestType", "_"
+				),
+				Expr.Int(1),
+				Expr.String("hello")
+			);
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();

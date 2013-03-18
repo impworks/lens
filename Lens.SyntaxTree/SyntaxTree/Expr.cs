@@ -245,14 +245,14 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new SetIdentifierNode { LocalName = name, Value = value };
 		}
 
-		public static GetMemberNode GetMember(NodeBase expr, string name)
+		public static GetMemberNode GetMember(NodeBase expr, string name, params TypeSignature[] hints)
 		{
-			return new GetMemberNode { Expression = expr, MemberName = name };
+			return new GetMemberNode { Expression = expr, MemberName = name, TypeHints = hints.ToList() };
 		}
 
-		public static GetMemberNode GetMember(TypeSignature type, string name)
+		public static GetMemberNode GetMember(TypeSignature type, string name, params TypeSignature[] hints)
 		{
-			return new GetMemberNode { StaticType = type, MemberName = name };
+			return new GetMemberNode { StaticType = type, MemberName = name, TypeHints = hints.ToList() };
 		}
 
 		public static SetMemberNode SetMember(NodeBase expr, string name, NodeBase value)
@@ -263,12 +263,6 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static SetMemberNode SetMember(TypeSignature type, string name, NodeBase value)
 		{
 			return new SetMemberNode { StaticType = type, MemberName = name, Value = value };
-		}
-
-		public static InvocationNode Invoke(string name, params NodeBase[] args)
-		{
-
-			return invoke(Get(name), args);
 		}
 
 		public static InvocationNode Invoke(TypeSignature type, string name, params NodeBase[] args)
@@ -284,6 +278,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static InvocationNode Invoke(NodeBase expr, params NodeBase[] args)
 		{
 			return invoke(expr, args);
+		}
+
+		public static InvocationNode Invoke(string name, params NodeBase[] args)
+		{
+			return invoke(Get(name), args);
 		}
 
 		private static InvocationNode invoke(NodeBase expr, params NodeBase[] args)
