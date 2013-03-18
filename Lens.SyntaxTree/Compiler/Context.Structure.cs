@@ -130,13 +130,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a group of methods by the name.
 		/// </summary>
-		public MethodInfo[] ResolveMethodGroup(Type type, string methodName)
+		public IEnumerable<MethodInfo> ResolveMethodGroup(Type type, string methodName)
 		{
 			var group = type is TypeBuilder
 				? _DefinedTypes[type.Name].ResolveMethodGroup(methodName)
-				: type.GetMethods().Where(m => m.Name == methodName).ToArray();
+				: type.GetMethods().Where(m => m.Name == methodName);
 
-			if(group == null || group.Length == 0)
+			if(group == null || !group.Any())
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
 
 			return group;

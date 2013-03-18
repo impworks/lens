@@ -108,11 +108,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, m)).ToArray();
+				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
+				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(argTypes, m)).ToArray();
 				if (methods.Length > 1)
 					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
 
-				m_Method = methods[0];
+				m_Method = GenericHelper.ResolveMethodGenerics(methods[0], argTypes);
 				if (m_Method.GetParameters().Count() > 16)
 					Error("Cannot create a callable object from a method with more than 16 arguments!");
 
@@ -126,16 +127,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		private bool checkMethodArgs(Context ctx, MethodInfo method)
+		private bool checkMethodArgs(Type[] argTypes, MethodInfo method)
 		{
-			if (TypeHints.Count == 0)
+			if(argTypes.Length == 0)
 				return true;
 
-			var argTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
-			if (TypeHints.Count != argTypes.Length)
-				return false;
-
-			return !argTypes.Where((t, idx) => TypeHints[idx].Signature != "_" && ctx.ResolveType(TypeHints[idx]) != t).Any();
+			return !method.GetParameters().Where((p, idx) => argTypes[idx] != null && p.ParameterType != argTypes[idx]).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
