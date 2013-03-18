@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -79,6 +80,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 						throw;
 
 					m_Method = type.FindExtensionMethod(node.MemberName, m_ArgTypes);
+					
+					// move invocation source to arguments
+					if (Arguments[0] is UnitNode)
+						Arguments[0] = m_InvocationSource;
+					else
+						Arguments.Insert(0, m_InvocationSource);
+
+					m_ArgTypes = new[] {m_InvocationSource.GetExpressionType(ctx)}.Union(m_ArgTypes).ToArray();
+					m_InvocationSource = null;
 				}
 			}
 			catch (AmbiguousMatchException)
@@ -163,10 +173,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (m_InvocationSource != null)
 			{
 				var type = m_InvocationSource.GetExpressionType(ctx);
-
-				// cast source for extension type
-				if (m_Method.IsDefined(typeof (ExtensionAttribute), false))
-					m_InvocationSource = Expr.Cast(m_InvocationSource, m_Method.GetParameters()[0].ParameterType);
 
 				if (type.IsValueType)
 				{

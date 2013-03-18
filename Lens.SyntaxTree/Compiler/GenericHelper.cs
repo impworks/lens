@@ -62,12 +62,15 @@ namespace Lens.SyntaxTree.Compiler
 				var actual = actualTypes[idx];
 
 				if (expected.IsGenericType)
+				{
+					var closest = findImplementation(expected, actual);
 					resolveGenerics(
 						expected.GetGenericArguments(),
-						actual.GetGenericArguments(),
+						closest.GetGenericArguments(),
 						genericDefs,
 						ref genericValues
 					);
+				}
 
 				else
 				{
@@ -79,7 +82,7 @@ namespace Lens.SyntaxTree.Compiler
 						if (expected != def)
 							continue;
 
-						if(value != null && value != actual)
+						if (value != null && value != actual)
 							throw new TypeMatchException(string.Format("Generic argument '{0}' has mismatched values: '{1}' and '{2}'.", def, actual, value));
 
 						genericValues[defIdx] = actual;
@@ -88,29 +91,37 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
-//		private static Type applyGenerics(Type type, Type[] genericDefs, Type[] values)
-//		{
-//			if (type.IsGenericParameter)
-//			{
-//				for (var idx = 0; idx < genericDefs.Length; idx++)
-//					if (type == genericDefs[idx])
-//						return values[idx];
-//			}
-//
-//			if (type.IsGenericType)
-//			{
-//				var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
-//				return type.GetGenericTypeDefinition().MakeGenericType(args);
-//			}
-//
-//			if (type.IsArray)
-//			{
-//				var arrType = type.GetElementType();
-//				return applyGenerics(arrType, genericDefs, values).MakeArrayType();
-//			}
-//
-//			return type;
-//		}
+		private static Type findImplementation(Type desired, Type actual)
+		{
+			var generic = desired.GetGenericTypeDefinition();
+
+			if (actual.IsGenericType && actual.GetGenericTypeDefinition() == generic)
+				return actual;
+
+			// is interface
+			if (desired.IsInterface)
+			{
+				var matching = actual.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
+				if(matching.Length == 0)
+					throw new TypeMatchException(string.Format("Type '{0}' does not implement any kind of interface '{1}'!", actual, generic));
+				if(matching.Length > 1)
+					throw new TypeMatchException(string.Format("Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!", generic, actual));
+
+				return matching[0];
+			}
+			
+			// is inherited
+			var currType = actual;
+			while (currType != null)
+			{
+				if (currType.IsGenericType && currType.GetGenericTypeDefinition() == generic)
+					return currType;
+
+				currType = currType.BaseType;
+			}
+
+			throw new TypeMatchException(string.Format("Cannot resolve arguments of '{0}' using type '{1}'!", generic, actual));
+		}
 	}
 
 	public class TypeMatchException: Exception

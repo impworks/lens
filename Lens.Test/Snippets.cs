@@ -249,8 +249,8 @@ string::Compare
 		[Test]
 		public void Linq()
 		{
-			var src = @"new [1; 2; 3; 4; 5].Where ((a:int) -> a > 2)";
-			Test(src, new [] {3, 5, 5});
+			var src = @"(new [1; 2; 3; 4; 5]).Where ((a:int) -> a > 2)";
+			Test(src, new [] {3, 4, 5});
 		}
 
 		[Test]
