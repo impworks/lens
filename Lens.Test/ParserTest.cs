@@ -858,6 +858,38 @@ catch DivisionByZeroException
 			Test(src, result);
 		}
 
+		[Test]
+		public void TypeHint3()
+		{
+			var src = @"let a = SomeType::Method<int, _, System.Uri>";
+			var result = Expr.Let(
+				"a",
+				Expr.GetMember(
+					"SomeType",
+					"Method",
+					"int", "_", "System.Uri"
+				)
+			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void TypeHint4()
+		{
+			var src = @"let a = b.Method<int, _, System.Uri>";
+			var result = Expr.Let(
+				"a",
+				Expr.GetMember(
+					Expr.Get("b"),
+					"Method",
+					"int", "_", "System.Uri"
+				)
+			);
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();
