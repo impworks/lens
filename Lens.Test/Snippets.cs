@@ -297,6 +297,18 @@ Array::FindAll arr filter";
 			Test(src, null);
 		}
 
+		[Test]
+		public void Closure1()
+		{
+			var src = @"
+var a = 0
+var b = 2
+var fx = (x:int) -> a = b * x
+fx 3
+a";
+			Test(src, 6);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

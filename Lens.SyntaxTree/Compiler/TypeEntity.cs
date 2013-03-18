@@ -173,13 +173,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void Compile()
 		{
+			var backup = Context.CurrentType;
+			Context.CurrentType = this;
+
 			foreach (var curr in _Constructors)
 				curr.Compile();
 
 			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
 					curr.Compile();
-				
+
+			Context.CurrentType = backup;
 		}
 
 		/// <summary>

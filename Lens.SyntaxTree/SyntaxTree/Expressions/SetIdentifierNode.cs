@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -49,8 +50,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
 				Error("Cannot assign a value of type '{0}' to a variable of type '{1}'!\nAn explicit cast might be required.", exprType, nameInfo.Type);
 
-			if(nameInfo.IsClosured)
-				assignClosured(ctx, nameInfo);
+			if (nameInfo.IsClosured)
+			{
+				if (nameInfo.ClosureDistance == 0)
+					assignClosuredLocal(ctx, nameInfo);
+				else
+					assignClosuredRemote(ctx, nameInfo);
+			}
 			else
 				assignLocal(ctx, nameInfo);
 		}
@@ -78,25 +84,44 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		private void assignClosured(Context ctx, LocalName name)
+		/// <summary>
+		/// Assigns a closured variable that is declared in current scope.
+		/// </summary>
+		private void assignClosuredLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
+
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			
+			Expr.Cast(Value, name.Type).Compile(ctx, true);
+
+			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
+			gen.EmitSaveField(clsField);
+		}
+
+		/// <summary>
+		/// Assigns a closured variable that has been imported from outer scopes.
+		/// </summary>
+		private void assignClosuredRemote(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			gen.EmitLoadArgument(0);
 
 			var dist = name.ClosureDistance;
-			var scope = ctx.CurrentScope;
-			while (dist > 0)
+			var type = (Type)ctx.CurrentType.TypeBuilder;
+			while (dist > 1)
 			{
-				var rootField = scope.ClosureType.ResolveField(Scope.ParentScopeFieldName);
+				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
 				gen.EmitLoadField(rootField);
 
-				scope = scope.OuterScope;
+				type = rootField.FieldType;
 				dist--;
 			}
 
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
-			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
+			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
 			gen.EmitSaveField(clsField);
 		}
 

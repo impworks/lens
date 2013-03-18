@@ -51,9 +51,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsClosured)
-					getClosured(ctx, nameInfo);
+				{
+					if(nameInfo.ClosureDistance == 0)
+						getClosuredLocal(ctx, nameInfo);
+					else
+						getClosuredRemote(ctx, nameInfo);
+				}
 				else
+				{
 					getLocal(ctx, nameInfo);
+				}
 
 				return;
 			}
@@ -75,24 +82,40 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		private void getClosured(Context ctx, LocalName name)
+		/// <summary>
+		/// Gets a closured variable that has been declared in the current scope.
+		/// </summary>
+		private void getClosuredLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
+
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
+			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
+			gen.EmitLoadField(clsField, PointerRequired);
+		}
+
+		/// <summary>
+		/// Gets a closured variable that has been imported from outer scopes.
+		/// </summary>
+		private void getClosuredRemote(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			gen.EmitLoadArgument(0);
+
 			var dist = name.ClosureDistance;
-			var scope = ctx.CurrentScope;
-			while (dist > 0)
+			var type = (Type)ctx.CurrentType.TypeBuilder;
+			while (dist > 1)
 			{
-				var rootField = scope.ClosureType.ResolveField(Scope.ParentScopeFieldName);
+				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
 				gen.EmitLoadField(rootField);
 
-				scope = scope.OuterScope;
+				type = rootField.FieldType;
 				dist--;
 			}
 
-			var clsField = scope.ClosureType.ResolveField(name.ClosureFieldName);
-
+			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
 			gen.EmitLoadField(clsField, PointerRequired);
 		}
 
