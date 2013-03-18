@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!m_IsResolved)
 				resolve(ctx);
 
-			return GenericHelper.ResolveReturnType(m_Method, m_ArgTypes, m_TypeHints);
+			return m_Method.ReturnType;
 		}
 
 		private void resolve(Context ctx)
@@ -51,6 +51,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
 			else
 				resolveExpression(ctx, Expression);
+
+			m_Method = GenericHelper.ResolveMethodGenerics(m_Method, m_ArgTypes, m_TypeHints);
 
 			m_IsResolved = true;
 		}

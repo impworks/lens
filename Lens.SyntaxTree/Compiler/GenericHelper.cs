@@ -9,10 +9,15 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public static class GenericHelper
 	{
-		public static Type ResolveReturnType(MethodInfo method, Type[] args, Type[] hints = null)
+		public static Type ResolveGenericReturnType(MethodInfo method, Type[] args, Type[] hints = null)
+		{
+			return ResolveMethodGenerics(method, args, hints).ReturnType;
+		}
+
+		public static MethodInfo ResolveMethodGenerics(MethodInfo method, Type[] args, Type[] hints = null)
 		{
 			if (!method.IsGenericMethod)
-				return method.ReturnType;
+				return method;
 
 			var genericDefs = method.GetGenericArguments();
 			var genericValues = new Type[genericDefs.Length];
@@ -40,7 +45,7 @@ namespace Lens.SyntaxTree.Compiler
 					genericValues[idx] = hint;
 			}
 
-			return applyGenerics(method.ReturnType, genericDefs, genericValues);
+			return method.MakeGenericMethod(genericValues);
 		}
 
 		private static void resolveGenerics(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
@@ -83,29 +88,29 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
-		private static Type applyGenerics(Type type, Type[] genericDefs, Type[] values)
-		{
-			if (type.IsGenericParameter)
-			{
-				for (var idx = 0; idx < genericDefs.Length; idx++)
-					if (type == genericDefs[idx])
-						return values[idx];
-			}
-
-			if (type.IsGenericType)
-			{
-				var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
-				return type.GetGenericTypeDefinition().MakeGenericType(args);
-			}
-
-			if (type.IsArray)
-			{
-				var arrType = type.GetElementType();
-				return applyGenerics(arrType, genericDefs, values).MakeArrayType();
-			}
-
-			return type;
-		}
+//		private static Type applyGenerics(Type type, Type[] genericDefs, Type[] values)
+//		{
+//			if (type.IsGenericParameter)
+//			{
+//				for (var idx = 0; idx < genericDefs.Length; idx++)
+//					if (type == genericDefs[idx])
+//						return values[idx];
+//			}
+//
+//			if (type.IsGenericType)
+//			{
+//				var args = type.GetGenericArguments().Select(a => applyGenerics(a, genericDefs, values)).ToArray();
+//				return type.GetGenericTypeDefinition().MakeGenericType(args);
+//			}
+//
+//			if (type.IsArray)
+//			{
+//				var arrType = type.GetElementType();
+//				return applyGenerics(arrType, genericDefs, values).MakeArrayType();
+//			}
+//
+//			return type;
+//		}
 	}
 
 	public class TypeMatchException: Exception

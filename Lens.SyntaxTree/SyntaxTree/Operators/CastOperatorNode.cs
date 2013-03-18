@@ -114,13 +114,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var fromArgs = fromMethod.GetParameters().Select(p => p.ParameterType).ToArray();
 			var toArgs = toMethod.GetParameters().Select(p => p.ParameterType).ToArray();
 
-			if(fromArgs.Length != toArgs.Length || !fromArgs.Select((t, id) => t.IsExtendablyAssignableFrom(toArgs[id], true)).Any())
+			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
 				Error("Delegate types '{0}' and '{1}' do not have matching argument types!", from, to);
 
-			if(toMethod.ReturnType != fromMethod.ReturnType)
+			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
 				Error("Delegate types '{0}' and '{1}' do not have matching return types!", from, to);
 
-			Expression.Compile(ctx, true);
+			if (fromMethod.IsStatic)
+				gen.EmitNull();
+			else
+				Expression.Compile(ctx, true);
 
 			if (from.IsGenericType && to.IsGenericType && from.GetGenericTypeDefinition() == to.GetGenericTypeDefinition())
 				return;

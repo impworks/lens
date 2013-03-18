@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Lens.SyntaxTree.Compiler;
 using NUnit.Framework;
 
@@ -58,7 +57,7 @@ namespace Lens.Test
 		private void Test(Type desired, string name, Type[] args = null, Type[] hints = null)
 		{
 			var method = typeof (GenericHelperTestExample).GetMethods().Single(m => m.Name == name);
-			var result = GenericHelper.ResolveReturnType(method, args, hints);
+			var result = GenericHelper.ResolveGenericReturnType(method, args, hints);
 			Assert.AreEqual(desired, result);
 		}
 	}

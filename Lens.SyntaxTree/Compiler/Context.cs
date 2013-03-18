@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The default size of a method's IL Generator stream.
 		/// </summary>
-		public const int ILStreamSize = 1024;
+		public const int ILStreamSize = 16384;
 
 		#endregion
 

@@ -117,6 +117,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
+					var skip = IsStatic ? 0 : 1;
 					var arg = Arguments[idx];
 					if (arg.IsRefArgument)
 						continue;
@@ -126,12 +127,12 @@ namespace Lens.SyntaxTree.Compiler
 					{
 						var fi = closureType.ResolveField(local.ClosureFieldName);
 						gen.EmitLoadLocal(closure);
-						gen.EmitLoadArgument(idx);
+						gen.EmitLoadArgument(idx + skip);
 						gen.EmitSaveField(fi);
 					}
 					else
 					{
-						gen.EmitLoadArgument(idx);
+						gen.EmitLoadArgument(idx + skip);
 						gen.EmitSaveLocal(local);
 					}
 				}

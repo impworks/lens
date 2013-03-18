@@ -379,10 +379,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void finalizeAssembly()
 		{
-//			var ep = ResolveMethod(RootTypeName, RootMethodName);
-//			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+			var ep = ResolveMethod(RootTypeName, RootMethodName);
+			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
+
+			MainAssembly.Save("_MainModule.dll");
 		}
 
 		#endregion
