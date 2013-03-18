@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				: ctx.ResolveType(node.StaticType);
 
 			if (node.TypeHints.Any())
-				m_TypeHints = node.TypeHints.Select(ctx.ResolveType).ToArray();
+				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
 
 			try
 			{
