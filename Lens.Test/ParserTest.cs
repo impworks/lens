@@ -810,7 +810,7 @@ catch DivisionByZeroException
 		[Test]
 		public void LinqCall()
 		{
-			var src = @"new [1, 2]. Where ((x:int) -> x > 1)";
+			var src = @"(new [1; 2]). Where ((x:int) -> x > 1)";
 			var result = Expr.Invoke(
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
@@ -825,6 +825,38 @@ catch DivisionByZeroException
 						)
 					}
 				);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void FluentCall()
+		{
+			var src = @"(Enumerable::Range 1 100)
+    |> Where ((i:int) -> i % 2 == 0)
+    |> Select ((i:int) -> i * 2)";
+
+			var result = Expr.Invoke(
+				Expr.Invoke(
+					Expr.Invoke(Expr.GetMember(new TypeSignature("Enumerable"), "Range"), Expr.Int(1), Expr.Int(100)),
+					"Where",
+					new LambdaNode
+					{
+						Arguments =
+						{
+							new FunctionArgument("i", new TypeSignature("int"))
+						},
+						Body = Expr.Block(Expr.Equal(Expr.Remainder(Expr.Get("i"), Expr.Int(2)), Expr.Int()))
+					}),
+				"Select",
+				new LambdaNode
+				{
+					Arguments =
+					{
+						new FunctionArgument("i", new TypeSignature("int"))
+					},
+					Body = Expr.Block(Expr.Mult(Expr.Get("i"), Expr.Int(2)))
+				});
 
 			Test(src, result);
 		}

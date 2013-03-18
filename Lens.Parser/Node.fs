@@ -137,6 +137,18 @@ let lambda parameters code : NodeBase =
 let invocation expression (parameters : NodeBase list) : NodeBase =
     upcast InvocationNode(Expression = expression, Arguments = ResizeArray<_> parameters)
 
+let fluentCall (argument : NodeBase) (functions : (string * (NodeBase list)) list option) : NodeBase =
+    match functions with
+    | None            -> argument
+    | Some(someFunctions) ->
+        let rec loop (arg : NodeBase) (calls : (string * (NodeBase list)) list) =
+            match calls with
+            | []                           -> arg
+            | (name, parameters) :: others ->
+                let getNode = GetMemberNode(Expression = loop arg others, MemberName = name)
+                upcast InvocationNode(Expression = getNode, Arguments = ResizeArray<_> parameters)
+        loop argument (List.rev someFunctions)
+
 // Branch constructions
 let ifNode condition thenBlock elseBlock =
     let falseAction =

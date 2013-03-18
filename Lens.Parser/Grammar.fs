@@ -111,6 +111,7 @@ let try_expr, try_exprRef                     = createAnnotatedNodeParser "try_e
 let catch_expr, catch_exprRef                 = createAnnotatedNodeParser "catch_expr" "catch expression"
 let lambda_expr, lambda_exprRef               = createAnnotatedNodeParser "lambda_expr" "lambda expression"
 let line_expr, line_exprRef                   = createAnnotatedNodeParser "line_expr" "line expression"
+let line_expr_0, line_expr_0Ref               = createAnnotatedNodeParser "line_expr_0" "line expression"
 let line_expr_1, line_expr_1Ref               = createAnnotatedNodeParser "line_expr_1" "line expression"
 let sign_1, sign_1Ref                         = createAnnotatedParser "sign_1" "operator"
 let line_expr_2, line_expr_2Ref               = createAnnotatedNodeParser "line_expr_2" "line expression"
@@ -217,7 +218,11 @@ lambda_exprRef        := pipe2
                          <| opt (token "(" >>? func_params .>>? token ")")
                          <| (token "->" >>? block)
                          <| Node.lambda
-line_exprRef          := pipe2
+line_exprRef           := pipe2
+                          <| attempt line_expr_0
+                          <| attempt (opt (Indentation.indentedBlock (token "|>" >>? identifier .>>.? invoke_list)))
+                          <| Node.fluentCall
+line_expr_0Ref         := pipe2
                          <| line_expr_1
                          <| opt ((keyword "as" <|> keyword "is") .>>.? ``type``)
                          <| Node.castNode
