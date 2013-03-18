@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -29,7 +30,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			
 			// get evaluated return type
 			var retType = Body.GetExpressionType(ctx);
-			_Method.ReturnType = retType;
+			if(retType == typeof(NullType))
+				Error("Lambda return type cannot be inferred! Please use type casting to specify type.");
+
+			_Method.ReturnType = retType.IsVoid() ? typeof(void) : retType;
 			_Method.PrepareSelf();
 
 			scope.FinalizeScope(ctx);
