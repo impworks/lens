@@ -322,7 +322,7 @@ namespace Lens.SyntaxTree.Compiler
 			if(exact && info.Item2 != 0)
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
 
-			return (info.Item1 as MethodEntity).MethodBuilder;
+			return info.Item1.MethodBuilder;
 		}
 
 		/// <summary>

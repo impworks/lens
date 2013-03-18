@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
@@ -111,6 +112,14 @@ namespace Lens.SyntaxTree.Compiler
 
 				gen.EmitCreateObject(ctor);
 				gen.EmitSaveLocal(closure);
+
+				var root = closureType.ResolveField(Scope.ParentScopeFieldName);
+				if (root != null)
+				{
+					gen.EmitLoadLocal(closure);
+					gen.EmitLoadArgument(0);
+					gen.EmitSaveField(root);
+				}
 			}
 
 			if (Arguments != null)

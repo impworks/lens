@@ -309,6 +309,24 @@ a";
 			Test(src, 6);
 		}
 
+		[Test]
+		public void Closure2()
+		{
+			var src = @"
+var result = 0
+var x1 = 1
+var fx1 = (a:int) ->
+    x1 = x1 + 1
+    var x2 = 1
+    var fx2 = (b:int) ->
+        x2 = x2 + 1
+        result = x1 + x2 + b
+    fx2 a
+fx1 10
+result";
+			Test(src, 14);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
