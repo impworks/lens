@@ -776,6 +776,59 @@ test ()";
 			Test(src, definition, invocation);
 		}
 
+		[Test]
+		public void ThrowExpression()
+		{
+			var src = "throw new NotImplementedException ()";
+			var result = Expr.Throw("NotImplementedException");
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Rethrow()
+		{
+			var src = @"
+try
+	1 / 0
+catch DivisionByZeroException
+	throw";
+
+			var result = Expr.Try(
+				Expr.Block(
+					Expr.Div(Expr.Int(1), Expr.Int(0))
+				),
+				Expr.Catch(
+					"DivisionByZeroException",
+					Expr.Block(Expr.Throw())
+				)
+			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void LinqCall()
+		{
+			var src = @"new [1, 2]. Where ((x:int) -> x > 1)";
+			var result = Expr.Invoke(
+				Expr.Array(Expr.Int(1), Expr.Int(2)),
+				"Where",
+				new LambdaNode
+					{
+						Arguments = new List<FunctionArgument> { new FunctionArgument("x", "int") },
+						Body = Expr.Block(
+							Expr.Greater(
+								Expr.Get("x"),
+								Expr.Int(1)
+							)
+						)
+					}
+				);
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();

@@ -334,6 +334,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new ConditionNode {Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse};
 		}
 
+		public static ThrowNode Throw()
+		{
+			return new ThrowNode();
+		}
+
 		public static ThrowNode Throw(NodeBase expr)
 		{
 			return new ThrowNode {Expression = expr};
