@@ -91,14 +91,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a type by its string signature.
 		/// </summary>
-		public Type ResolveType(string signature)
+		public Type ResolveType(string signature, bool allowGeneric = false)
 		{
 			var trimmed = signature.Replace(" ", string.Empty);
 			Type cached;
 			if (_Cache.TryGetValue(trimmed, out cached))
 				return cached;
 
-			var type = parseTypeSignature(trimmed);
+			var type = parseTypeSignature(trimmed, allowGeneric);
 			if (type != null)
 				_Cache.Add(trimmed, type);
 
@@ -118,7 +118,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
-		private Type parseTypeSignature(string signature)
+		private Type parseTypeSignature(string signature, bool allowGeneric)
 		{
 			// simple cases: type is an alias
 			if (_TypeAliases.ContainsKey(signature))
@@ -126,7 +126,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			// array
 			if (signature.EndsWith("[]"))
-				return parseTypeSignature(signature.Substring(0, signature.Length - 2)).MakeArrayType();
+				return parseTypeSignature(signature.Substring(0, signature.Length - 2), false).MakeArrayType();
 
 			// generic type
 			var open = signature.IndexOf('<');
@@ -134,10 +134,10 @@ namespace Lens.SyntaxTree.Compiler
 				return findType(signature);
 
 			var close = signature.LastIndexOf('>');
-			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
+			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1), allowGeneric).ToArray();
 			var typeName = signature.Substring(0, open) + '`' + args.Length;
 			var type = findType(typeName);
-			return type.MakeGenericType(args);
+			return args.Any(x => x == null) ? type : type.MakeGenericType(args);
 		}
 
 		/// <summary>
@@ -193,7 +193,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Parses out the list of generic type arguments delimited by commas.
 		/// </summary>
-		private IEnumerable<Type> parseTypeArgs(string args)
+		private IEnumerable<Type> parseTypeArgs(string args, bool allowGeneric)
 		{
 			var depth = 0;
 			var start = 0;
@@ -204,12 +204,20 @@ namespace Lens.SyntaxTree.Compiler
 				if (args[idx] == '>') depth--;
 				if (depth == 0 && args[idx] == ',')
 				{
-					yield return parseTypeSignature(args.Substring(start, idx - start));
+					yield return getGenericArgumentType(args.Substring(start, idx - start), allowGeneric);
 					start = idx + 1;
 				}
 			}
 
-			yield return parseTypeSignature(args.Substring(start, args.Length - start));
+			yield return getGenericArgumentType(args.Substring(start, args.Length - start), allowGeneric);
+		}
+
+		/// <summary>
+		/// Substitutes a null for placeholder type.
+		/// </summary>
+		private Type getGenericArgumentType(string str, bool allowGeneric)
+		{
+			return str == "_" && allowGeneric ? null : parseTypeSignature(str, false);
 		}
 	}
 }
