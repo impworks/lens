@@ -383,6 +383,42 @@ new [ a is TestType; a is Small; a is Large ]";
 			Test(src, new [] { true, true, false });
 		}
 
+		[Test]
+		public void Records1()
+		{
+			var src = @"
+record Holder
+    A : int
+    B : int
+
+var a = new Holder ()
+a.A = 2
+a.B = 3
+a.A * a.B
+";
+			Test(src, 6);
+		}
+
+		[Test]
+		public void Records2()
+		{
+			var src = @"
+record First
+    A : int
+
+record Second
+    B : int
+
+var a = new First ()
+a.A = 2
+var b = new Second ()
+b.B = 3
+
+a.A * b.B
+";
+			Test(src, 6);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
