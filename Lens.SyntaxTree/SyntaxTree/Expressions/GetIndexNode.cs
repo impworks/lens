@@ -87,5 +87,32 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			return string.Format("getidx({0} of {1})", Index, Expression);
 		}
+
+
+		#region Equality
+
+		protected bool Equals(GetIndexNode other)
+		{
+			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((GetIndexNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (base.GetHashCode() * 397) ^ PointerRequired.GetHashCode();
+			}
+		}
+
+
+		#endregion
 	}
 }

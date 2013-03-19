@@ -247,9 +247,38 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
+			var typehints = TypeHints.Any() ? "<" + string.Join(", ", TypeHints) + ">" : string.Empty;
 			return StaticType == null
-				? string.Format("getmbr({0} of value {1})", MemberName, Expression)
-				: string.Format("getmbr({0} of type {1})", MemberName, StaticType);
+				? string.Format("getmbr({0}{1} of value {2})", MemberName, typehints, Expression)
+				: string.Format("getmbr({0}{1} of type {2})", MemberName, typehints, StaticType);
 		}
+
+		#region Equality
+
+		protected bool Equals(GetMemberNode other)
+		{
+			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired) && TypeHints.SequenceEqual(other.TypeHints);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((GetMemberNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hashCode = base.GetHashCode();
+				hashCode = (hashCode * 397) ^ PointerRequired.GetHashCode();
+				hashCode = (hashCode * 397) ^ (TypeHints != null ? TypeHints.GetHashCode() : 0);
+				return hashCode;
+			}
+		}
+
+		#endregion
 	}
 }
