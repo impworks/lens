@@ -922,6 +922,40 @@ catch DivisionByZeroException
 			Test(src, result);
 		}
 
+		[Test]
+		public void RefArgDeclaration()
+		{
+			var src = "func test x:int y:ref int -> y = x";
+			var result = new FunctionNode
+			{
+				Arguments = new List<FunctionArgument>
+				{
+					new FunctionArgument("x", "int"),
+					new FunctionArgument("y", "int", true),
+				},
+				Name = "test",
+				Body = Expr.Block(
+					Expr.Set("y", Expr.Get("x"))
+				)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void RefArgUsage()
+		{
+			var src = "test x (ref a) (ref b.Field) (ref Type::Field)";
+			var result = Expr.Invoke(
+				"test",
+				Expr.Ref(Expr.Get("a")),
+				Expr.Ref(Expr.GetMember(Expr.Get("b"), "Field")),
+				Expr.Ref(Expr.GetMember("Type", "Field"))
+			);
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();

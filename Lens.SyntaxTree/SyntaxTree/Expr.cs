@@ -294,6 +294,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 			};
 		}
 
+		public static T Ref<T>(T expr) where T: NodeBase, IPointerProvider
+		{
+			expr.PointerRequired = true;
+			return expr;
+		}
+
 		#endregion
 
 		#region Control Structures
