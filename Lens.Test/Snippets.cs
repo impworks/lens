@@ -339,6 +339,50 @@ result";
 			Test(src, 14);
 		}
 
+		[Test]
+		public void Algebraic1()
+		{
+			var src = @"
+type TestType
+    Value of int
+
+(new Value 1).Tag";
+
+			Test(src, 1);
+		}
+
+		[Test]
+		public void Algebraic2()
+		{
+			var src = @"
+type TestType
+    Small of int
+    Large of int
+
+var a = new Small 1
+var b = new Large 100
+a.Tag + b.Tag";
+
+			Test(src, 101);
+		}
+
+		[Test]
+		public void Algebraic3()
+		{
+			var src = @"
+type TestType
+    Small of int
+    Large of int
+
+fun part of TestType x:int ->
+    if (x > 100) new Large x else new Small x
+
+var a = part 10
+new [ a is TestType; a is Small; a is Large ]";
+
+			Test(src, new [] { true, true, false });
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
