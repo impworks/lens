@@ -215,6 +215,17 @@ namespace Lens.Test
 			Assert.AreEqual(1, to[1].DistanceFrom(from2));
 		}
 
+		[Test]
+		public void RefArguments()
+		{
+			var types = new[] {typeof (object), typeof (float), typeof (int), typeof (string)};
+			foreach (var type in types)
+				Assert.AreEqual(0, type.MakeByRefType().DistanceFrom(type));
+
+			Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(typeof(float)));
+			Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(typeof(int)));
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
 		/// result.

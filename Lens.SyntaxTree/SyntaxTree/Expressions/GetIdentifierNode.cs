@@ -50,6 +50,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)
 			{
+				if(nameInfo.IsConstant && PointerRequired)
+					Error("Constant variables cannot be passed by reference!");
+
 				if (nameInfo.IsClosured)
 				{
 					if(nameInfo.ClosureDistance == 0)
@@ -130,5 +133,30 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			return string.Format("get({0})", Identifier);
 		}
+
+		#region Equality
+
+		protected bool Equals(GetIdentifierNode other)
+		{
+			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((GetIdentifierNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (base.GetHashCode() * 397) ^ PointerRequired.GetHashCode();
+			}
+		}
+
+		#endregion
 	}
 }

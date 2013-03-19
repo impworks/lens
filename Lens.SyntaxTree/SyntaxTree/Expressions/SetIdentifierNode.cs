@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (!ctx.CurrentMethod.IsStatic)
 					argId++;
 
-				gen.EmitLoadArgument(argId);
+				gen.EmitLoadArgument(argId, true);
 				castNode.Compile(ctx, true);
 				gen.EmitSaveObject(name.Type);
 			}

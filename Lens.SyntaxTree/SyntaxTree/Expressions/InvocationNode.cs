@@ -206,7 +206,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					: m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 
 				for (var idx = 0; idx < Arguments.Count; idx++)
-					Expr.Cast(Arguments[idx], toTypes[idx]).Compile(ctx, true);
+				{
+					var arg = Arguments[idx];
+					var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
+					var targetRef = toTypes[idx].IsByRef;
+
+					if (argRef != targetRef)
+					{
+						if(argRef)
+							Error(arg, "Cannot use reference as a value for non-reference argument!");
+						else
+							Error(arg, "Argument '{0}' requires a reference of type '{1}!", idx, toTypes[idx].GetElementType());
+					}
+
+					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], toTypes[idx]);
+					expr.Compile(ctx, true);
+				}
 			}
 
 			if (constraint != null)

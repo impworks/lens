@@ -419,6 +419,30 @@ a.A * b.B
 			Test(src, 6);
 		}
 
+		[Test]
+		public void RefFunction1()
+		{
+			var src = @"
+var x = 0
+int::TryParse ""100"" ref x
+x";
+
+			Test(src, 100);
+		}
+
+		[Test]
+		public void RefFunction2()
+		{
+			var src = @"
+fun test a:int x:ref int -> x = a * 2
+var result = 0
+test 21 (ref result)
+result
+";
+
+			Test(src, 42);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

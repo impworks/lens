@@ -285,7 +285,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <param name="args">Desired argument types.</param>
 		public static Tuple<T, int> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
 		{
-			Func<T, Tuple<T, int>> methodEvaluator = ent => new Tuple<T, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(argsGetter(ent), args));
+			Func<T, Tuple<T, int>> methodEvaluator = ent => new Tuple<T, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(args, argsGetter(ent)));
 
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 
