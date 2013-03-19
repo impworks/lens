@@ -247,10 +247,22 @@ string::Compare
 		}
 
 		[Test]
-		public void Linq()
+		public void Linq1()
 		{
 			var src = @"(new [1; 2; 3; 4; 5]).Where ((a:int) -> a > 2)";
 			Test(src, new [] {3, 4, 5});
+		}
+
+		[Test]
+		public void Linq2()
+		{
+			var src = @"
+Enumerable::Range 1 10
+    |> Where ((x:int) -> x % 2 == 0)
+    |> Select ((x:int) -> x * 2)";
+
+			var result = new[] { 4, 8, 12, 16, 20};
+			Test(src, result);
 		}
 
 		[Test]
