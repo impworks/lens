@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using Lens.SyntaxTree.Compiler;
+﻿using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -17,11 +14,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public class RecordField : LocationEntity, IStartLocationTrackingEntity
 	{
-		/// <summary>
-		/// The record type containing this entry.
-		/// </summary>
-		public RecordDefinitionNode ContainingRecord { get; set; }
-
 		/// <summary>
 		/// The name of the entry.
 		/// </summary>

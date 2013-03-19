@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -20,11 +19,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// The name of the type.
 		/// </summary>
 		public string Name { get; set; }
-
-		/// <summary>
-		/// The type builder associated with this type.
-		/// </summary>
-		public TypeBuilder TypeBuilder { get; private set; }
 
 		/// <summary>
 		/// The entries of the type node.

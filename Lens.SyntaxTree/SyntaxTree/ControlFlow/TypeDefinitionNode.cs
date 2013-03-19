@@ -15,11 +15,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	public class TypeLabel : LocationEntity
 	{
 		/// <summary>
-		/// The type of this label.
-		/// </summary>
-		public TypeDefinitionNode ContainingType { get; set; }
-
-		/// <summary>
 		/// The name of the entry.
 		/// </summary>
 		public string Name { get; set; }

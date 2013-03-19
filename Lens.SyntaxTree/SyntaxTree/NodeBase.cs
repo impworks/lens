@@ -32,12 +32,6 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public abstract void Compile(Context ctx, bool mustReturn);
 
 		/// <summary>
-		/// Validates the node parameters.
-		/// </summary>
-		protected virtual void Validate()
-		{ }
-
-		/// <summary>
 		/// Gets the list of child nodes.
 		/// </summary>
 		public virtual IEnumerable<NodeBase> GetChildNodes()
