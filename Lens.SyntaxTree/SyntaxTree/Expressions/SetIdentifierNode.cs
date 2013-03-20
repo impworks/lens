@@ -39,26 +39,50 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
-			if(nameInfo == null)
-				Error("Variable '{0}' is undefined in current scope!", Identifier);
-
-			if(nameInfo.IsConstant && !IsInitialization)
-				Error("'{0}' is a constant and cannot be assigned after definition!", Identifier);
+			var gen = ctx.CurrentILGenerator;
 
 			var exprType = Value.GetExpressionType(ctx);
-			if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-				Error("Cannot assign a value of type '{0}' to a variable of type '{1}'!\nAn explicit cast might be required.", exprType, nameInfo.Type);
 
-			if (nameInfo.IsClosured)
+			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			if (nameInfo != null)
 			{
-				if (nameInfo.ClosureDistance == 0)
-					assignClosuredLocal(ctx, nameInfo);
+				if (nameInfo.IsConstant && !IsInitialization)
+					Error("'{0}' is a constant and cannot be assigned after definition!", Identifier);
+
+				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
+					Error("Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.", exprType, nameInfo.Type);
+
+				if (nameInfo.IsClosured)
+				{
+					if (nameInfo.ClosureDistance == 0)
+						assignClosuredLocal(ctx, nameInfo);
+					else
+						assignClosuredRemote(ctx, nameInfo);
+				}
 				else
-					assignClosuredRemote(ctx, nameInfo);
+				{
+					assignLocal(ctx, nameInfo);
+				}
+
+				return;
 			}
-			else
-				assignLocal(ctx, nameInfo);
+
+			try
+			{
+				var pty = ctx.FindGlobalProperty(Identifier);
+				if(pty.Setter == null)
+					Error("Global property '{0}' does not have a setter!", Identifier);
+
+				if(!pty.PropertyType.IsExtendablyAssignableFrom(exprType))
+					Error("Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.", exprType, pty.PropertyType);
+
+				Expr.Cast(Value, pty.PropertyType).Compile(ctx, true);
+				gen.EmitCall(pty.Setter);
+			}
+			catch (KeyNotFoundException)
+			{
+				Error("Variable '{0}' is undefined in current scope!", Identifier);
+			}
 		}
 
 		private void assignLocal(Context ctx, LocalName name)

@@ -16,51 +16,45 @@ namespace Lens
 	{
 		public LensCompiler()
 		{
-			m_RegisteredTypes = new Dictionary<string, Type>();
-			m_RegisteredFunctions = new Dictionary<string, List<Delegate>>();
+			m_RegisteredTypes = new List<Tuple<string, Type>>();
+			m_RegisteredProperties = new List<Tuple<string, Delegate, Delegate>>();
+			m_RegisteredFunctions = new List<Tuple<string, Delegate>>();
 		}
 
-		private Dictionary<string, Type> m_RegisteredTypes;
-		private Dictionary<string, List<Delegate>> m_RegisteredFunctions;
+		private List<Tuple<string, Type>> m_RegisteredTypes;
+		private List<Tuple<string, Delegate>> m_RegisteredFunctions;
+		private List<Tuple<string, Delegate, Delegate>> m_RegisteredProperties;
 
 		/// <summary>
 		/// Register a type to be used by LENS script.
 		/// </summary>
-		/// <param name="type">Type to register.</param>
 		public void RegisterType(Type type)
 		{
 			RegisterType(type.Name, type);
 		}
 
 		/// <summary>
-		/// Register an aliased type to be used by LENS script.
+		/// Registers an aliased type to be used by LENS script.
 		/// </summary>
 		public void RegisterType(string alias, Type type)
 		{
-			if(m_RegisteredTypes.ContainsKey(alias))
-				throw new LensCompilerException(string.Format("Type '{0}' has already been registered!", alias));
-
-			m_RegisteredTypes.Add(alias, type);
+			m_RegisteredTypes.Add(new Tuple<string, Type>(alias, type));
 		}
 
 		/// <summary>
-		/// Register a method to be used by LENS script.
+		/// Registers a method to be used by LENS script.
 		/// </summary>
 		public void RegisterFunction(string name, Delegate method)
 		{
-			if (m_RegisteredFunctions.ContainsKey(name))
-			{
-				var types = method.GetType().GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
-				var overloads = m_RegisteredFunctions[name];
-				if(overloads.Any(d => d.GetArgumentTypes().SequenceEqual(types)))
-					throw new LensCompilerException(string.Format("Method '{0}' with identical argument types has already been registered!", name));
+			m_RegisteredFunctions.Add(new Tuple<string, Delegate>(name, method));
+		}
 
-				overloads.Add(method);
-			}
-			else
-			{
-				m_RegisteredFunctions.Add(name, new List<Delegate> {method});
-			}
+		/// <summary>
+		/// Registers a dynamic property to be used by LENS script.
+		/// </summary>
+		public void RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
+		{
+			m_RegisteredProperties.Add(new Tuple<string, Delegate, Delegate>(name, getter, setter));
 		}
 
 		/// <summary>
@@ -73,7 +67,13 @@ namespace Lens
 			var ctx = Context.CreateFromNodes(nodes);
 
 			foreach (var curr in m_RegisteredTypes)
-				ctx.ImportType(curr.Key, curr.Value);
+				ctx.ImportType(curr.Item1, curr.Item2);
+
+			foreach(var curr in m_RegisteredFunctions)
+				ctx.ImportFunction(curr.Item1, curr.Item2);
+
+			foreach(var curr in m_RegisteredProperties)
+				ctx.ImportProperty(curr.Item1, curr.Item2, curr.Item3);
 
 			var script = ctx.Compile();
 			

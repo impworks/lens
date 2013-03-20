@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -10,6 +11,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
+		private MethodInfo m_Method;
+		private GlobalPropertyEntity m_Property;
+
 		/// <summary>
 		/// Local and closured variables can provide a location pointer.
 		/// </summary>
@@ -22,17 +26,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
-			if (nameInfo != null)
-				return nameInfo.Type;
+			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			if (local != null)
+				return local.Type;
 
 			try
 			{
-				var method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
-				if(method == null)
-					throw new KeyNotFoundException();
+				m_Method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
+				return FunctionalHelper.CreateFuncType(m_Method.ReturnType);
+			}
+			catch (KeyNotFoundException) { }
 
-				return FunctionalHelper.CreateFuncType(method.ReturnType);
+			try
+			{
+				m_Property = ctx.FindGlobalProperty(Identifier);
+				return m_Property.PropertyType;
 			}
 			catch (KeyNotFoundException)
 			{
@@ -44,45 +52,56 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
+			var resultType = GetExpressionType(ctx);
+
 			var gen = ctx.CurrentILGenerator;
 
 			// load local variable
-			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
-			if (nameInfo != null)
+			// local name is not cached because it can be closured.
+			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			if (local != null)
 			{
-				if(nameInfo.IsConstant && PointerRequired)
+				if(local.IsConstant && PointerRequired)
 					Error("Constant variables cannot be passed by reference!");
 
-				if (nameInfo.IsClosured)
+				if (local.IsClosured)
 				{
-					if(nameInfo.ClosureDistance == 0)
-						getClosuredLocal(ctx, nameInfo);
+					if (local.ClosureDistance == 0)
+						getClosuredLocal(ctx, local);
 					else
-						getClosuredRemote(ctx, nameInfo);
+						getClosuredRemote(ctx, local);
 				}
 				else
 				{
-					getLocal(ctx, nameInfo);
+					getLocal(ctx, local);
 				}
 
 				return;
 			}
 
 			// load pointer to global function
-			try
+			if (m_Method != null)
 			{
-				var method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
-				var funcType = FunctionalHelper.CreateFuncType(method.ReturnType);
-				var ctor = funcType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
+				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(method);
+				gen.EmitLoadFunctionPointer(m_Method);
 				gen.EmitCreateObject(ctor);
+
+				return;
 			}
-			catch (KeyNotFoundException)
+
+			// get a property value
+			if (m_Property != null)
 			{
-				Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+				if(m_Property.Getter == null)
+					Error("Global property '{0}' does not have a getter!", Identifier);
+
+				gen.EmitCall(m_Property.Getter);
+				return;
 			}
+
+			Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
 		}
 
 		/// <summary>

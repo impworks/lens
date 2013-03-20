@@ -38,8 +38,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
-
-			MethodResolutionStack = new Stack<MethodEntity>();
+			_DefinedGlobalProperties = new Dictionary<string, GlobalPropertyEntity>();
 
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
@@ -128,11 +127,6 @@ namespace Lens.SyntaxTree.Compiler
 		internal MethodEntityBase CurrentMethod { get; set; }
 
 		/// <summary>
-		/// The current most nested loop.
-		/// </summary>
-		internal LoopNode CurrentLoop { get; set; }
-
-		/// <summary>
 		/// The current most nested try block.
 		/// </summary>
 		internal TryNode CurrentTryBlock { get; set; }
@@ -141,8 +135,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// The current most nested catch block.
 		/// </summary>
 		internal CatchNode CurrentCatchClause { get; set; }
-
-		internal Stack<MethodEntity> MethodResolutionStack { get; private set; }
 
 		/// <summary>
 		/// The lexical scope of the current scope.
@@ -183,6 +175,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// The root of type lookup.
 		/// </summary>
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
+
+		/// <summary>
+		/// The list of properties imported from external code.
+		/// </summary>
+		private readonly Dictionary<string, GlobalPropertyEntity> _DefinedGlobalProperties;
 
 		#endregion
 	}

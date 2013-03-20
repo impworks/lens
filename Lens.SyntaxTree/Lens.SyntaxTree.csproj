@@ -62,6 +62,7 @@
     <Compile Include="Compiler\ExtensionMethodResolver.cs" />
     <Compile Include="Compiler\FieldEntity.cs" />
     <Compile Include="Compiler\GenericHelper.cs" />
+    <Compile Include="Compiler\GlobalPropertyEntity.cs" />
     <Compile Include="Compiler\MethodEntityBase.cs" />
     <Compile Include="Compiler\MethodEntity.cs" />
     <Compile Include="Compiler\Scope.cs" />

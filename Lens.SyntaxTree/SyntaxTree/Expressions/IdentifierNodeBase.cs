@@ -7,9 +7,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public abstract class IdentifierNodeBase : NodeBase
 	{
-		/// <summary>
-		/// Identifier to access.
-		/// </summary>
 		public string Identifier { get; set; }
 
 		public LocalName LocalName { get; set; }

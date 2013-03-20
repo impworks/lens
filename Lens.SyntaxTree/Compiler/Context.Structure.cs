@@ -29,9 +29,20 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Imports an arbitrary property from external code.
+		/// </summary>
+		public void ImportProperty(string name, Delegate getter, Delegate setter)
+		{
+			if(_DefinedGlobalProperties.ContainsKey(name))
+				Error("Global property '{0}' has already been defined!", name);
+
+			_DefinedGlobalProperties.Add(name, GlobalPropertyEntity.Create(getter, setter));
+		}
+
+		/// <summary>
 		/// Imports an existing external method with given name.
 		/// </summary>
-		public void ImportMethod(string name, Delegate method)
+		public void ImportFunction(string name, Delegate method)
 		{
 			_DefinedTypes[RootTypeName].ImportMethod(name, method);
 		}
@@ -81,12 +92,14 @@ namespace Lens.SyntaxTree.Compiler
 		internal TypeEntity FindType(string name)
 		{
 			TypeEntity entity;
-			_DefinedTypes.TryGetValue(name, out entity);
+			if(!_DefinedTypes.TryGetValue(name, out entity))
+				throw new KeyNotFoundException();
+
 			return entity;
 		}
 
 		/// <summary>
-		/// Tries to search for a method by it's method info.
+		/// Tries to search for a method by it method info.
 		/// </summary>
 		internal MethodEntity FindMethod(MethodInfo method)
 		{
@@ -96,9 +109,21 @@ namespace Lens.SyntaxTree.Compiler
 			var typeName = method.DeclaringType.Name;
 			var type = FindType(typeName);
 			if(type == null)
-				Error("Type '{0}' could not be found within the script!", typeName);
+				throw new KeyNotFoundException();
 
 			return type.FindMethod(method);
+		}
+
+		/// <summary>
+		/// Tries to search for a global property by its name.
+		/// </summary>
+		internal GlobalPropertyEntity FindGlobalProperty(string name)
+		{
+			GlobalPropertyEntity entity;
+			if(!_DefinedGlobalProperties.TryGetValue(name, out entity))
+				throw new KeyNotFoundException();
+
+			return entity;
 		}
 
 		/// <summary>
@@ -122,7 +147,7 @@ namespace Lens.SyntaxTree.Compiler
 				: ResolveMethodByArgs(type.GetMethods().Where(m => m.Name == methodName), m => m.GetParameters().Select(p => p.ParameterType).ToArray(), args).Item1;
 
 			if(method == null)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
+				throw new KeyNotFoundException();
 
 			return method;
 		}
@@ -137,7 +162,7 @@ namespace Lens.SyntaxTree.Compiler
 				: type.GetMethods().Where(m => m.Name == methodName);
 
 			if(group == null || !group.Any())
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any method named '{1}'.", type, methodName));
+				throw new KeyNotFoundException();
 
 			return group;
 		}
@@ -160,7 +185,7 @@ namespace Lens.SyntaxTree.Compiler
 				: type.GetField(fieldName);
 
 			if(field == null)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any field named '{1}'.", type, fieldName));
+				throw new KeyNotFoundException();
 
 			return field;
 		}
@@ -170,12 +195,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public PropertyInfo ResolveProperty(Type type, string propertyName)
 		{
-			var pty = type is TypeBuilder
-				? null
-				: type.GetProperty(propertyName);
+			// todo: properties for built-in types?
+			if(type is TypeBuilder)
+				throw new KeyNotFoundException();
 
+			var pty = type.GetProperty(propertyName);
 			if(pty == null)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain any property named '{1}'.", type, propertyName));
+				throw new KeyNotFoundException();
 
 			return pty;
 		}
@@ -201,7 +227,7 @@ namespace Lens.SyntaxTree.Compiler
 				: type.GetConstructor(args);
 
 			if(ctor == null)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a constructor with the given arguments.", type));
+				throw new KeyNotFoundException();
 
 			return ctor;
 		}
