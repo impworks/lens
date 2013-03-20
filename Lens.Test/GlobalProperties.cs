@@ -15,7 +15,7 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void GetAndSet()
+		public void Statics()
 		{
 			SetX(1337);
 			var lc = new LensCompiler();
@@ -23,6 +23,18 @@ namespace Lens.Test
 			lc.RegisterProperty("y", GetY, SetY);
 			lc.Run("y = x - 337");
 			Assert.AreEqual(1000, GetY());
+		}
+
+		[Test]
+		public void Lambdas()
+		{
+			var x = 10;
+			var y = 0;
+			var lc = new LensCompiler();
+			lc.RegisterProperty("x", () => x, nx => x = nx);
+			lc.RegisterProperty("y", () => y, ny => y = ny);
+			lc.Run("y = x + 32");
+			Assert.AreEqual(y, 42);
 		}
 		
 		public static int HalfValue()

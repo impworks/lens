@@ -29,17 +29,6 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Imports an arbitrary property from external code.
-		/// </summary>
-		public void ImportProperty(string name, Delegate getter, Delegate setter)
-		{
-			if(_DefinedGlobalProperties.ContainsKey(name))
-				Error("Global property '{0}' has already been defined!", name);
-
-			_DefinedGlobalProperties.Add(name, GlobalPropertyEntity.Create(getter, setter));
-		}
-
-		/// <summary>
 		/// Imports an existing external method with given name.
 		/// </summary>
 		public void ImportFunction(string name, Delegate method)
@@ -112,18 +101,6 @@ namespace Lens.SyntaxTree.Compiler
 				throw new KeyNotFoundException();
 
 			return type.FindMethod(method);
-		}
-
-		/// <summary>
-		/// Tries to search for a global property by its name.
-		/// </summary>
-		internal GlobalPropertyEntity FindGlobalProperty(string name)
-		{
-			GlobalPropertyEntity entity;
-			if(!_DefinedGlobalProperties.TryGetValue(name, out entity))
-				throw new KeyNotFoundException();
-
-			return entity;
 		}
 
 		/// <summary>

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lens.Parser;
-using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens
 {
@@ -17,13 +14,12 @@ namespace Lens
 		public LensCompiler()
 		{
 			m_RegisteredTypes = new List<Tuple<string, Type>>();
-			m_RegisteredProperties = new List<Tuple<string, Delegate, Delegate>>();
 			m_RegisteredFunctions = new List<Tuple<string, Delegate>>();
+			GlobalPropertyHelper.Clear();
 		}
 
 		private List<Tuple<string, Type>> m_RegisteredTypes;
 		private List<Tuple<string, Delegate>> m_RegisteredFunctions;
-		private List<Tuple<string, Delegate, Delegate>> m_RegisteredProperties;
 
 		/// <summary>
 		/// Register a type to be used by LENS script.
@@ -54,7 +50,7 @@ namespace Lens
 		/// </summary>
 		public void RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
-			m_RegisteredProperties.Add(new Tuple<string, Delegate, Delegate>(name, getter, setter));
+			GlobalPropertyHelper.RegisterProperty(name, getter, setter);
 		}
 
 		/// <summary>
@@ -71,9 +67,6 @@ namespace Lens
 
 			foreach(var curr in m_RegisteredFunctions)
 				ctx.ImportFunction(curr.Item1, curr.Item2);
-
-			foreach(var curr in m_RegisteredProperties)
-				ctx.ImportProperty(curr.Item1, curr.Item2, curr.Item3);
 
 			var script = ctx.Compile();
 			

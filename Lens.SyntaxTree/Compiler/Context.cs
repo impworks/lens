@@ -38,7 +38,6 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
-			_DefinedGlobalProperties = new Dictionary<string, GlobalPropertyEntity>();
 
 			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
 			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
@@ -175,11 +174,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// The root of type lookup.
 		/// </summary>
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
-
-		/// <summary>
-		/// The list of properties imported from external code.
-		/// </summary>
-		private readonly Dictionary<string, GlobalPropertyEntity> _DefinedGlobalProperties;
 
 		#endregion
 	}
