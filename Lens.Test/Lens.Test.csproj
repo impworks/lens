@@ -58,6 +58,7 @@
     <Compile Include="ExtensionMethodResolverTest.cs" />
     <Compile Include="FunctionalHelperTest.cs" />
     <Compile Include="GenericHelperTest.cs" />
+    <Compile Include="GlobalProperties.cs" />
     <Compile Include="LiteralsTest.cs" />
     <Compile Include="OperatorsTest.cs" />
     <Compile Include="ParserTest.cs" />

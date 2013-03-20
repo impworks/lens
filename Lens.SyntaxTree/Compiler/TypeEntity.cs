@@ -316,7 +316,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			List<MethodEntity> group;
 			if (!_Methods.TryGetValue(name, out group))
-				return null;
+				throw new KeyNotFoundException();
 
 			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
 			if(exact && info.Item2 != 0)

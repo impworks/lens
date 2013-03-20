@@ -17,13 +17,36 @@ namespace Lens.SyntaxTree.Compiler
 			if (getter == null && setter == null)
 				throw new LensCompilerException("Cannot create a property without getter and setter!");
 
-			var getterType = getter != null ? getter.ReturnType : null;
-			var setterType = setter != null ? setter.GetParameters()[0].ParameterType : null;
+			if (getter != null)
+			{
+				if (!getter.IsStatic)
+					throw new LensCompilerException("Property getter must be a static method!");
 
-			if (getterType != null && setterType != null && getterType != setterType)
-				throw new LensCompilerException("Getter and setter types do not match!");
-			
-			PropertyType = getterType ?? setterType;
+				if(getter.GetParameters().Length > 0)
+					throw new LensCompilerException("Property getter must not contain parameters!");
+
+				PropertyType = getter.ReturnType;
+			}
+
+			if (setter != null)
+			{
+				if (!setter.IsStatic)
+					throw new LensCompilerException("Property setter must be a static method!");
+
+				if(setter.ReturnType != typeof(void))
+					throw new LensCompilerException("Property setter must be a void method!");
+
+				var ps = setter.GetParameters();
+				if (ps.Length != 1)
+					throw new LensCompilerException("Property setter must have exactly one parameter!");
+
+				if (PropertyType == null)
+					PropertyType = ps[0].ParameterType;
+
+				if (ps[0].ParameterType != PropertyType)
+					throw new LensCompilerException("Getter and setter types do not match!");
+			}
+
 			Getter = getter;
 			Setter = setter;
 		}
