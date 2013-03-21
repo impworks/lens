@@ -40,21 +40,31 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		private void resolve(Context ctx)
 		{
-			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof(Unit);
+			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
 
 			m_ArgTypes = isParameterless
 				? Type.EmptyTypes
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
 
 			if (Expression is GetMemberNode)
-				resolveGetMember(ctx, Expression as GetMemberNode);
+			{
+				var getNode = Expression as GetMemberNode;
+
+				if (getNode.TypeHints.Any())
+					m_TypeHints = getNode.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
+
+				resolveGetMember(ctx, getNode);
+			}
 			else if (Expression is GetIdentifierNode)
+			{
 				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
+			}
 			else
+			{
 				resolveExpression(ctx, Expression);
+			}
 
 			m_Method = GenericHelper.ResolveMethodGenerics(m_Method, m_ArgTypes, m_TypeHints);
-
 			m_IsResolved = true;
 		}
 
@@ -65,30 +75,41 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
-			if (node.TypeHints.Any())
-				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
-
 			try
 			{
+				// resolve a normal method
 				try
 				{
 					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes);
+					return;
 				}
 				catch (KeyNotFoundException)
 				{
 					if (m_InvocationSource == null)
 						throw;
+				}
 
-					m_Method = type.FindExtensionMethod(node.MemberName, m_ArgTypes);
-					
-					// move invocation source to arguments
-					if (Arguments[0] is UnitNode)
-						Arguments[0] = m_InvocationSource;
-					else
-						Arguments.Insert(0, m_InvocationSource);
+				// resolve a local function that is implicitly used as an extension method
+				// move invocation source to arguments
+				var oldArgTypes = m_ArgTypes;
 
-					m_ArgTypes = new[] {m_InvocationSource.GetExpressionType(ctx)}.Union(m_ArgTypes).ToArray();
-					m_InvocationSource = null;
+				if (Arguments[0] is UnitNode)
+					Arguments[0] = m_InvocationSource;
+				else
+					Arguments.Insert(0, m_InvocationSource);
+
+				m_ArgTypes = new[] {m_InvocationSource.GetExpressionType(ctx)}.Union(m_ArgTypes).ToArray();
+				m_InvocationSource = null;
+
+				try
+				{
+					m_Method = ctx.ResolveMethod(ctx.MainType.Name, node.MemberName, m_ArgTypes);
+				}
+				catch (KeyNotFoundException)
+				{
+					// resolve a declared extension method
+					// most time-consuming operation, therefore is last checked
+					m_Method = type.FindExtensionMethod(node.MemberName, oldArgTypes);
 				}
 			}
 			catch (AmbiguousMatchException)

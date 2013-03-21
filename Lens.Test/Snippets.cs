@@ -443,6 +443,31 @@ result
 			Test(src, 42);
 		}
 
+		[Test]
+		public void HasValue()
+		{
+			var src = @"
+var a = null as Nullable<int>
+var b = 1 as Nullable<int>
+new [ a.HasValue; b.HasValue ]
+";
+
+			Test(src, new [] { false, true });
+		}
+
+		[Test]
+		public void ImplicitExtensionMethod()
+		{
+			var src = @"
+fun add of int a:int b:int -> a + b
+
+let x = add 1 2
+let y = 1.add 2
+x == y
+";
+			Test(src, true);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
