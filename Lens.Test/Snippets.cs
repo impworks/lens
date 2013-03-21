@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -108,6 +112,7 @@ res";
 		public void ThrowNew()
 		{
 			var src = "throw new NotImplementedException ()";
+//			var src = new[] { Expr.Throw("NotImplementedException") };
 			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
@@ -194,7 +199,9 @@ fx (1.0 / 0)";
 		[Test]
 		public void MethodGenerics()
 		{
-			Test("Enumerable::Empty<int> ()", Enumerable.Empty<int>());
+//			var src = "Enumerable::Empty<int> ()";
+			var src = new [] { Expr.Invoke(Expr.GetMember("Enumerable", "Empty", "int")) };
+			Test(src, Enumerable.Empty<int>());
 		}
 
 		[Test]
@@ -342,11 +349,25 @@ result";
 		[Test]
 		public void Algebraic1()
 		{
-			var src = @"
-type TestType
-    Value of int
+//			var src = @"
+//type TestType
+//    Value of int
+//
+//(new Value 1).Tag";
 
-(new Value 1).Tag";
+			var src = new NodeBase[]
+			{
+				new TypeDefinitionNode
+				{
+					Name = "TestType",
+					Entries = { new TypeLabel { Name = "Value", TagType = "int" } }
+				},
+
+				Expr.GetMember(
+					Expr.NewObject("Value", Expr.Int(1)),
+					"Tag"
+				)
+			};
 
 			Test(src, 1);
 		}
@@ -354,14 +375,34 @@ type TestType
 		[Test]
 		public void Algebraic2()
 		{
-			var src = @"
-type TestType
-    Small of int
-    Large of int
+//			var src = @"
+//type TestType
+//    Small of int
+//    Large of int
+//
+//var a = new Small 1
+//var b = new Large 100
+//a.Tag + b.Tag";
 
-var a = new Small 1
-var b = new Large 100
-a.Tag + b.Tag";
+			var src = new NodeBase[]
+			{
+				new TypeDefinitionNode
+				{
+					Name = "TestType",
+					Entries =
+					{
+						new TypeLabel { Name = "Small", TagType = "int" },
+						new TypeLabel { Name = "Large", TagType = "int" },
+					}
+				},
+
+				Expr.Var("a", Expr.NewObject("Small", Expr.Int(1))),
+				Expr.Var("b", Expr.NewObject("Large", Expr.Int(1))),
+				Expr.Add(
+					Expr.GetMember(Expr.Get("a"), "Tag"),
+					Expr.GetMember(Expr.Get("b"), "Tag")
+				)
+			};
 
 			Test(src, 101);
 		}
@@ -369,16 +410,55 @@ a.Tag + b.Tag";
 		[Test]
 		public void Algebraic3()
 		{
-			var src = @"
-type TestType
-    Small of int
-    Large of int
+//			var src = @"
+//type TestType
+//    Small of int
+//    Large of int
+//
+//fun part of TestType x:int ->
+//    if (x > 100) new Large x else new Small x
+//
+//var a = part 10
+//new [ a is TestType; a is Small; a is Large ]";
 
-fun part of TestType x:int ->
-    if (x > 100) new Large x else new Small x
+			var src = new NodeBase[]
+			{
+				new TypeDefinitionNode
+				{
+					Name = "TestType",
+					Entries =
+					{
+						new TypeLabel { Name = "Small", TagType = "int" },
+						new TypeLabel { Name = "Large", TagType = "int" },
+					}
+				},
 
-var a = part 10
-new [ a is TestType; a is Small; a is Large ]";
+				new FunctionNode
+				{
+					Name = "part",
+					ReturnTypeSignature = "TestType",
+					Arguments = { new FunctionArgument("x", "int") },
+					Body =
+					{
+						Expr.If(
+							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+							Expr.Block(
+								Expr.NewObject("Large", Expr.Get("x"))
+							),
+							Expr.Block(
+								Expr.NewObject("Small", Expr.Get("x"))
+							)
+						)
+					}
+				},
+
+				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
+				Expr.Array(
+					Expr.IsType(Expr.Get("a"), "TestType"),
+					Expr.IsType(Expr.Get("a"), "Small"),
+					Expr.IsType(Expr.Get("a"), "Large")
+				)
+			};
 
 			Test(src, new [] { true, true, false });
 		}
@@ -465,15 +545,49 @@ let x = add 1 2
 let y = 1.add 2
 x == y
 ";
+//			var src = new NodeBase[]
+//			{
+//				new FunctionNode
+//				{
+//					Name = "add",
+//					ReturnTypeSignature = "int",
+//					Arguments =
+//					{
+//						new FunctionArgument("a", "int"),
+//						new FunctionArgument("b", "int"),
+//					},
+//					Body = Expr.Block(
+//						Expr.Add(
+//							Expr.Get("a"),
+//							Expr.Get("b")
+//						)
+//					)
+//				},
+//
+//				Expr.Let("x", Expr.Invoke("add", Expr.Int(1), Expr.Int(2))),
+//				Expr.Let("y", Expr.Invoke( Expr.Int(1), "add", Expr.Int(2))),
+//				Expr.Equal(Expr.Get("x"), Expr.Get("y"))
+//			};
+
 			Test(src, true);
 		}
 
 		private void Test(string src, object value)
 		{
-			Assert.AreEqual(value, Compile(src));
+			Assert.AreEqual(value, new LensCompiler().Run(src));
+		}
+
+		private void Test(IEnumerable<NodeBase> nodes, object value)
+		{
+			Assert.AreEqual(value, new LensCompiler().Run(nodes));
 		}
 
 		private object Compile(string src)
+		{
+			return new LensCompiler().Run(src);
+		}
+
+		private object Compile(IEnumerable<NodeBase> src)
 		{
 			return new LensCompiler().Run(src);
 		}

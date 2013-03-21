@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Parser;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens
 {
@@ -58,18 +59,25 @@ namespace Lens
 		/// </summary>
 		public Func<object> Compile(string src)
 		{
-			var tb = new TreeBuilder();
-			var nodes = tb.Parse(src);
+			var nodes = new TreeBuilder().Parse(src);
+			return Compile(nodes);
+		}
+
+		/// <summary>
+		/// Compile the script for many invocations.
+		/// </summary>
+		public Func<object> Compile(IEnumerable<NodeBase> nodes)
+		{
 			var ctx = Context.CreateFromNodes(nodes);
 
 			foreach (var curr in m_RegisteredTypes)
 				ctx.ImportType(curr.Item1, curr.Item2);
 
-			foreach(var curr in m_RegisteredFunctions)
+			foreach (var curr in m_RegisteredFunctions)
 				ctx.ImportFunction(curr.Item1, curr.Item2);
 
 			var script = ctx.Compile();
-			
+
 			return script.Run;
 		}
 
@@ -79,6 +87,14 @@ namespace Lens
 		public object Run(string src)
 		{
 			return Compile(src)();
+		}
+
+		/// <summary>
+		/// Run the script and get a return value.
+		/// </summary>
+		public object Run(IEnumerable<NodeBase> nodes)
+		{
+			return Compile(nodes)();
 		}
 	}
 }

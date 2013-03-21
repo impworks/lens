@@ -91,14 +91,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				// resolve a local function that is implicitly used as an extension method
 				// move invocation source to arguments
-				var oldArgTypes = m_ArgTypes;
-
 				if (Arguments[0] is UnitNode)
 					Arguments[0] = m_InvocationSource;
 				else
 					Arguments.Insert(0, m_InvocationSource);
 
-				m_ArgTypes = new[] {m_InvocationSource.GetExpressionType(ctx)}.Union(m_ArgTypes).ToArray();
+				var oldArgTypes = m_ArgTypes;
+				m_ArgTypes = Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
 				m_InvocationSource = null;
 
 				try

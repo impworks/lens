@@ -29,11 +29,6 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Body { get; set; }
 
-		/// <summary>
-		/// The method builder for the current function.
-		/// </summary>
-		public MethodBuilder MethodBuilder { get; protected set; }
-
 		public override LexemLocation EndLocation
 		{
 			get { return Body.EndLocation; }

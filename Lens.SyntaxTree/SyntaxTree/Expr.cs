@@ -208,7 +208,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		public static NewObjectNode NewObject(TypeSignature type, params NodeBase[] args)
 		{
-			return new NewObjectNode {Type = type, Arguments = args.ToList()};
+			return new NewObjectNode
+			{
+				Type = type,
+				Arguments = args.Length == 0 ? new List<NodeBase> { new UnitNode() } : args.ToList()
+			};
 		}
 
 		#endregion
