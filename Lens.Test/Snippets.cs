@@ -364,7 +364,7 @@ result";
 				},
 
 				Expr.GetMember(
-					Expr.NewObject("Value", Expr.Int(1)),
+					Expr.New("Value", Expr.Int(1)),
 					"Tag"
 				)
 			};
@@ -396,8 +396,8 @@ result";
 					}
 				},
 
-				Expr.Var("a", Expr.NewObject("Small", Expr.Int(1))),
-				Expr.Var("b", Expr.NewObject("Large", Expr.Int(1))),
+				Expr.Var("a", Expr.New("Small", Expr.Int(1))),
+				Expr.Var("b", Expr.New("Large", Expr.Int(100))),
 				Expr.Add(
 					Expr.GetMember(Expr.Get("a"), "Tag"),
 					Expr.GetMember(Expr.Get("b"), "Tag")
@@ -416,47 +416,47 @@ result";
 //    Large of int
 //
 //fun part of TestType x:int ->
-//    if (x > 100) new Large x else new Small x
+//    if (x > 100)
+//        (new Large x) as TestType
+//    else
+//        new Small x
 //
 //var a = part 10
 //new [ a is TestType; a is Small; a is Large ]";
 
 			var src = new NodeBase[]
 			{
-				new TypeDefinitionNode
-				{
-					Name = "TestType",
-					Entries =
-					{
-						new TypeLabel { Name = "Small", TagType = "int" },
-						new TypeLabel { Name = "Large", TagType = "int" },
-					}
-				},
-
-				new FunctionNode
-				{
-					Name = "part",
-					ReturnTypeSignature = "TestType",
-					Arguments = { new FunctionArgument("x", "int") },
-					Body =
-					{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Small", "int"),
+					Expr.Label("Large", "int")
+				),
+				
+				Expr.Fun(
+					"part",
+					"TestType",
+					new [] { Expr.Arg("x", "int") },
+					Expr.Block(
 						Expr.If(
 							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
 							Expr.Block(
-								Expr.NewObject("Large", Expr.Get("x"))
+								Expr.Cast(
+									Expr.New("Large", Expr.Get("x")),
+									"TestType"
+								)
 							),
 							Expr.Block(
-								Expr.NewObject("Small", Expr.Get("x"))
+								Expr.New("Small", Expr.Get("x"))
 							)
 						)
-					}
-				},
-
+					)
+				),
+				
 				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
 				Expr.Array(
-					Expr.IsType(Expr.Get("a"), "TestType"),
-					Expr.IsType(Expr.Get("a"), "Small"),
-					Expr.IsType(Expr.Get("a"), "Large")
+					Expr.Is(Expr.Get("a"), "TestType"),
+					Expr.Is(Expr.Get("a"), "Small"),
+					Expr.Is(Expr.Get("a"), "Large")
 				)
 			};
 
@@ -466,36 +466,62 @@ result";
 		[Test]
 		public void Records1()
 		{
-			var src = @"
-record Holder
-    A : int
-    B : int
+//			var src = @"
+//record Holder
+//    A : int
+//    B : int
+//
+//var a = new Holder 2 3
+//a.A * a.B
+//";
 
-var a = new Holder ()
-a.A = 2
-a.B = 3
-a.A * a.B
-";
+			var src = new NodeBase[]
+			{
+				Expr.Record(
+					"Holder",
+					Expr.Field("A", "int"),
+					Expr.Field("B", "int")
+				),
+
+				Expr.Var(
+					"a",
+					Expr.New("Holder", Expr.Int(2), Expr.Int(3))
+				),
+				Expr.Mult(
+					Expr.GetMember(Expr.Get("a"), "A"),
+					Expr.GetMember(Expr.Get("a"), "B")
+				)
+			};
 			Test(src, 6);
 		}
 
 		[Test]
 		public void Records2()
 		{
-			var src = @"
-record First
-    A : int
+//			var src = @"
+//record First
+//    A : int
+//
+//record Second
+//    B : int
+//
+//var a = new First 2
+//var b = new Second 3
+//a.A * b.B
+//";
+			var src = new NodeBase[]
+			{
+				Expr.Record("First", Expr.Field("A", "int")),
+				Expr.Record("Second", Expr.Field("B", "int")),
 
-record Second
-    B : int
+				Expr.Var("a", Expr.New("First", Expr.Int(2))),
+				Expr.Var("b", Expr.New("Second", Expr.Int(3))),
+				Expr.Mult(
+					Expr.GetMember(Expr.Get("a"), "A"),
+					Expr.GetMember(Expr.Get("b"), "B")
+				)
+			};
 
-var a = new First ()
-a.A = 2
-var b = new Second ()
-b.B = 3
-
-a.A * b.B
-";
 			Test(src, 6);
 		}
 

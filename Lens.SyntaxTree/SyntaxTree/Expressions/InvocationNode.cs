@@ -221,7 +221,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			if (m_ArgTypes.Length > 0)
 			{
-				var toTypes = m_Method is MethodBuilder
+				var destTypes = m_Method is MethodBuilder
 					? ctx.FindMethod(m_Method).GetArgumentTypes(ctx)
 					: m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 
@@ -229,17 +229,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				{
 					var arg = Arguments[idx];
 					var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
-					var targetRef = toTypes[idx].IsByRef;
+					var targetRef = destTypes[idx].IsByRef;
 
 					if (argRef != targetRef)
 					{
 						if(argRef)
 							Error(arg, "Cannot use reference as a value for non-reference argument!");
 						else
-							Error(arg, "Argument '{0}' requires a reference of type '{1}!", idx, toTypes[idx].GetElementType());
+							Error(arg, "Argument '{0}' requires a reference of type '{1}!", idx, destTypes[idx].GetElementType());
 					}
 
-					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], toTypes[idx]);
+					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
 					expr.Compile(ctx, true);
 				}
 			}

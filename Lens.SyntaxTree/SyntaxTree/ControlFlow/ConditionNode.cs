@@ -41,15 +41,17 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (!mustReturn)
 				return typeof (Unit);
 
-			var t1 = TrueAction.GetExpressionType(ctx);
+			var type = TrueAction.GetExpressionType(ctx);
 			if (FalseAction != null)
 			{
-				var t2 = FalseAction.GetExpressionType(ctx);
-				if (t1 != t2)
-					Error("Inconsistent typing: the branches of the condition return objects of types {0} and {1} respectively.", t1.ToString(), t2.ToString());
+				var otherType = FalseAction.GetExpressionType(ctx);
+				if (otherType.IsExtendablyAssignableFrom(type))
+					type = otherType;
+				else if(!type.IsExtendablyAssignableFrom(otherType))
+					Error("Inconsistent typing: the branches of the condition return objects of types '{0}' and '{1}' respectively.", type, otherType);
 			}
 
-			return t1;
+			return type;
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()

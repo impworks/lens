@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -42,13 +43,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var argTypes = isParameterless
 				? System.Type.EmptyTypes
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
+
 			try
 			{
 				var ctor = ctx.ResolveConstructor(Type.Signature, argTypes);
 
 				if (!isParameterless)
 				{
-					var destTypes = ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+					var destTypes = ctor is ConstructorBuilder
+						? ctx.FindConstructor(ctor).GetArgumentTypes(ctx)
+						: ctor.GetParameters().Select(p => p.ParameterType).ToArray();
+
 					for (var idx = 0; idx < Arguments.Count; idx++)
 						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
 				}

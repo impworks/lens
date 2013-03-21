@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new BooleanNode(value);
 		}
 
-		public static StringNode String(string value = null)
+		public static StringNode Str(string value = null)
 		{
 			return new StringNode(value ?? string.Empty);
 		}
@@ -51,6 +51,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static UnitNode Unit()
 		{
 			return new UnitNode();
+		}
+
+		public static ThisNode This()
+		{
+			return new ThisNode();
 		}
 
 		#endregion
@@ -77,7 +82,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return Op<DivideOperatorNode>(left, right);
 		}
 
-		public static RemainderOperatorNode Remainder(NodeBase left, NodeBase right)
+		public static RemainderOperatorNode Mod(NodeBase left, NodeBase right)
 		{
 			return Op<RemainderOperatorNode>(left, right);
 		}
@@ -117,12 +122,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new CastOperatorNode { Expression = node, Type = type };
 		}
 
-		public static IsOperatorNode IsType(NodeBase node, TypeSignature type)
+		public static IsOperatorNode Is(NodeBase node, TypeSignature type)
 		{
 			return new IsOperatorNode { Expression = node, TypeSignature = type };
 		}
 
-		public static IsOperatorNode IsType(NodeBase node, Type type)
+		public static IsOperatorNode Is(NodeBase node, Type type)
 		{
 			return new IsOperatorNode { Expression = node, Type = type };
 		}
@@ -206,7 +211,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new NewListNode { Expressions = items.ToList() };
 		}
 
-		public static NewObjectNode NewObject(TypeSignature type, params NodeBase[] args)
+		public static NewObjectNode New(TypeSignature type, params NodeBase[] args)
 		{
 			return new NewObjectNode
 			{
@@ -219,12 +224,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		#region Expressions
 
-		public static GetIndexNode GetIndex(NodeBase expr, NodeBase index)
+		public static GetIndexNode GetIdx(NodeBase expr, NodeBase index)
 		{
 			return new GetIndexNode {Expression = expr, Index = index};
 		}
 
-		public static SetIndexNode SetIndex(NodeBase expr, NodeBase index, NodeBase value)
+		public static SetIndexNode SetIdx(NodeBase expr, NodeBase index, NodeBase value)
 		{
 			return new SetIndexNode { Expression = expr, Index = index, Value = value};
 		}
@@ -355,7 +360,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		public static ThrowNode Throw(TypeSignature type, params NodeBase[] args)
 		{
-			return new ThrowNode { Expression = NewObject(type, args) };
+			return new ThrowNode { Expression = New(type, args) };
 		}
 
 		public static TryNode Try(CodeBlockNode body, params CatchNode[] catches)
@@ -376,6 +381,57 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static CatchNode CatchAll(params NodeBase[] stmts)
 		{
 			return new CatchNode { Code = Block(stmts) };
+		}
+
+		#endregion
+
+		#region Entities
+
+		public static RecordDefinitionNode Record(string name, params RecordField[] fields)
+		{
+			var node = new RecordDefinitionNode {Name = name};
+			foreach(var curr in fields)
+				node.Entries.Add(curr);
+			return node;
+		}
+
+		public static RecordField Field(string name, TypeSignature type)
+		{
+			return new RecordField {Name = name, Type = type};
+		}
+
+		public static TypeDefinitionNode Type(string name, params TypeLabel[] labels)
+		{
+			var node = new TypeDefinitionNode {Name = name};
+			foreach(var curr in labels)
+				node.Entries.Add(curr);
+			return node;
+		}
+
+		public static TypeLabel Label(string name, TypeSignature tag = null)
+		{
+			return new TypeLabel {Name = name, TagType = tag};
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, FunctionArgument[] args, CodeBlockNode body)
+		{
+			return new FunctionNode
+			{
+				Name = name,
+				ReturnTypeSignature = type,
+				Body = body,
+				Arguments = args.ToList()
+			};
+		}
+
+		public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
+		{
+			return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};
+		}
+
+		public static LambdaNode Lambda(FunctionArgument[] args, CodeBlockNode body)
+		{
+			return new LambdaNode {Body = body, Arguments = args.ToList()};
 		}
 
 		#endregion

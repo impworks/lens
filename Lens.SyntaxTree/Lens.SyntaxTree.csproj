@@ -96,6 +96,7 @@
     <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />
+    <Compile Include="SyntaxTree\Literals\ThisNode.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />

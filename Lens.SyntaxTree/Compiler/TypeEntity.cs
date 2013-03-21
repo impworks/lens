@@ -194,6 +194,9 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var currGroup in _Methods)
 				foreach(var currMethod in currGroup.Value)
 					currMethod.ProcessClosures();
+
+			foreach(var currCtor in _Constructors)
+				currCtor.ProcessClosures();
 		}
 
 		#endregion
@@ -354,6 +357,18 @@ namespace Lens.SyntaxTree.Compiler
 				foreach(var currMethod in currGroup.Value)
 					if (currMethod.MethodBuilder == method)
 						return currMethod;
+
+			throw new KeyNotFoundException();
+		}
+
+		/// <summary>
+		/// Finds information about a method in the type.
+		/// </summary>
+		internal ConstructorEntity FindConstructor(ConstructorInfo ctor)
+		{
+			foreach (var currCtor in _Constructors)
+				if (currCtor.ConstructorBuilder == ctor)
+					return currCtor;
 
 			throw new KeyNotFoundException();
 		}

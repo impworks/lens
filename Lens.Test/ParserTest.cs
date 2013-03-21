@@ -233,7 +233,7 @@ type ArrayHolder
 			var result = Expr.Tuple(
 				Expr.Int(1),
 				Expr.Double(1.2),
-				Expr.String("hello world"),
+				Expr.Str("hello world"),
 				Expr.True()
 			);
 
@@ -244,7 +244,7 @@ type ArrayHolder
 		public void NewObjectDeclaration()
 		{
 			var src = @"new SomeObject false 13.37";
-			var result = Expr.NewObject(
+			var result = Expr.New(
 				"SomeObject",
 				Expr.False(),
 				Expr.Double(13.37)
@@ -421,7 +421,7 @@ type ArrayHolder
 			var src = "a = b[2**2]";
 			var result = Expr.Set(
 				"a",
-				Expr.GetIndex(
+				Expr.GetIdx(
 					Expr.Get("b"),
 					Expr.Pow(
 						Expr.Int(2),
@@ -437,7 +437,7 @@ type ArrayHolder
 		public void SetIndex()
 		{
 			var src = "a[2**2] = test 1 2 3";
-			var result = Expr.SetIndex(
+			var result = Expr.SetIdx(
 				Expr.Get("a"),
 				Expr.Pow(Expr.Int(2), Expr.Int(2)),
 				Expr.Invoke(
@@ -619,7 +619,7 @@ catch
 				),
 				Expr.CatchAll(
 					Expr.Invoke("doStuff", Expr.Unit()),
-					Expr.Invoke("log", Expr.String("whoopsie"))
+					Expr.Invoke("log", Expr.Str("whoopsie"))
 				)
 			);
 
@@ -676,7 +676,7 @@ catch
 		public void IsOperator()
 		{
 			var src = "1 is double";
-			var result = Expr.IsType(Expr.Int(1), new TypeSignature("double"));
+			var result = Expr.Is(Expr.Int(1), new TypeSignature("double"));
 			Test(src, result);
 		}
 
@@ -688,7 +688,7 @@ catch
 				"test",
 				Expr.Int(1337),
 				Expr.True(),
-				Expr.String("hello"),
+				Expr.Str("hello"),
 				Expr.Tuple(
 					Expr.Double(13.37),
 					Expr.Array(
@@ -726,7 +726,7 @@ catch
 					Expr.Int(1),
 					Expr.Int(2)
 				),
-				Expr.Remainder(
+				Expr.Mod(
 					Expr.Div(
 						Expr.Mult(
 							Expr.Int(3),
@@ -846,7 +846,7 @@ catch DivisionByZeroException
 						{
 							new FunctionArgument("i", new TypeSignature("int"))
 						},
-						Body = Expr.Block(Expr.Equal(Expr.Remainder(Expr.Get("i"), Expr.Int(2)), Expr.Int()))
+						Body = Expr.Block(Expr.Equal(Expr.Mod(Expr.Get("i"), Expr.Int(2)), Expr.Int()))
 					}),
 				"Select",
 				new LambdaNode
@@ -884,7 +884,7 @@ catch DivisionByZeroException
 					"int", "TestType", "_"
 				),
 				Expr.Int(1),
-				Expr.String("hello")
+				Expr.Str("hello")
 			);
 
 			Test(src, result);

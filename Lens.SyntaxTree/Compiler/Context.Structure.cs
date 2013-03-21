@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -88,7 +89,7 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Tries to search for a method by it method info.
+		/// Tries to search for a method by its info.
 		/// </summary>
 		internal MethodEntity FindMethod(MethodInfo method)
 		{
@@ -101,6 +102,24 @@ namespace Lens.SyntaxTree.Compiler
 				throw new KeyNotFoundException();
 
 			return type.FindMethod(method);
+		}
+
+		/// <summary>
+		/// Tries to search for a constructor by its info.
+		/// </summary>
+		/// <param name="ctor"></param>
+		/// <returns></returns>
+		internal ConstructorEntity FindConstructor(ConstructorInfo ctor)
+		{
+			if (!(ctor is ConstructorBuilder))
+				Error("Type '{0}' is not defined within the script!", ctor.DeclaringType.Name);
+
+			var typeName = ctor.DeclaringType.Name;
+			var type = FindType(typeName);
+			if (type == null)
+				throw new KeyNotFoundException();
+
+			return type.FindConstructor(ctor);
 		}
 
 		/// <summary>
@@ -230,15 +249,27 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
-			var root = CreateType(node.Name);
-			root.Kind = TypeEntityKind.Type;
+			var mainType = CreateType(node.Name);
+			mainType.Kind = TypeEntityKind.Type;
 
 			foreach (var curr in node.Entries)
 			{
-				var currType = CreateType(curr.Name, node.Name, true);
-				currType.Kind = TypeEntityKind.TypeLabel;
+				var labelType = CreateType(curr.Name, node.Name, true);
+				labelType.Kind = TypeEntityKind.TypeLabel;
 				if (curr.IsTagged)
-					currType.CreateField("Tag", curr.TagType);
+				{
+					labelType.CreateField("Tag", curr.TagType);
+
+					var labelCtor = labelType.CreateConstructor();
+					labelCtor.Arguments = new HashList<FunctionArgument> {{"value", new FunctionArgument("value", curr.TagType)}};
+					labelCtor.Body.Add(
+						Expr.SetMember(Expr.This(), "Tag", Expr.Get("value"))
+					);
+				}
+				else
+				{
+					// todo
+				}
 			}
 		}
 
@@ -247,11 +278,21 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
-			var root = CreateType(node.Name, isSealed: true);
-			root.Kind = TypeEntityKind.Record;
+			var recType = CreateType(node.Name, isSealed: true);
+			var ctor = recType.CreateConstructor();
+			recType.Kind = TypeEntityKind.Record;
 
 			foreach (var curr in node.Entries)
-				root.CreateField(curr.Name, curr.Type);
+			{
+				recType.CreateField(curr.Name, curr.Type);
+
+				var argName = "_" + curr.Name.ToLowerInvariant();
+
+				ctor.Arguments.Add(argName, new FunctionArgument(argName, curr.Type));
+				ctor.Body.Add(
+					Expr.SetMember(Expr.This(), curr.Name, Expr.Get(argName))
+				);
+			}
 		}
 
 		/// <summary>
