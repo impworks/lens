@@ -14,6 +14,12 @@ namespace Lens.Test
 	public class ParserTest
 	{
 		[Test]
+		public void Testy()
+		{
+			Assert.AreEqual(new TypeSignature("int"), new TypeSignature("int"));
+		}
+
+		[Test]
 		public void Using()
 		{
 			Test("using System", new UsingNode { Namespace = "System" });
@@ -33,15 +39,11 @@ record Student
     Name:string
     Age:int";
 
-			var result = new RecordDefinitionNode
-			{
-				Name = "Student",
-				Entries =
-				{
-					new RecordField { Name = "Name", Type = "string" },
-					new RecordField { Name = "Age", Type = "int" }
-				}
-			};
+			var result = Expr.Record(
+				"Student",
+				Expr.Field("Name", "string"),
+				Expr.Field("Age", "int")
+			);
 
 			Test(src, result);
 		}
@@ -56,18 +58,14 @@ type Suit
     Spades
     Diamonds";
 
-			var result = new TypeDefinitionNode
-			{
-				Name = "Suit",
-				Entries =
-				{
-					new TypeLabel {Name = "Hearts"},
-					new TypeLabel {Name = "Clubs"},
-					new TypeLabel {Name = "Spades"},
-					new TypeLabel {Name = "Diamonds"}
-				}
-			};
-
+			var result = Expr.Type(
+				"Suit",
+				Expr.Label("Hearts"),
+				Expr.Label("Clubs"),
+				Expr.Label("Spades"),
+				Expr.Label("Diamonds")
+			);
+			
 			Test(src, result);
 		}
 
@@ -82,18 +80,14 @@ type Card
     Jack of Suit
     ValueCard of Tuple<Suit, int>";
 
-			var result = new TypeDefinitionNode
-			{
-				Name = "Card",
-				Entries =
-				{
-					new TypeLabel {Name = "Ace", TagType = "Suit"},
-					new TypeLabel {Name = "King", TagType = "Suit"},
-					new TypeLabel {Name = "Queen", TagType = "Suit"},
-					new TypeLabel {Name = "Jack", TagType = "Suit"},
-					new TypeLabel {Name = "ValueCard", TagType = "Tuple<Suit,int>"}
-				}
-			};
+			var result = Expr.Type(
+				"Card",
+				Expr.Label("Ace", "Suit"),
+				Expr.Label("King", "Suit"),
+				Expr.Label("Queen", "Suit"),
+				Expr.Label("Jack", "Suit"),
+				Expr.Label("ValueCard", "Tuple<Suit, int>")
+			);
 
 			Test(src, result);
 		}
@@ -105,11 +99,10 @@ type Card
 type ArrayHolder
     Array of int[][]";
 
-			var result = new TypeDefinitionNode
-			{
-				Name = "ArrayHolder",
-				Entries = { new TypeLabel { Name = "Array", TagType = "int[][]" } }
-			};
+			var result = Expr.Type(
+				"ArrayHolder",
+				Expr.Label("Array", "int[][]")
+			);
 
 			Test(src, result);
 		}
@@ -118,20 +111,13 @@ type ArrayHolder
 		public void SimpleFunction()
 		{
 			var src = @"fun negate of int x:int -> -x";
-			var result = new FunctionNode
-			{
-				Name = "negate",
-				ReturnTypeSignature = new TypeSignature("int"),
-				Arguments =
-				{
-					new FunctionArgument("x", "int")
-				},
-				Body =
-				{
-					Expr.Negate(Expr.Get("x"))
-				}
-			};
-
+			var result = Expr.Fun(
+				"negate",
+				"int",
+				new[] {Expr.Arg("x", "int")},
+				Expr.Negate(Expr.Get("x"))
+			);
+			
 			Test(src, result);
 		}
 
@@ -143,8 +129,8 @@ type ArrayHolder
 				Expr.Add(
 					Expr.Get("sq1"),
 					Expr.Get("sq2")
-					)
-				);
+				)
+			);
 
 			Test("sqrt (sq1 + sq2)", result);
 		}
@@ -157,40 +143,32 @@ type ArrayHolder
     let sq2 = b * b
     sqrt (sq1 + sq2)";
 
-			var result = new FunctionNode
-			{
-				Name = "hypo",
-				ReturnTypeSignature = new TypeSignature("double"),
-				Arguments = new List<FunctionArgument>
-				{
-					new FunctionArgument("a", "int"),
-					new FunctionArgument("b", "int")
-				},
-				Body = 
-				{
-					Expr.Let(
-						"sq1",
-						Expr.Mult(
-							Expr.Get("a"),
-							Expr.Get("a")
-						)
-					),
-					Expr.Let(
-						"sq2",
-						Expr.Mult(
-							Expr.Get("b"),
-							Expr.Get("b")
-						)
-					),
-					Expr.Invoke(
-						"sqrt",
-						Expr.Add(
-							Expr.Get("sq1"),
-							Expr.Get("sq2")
-						)
+			var result = Expr.Fun(
+				"hypo",
+				"double",
+				new[] { Expr.Arg("a", "int"), Expr.Arg("b", "int") },
+				Expr.Let(
+					"sq1",
+					Expr.Mult(
+						Expr.Get("a"),
+						Expr.Get("a")
 					)
-				}
-			};
+				),
+				Expr.Let(
+					"sq2",
+					Expr.Mult(
+						Expr.Get("b"),
+						Expr.Get("b")
+					)
+				),
+				Expr.Invoke(
+					"sqrt",
+					Expr.Add(
+						Expr.Get("sq1"),
+						Expr.Get("sq2")
+					)
+				)
+			);
 
 			Test(src, result);
 		}
@@ -283,14 +261,8 @@ type ArrayHolder
 		public void BareLambda()
 		{
 			var src = "let getFive = -> 5";
-			var result = new LetNode("getFive")
-			{
-				Value = new LambdaNode
-				{
-					Body = { Expr.Int(5) }
-				}
-			};
-
+			var result = Expr.Let("getFive", Expr.Lambda(Expr.Int(5)));
+			
 			Test(src, result);
 		}
 
@@ -298,21 +270,16 @@ type ArrayHolder
 		public void ParametricLambda()
 		{
 			var src = "let div = (a:System.Float b:System.Float) -> a / b";
-			var result = new LetNode("div")
-			{
-				Value = new LambdaNode
-				{
-					Arguments =
-					{
-						new FunctionArgument("a", "System.Float"),
-						new FunctionArgument("b", "System.Float")
-					},
-					Body =
-					{
-						Expr.Div(Expr.Get("a"), Expr.Get("b"))
-					}
-				}
-			};
+			var result = Expr.Let(
+				"div",
+				Expr.Lambda(
+					new[] { Expr.Arg("a", "System.Float"), Expr.Arg("b", "System.Float") },
+					Expr.Div(
+						Expr.Get("a"),
+						Expr.Get("b")
+					)
+				)
+			);
 
 			Test(src, result);
 		}
@@ -459,21 +426,19 @@ type ArrayHolder
     logger.log a
     a ** 2";
 
-			var result = new LambdaNode
-				{
-					Arguments = { new FunctionArgument("a", "double") },
-					Body = Expr.Block(
-						Expr.Invoke(
-							Expr.Get("logger"),
-							"log",
-							Expr.Get("a")
-						),
-						Expr.Pow(
-							Expr.Get("a"),
-							Expr.Int(2)
-						)
-					)
-				};
+			var result = Expr.Lambda
+			(
+				new [] { Expr.Arg("a", "double") },
+				Expr.Invoke(
+					Expr.Get("logger"),
+					"log",
+					Expr.Get("a")
+				),
+				Expr.Pow(
+					Expr.Get("a"),
+					Expr.Int(2)
+				)
+			);
 
 			Test(src, result);
 		}
@@ -492,10 +457,9 @@ test
 			var result = Expr.Invoke(
 				"test",
 				Expr.True(),
-				new LambdaNode
-				{
-					Arguments = { new FunctionArgument("a", "double") },
-					Body = Expr.Block(
+				Expr.Lambda
+				(
+					new [] { Expr.Arg("a", "double") },
 						Expr.Invoke(
 							Expr.Get("logger"),
 							"log",
@@ -505,8 +469,7 @@ test
 							Expr.Get("a"),
 							Expr.Int(2)
 						)
-					)
-				},
+				),
 				Expr.False()
 			);
 
@@ -765,12 +728,7 @@ catch
 		{
 			var src = @"fun test of int -> 10
 test ()";
-			var definition = new FunctionNode
-			{
-				Name = "test",
-				ReturnTypeSignature = new TypeSignature("int"),
-				Body = Expr.Block(Expr.Int(10))
-			};
+			var definition = Expr.Fun("test", "int", Expr.Int(10));
 			var invocation = Expr.Invoke("test", Expr.Unit());
 
 			Test(src, definition, invocation);
@@ -832,7 +790,7 @@ catch DivisionByZeroException
 		[Test]
 		public void FluentCall()
 		{
-			var src = @"(Enumerable::Range 1 100)
+			var src = @"Enumerable::Range 1 100
     |> Where ((i:int) -> i % 2 == 0)
     |> Select ((i:int) -> i * 2)";
 
@@ -840,23 +798,17 @@ catch DivisionByZeroException
 				Expr.Invoke(
 					Expr.Invoke(Expr.GetMember(new TypeSignature("Enumerable"), "Range"), Expr.Int(1), Expr.Int(100)),
 					"Where",
-					new LambdaNode
-					{
-						Arguments =
-						{
-							new FunctionArgument("i", new TypeSignature("int"))
-						},
-						Body = Expr.Block(Expr.Equal(Expr.Mod(Expr.Get("i"), Expr.Int(2)), Expr.Int()))
-					}),
+					Expr.Lambda(
+						new [] { Expr.Arg("i", "int") },
+						Expr.Equal(Expr.Mod(Expr.Get("i"), Expr.Int(2)), Expr.Int())
+					)
+				),
 				"Select",
-				new LambdaNode
-				{
-					Arguments =
-					{
-						new FunctionArgument("i", new TypeSignature("int"))
-					},
-					Body = Expr.Block(Expr.Mult(Expr.Get("i"), Expr.Int(2)))
-				});
+				Expr.Lambda(
+					new [] {Expr.Arg("i", "int") },
+					Expr.Mult(Expr.Get("i"), Expr.Int(2))
+				)
+			);
 
 			Test(src, result);
 		}
@@ -926,18 +878,12 @@ catch DivisionByZeroException
 		public void RefArgDeclaration()
 		{
 			var src = "func test x:int y:ref int -> y = x";
-			var result = new FunctionNode
-			{
-				Arguments = new List<FunctionArgument>
-				{
-					new FunctionArgument("x", "int"),
-					new FunctionArgument("y", "int", true),
-				},
-				Name = "test",
-				Body = Expr.Block(
-					Expr.Set("y", Expr.Get("x"))
-				)
-			};
+			var result = Expr.Fun
+			(
+				"test",
+				new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int", true) },
+				Expr.Set("y", Expr.Get("x"))
+			);
 
 			Test(src, result);
 		}
@@ -948,10 +894,234 @@ catch DivisionByZeroException
 			var src = "test x (ref a) (ref b.Field) (ref Type::Field)";
 			var result = Expr.Invoke(
 				"test",
+				Expr.Get("x"),
 				Expr.Ref(Expr.Get("a")),
 				Expr.Ref(Expr.GetMember(Expr.Get("b"), "Field")),
 				Expr.Ref(Expr.GetMember("Type", "Field"))
 			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Algebraic1()
+		{
+			var src = @"
+type TestType
+	Value of int
+			
+(new Value 1).Tag";
+
+			var result = new NodeBase[]
+			{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Value", "int")
+				),
+
+				Expr.GetMember(
+					Expr.New("Value", Expr.Int(1)),
+					"Tag"
+				)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Algebraic2()
+		{
+			var src = @"
+type TestType
+    Small of int
+    Large of int
+
+var a = new Small 1
+var b = new Large 100
+a.Tag + b.Tag";
+
+			var result = new NodeBase[]
+			{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Small", "int"),
+					Expr.Label("Large", "int")
+				),
+
+				Expr.Var("a", Expr.New("Small", Expr.Int(1))),
+				Expr.Var("b", Expr.New("Large", Expr.Int(100))),
+				Expr.Add(
+					Expr.GetMember(Expr.Get("a"), "Tag"),
+					Expr.GetMember(Expr.Get("b"), "Tag")
+				)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Algebraic3()
+		{
+				var src = @"
+type TestType
+	Small of int
+	Large of int
+			
+fun part of TestType x:int ->
+	if (x > 100)
+		(new Large x) as TestType
+	else
+		new Small x
+			
+var a = part 10
+new [ a is TestType; a is Small; a is Large ]";
+
+			var result = new NodeBase[]
+			{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Small", "int"),
+					Expr.Label("Large", "int")
+				),
+				
+				Expr.Fun(
+					"part",
+					"TestType",
+					new [] { Expr.Arg("x", "int") },
+					Expr.Block(
+						Expr.If(
+							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+							Expr.Block(
+								Expr.Cast(
+									Expr.New("Large", Expr.Get("x")),
+									"TestType"
+								)
+							),
+							Expr.Block(
+								Expr.New("Small", Expr.Get("x"))
+							)
+						)
+					)
+				),
+				
+				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
+				Expr.Array(
+					Expr.Is(Expr.Get("a"), "TestType"),
+					Expr.Is(Expr.Get("a"), "Small"),
+					Expr.Is(Expr.Get("a"), "Large")
+				)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Records1()
+		{
+			var src = @"
+record Holder
+	A : int
+	B : int
+			
+var a = new Holder 2 3
+a.A * a.B
+";
+			var result = new NodeBase[]
+			{
+				Expr.Record(
+					"Holder",
+					Expr.Field("A", "int"),
+					Expr.Field("B", "int")
+				),
+
+				Expr.Var(
+					"a",
+					Expr.New("Holder", Expr.Int(2), Expr.Int(3))
+				),
+				Expr.Mult(
+					Expr.GetMember(Expr.Get("a"), "A"),
+					Expr.GetMember(Expr.Get("a"), "B")
+				)
+			};
+			Test(src, result);
+		}
+
+		[Test]
+		public void Records2()
+		{
+			var src = @"
+record First
+	A : int
+			
+record Second
+	B : int
+			
+var a = new First 2
+var b = new Second 3
+a.A * b.B
+";
+			var result = new NodeBase[]
+			{
+				Expr.Record("First", Expr.Field("A", "int")),
+				Expr.Record("Second", Expr.Field("B", "int")),
+
+				Expr.Var("a", Expr.New("First", Expr.Int(2))),
+				Expr.Var("b", Expr.New("Second", Expr.Int(3))),
+				Expr.Mult(
+					Expr.GetMember(Expr.Get("a"), "A"),
+					Expr.GetMember(Expr.Get("b"), "B")
+				)
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void RefFunction1()
+		{
+			var src = @"
+var x = 0
+int::TryParse ""100"" ref x
+x";
+			var result = new NodeBase[]
+			{
+				Expr.Var("x", Expr.Int(0)),
+				Expr.Invoke(
+					"int", "TryParse",
+					Expr.Str("100"),
+					Expr.Ref(Expr.Get("x"))
+				),
+				Expr.Get("x")
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void RefFunction2()
+		{
+			var src = @"
+fun test a:int x:ref int -> x = a * 2
+var result = 0
+test 21 (ref result)
+result
+";
+			var result = new NodeBase[]
+			{
+				Expr.Fun(
+					"test",
+					new [] { Expr.Arg("a", "int"), Expr.Arg("x", "int", true) },
+					Expr.Block(
+						Expr.Set(
+							"x",
+							Expr.Mult(Expr.Get("a"), Expr.Int(2))
+						)
+					)
+				),
+				Expr.Var("result", Expr.Int(0)),
+				Expr.Invoke("test", Expr.Int(21), Expr.Ref(Expr.Get("result"))),
+				Expr.Get("result")
+			};
 
 			Test(src, result);
 		}

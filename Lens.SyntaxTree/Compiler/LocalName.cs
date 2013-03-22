@@ -20,6 +20,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Name = other.Name;
 			Type = other.Type;
+			IsRefArgument = other.IsRefArgument;
 			IsClosured = other.IsClosured;
 			IsConstant = other.IsConstant;
 			ClosureFieldName = other.ClosureFieldName;

@@ -112,7 +112,6 @@ res";
 		public void ThrowNew()
 		{
 			var src = "throw new NotImplementedException ()";
-//			var src = new[] { Expr.Throw("NotImplementedException") };
 			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
@@ -122,6 +121,7 @@ res";
 			var src = @"
 var ex = new NotImplementedException ()
 throw ex";
+
 			Assert.Throws<NotImplementedException>(() => Compile(src));
 		}
 
@@ -199,8 +199,7 @@ fx (1.0 / 0)";
 		[Test]
 		public void MethodGenerics()
 		{
-//			var src = "Enumerable::Empty<int> ()";
-			var src = new [] { Expr.Invoke(Expr.GetMember("Enumerable", "Empty", "int")) };
+			var src = "Enumerable::Empty<int> ()";
 			Test(src, Enumerable.Empty<int>());
 		}
 
@@ -349,25 +348,24 @@ result";
 		[Test]
 		public void Algebraic1()
 		{
-//			var src = @"
-//type TestType
-//    Value of int
+			var src = @"
+type TestType
+    Value of int
+
+(new Value 1).Tag";
+
+//			var src = new NodeBase[]
+//			{
+//				Expr.Type(
+//					"TestType",
+//					Expr.Label("Value", "int")
+//				),
 //
-//(new Value 1).Tag";
-
-			var src = new NodeBase[]
-			{
-				new TypeDefinitionNode
-				{
-					Name = "TestType",
-					Entries = { new TypeLabel { Name = "Value", TagType = "int" } }
-				},
-
-				Expr.GetMember(
-					Expr.New("Value", Expr.Int(1)),
-					"Tag"
-				)
-			};
+//				Expr.GetMember(
+//					Expr.New("Value", Expr.Int(1)),
+//					"Tag"
+//				)
+//			};
 
 			Test(src, 1);
 		}
@@ -375,34 +373,30 @@ result";
 		[Test]
 		public void Algebraic2()
 		{
-//			var src = @"
-//type TestType
-//    Small of int
-//    Large of int
+			var src = @"
+type TestType
+    Small of int
+    Large of int
+
+var a = new Small 1
+var b = new Large 100
+a.Tag + b.Tag";
+
+//			var src = new NodeBase[]
+//			{
+//				Expr.Type(
+//					"TestType",
+//					Expr.Label("Small", "int"),
+//					Expr.Label("Large", "int")
+//				),
 //
-//var a = new Small 1
-//var b = new Large 100
-//a.Tag + b.Tag";
-
-			var src = new NodeBase[]
-			{
-				new TypeDefinitionNode
-				{
-					Name = "TestType",
-					Entries =
-					{
-						new TypeLabel { Name = "Small", TagType = "int" },
-						new TypeLabel { Name = "Large", TagType = "int" },
-					}
-				},
-
-				Expr.Var("a", Expr.New("Small", Expr.Int(1))),
-				Expr.Var("b", Expr.New("Large", Expr.Int(100))),
-				Expr.Add(
-					Expr.GetMember(Expr.Get("a"), "Tag"),
-					Expr.GetMember(Expr.Get("b"), "Tag")
-				)
-			};
+//				Expr.Var("a", Expr.New("Small", Expr.Int(1))),
+//				Expr.Var("b", Expr.New("Large", Expr.Int(100))),
+//				Expr.Add(
+//					Expr.GetMember(Expr.Get("a"), "Tag"),
+//					Expr.GetMember(Expr.Get("b"), "Tag")
+//				)
+//			};
 
 			Test(src, 101);
 		}
@@ -410,55 +404,55 @@ result";
 		[Test]
 		public void Algebraic3()
 		{
-//			var src = @"
-//type TestType
-//    Small of int
-//    Large of int
-//
-//fun part of TestType x:int ->
-//    if (x > 100)
-//        (new Large x) as TestType
-//    else
-//        new Small x
-//
-//var a = part 10
-//new [ a is TestType; a is Small; a is Large ]";
+			var src = @"
+type TestType
+    Small of int
+    Large of int
 
-			var src = new NodeBase[]
-			{
-				Expr.Type(
-					"TestType",
-					Expr.Label("Small", "int"),
-					Expr.Label("Large", "int")
-				),
-				
-				Expr.Fun(
-					"part",
-					"TestType",
-					new [] { Expr.Arg("x", "int") },
-					Expr.Block(
-						Expr.If(
-							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
-							Expr.Block(
-								Expr.Cast(
-									Expr.New("Large", Expr.Get("x")),
-									"TestType"
-								)
-							),
-							Expr.Block(
-								Expr.New("Small", Expr.Get("x"))
-							)
-						)
-					)
-				),
-				
-				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
-				Expr.Array(
-					Expr.Is(Expr.Get("a"), "TestType"),
-					Expr.Is(Expr.Get("a"), "Small"),
-					Expr.Is(Expr.Get("a"), "Large")
-				)
-			};
+fun part of TestType x:int ->
+    if (x > 100)
+        (new Large x) as TestType
+    else
+        new Small x
+
+var a = part 10
+new [ a is TestType; a is Small; a is Large ]";
+
+//			var src = new NodeBase[]
+//			{
+//				Expr.Type(
+//					"TestType",
+//					Expr.Label("Small", "int"),
+//					Expr.Label("Large", "int")
+//				),
+//				
+//				Expr.Fun(
+//					"part",
+//					"TestType",
+//					new [] { Expr.Arg("x", "int") },
+//					Expr.Block(
+//						Expr.If(
+//							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+//							Expr.Block(
+//								Expr.Cast(
+//									Expr.New("Large", Expr.Get("x")),
+//									"TestType"
+//								)
+//							),
+//							Expr.Block(
+//								Expr.New("Small", Expr.Get("x"))
+//							)
+//						)
+//					)
+//				),
+//				
+//				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
+//				Expr.Array(
+//					Expr.Is(Expr.Get("a"), "TestType"),
+//					Expr.Is(Expr.Get("a"), "Small"),
+//					Expr.Is(Expr.Get("a"), "Large")
+//				)
+//			};
 
 			Test(src, new [] { true, true, false });
 		}
@@ -466,61 +460,62 @@ result";
 		[Test]
 		public void Records1()
 		{
-//			var src = @"
-//record Holder
-//    A : int
-//    B : int
+			var src = @"
+record Holder
+    A : int
+    B : int
+
+var a = new Holder 2 3
+a.A * a.B
+";
+
+//			var src = new NodeBase[]
+//			{
+//				Expr.Record(
+//					"Holder",
+//					Expr.Field("A", "int"),
+//					Expr.Field("B", "int")
+//				),
 //
-//var a = new Holder 2 3
-//a.A * a.B
-//";
+//				Expr.Var(
+//					"a",
+//					Expr.New("Holder", Expr.Int(2), Expr.Int(3))
+//				),
+//				Expr.Mult(
+//					Expr.GetMember(Expr.Get("a"), "A"),
+//					Expr.GetMember(Expr.Get("a"), "B")
+//				)
+//			};
 
-			var src = new NodeBase[]
-			{
-				Expr.Record(
-					"Holder",
-					Expr.Field("A", "int"),
-					Expr.Field("B", "int")
-				),
-
-				Expr.Var(
-					"a",
-					Expr.New("Holder", Expr.Int(2), Expr.Int(3))
-				),
-				Expr.Mult(
-					Expr.GetMember(Expr.Get("a"), "A"),
-					Expr.GetMember(Expr.Get("a"), "B")
-				)
-			};
 			Test(src, 6);
 		}
 
 		[Test]
 		public void Records2()
 		{
-//			var src = @"
-//record First
-//    A : int
-//
-//record Second
-//    B : int
-//
-//var a = new First 2
-//var b = new Second 3
-//a.A * b.B
-//";
-			var src = new NodeBase[]
-			{
-				Expr.Record("First", Expr.Field("A", "int")),
-				Expr.Record("Second", Expr.Field("B", "int")),
+			var src = @"
+record First
+    A : int
 
-				Expr.Var("a", Expr.New("First", Expr.Int(2))),
-				Expr.Var("b", Expr.New("Second", Expr.Int(3))),
-				Expr.Mult(
-					Expr.GetMember(Expr.Get("a"), "A"),
-					Expr.GetMember(Expr.Get("b"), "B")
-				)
-			};
+record Second
+    B : int
+
+var a = new First 2
+var b = new Second 3
+a.A * b.B
+";
+//			var src = new NodeBase[]
+//			{
+//				Expr.Record("First", Expr.Field("A", "int")),
+//				Expr.Record("Second", Expr.Field("B", "int")),
+//
+//				Expr.Var("a", Expr.New("First", Expr.Int(2))),
+//				Expr.Var("b", Expr.New("Second", Expr.Int(3))),
+//				Expr.Mult(
+//					Expr.GetMember(Expr.Get("a"), "A"),
+//					Expr.GetMember(Expr.Get("b"), "B")
+//				)
+//			};
 
 			Test(src, 6);
 		}
@@ -532,6 +527,16 @@ result";
 var x = 0
 int::TryParse ""100"" ref x
 x";
+//			var src = new NodeBase[]
+//			{
+//				Expr.Var("x", Expr.Int(0)),
+//				Expr.Invoke(
+//					"int", "TryParse",
+//					Expr.Str("100"),
+//					Expr.Ref(Expr.Get("x"))
+//				),
+//				Expr.Get("x")
+//			};
 
 			Test(src, 100);
 		}
@@ -545,6 +550,22 @@ var result = 0
 test 21 (ref result)
 result
 ";
+//			var src = new NodeBase[]
+//			{
+//				Expr.Fun(
+//					"test",
+//					new [] { Expr.Arg("a", "int"), Expr.Arg("x", "int", true) },
+//					Expr.Block(
+//						Expr.Set(
+//							"x",
+//							Expr.Mult(Expr.Get("a"), Expr.Int(2))
+//						)
+//					)
+//				),
+//				Expr.Var("result", Expr.Int(0)),
+//				Expr.Invoke("test", Expr.Int(21), Expr.Ref(Expr.Get("result"))),
+//				Expr.Get("result")
+//			};
 
 			Test(src, 42);
 		}
@@ -573,22 +594,15 @@ x == y
 ";
 //			var src = new NodeBase[]
 //			{
-//				new FunctionNode
-//				{
-//					Name = "add",
-//					ReturnTypeSignature = "int",
-//					Arguments =
-//					{
-//						new FunctionArgument("a", "int"),
-//						new FunctionArgument("b", "int"),
-//					},
-//					Body = Expr.Block(
-//						Expr.Add(
-//							Expr.Get("a"),
-//							Expr.Get("b")
-//						)
+//				Expr.Fun(
+//					"add",
+//					"int",
+//					new [] { Expr.Arg("a", "int"), Expr.Arg("b", "int") },
+//					Expr.Add(
+//						Expr.Get("a"),
+//						Expr.Get("b")
 //					)
-//				},
+//				),
 //
 //				Expr.Let("x", Expr.Invoke("add", Expr.Int(1), Expr.Int(2))),
 //				Expr.Let("y", Expr.Invoke( Expr.Int(1), "add", Expr.Int(2))),

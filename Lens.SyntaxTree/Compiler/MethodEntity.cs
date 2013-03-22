@@ -68,14 +68,16 @@ namespace Lens.SyntaxTree.Compiler
 				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
 			if (ReturnType == null)
-				ReturnType = ctx.ResolveType(ReturnTypeSignature);
+				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.Signature)
+					? typeof(Unit)
+					: ctx.ResolveType(ReturnTypeSignature);
 
 			if (ArgumentTypes == null)
 				ArgumentTypes = Arguments == null
 					? new Type[0]
 					: Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
-			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType, ArgumentTypes);
+			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
 			Generator = MethodBuilder.GetILGenerator(Context.ILStreamSize);
 
 			if (Arguments != null)

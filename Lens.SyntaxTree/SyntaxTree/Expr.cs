@@ -413,14 +413,29 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new TypeLabel {Name = name, TagType = tag};
 		}
 
-		public static FunctionNode Fun(string name, TypeSignature type, FunctionArgument[] args, CodeBlockNode body)
+		public static FunctionNode Fun(string name, params NodeBase[] body)
+		{
+			return Fun(name, null, new FunctionArgument[0], body);
+		}
+
+		public static FunctionNode Fun(string name, FunctionArgument[] args, params NodeBase[] body)
+		{
+			return Fun(name, null, args, body);
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, params NodeBase[] body)
+		{
+			return Fun(name, type, new FunctionArgument[0], body);
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, FunctionArgument[] args, params NodeBase[] body)
 		{
 			return new FunctionNode
 			{
 				Name = name,
+				Arguments = args.ToList(),
 				ReturnTypeSignature = type,
-				Body = body,
-				Arguments = args.ToList()
+				Body = Block(body),
 			};
 		}
 
@@ -429,9 +444,14 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};
 		}
 
-		public static LambdaNode Lambda(FunctionArgument[] args, CodeBlockNode body)
+		public static LambdaNode Lambda(FunctionArgument[] args, params NodeBase[] body)
 		{
-			return new LambdaNode {Body = body, Arguments = args.ToList()};
+			return new LambdaNode {Body = Block(body), Arguments = args.ToList()};
+		}
+
+		public static LambdaNode Lambda(params NodeBase[] body)
+		{
+			return new LambdaNode { Body = Block(body) };
 		}
 
 		#endregion
