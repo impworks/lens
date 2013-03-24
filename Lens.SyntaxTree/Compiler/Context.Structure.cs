@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportType(string name, Type type)
 		{
 			if(Options.AllowSave)
-				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+				Error("Entities cannot be imported into a saveable assembly!");
 
 			if (_DefinedTypes.ContainsKey(name))
 				Error("Type '{0}' has already been defined!", name);
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportFunction(string name, Delegate method)
 		{
 			if (Options.AllowSave)
-				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+				Error("Entities cannot be imported into a saveable assembly!");
 
 			_DefinedTypes[RootTypeName].ImportMethod(name, method);
 		}
@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
 			if (Options.AllowSave)
-				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+				Error("Entities cannot be imported into a saveable assembly!");
 
 			if(_DefinedProperties.ContainsKey(name))
 				Error("Property '{0}' has already been imported!", name);

@@ -209,8 +209,8 @@ namespace Lens.SyntaxTree.Compiler
 		internal void ImportMethod(string name, Delegate method)
 		{
 			var mi = method.Method;
-			if(!mi.IsStatic || !mi.IsPublic)
-				Context.Error("Only public static methods can be imported!");
+			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
+				Context.Error("Only public, static, non-generic methods can be imported!");
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
