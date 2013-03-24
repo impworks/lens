@@ -908,8 +908,7 @@ catch DivisionByZeroException
 		{
 			var src = @"
 type TestType
-	Value of int
-			
+    Value of int
 (new Value 1).Tag";
 
 			var result = new NodeBase[]
@@ -935,7 +934,6 @@ type TestType
 type TestType
     Small of int
     Large of int
-
 var a = new Small 1
 var b = new Large 100
 a.Tag + b.Tag";
@@ -964,15 +962,13 @@ a.Tag + b.Tag";
 		{
 				var src = @"
 type TestType
-	Small of int
-	Large of int
-			
+    Small of int
+    Large of int
 fun part of TestType x:int ->
-	if (x > 100)
-		(new Large x) as TestType
-	else
-		new Small x
-			
+    if (x > 100)
+        (new Large x) as TestType
+    else
+        new Small x
 var a = part 10
 new [ a is TestType; a is Small; a is Large ]";
 
@@ -1123,6 +1119,19 @@ result
 				Expr.Get("result")
 			};
 
+			Test(src, result);
+		}
+
+		[Test]
+		public void IfThenElse()
+		{
+			var src = @"
+if (x)
+    1
+else
+    2
+";
+			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
 			Test(src, result);
 		}
 

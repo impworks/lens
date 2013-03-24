@@ -153,7 +153,11 @@ usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Nod
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.indentedBlock recorddef_stmt |>> Node.record
 recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
-typedefRef            := keyword "type" >>? identifier .>>.? Indentation.indentedBlock typedef_stmt |>> Node.typeNode
+typedefRef            := keyword "type"
+                         >>? identifier
+                         .>>.? Indentation.indentedBlock typedef_stmt
+                         .>>? nextLine
+                         |>> Node.typeNode
 typedef_stmtRef       := identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := (pipe4
                           <| (keyword "fun" >>? identifier)
