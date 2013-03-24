@@ -86,7 +86,7 @@ type Card
 				Expr.Label("King", "Suit"),
 				Expr.Label("Queen", "Suit"),
 				Expr.Label("Jack", "Suit"),
-				Expr.Label("ValueCard", "Tuple<Suit, int>")
+				Expr.Label("ValueCard", "Tuple<Suit,int>")
 			);
 
 			Test(src, result);
