@@ -973,18 +973,16 @@ fun part of TestType x:int ->
 				{
 					Expr.Arg("x", "int")
 				},
-				Expr.Block(
-					Expr.If(
-						Expr.Greater(Expr.Get("x"), Expr.Int(100)),
-						Expr.Block(
-							Expr.Cast(
-								Expr.New("Large", Expr.Get("x")),
-								"TestType"
-								)
-							),
-						Expr.Block(
-							Expr.New("Small", Expr.Get("x"))
+				Expr.If(
+					Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+					Expr.Block(
+						Expr.Cast(
+							Expr.New("Large", Expr.Get("x")),
+							"TestType"
 							)
+						),
+					Expr.Block(
+						Expr.New("Small", Expr.Get("x"))
 						)
 					)
 				);
