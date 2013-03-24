@@ -749,9 +749,9 @@ test ()";
 		{
 			var src = @"
 try
-	1 / 0
-catch DivisionByZeroException
-	throw";
+    1 / 0
+catch (DivisionByZeroException ex)
+    throw";
 
 			var result = Expr.Try(
 				Expr.Block(
@@ -759,6 +759,7 @@ catch DivisionByZeroException
 				),
 				Expr.Catch(
 					"DivisionByZeroException",
+					"ex",
 					Expr.Block(Expr.Throw())
 				)
 			);
