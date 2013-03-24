@@ -105,6 +105,9 @@ namespace Lens.SyntaxTree.Compiler
 			var gen = ctx.CurrentILGenerator;
 			var actualType = Body.GetExpressionType(ctx);
 
+			if(!ReturnType.IsExtendablyAssignableFrom(actualType))
+				ctx.Error("Function of type '{0}' cannot return an expression of type '{1}'!", ReturnType, actualType);
+
 			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())
 				gen.EmitBox(actualType);
 
