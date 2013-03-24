@@ -166,7 +166,7 @@ typedefRef            := keyword "type"
 typedef_stmtRef       := identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := (pipe4
                           <| (keyword "fun" >>? identifier)
-                          <| (keyword "of" >>? ``type``)
+                          <| opt (keyword "of" >>? ``type``)
                           <| (func_params .>>? token "->")
                           <| block
                           <| Node.functionNode) .>>? nextLine

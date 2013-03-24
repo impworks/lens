@@ -66,7 +66,9 @@ let functionParameters parameters =
 let functionNode name ``type`` parameters body =
     FunctionNode(
         Name = name,
-        ReturnTypeSignature = TypeSignature ``type``,
+        ReturnTypeSignature = (match ``type`` with
+                               | Some(typeName) -> TypeSignature typeName
+                               | None           -> null),
         Arguments = parameters, Body = body) :> NodeBase
 
 // Code

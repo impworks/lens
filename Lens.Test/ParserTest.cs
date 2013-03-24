@@ -978,14 +978,13 @@ a.Tag + b.Tag";
 		public void FunWithIfThenElse()
 		{
 			var src = @"
-fun part of TestType x:int ->
+fun part x:int ->
     if (x > 100)
         (new Large x) as TestType
     else
         new Small x";
 			var result = Expr.Fun(
 				"part",
-				"TestType",
 				new[]
 				{
 					Expr.Arg("x", "int")
