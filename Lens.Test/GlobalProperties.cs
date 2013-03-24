@@ -34,7 +34,7 @@ namespace Lens.Test
 			lc.RegisterProperty("x", () => x, nx => x = nx);
 			lc.RegisterProperty("y", () => y, ny => y = ny);
 			lc.Run("y = x + 32");
-			Assert.AreEqual(y, 42);
+			Assert.AreEqual(42, y);
 		}
 		
 		public static int HalfValue()

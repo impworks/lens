@@ -208,16 +208,18 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal void ImportMethod(string name, Delegate method)
 		{
-			var info = method.GetType().GetMethod("Invoke");
-			var args = info.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
+			var mi = method.Method;
+			if(!mi.IsStatic || !mi.IsPublic)
+				Context.Error("Only public static methods can be imported!");
 
+			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
 			{
 				Name = name,
-				IsStatic = info.IsStatic,
-				IsVirtual = info.IsVirtual,
+				IsStatic = true,
+				IsVirtual = false,
 				ContainerType = this,
-				MethodInfo = info,
+				MethodInfo = mi,
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
 			};
 

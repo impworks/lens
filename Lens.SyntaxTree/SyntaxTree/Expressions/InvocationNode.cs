@@ -236,7 +236,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 						if(argRef)
 							Error(arg, "Cannot use reference as a value for non-reference argument!");
 						else
-							Error(arg, "Argument '{0}' requires a reference of type '{1}!", idx, destTypes[idx].GetElementType());
+							Error(arg, "Argument {0} requires a reference of type '{1}!", idx+1, destTypes[idx].GetElementType());
 					}
 
 					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);

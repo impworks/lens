@@ -69,18 +69,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var id = GlobalPropertyHelper.FindByName(Identifier);
+				var pty = ctx.ResolveGlobalProperty(Identifier);
 
-				if(!GlobalPropertyHelper.HasSetter(id))
+				if(!pty.HasSetter)
 					Error("Global property '{0}' has no setter!", Identifier);
 
-				var type = GlobalPropertyHelper.TypeOf(id);
+				var type = pty.PropertyType;
 				if(!type.IsExtendablyAssignableFrom(exprType))
 					Error("Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.", exprType, type);
 
 				var method = typeof (GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
 
-				gen.EmitConstant(id);
+				gen.EmitConstant(ctx.ContextId);
+				gen.EmitConstant(pty.PropertyId);
 				Expr.Cast(Value, type).Compile(ctx, true);
 				gen.EmitCall(method);
 			}

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -109,7 +110,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			try
 			{
 				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
-				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(argTypes, m)).ToArray();
+				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 				if (methods.Length > 1)
 					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
 
@@ -127,12 +128,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		private bool checkMethodArgs(Type[] argTypes, MethodInfo method)
+		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodInfo method)
 		{
 			if(argTypes.Length == 0)
 				return true;
 
-			return !method.GetParameters().Where((p, idx) => argTypes[idx] != null && p.ParameterType != argTypes[idx]).Any();
+			var ps = method is MethodBuilder
+				? ctx.FindMethod(method).GetArgumentTypes(ctx)
+				: method.GetParameters().Select(p => p.ParameterType).ToArray();
+
+			if (ps.Length != argTypes.Length)
+				return false;
+
+			return !ps.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()

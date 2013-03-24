@@ -612,6 +612,18 @@ x == y
 			Test(src, true);
 		}
 
+		[Test]
+		public void DelegateTypeHints()
+		{
+			var src = new NodeBase[]
+			{
+				Expr.Var("test", Expr.GetMember("string", "Concat", "string", "string")),
+				Expr.Invoke(Expr.Get("test"), Expr.Str("a"), Expr.Str("b"))
+			};
+
+			Test(src, "ab");
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, new LensCompiler().Run(src));

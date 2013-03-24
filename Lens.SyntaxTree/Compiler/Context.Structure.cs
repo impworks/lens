@@ -18,6 +18,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ImportType(string name, Type type)
 		{
+			if(Options.AllowSave)
+				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+
 			if (_DefinedTypes.ContainsKey(name))
 				Error("Type '{0}' has already been defined!", name);
 
@@ -34,7 +37,25 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ImportFunction(string name, Delegate method)
 		{
+			if (Options.AllowSave)
+				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+
 			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+		}
+
+		/// <summary>
+		/// Imports a property registered in GlobalPropertyHelper into the lookup.
+		/// </summary>
+		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
+		{
+			if (Options.AllowSave)
+				throw new InvalidOperationException("Entities cannot be imported into a saveable assembly!");
+
+			if(_DefinedProperties.ContainsKey(name))
+				Error("Property '{0}' has already been imported!", name);
+
+			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
+			_DefinedProperties.Add(name, ent);
 		}
 
 		/// <summary>
@@ -107,8 +128,6 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Tries to search for a constructor by its info.
 		/// </summary>
-		/// <param name="ctor"></param>
-		/// <returns></returns>
 		internal ConstructorEntity FindConstructor(ConstructorInfo ctor)
 		{
 			if (!(ctor is ConstructorBuilder))
@@ -244,6 +263,15 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
+		internal GlobalPropertyEntity ResolveGlobalProperty(string name)
+		{
+			GlobalPropertyEntity ent;
+			if(!_DefinedProperties.TryGetValue(name, out ent))
+				throw new KeyNotFoundException();
+
+			return ent;
+		}
+
 		/// <summary>
 		/// Declares a new type.
 		/// </summary>
@@ -373,6 +401,26 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Initializes the context from a stream of nodes.
+		/// </summary>
+		private void loadNodes(IEnumerable<NodeBase> nodes)
+		{
+			foreach (var currNode in nodes)
+			{
+				if (currNode is TypeDefinitionNode)
+					DeclareType(currNode as TypeDefinitionNode);
+				else if (currNode is RecordDefinitionNode)
+					DeclareRecord(currNode as RecordDefinitionNode);
+				else if (currNode is FunctionNode)
+					DeclareFunction(currNode as FunctionNode);
+				else if (currNode is UsingNode)
+					DeclareOpenNamespace(currNode as UsingNode);
+				else
+					DeclareScriptNode(currNode);
+			}
+		}
+
+		/// <summary>
 		/// Prepares the assembly entities for the type list.
 		/// </summary>
 		private void prepareEntities()
@@ -423,13 +471,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void finalizeAssembly()
 		{
-			var ep = ResolveMethod(RootTypeName, RootMethodName);
-			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
+//			var ep = ResolveMethod(RootTypeName, RootMethodName);
+//			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
 
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
 
-			MainAssembly.Save("_MainModule.dll");
+			if(Options.AllowSave)
+				MainAssembly.Save("_MainModule.dll");
 		}
 
 		#endregion

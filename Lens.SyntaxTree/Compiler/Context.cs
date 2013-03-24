@@ -32,15 +32,27 @@ namespace Lens.SyntaxTree.Compiler
 
 		#endregion
 
-		private Context()
+		public Context(CompilerOptions options = null)
 		{
 			var an = new AssemblyName(getAssemblyName());
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
+			_DefinedProperties = new Dictionary<string, GlobalPropertyEntity>();
 
-			MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
-			MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
+			Options = options ?? new CompilerOptions();
+			var saveable = Options.AllowSave;
+			if (saveable)
+			{
+				MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
+				MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
+			}
+			else
+			{
+				ContextId = GlobalPropertyHelper.RegisterContext();
+				MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+				MainModule = MainAssembly.DefineDynamicModule(an.Name);
+			}
 
 			MainType = CreateType(RootTypeName);
 			MainType.Interfaces = new[] {typeof (IScript)};
@@ -48,32 +60,9 @@ namespace Lens.SyntaxTree.Compiler
 			MainMethod.ReturnType = typeof (object);
 		}
 
-		/// <summary>
-		/// Creates the context from a stream of nodes.
-		/// </summary>
-		public static Context CreateFromNodes(IEnumerable<NodeBase> nodes)
+		public IScript Compile(IEnumerable<NodeBase> nodes)
 		{
-			var ctx = new Context();
-
-			foreach (var currNode in nodes)
-			{
-				if (currNode is TypeDefinitionNode)
-					ctx.DeclareType(currNode as TypeDefinitionNode);
-				else if (currNode is RecordDefinitionNode)
-					ctx.DeclareRecord(currNode as RecordDefinitionNode);
-				else if (currNode is FunctionNode)
-					ctx.DeclareFunction(currNode as FunctionNode);
-				else if (currNode is UsingNode)
-					ctx.DeclareOpenNamespace(currNode as UsingNode);
-				else
-					ctx.DeclareScriptNode(currNode);
-			}
-
-			return ctx;
-		}
-
-		public IScript Compile()
-		{
+			loadNodes(nodes);
 			prepareEntities();
 			processClosures();
 			prepareEntities();
@@ -94,6 +83,16 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		#region Properties
+
+		/// <summary>
+		/// Context ID for imported properties.
+		/// </summary>
+		public int ContextId { get; set; }
+
+		/// <summary>
+		/// Compiler options.
+		/// </summary>
+		internal CompilerOptions Options { get; private set; }
 
 		/// <summary>
 		/// The assembly that's being currently built.
@@ -174,6 +173,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// The root of type lookup.
 		/// </summary>
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
+
+		/// <summary>
+		/// The lookup table for imported properties.
+		/// </summary>
+		private readonly Dictionary<string, GlobalPropertyEntity> _DefinedProperties;
 
 		#endregion
 	}
