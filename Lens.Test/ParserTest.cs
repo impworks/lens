@@ -878,10 +878,11 @@ catch DivisionByZeroException
 		[Test]
 		public void RefArgDeclaration()
 		{
-			var src = "func test x:int y:ref int -> y = x";
+			var src = "fun test of object x:int y:ref int -> y = x";
 			var result = Expr.Fun
 			(
 				"test",
+				new TypeSignature("object"),
 				new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int", true) },
 				Expr.Set("y", Expr.Get("x"))
 			);
