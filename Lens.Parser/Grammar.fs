@@ -136,6 +136,7 @@ let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invok
 let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" "invocation list"
 let byref_arg, byref_argRef                   = createAnnotatedParser "byref_arg" "byref argument"
 let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" "value"
+let rvalue, rvalueRef                         = createAnnotatedParser "rvalue" "rvalue"
 let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" "type operator"
 let literal, literalRef                       = createAnnotatedNodeParser "literal" "literal"
 
@@ -304,8 +305,13 @@ invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? choice [atte
 byref_argRef          := choice [attempt (token "(" >>. keyword "ref" .>>. lvalue .>> token ")")
                                  attempt (keyword "ref" .>>. lvalue)]
                          >>. lvalue |>> Node.getterNode
-value_exprRef         := choice [attempt lvalue      |>> Node.getterNode
+value_exprRef         := choice [attempt rvalue
                                  attempt atomar_expr]
+rvalueRef             := pipe2
+                         <| attempt lvalue
+                         <| (attempt <| opt (token "." >>? identifier .>>.? type_params))
+                         <| Node.genericGetterNode
+
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
                          <| ``type``

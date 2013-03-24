@@ -790,6 +790,20 @@ catch (DivisionByZeroException ex)
 		}
 
 		[Test]
+		public void FieldWithTypeParameters()
+		{
+			var src = "Enumerable::Empty<int>";
+			var result = new GetMemberNode
+			{
+				StaticType = new TypeSignature("Enumerable"),
+				MemberName = "Empty"
+				// TODO: Add TypeSignature?
+			};
+
+			Test(src, result);
+		}
+
+		[Test]
 		public void FluentCall()
 		{
 			var src = @"Enumerable::Range 1 100
