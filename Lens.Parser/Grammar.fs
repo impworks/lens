@@ -177,7 +177,7 @@ blockRef              := ((Indentation.indentedBlock block_line .>>? nextLine)
 block_lineRef         := local_stmt
 typeRef               := pipe2
                          <| ``namespace``
-                         <| opt (type_params <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
+                         <| opt ((type_params |>> Node.typeParams) <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
                          <| Node.typeTag
 local_stmtRef         := choice [attempt var_decl_expr
                                  attempt assign_expr
@@ -199,7 +199,7 @@ atomar_exprRef        := choice [attempt literal
                                  attempt <| token "(" >>? expr .>>? token ")"]
 accessor_exprRef      := choice [attempt ((token "." >>? identifier) |>> Accessor.Member)
                                  attempt ((token "[" >>? line_expr .>>? token "]") |>> Accessor.Indexer)]
-type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">" |>> Node.typeParams
+type_paramsRef        := token "<" >>? (sepBy1 ``type`` <| token ",") .>>? token ">"
 exprRef               := choice [attempt block_expr
                                  attempt line_expr]
 block_exprRef         := choice [attempt if_expr
@@ -309,7 +309,7 @@ value_exprRef         := choice [attempt rvalue
                                  attempt atomar_expr]
 rvalueRef             := pipe2
                          <| attempt lvalue
-                         <| (attempt <| opt (token "." >>? identifier .>>.? type_params))
+                         <| (attempt <| opt (type_params))
                          <| Node.genericGetterNode
 
 type_operator_exprRef := pipe2

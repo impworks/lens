@@ -796,8 +796,8 @@ catch (DivisionByZeroException ex)
 			var result = new GetMemberNode
 			{
 				StaticType = new TypeSignature("Enumerable"),
-				MemberName = "Empty"
-				// TODO: Add TypeSignature?
+				MemberName = "Empty",
+				TypeHints = { new TypeSignature("int") }
 			};
 
 			Test(src, result);
@@ -859,7 +859,7 @@ catch (DivisionByZeroException ex)
 		}
 
 		[Test]
-		public void TypeHint3()
+		public void TypeHints3()
 		{
 			var src = @"let a = SomeType::Method<int, _, System.Uri>";
 			var result = Expr.Let(
@@ -875,7 +875,7 @@ catch (DivisionByZeroException ex)
 		}
 
 		[Test]
-		public void TypeHint4()
+		public void TypeHints4()
 		{
 			var src = @"let a = b.Method<int, _, System.Uri>";
 			var result = Expr.Let(

@@ -132,15 +132,16 @@ let getterNode (symbol, accessorChain) =
             last.Expression <- top
             upcast root
 
-let genericGetterNode (symbol, accessorChain) pair : NodeBase =
-    match pair with
-    | Some(lastAccessor, typeArguments) ->
-        let chain = List.append accessorChain [Accessor.Member lastAccessor]
+let genericGetterNode (symbol, chain) typeArguments : NodeBase =
+    match typeArguments with
+    | Some(arguments) ->
         let node : GetMemberNode = downcast getterNode (symbol, chain)
-        // TODO: process types
+        node.TypeHints <- arguments
+                          |> Seq.map (fun t -> TypeSignature(t))
+                          |> (fun l -> ResizeArray<_>(l))
         upcast node
-    | None                              ->
-        getterNode (symbol, accessorChain)
+    | None           ->
+        getterNode (symbol, chain)
 
 let lambda parameters code : NodeBase =
     let node = LambdaNode(Body = code)
