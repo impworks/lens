@@ -86,7 +86,7 @@ type Card
 				Expr.Label("King", "Suit"),
 				Expr.Label("Queen", "Suit"),
 				Expr.Label("Jack", "Suit"),
-				Expr.Label("ValueCard", "Tuple<Suit, int>")
+				Expr.Label("ValueCard", "Tuple<Suit,int>")
 			);
 
 			Test(src, result);
@@ -452,6 +452,7 @@ test
     <| (a:double) ->
         logger.log a
         a ** 2
+
     <| false";
 
 			var result = Expr.Invoke(
@@ -748,9 +749,9 @@ test ()";
 		{
 			var src = @"
 try
-	1 / 0
-catch DivisionByZeroException
-	throw";
+    1 / 0
+catch (DivisionByZeroException ex)
+    throw";
 
 			var result = Expr.Try(
 				Expr.Block(
@@ -758,6 +759,7 @@ catch DivisionByZeroException
 				),
 				Expr.Catch(
 					"DivisionByZeroException",
+					"ex",
 					Expr.Block(Expr.Throw())
 				)
 			);
@@ -783,6 +785,20 @@ catch DivisionByZeroException
 						)
 					}
 				);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void FieldWithTypeParameters()
+		{
+			var src = "Enumerable::Empty<int>";
+			var result = new GetMemberNode
+			{
+				StaticType = new TypeSignature("Enumerable"),
+				MemberName = "Empty",
+				TypeHints = { new TypeSignature("int") }
+			};
 
 			Test(src, result);
 		}
@@ -843,7 +859,7 @@ catch DivisionByZeroException
 		}
 
 		[Test]
-		public void TypeHint3()
+		public void TypeHints3()
 		{
 			var src = @"let a = SomeType::Method<int, _, System.Uri>";
 			var result = Expr.Let(
@@ -859,7 +875,7 @@ catch DivisionByZeroException
 		}
 
 		[Test]
-		public void TypeHint4()
+		public void TypeHints4()
 		{
 			var src = @"let a = b.Method<int, _, System.Uri>";
 			var result = Expr.Let(
@@ -877,10 +893,11 @@ catch DivisionByZeroException
 		[Test]
 		public void RefArgDeclaration()
 		{
-			var src = "func test x:int y:ref int -> y = x";
+			var src = "fun test of object x:int y:ref int -> y = x";
 			var result = Expr.Fun
 			(
 				"test",
+				new TypeSignature("object"),
 				new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int", true) },
 				Expr.Set("y", Expr.Get("x"))
 			);
@@ -908,8 +925,7 @@ catch DivisionByZeroException
 		{
 			var src = @"
 type TestType
-	Value of int
-			
+    Value of int
 (new Value 1).Tag";
 
 			var result = new NodeBase[]
@@ -935,7 +951,6 @@ type TestType
 type TestType
     Small of int
     Large of int
-
 var a = new Small 1
 var b = new Large 100
 a.Tag + b.Tag";
@@ -960,19 +975,50 @@ a.Tag + b.Tag";
 		}
 
 		[Test]
+		public void FunWithIfThenElse()
+		{
+			var src = @"
+fun part x:int ->
+    if (x > 100)
+        (new Large x) as TestType
+    else
+        new Small x";
+			var result = Expr.Fun(
+				"part",
+				new[]
+				{
+					Expr.Arg("x", "int")
+				},
+				Expr.If(
+					Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+					Expr.Block(
+						Expr.Cast(
+							Expr.New("Large", Expr.Get("x")),
+							"TestType"
+							)
+						),
+					Expr.Block(
+						Expr.New("Small", Expr.Get("x"))
+						)
+					)
+				);
+			Test(src, result);
+		}
+
+		[Test]
 		public void Algebraic3()
 		{
 				var src = @"
 type TestType
-	Small of int
-	Large of int
-			
+    Small of int
+    Large of int
 fun part of TestType x:int ->
-	if (x > 100)
-		(new Large x) as TestType
-	else
-		new Small x
-			
+    if (x > 100)
+        (new Large x) as TestType
+    else
+        new Small x
+
+
 var a = part 10
 new [ a is TestType; a is Small; a is Large ]";
 
@@ -988,18 +1034,16 @@ new [ a is TestType; a is Small; a is Large ]";
 					"part",
 					"TestType",
 					new [] { Expr.Arg("x", "int") },
-					Expr.Block(
-						Expr.If(
-							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
-							Expr.Block(
-								Expr.Cast(
-									Expr.New("Large", Expr.Get("x")),
-									"TestType"
-								)
-							),
-							Expr.Block(
-								Expr.New("Small", Expr.Get("x"))
+					Expr.If(
+						Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+						Expr.Block(
+							Expr.Cast(
+								Expr.New("Large", Expr.Get("x")),
+								"TestType"
 							)
+						),
+						Expr.Block(
+							Expr.New("Small", Expr.Get("x"))
 						)
 					)
 				),
@@ -1020,9 +1064,8 @@ new [ a is TestType; a is Small; a is Large ]";
 		{
 			var src = @"
 record Holder
-	A : int
-	B : int
-			
+    A : int
+    B : int
 var a = new Holder 2 3
 a.A * a.B
 ";
@@ -1051,11 +1094,9 @@ a.A * a.B
 		{
 			var src = @"
 record First
-	A : int
-			
+    A : int
 record Second
-	B : int
-			
+    B : int
 var a = new First 2
 var b = new Second 3
 a.A * b.B
@@ -1123,6 +1164,19 @@ result
 				Expr.Get("result")
 			};
 
+			Test(src, result);
+		}
+
+		[Test]
+		public void IfThenElse()
+		{
+			var src = @"
+if (x)
+    1
+else
+    2
+";
+			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
 			Test(src, result);
 		}
 

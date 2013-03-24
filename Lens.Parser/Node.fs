@@ -35,7 +35,7 @@ let arrayDefinition braces =
 let recordEntry(entryName, typeName) =
     RecordField(Name = entryName, Type = TypeSignature(typeName))
 
-let record(name, entries) =
+let record name entries =
     let node = RecordDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
@@ -66,12 +66,19 @@ let functionParameters parameters =
 let functionNode name ``type`` parameters body =
     FunctionNode(
         Name = name,
-        ReturnTypeSignature = TypeSignature ``type``,
+        ReturnTypeSignature = (match ``type`` with
+                               | Some(typeName) -> TypeSignature typeName
+                               | None           -> null),
         Arguments = parameters, Body = body) :> NodeBase
 
 // Code
 let codeBlock (lines : NodeBase list) =
     CodeBlockNode(Statements = ResizeArray<_>(lines))
+
+let throw maybeExpression : NodeBase =
+    upcast (match maybeExpression with
+            | Some(expression) -> ThrowNode(Expression = expression)
+            | None             -> ThrowNode())
 
 let variableDeclaration binding name value =
     let node : NameDeclarationNodeBase =
@@ -126,6 +133,17 @@ let getterNode (symbol, accessorChain) =
             let top = symbolGetter symbol
             last.Expression <- top
             upcast root
+
+let genericGetterNode (symbol, chain) typeArguments : NodeBase =
+    match typeArguments with
+    | Some(arguments) ->
+        let node : GetMemberNode = downcast getterNode (symbol, chain)
+        node.TypeHints <- arguments
+                          |> Seq.map (fun t -> TypeSignature(t))
+                          |> (fun l -> ResizeArray<_>(l))
+        upcast node
+    | None           ->
+        getterNode (symbol, chain)
 
 let lambda parameters code : NodeBase =
     let node = LambdaNode(Body = code)
