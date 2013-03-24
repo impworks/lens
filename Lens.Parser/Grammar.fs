@@ -42,7 +42,7 @@ let keywords = Set.ofList ["using"
 let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
 let space = pchar ' '
-let nextLine = skipNewline <|> eof
+let nextLine = (skipNewline <|> eof) <!> "nextLine"
 let keyword k = pstring k .>>? (choice [skipMany1 space
                                         notFollowedBy letter])
                                                    
@@ -166,7 +166,7 @@ funcdefRef            := (pipe4
                           <| block
                           <| Node.functionNode) .>>? nextLine
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt <| keyword "ref") .>>.? ``type``) |>> Node.functionParameters
-blockRef              := ((Indentation.indentedBlock block_line)
+blockRef              := ((Indentation.indentedBlock block_line .>>? nextLine)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -211,12 +211,12 @@ while_exprRef         := pipe2
                          <| block
                          <| Node.whileNode
 try_exprRef           := pipe2
-                         <| (keyword "try" >>? block .>>? nextLine)
+                         <| (keyword "try" >>? block)
                          <| many1 catch_expr
                          <| Node.tryCatchNode
 catch_exprRef         := pipe2
                          <| (keyword "catch" >>? opt (token "(" >>? ``type`` .>>.? identifier .>>? token ")"))
-                         <| (block .>>? nextLine)
+                         <| block
                          <| Node.catchNode
 lambda_exprRef        := pipe2
                          <| opt (token "(" >>? func_params .>>? token ")")

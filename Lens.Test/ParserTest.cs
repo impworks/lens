@@ -958,6 +958,40 @@ a.Tag + b.Tag";
 		}
 
 		[Test]
+		public void FunWithIfThenElse()
+		{
+			var src = @"
+fun part of TestType x:int ->
+    if (x > 100)
+        (new Large x) as TestType
+    else
+        new Small x";
+			var result = Expr.Fun(
+				"part",
+				"TestType",
+				new[]
+				{
+					Expr.Arg("x", "int")
+				},
+				Expr.Block(
+					Expr.If(
+						Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+						Expr.Block(
+							Expr.Cast(
+								Expr.New("Large", Expr.Get("x")),
+								"TestType"
+								)
+							),
+						Expr.Block(
+							Expr.New("Small", Expr.Get("x"))
+							)
+						)
+					)
+				);
+			Test(src, result);
+		}
+
+		[Test]
 		public void Algebraic3()
 		{
 				var src = @"
@@ -969,6 +1003,8 @@ fun part of TestType x:int ->
         (new Large x) as TestType
     else
         new Small x
+
+
 var a = part 10
 new [ a is TestType; a is Small; a is Large ]";
 
@@ -984,18 +1020,16 @@ new [ a is TestType; a is Small; a is Large ]";
 					"part",
 					"TestType",
 					new [] { Expr.Arg("x", "int") },
-					Expr.Block(
-						Expr.If(
-							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
-							Expr.Block(
-								Expr.Cast(
-									Expr.New("Large", Expr.Get("x")),
-									"TestType"
-								)
-							),
-							Expr.Block(
-								Expr.New("Small", Expr.Get("x"))
+					Expr.If(
+						Expr.Greater(Expr.Get("x"), Expr.Int(100)),
+						Expr.Block(
+							Expr.Cast(
+								Expr.New("Large", Expr.Get("x")),
+								"TestType"
 							)
+						),
+						Expr.Block(
+							Expr.New("Small", Expr.Get("x"))
 						)
 					)
 				),
