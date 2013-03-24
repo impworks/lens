@@ -1049,9 +1049,8 @@ new [ a is TestType; a is Small; a is Large ]";
 		{
 			var src = @"
 record Holder
-	A : int
-	B : int
-			
+    A : int
+    B : int
 var a = new Holder 2 3
 a.A * a.B
 ";
@@ -1080,11 +1079,9 @@ a.A * a.B
 		{
 			var src = @"
 record First
-	A : int
-			
+    A : int
 record Second
-	B : int
-			
+    B : int
 var a = new First 2
 var b = new Second 3
 a.A * b.B

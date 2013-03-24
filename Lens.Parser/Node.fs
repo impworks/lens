@@ -35,7 +35,7 @@ let arrayDefinition braces =
 let recordEntry(entryName, typeName) =
     RecordField(Name = entryName, Type = TypeSignature(typeName))
 
-let record(name, entries) =
+let record name entries =
     let node = RecordDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase

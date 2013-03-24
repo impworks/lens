@@ -151,8 +151,11 @@ stmtRef               := choice [attempt using
                                  attempt (local_stmt .>>? nextLine)]
 usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
-recorddefRef          := keyword "record" >>? identifier .>>.? Indentation.indentedBlock recorddef_stmt |>> Node.record
-recorddef_stmtRef     := (identifier .>>.? (skipChar ':' >>? ``type``)) |>> Node.recordEntry
+recorddefRef          := pipe2
+                         <| (keyword "record" >>? identifier)
+                         <| (Indentation.indentedBlock recorddef_stmt .>>? nextLine)
+                         <| Node.record
+recorddef_stmtRef     := (identifier .>>.? (token ":" >>? ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type"
                          >>? identifier
                          .>>.? Indentation.indentedBlock typedef_stmt
