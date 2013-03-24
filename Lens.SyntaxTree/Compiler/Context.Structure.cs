@@ -263,9 +263,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
-		internal GlobalPropertyEntity ResolveGlobalProperty(string name)
+		internal GlobalPropertyInfo ResolveGlobalProperty(string name)
 		{
-			GlobalPropertyEntity ent;
+			GlobalPropertyInfo ent;
 			if(!_DefinedProperties.TryGetValue(name, out ent))
 				throw new KeyNotFoundException();
 

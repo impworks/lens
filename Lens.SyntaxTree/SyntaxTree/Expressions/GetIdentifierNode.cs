@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
 		private MethodInfo m_Method;
-		private GlobalPropertyEntity m_Property;
+		private GlobalPropertyInfo m_Property;
 
 		/// <summary>
 		/// Local and closured variables can provide a location pointer.
@@ -99,11 +99,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					Error("Global property '{0}' has no getter!", Identifier);
 
 				var type = m_Property.PropertyType;
-				var method = typeof (GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
-
-				gen.EmitConstant(ctx.ContextId);
-				gen.EmitConstant(id);
-				gen.EmitCall(method);
+				if (m_Property.GetterMethod != null)
+				{
+					gen.EmitCall(m_Property.GetterMethod);
+				}
+				else
+				{
+					var method = typeof (GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
+					gen.EmitConstant(ctx.ContextId);
+					gen.EmitConstant(id);
+					gen.EmitCall(method);
+				}
 				return;
 			}
 

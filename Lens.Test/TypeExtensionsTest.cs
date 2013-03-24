@@ -28,7 +28,7 @@ namespace Lens.Test
 		[Test]
 		public void BoxTest()
 		{
-			TestDistanceFrom<object, int>(1);
+//			TestDistanceFrom<object, int>(1);
 			TestDistanceFrom<object, Struct>(1);
 		}
 
@@ -224,6 +224,13 @@ namespace Lens.Test
 
 			Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(typeof(float)));
 			Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(typeof(int)));
+		}
+
+		[Test]
+		public void Interface()
+		{
+			TestDistanceFrom<object, IEnumerable<int>>(1);
+			TestDistanceFrom<object, IEnumerable<DerivedClass>>(1);
 		}
 
 		/// <summary>

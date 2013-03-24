@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -11,17 +12,17 @@ namespace Lens.SyntaxTree.Compiler
 	{
 		static GlobalPropertyHelper()
 		{
-			m_Properties = new List<List<Tuple<Delegate, Delegate>>>();
+			m_Properties = new List<List<GlobalPropertyEntity>>();
 		}
 
-		private static readonly List<List<Tuple<Delegate, Delegate>>> m_Properties;
+		private static readonly List<List<GlobalPropertyEntity>> m_Properties;
 
 		/// <summary>
 		/// Adds a new tier for current compiler instance and returns the unique id.
 		/// </summary>
 		public static int RegisterContext()
 		{
-			m_Properties.Add(new List<Tuple<Delegate, Delegate>>());
+			m_Properties.Add(new List<GlobalPropertyEntity>());
 			return m_Properties.Count - 1;
 		}
 
@@ -42,12 +43,36 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Registers a property and returns its unique ID.
 		/// </summary>
-		public static GlobalPropertyEntity RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
+		public static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
 		{
-			m_Properties[contextId].Add(new Tuple<Delegate, Delegate>(getter, setter));
+			if (getter == null && setter == null)
+				throw new ArgumentNullException("getter");
+
+			m_Properties[contextId].Add(new GlobalPropertyEntity { Getter = getter, Setter = setter } );
 			var id = m_Properties[contextId].Count - 1;
 
-			return new GlobalPropertyEntity(id, typeof(T), getter != null, setter != null);
+			return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
+		}
+
+		/// <summary>
+		/// Registers a property and returns its unique ID.
+		/// </summary>
+		public static GlobalPropertyInfo RegisterProperty(int contextId, MethodInfo getter, MethodInfo setter)
+		{
+			// todo: additional checks
+
+			if (getter == null && setter == null)
+				throw new ArgumentNullException("getter");
+
+			if(getter != null && setter != null && getter.ReturnType != setter.GetParameters()[0].ParameterType)
+				throw new InvalidOperationException("Getter and setter methods must match in return types!");
+
+			m_Properties[contextId].Add(new GlobalPropertyEntity { GetterMethod = getter, SetterMethod = setter });
+			var id = m_Properties[contextId].Count - 1;
+
+			var type = getter != null ? getter.ReturnType : setter.GetParameters()[0].ParameterType;
+
+			return new GlobalPropertyInfo(id, type, getter != null, setter != null, getter, setter);
 		}
 
 		/// <summary>
@@ -59,11 +84,11 @@ namespace Lens.SyntaxTree.Compiler
 			var info = m_Properties[contextId][id];
 
 #if DEBUG
-			if(info.Item1 == null)
+			if(info.Getter == null)
 				throw new InvalidOperationException(string.Format("Property #{0} has no getter!", id));
 #endif
 
-			return (info.Item1 as Func<T>).Invoke();
+			return (info.Getter as Func<T>).Invoke();
 		}
 
 		/// <summary>
@@ -75,11 +100,11 @@ namespace Lens.SyntaxTree.Compiler
 			var info = m_Properties[contextId][id];
 
 #if DEBUG
-			if (info.Item2 == null)
+			if (info.Setter == null)
 				throw new InvalidOperationException(string.Format("Property #{0} has no setter!", id));
 #endif
 
-			(info.Item2 as Action<T>).Invoke(value);
+			(info.Setter as Action<T>).Invoke(value);
 		}
 
 		[Conditional("DEBUG")]
@@ -95,21 +120,36 @@ namespace Lens.SyntaxTree.Compiler
 			if(id < 0 || id > m_Properties[contextId].Count - 1)
 				throw new ArgumentException(string.Format("Property #{0} does not exist!", id));
 		}
+
+		private class GlobalPropertyEntity
+		{
+			public Delegate Getter;
+			public Delegate Setter;
+			public MethodInfo GetterMethod;
+			public MethodInfo SetterMethod;
+		}
 	}
 
-	public class GlobalPropertyEntity
+	public class GlobalPropertyInfo
 	{
 		public readonly int PropertyId;
 		public readonly Type PropertyType;
+
 		public readonly bool HasGetter;
 		public readonly bool HasSetter;
 
-		public GlobalPropertyEntity(int id, Type propType, bool hasGetter, bool hasSetter)
+		public readonly MethodInfo GetterMethod;
+		public readonly MethodInfo SetterMethod;
+
+		public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodInfo getterMethod, MethodInfo setterMethod)
 		{
 			PropertyId = id;
 			PropertyType = propType;
 			HasGetter = hasGetter;
 			HasSetter = hasSetter;
+
+			GetterMethod = getterMethod;
+			SetterMethod = setterMethod;
 		}
 	}
 }

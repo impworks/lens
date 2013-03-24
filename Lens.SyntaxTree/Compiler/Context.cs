@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			_TypeResolver = new TypeResolver();
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
-			_DefinedProperties = new Dictionary<string, GlobalPropertyEntity>();
+			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
 			Options = options ?? new CompilerOptions();
 			var saveable = Options.AllowSave;
@@ -177,7 +177,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The lookup table for imported properties.
 		/// </summary>
-		private readonly Dictionary<string, GlobalPropertyEntity> _DefinedProperties;
+		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
 
 		#endregion
 	}
