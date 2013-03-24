@@ -44,7 +44,7 @@ let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 let space = pchar ' '
 let nextLine = (skipNewline <|> eof) <!> "nextLine"
 let keyword k = pstring k .>>? (choice [skipMany1 space
-                                        notFollowedBy letter])
+                                        notFollowedBy letter]) <!> sprintf "keyword %s" k
                                                    
 let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
 
@@ -296,10 +296,10 @@ invoke_exprRef        := pipe2
                          <| Node.invocation
 invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? choice [attempt expr
                                                                             attempt byref_arg]))
-                         <|> (many1 <| choice [attempt value_expr
-                                               attempt byref_arg])
-byref_argRef          := choice [attempt <| token "(" >>. keyword "ref" .>> token ")"
-                                 attempt <| keyword "ref"]
+                         <|> ((many1 <| choice [attempt byref_arg
+                                                attempt value_expr]) <!> "invoke_list_single_line")
+byref_argRef          := choice [attempt (token "(" >>. keyword "ref" .>>. lvalue .>> token ")")
+                                 attempt (keyword "ref" .>>. lvalue)]
                          >>. lvalue |>> Node.getterNode
 value_exprRef         := choice [attempt lvalue      |>> Node.getterNode
                                  attempt atomar_expr]
