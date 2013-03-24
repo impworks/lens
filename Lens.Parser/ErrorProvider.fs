@@ -4,7 +4,7 @@ open FParsec
 open FParsec.Error
 
 /// Set to false when debugging complex parser failures.
-let enabled = true
+let enabled = false
 
 let rec messageSeq (list : ErrorMessageList) : ErrorMessage seq =
     match list with
