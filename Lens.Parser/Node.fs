@@ -73,6 +73,11 @@ let functionNode name ``type`` parameters body =
 let codeBlock (lines : NodeBase list) =
     CodeBlockNode(Statements = ResizeArray<_>(lines))
 
+let throw maybeExpression : NodeBase =
+    upcast (match maybeExpression with
+            | Some(expression) -> ThrowNode(Expression = expression)
+            | None             -> ThrowNode())
+
 let variableDeclaration binding name value =
     let node : NameDeclarationNodeBase =
         match binding with

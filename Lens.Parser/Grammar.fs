@@ -105,6 +105,7 @@ let accessor_expr, accessor_exprRef           = createAnnotatedParser "accessor_
 let type_params, type_paramsRef               = createAnnotatedParser "type_params" "type parameters"
 let expr, exprRef                             = createAnnotatedNodeParser "expr" "expression"
 let block_expr, block_exprRef                 = createAnnotatedNodeParser "block_expr" "block expression"
+let throw_expr, throw_exprRef                 = createAnnotatedNodeParser "throw_expr" "throw expression"
 let if_expr, if_exprRef                       = createAnnotatedNodeParser "if_expr" "if expression"
 let while_expr, while_exprRef                 = createAnnotatedNodeParser "while_expr" "while expression"
 let try_expr, try_exprRef                     = createAnnotatedNodeParser "try_expr" "try expression"
@@ -203,7 +204,9 @@ exprRef               := choice [attempt block_expr
 block_exprRef         := choice [attempt if_expr
                                  attempt while_expr
                                  attempt try_expr
+                                 attempt throw_expr
                                  attempt lambda_expr]
+throw_exprRef         := keyword "throw" >>. opt line_expr |>> Node.throw
 if_exprRef            := pipe3
                          <| (keyword "if" >>? (token "(" >>? line_expr .>>? token ")"))
                          <| block
