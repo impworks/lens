@@ -159,6 +159,14 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Root type.
+		/// </summary>
+		internal TypeEntity RootType
+		{
+			get { return _DefinedTypes[RootTypeName]; }
+		}
+
+		/// <summary>
 		/// An ID for closure types.
 		/// </summary>
 		internal int ClosureId;

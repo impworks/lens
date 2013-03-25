@@ -282,21 +282,32 @@ namespace Lens.SyntaxTree.Compiler
 
 			foreach (var curr in node.Entries)
 			{
-				var labelType = CreateType(curr.Name, node.Name, true);
+				var tagName = curr.Name;
+				var labelType = CreateType(tagName, node.Name, true);
 				labelType.Kind = TypeEntityKind.TypeLabel;
+
+				var ctor = labelType.CreateConstructor();
+				var staticCtor = RootType.CreateMethod(tagName, tagName, new string[0], true);
+
 				if (curr.IsTagged)
 				{
 					labelType.CreateField("Tag", curr.TagType);
 
-					var labelCtor = labelType.CreateConstructor();
-					labelCtor.Arguments = new HashList<FunctionArgument> {{"value", new FunctionArgument("value", curr.TagType)}};
-					labelCtor.Body.Add(
+					var args = new HashList<FunctionArgument> { { "value", new FunctionArgument("value", curr.TagType) } };
+
+					ctor.Arguments = staticCtor.Arguments = args;
+
+					ctor.Body.Add(
 						Expr.SetMember(Expr.This(), "Tag", Expr.Get("value"))
+					);
+
+					staticCtor.Body.Add(
+						Expr.New(tagName, Expr.Get("value"))
 					);
 				}
 				else
 				{
-					// todo
+					staticCtor.Body.Add(Expr.New(tagName));
 				}
 			}
 		}
@@ -307,18 +318,18 @@ namespace Lens.SyntaxTree.Compiler
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
 			var recType = CreateType(node.Name, isSealed: true);
-			var ctor = recType.CreateConstructor();
 			recType.Kind = TypeEntityKind.Record;
+
+			var recCtor = recType.CreateConstructor();
 
 			foreach (var curr in node.Entries)
 			{
-				recType.CreateField(curr.Name, curr.Type);
-
-				var argName = "_" + curr.Name.ToLowerInvariant();
-
-				ctor.Arguments.Add(argName, new FunctionArgument(argName, curr.Type));
-				ctor.Body.Add(
-					Expr.SetMember(Expr.This(), curr.Name, Expr.Get(argName))
+				var field = recType.CreateField(curr.Name, curr.Type);
+				var argName = "_" + field.Name.ToLowerInvariant();
+				
+				recCtor.Arguments.Add(argName, new FunctionArgument(argName, field.Type));
+				recCtor.Body.Add(
+					Expr.SetMember(Expr.This(), field.Name, Expr.Get(argName))
 				);
 			}
 		}

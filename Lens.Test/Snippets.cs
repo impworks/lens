@@ -348,24 +348,24 @@ result";
 		[Test]
 		public void Algebraic1()
 		{
-			var src = @"
-type TestType
-    Value of int
-
-(new Value 1).Tag";
-
-//			var src = new NodeBase[]
-//			{
-//				Expr.Type(
-//					"TestType",
-//					Expr.Label("Value", "int")
-//				),
+//			var src = @"
+//type TestType
+//    Value of int
 //
-//				Expr.GetMember(
-//					Expr.New("Value", Expr.Int(1)),
-//					"Tag"
-//				)
-//			};
+//(Value 1).Tag";
+
+			var src = new NodeBase[]
+			{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Value", "int")
+				),
+
+				Expr.GetMember(
+					Expr.Invoke("Value", Expr.Int(1)),
+					"Tag"
+				)
+			};
 
 			Test(src, 1);
 		}
@@ -373,30 +373,30 @@ type TestType
 		[Test]
 		public void Algebraic2()
 		{
-			var src = @"
-type TestType
-    Small of int
-    Large of int
-
-var a = new Small 1
-var b = new Large 100
-a.Tag + b.Tag";
-
-//			var src = new NodeBase[]
-//			{
-//				Expr.Type(
-//					"TestType",
-//					Expr.Label("Small", "int"),
-//					Expr.Label("Large", "int")
-//				),
+//			var src = @"
+//type TestType
+//    Small of int
+//    Large of int
 //
-//				Expr.Var("a", Expr.New("Small", Expr.Int(1))),
-//				Expr.Var("b", Expr.New("Large", Expr.Int(100))),
-//				Expr.Add(
-//					Expr.GetMember(Expr.Get("a"), "Tag"),
-//					Expr.GetMember(Expr.Get("b"), "Tag")
-//				)
-//			};
+//var a = Small 1
+//var b = Large 100
+//a.Tag + b.Tag";
+
+			var src = new NodeBase[]
+			{
+				Expr.Type(
+					"TestType",
+					Expr.Label("Small", "int"),
+					Expr.Label("Large", "int")
+				),
+
+				Expr.Var("a", Expr.Invoke("Small", Expr.Int(1))),
+				Expr.Var("b", Expr.Invoke("Large", Expr.Int(100))),
+				Expr.Add(
+					Expr.GetMember(Expr.Get("a"), "Tag"),
+					Expr.GetMember(Expr.Get("b"), "Tag")
+				)
+			};
 
 			Test(src, 101);
 		}
@@ -411,9 +411,9 @@ type TestType
 
 fun part of TestType x:int ->
     if (x > 100)
-        (new Large x) as TestType
+        (Large x) as TestType
     else
-        new Small x
+        Small x
 
 var a = part 10
 new [ a is TestType; a is Small; a is Large ]";
@@ -435,12 +435,12 @@ new [ a is TestType; a is Small; a is Large ]";
 //							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
 //							Expr.Block(
 //								Expr.Cast(
-//									Expr.New("Large", Expr.Get("x")),
+//									Expr.Invoke("Large", Expr.Get("x")),
 //									"TestType"
 //								)
 //							),
 //							Expr.Block(
-//								Expr.New("Small", Expr.Get("x"))
+//								Expr.Invoke("Small", Expr.Get("x"))
 //							)
 //						)
 //					)
@@ -455,6 +455,48 @@ new [ a is TestType; a is Small; a is Large ]";
 //			};
 
 			Test(src, new [] { true, true, false });
+		}
+
+		[Test]
+		public void Algebraic4()
+		{
+//			var src = @"
+//type Test
+//    Value1
+//    Value2 of Test
+//    Value3 of Tuple<Test, string>
+//
+//let v1 = Value1 ()
+//let v2 = Value2 v1
+//let v3 = Value3 new(v2; ""hello"")
+//new [v1 is Test; v2 is Test; v3 is Test]";
+
+			var src = new NodeBase[]
+			{
+				Expr.Type(
+					"Test",
+					Expr.Label("Value1"),
+					Expr.Label("Value2", "Test"),
+					Expr.Label("Value3", "Tuple<Test, string>")
+				),
+
+				Expr.Let("v1", Expr.Invoke("Value1")),
+				Expr.Let("v2", Expr.Invoke("Value2", Expr.Get("v1"))),
+				Expr.Let(
+					"v3",
+					Expr.Invoke(
+						"Value3",
+						Expr.Array(Expr.Get("v2"), Expr.Str("hello"))
+					)
+				),
+				Expr.Array(
+					Expr.Is(Expr.Get("v1"), "Test"),
+					Expr.Is(Expr.Get("v2"), "Test"),
+					Expr.Is(Expr.Get("v3"), "Test")
+				)
+			};
+
+			Test(src, new[] {true, true, true});
 		}
 
 		[Test]
