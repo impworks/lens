@@ -46,8 +46,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var backup = ctx.CurrentCatchClause;
-			ctx.CurrentCatchClause = this;
+			var backup = ctx.CurrentCatchBlock;
+			ctx.CurrentCatchBlock = this;
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if(!type.IsSubclassOf(typeof(Exception)))
@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			gen.EmitLeave(ctx.CurrentTryBlock.EndLabel);
 
-			ctx.CurrentCatchClause = backup;
+			ctx.CurrentCatchBlock = backup;
 		}
 
 		#region Equality members

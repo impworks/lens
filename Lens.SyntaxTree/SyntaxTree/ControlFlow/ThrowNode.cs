@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			if (Expression == null)
 			{
-				if(ctx.CurrentCatchClause == null)
+				if(ctx.CurrentCatchBlock == null)
 					Error("An exception can only be rethrown from a catch clause.");
 
 				gen.EmitRethrow();

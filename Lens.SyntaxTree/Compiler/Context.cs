@@ -127,12 +127,20 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The current most nested try block.
 		/// </summary>
-		internal TryNode CurrentTryBlock { get; set; }
+		internal TryNode CurrentTryBlock
+		{
+			get { return CurrentMethod.CurrentTryBlock; }
+			set { CurrentMethod.CurrentTryBlock = value; }
+		}
 
 		/// <summary>
 		/// The current most nested catch block.
 		/// </summary>
-		internal CatchNode CurrentCatchClause { get; set; }
+		internal CatchNode CurrentCatchBlock
+		{
+			get { return CurrentMethod.CurrentCatchBlock; }
+			set { CurrentMethod.CurrentCatchBlock = value; }
+		}
 
 		/// <summary>
 		/// The lexical scope of the current scope.

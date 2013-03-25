@@ -54,6 +54,16 @@ namespace Lens.SyntaxTree.Compiler
 		public ILGenerator Generator { get; protected set; }
 
 		/// <summary>
+		/// 
+		/// </summary>
+		public TryNode CurrentTryBlock { get; set; }
+
+		/// <summary>
+		/// The current catch block.
+		/// </summary>
+		public CatchNode CurrentCatchBlock { get; set; }
+
+		/// <summary>
 		/// Process closures.
 		/// </summary>
 		public void ProcessClosures()
@@ -61,13 +71,17 @@ namespace Lens.SyntaxTree.Compiler
 			var ctx = ContainerType.Context;
 
 			var oldMethod = ctx.CurrentMethod;
+
 			ctx.CurrentMethod = this;
+			CurrentTryBlock = null;
+			CurrentCatchBlock = null;
 
 			Scope.InitializeScope(ctx);
 			Body.ProcessClosures(ctx);
 			Scope.FinalizeScope(ctx);
 
 			ctx.CurrentMethod = oldMethod;
+
 		}
 
 		/// <summary>
@@ -79,6 +93,8 @@ namespace Lens.SyntaxTree.Compiler
 
 			var backup = ctx.CurrentMethod;
 			ctx.CurrentMethod = this;
+			CurrentTryBlock = null;
+			CurrentCatchBlock = null;
 
 			emitPrelude(ctx);
 			compileCore(ctx);
