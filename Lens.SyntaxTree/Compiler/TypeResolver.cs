@@ -63,6 +63,11 @@ namespace Lens.SyntaxTree.Compiler
 		private static List<Assembly> _Assemblies;
 		private static readonly Dictionary<string, Type> _TypeAliases;
 
+		/// <summary>
+		/// The method that allows external types to be looked up.
+		/// </summary>
+		public Func<string, Type> ExternalLookup { get; set; }
+
 		private static void loadAssemblies()
 		{
 			_Assemblies = new List<Assembly>();
@@ -146,6 +151,14 @@ namespace Lens.SyntaxTree.Compiler
 		private Type findType(string name)
 		{
 			var checkNamespaces = !name.Contains('.');
+
+			if (checkNamespaces && ExternalLookup != null)
+			{
+				var candidate = ExternalLookup(name);
+				if (candidate != null)
+					return candidate;
+			}
+
 			
 			Type foundType = null;
 

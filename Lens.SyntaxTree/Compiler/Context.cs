@@ -37,6 +37,13 @@ namespace Lens.SyntaxTree.Compiler
 			var an = new AssemblyName(getAssemblyName());
 
 			_TypeResolver = new TypeResolver();
+			_TypeResolver.ExternalLookup = name =>
+			{
+				TypeEntity ent;
+				_DefinedTypes.TryGetValue(name, out ent);
+				return ent == null ? null : ent.TypeBuilder;
+			};
+
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
