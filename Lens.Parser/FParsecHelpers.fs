@@ -2,7 +2,7 @@
 
 open FParsec
 
-let debug = false
+let debug = true
 
 let (<!>) (p : Parser<_,_>) label : Parser<_,_> =
     if debug then
