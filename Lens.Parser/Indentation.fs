@@ -3,31 +3,54 @@
 open FParsec
 open Lens.Parser.FParsecHelpers
 
-let indent s = pstring "    " s
-let indentCount s = (indent |>> fun _ -> 1
-                    |> many
-                    |>> Seq.sum) s
+let private getRealIndent (stream : CharStream<ParserState>) = Reply stream.UserState.RealIndentation
+let private getVirtualIndent (stream : CharStream<ParserState>) = Reply stream.UserState.VirtualIndentation
+let private setIndent realValue virtualValue (stream : CharStream<ParserState>) =
+    stream.UserState <- { stream.UserState with
+                              RealIndentation = realValue
+                              VirtualIndentation = virtualValue }
+    Reply ()
 
-let getIndent (stream : CharStream<_>) =
-    let state = stream.State
-    stream.Seek stream.LineBegin
-    let s = indentCount stream
-    stream.BacktrackTo state
-    s.Result
+let private skipIndent indent =
+    let count = indent * 4
+    skipManyMinMaxSatisfy count count (fun c -> c = ' ')
 
-let skipIndent count =
-    (let spaceCount = count * 4
-     let isSpace c = c = ' '
-     skipManyMinMaxSatisfy spaceCount spaceCount isSpace) <!> sprintf "skipIndent %d" count
+let private decreaseIndent indent (stream : CharStream<ParserState>) =
+    let state = stream.UserState
+    if state.RealIndentation = state.VirtualIndentation
+    then let reply = (many (pstring "    ") |>> List.length) stream
+         let count = reply.Result
+         if count > indent
+         then fail "Incorrect indentation dectected on dedent" stream
+         else Reply count
+    else Reply state.RealIndentation
+    
 
-let indentedBlock parser =
-    (fun (stream : CharStream<ParserState>) ->
-        let indentation = getIndent stream
-        let elementParser = (skipNewline >>? skipIndent (indentation + 1) >>? parser)
-                            <!> (sprintf "indentedLine %d" (indentation + 1))
+let private checkIndent (stream : CharStream<ParserState>) =
+    let state = stream.UserState
+    if state.RealIndentation = state.VirtualIndentation
+    then Reply ()
+    else fail "Incorrect indentation" stream
 
-        stream
-        |> Inline.Many(stateFromFirstElement = (fun x -> [x]), 
-                       foldState = (fun xs x -> x::xs),
-                       resultFromState = List.rev,
-                       elementParser = elementParser)) <!> "indentedBlock"
+let nextLine : Parser<unit, ParserState> =
+    parse {
+        do! checkIndent
+        let! indent = getRealIndent
+        do! skipNewline
+        do! skipIndent indent
+    } <!> "indented line"
+
+let indent : Parser<unit, ParserState> =
+    parse {
+        let! indent = getRealIndent
+        do! nextLine
+        do! skipIndent 1
+        do! setIndent (indent + 1) (indent + 1)
+    } <!> "indent level increase"
+
+let dedent : Parser<unit, ParserState> =
+    parse {
+        let! indent = getVirtualIndent
+        let! realIndent = decreaseIndent indent
+        do! setIndent realIndent (indent - 1)
+    } <!> "indent level decrease"

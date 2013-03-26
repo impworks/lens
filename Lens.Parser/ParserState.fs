@@ -1,7 +1,9 @@
 ﻿namespace Lens.Parser
 
 type ParserState = {
-    Indentation: int
+    RealIndentation : int
+    VirtualIndentation : int
 }
     with
-        static member Create() = {Indentation = -1}
+        static member Create() = { RealIndentation = 0
+                                   VirtualIndentation = 0 }
