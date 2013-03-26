@@ -155,12 +155,12 @@ usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Nod
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := pipe2
                          <| (keyword "record" >>? identifier)
-                         <| (Indentation.indentedBlock recorddef_stmt .>>? nextLine)
+                         <| ((*Indentation.indentedBlock*)many1 recorddef_stmt .>>? nextLine)
                          <| Node.record
 recorddef_stmtRef     := (identifier .>>.? (token ":" >>? ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type"
                          >>? identifier
-                         .>>.? Indentation.indentedBlock typedef_stmt
+                         .>>.? (*Indentation.indentedBlock*)many1 typedef_stmt
                          .>>? nextLine
                          |>> Node.typeNode
 typedef_stmtRef       := identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
@@ -171,7 +171,7 @@ funcdefRef            := (pipe4
                           <| block
                           <| Node.functionNode) .>>? nextLine
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt <| keyword "ref") .>>.? ``type``) |>> Node.functionParameters
-blockRef              := ((Indentation.indentedBlock block_line .>>? nextLine)
+blockRef              := (((*Indentation.indentedBlock*)many1 block_line .>>? nextLine)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -231,7 +231,7 @@ lambda_exprRef        := pipe2
                          <| Node.lambda
 line_exprRef           := pipe2
                           <| attempt line_expr_0
-                          <| attempt (opt (Indentation.indentedBlock (token "|>" >>? identifier .>>.? invoke_list)))
+                          <| attempt (opt ((*Indentation.indentedBlock*)many1 (token "|>" >>? identifier .>>.? invoke_list)))
                           <| Node.fluentCall
 line_expr_0Ref         := pipe2
                          <| line_expr_1
@@ -298,8 +298,8 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := (Indentation.indentedBlock (token "<|" >>? choice [attempt expr
-                                                                            attempt byref_arg]))
+invoke_listRef        := ((*Indentation.indentedBlock*)many1 (token "<|" >>? choice [attempt expr
+                                                                                     attempt byref_arg]))
                          <|> ((many1 <| choice [attempt byref_arg
                                                 attempt value_expr]) <!> "invoke_list_single_line")
 byref_argRef          := choice [attempt (token "(" >>. keyword "ref" .>>. lvalue .>> token ")")
