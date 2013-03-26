@@ -27,6 +27,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<CatchNode> CatchClauses { get; set; }
 
+		/// <summary>
+		/// Label to jump to when there's no exception.
+		/// </summary>
 		public Label EndLabel { get; private set; }
 
 		public override LexemLocation EndLocation

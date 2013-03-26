@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			Type = type;
 		}
-
+		
 		/// <summary>
 		/// The type of the object to create.
 		/// </summary>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
@@ -208,16 +209,18 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal void ImportMethod(string name, Delegate method)
 		{
-			var info = method.GetType().GetMethod("Invoke");
-			var args = info.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
+			var mi = method.Method;
+			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
+				Context.Error("Only public, static, non-generic methods can be imported!");
 
+			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
 			{
 				Name = name,
-				IsStatic = info.IsStatic,
-				IsVirtual = info.IsVirtual,
+				IsStatic = true,
+				IsVirtual = false,
 				ContainerType = this,
-				MethodInfo = info,
+				MethodInfo = mi,
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
 			};
 
@@ -227,9 +230,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new field by type signature.
 		/// </summary>
-		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false)
+		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = false)
 		{
-			var fe = createFieldCore(name, isStatic);
+			var fe = createFieldCore(name, isStatic, prepare);
 			fe.TypeSignature = signature;
 			return fe;
 		}
@@ -237,9 +240,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new field by resolved type.
 		/// </summary>
-		internal FieldEntity CreateField(string name, Type type, bool isStatic = false)
+		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = false)
 		{
-			var fe = createFieldCore(name, isStatic);
+			var fe = createFieldCore(name, isStatic, prepare);
 			fe.Type = type;
 			return fe;
 		}
@@ -247,9 +250,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new method by resolved argument types.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
 		{
-			var me = createMethodCore(name, isStatic, isVirtual);
+			var me = createMethodCore(name, isStatic, isVirtual, prepare);
 			me.ArgumentTypes = argTypes;
 			me.ReturnType = returnType;
 			return me;
@@ -258,26 +261,26 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new method with argument types given by signatures.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
 		{
 			var args = argTypes == null
 				? null
 				: argTypes.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
 
-			return CreateMethod(name, returnType, args, isStatic, isVirtual);
+			return CreateMethod(name, returnType, args, isStatic, isVirtual, prepare);
 		}
 
 		/// <summary>
 		/// Creates a new method with argument types given by function arguments.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
 		{
 			var argHash = new HashList<FunctionArgument>();
 			if(args != null)
 				foreach (var curr in args)
 					argHash.Add(curr.Name, curr);
 
-			var me = createMethodCore(name, isStatic, isVirtual);
+			var me = createMethodCore(name, isStatic, isVirtual, prepare);
 			me.ReturnTypeSignature = returnType;
 			me.Arguments = argHash;
 			return me;
@@ -286,7 +289,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Creates a new constructor with the given argument types.
 		/// </summary>
-		internal ConstructorEntity CreateConstructor(string[] argTypes = null)
+		internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = false)
 		{
 			var ce = new ConstructorEntity
 			{
@@ -294,6 +297,10 @@ namespace Lens.SyntaxTree.Compiler
 				ContainerType = this,
 			};
 			_Constructors.Add(ce);
+
+			if(prepare)
+				ce.PrepareSelf();
+
 			return ce;
 		}
 
@@ -380,7 +387,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Create a field without setting type info.
 		/// </summary>
-		private FieldEntity createFieldCore(string name, bool isStatic)
+		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare)
 		{
 			if (_Fields.ContainsKey(name))
 				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
@@ -391,14 +398,19 @@ namespace Lens.SyntaxTree.Compiler
 				IsStatic = isStatic,
 				ContainerType = this,
 			};
+
 			_Fields.Add(name, fe);
+
+			if(prepare)
+				fe.PrepareSelf();
+
 			return fe;
 		}
 
 		/// <summary>
 		/// Creates a method without setting argument type info.
 		/// </summary>
-		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual)
+		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare)
 		{
 			var me = new MethodEntity
 			{
@@ -409,6 +421,10 @@ namespace Lens.SyntaxTree.Compiler
 			};
 
 			_MethodList.Add(me);
+
+			if(prepare)
+				me.PrepareSelf();
+
 			return me;
 		}
 

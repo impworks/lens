@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
 		private MethodInfo m_Method;
-		private int? m_Property;
+		private GlobalPropertyInfo m_Property;
 
 		/// <summary>
 		/// Local and closured variables can provide a location pointer.
@@ -39,8 +39,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				m_Property = GlobalPropertyHelper.FindByName(Identifier);
-				return GlobalPropertyHelper.TypeOf(m_Property.Value);
+				m_Property = ctx.ResolveGlobalProperty(Identifier);
+				return m_Property.PropertyType;
 			}
 			catch (KeyNotFoundException)
 			{
@@ -92,17 +92,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			// get a property value
-			if (m_Property.HasValue)
+			if (m_Property != null)
 			{
-				var id = m_Property.Value;
-				if(!GlobalPropertyHelper.HasGetter(id))
+				var id = m_Property.PropertyId;
+				if(!m_Property.HasGetter)
 					Error("Global property '{0}' has no getter!", Identifier);
 
-				var type = GlobalPropertyHelper.TypeOf(id);
-				var method = typeof (GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
-
-				gen.EmitConstant(id);
-				gen.EmitCall(method);
+				var type = m_Property.PropertyType;
+				if (m_Property.GetterMethod != null)
+				{
+					gen.EmitCall(m_Property.GetterMethod);
+				}
+				else
+				{
+					var method = typeof (GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
+					gen.EmitConstant(ctx.ContextId);
+					gen.EmitConstant(id);
+					gen.EmitCall(method);
+				}
 				return;
 			}
 

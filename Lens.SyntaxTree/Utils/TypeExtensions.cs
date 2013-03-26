@@ -182,8 +182,14 @@ namespace Lens.SyntaxTree.Utils
 
 				if (varType.IsNumericType() && exprType.IsNumericType())
 					return NumericTypeConversion(varType, exprType);
+			}
 
-				if (varType == typeof (object) && exprType.IsValueType)
+			if (varType == typeof (object))
+			{
+				if (exprType.IsValueType)
+					return exactly ? int.MaxValue : 1;
+
+				if (exprType.IsInterface)
 					return 1;
 			}
 

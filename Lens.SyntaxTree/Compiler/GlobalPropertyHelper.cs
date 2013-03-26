@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -11,88 +12,78 @@ namespace Lens.SyntaxTree.Compiler
 	{
 		static GlobalPropertyHelper()
 		{
-			m_Properties = new List<GlobalPropertyEntity>();
-			m_Lookup = new Dictionary<string, int>();
+			m_Properties = new List<List<GlobalPropertyEntity>>();
 		}
 
-		private static readonly Dictionary<string, int> m_Lookup;
-		private static readonly List<GlobalPropertyEntity> m_Properties;
+		private static readonly List<List<GlobalPropertyEntity>> m_Properties;
 
 		/// <summary>
-		/// Removes all properties from the list.
+		/// Adds a new tier for current compiler instance and returns the unique id.
 		/// </summary>
-		public static void Clear()
+		public static int RegisterContext()
 		{
-			m_Properties.Clear();
-			m_Lookup.Clear();
+			m_Properties.Add(new List<GlobalPropertyEntity>());
+			return m_Properties.Count - 1;
 		}
 
-		/// <summary>
-		/// Gets property id by name.
-		/// </summary>
-		public static int FindByName(string name)
+		public static void UnregisterContext(int contextId)
 		{
-			int id;
-			if(!m_Lookup.TryGetValue(name, out id))
-				throw new KeyNotFoundException();
+			if (contextId < 0 || contextId > m_Properties.Count - 1)
+				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
 
-			return id;
+#if DEBUG
+			var curr = m_Properties[contextId];
+			if (curr == null)
+				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+#endif
+
+			m_Properties[contextId] = null;
 		}
 
 		/// <summary>
 		/// Registers a property and returns its unique ID.
 		/// </summary>
-		public static int RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
+		public static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
 		{
-			if(m_Lookup.ContainsKey(name))
-				throw new ArgumentException(string.Format("Property '{0}' has already been defined!", name));
+			if (getter == null && setter == null)
+				throw new ArgumentNullException("getter");
 
-			var pty = new GlobalPropertyEntity(typeof (T), getter, setter);
-			m_Properties.Add(pty);
-			var id = m_Properties.Count - 1;
-			m_Lookup.Add(name, id);
-			return id;
+			m_Properties[contextId].Add(new GlobalPropertyEntity { Getter = getter, Setter = setter } );
+			var id = m_Properties[contextId].Count - 1;
+
+			return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
 		}
 
 		/// <summary>
-		/// Checks if the property has a getter.
+		/// Registers a property and returns its unique ID.
 		/// </summary>
-		public static bool HasGetter(int id)
+		public static GlobalPropertyInfo RegisterProperty(int contextId, MethodInfo getter, MethodInfo setter)
 		{
-			validateId(id);
-			return m_Properties[id].Getter != null;
-		}
+			// todo: additional checks
 
-		/// <summary>
-		/// Checks if the property has a setter.
-		/// </summary>
-		public static bool HasSetter(int id)
-		{
-			validateId(id);
-			return m_Properties[id].Setter != null;
-		}
+			if (getter == null && setter == null)
+				throw new ArgumentNullException("getter");
 
-		/// <summary>
-		/// Returns the type of the property.
-		/// </summary>
-		public static Type TypeOf(int id)
-		{
-			validateId(id);
-			return m_Properties[id].PropertyType;
+			if(getter != null && setter != null && getter.ReturnType != setter.GetParameters()[0].ParameterType)
+				throw new InvalidOperationException("Getter and setter methods must match in return types!");
+
+			m_Properties[contextId].Add(new GlobalPropertyEntity { GetterMethod = getter, SetterMethod = setter });
+			var id = m_Properties[contextId].Count - 1;
+
+			var type = getter != null ? getter.ReturnType : setter.GetParameters()[0].ParameterType;
+
+			return new GlobalPropertyInfo(id, type, getter != null, setter != null, getter, setter);
 		}
 
 		/// <summary>
 		/// Gets the value of a property.
 		/// </summary>
-		public static T Get<T>(int id)
+		public static T Get<T>(int contextId, int id)
 		{
-			validateId(id);
-			var info = m_Properties[id];
+			validateId(contextId, id);
+			var info = m_Properties[contextId][id];
 
 #if DEBUG
-			if(typeof(T) != info.PropertyType)
-				throw new InvalidOperationException(string.Format("Property #{0} is of type '{1}', but requested type was '{2}'.", id, info.PropertyType, typeof(T)));
-
 			if(info.Getter == null)
 				throw new InvalidOperationException(string.Format("Property #{0} has no getter!", id));
 #endif
@@ -103,15 +94,12 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Sets the value of a property.
 		/// </summary>
-		public static void Set<T>(int id, T value)
+		public static void Set<T>(int contextId, int id, T value)
 		{
-			validateId(id);
-			var info = m_Properties[id];
+			validateId(contextId, id);
+			var info = m_Properties[contextId][id];
 
 #if DEBUG
-			if (typeof(T) != info.PropertyType)
-				throw new InvalidOperationException(string.Format("Property #{0} is of type '{1}', but passed type was '{2}'.", id, info.PropertyType, typeof(T)));
-
 			if (info.Setter == null)
 				throw new InvalidOperationException(string.Format("Property #{0} has no setter!", id));
 #endif
@@ -120,24 +108,48 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		[Conditional("DEBUG")]
-		private static void validateId(int id)
+		private static void validateId(int contextId, int id)
 		{
-			if(id < 0 || id > m_Properties.Count - 1)
-				throw new ArgumentException(string.Format("Property #{0} has does not exist!", id));
+			if (contextId < 0 || contextId > m_Properties.Count - 1)
+				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
+
+			var curr = m_Properties[contextId];
+			if(curr == null)
+				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+
+			if(id < 0 || id > m_Properties[contextId].Count - 1)
+				throw new ArgumentException(string.Format("Property #{0} does not exist!", id));
 		}
 
 		private class GlobalPropertyEntity
 		{
-			public readonly Type PropertyType;
-			public readonly Delegate Getter;
-			public readonly Delegate Setter;
+			public Delegate Getter;
+			public Delegate Setter;
+			public MethodInfo GetterMethod;
+			public MethodInfo SetterMethod;
+		}
+	}
 
-			public GlobalPropertyEntity(Type propType, Delegate getter, Delegate setter)
-			{
-				PropertyType = propType;
-				Getter = getter;
-				Setter = setter;
-			}
+	public class GlobalPropertyInfo
+	{
+		public readonly int PropertyId;
+		public readonly Type PropertyType;
+
+		public readonly bool HasGetter;
+		public readonly bool HasSetter;
+
+		public readonly MethodInfo GetterMethod;
+		public readonly MethodInfo SetterMethod;
+
+		public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodInfo getterMethod, MethodInfo setterMethod)
+		{
+			PropertyId = id;
+			PropertyType = propType;
+			HasGetter = hasGetter;
+			HasSetter = hasSetter;
+
+			GetterMethod = getterMethod;
+			SetterMethod = setterMethod;
 		}
 	}
 }
