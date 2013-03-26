@@ -9,7 +9,7 @@ let private setIndent realValue virtualValue (stream : CharStream<ParserState>) 
     stream.UserState <- { stream.UserState with
                               RealIndentation = realValue
                               VirtualIndentation = virtualValue }
-    Reply ()
+    Reply()
 
 let private skipIndent indent =
     let count = indent * 4
@@ -29,7 +29,7 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
 let private checkIndent (stream : CharStream<ParserState>) =
     let state = stream.UserState
     if state.RealIndentation = state.VirtualIndentation
-    then Reply ()
+    then Reply()
     else fail "Incorrect indentation" stream
 
 let nextLine : Parser<unit, ParserState> =
