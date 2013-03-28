@@ -666,6 +666,141 @@ x == y
 			Test(src, "ab");
 		}
 
+		[Test]
+		public void CustomIf()
+		{
+			var src = @"
+type Clauses
+    Else
+fun If x:bool t:Action s:Else f:Action ->
+    let tAction = ->
+        t ()
+        true
+    let fAction = ->
+        f ()
+        false
+    x && tAction()
+    x || fAction()
+var res = string::Empty
+If (1 > 2) (-> res = ""a"") Else (-> res = ""b"")
+res
+";
+//			var src = new NodeBase[]
+//			{
+//				Expr.Type("Clauses", Expr.Label("Else")),
+//				Expr.Fun(
+//					"If",
+//					new [] { Expr.Arg("x", "bool"), Expr.Arg("t", "Action"), Expr.Arg("s", "Else"), Expr.Arg("f", "Action")},
+//					Expr.Let(
+//						"tAction",
+//						Expr.Lambda(
+//							Expr.Invoke(Expr.Get("t")),
+//							Expr.True()
+//						)
+//					),
+//					Expr.Let(
+//						"fAction",
+//						Expr.Lambda(
+//							Expr.Invoke(Expr.Get("f")),
+//							Expr.False()
+//						)
+//					),
+//					Expr.And(
+//						Expr.Get("x"),
+//						Expr.Invoke("tAction")
+//					),
+//					Expr.And(
+//						Expr.Not(Expr.Get("x")),
+//						Expr.Invoke("fAction")
+//					),
+//					Expr.Unit()
+//				),
+//				Expr.Var("res", Expr.Str()),
+//				Expr.Invoke(
+//					"If",
+//					Expr.Greater(
+//						Expr.Int(1),
+//						Expr.Int(2)
+//					),
+//					Expr.Lambda(
+//						Expr.Set("res", Expr.Str("a"))
+//					),
+//					Expr.Get("Else"),
+//					Expr.Lambda(
+//						Expr.Set("res", Expr.Str("b"))
+//					)
+//				),
+//				Expr.Get("res")
+//			};
+
+			Test(src, "b");
+		}
+
+		[Test]
+		public void CustomWhile()
+		{
+			var src = @"
+fun While cond:Func<bool> body:Action ->
+    var act = null as Action
+    act = ->
+        if(cond ())
+            body ()
+            act ()
+    act ()
+
+var result = new List<int> ()
+var idx = 0
+While
+    <| -> idx < 10
+    <| ->
+        result.Add idx
+        idx = idx + 1
+
+result.Count
+";
+
+//			var src = new NodeBase[]
+//			{
+//				Expr.Fun(
+//					"While",
+//					new [] { Expr.Arg("cond", "Func<bool>"), Expr.Arg("body", "Action") },
+//					Expr.Var("act", Expr.Cast(Expr.Null(), "Action")),
+//					Expr.Set(
+//						"act",
+//						Expr.Lambda(
+//							Expr.If(
+//								Expr.Invoke("cond"),
+//								Expr.Block(
+//									Expr.Invoke("body"),
+//									Expr.Invoke("act")
+//								)
+//							)
+//						)
+//					),
+//					Expr.Invoke("act")
+//				),
+//
+//				Expr.Var("result", Expr.New("List<int>")),
+//				Expr.Var("idx", Expr.Int(0)),
+//				Expr.Invoke(
+//					"While",
+//					Expr.Lambda(
+//						Expr.Less(Expr.Get("idx"), Expr.Int(10))
+//					),
+//					Expr.Lambda(
+//						Expr.Invoke(Expr.Get("result"), "Add", Expr.Get("idx")),
+//						Expr.Set(
+//							"idx",
+//							Expr.Add(Expr.Get("idx"), Expr.Int(1))
+//						)
+//					)
+//				),
+//				Expr.GetMember(Expr.Get("result"), "Count")
+//			};
+
+			Test(src, 10);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, new LensCompiler().Run(src));

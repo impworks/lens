@@ -101,7 +101,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var type = m_Property.PropertyType;
 				if (m_Property.GetterMethod != null)
 				{
-					gen.EmitCall(m_Property.GetterMethod);
+					gen.EmitCall(m_Property.GetterMethod.MethodInfo);
 				}
 				else
 				{

@@ -277,17 +277,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
-			var mainType = CreateType(node.Name);
+			var mainType = CreateType(node.Name, prepare: true);
 			mainType.Kind = TypeEntityKind.Type;
 
 			foreach (var curr in node.Entries)
 			{
 				var tagName = curr.Name;
-				var labelType = CreateType(tagName, node.Name, true);
+				var labelType = CreateType(tagName, node.Name, isSealed: true, prepare: true);
 				labelType.Kind = TypeEntityKind.TypeLabel;
 
 				var ctor = labelType.CreateConstructor();
-				var staticCtor = RootType.CreateMethod(tagName, tagName, new string[0], true);
+				var staticCtor = labelType.CreateMethod(tagName, tagName, new string[0], true);
 
 				if (curr.IsTagged)
 				{
@@ -308,6 +308,9 @@ namespace Lens.SyntaxTree.Compiler
 				else
 				{
 					staticCtor.Body.Add(Expr.New(tagName));
+
+					var pty = GlobalPropertyHelper.RegisterProperty(ContextId, labelType.TypeInfo, staticCtor, null);
+					_DefinedProperties.Add(tagName, pty);
 				}
 			}
 		}

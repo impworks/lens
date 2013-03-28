@@ -82,7 +82,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (pty.SetterMethod != null)
 				{
 					cast.Compile(ctx, true);
-					gen.EmitCall(pty.SetterMethod);
+					gen.EmitCall(pty.SetterMethod.MethodInfo);
 				}
 				else
 				{
