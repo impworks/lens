@@ -466,7 +466,7 @@ new [ a is TestType; a is Small; a is Large ]";
 //    Value2 of Test
 //    Value3 of Tuple<Test, string>
 //
-//let v1 = Value1 ()
+//let v1 = Value1
 //let v2 = Value2 v1
 //let v3 = Value3 new(v2; ""hello"")
 //new [v1 is Test; v2 is Test; v3 is Test]";
@@ -480,7 +480,7 @@ new [ a is TestType; a is Small; a is Large ]";
 					Expr.Label("Value3", "Tuple<Test, string>")
 				),
 
-				Expr.Let("v1", Expr.Invoke("Value1")),
+				Expr.Let("v1", Expr.Get("Value1")),
 				Expr.Let("v2", Expr.Invoke("Value2", Expr.Get("v1"))),
 				Expr.Let(
 					"v3",

@@ -287,14 +287,13 @@ namespace Lens.SyntaxTree.Compiler
 				labelType.Kind = TypeEntityKind.TypeLabel;
 
 				var ctor = labelType.CreateConstructor();
-				var staticCtor = labelType.CreateMethod(tagName, tagName, new string[0], true);
-
 				if (curr.IsTagged)
 				{
 					labelType.CreateField("Tag", curr.TagType);
 
 					var args = new HashList<FunctionArgument> { { "value", new FunctionArgument("value", curr.TagType) } };
 
+					var staticCtor = RootType.CreateMethod(tagName, tagName, new string[0], true);
 					ctor.Arguments = staticCtor.Arguments = args;
 
 					ctor.Body.Add(
@@ -307,6 +306,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else
 				{
+					var staticCtor = labelType.CreateMethod(tagName, tagName, new string[0], true);
 					staticCtor.Body.Add(Expr.New(tagName));
 
 					var pty = GlobalPropertyHelper.RegisterProperty(ContextId, labelType.TypeInfo, staticCtor, null);
