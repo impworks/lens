@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
@@ -11,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	public class SetMemberNode : MemberNodeBase
 	{
 		private bool m_IsStatic;
-		private PropertyInfo m_Property;
+		private MethodInfo m_PropertySetter;
 		private FieldInfo m_Field;
 
 		/// <summary>
@@ -38,7 +39,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var gen = ctx.CurrentILGenerator;
 
-			var destType = m_Field != null ? m_Field.FieldType : m_Property.PropertyType;
+			var destType = m_Field != null ? m_Field.FieldType : m_PropertySetter.GetParameters()[0].ParameterType;
 			var valType = Value.GetExpressionType(ctx);
 
 			if (valType.IsVoid())
@@ -62,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if(m_Field != null)
 				gen.EmitSaveField(m_Field);
 			else
-				gen.EmitCall(m_Property.GetSetMethod(), true);
+				gen.EmitCall(m_PropertySetter, true);
 		}
 
 		private void resolve(Context ctx)
@@ -85,14 +86,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				m_Property = ctx.ResolveProperty(type, MemberName);
-				var setMbr = m_Property.GetSetMethod();
-				if(setMbr == null)
-					Error("Property '{0}' of type '{1}' does not have a public setter!");
-
-				m_IsStatic = setMbr.IsStatic;
+				m_PropertySetter = ctx.ResolvePropertySetter(type, MemberName);
+				m_IsStatic = m_PropertySetter.IsStatic;
 				if (Expression == null && !m_IsStatic)
 					Error("Property '{0}' of type '{1}' cannot be used in static context!", type, MemberName);
+			}
+			catch(ArgumentNullException)
+			{
+				Error("Property '{0}' of type '{1}' does not have a public setter!");
 			}
 			catch (KeyNotFoundException)
 			{

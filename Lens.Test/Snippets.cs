@@ -801,6 +801,21 @@ result.Count
 			Test(src, 10);
 		}
 
+		[Test]
+		public void GenericWithCustom()
+		{
+			var src = @"
+record MyRecord
+    Value : int
+var r1 = new MyRecord 1
+var r2 = new MyRecord 2
+var res = new (r1; r2)
+res.Item1.Value + res.Item2.Value
+";
+
+			Test(src, 3);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, new LensCompiler().Run(src));

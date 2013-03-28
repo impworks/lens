@@ -21,9 +21,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private bool m_IsResolved;
 
 		private Type m_Type;
-		private PropertyInfo m_Property;
 		private FieldInfo m_Field;
 		private MethodInfo m_Method;
+		private MethodInfo m_PropertyGetter;
 
 		private bool m_IsStatic;
 
@@ -48,8 +48,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (m_Field != null)
 				return m_Field.FieldType;
 
-			if (m_Property != null)
-				return m_Property.PropertyType;
+			if (m_PropertyGetter != null)
+				return m_PropertyGetter.ReturnType;
 
 			var argTypes = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 			return m_Method.ReturnType == typeof (void)
@@ -95,14 +95,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			// check for property
 			try
 			{
-				m_Property = ctx.ResolveProperty(m_Type, MemberName);
-				if (!m_Property.CanRead)
-					Error("Property '{0}' of type '{1}' does not have a getter!", m_Property.Name, m_Type);
-
-				m_IsStatic = m_Property.GetGetMethod().IsStatic;
+				m_PropertyGetter = ctx.ResolvePropertyGetter(m_Type, MemberName);
+				m_IsStatic = m_PropertyGetter.IsStatic;
 
 				check();
 				return;
+			}
+			catch (ArgumentNullException)
+			{
+				Error("Property '{0}' of type '{1}' does not have a getter!", MemberName, m_Type);
 			}
 			catch (KeyNotFoundException)
 			{ }
@@ -229,10 +230,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				return;
 			}
 
-			if (m_Property != null)
+			if (m_PropertyGetter != null)
 			{
-				var getter = m_Property.GetGetMethod();
-				gen.EmitCall(getter);
+				gen.EmitCall(m_PropertyGetter);
 				return;
 			}
 

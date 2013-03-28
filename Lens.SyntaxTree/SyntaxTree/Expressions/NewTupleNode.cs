@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			foreach(var curr in Expressions)
 				curr.Compile(ctx, true);
 
-			var ctor = GetExpressionType(ctx).GetConstructor(m_Types);
+			var ctor = ctx.ResolveConstructor(GetExpressionType(ctx), m_Types);
 			gen.EmitCreateObject(ctor);
 		}
 

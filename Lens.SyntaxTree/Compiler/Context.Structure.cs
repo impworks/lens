@@ -157,9 +157,30 @@ namespace Lens.SyntaxTree.Compiler
 			if(args == null)
 				args = new Type[0];
 
-			var method = type is TypeBuilder
-				? _DefinedTypes[type.Name].ResolveMethod(methodName, args)
-				: ResolveMethodByArgs(type.GetMethods().Where(m => m.Name == methodName), m => m.GetParameters().Select(p => p.ParameterType).ToArray(), args).Item1;
+			MethodInfo method;
+			if (type is TypeBuilder)
+			{
+				method = _DefinedTypes[type.Name].ResolveMethod(methodName, args);
+			}
+			else
+			{
+				IEnumerable<MethodInfo> methods;
+				try
+				{
+					methods = type.GetMethods().Where(m => m.Name == methodName);
+				}
+				catch (NotSupportedException)
+				{
+					// type is a generic type that references a dynamic type generated with LENS
+					// going the long & hard way...
+					var genType = type.GetGenericTypeDefinition();
+					methods = genType.GetMethods()
+					                 .Where(m => m.Name == methodName)
+					                 .Select(m => TypeBuilder.GetMethod(type, m));
+				}
+
+				method = ResolveMethodByArgs(methods, m => m.GetParameters().Select(p => p.ParameterType).ToArray(), args).Item1;
+			}
 
 			if(method == null)
 				throw new KeyNotFoundException();
@@ -195,9 +216,24 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public FieldInfo ResolveField(Type type, string fieldName)
 		{
-			var field = type is TypeBuilder
-				? _DefinedTypes[type.Name].ResolveField(fieldName)
-				: type.GetField(fieldName);
+			FieldInfo field;
+			if (type is TypeBuilder)
+			{
+				field = _DefinedTypes[type.Name].ResolveField(fieldName);
+			}
+			else
+			{
+				try
+				{
+					field = type.GetField(fieldName);
+				}
+				catch (NotSupportedException)
+				{
+					var genType = type.GetGenericTypeDefinition();
+					var origField = genType.GetField(fieldName);
+					field = origField == null ? null : TypeBuilder.GetField(type, origField);
+				}
+			}
 
 			if(field == null)
 				throw new KeyNotFoundException();
@@ -208,17 +244,50 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a property by its name.
 		/// </summary>
-		public PropertyInfo ResolveProperty(Type type, string propertyName)
+		public MethodInfo ResolvePropertyGetter(Type type, string propertyName)
 		{
-			// todo: properties for built-in types?
-			if(type is TypeBuilder)
+			return resolvePropertyAccessor(type, propertyName, p => p.GetGetMethod());
+		}
+
+		/// <summary>
+		/// Resolves a property by its name.
+		/// </summary>
+		public MethodInfo ResolvePropertySetter(Type type, string propertyName)
+		{
+			return resolvePropertyAccessor(type, propertyName, p => p.GetSetMethod());
+		}
+
+		private MethodInfo resolvePropertyAccessor(Type type, string propertyName, Func<PropertyInfo, MethodInfo> acc)
+		{
+			// built-in types have no properties fo'chizzle.
+			if (type is TypeBuilder)
 				throw new KeyNotFoundException();
 
-			var pty = type.GetProperty(propertyName);
-			if(pty == null)
-				throw new KeyNotFoundException();
+			try
+			{
+				var pty = type.GetProperty(propertyName);
+				if (pty == null)
+					throw new KeyNotFoundException();
 
-			return pty;
+				var accValue = acc(pty);
+				if(accValue == null)
+					throw new ArgumentNullException();
+
+				return accValue;
+			}
+			catch (NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var origPty = genType.GetProperty(propertyName);
+				if (origPty == null)
+					throw new KeyNotFoundException();
+
+				var accValue = acc(origPty);
+				if(accValue == null)
+					throw new ArgumentNullException();
+
+				return TypeBuilder.GetMethod(type, accValue);
+			}
 		}
 
 		/// <summary>
@@ -237,9 +306,24 @@ namespace Lens.SyntaxTree.Compiler
 			if (args == null)
 				args = new Type[0];
 
-			var ctor = type is TypeBuilder
-				? _DefinedTypes[type.Name].ResolveConstructor(args)
-				: type.GetConstructor(args);
+			ConstructorInfo ctor;
+			if (type is TypeBuilder)
+			{
+				ctor = _DefinedTypes[type.Name].ResolveConstructor(args);
+			}
+			else
+			{
+				try
+				{
+					ctor = type.GetConstructor(args);
+				}
+				catch (NotSupportedException)
+				{
+					var genType = type.GetGenericTypeDefinition();
+					var ctors = genType.GetConstructors().Select(c => TypeBuilder.GetConstructor(type, c));
+					ctor = ResolveMethodByArgs(ctors, c => c.GetParameters().Select(p => p.ParameterType).ToArray(), args).Item1;
+				}
+			}
 
 			if(ctor == null)
 				throw new KeyNotFoundException();
@@ -329,8 +413,8 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var field = recType.CreateField(curr.Name, curr.Type);
 				var argName = "_" + field.Name.ToLowerInvariant();
-				
-				recCtor.Arguments.Add(argName, new FunctionArgument(argName, field.Type));
+
+				recCtor.Arguments.Add(argName, new FunctionArgument(argName, curr.Type));
 				recCtor.Body.Add(
 					Expr.SetMember(Expr.This(), field.Name, Expr.Get(argName))
 				);
