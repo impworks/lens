@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -470,6 +472,20 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			return result[0];
+		}
+
+		/// <summary>
+		/// Checks if the expression returns a value and has a specified type.
+		/// </summary>
+		public void CheckTypedExpression(NodeBase node, Type calculatedType = null, bool allowNull = false)
+		{
+			var type = calculatedType ?? node.GetExpressionType(this);
+
+			if(!allowNull && type == typeof(NullType))
+				Error(node, "Expression type cannot be inferred! Please use type casting to specify actual type.");
+
+			if(type.IsVoid())
+				Error(node, "Expression that returns a value is expected!");
 		}
 
 		#endregion

@@ -42,10 +42,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var destType = m_Field != null ? m_Field.FieldType : m_PropertySetter.GetParameters()[0].ParameterType;
 			var valType = Value.GetExpressionType(ctx);
 
-			if (valType.IsVoid())
-				Error("Cannot use a function or expression that does not return anything as assignment source!");
+			ctx.CheckTypedExpression(Value, valType, true);
 
-			// todo: extract, add check for null
 			if(!destType.IsExtendablyAssignableFrom(valType))
 				Error("Cannot implicitly convert an object of type '{0}' to required type '{1}'!", valType, destType);
 

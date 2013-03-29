@@ -44,8 +44,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var currType = Expressions[idx].GetExpressionType(ctx);
 
-				if (currType.IsVoid())
-					Error(Expressions[idx], "An expression that returns a value is expected!");
+				ctx.CheckTypedExpression(Expressions[idx], currType, true);
 
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
 					Error(Expressions[idx], "Cannot add object of type '{0}' to array of type '{1}'!", currType, m_ItemType);

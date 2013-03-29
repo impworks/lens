@@ -42,6 +42,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			var exprType = Value.GetExpressionType(ctx);
+			ctx.CheckTypedExpression(Value, exprType, true);
 
 			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)

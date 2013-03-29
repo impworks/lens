@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using JetBrains.Annotations;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -87,6 +88,15 @@ namespace Lens.SyntaxTree.Compiler
 		public void Error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args));
+		}
+
+		/// <summary>
+		/// Throws a new error bound to a location.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		public void Error(LocationEntity ent, string msg, params object[] args)
+		{
+			throw new LensCompilerException(string.Format(msg, args), ent);
 		}
 
 		#region Properties
