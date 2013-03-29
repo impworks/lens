@@ -70,6 +70,7 @@
     <Compile Include="Compiler\TypeContentsBase.cs" />
     <Compile Include="Compiler\TypeEntity.cs" />
     <Compile Include="Compiler\TypeResolver.cs" />
+    <Compile Include="Compiler\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
