@@ -58,6 +58,7 @@
     <Compile Include="Compiler\CompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
+    <Compile Include="Compiler\Context.Lookup.cs" />
     <Compile Include="Compiler\Context.Structure.cs" />
     <Compile Include="Compiler\GlobalPropertyHelper.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
