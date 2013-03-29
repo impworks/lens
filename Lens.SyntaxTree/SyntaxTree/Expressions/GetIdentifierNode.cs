@@ -143,14 +143,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			while (dist > 1)
 			{
 				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
-				gen.EmitLoadField(rootField);
+				gen.EmitLoadField(rootField.FieldInfo);
 
 				type = rootField.FieldType;
 				dist--;
 			}
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitLoadField(clsField, PointerRequired);
+			gen.EmitLoadField(clsField.FieldInfo, PointerRequired);
 		}
 
 		private void getLocal(Context ctx, LocalName name)

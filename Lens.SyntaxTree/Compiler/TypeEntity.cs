@@ -307,22 +307,22 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a field assembly entity.
 		/// </summary>
-		internal FieldInfo ResolveField(string name)
+		internal FieldEntity ResolveField(string name)
 		{
 			FieldEntity fe;
 			if (!_Fields.TryGetValue(name, out fe))
-				return null;
+				throw new KeyNotFoundException();
 
 			if(fe.FieldBuilder == null)
 				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
 
-			return fe.FieldBuilder;
+			return fe;
 		}
 
 		/// <summary>
 		/// Resolves a method assembly entity.
 		/// </summary>
-		internal MethodInfo ResolveMethod(string name, Type[] args, bool exact = false)
+		internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false)
 		{
 			List<MethodEntity> group;
 			if (!_Methods.TryGetValue(name, out group))
@@ -332,52 +332,28 @@ namespace Lens.SyntaxTree.Compiler
 			if(exact && info.Item2 != 0)
 				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
 
-			return info.Item1.MethodBuilder;
+			return info.Item1;
 		}
 
 		/// <summary>
 		/// Resolves a group of methods by their name.
 		/// </summary>
-		internal MethodInfo[] ResolveMethodGroup(string name)
+		internal MethodEntity[] ResolveMethodGroup(string name)
 		{
 			List<MethodEntity> group;
-			return _Methods.TryGetValue(name, out group)
-				? group.Select(m => m.MethodBuilder).ToArray()
-				: new MethodInfo[0];
+			if(!_Methods.TryGetValue(name, out group))
+				throw new KeyNotFoundException();
+			
+			return group.ToArray();
 		}
 
 		/// <summary>
 		/// Resolves a method assembly entity.
 		/// </summary>
-		internal ConstructorInfo ResolveConstructor(Type[] args)
+		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
 			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
-			return info.Item1.ConstructorBuilder;
-		}
-
-		/// <summary>
-		/// Finds information about a method in the type.
-		/// </summary>
-		internal MethodEntity FindMethod(MethodInfo method)
-		{
-			foreach(var currGroup in _Methods)
-				foreach(var currMethod in currGroup.Value)
-					if (currMethod.MethodBuilder == method)
-						return currMethod;
-
-			throw new KeyNotFoundException();
-		}
-
-		/// <summary>
-		/// Finds information about a method in the type.
-		/// </summary>
-		internal ConstructorEntity FindConstructor(ConstructorInfo ctor)
-		{
-			foreach (var currCtor in _Constructors)
-				if (currCtor.ConstructorBuilder == ctor)
-					return currCtor;
-
-			throw new KeyNotFoundException();
+			return info.Item1;
 		}
 
 		#endregion

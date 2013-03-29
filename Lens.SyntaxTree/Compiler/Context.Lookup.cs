@@ -49,31 +49,154 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public FieldWrapper ResolveField(Type type, string name)
 		{
+			if (type is TypeBuilder)
+			{
+				var typeEntity = _DefinedTypes[type.Name];
+				var fi = typeEntity.ResolveField(name);
+				return new FieldWrapper
+				{
+					Name = name,
+					Type = type,
+
+					FieldInfo = fi.FieldBuilder,
+					IsStatic = fi.IsStatic,
+					FieldType = fi.FieldBuilder.FieldType
+				};
+			}
+
 			try
 			{
 				var field = type.GetField(name);
-				return new FieldWrapper(field, type, field.FieldType);
+				if(field == null)
+					throw new KeyNotFoundException();
+
+				return new FieldWrapper
+				{
+					FieldInfo = field,
+					IsStatic = field.IsStatic, 
+					FieldType = field.FieldType
+				};
 			}
 			catch (NotSupportedException)
 			{
 				var genType = type.GetGenericTypeDefinition();
 				var genField = genType.GetField(name);
 
-				return new FieldWrapper(
-					TypeBuilder.GetField(type, genField),
-					type,
-					GenericHelper.ApplyGenericArguments(genField.FieldType, type)
-				);
+				if (genField == null)
+					throw new KeyNotFoundException();
+
+				return new FieldWrapper
+				{
+					Name = name,
+					Type = type,
+
+					FieldInfo = TypeBuilder.GetField(type, genField),
+					IsStatic =  genField.IsStatic,
+					FieldType = GenericHelper.ApplyGenericArguments(genField.FieldType, type)
+				};
 			}
 		}
 
-//		/// <summary>
-//		/// Resolves a property 
-//		/// </summary>
-//		public PropertyWrapper ResolveProperty(Type type, string name)
-//		{
-//			
-//		}
+		/// <summary>
+		/// Resolves a property from a type by its name.
+		/// </summary>
+		public PropertyWrapper ResolveProperty(Type type, string name)
+		{
+			// no internal properties
+			if(type is TypeBuilder)
+				throw new KeyNotFoundException();
+
+			try
+			{
+				var pty = type.GetProperty(name);
+				if (pty == null)
+					throw new KeyNotFoundException();
+
+				return new PropertyWrapper
+				{
+					Name = name,
+					Type = type,
+
+					Getter = pty.GetGetMethod(),
+					Setter = pty.GetSetMethod(),
+					IsStatic = (pty.GetGetMethod() ?? pty.GetSetMethod()).IsStatic,
+					PropertyType = pty.PropertyType
+				};
+			}
+			catch(NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var genPty = genType.GetProperty(name);
+
+				if (genPty == null)
+					throw new KeyNotFoundException();
+
+				var getter = genPty.GetGetMethod();
+				var setter = genPty.GetSetMethod();
+
+				return new PropertyWrapper
+				{
+					Name = name,
+					Type = type,
+					
+					Getter = getter == null ? null : TypeBuilder.GetMethod(type, getter),
+					Setter = setter == null ? null : TypeBuilder.GetMethod(type, setter),
+					IsStatic = (getter ?? setter).IsStatic,
+					PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
+				};
+			}
+		}
+
+		/// <summary>
+		/// Resolves a constructor from a type by the list of arguments.
+		/// </summary>
+		public ConstructorWrapper ResolveConstructor(Type type, Type[] argTypes)
+		{
+			if (type is TypeBuilder)
+			{
+				var typeEntity = _DefinedTypes[type.Name];
+				var ctor = typeEntity.ResolveConstructor(argTypes);
+
+				return new ConstructorWrapper
+				{
+					Type = type,
+					ConstructorInfo = ctor.ConstructorBuilder,
+					ArgumentTypes = ctor.GetArgumentTypes(this)
+				};
+			}
+
+			try
+			{
+				var ctor = ResolveMethodByArgs(
+					type.GetConstructors(), 
+					c => c.GetParameters().Select(p => p.ParameterType).ToArray(),
+					argTypes
+				);
+
+				return new ConstructorWrapper
+				{
+					Type = type,
+					ConstructorInfo = ctor.Item1,
+					ArgumentTypes = ctor.Item1.GetParameters().Select(p => p.ParameterType).ToArray()
+				};
+			}
+			catch (NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var genCtor = ResolveMethodByArgs(
+					genType.GetConstructors(),
+					c => c.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					argTypes
+				);
+
+				return new ConstructorWrapper
+				{
+					Type = type,
+					ConstructorInfo = genCtor.Item1,
+					ArgumentTypes = genCtor.Item3;
+				};
+			}
+		}
 
 		/// <summary>
 		/// Resolves a global property by its name.
@@ -94,9 +217,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// <param name="list">List of method-like entitites.</param>
 		/// <param name="argsGetter">A function that gets method entity arguments.</param>
 		/// <param name="args">Desired argument types.</param>
-		public static Tuple<T, int> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
+		public static Tuple<T, int, Type[]> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
 		{
-			Func<T, Tuple<T, int>> methodEvaluator = ent => new Tuple<T, int>(ent, ExtensionMethodResolver.GetArgumentsDistance(args, argsGetter(ent)));
+			Func<T, Tuple<T, int, Type[]>> methodEvaluator = ent =>
+			{
+				var currArgs = argsGetter(ent);
+				var dist = ExtensionMethodResolver.GetArgumentsDistance(args, currArgs);
+				return new Tuple<T, int, Type[]>(ent, dist, currArgs);
+			};
 
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 
