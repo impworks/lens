@@ -9,6 +9,15 @@ namespace Lens.SyntaxTree.Compiler
 	partial class Context
 	{
 		/// <summary>
+		/// Finds a declared type by its name.
+		/// </summary>
+		internal TypeEntity FindType(string signature)
+		{
+			TypeEntity type;
+			return _DefinedTypes.TryGetValue(signature, out type) ? type : null;
+		}
+
+		/// <summary>
 		/// Resolves a type by its string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
@@ -16,9 +25,9 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			try
 			{
-				TypeEntity type;
-				return _DefinedTypes.TryGetValue(signature, out type)
-					? type.TypeInfo
+				var local = FindType(signature);
+				return local != null
+					? local.TypeInfo
 					: _TypeResolver.ResolveType(signature);
 			}
 			catch (ArgumentException ex)
@@ -71,8 +80,12 @@ namespace Lens.SyntaxTree.Compiler
 
 				return new FieldWrapper
 				{
+					Name = name,
+					Type = type,
+
 					FieldInfo = field,
 					IsStatic = field.IsStatic, 
+					IsLiteral = field.IsLiteral,
 					FieldType = field.FieldType
 				};
 			}
@@ -91,6 +104,7 @@ namespace Lens.SyntaxTree.Compiler
 
 					FieldInfo = TypeBuilder.GetField(type, genField),
 					IsStatic =  genField.IsStatic,
+					IsLiteral = genField.IsLiteral,
 					FieldType = GenericHelper.ApplyGenericArguments(genField.FieldType, type)
 				};
 			}

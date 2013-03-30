@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
@@ -23,7 +22,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private bool m_IsResolved;
 
 		private NodeBase m_InvocationSource;
-		private MethodInfo m_Method;
+		private MethodWrapper m_Method;
 
 		private Type[] m_ArgTypes;
 		private Type[] m_TypeHints;
@@ -64,7 +63,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				resolveExpression(ctx, Expression);
 			}
 
-			m_Method = GenericHelper.ResolveMethodGenerics(m_Method, m_ArgTypes, m_TypeHints);
 			m_IsResolved = true;
 		}
 
@@ -102,7 +100,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				try
 				{
-					m_Method = ctx.ResolveMethod(ctx.MainType.Name, node.MemberName, m_ArgTypes);
+					m_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, m_ArgTypes);
 				}
 				catch (KeyNotFoundException)
 				{
@@ -132,7 +130,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				m_Method = ctx.MainType.ResolveMethod(node.Identifier, m_ArgTypes);
+				m_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.Identifier, m_ArgTypes);
 				if (m_Method == null)
 					throw new KeyNotFoundException();
 			}
@@ -165,7 +163,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			m_InvocationSource = node;
-			m_Method = exprType.GetMethod("Invoke", m_ArgTypes);
+			m_Method = ctx.ResolveMethod(exprType, "Invoke", m_ArgTypes);
 		}
 
 		#endregion
@@ -221,9 +219,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			if (m_ArgTypes.Length > 0)
 			{
-				var destTypes = m_Method is MethodBuilder
-					? ctx.FindMethod(m_Method).GetArgumentTypes(ctx)
-					: m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
+				var destTypes = m_Method.ArgumentTypes;
 
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
@@ -245,9 +241,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			if (constraint != null)
-				gen.EmitCall(m_Method, true, constraint);	
+				gen.EmitCall(m_Method.MethodInfo, true, constraint);	
 			else
-				gen.EmitCall(m_Method);
+				gen.EmitCall(m_Method.MethodInfo);
 		}
 
 		#endregion

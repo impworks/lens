@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
-		private MethodInfo m_Method;
+		private MethodEntity m_Method;
 		private GlobalPropertyInfo m_Property;
 
 		/// <summary>
@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(m_Method);
+				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 
 				return;
@@ -126,7 +126,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
 			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitLoadField(clsField, PointerRequired);
+			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired);
 		}
 
 		/// <summary>

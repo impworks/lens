@@ -21,9 +21,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private bool m_IsResolved;
 
 		private Type m_Type;
-		private FieldInfo m_Field;
-		private MethodInfo m_Method;
-		private MethodInfo m_PropertyGetter;
+		private FieldWrapper m_Field;
+		private MethodWrapper m_Method;
+		private PropertyWrapper m_Property;
 
 		private bool m_IsStatic;
 
@@ -48,13 +48,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (m_Field != null)
 				return m_Field.FieldType;
 
-			if (m_PropertyGetter != null)
-				return m_PropertyGetter.ReturnType;
+			if (m_Property != null)
+				return m_Property.PropertyType;
 
-			var argTypes = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 			return m_Method.ReturnType == typeof (void)
-				? FunctionalHelper.CreateActionType(argTypes)
-				: FunctionalHelper.CreateFuncType(m_Method.ReturnType, argTypes);
+				? FunctionalHelper.CreateActionType(m_Method.ArgumentTypes)
+				: FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.ArgumentTypes);
 		}
 
 		private void resolve(Context ctx)
@@ -95,8 +94,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			// check for property
 			try
 			{
-				m_PropertyGetter = ctx.ResolvePropertyGetter(m_Type, MemberName);
-				m_IsStatic = m_PropertyGetter.IsStatic;
+				m_Property = ctx.ResolveProperty(m_Type, MemberName);
+				m_IsStatic = m_Property.IsStatic;
 
 				check();
 				return;
@@ -115,8 +114,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (methods.Length > 1)
 					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
 
-				m_Method = GenericHelper.ResolveMethodGenerics(methods[0], argTypes);
-				if (m_Method.GetParameters().Count() > 16)
+				// todo : make generic
+				if (m_Method.ArgumentTypes.Length > 16)
 					Error("Cannot create a callable object from a method with more than 16 arguments!");
 
 				m_IsStatic = m_Method.IsStatic;
@@ -129,19 +128,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 		}
 
-		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodInfo method)
+		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodWrapper method)
 		{
 			if(argTypes.Length == 0)
 				return true;
 
-			var ps = method is MethodBuilder
-				? ctx.FindMethod(method).GetArgumentTypes(ctx)
-				: method.GetParameters().Select(p => p.ParameterType).ToArray();
-
-			if (ps.Length != argTypes.Length)
+			if (method.ArgumentTypes.Length != argTypes.Length)
 				return false;
 
-			return !ps.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
+			return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -191,7 +186,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					var fieldType = m_Field.FieldType;
 					var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
 
-					var value = m_Field.GetValue(null);
+					var value = m_Field.FieldInfo.GetValue(null);
 
 					if (dataType == typeof(int))
 						gen.EmitConstant((int) value);
@@ -225,14 +220,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				}
 				else
 				{ 
-					gen.EmitLoadField(m_Field, PointerRequired);
+					gen.EmitLoadField(m_Field.FieldInfo, PointerRequired);
 				}
 				return;
 			}
 
-			if (m_PropertyGetter != null)
+			if (m_Property != null)
 			{
-				gen.EmitCall(m_PropertyGetter);
+				gen.EmitCall(m_Property.Getter);
 				return;
 			}
 
@@ -242,13 +237,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					gen.EmitNull();
 
 				var retType = m_Method.ReturnType;
-				var args = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 				var type = retType.IsNotVoid()
-					? FunctionalHelper.CreateFuncType(retType, args)
-					: FunctionalHelper.CreateActionType(args);
+					? FunctionalHelper.CreateFuncType(retType, m_Method.ArgumentTypes)
+					: FunctionalHelper.CreateActionType(m_Method.ArgumentTypes);
 
 				var ctor = type.GetConstructor(new[] { typeof(object), typeof(IntPtr) });
-				gen.EmitLoadFunctionPointer(m_Method);
+				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 			}
 		}

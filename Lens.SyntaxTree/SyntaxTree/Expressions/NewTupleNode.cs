@@ -40,15 +40,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			GetExpressionType(ctx);
+			var tupleType = GetExpressionType(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 
 			foreach(var curr in Expressions)
 				curr.Compile(ctx, true);
 
-			var ctor = ctx.ResolveConstructor(GetExpressionType(ctx), m_Types);
-			gen.EmitCreateObject(ctor);
+			var ctor = ctx.ResolveConstructor(tupleType, m_Types);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
 		public override string ToString()

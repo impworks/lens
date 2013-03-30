@@ -32,6 +32,7 @@ namespace Lens.SyntaxTree.Compiler
 		public string Name;
 		public FieldInfo FieldInfo;
 		public bool IsStatic;
+		public bool IsLiteral;
 		public Type Type;
 		public Type FieldType;
 	}

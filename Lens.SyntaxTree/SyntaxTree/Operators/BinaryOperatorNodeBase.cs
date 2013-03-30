@@ -79,10 +79,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				return;
 			}
 
-			var ps = m_OverloadedMethod.GetParameters();
-			Expr.Cast(LeftOperand, ps[0].ParameterType).Compile(ctx, true);
-			Expr.Cast(RightOperand, ps[1].ParameterType).Compile(ctx, true);
-			gen.EmitCall(m_OverloadedMethod);
+			var ps = m_OverloadedMethod.ArgumentTypes;
+			Expr.Cast(LeftOperand, ps[0]).Compile(ctx, true);
+			Expr.Cast(RightOperand, ps[1]).Compile(ctx, true);
+			gen.EmitCall(m_OverloadedMethod.MethodInfo);
 		}
 
 		protected virtual Type resolveOperatorType(Context ctx, Type leftType, Type rightType)

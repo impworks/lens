@@ -150,7 +150,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				method.PrepareSelf();
 
-				MethodInfo mi = null;
+				MethodEntity mi = null;
 				try
 				{
 					mi = ResolveMethod(method.Name, method.ArgumentTypes, true);

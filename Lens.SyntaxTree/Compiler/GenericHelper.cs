@@ -103,7 +103,7 @@ namespace Lens.SyntaxTree.Compiler
 						return values[idx];
 
 				if (throwNotFound)
-					throw new ArgumentOutOfRangeException(string.Format("Generic parameter '{0}' was not found!", type))
+					throw new ArgumentOutOfRangeException(string.Format("Generic parameter '{0}' was not found!", type));
 
 				return type;
 			}
