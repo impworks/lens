@@ -330,6 +330,42 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Finds an extension method for current type.
+		/// </summary>
+		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] genericArgs = null)
+		{
+			Type[] genericValues = null;
+			var method = type.FindExtensionMethod(name, argTypes);
+			if (method.IsGenericMethod)
+			{
+				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+				var genericDefs = method.GetGenericArguments();
+				genericValues = new Type[genericDefs.Length];
+
+				GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+
+				method = method.MakeGenericMethod(genericValues);
+			}
+			else if (genericArgs != null)
+			{
+				Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+			}
+
+			return new MethodWrapper
+			{
+				Name = name,
+				Type = method.DeclaringType,
+
+				MethodInfo = method,
+				IsStatic = true,
+				IsVirtual = false,
+				ReturnType = method.ReturnType,
+				ArgumentTypes = method.GetParameters().Select(p => p.ParameterType).ToArray(),
+				GenericArguments = genericValues
+			};
+		}
+
+		/// <summary>
 		/// Resolves a global property by its name.
 		/// </summary>
 		internal GlobalPropertyInfo ResolveGlobalProperty(string name)

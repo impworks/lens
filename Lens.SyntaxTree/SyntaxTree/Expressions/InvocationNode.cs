@@ -46,22 +46,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
 
 			if (Expression is GetMemberNode)
-			{
-				var getNode = Expression as GetMemberNode;
-
-				if (getNode.TypeHints.Any())
-					m_TypeHints = getNode.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
-
-				resolveGetMember(ctx, getNode);
-			}
+				resolveGetMember(ctx, Expression as GetMemberNode);
 			else if (Expression is GetIdentifierNode)
-			{
 				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
-			}
 			else
-			{
 				resolveExpression(ctx, Expression);
-			}
 
 			m_IsResolved = true;
 		}
@@ -72,6 +61,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var type = m_InvocationSource != null
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
+
+			if (node.TypeHints.Any())
+				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
 
 			try
 			{
@@ -106,7 +98,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				{
 					// resolve a declared extension method
 					// most time-consuming operation, therefore is last checked
-					m_Method = type.FindExtensionMethod(node.MemberName, oldArgTypes);
+					m_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, m_TypeHints);
 				}
 			}
 			catch (AmbiguousMatchException)
