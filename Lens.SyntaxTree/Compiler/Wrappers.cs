@@ -6,6 +6,8 @@ namespace Lens.SyntaxTree.Compiler
 	public class MethodWrapper
 	{
 		public string Name;
+		public Type Type;
+		public bool IsVirtual;
 		public bool IsStatic;
 		public MethodInfo MethodInfo;
 		public Type ReturnType;

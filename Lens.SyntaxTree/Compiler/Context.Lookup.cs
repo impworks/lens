@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -192,8 +191,116 @@ namespace Lens.SyntaxTree.Compiler
 				return new ConstructorWrapper
 				{
 					Type = type,
-					ConstructorInfo = genCtor.Item1,
-					ArgumentTypes = genCtor.Item3;
+					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Item1),
+					ArgumentTypes = genCtor.Item3
+				};
+			}
+		}
+
+		/// <summary>
+		/// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
+		/// Generic arguments whose values can be inferred from argument types can be skipped.
+		/// </summary>
+		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] genericArgs = null)
+		{
+			if (type is TypeBuilder)
+			{
+				var typeEntity = _DefinedTypes[type.Name];
+				var method = typeEntity.ResolveMethod(name, argTypes);
+
+				if(genericArgs != null)
+					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+
+				return new MethodWrapper
+				{
+					Name = name,
+					Type = type,
+
+					MethodInfo = method.MethodInfo,
+					IsStatic = method.IsStatic,
+					IsVirtual = method.IsVirtual,
+					ArgumentTypes = method.GetArgumentTypes(this),
+					GenericArguments = null,
+					ReturnType = method.ReturnType
+				};
+			}
+
+			try
+			{
+				var method = ResolveMethodByArgs(
+					type.GetMethods().Where(m => m.Name == name),
+					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
+					argTypes
+				);
+
+				var mInfo = method.Item1;
+				var expectedTypes = method.Item3;
+				Type[] genericValues = null;
+
+				if (mInfo.IsGenericMethod)
+				{
+					var genericDefs = mInfo.GetGenericArguments();
+					genericValues = new Type[genericDefs.Length];
+					GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+
+					mInfo = mInfo.MakeGenericMethod(genericValues);
+				}
+				else if (genericArgs != null)
+				{
+					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+				}
+
+				return new MethodWrapper
+				{
+					Name = name,
+					Type = type,
+
+					MethodInfo = mInfo,
+					IsStatic = mInfo.IsStatic,
+					IsVirtual = mInfo.IsVirtual,
+					ArgumentTypes = expectedTypes,
+					GenericArguments = genericValues,
+					ReturnType = mInfo.ReturnType
+				};
+			}
+			catch (NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var genMethod = ResolveMethodByArgs(
+					genType.GetMethods().Where(m => m.Name == name),
+					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					argTypes
+				);
+
+				var mInfoOriginal = genMethod.Item1;
+				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
+				var expectedTypes = genMethod.Item3;
+				Type[] genericValues = null;
+
+				if (mInfoOriginal.IsGenericMethod)
+				{
+					var genericDefs = mInfoOriginal.GetGenericArguments();
+					genericValues = new Type[genericDefs.Length];
+					GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+
+					mInfo = mInfo.MakeGenericMethod(genericValues);
+				}
+				else if (genericArgs != null)
+				{
+					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+				}
+
+				return new MethodWrapper
+				{
+					Name = name,
+					Type = type,
+
+					MethodInfo = mInfo,
+					IsStatic = mInfoOriginal.IsStatic,
+					IsVirtual = mInfoOriginal.IsVirtual,
+					ArgumentTypes = expectedTypes,
+					GenericArguments = genericValues,
+					ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type)
 				};
 			}
 		}

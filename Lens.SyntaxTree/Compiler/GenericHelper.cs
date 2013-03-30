@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -56,6 +55,12 @@ namespace Lens.SyntaxTree.Compiler
 						genericValues[defIdx] = actual;
 					}
 				}
+			}
+
+			for (var idx = 0; idx < exLen; idx++)
+			{
+				if(genericValues[idx] == null)
+					throw new TypeMatchException(string.Format("No value could be inferred for generic argument '{0}'!", genericDefs[idx]));
 			}
 		}
 
