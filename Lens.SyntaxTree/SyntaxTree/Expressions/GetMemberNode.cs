@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (methods.Length > 1)
 					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
 
-				// todo : make generic
+				m_Method = methods[0];
 				if (m_Method.ArgumentTypes.Length > 16)
 					Error("Cannot create a callable object from a method with more than 16 arguments!");
 

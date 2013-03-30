@@ -8,6 +8,31 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public static class GenericHelper
 	{
+		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
+		{
+			var genericValues = new Type[genericDefs.Length];
+
+			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, ref genericValues);
+
+			for (var idx = 0; idx < genericDefs.Length; idx++)
+			{
+				var hint = hints != null ? hints[idx] : null;
+				var def = genericDefs[idx];
+				var value = genericValues[idx];
+
+				if (value == null && hint == null)
+					throw new TypeMatchException(string.Format("Generic argument '{0}' could not be resolved!", def));
+
+				if (hint != null && value != null && hint != value)
+					throw new TypeMatchException(string.Format("Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!", def, hint, value));
+
+				if (value == null)
+					genericValues[idx] = hint;
+			}
+
+			return genericValues;
+		}
+
 		/// <summary>
 		/// Resolves generic argument values for a method by its argument types.
 		/// </summary>
@@ -15,7 +40,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
 		/// <param name="genericDefs">Generic parameters.</param>
 		/// <param name="genericValues">Result array where values for generic parameters will be put.</param>
-		public static void ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
+		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
 		{
 			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
@@ -31,7 +56,7 @@ namespace Lens.SyntaxTree.Compiler
 				if (expected.IsGenericType)
 				{
 					var closest = findImplementation(expected, actual);
-					ResolveMethodGenericsByArgs(
+					resolveMethodGenericsByArgs(
 						expected.GetGenericArguments(),
 						closest.GetGenericArguments(),
 						genericDefs,
@@ -55,12 +80,6 @@ namespace Lens.SyntaxTree.Compiler
 						genericValues[defIdx] = actual;
 					}
 				}
-			}
-
-			for (var idx = 0; idx < exLen; idx++)
-			{
-				if(genericValues[idx] == null)
-					throw new TypeMatchException(string.Format("No value could be inferred for generic argument '{0}'!", genericDefs[idx]));
 			}
 		}
 

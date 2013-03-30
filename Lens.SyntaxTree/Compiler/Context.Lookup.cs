@@ -215,14 +215,14 @@ namespace Lens.SyntaxTree.Compiler
 		/// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
 		/// Generic arguments whose values can be inferred from argument types can be skipped.
 		/// </summary>
-		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] genericArgs = null)
+		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
 			if (type is TypeBuilder)
 			{
 				var typeEntity = _DefinedTypes[type.Name];
 				var method = typeEntity.ResolveMethod(name, argTypes);
 
-				if(genericArgs != null)
+				if(hints != null)
 					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
 
 				return new MethodWrapper
@@ -254,12 +254,11 @@ namespace Lens.SyntaxTree.Compiler
 				if (mInfo.IsGenericMethod)
 				{
 					var genericDefs = mInfo.GetGenericArguments();
-					genericValues = new Type[genericDefs.Length];
-					GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+					genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 				}
-				else if (genericArgs != null)
+				else if (hints != null)
 				{
 					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
 				}
@@ -295,8 +294,7 @@ namespace Lens.SyntaxTree.Compiler
 				if (mInfoOriginal.IsGenericMethod)
 				{
 					var genericDefs = mInfoOriginal.GetGenericArguments();
-					genericValues = new Type[genericDefs.Length];
-					GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+					genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -309,7 +307,7 @@ namespace Lens.SyntaxTree.Compiler
 						if (expectedTypes[idx].IsGenericParameter)
 							expectedTypes[idx] = genericValues[Array.IndexOf(genericDefs, expectedTypes[idx])];
 				}
-				else if (genericArgs != null)
+				else if (hints != null)
 				{
 					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
 				}
@@ -332,7 +330,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Finds an extension method for current type.
 		/// </summary>
-		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] genericArgs = null)
+		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
 			Type[] genericValues = null;
 			var method = type.FindExtensionMethod(name, argTypes);
@@ -340,13 +338,11 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
 				var genericDefs = method.GetGenericArguments();
-				genericValues = new Type[genericDefs.Length];
-
-				GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
+				genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
 
 				method = method.MakeGenericMethod(genericValues);
 			}
-			else if (genericArgs != null)
+			else if (hints != null)
 			{
 				Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
 			}
