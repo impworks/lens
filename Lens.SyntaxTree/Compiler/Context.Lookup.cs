@@ -366,6 +366,37 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Resolves a group of methods by name.
+		/// Only non-generic methods are returned!
+		/// </summary>
+		public IEnumerable<MethodWrapper> ResolveMethodGroup(Type type, string name)
+		{
+			try
+			{
+				return type.GetMethods().Where(m => !m.IsGenericMethod && m.Name == name).Select(m => new MethodWrapper(m));
+			}
+			catch (NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var genericMethods = genType.GetMethods().Where(m => !m.IsGenericMethod && m.Name == name);
+
+				return genericMethods.Select(
+					m => new MethodWrapper
+					{
+						Name = name,
+						Type = type,
+
+						MethodInfo = TypeBuilder.GetMethod(type, m),
+						IsStatic = m.IsStatic,
+						IsVirtual = m.IsVirtual,
+						ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+						ReturnType = GenericHelper.ApplyGenericArguments(m.ReturnType, type)
+					}
+				);
+			}
+		}
+
+		/// <summary>
 		/// Resolves a global property by its name.
 		/// </summary>
 		internal GlobalPropertyInfo ResolveGlobalProperty(string name)

@@ -57,7 +57,7 @@ namespace Lens.Test
 		private void Test(Type desired, string name, Type[] args = null, Type[] hints = null)
 		{
 			var method = typeof (GenericHelperTestExample).GetMethods().Single(m => m.Name == name);
-			var result = GenericHelper.ResolveGenericReturnType(method, args, hints);
+			var result = GenericHelper.ApplyGenericArguments(method.ReturnType, args, hints);
 			Assert.AreEqual(desired, result);
 		}
 	}

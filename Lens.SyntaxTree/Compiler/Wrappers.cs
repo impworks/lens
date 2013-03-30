@@ -1,10 +1,25 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Lens.SyntaxTree.Compiler
 {
 	public class MethodWrapper
 	{
+		public MethodWrapper() { }
+
+		public MethodWrapper(MethodInfo info)
+		{
+			Name = info.Name;
+			Type = info.DeclaringType;
+
+			MethodInfo = info;
+			IsVirtual = info.IsVirtual;
+			IsStatic = info.IsStatic;
+			ReturnType = info.ReturnType;
+			ArgumentTypes = info.GetParameters().Select(p => p.ParameterType).ToArray();
+		}
+
 		public string Name;
 		public Type Type;
 		public bool IsVirtual;
