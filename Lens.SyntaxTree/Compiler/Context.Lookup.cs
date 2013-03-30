@@ -268,7 +268,7 @@ namespace Lens.SyntaxTree.Compiler
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
 					genType.GetMethods().Where(m => m.Name == name),
-					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					argTypes
 				);
 
@@ -276,6 +276,7 @@ namespace Lens.SyntaxTree.Compiler
 				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
 				var expectedTypes = genMethod.Item3;
 				Type[] genericValues = null;
+				Type retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
@@ -284,6 +285,15 @@ namespace Lens.SyntaxTree.Compiler
 					GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, ref genericValues);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
+
+					// setting generic argument values unresolved by containing type to values of current method
+
+					if (retType.IsGenericParameter)
+						retType = genericValues[Array.IndexOf(genericDefs, retType)];
+
+					for (var idx = 0; idx < expectedTypes.Length; idx++)
+						if (expectedTypes[idx].IsGenericParameter)
+							expectedTypes[idx] = genericValues[Array.IndexOf(genericDefs, expectedTypes[idx])];
 				}
 				else if (genericArgs != null)
 				{
@@ -300,7 +310,7 @@ namespace Lens.SyntaxTree.Compiler
 					IsVirtual = mInfoOriginal.IsVirtual,
 					ArgumentTypes = expectedTypes,
 					GenericArguments = genericValues,
-					ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type)
+					ReturnType = retType
 				};
 			}
 		}

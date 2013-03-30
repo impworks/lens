@@ -69,13 +69,16 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		/// <param name="type">Type to process.</param>
 		/// <param name="generic">Type that contains the processed type as a generic parameter.</param>
-		/// <returns></returns>
-		public static Type ApplyGenericArguments(Type type, Type generic)
+		public static Type ApplyGenericArguments(Type type, Type generic, bool throwNotFound = true)
 		{
+			if (!generic.IsGenericType)
+				return type;
+
 			return ApplyGenericArguments(
 				type,
 				generic.GetGenericTypeDefinition().GetGenericArguments(),
-				generic.GetGenericArguments()
+				generic.GetGenericArguments(),
+				throwNotFound
 			);
 		}
 
@@ -85,7 +88,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <param name="type">Type to process.</param>
 		/// <param name="generics">Generic parameters that can be used in the type.</param>
 		/// <param name="values">Actual values of generic parameters.</param>
-		public static Type ApplyGenericArguments(Type type, Type[] generics, Type[] values)
+		public static Type ApplyGenericArguments(Type type, Type[] generics, Type[] values, bool throwNotFound = true)
 		{
 			if (type.IsArray || type.IsByRef)
 			{
@@ -99,7 +102,10 @@ namespace Lens.SyntaxTree.Compiler
 					if (generics[idx] == type)
 						return values[idx];
 
-				throw new ArgumentOutOfRangeException(string.Format("Generic parameter '{0}' was not found!", type));
+				if (throwNotFound)
+					throw new ArgumentOutOfRangeException(string.Format("Generic parameter '{0}' was not found!", type))
+
+				return type;
 			}
 
 			if (type.IsGenericType)
