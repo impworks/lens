@@ -338,7 +338,11 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
 				var genericDefs = method.GetGenericArguments();
-				genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+
+				var extMethodArgs = argTypes.ToList();
+				extMethodArgs.Insert(0, type);
+
+				genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, extMethodArgs.ToArray(), genericDefs, hints);
 
 				method = method.MakeGenericMethod(genericValues);
 			}
