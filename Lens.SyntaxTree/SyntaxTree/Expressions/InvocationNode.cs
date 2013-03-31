@@ -142,7 +142,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!exprType.IsCallableType())
 				Error("Type '{0}' cannot be invoked!");
 
-			var argTypes = exprType.GetArgumentTypes();
+			m_Method = ctx.ResolveMethod(exprType, "Invoke");
+			var argTypes = m_Method.ArgumentTypes;
 			if (argTypes.Length != m_ArgTypes.Length)
 				Error("Invoking a '{0}' requires {1} arguments, {2} given instead!", exprType, argTypes.Length, m_ArgTypes.Length);
 
@@ -155,7 +156,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			m_InvocationSource = node;
-			m_Method = ctx.ResolveMethod(exprType, "Invoke", m_ArgTypes);
 		}
 
 		#endregion

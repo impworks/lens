@@ -366,6 +366,14 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Resolves a method within the type, assuming it's the only one with such name.
+		/// </summary>
+		public MethodWrapper ResolveMethod(Type type, string name)
+		{
+			return ResolveMethodGroup(type, name).Single();
+		}
+
+		/// <summary>
 		/// Resolves a group of methods by name.
 		/// Only non-generic methods are returned!
 		/// </summary>

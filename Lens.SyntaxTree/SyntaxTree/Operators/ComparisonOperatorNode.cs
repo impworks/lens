@@ -194,7 +194,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var otherNull = otherType.IsNullableType();
 
 			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
-			var hasValueGetter = nullType.GetMethod("get_HasValue");
+			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			var falseLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
@@ -305,7 +305,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 			var nullType = nullValue.GetExpressionType(ctx);
 			var nullVar = ctx.CurrentScope.DeclareImplicitName(ctx, nullType, true);
-			var hasValueGetter = nullType.GetMethod("get_HasValue");
+			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Compile(ctx, true);
 			gen.EmitSaveLocal(nullVar);
