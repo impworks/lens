@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				// resolve a normal method
 				try
 				{
-					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes);
+					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes, m_TypeHints);
 					return;
 				}
 				catch (KeyNotFoundException)
