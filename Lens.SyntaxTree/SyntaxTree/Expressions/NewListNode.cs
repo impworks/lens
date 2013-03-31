@@ -35,12 +35,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
 			
 			var listType = GetExpressionType(ctx);
-			var ctor = listType.GetConstructor(new[] {typeof (int)});
-			var addMethod = listType.GetMethod("Add", new[] { m_ItemType });
+			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
+			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { m_ItemType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
@@ -54,8 +54,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				gen.EmitLoadLocal(tmpVar);
 				
-				Expr.Cast(curr, currType).Compile(ctx, true);
-				gen.EmitCall(addMethod);
+				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Compile(ctx, true);
+				gen.EmitCall(addMethod.MethodInfo);
 			}
 
 			gen.EmitLoadLocal(tmpVar);

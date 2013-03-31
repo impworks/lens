@@ -49,12 +49,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
 
-			var ctor = dictType.GetConstructor(new[] {typeof (int)});
-			var addMethod = dictType.GetMethod("Add", new[] { m_KeyType, m_ValueType });
+			var ctor = ctx.ResolveConstructor(dictType, new[] {typeof (int)});
+			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { m_KeyType, m_ValueType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
@@ -71,13 +71,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
 					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, m_KeyType, m_ValueType);
 
-
 				gen.EmitLoadLocal(tmpVar);
 
 				curr.Key.Compile(ctx, true);
 				Expr.Cast(curr.Value, m_ValueType).Compile(ctx, true);
 
-				gen.EmitCall(addMethod);
+				gen.EmitCall(addMethod.MethodInfo);
 			}
 
 			gen.EmitLoadLocal(tmpVar);

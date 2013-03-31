@@ -261,7 +261,17 @@ namespace Lens.SyntaxTree.Utils
 
 		private static bool IsImplicitCastable(Type varType, Type exprType)
 		{
-			return (!(exprType is TypeBuilder)) && exprType.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == varType);
+			if (exprType is TypeBuilder)
+				return false;
+
+			try
+			{
+				return exprType.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == varType);
+			}
+			catch(NotSupportedException)
+			{
+				return false;
+			}
 		}
 
 		private static Type MostWideType(Type[] types, Type type1, Type type2)

@@ -58,6 +58,7 @@
     <Compile Include="Compiler\CompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
+    <Compile Include="Compiler\Context.Lookup.cs" />
     <Compile Include="Compiler\Context.Structure.cs" />
     <Compile Include="Compiler\GlobalPropertyHelper.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Compiler\TypeContentsBase.cs" />
     <Compile Include="Compiler\TypeEntity.cs" />
     <Compile Include="Compiler\TypeResolver.cs" />
+    <Compile Include="Compiler\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

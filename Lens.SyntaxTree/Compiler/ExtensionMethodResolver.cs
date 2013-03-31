@@ -30,21 +30,21 @@ namespace Lens.SyntaxTree.Compiler
 			if (!_Cache.ContainsKey(type))
 				findMethodsForType(type);
 
-			var cache = _Cache[type];
-			var methods = cache.ContainsKey(name) ? cache[name] : new List<MethodInfo>();
+			if(!_Cache[type].ContainsKey(name))
+				throw new KeyNotFoundException();
 
+			var methods = _Cache[type][name];
 			var result = methods.Where(m => m.Name == name)
 								.Select(mi => new { Method = mi, Distance = GetExtensionDistance(mi, type, args) })
 								.OrderBy(p => p.Distance)
 								.ToArray();
 
 			if (result.Length == 0 || result[0].Distance == int.MaxValue)
-				throw new KeyNotFoundException("No suitable method was found!");
+				throw new KeyNotFoundException();
 
 			if (result.Length > 2)
 			{
-				var ambiCount = result.Skip(1).TakeWhile(i => i.Distance == result[0].Distance).Count();
-				if (ambiCount > 0)
+				if(result.Skip(1).TakeWhile(i => i.Distance == result[0].Distance).Any())
 					throw new AmbiguousMatchException();
 			}
 

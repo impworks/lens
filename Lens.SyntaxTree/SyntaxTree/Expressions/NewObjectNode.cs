@@ -46,19 +46,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var ctor = ctx.ResolveConstructor(Type.Signature, argTypes);
+				var ctor = ctx.ResolveConstructor(ctx.ResolveType(Type.Signature), argTypes);
 
 				if (!isParameterless)
 				{
-					var destTypes = ctor is ConstructorBuilder
-						? ctx.FindConstructor(ctor).GetArgumentTypes(ctx)
-						: ctor.GetParameters().Select(p => p.ParameterType).ToArray();
-
+					var destTypes = ctor.ArgumentTypes;
 					for (var idx = 0; idx < Arguments.Count; idx++)
 						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
 				}
 
-				gen.EmitCreateObject(ctor);
+				gen.EmitCreateObject(ctor.ConstructorInfo);
 			}
 			catch (KeyNotFoundException)
 			{

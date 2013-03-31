@@ -135,8 +135,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
-			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitSaveField(clsField);
+			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
+			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
+			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
 		/// <summary>
@@ -153,7 +154,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			while (dist > 1)
 			{
 				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
-				gen.EmitLoadField(rootField);
+				gen.EmitLoadField(rootField.FieldInfo);
 
 				type = rootField.FieldType;
 				dist--;
@@ -162,7 +163,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitSaveField(clsField);
+			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
 		#region Equality members
