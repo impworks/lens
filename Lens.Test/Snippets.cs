@@ -831,6 +831,18 @@ list.Count
 			Test(src, 3);
 		}
 
+		[Test]
+		public void GenericWithCustom3()
+		{
+			var src = @"
+record MyRecord
+    Value : int
+var list = new <new MyRecord 1; new MyRecord 2; new MyRecord 3>
+list[1].Value + list[2].Value
+";
+			Test(src, 5);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, new LensCompiler().Run(src));
