@@ -210,7 +210,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var mi = method.Method;
 			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
-				Context.Error(Messages.ImportUnsupportedMethod);
+				Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity

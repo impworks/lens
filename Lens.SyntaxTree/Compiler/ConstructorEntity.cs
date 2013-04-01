@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			// todo: remove when we support static ctors
 			if(IsStatic)
-				throw new LensCompilerException(Messages.ConstructorStatic);
+				throw new LensCompilerException(CompilerMessages.ConstructorStatic);
 
 			if (ConstructorBuilder != null || IsImported)
 				return;

@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error(Messages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+			Error(CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
 			return null;
 		}
 
@@ -103,7 +103,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			var type = TypeExtensions.GetNumericOperationType(left, right);
 			if(type == null)
-				Error(Messages.OperatorTypesSignednessMismatch);
+				Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
 			return type;
 		}

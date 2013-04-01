@@ -109,7 +109,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())
 			{
 				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
-					ctx.Error(Messages.ReturnTypeMismatch, ReturnType, actualType);
+					ctx.Error(CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
 			}
 
 			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())

@@ -22,10 +22,10 @@ namespace Lens.SyntaxTree.Compiler
 				var value = genericValues[idx];
 
 				if (value == null && hint == null)
-					throw new TypeMatchException(string.Format(Messages.GenericArgumentNotResolved, def));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, def));
 
 				if (hint != null && value != null && hint != value)
-					throw new TypeMatchException(string.Format(Messages.GenericHintMismatch, def, hint, value));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericHintMismatch, def, hint, value));
 
 				if (value == null)
 					genericValues[idx] = hint;
@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Compiler
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
 
 			if(exLen != actLen)
-				throw new ArgumentException(Messages.GenericArgCountMismatch);
+				throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);
 
 			for (var idx = 0; idx < exLen; idx++)
 			{
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.Compiler
 							continue;
 
 						if (value != null && value != actual)
-							throw new TypeMatchException(string.Format(Messages.GenericArgMismatch, def, actual, value));
+							throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
 
 						genericValues[defIdx] = actual;
 					}
@@ -123,7 +123,7 @@ namespace Lens.SyntaxTree.Compiler
 						return values[idx];
 
 				if (throwNotFound)
-					throw new ArgumentOutOfRangeException(string.Format(Messages.GenericParameterNotFound, type));
+					throw new ArgumentOutOfRangeException(string.Format(CompilerMessages.GenericParameterNotFound, type));
 
 				return type;
 			}
@@ -152,9 +152,9 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var matching = actual.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
 				if (matching.Length == 0)
-					throw new TypeMatchException(string.Format(Messages.GenericInterfaceNotImplemented, actual, generic));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
 				if (matching.Length > 1)
-					throw new TypeMatchException(string.Format(Messages.GenericInterfaceMultipleImplementations, generic, actual));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
 
 				return matching[0];
 			}
@@ -169,7 +169,7 @@ namespace Lens.SyntaxTree.Compiler
 				currType = currType.BaseType;
 			}
 
-			throw new TypeMatchException(string.Format(Messages.GenericImplementationWrongType, generic, actual));
+			throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
 		}
 
 		#endregion

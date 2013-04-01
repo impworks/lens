@@ -60,10 +60,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Action check = () =>
 			{
 				if (Expression == null && !m_IsStatic)
-					Error(Messages.DynamicMemberFromStaticContext, MemberName);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName);
 
 				if(m_Method == null && TypeHints.Count > 0)
-					Error(Messages.TypeArgumentsForNonMethod, m_Type, MemberName);
+					Error(CompilerMessages.TypeArgumentsForNonMethod, m_Type, MemberName);
 
 				m_IsResolved = true;
 			};
@@ -96,7 +96,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Property = ctx.ResolveProperty(m_Type, MemberName);
 
 				if(!m_Property.CanGet)
-					Error(Messages.PropertyNoGetter, m_Type, MemberName);
+					Error(CompilerMessages.PropertyNoGetter, m_Type, MemberName);
 
 				m_IsStatic = m_Property.IsStatic;
 
@@ -111,11 +111,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
 				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 				if (methods.Length > 1)
-					Error(Messages.TypeMethodAmbiguous, m_Type.Name, MemberName);
+					Error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
 
 				m_Method = methods[0];
 				if (m_Method.ArgumentTypes.Length > 16)
-					Error(Messages.CallableTooManyArguments);
+					Error(CompilerMessages.CallableTooManyArguments);
 
 				m_IsStatic = m_Method.IsStatic;
 
@@ -123,7 +123,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.TypeIdentifierNotFound, m_Type.Name, MemberName);
+				Error(CompilerMessages.TypeIdentifierNotFound, m_Type.Name, MemberName);
 			}
 		}
 

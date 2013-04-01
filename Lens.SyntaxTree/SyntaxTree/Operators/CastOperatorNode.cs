@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				}
 
 				else
-					Error(Messages.CastNullValueType, toType);
+					Error(CompilerMessages.CastNullValueType, toType);
 			}
 
 			else if (toType.IsExtendablyAssignableFrom(fromType))
@@ -116,10 +116,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var toArgs = toMethod.ArgumentTypes;
 
 			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
-				Error(Messages.CastDelegateArgTypesMismatch, from, to);
+				Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				Error(Messages.CastDelegateReturnTypesMismatch, from, to);
+				Error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();
@@ -135,7 +135,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		private void castError(Type from, Type to)
 		{
-			Error(Messages.CastTypesMismatch, from, to);
+			Error(CompilerMessages.CastTypesMismatch, from, to);
 		}
 
 		public static bool IsImplicitlyBoolean(Type type)

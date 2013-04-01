@@ -16,10 +16,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (Expressions.Count == 0)
-				Error(Messages.TupleNoArgs);
+				Error(CompilerMessages.TupleNoArgs);
 
 			if (Expressions.Count > 8)
-				Error(Messages.TupleTooManyArgs);
+				Error(CompilerMessages.TupleTooManyArgs);
 
 			var types = new List<Type>();
 			foreach (var curr in Expressions)

@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				if (otherType.IsExtendablyAssignableFrom(type))
 					type = otherType;
 				else if(!type.IsExtendablyAssignableFrom(otherType))
-					Error(Messages.ConditionInconsistentTyping, type, otherType);
+					Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
 			}
 
 			return type;

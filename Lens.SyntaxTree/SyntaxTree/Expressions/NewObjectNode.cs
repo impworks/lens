@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			if(Arguments.Count == 0)
-				Error(Messages.ParameterlessConstructorParens);
+				Error(CompilerMessages.ParameterlessConstructorParens);
 
 			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
 

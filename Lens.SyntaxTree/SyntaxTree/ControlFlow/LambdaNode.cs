@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			// get evaluated return type
 			var retType = Body.GetExpressionType(ctx);
 			if(retType == typeof(NullType))
-				Error(Messages.LambdaReturnTypeUnknown);
+				Error(CompilerMessages.LambdaReturnTypeUnknown);
 
 			_Method.ReturnType = retType.IsVoid() ? typeof(void) : retType;
 			_Method.PrepareSelf();

@@ -184,7 +184,7 @@ namespace Lens.SyntaxTree.Compiler
 					{
 						throw new ArgumentException(
 							string.Format(
-								Messages.TypeIsAmbiguous,
+								CompilerMessages.TypeIsAmbiguous,
 								name,
 								foundType.Namespace,
 								foundType.Assembly.GetName().Name,
@@ -200,7 +200,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			if (foundType == null)
-				throw new ArgumentException(string.Format(Messages.TypeNotFound, name));
+				throw new ArgumentException(string.Format(CompilerMessages.TypeNotFound, name));
 
 			return foundType;
 		}

@@ -20,10 +20,10 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportType(string name, Type type)
 		{
 			if(Options.AllowSave)
-				Error(Messages.ImportIntoSaveableAssembly);
+				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
 			if (_DefinedTypes.ContainsKey(name))
-				Error(Messages.TypeDefined, name);
+				Error(CompilerMessages.TypeDefined, name);
 
 			var te = new TypeEntity(this, true)
 			{
@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportFunction(string name, Delegate method)
 		{
 			if (Options.AllowSave)
-				Error(Messages.ImportIntoSaveableAssembly);
+				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
 			_DefinedTypes[RootTypeName].ImportMethod(name, method);
 		}
@@ -50,10 +50,10 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
 			if (Options.AllowSave)
-				Error(Messages.ImportIntoSaveableAssembly);
+				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
 			if(_DefinedProperties.ContainsKey(name))
-				Error(Messages.PropertyImported, name);
+				Error(CompilerMessages.PropertyImported, name);
 
 			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
 			_DefinedProperties.Add(name, ent);
@@ -185,10 +185,10 @@ namespace Lens.SyntaxTree.Compiler
 			var type = calculatedType ?? node.GetExpressionType(this);
 
 			if(!allowNull && type == typeof(NullType))
-				Error(node, Messages.ExpressionNull);
+				Error(node, CompilerMessages.ExpressionNull);
 
 			if(type.IsVoid())
-				Error(node, Messages.ExpressionVoid);
+				Error(node, CompilerMessages.ExpressionVoid);
 		}
 
 		#endregion
@@ -265,7 +265,7 @@ namespace Lens.SyntaxTree.Compiler
 		private TypeEntity createTypeCore(string name, bool isSealed, bool defaultCtor)
 		{
 			if (_DefinedTypes.ContainsKey(name))
-				Error(Messages.TypeDefined, name);
+				Error(CompilerMessages.TypeDefined, name);
 
 			var te = new TypeEntity(this)
 			{

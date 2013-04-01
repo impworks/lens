@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if(!type.IsSubclassOf(typeof(Exception)))
-				Error(Messages.CatchTypeNotException, type);
+				Error(CompilerMessages.CatchTypeNotException, type);
 
 			gen.BeginCatchBlock(type);
 

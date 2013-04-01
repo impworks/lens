@@ -104,7 +104,7 @@ namespace Lens.SyntaxTree.Compiler
 		public LocalName DeclareName(string name, Type type, bool isConst, bool isRefArg = false)
 		{
 			if(find(name))
-				throw new LensCompilerException(string.Format(Messages.VariableDefined, name));
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, name));
 
 			var n = new LocalName(name, type, isConst, isRefArg);
 			Names[name] = n;
@@ -148,10 +148,10 @@ namespace Lens.SyntaxTree.Compiler
 					if (closured)
 					{
 						if (loc.LocalBuilder != null)
-							throw new InvalidOperationException(Messages.ClosureImplicit);
+							throw new InvalidOperationException(CompilerMessages.ClosureImplicit);
 
 						if(loc.IsRefArgument)
-							throw new LensCompilerException(Messages.ClosureRef);
+							throw new LensCompilerException(CompilerMessages.ClosureRef);
 					}
 
 					loc.IsClosured |= closured;
@@ -159,7 +159,7 @@ namespace Lens.SyntaxTree.Compiler
 			);
 
 			if(!found)
-				throw new LensCompilerException(string.Format(Messages.VariableNotFound, name));
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableNotFound, name));
 		}
 
 		/// <summary>

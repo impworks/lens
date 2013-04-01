@@ -225,7 +225,7 @@ namespace Lens.SyntaxTree.Compiler
 				var method = typeEntity.ResolveMethod(name, argTypes);
 
 				if(hints != null)
-					Error(Messages.GenericArgsToNonGenericMethod, name);
+					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 
 				return new MethodWrapper
 				{
@@ -262,7 +262,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else if (hints != null)
 				{
-					Error(Messages.GenericArgsToNonGenericMethod, name);
+					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 				}
 
 				return new MethodWrapper
@@ -311,7 +311,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else if (hints != null)
 				{
-					Error(Messages.GenericArgsToNonGenericMethod, name);
+					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 				}
 
 				return new MethodWrapper
@@ -359,7 +359,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			else if (hints != null)
 			{
-				Error(Messages.GenericArgsToNonGenericMethod, name);
+				Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 			}
 
 			return new MethodWrapper
@@ -463,14 +463,14 @@ namespace Lens.SyntaxTree.Compiler
 
 			if(indexers.Count == 0 || indexers[0].Item3 == int.MaxValue)
 				Error(
-					isGetter ? Messages.IndexGetterNotFound : Messages.IndexSetterNotFound,
+					isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
 					type,
 					idxType
 				);
 
 			if (indexers.Count > 1 && indexers[0].Item3 == indexers[1].Item3)
 				Error(
-					Messages.IndexAmbigious,
+					CompilerMessages.IndexAmbigious,
 					type,
 					indexers[0].Item2,
 					indexers[1].Item2,

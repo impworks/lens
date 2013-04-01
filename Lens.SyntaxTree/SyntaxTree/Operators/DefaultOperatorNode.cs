@@ -41,7 +41,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var type = GetExpressionType(ctx);
 
 			if(type.IsVoid())
-				Error(Messages.VoidTypeDefault);
+				Error(CompilerMessages.VoidTypeDefault);
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);

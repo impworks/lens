@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (Expression == null)
 			{
 				if(ctx.CurrentCatchBlock == null)
-					Error(Messages.ThrowArgumentExpected);
+					Error(CompilerMessages.ThrowArgumentExpected);
 
 				gen.EmitRethrow();
 			}
@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				var type = Expression.GetExpressionType(ctx);
 
 				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					Error(Expression, Messages.ThrowTypeNotException);
+					Error(Expression, CompilerMessages.ThrowTypeNotException);
 
 				Expression.Compile(ctx, true);
 				gen.EmitThrow();

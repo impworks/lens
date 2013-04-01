@@ -104,11 +104,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(Messages.TypeMethodInvocationAmbiguous, type, node.MemberName);
+				Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.TypeMethodNotFound, type, node.MemberName);
+				Error(CompilerMessages.TypeMethodNotFound, type, node.MemberName);
 			}
 		}
 
@@ -129,11 +129,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.FunctionNotFound, node.Identifier);
+				Error(CompilerMessages.FunctionNotFound, node.Identifier);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(Messages.FunctionInvocationAmbiguous, node.Identifier);
+				Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
 			}
 		}
 
@@ -141,19 +141,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var exprType = node.GetExpressionType(ctx);
 			if (!exprType.IsCallableType())
-				Error(Messages.TypeNotCallable, exprType);
+				Error(CompilerMessages.TypeNotCallable, exprType);
 
 			m_Method = ctx.ResolveMethod(exprType, "Invoke");
 			var argTypes = m_Method.ArgumentTypes;
 			if (argTypes.Length != m_ArgTypes.Length)
-				Error(Messages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
+				Error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
 
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var fromType = m_ArgTypes[idx];
 				var toType = argTypes[idx];
 				if (!toType.IsExtendablyAssignableFrom(fromType))
-					Error(Arguments[idx], Messages.ArgumentTypeMismatch, fromType, toType);
+					Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 			}
 
 			m_InvocationSource = node;

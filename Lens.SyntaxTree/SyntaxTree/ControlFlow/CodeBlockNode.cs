@@ -38,11 +38,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (!Statements.Any())
-				Error(Messages.CodeBlockEmpty);
+				Error(CompilerMessages.CodeBlockEmpty);
 
 			var last = Statements.Last();
 			if (last is VarNode || last is LetNode)
-				Error(last, Messages.CodeBlockLastVar);
+				Error(last, CompilerMessages.CodeBlockLastVar);
 
 			return Statements[Statements.Count - 1].GetExpressionType(ctx);
 		}

@@ -45,7 +45,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.IdentifierNotFound, Identifier);
+				Error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (Unit);
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (local != null)
 			{
 				if(local.IsConstant && PointerRequired)
-					Error(Messages.ConstantByRef);
+					Error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var id = m_Property.PropertyId;
 				if(!m_Property.HasGetter)
-					Error(Messages.GlobalPropertyNoGetter, Identifier);
+					Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
 				var type = m_Property.PropertyType;
 				if (m_Property.GetterMethod != null)
@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				return;
 			}
 
-			Error(Messages.IdentifierNotFound, Identifier);
+			Error(CompilerMessages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>

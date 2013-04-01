@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			ctx.CheckTypedExpression(Value, valType, true);
 
 			if(!destType.IsExtendablyAssignableFrom(valType))
-				Error(Messages.ImplicitCastImpossible, valType, destType);
+				Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 
 			if (!m_IsStatic)
 			{
@@ -75,7 +75,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Field = ctx.ResolveField(type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error(Messages.DynamicMemberFromStaticContext, type, MemberName);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 
 				return;
 			}
@@ -85,15 +85,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				m_Property = ctx.ResolveProperty(type, MemberName);
 				if(!m_Property.CanSet)
-					Error(Messages.PropertyNoSetter, MemberName, type);
+					Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
 				m_IsStatic = m_Property.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error(Messages.DynamicMemberFromStaticContext, MemberName, type);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.TypeSettableIdentifierNotFound, type, MemberName);
+				Error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
 			}
 		}
 

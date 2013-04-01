@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			if(LeftOperand.GetExpressionType(ctx).IsIntegerType() && RightOperand is IntNode && (RightOperand as IntNode).Value == 0)
-				Error(Messages.ConstantDivisionByZero);
+				Error(CompilerMessages.ConstantDivisionByZero);
 			
 			var gen = ctx.CurrentILGenerator;
 

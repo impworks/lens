@@ -16,11 +16,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error(Messages.ListEmpty);
+				Error(CompilerMessages.ListEmpty);
 
 			m_ItemType = resolveItemType(Expressions, ctx);
 			if (m_ItemType == null)
-				Error(Expressions[0], Messages.ListTypeUnknown);
+				Error(Expressions[0], CompilerMessages.ListTypeUnknown);
 
 			return typeof(List<>).MakeGenericType(m_ItemType);
 		}
@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				ctx.CheckTypedExpression(curr, currType, true);
 
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					Error(curr, Messages.ListElementTypeMismatch, currType, m_ItemType);
+					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				

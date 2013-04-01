@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
 			if(!canCompare(leftType, rightType, isEquality))
-				Error(Messages.TypesIncomparable, leftType, rightType);
+				Error(CompilerMessages.TypesIncomparable, leftType, rightType);
 
 			if (isEquality)
 				compileEquality(ctx, leftType, rightType);

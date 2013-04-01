@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error(Messages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
+			Error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
 			return null;
 		}
 

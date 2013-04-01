@@ -49,10 +49,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsConstant && !IsInitialization)
-					Error(Messages.IdentifierIsConstant, Identifier);
+					Error(CompilerMessages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					Error(Messages.IdentifierTypeMismatch, exprType, nameInfo.Type);
+					Error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 
 				if (nameInfo.IsClosured)
 				{
@@ -74,11 +74,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var pty = ctx.ResolveGlobalProperty(Identifier);
 
 				if(!pty.HasSetter)
-					Error(Messages.GlobalPropertyNoSetter, Identifier);
+					Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
 
 				var type = pty.PropertyType;
 				if(!type.IsExtendablyAssignableFrom(exprType))
-					Error(Messages.GlobalPropertyTypeMismatch, exprType, type);
+					Error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
 
 				var cast = Expr.Cast(Value, type);
 				if (pty.SetterMethod != null)
@@ -98,7 +98,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(Messages.VariableNotFound, Identifier);
+				Error(CompilerMessages.VariableNotFound, Identifier);
 			}
 		}
 
