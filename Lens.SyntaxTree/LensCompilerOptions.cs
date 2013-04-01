@@ -1,9 +1,9 @@
-﻿namespace Lens.SyntaxTree.Compiler
+﻿namespace Lens.SyntaxTree
 {
 	/// <summary>
 	/// A list of options to tweak the compiler.
 	/// </summary>
-	public class CompilerOptions
+	public class LensCompilerOptions
 	{
 		/// <summary>
 		/// Checks whether the generated assembly can be saved to disk.

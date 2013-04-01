@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -19,13 +20,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error("Use explicit constructor to create an empty dictionary!");
+				Error(CompilerMessages.DictionaryEmpty);
 
 			m_KeyType = Expressions[0].Key.GetExpressionType(ctx);
 			m_ValueType = resolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
 			if (m_ValueType == typeof(NullType))
-				Error(Expressions[0].Value, "Dictionary value type cannot be inferred, at least one value must be non-null!");
+				Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
 			ctx.CheckTypedExpression(Expressions[0].Key, m_KeyType);
 			ctx.CheckTypedExpression(Expressions[0].Value, m_ValueType, true);
@@ -66,10 +67,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				ctx.CheckTypedExpression(curr.Value, currValType, true);
 
 				if (currKeyType != m_KeyType)
-					Error(curr.Key, "Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, m_KeyType, m_ValueType);
+					Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, m_KeyType, m_ValueType);
 
 				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
-					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, m_KeyType, m_ValueType);
+					Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, m_KeyType, m_ValueType);
 
 				gen.EmitLoadLocal(tmpVar);
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -48,7 +49,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				if (otherType.IsExtendablyAssignableFrom(type))
 					type = otherType;
 				else if(!type.IsExtendablyAssignableFrom(otherType))
-					Error("Inconsistent typing: the branches of the condition return objects of types '{0}' and '{1}' respectively.", type, otherType);
+					Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
 			}
 
 			return type;

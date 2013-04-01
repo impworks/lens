@@ -55,7 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler\CompilerOptions.cs" />
+    <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
     <Compile Include="Compiler\Context.Lookup.cs" />
@@ -74,6 +74,11 @@
     <Compile Include="Compiler\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
+    <Compile Include="Translations\CompilerMessages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CompilerMessages.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
@@ -156,6 +161,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Translations\CompilerMessages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -103,11 +104,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error("Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.", type, node.MemberName);
+				Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!", type, node.MemberName);
+				Error(CompilerMessages.TypeMethodNotFound, type, node.MemberName);
 			}
 		}
 
@@ -128,11 +129,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("No global function named '{0}' with suitable arguments is declared!", node.Identifier);
+				Error(CompilerMessages.FunctionNotFound, node.Identifier);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error("There is more than one suitable override of global method '{0}'! Please use type casting to specify the exact override.", node.Identifier);
+				Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
 			}
 		}
 
@@ -140,19 +141,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var exprType = node.GetExpressionType(ctx);
 			if (!exprType.IsCallableType())
-				Error("Type '{0}' cannot be invoked!");
+				Error(CompilerMessages.TypeNotCallable, exprType);
 
 			m_Method = ctx.ResolveMethod(exprType, "Invoke");
 			var argTypes = m_Method.ArgumentTypes;
 			if (argTypes.Length != m_ArgTypes.Length)
-				Error("Invoking a '{0}' requires {1} arguments, {2} given instead!", exprType, argTypes.Length, m_ArgTypes.Length);
+				Error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
 
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var fromType = m_ArgTypes[idx];
 				var toType = argTypes[idx];
 				if (!toType.IsExtendablyAssignableFrom(fromType))
-					Error(Arguments[idx], "Cannot use object of type '{0}' as a value for parameter of type '{1}'!", fromType, toType);
+					Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 			}
 
 			m_InvocationSource = node;

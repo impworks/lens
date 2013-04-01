@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -37,11 +38,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (!Statements.Any())
-				Error("Code block contains no statements!");
+				Error(CompilerMessages.CodeBlockEmpty);
 
 			var last = Statements.Last();
 			if (last is VarNode || last is LetNode)
-				Error("A {0} declaration cannot be the last statement in a code block.", last is VarNode ? "variable" : "constant");
+				Error(last, CompilerMessages.CodeBlockLastVar);
 
 			return Statements[Statements.Count - 1].GetExpressionType(ctx);
 		}

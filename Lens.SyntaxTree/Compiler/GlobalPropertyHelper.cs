@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -29,12 +30,12 @@ namespace Lens.SyntaxTree.Compiler
 		public static void UnregisterContext(int contextId)
 		{
 			if (contextId < 0 || contextId > m_Properties.Count - 1)
-				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
+				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 #if DEBUG
 			var curr = m_Properties[contextId];
 			if (curr == null)
-				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 #endif
 
 			m_Properties[contextId] = null;
@@ -78,7 +79,7 @@ namespace Lens.SyntaxTree.Compiler
 
 #if DEBUG
 			if(info.Getter == null)
-				throw new InvalidOperationException(string.Format("Property #{0} has no getter!", id));
+				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoGetter, id));
 #endif
 
 			return (info.Getter as Func<T>).Invoke();
@@ -94,7 +95,7 @@ namespace Lens.SyntaxTree.Compiler
 
 #if DEBUG
 			if (info.Setter == null)
-				throw new InvalidOperationException(string.Format("Property #{0} has no setter!", id));
+				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoSetter, id));
 #endif
 
 			(info.Setter as Action<T>).Invoke(value);
@@ -104,14 +105,14 @@ namespace Lens.SyntaxTree.Compiler
 		private static void validateId(int contextId, int id)
 		{
 			if (contextId < 0 || contextId > m_Properties.Count - 1)
-				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
+				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 			var curr = m_Properties[contextId];
 			if(curr == null)
-				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 
 			if(id < 0 || id > m_Properties[contextId].Count - 1)
-				throw new ArgumentException(string.Format("Property #{0} does not exist!", id));
+				throw new ArgumentException(string.Format(CompilerMessages.PropertyIdNotFound, id));
 		}
 
 		private class GlobalPropertyEntity

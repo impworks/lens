@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -15,11 +16,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error("Use explicit constructor to create an empty list!");
+				Error(CompilerMessages.ListEmpty);
 
 			m_ItemType = resolveItemType(Expressions, ctx);
 			if (m_ItemType == null)
-				Error(Expressions[0], "List type cannot be inferred, at least one value must be non-null.");
+				Error(Expressions[0], CompilerMessages.ListTypeUnknown);
 
 			return typeof(List<>).MakeGenericType(m_ItemType);
 		}
@@ -50,7 +51,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				ctx.CheckTypedExpression(curr, currType, true);
 
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					Error(curr, "Cannot add an object of type '{0}' to List<{1}>!", currType, m_ItemType);
+					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				

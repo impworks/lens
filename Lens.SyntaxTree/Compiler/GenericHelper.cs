@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -21,10 +22,10 @@ namespace Lens.SyntaxTree.Compiler
 				var value = genericValues[idx];
 
 				if (value == null && hint == null)
-					throw new TypeMatchException(string.Format("Generic argument '{0}' could not be resolved!", def));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, def));
 
 				if (hint != null && value != null && hint != value)
-					throw new TypeMatchException(string.Format("Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!", def, hint, value));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericHintMismatch, def, hint, value));
 
 				if (value == null)
 					genericValues[idx] = hint;
@@ -46,7 +47,7 @@ namespace Lens.SyntaxTree.Compiler
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
 
 			if(exLen != actLen)
-				throw new ArgumentException("Number of arguments does not match!");
+				throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);
 
 			for (var idx = 0; idx < exLen; idx++)
 			{
@@ -75,7 +76,7 @@ namespace Lens.SyntaxTree.Compiler
 							continue;
 
 						if (value != null && value != actual)
-							throw new TypeMatchException(string.Format("Generic argument '{0}' has mismatched values: '{1}' and '{2}'.", def, actual, value));
+							throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
 
 						genericValues[defIdx] = actual;
 					}
@@ -122,7 +123,7 @@ namespace Lens.SyntaxTree.Compiler
 						return values[idx];
 
 				if (throwNotFound)
-					throw new ArgumentOutOfRangeException(string.Format("Generic parameter '{0}' was not found!", type));
+					throw new ArgumentOutOfRangeException(string.Format(CompilerMessages.GenericParameterNotFound, type));
 
 				return type;
 			}
@@ -151,9 +152,9 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var matching = actual.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
 				if (matching.Length == 0)
-					throw new TypeMatchException(string.Format("Type '{0}' does not implement any kind of interface '{1}'!", actual, generic));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
 				if (matching.Length > 1)
-					throw new TypeMatchException(string.Format("Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!", generic, actual));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
 
 				return matching[0];
 			}
@@ -168,7 +169,7 @@ namespace Lens.SyntaxTree.Compiler
 				currType = currType.BaseType;
 			}
 
-			throw new TypeMatchException(string.Format("Cannot resolve arguments of '{0}' using type '{1}'!", generic, actual));
+			throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
 		}
 
 		#endregion
