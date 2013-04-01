@@ -126,6 +126,15 @@
   <data name="ClosureRef" xml:space="preserve">
     <value>Cannot closure a ref argument!</value>
   </data>
+  <data name="CodeBlockEmpty" xml:space="preserve">
+    <value>Code block contains no statements!</value>
+  </data>
+  <data name="CodeBlockLastVar" xml:space="preserve">
+    <value>A declaration of a variable or a constant cannot be the last statement in a code block!</value>
+  </data>
+  <data name="ConditionInconsistentTyping" xml:space="preserve">
+    <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
+  </data>
   <data name="ConstructorStatic" xml:space="preserve">
     <value>A constructor must not be marked as static!</value>
   </data>
@@ -183,6 +192,9 @@
   <data name="IndexSetterNotFound" xml:space="preserve">
     <value>Type '{0}' has no index setter that accepts an index of type '{1}'!</value>
   </data>
+  <data name="LambdaReturnTypeUnknown" xml:space="preserve">
+    <value>Lambda return type cannot be inferred! Please use type casting to specify type.</value>
+  </data>
   <data name="PropertyIdNoGetter" xml:space="preserve">
     <value>Property #{0} has no getter!</value>
   </data>
@@ -197,6 +209,12 @@
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
+  </data>
+  <data name="ThrowArgumentExpected" xml:space="preserve">
+    <value>Expression is expected! An exception can only be rethrown from a catch clause.</value>
+  </data>
+  <data name="ThrowTypeNotException" xml:space="preserve">
+    <value>Type '{0}' cannot be used in throw statement because it does not derive from System.Exception!</value>
   </data>
   <data name="TypeDefined" xml:space="preserve">
     <value>Type '{0}' has already been defined!</value>

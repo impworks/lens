@@ -88,6 +88,33 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Code block contains no statements!.
+        /// </summary>
+        public static string CodeBlockEmpty {
+            get {
+                return ResourceManager.GetString("CodeBlockEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A declaration of a variable or a constant cannot be the last statement in a code block!.
+        /// </summary>
+        public static string CodeBlockLastVar {
+            get {
+                return ResourceManager.GetString("CodeBlockLastVar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No best common type found for return types of condition branches: &apos;{0}&apos; and &apos;{1}&apos; respectively..
+        /// </summary>
+        public static string ConditionInconsistentTyping {
+            get {
+                return ResourceManager.GetString("ConditionInconsistentTyping", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A constructor must not be marked as static!.
         /// </summary>
         public static string ConstructorStatic {
@@ -259,6 +286,15 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Lambda return type cannot be inferred! Please use type casting to specify type..
+        /// </summary>
+        public static string LambdaReturnTypeUnknown {
+            get {
+                return ResourceManager.GetString("LambdaReturnTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Property #{0} has no getter!.
         /// </summary>
         public static string PropertyIdNoGetter {
@@ -300,6 +336,24 @@ namespace Lens.SyntaxTree.Translations {
         public static string ReturnTypeMismatch {
             get {
                 return ResourceManager.GetString("ReturnTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expression is expected! An exception can only be rethrown from a catch clause..
+        /// </summary>
+        public static string ThrowArgumentExpected {
+            get {
+                return ResourceManager.GetString("ThrowArgumentExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used in throw statement because it does not derive from System.Exception!.
+        /// </summary>
+        public static string ThrowTypeNotException {
+            get {
+                return ResourceManager.GetString("ThrowTypeNotException", resourceCulture);
             }
         }
         

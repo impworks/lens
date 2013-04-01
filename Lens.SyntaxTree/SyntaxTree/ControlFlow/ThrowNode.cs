@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -33,7 +34,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (Expression == null)
 			{
 				if(ctx.CurrentCatchBlock == null)
-					Error("An exception can only be rethrown from a catch clause.");
+					Error(Messages.ThrowArgumentExpected);
 
 				gen.EmitRethrow();
 			}
@@ -42,7 +43,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				var type = Expression.GetExpressionType(ctx);
 
 				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					Error("Throw argument must be derived from System.Exception!");
+					Error(Expression, Messages.ThrowTypeNotException);
 
 				Expression.Compile(ctx, true);
 				gen.EmitThrow();
