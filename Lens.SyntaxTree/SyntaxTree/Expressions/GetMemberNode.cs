@@ -93,14 +93,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			try
 			{
 				m_Property = ctx.ResolveProperty(m_Type, MemberName);
+
+				if(!m_Property.CanGet)
+					Error("Property '{0}' of type '{1}' does not have a getter!", MemberName, m_Type);
+
 				m_IsStatic = m_Property.IsStatic;
 
 				check();
 				return;
-			}
-			catch (ArgumentNullException)
-			{
-				Error("Property '{0}' of type '{1}' does not have a getter!", MemberName, m_Type);
 			}
 			catch (KeyNotFoundException)
 			{ }

@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="CatchTypeNotException" xml:space="preserve">
+    <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
+  </data>
+  <data name="ClosureImplicit" xml:space="preserve">
+    <value>Cannot closure an implicit variable!</value>
+  </data>
+  <data name="ClosureRef" xml:space="preserve">
+    <value>Cannot closure a ref argument!</value>
+  </data>
+  <data name="ConstructorStatic" xml:space="preserve">
+    <value>A constructor must not be marked as static!</value>
+  </data>
+  <data name="ContextNotFound" xml:space="preserve">
+    <value>Context #{0} does not exist!</value>
+  </data>
+  <data name="ContextUnregistered" xml:space="preserve">
+    <value>Context #{0} has been unregistered!</value>
+  </data>
+  <data name="ExpressionNull" xml:space="preserve">
+    <value>Expression type cannot be inferred! Please use type casting to specify actual type.</value>
+  </data>
+  <data name="ExpressionVoid" xml:space="preserve">
+    <value>Expression that returns a value is expected!</value>
+  </data>
+  <data name="GenericArgCountMismatch" xml:space="preserve">
+    <value>Number of generic arguments does not match!</value>
+  </data>
+  <data name="GenericArgMismatch" xml:space="preserve">
+    <value>Generic argument '{0}' has mismatched values: '{1}' and '{2}'!</value>
+  </data>
+  <data name="GenericArgsToNonGenericMethod" xml:space="preserve">
+    <value>Cannot apply generic arguments to non-generic method '{0}'!</value>
+  </data>
+  <data name="GenericArgumentNotResolved" xml:space="preserve">
+    <value>Generic argument '{0}' could not be resolved!</value>
+  </data>
+  <data name="GenericHintMismatch" xml:space="preserve">
+    <value>Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!</value>
+  </data>
+  <data name="GenericImplementationWrongType" xml:space="preserve">
+    <value>Cannot resolve arguments of '{0}' using type '{1}'!</value>
+  </data>
+  <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
+    <value>Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
+  </data>
+  <data name="GenericInterfaceNotImplemented" xml:space="preserve">
+    <value>Type '{0}' does not implement any kind of interface '{1}'!</value>
+  </data>
+  <data name="GenericParameterNotFound" xml:space="preserve">
+    <value>Generic parameter '{0}' was not found!</value>
+  </data>
+  <data name="ImportIntoSaveableAssembly" xml:space="preserve">
+    <value>Entities cannot be imported into a saveable assembly!</value>
+  </data>
+  <data name="ImportUnsupportedMethod" xml:space="preserve">
+    <value>Only public, static, non-generic methods can be imported!</value>
+  </data>
+  <data name="IndexAmbigious" xml:space="preserve">
+    <value>Indexer is ambigious! At least two cases apply:{3}{0}[{1}]{3}{0}[{2}]</value>
+  </data>
+  <data name="IndexGetterNotFound" xml:space="preserve">
+    <value>Type '{0}' has no index getter that accepts an index of type '{1}'!</value>
+  </data>
+  <data name="IndexSetterNotFound" xml:space="preserve">
+    <value>Type '{0}' has no index setter that accepts an index of type '{1}'!</value>
+  </data>
+  <data name="PropertyIdNoGetter" xml:space="preserve">
+    <value>Property #{0} has no getter!</value>
+  </data>
+  <data name="PropertyIdNoSetter" xml:space="preserve">
+    <value>Property #{0} has no setter!</value>
+  </data>
+  <data name="PropertyIdNotFound" xml:space="preserve">
+    <value>Property #{0} does not exist!</value>
+  </data>
+  <data name="PropertyImported" xml:space="preserve">
+    <value>Property '{0}' has already been imported!</value>
+  </data>
+  <data name="ReturnTypeMismatch" xml:space="preserve">
+    <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
+  </data>
+  <data name="TypeDefined" xml:space="preserve">
+    <value>Type '{0}' has already been defined!</value>
+  </data>
+  <data name="TypeIsAmbiguous" xml:space="preserve">
+    <value>Ambigious type reference: type '{0}' is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}</value>
+  </data>
+  <data name="TypeNotFound" xml:space="preserve">
+    <value>Type '{0}' could not be resolved!</value>
+  </data>
+  <data name="VariableDefined" xml:space="preserve">
+    <value>A variable named '{0}' is already defined!</value>
+  </data>
+  <data name="VariableNotFound" xml:space="preserve">
+    <value>A variable named '{0}' does not exist in the scope!</value>
+  </data>
+</root>

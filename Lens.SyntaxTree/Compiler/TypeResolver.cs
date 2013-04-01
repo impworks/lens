@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -183,12 +184,13 @@ namespace Lens.SyntaxTree.Compiler
 					{
 						throw new ArgumentException(
 							string.Format(
-								"Ambigious type reference: type '{0}' is found in the following namespaces:\n{1} in assembly {2}\n{3} in assembly {4}",
+								Messages.TypeIsAmbiguous,
 								name,
 								foundType.Namespace,
 								foundType.Assembly.GetName().Name,
 								type.Namespace,
-								currAsm.FullName
+								currAsm.FullName,
+								Environment.NewLine
 							)
 						);
 					}
@@ -198,7 +200,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			if (foundType == null)
-				throw new ArgumentException(string.Format("Type '{0}' could not be found.", name));
+				throw new ArgumentException(string.Format(Messages.TypeNotFound, name));
 
 			return foundType;
 		}

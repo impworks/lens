@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -209,7 +210,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var mi = method.Method;
 			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
-				Context.Error("Only public, static, non-generic methods can be imported!");
+				Context.Error(Messages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
@@ -328,7 +329,7 @@ namespace Lens.SyntaxTree.Compiler
 
 			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
 			if(exact && info.Item2 != 0)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
+				throw new KeyNotFoundException();
 
 			return info.Item1;
 		}

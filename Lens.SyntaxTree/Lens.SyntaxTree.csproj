@@ -74,6 +74,11 @@
     <Compile Include="Compiler\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
+    <Compile Include="Translations\Messages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
@@ -156,6 +161,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Translations\Messages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Messages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

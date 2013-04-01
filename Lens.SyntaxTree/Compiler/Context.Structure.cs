@@ -4,6 +4,7 @@ using System.Linq;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
@@ -19,10 +20,10 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportType(string name, Type type)
 		{
 			if(Options.AllowSave)
-				Error("Entities cannot be imported into a saveable assembly!");
+				Error(Messages.ImportIntoSaveableAssembly);
 
 			if (_DefinedTypes.ContainsKey(name))
-				Error("Type '{0}' has already been defined!", name);
+				Error(Messages.TypeDefined, name);
 
 			var te = new TypeEntity(this, true)
 			{
@@ -38,7 +39,7 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportFunction(string name, Delegate method)
 		{
 			if (Options.AllowSave)
-				Error("Entities cannot be imported into a saveable assembly!");
+				Error(Messages.ImportIntoSaveableAssembly);
 
 			_DefinedTypes[RootTypeName].ImportMethod(name, method);
 		}
@@ -49,10 +50,10 @@ namespace Lens.SyntaxTree.Compiler
 		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
 			if (Options.AllowSave)
-				Error("Entities cannot be imported into a saveable assembly!");
+				Error(Messages.ImportIntoSaveableAssembly);
 
 			if(_DefinedProperties.ContainsKey(name))
-				Error("Property '{0}' has already been imported!", name);
+				Error(Messages.PropertyImported, name);
 
 			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
 			_DefinedProperties.Add(name, ent);
@@ -184,10 +185,10 @@ namespace Lens.SyntaxTree.Compiler
 			var type = calculatedType ?? node.GetExpressionType(this);
 
 			if(!allowNull && type == typeof(NullType))
-				Error(node, "Expression type cannot be inferred! Please use type casting to specify actual type.");
+				Error(node, Messages.ExpressionNull);
 
 			if(type.IsVoid())
-				Error(node, "Expression that returns a value is expected!");
+				Error(node, Messages.ExpressionVoid);
 		}
 
 		#endregion
@@ -264,7 +265,7 @@ namespace Lens.SyntaxTree.Compiler
 		private TypeEntity createTypeCore(string name, bool isSealed, bool defaultCtor)
 		{
 			if (_DefinedTypes.ContainsKey(name))
-				Error("Type '{0}' has already been defined!", name);
+				Error(Messages.TypeDefined, name);
 
 			var te = new TypeEntity(this)
 			{

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -224,7 +225,7 @@ namespace Lens.SyntaxTree.Compiler
 				var method = typeEntity.ResolveMethod(name, argTypes);
 
 				if(hints != null)
-					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+					Error(Messages.GenericArgsToNonGenericMethod, name);
 
 				return new MethodWrapper
 				{
@@ -261,7 +262,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else if (hints != null)
 				{
-					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+					Error(Messages.GenericArgsToNonGenericMethod, name);
 				}
 
 				return new MethodWrapper
@@ -310,7 +311,7 @@ namespace Lens.SyntaxTree.Compiler
 				}
 				else if (hints != null)
 				{
-					Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+					Error(Messages.GenericArgsToNonGenericMethod, name);
 				}
 
 				return new MethodWrapper
@@ -358,7 +359,7 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			else if (hints != null)
 			{
-				Error("Cannot apply generic arguments to non-generic method '{0}'!", name);
+				Error(Messages.GenericArgsToNonGenericMethod, name);
 			}
 
 			return new MethodWrapper
@@ -462,18 +463,18 @@ namespace Lens.SyntaxTree.Compiler
 
 			if(indexers.Count == 0 || indexers[0].Item3 == int.MaxValue)
 				Error(
-					"Type '{0}' has no index {1} that accepts an index of type '{1}'!",
+					isGetter ? Messages.IndexGetterNotFound : Messages.IndexSetterNotFound,
 					type,
-					isGetter ? "getter" : "setter",
 					idxType
 				);
 
 			if (indexers.Count > 1 && indexers[0].Item3 == indexers[1].Item3)
 				Error(
-					"Indexer is ambigious, at least two cases apply:" + Environment.NewLine + "{0}[{1}]" + Environment.NewLine + "{0}[{2}]",
+					Messages.IndexAmbigious,
 					type,
 					indexers[0].Item2,
-					indexers[1].Item2
+					indexers[1].Item2,
+					Environment.NewLine
 				);
 
 			var it = indexers[0];
@@ -512,7 +513,7 @@ namespace Lens.SyntaxTree.Compiler
 			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
 
 			if (result.Length == 0 || result[0].Item2 == int.MaxValue)
-				throw new KeyNotFoundException("No suitable method was found!");
+				throw new KeyNotFoundException();
 
 			if (result.Length > 2)
 			{

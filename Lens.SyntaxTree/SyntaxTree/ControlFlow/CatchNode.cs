@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -51,7 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if(!type.IsSubclassOf(typeof(Exception)))
-				Error("Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!", type);
+				Error(Messages.CatchTypeNotException, type);
 
 			gen.BeginCatchBlock(type);
 

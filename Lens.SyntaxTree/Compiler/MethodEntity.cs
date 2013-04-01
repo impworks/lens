@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -108,7 +109,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())
 			{
 				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
-					ctx.Error("Function of type '{0}' cannot return an expression of type '{1}'!", ReturnType, actualType);
+					ctx.Error(Messages.ReturnTypeMismatch, ReturnType, actualType);
 			}
 
 			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())
