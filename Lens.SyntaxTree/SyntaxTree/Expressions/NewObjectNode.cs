@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -36,7 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			if(Arguments.Count == 0)
-				Error("A parameterless constructor must be invoked by applying a () to it.");
+				Error(Messages.ParameterlessConstructorParens);
 
 			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
 

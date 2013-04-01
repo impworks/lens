@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -15,10 +16,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (Expressions.Count == 0)
-				Error("Tuple must contain at least one object!");
+				Error(Messages.TupleNoArgs);
 
 			if (Expressions.Count > 8)
-				Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
+				Error(Messages.TupleTooManyArgs);
 
 			var types = new List<Type>();
 			foreach (var curr in Expressions)

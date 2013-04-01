@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -44,7 +45,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+				Error(Messages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (Unit);
@@ -62,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (local != null)
 			{
 				if(local.IsConstant && PointerRequired)
-					Error("Constant variables cannot be passed by reference!");
+					Error(Messages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
@@ -96,7 +97,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var id = m_Property.PropertyId;
 				if(!m_Property.HasGetter)
-					Error("Global property '{0}' has no getter!", Identifier);
+					Error(Messages.GlobalPropertyNoGetter, Identifier);
 
 				var type = m_Property.PropertyType;
 				if (m_Property.GetterMethod != null)
@@ -113,7 +114,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				return;
 			}
 
-			Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+			Error(Messages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>

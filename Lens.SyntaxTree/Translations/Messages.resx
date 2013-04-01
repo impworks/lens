@@ -117,6 +117,21 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ArgumentTypeMismatch" xml:space="preserve">
+    <value>Cannot use object of type '{0}' as a value for parameter of type '{1}'!</value>
+  </data>
+  <data name="ArrayElementTypeMismatch" xml:space="preserve">
+    <value>Cannot add object of type '{0}' to array of type '{1}'!</value>
+  </data>
+  <data name="ArrayEmpty" xml:space="preserve">
+    <value>Array initializer must contain at least one object! Use explicit constructor to create an empty array.</value>
+  </data>
+  <data name="ArrayTypeUnknown" xml:space="preserve">
+    <value>Array type cannot be inferred! Use type casting to specify element types.</value>
+  </data>
+  <data name="CallableTooManyArguments" xml:space="preserve">
+    <value>Cannot create a callable object from a method with more than 16 arguments!</value>
+  </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
   </data>
@@ -135,6 +150,9 @@
   <data name="ConditionInconsistentTyping" xml:space="preserve">
     <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
   </data>
+  <data name="ConstantByRef" xml:space="preserve">
+    <value>Constant variables cannot be passed by reference!</value>
+  </data>
   <data name="ConstructorStatic" xml:space="preserve">
     <value>A constructor must not be marked as static!</value>
   </data>
@@ -144,11 +162,35 @@
   <data name="ContextUnregistered" xml:space="preserve">
     <value>Context #{0} has been unregistered!</value>
   </data>
+  <data name="DelegateArgumentsCountMismatch" xml:space="preserve">
+    <value>Invoking a delegate of type '{0}' requires {1} arguments, {2} given instead!</value>
+  </data>
+  <data name="DictionaryEmpty" xml:space="preserve">
+    <value>Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary.</value>
+  </data>
+  <data name="DictionaryKeyTypeMismatch" xml:space="preserve">
+    <value>Cannot add a key of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+  </data>
+  <data name="DictionaryTypeUnknown" xml:space="preserve">
+    <value>Dictionary type cannot be inferred! Use type casting to specify element types.</value>
+  </data>
+  <data name="DictionaryValueTypeMismatch" xml:space="preserve">
+    <value>Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+  </data>
+  <data name="DynamicMemberFromStaticContext" xml:space="preserve">
+    <value>'{0}' cannot be accessed from static context!</value>
+  </data>
   <data name="ExpressionNull" xml:space="preserve">
     <value>Expression type cannot be inferred! Please use type casting to specify actual type.</value>
   </data>
   <data name="ExpressionVoid" xml:space="preserve">
     <value>Expression that returns a value is expected!</value>
+  </data>
+  <data name="FunctionInvocationAmbiguous" xml:space="preserve">
+    <value>There is more than one suitable override of function '{0}'! Please use type casting to specify the exact override.</value>
+  </data>
+  <data name="FunctionNotFound" xml:space="preserve">
+    <value>No function named '{0}' with suitable arguments is declared!</value>
   </data>
   <data name="GenericArgCountMismatch" xml:space="preserve">
     <value>Number of generic arguments does not match!</value>
@@ -177,6 +219,24 @@
   <data name="GenericParameterNotFound" xml:space="preserve">
     <value>Generic parameter '{0}' was not found!</value>
   </data>
+  <data name="GlobalPropertyNoGetter" xml:space="preserve">
+    <value>Global property '{0}' has no getter!</value>
+  </data>
+  <data name="GlobalPropertyNoSetter" xml:space="preserve">
+    <value>Global property '{0}' has no setter!</value>
+  </data>
+  <data name="GlobalPropertyTypeMismatch" xml:space="preserve">
+    <value>Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.</value>
+  </data>
+  <data name="IdentifierIsConstant" xml:space="preserve">
+    <value>'{0}' is a constant and cannot be assigned after definition!</value>
+  </data>
+  <data name="IdentifierNotFound" xml:space="preserve">
+    <value>No local variable or global parameterless function named '{0}' was found!</value>
+  </data>
+  <data name="IdentifierTypeMismatch" xml:space="preserve">
+    <value>Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.</value>
+  </data>
   <data name="ImportIntoSaveableAssembly" xml:space="preserve">
     <value>Entities cannot be imported into a saveable assembly!</value>
   </data>
@@ -195,6 +255,18 @@
   <data name="LambdaReturnTypeUnknown" xml:space="preserve">
     <value>Lambda return type cannot be inferred! Please use type casting to specify type.</value>
   </data>
+  <data name="ListElementTypeMismatch" xml:space="preserve">
+    <value>Cannot add object of type '{0}' to List&lt;{1}&gt;!</value>
+  </data>
+  <data name="ListEmpty" xml:space="preserve">
+    <value>List initializer must contain at least one object! Use explicit constructor to create an empty list.</value>
+  </data>
+  <data name="ListTypeUnknown" xml:space="preserve">
+    <value>List type cannot be inferred! Use type casting to specify element types.</value>
+  </data>
+  <data name="ParameterlessConstructorParens" xml:space="preserve">
+    <value>A parameterless constructor must be invoked by applying a () to it!</value>
+  </data>
   <data name="PropertyIdNoGetter" xml:space="preserve">
     <value>Property #{0} has no getter!</value>
   </data>
@@ -207,6 +279,12 @@
   <data name="PropertyImported" xml:space="preserve">
     <value>Property '{0}' has already been imported!</value>
   </data>
+  <data name="PropertyNoGetter" xml:space="preserve">
+    <value>Property '{0}.{1}' does not have a getter!</value>
+  </data>
+  <data name="PropertyNoSetter" xml:space="preserve">
+    <value>Property '{0}.{1}' does not have a setter!</value>
+  </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
   </data>
@@ -216,11 +294,35 @@
   <data name="ThrowTypeNotException" xml:space="preserve">
     <value>Type '{0}' cannot be used in throw statement because it does not derive from System.Exception!</value>
   </data>
+  <data name="TupleNoArgs" xml:space="preserve">
+    <value>Tuple must contain at least one object!</value>
+  </data>
+  <data name="TupleTooManyArgs" xml:space="preserve">
+    <value>Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead.</value>
+  </data>
+  <data name="TypeArgumentsForNonMethod" xml:space="preserve">
+    <value>Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
+  </data>
   <data name="TypeDefined" xml:space="preserve">
     <value>Type '{0}' has already been defined!</value>
   </data>
+  <data name="TypeIdentifierNotFound" xml:space="preserve">
+    <value>Type '{0}' does not have any field, property or method called '{1}'!</value>
+  </data>
   <data name="TypeIsAmbiguous" xml:space="preserve">
     <value>Ambigious type reference: type '{0}' is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}</value>
+  </data>
+  <data name="TypeMethodAmbiguous" xml:space="preserve">
+    <value>Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.</value>
+  </data>
+  <data name="TypeMethodInvocationAmbiguous" xml:space="preserve">
+    <value>Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.</value>
+  </data>
+  <data name="TypeMethodNotFound" xml:space="preserve">
+    <value>Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!</value>
+  </data>
+  <data name="TypeNotCallable" xml:space="preserve">
+    <value>Type '{0}' is not a delegate!</value>
   </data>
   <data name="TypeNotFound" xml:space="preserve">
     <value>Type '{0}' could not be resolved!</value>

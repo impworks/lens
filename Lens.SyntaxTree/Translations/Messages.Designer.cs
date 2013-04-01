@@ -61,6 +61,51 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use object of type &apos;{0}&apos; as a value for parameter of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string ArgumentTypeMismatch {
+            get {
+                return ResourceManager.GetString("ArgumentTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot add object of type &apos;{0}&apos; to array of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string ArrayElementTypeMismatch {
+            get {
+                return ResourceManager.GetString("ArrayElementTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Array initializer must contain at least one object! Use explicit constructor to create an empty array..
+        /// </summary>
+        public static string ArrayEmpty {
+            get {
+                return ResourceManager.GetString("ArrayEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Array type cannot be inferred! Use type casting to specify element types..
+        /// </summary>
+        public static string ArrayTypeUnknown {
+            get {
+                return ResourceManager.GetString("ArrayTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create a callable object from a method with more than 16 arguments!.
+        /// </summary>
+        public static string CallableTooManyArguments {
+            get {
+                return ResourceManager.GetString("CallableTooManyArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used in catch clause because it does not derive from System.Exception!.
         /// </summary>
         public static string CatchTypeNotException {
@@ -115,6 +160,15 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Constant variables cannot be passed by reference!.
+        /// </summary>
+        public static string ConstantByRef {
+            get {
+                return ResourceManager.GetString("ConstantByRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A constructor must not be marked as static!.
         /// </summary>
         public static string ConstructorStatic {
@@ -142,6 +196,60 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invoking a delegate of type &apos;{0}&apos; requires {1} arguments, {2} given instead!.
+        /// </summary>
+        public static string DelegateArgumentsCountMismatch {
+            get {
+                return ResourceManager.GetString("DelegateArgumentsCountMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary..
+        /// </summary>
+        public static string DictionaryEmpty {
+            get {
+                return ResourceManager.GetString("DictionaryEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot add a key of type &apos;{0}&apos; to Dictionary&lt;{1}, {2}&gt;!.
+        /// </summary>
+        public static string DictionaryKeyTypeMismatch {
+            get {
+                return ResourceManager.GetString("DictionaryKeyTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dictionary type cannot be inferred! Use type casting to specify element types..
+        /// </summary>
+        public static string DictionaryTypeUnknown {
+            get {
+                return ResourceManager.GetString("DictionaryTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot add a value of type &apos;{0}&apos; to Dictionary&lt;{1}, {2}&gt;!.
+        /// </summary>
+        public static string DictionaryValueTypeMismatch {
+            get {
+                return ResourceManager.GetString("DictionaryValueTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be accessed from static context!.
+        /// </summary>
+        public static string DynamicMemberFromStaticContext {
+            get {
+                return ResourceManager.GetString("DynamicMemberFromStaticContext", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expression type cannot be inferred! Please use type casting to specify actual type..
         /// </summary>
         public static string ExpressionNull {
@@ -156,6 +264,24 @@ namespace Lens.SyntaxTree.Translations {
         public static string ExpressionVoid {
             get {
                 return ResourceManager.GetString("ExpressionVoid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There is more than one suitable override of function &apos;{0}&apos;! Please use type casting to specify the exact override..
+        /// </summary>
+        public static string FunctionInvocationAmbiguous {
+            get {
+                return ResourceManager.GetString("FunctionInvocationAmbiguous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No function named &apos;{0}&apos; with suitable arguments is declared!.
+        /// </summary>
+        public static string FunctionNotFound {
+            get {
+                return ResourceManager.GetString("FunctionNotFound", resourceCulture);
             }
         }
         
@@ -241,6 +367,69 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Global property &apos;{0}&apos; has no getter!.
+        /// </summary>
+        public static string GlobalPropertyNoGetter {
+            get {
+                return ResourceManager.GetString("GlobalPropertyNoGetter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Global property &apos;{0}&apos; has no setter!.
+        /// </summary>
+        public static string GlobalPropertyNoSetter {
+            get {
+                return ResourceManager.GetString("GlobalPropertyNoSetter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot assign a value of type &apos;{0}&apos; to a global property of type &apos;{1}&apos;! An explicit cast might be required..
+        /// </summary>
+        public static string GlobalPropertyTypeMismatch {
+            get {
+                return ResourceManager.GetString("GlobalPropertyTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is a constant and cannot be assigned after definition!.
+        /// </summary>
+        public static string IdentifierIsConstant {
+            get {
+                return ResourceManager.GetString("IdentifierIsConstant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No local variable or global parameterless function named &apos;{0}&apos; was found!.
+        /// </summary>
+        public static string IdentifierNotFound {
+            get {
+                return ResourceManager.GetString("IdentifierNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot assign a value of type &apos;{0}&apos; to a variable of type &apos;{1}&apos;! An explicit cast might be required..
+        /// </summary>
+        public static string IdentifierTypeMismatch {
+            get {
+                return ResourceManager.GetString("IdentifierTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot implicitly convert an object of type &apos;{0}&apos; to required type &apos;{1}&apos;!.
+        /// </summary>
+        public static string ImplicitCastImpossible {
+            get {
+                return ResourceManager.GetString("ImplicitCastImpossible", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Entities cannot be imported into a saveable assembly!.
         /// </summary>
         public static string ImportIntoSaveableAssembly {
@@ -295,6 +484,42 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot add object of type &apos;{0}&apos; to List&lt;{1}&gt;!.
+        /// </summary>
+        public static string ListElementTypeMismatch {
+            get {
+                return ResourceManager.GetString("ListElementTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to List initializer must contain at least one object! Use explicit constructor to create an empty list..
+        /// </summary>
+        public static string ListEmpty {
+            get {
+                return ResourceManager.GetString("ListEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to List type cannot be inferred! Use type casting to specify element types..
+        /// </summary>
+        public static string ListTypeUnknown {
+            get {
+                return ResourceManager.GetString("ListTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A parameterless constructor must be invoked by applying a () to it!.
+        /// </summary>
+        public static string ParameterlessConstructorParens {
+            get {
+                return ResourceManager.GetString("ParameterlessConstructorParens", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Property #{0} has no getter!.
         /// </summary>
         public static string PropertyIdNoGetter {
@@ -331,6 +556,24 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Property &apos;{0}.{1}&apos; does not have a getter!.
+        /// </summary>
+        public static string PropertyNoGetter {
+            get {
+                return ResourceManager.GetString("PropertyNoGetter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Property &apos;{0}.{1}&apos; does not have a setter!.
+        /// </summary>
+        public static string PropertyNoSetter {
+            get {
+                return ResourceManager.GetString("PropertyNoSetter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function of type &apos;{0}&apos; cannot return an expression of type &apos;{1}&apos;!.
         /// </summary>
         public static string ReturnTypeMismatch {
@@ -358,11 +601,47 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tuple must contain at least one object!.
+        /// </summary>
+        public static string TupleNoArgs {
+            get {
+                return ResourceManager.GetString("TupleNoArgs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead..
+        /// </summary>
+        public static string TupleTooManyArgs {
+            get {
+                return ResourceManager.GetString("TupleTooManyArgs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type arguments cannot be applied to &apos;{0}.{1}&apos; because it is not a method!.
+        /// </summary>
+        public static string TypeArgumentsForNonMethod {
+            get {
+                return ResourceManager.GetString("TypeArgumentsForNonMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; has already been defined!.
         /// </summary>
         public static string TypeDefined {
             get {
                 return ResourceManager.GetString("TypeDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; does not have any field, property or method called &apos;{1}&apos;!.
+        /// </summary>
+        public static string TypeIdentifierNotFound {
+            get {
+                return ResourceManager.GetString("TypeIdentifierNotFound", resourceCulture);
             }
         }
         
@@ -376,11 +655,56 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has more than one suitable override of &apos;{1}&apos;! Please specify type arguments..
+        /// </summary>
+        public static string TypeMethodAmbiguous {
+            get {
+                return ResourceManager.GetString("TypeMethodAmbiguous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has more than one suitable override of &apos;{1}&apos;! Please use type casting to specify the exact override..
+        /// </summary>
+        public static string TypeMethodInvocationAmbiguous {
+            get {
+                return ResourceManager.GetString("TypeMethodInvocationAmbiguous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has no method named &apos;{1}&apos; and no extension method accepting given arguments was found!.
+        /// </summary>
+        public static string TypeMethodNotFound {
+            get {
+                return ResourceManager.GetString("TypeMethodNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; is not a delegate!.
+        /// </summary>
+        public static string TypeNotCallable {
+            get {
+                return ResourceManager.GetString("TypeNotCallable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; could not be resolved!.
         /// </summary>
         public static string TypeNotFound {
             get {
                 return ResourceManager.GetString("TypeNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; does not contain a field or a property named &apos;{1}&apos;!.
+        /// </summary>
+        public static string TypeSettableIdentifierNotFound {
+            get {
+                return ResourceManager.GetString("TypeSettableIdentifierNotFound", resourceCulture);
             }
         }
         

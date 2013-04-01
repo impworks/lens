@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -59,10 +60,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Action check = () =>
 			{
 				if (Expression == null && !m_IsStatic)
-					Error("'{0}' cannot be accessed from static context!", MemberName);
+					Error(Messages.DynamicMemberFromStaticContext, MemberName);
 
 				if(m_Method == null && TypeHints.Count > 0)
-					Error("Type arguments can only be applied to methods, and '{0}' is a field or a property!", MemberName);
+					Error(Messages.TypeArgumentsForNonMethod, m_Type, MemberName);
 
 				m_IsResolved = true;
 			};
@@ -95,7 +96,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Property = ctx.ResolveProperty(m_Type, MemberName);
 
 				if(!m_Property.CanGet)
-					Error("Property '{0}' of type '{1}' does not have a getter!", MemberName, m_Type);
+					Error(Messages.PropertyNoGetter, m_Type, MemberName);
 
 				m_IsStatic = m_Property.IsStatic;
 
@@ -110,11 +111,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
 				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 				if (methods.Length > 1)
-					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
+					Error(Messages.TypeMethodAmbiguous, m_Type.Name, MemberName);
 
 				m_Method = methods[0];
 				if (m_Method.ArgumentTypes.Length > 16)
-					Error("Cannot create a callable object from a method with more than 16 arguments!");
+					Error(Messages.CallableTooManyArguments);
 
 				m_IsStatic = m_Method.IsStatic;
 
@@ -122,7 +123,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' does not have any field, property or method called '{1}'!", m_Type.Name, MemberName);
+				Error(Messages.TypeIdentifierNotFound, m_Type.Name, MemberName);
 			}
 		}
 

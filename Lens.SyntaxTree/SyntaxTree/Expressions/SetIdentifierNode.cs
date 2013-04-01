@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -48,10 +49,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsConstant && !IsInitialization)
-					Error("'{0}' is a constant and cannot be assigned after definition!", Identifier);
+					Error(Messages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					Error("Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.", exprType, nameInfo.Type);
+					Error(Messages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 
 				if (nameInfo.IsClosured)
 				{
@@ -73,11 +74,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var pty = ctx.ResolveGlobalProperty(Identifier);
 
 				if(!pty.HasSetter)
-					Error("Global property '{0}' has no setter!", Identifier);
+					Error(Messages.GlobalPropertyNoSetter, Identifier);
 
 				var type = pty.PropertyType;
 				if(!type.IsExtendablyAssignableFrom(exprType))
-					Error("Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.", exprType, type);
+					Error(Messages.GlobalPropertyTypeMismatch, exprType, type);
 
 				var cast = Expr.Cast(Value, type);
 				if (pty.SetterMethod != null)
@@ -97,7 +98,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Variable '{0}' is undefined in current scope!", Identifier);
+				Error(Messages.VariableNotFound, Identifier);
 			}
 		}
 

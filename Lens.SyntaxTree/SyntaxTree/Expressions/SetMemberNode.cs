@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -45,7 +44,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			ctx.CheckTypedExpression(Value, valType, true);
 
 			if(!destType.IsExtendablyAssignableFrom(valType))
-				Error("Cannot implicitly convert an object of type '{0}' to required type '{1}'!", valType, destType);
+				Error(Messages.ImplicitCastImpossible, valType, destType);
 
 			if (!m_IsStatic)
 			{
@@ -76,7 +75,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Field = ctx.ResolveField(type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error("Field '{1}' of type '{0}' cannot be used in static context!", type, MemberName);
+					Error(Messages.DynamicMemberFromStaticContext, type, MemberName);
 
 				return;
 			}
@@ -86,19 +85,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				m_Property = ctx.ResolveProperty(type, MemberName);
 				if(!m_Property.CanSet)
-					Error("Property '{0}' of type '{1}' has no setter!", MemberName, type);
+					Error(Messages.PropertyNoSetter, MemberName, type);
 
 				m_IsStatic = m_Property.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error("Property '{0}' of type '{1}' cannot be used in static context!", MemberName, type);
-			}
-			catch(ArgumentNullException)
-			{
-				Error("Property '{0}' of type '{1}' does not have a public setter!");
+					Error(Messages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' does not contain a field or a property named '{1}'!", type, MemberName);
+				Error(Messages.TypeSettableIdentifierNotFound, type, MemberName);
 			}
 		}
 
