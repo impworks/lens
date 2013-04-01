@@ -2,6 +2,7 @@
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -71,7 +72,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
 			if(!canCompare(leftType, rightType, isEquality))
-				Error("Types '{0}' and '{1}' cannot be compared.", leftType, rightType);
+				Error(Messages.TypesIncomparable, leftType, rightType);
 
 			if (isEquality)
 				compileEquality(ctx, leftType, rightType);

@@ -1,5 +1,6 @@
 ﻿using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -22,7 +23,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			if(LeftOperand.GetExpressionType(ctx).IsIntegerType() && RightOperand is IntNode && (RightOperand as IntNode).Value == 0)
-				Error("Constant division by zero!");
+				Error(Messages.ConstantDivisionByZero);
 			
 			var gen = ctx.CurrentILGenerator;
 

@@ -855,13 +855,13 @@ list[1].Value + list[2].Value
 
 		private object Compile(string src)
 		{
-			var opts = new CompilerOptions {AllowSave = true};
+			var opts = new LensCompilerOptions {AllowSave = true};
 			return new LensCompiler(opts).Run(src);
 		}
 
 		private object Compile(IEnumerable<NodeBase> src)
 		{
-			var opts = new CompilerOptions { AllowSave = true };
+			var opts = new LensCompilerOptions { AllowSave = true };
 			return new LensCompiler(opts).Run(src);
 		}
 	}

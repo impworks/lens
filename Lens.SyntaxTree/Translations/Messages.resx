@@ -132,6 +132,18 @@
   <data name="CallableTooManyArguments" xml:space="preserve">
     <value>Cannot create a callable object from a method with more than 16 arguments!</value>
   </data>
+  <data name="CastDelegateArgTypesMismatch" xml:space="preserve">
+    <value>Delegate types '{0}' and '{1}' do not have matching argument types!</value>
+  </data>
+  <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
+    <value>Delegate types '{0}' and '{1}' do not have matching return types!</value>
+  </data>
+  <data name="CastNullValueType" xml:space="preserve">
+    <value>Cannot cast a null to type '{0}' because it is a value type!</value>
+  </data>
+  <data name="CastTypesMismatch" xml:space="preserve">
+    <value>Cannot cast object of type '{0}' to type '{1}'!</value>
+  </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
   </data>
@@ -152,6 +164,9 @@
   </data>
   <data name="ConstantByRef" xml:space="preserve">
     <value>Constant variables cannot be passed by reference!</value>
+  </data>
+  <data name="ConstantDivisionByZero" xml:space="preserve">
+    <value>Constant division by zero!</value>
   </data>
   <data name="ConstructorStatic" xml:space="preserve">
     <value>A constructor must not be marked as static!</value>
@@ -237,6 +252,9 @@
   <data name="IdentifierTypeMismatch" xml:space="preserve">
     <value>Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.</value>
   </data>
+  <data name="ImplicitCastImpossible" xml:space="preserve">
+    <value>Cannot implicitly convert an object of type '{0}' to required type '{1}'!</value>
+  </data>
   <data name="ImportIntoSaveableAssembly" xml:space="preserve">
     <value>Entities cannot be imported into a saveable assembly!</value>
   </data>
@@ -263,6 +281,15 @@
   </data>
   <data name="ListTypeUnknown" xml:space="preserve">
     <value>List type cannot be inferred! Use type casting to specify element types.</value>
+  </data>
+  <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
+    <value>Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>
+  </data>
+  <data name="OperatorTypesSignednessMismatch" xml:space="preserve">
+    <value>Cannot apply apply math operations to arguments of different signedness!</value>
+  </data>
+  <data name="OperatorUnaryTypeMismatch" xml:space="preserve">
+    <value>Cannot apply operator '{0}' to argument of type '{1}'!</value>
   </data>
   <data name="ParameterlessConstructorParens" xml:space="preserve">
     <value>A parameterless constructor must be invoked by applying a () to it!</value>
@@ -327,10 +354,25 @@
   <data name="TypeNotFound" xml:space="preserve">
     <value>Type '{0}' could not be resolved!</value>
   </data>
+  <data name="TypeNotImplicitlyBoolean" xml:space="preserve">
+    <value>Type '{0}' cannot be used in a boolean context!</value>
+  </data>
+  <data name="TypeNotNumeric" xml:space="preserve">
+    <value>Type '{0}' is not numeric!</value>
+  </data>
+  <data name="TypeSettableIdentifierNotFound" xml:space="preserve">
+    <value>Type '{0}' does not contain a field or a property named '{1}'!</value>
+  </data>
+  <data name="TypesIncomparable" xml:space="preserve">
+    <value>Types '{0}' and '{1}' cannot be compared!</value>
+  </data>
   <data name="VariableDefined" xml:space="preserve">
     <value>A variable named '{0}' is already defined!</value>
   </data>
   <data name="VariableNotFound" xml:space="preserve">
     <value>A variable named '{0}' does not exist in the scope!</value>
+  </data>
+  <data name="VoidTypeDefault" xml:space="preserve">
+    <value>Cannot create an instance of Unit or Void types!</value>
   </data>
 </root>

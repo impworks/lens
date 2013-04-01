@@ -1,4 +1,4 @@
-﻿namespace Lens.SyntaxTree.Utils
+﻿namespace Lens.SyntaxTree.SyntaxTree
 {
 	/// <summary>
 	/// The position of a caret in the text.

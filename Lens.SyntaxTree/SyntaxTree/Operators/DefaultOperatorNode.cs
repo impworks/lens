@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -40,7 +41,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var type = GetExpressionType(ctx);
 
 			if(type.IsVoid())
-				Error("Unit and void types cannot have instances.");
+				Error(Messages.VoidTypeDefault);
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);

@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.Compiler
 
 		#endregion
 
-		public Context(CompilerOptions options = null)
+		public Context(LensCompilerOptions options = null)
 		{
 			var an = new AssemblyName(getAssemblyName());
 
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Compiler
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
-			Options = options ?? new CompilerOptions();
+			Options = options ?? new LensCompilerOptions();
 			var saveable = Options.AllowSave;
 			if (saveable)
 			{
@@ -109,7 +109,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Compiler options.
 		/// </summary>
-		internal CompilerOptions Options { get; private set; }
+		internal LensCompilerOptions Options { get; private set; }
 
 		/// <summary>
 		/// The assembly that's being currently built.

@@ -1,5 +1,5 @@
 ﻿using System;
-using Lens.SyntaxTree.Utils;
+using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens.SyntaxTree
 {

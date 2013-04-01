@@ -106,6 +106,42 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Delegate types &apos;{0}&apos; and &apos;{1}&apos; do not have matching argument types!.
+        /// </summary>
+        public static string CastDelegateArgTypesMismatch {
+            get {
+                return ResourceManager.GetString("CastDelegateArgTypesMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delegate types &apos;{0}&apos; and &apos;{1}&apos; do not have matching return types!.
+        /// </summary>
+        public static string CastDelegateReturnTypesMismatch {
+            get {
+                return ResourceManager.GetString("CastDelegateReturnTypesMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot cast a null to type &apos;{0}&apos; because it is a value type!.
+        /// </summary>
+        public static string CastNullValueType {
+            get {
+                return ResourceManager.GetString("CastNullValueType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot cast object of type &apos;{0}&apos; to type &apos;{1}&apos;!.
+        /// </summary>
+        public static string CastTypesMismatch {
+            get {
+                return ResourceManager.GetString("CastTypesMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used in catch clause because it does not derive from System.Exception!.
         /// </summary>
         public static string CatchTypeNotException {
@@ -165,6 +201,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string ConstantByRef {
             get {
                 return ResourceManager.GetString("ConstantByRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Constant division by zero!.
+        /// </summary>
+        public static string ConstantDivisionByZero {
+            get {
+                return ResourceManager.GetString("ConstantDivisionByZero", resourceCulture);
             }
         }
         
@@ -511,6 +556,33 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot apply operator &apos;{0}&apos; to arguments of types &apos;{1}&apos; and &apos;{2}&apos;!.
+        /// </summary>
+        public static string OperatorBinaryTypesMismatch {
+            get {
+                return ResourceManager.GetString("OperatorBinaryTypesMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot apply apply math operations to arguments of different signedness!.
+        /// </summary>
+        public static string OperatorTypesSignednessMismatch {
+            get {
+                return ResourceManager.GetString("OperatorTypesSignednessMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot apply operator &apos;{0}&apos; to argument of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string OperatorUnaryTypeMismatch {
+            get {
+                return ResourceManager.GetString("OperatorUnaryTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A parameterless constructor must be invoked by applying a () to it!.
         /// </summary>
         public static string ParameterlessConstructorParens {
@@ -700,11 +772,38 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used in a boolean context!.
+        /// </summary>
+        public static string TypeNotImplicitlyBoolean {
+            get {
+                return ResourceManager.GetString("TypeNotImplicitlyBoolean", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; is not numeric!.
+        /// </summary>
+        public static string TypeNotNumeric {
+            get {
+                return ResourceManager.GetString("TypeNotNumeric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not contain a field or a property named &apos;{1}&apos;!.
         /// </summary>
         public static string TypeSettableIdentifierNotFound {
             get {
                 return ResourceManager.GetString("TypeSettableIdentifierNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Types &apos;{0}&apos; and &apos;{1}&apos; cannot be compared!.
+        /// </summary>
+        public static string TypesIncomparable {
+            get {
+                return ResourceManager.GetString("TypesIncomparable", resourceCulture);
             }
         }
         
@@ -723,6 +822,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string VariableNotFound {
             get {
                 return ResourceManager.GetString("VariableNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create an instance of Unit or Void types!.
+        /// </summary>
+        public static string VoidTypeDefault {
+            get {
+                return ResourceManager.GetString("VoidTypeDefault", resourceCulture);
             }
         }
     }

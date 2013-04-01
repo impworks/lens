@@ -2,6 +2,7 @@
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -52,7 +53,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				}
 
 				else
-					Error("Cannot cast a null to a value type!");
+					Error(Messages.CastNullValueType, toType);
 			}
 
 			else if (toType.IsExtendablyAssignableFrom(fromType))
@@ -115,10 +116,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var toArgs = toMethod.ArgumentTypes;
 
 			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
-				Error("Delegate types '{0}' and '{1}' do not have matching argument types!", from, to);
+				Error(Messages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				Error("Delegate types '{0}' and '{1}' do not have matching return types!", from, to);
+				Error(Messages.CastDelegateReturnTypesMismatch, from, to);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();
@@ -134,7 +135,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		private void castError(Type from, Type to)
 		{
-			Error("Cannot cast object of type '{0}' to type '{1}'.", from, to);
+			Error(Messages.CastTypesMismatch, from, to);
 		}
 
 		public static bool IsImplicitlyBoolean(Type type)

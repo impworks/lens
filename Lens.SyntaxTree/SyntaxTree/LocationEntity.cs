@@ -1,4 +1,6 @@
-﻿namespace Lens.SyntaxTree.Utils
+﻿using Lens.SyntaxTree.Utils;
+
+namespace Lens.SyntaxTree.SyntaxTree
 {
 	/// <summary>
 	/// A base class for source code entities that have a location.

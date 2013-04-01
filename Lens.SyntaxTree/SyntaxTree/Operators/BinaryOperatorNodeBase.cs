@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -63,7 +64,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error("Cannot apply operator '{0}' to arguments of types '{1}' and '{2}' respectively.", OperatorRepresentation, leftType, rightType);
+			Error(Messages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
 			return null;
 		}
 
@@ -102,7 +103,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 			var type = TypeExtensions.GetNumericOperationType(left, right);
 			if(type == null)
-				Error("Cannot apply apply math operations to arguments of different signedness.");
+				Error(Messages.OperatorTypesSignednessMismatch);
 
 			return type;
 		}

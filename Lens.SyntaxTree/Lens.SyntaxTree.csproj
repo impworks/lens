@@ -55,7 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler\CompilerOptions.cs" />
+    <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
     <Compile Include="Compiler\Context.Lookup.cs" />
