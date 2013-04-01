@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -327,6 +328,15 @@ namespace Lens.SyntaxTree.Compiler
 			}
 		}
 
+
+		/// <summary>
+		/// Resolves a method within the type, assuming it's the only one with such name.
+		/// </summary>
+		public MethodWrapper ResolveMethod(Type type, string name)
+		{
+			return ResolveMethodGroup(type, name).Single();
+		}
+
 		/// <summary>
 		/// Finds an extension method for current type.
 		/// </summary>
@@ -366,14 +376,6 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Resolves a method within the type, assuming it's the only one with such name.
-		/// </summary>
-		public MethodWrapper ResolveMethod(Type type, string name)
-		{
-			return ResolveMethodGroup(type, name).Single();
-		}
-
-		/// <summary>
 		/// Resolves a group of methods by name.
 		/// Only non-generic methods are returned!
 		/// </summary>
@@ -402,6 +404,81 @@ namespace Lens.SyntaxTree.Compiler
 					}
 				);
 			}
+		}
+
+		/// <summary>
+		/// Resolves an indexer property from a type by its argument.
+		/// </summary>
+		public MethodWrapper ResolveIndexer(Type type, Type idxType, bool isGetter)
+		{
+			if(type is TypeBuilder)
+				throw new NotSupportedException();
+
+			try
+			{
+				var indexer = resolveIndexer(type, idxType, isGetter, p => p);
+				return new MethodWrapper(indexer);
+			}
+			catch (NotSupportedException)
+			{
+				var genType = type.GetGenericTypeDefinition();
+				var indexer = resolveIndexer(genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
+				return new MethodWrapper
+				{
+					Type = type,
+
+					MethodInfo = TypeBuilder.GetMethod(type, indexer),
+					IsStatic = false,
+					IsVirtual = indexer.IsVirtual,
+					ArgumentTypes = indexer.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					ReturnType = GenericHelper.ApplyGenericArguments(indexer.ReturnType, type)
+				};
+			}
+		}
+
+		private MethodInfo resolveIndexer(Type type, Type idxType, bool isGetter, Func<Type, Type> typeProcessor)
+		{
+			var indexers = new List<Tuple<PropertyInfo, Type, int>>();
+
+			foreach (var pty in type.GetProperties())
+			{
+				if (isGetter && pty.GetGetMethod() == null)
+					continue;
+
+				if (!isGetter && pty.GetSetMethod() == null)
+					continue;
+
+				var idxArgs = pty.GetIndexParameters();
+				if (idxArgs.Length != 1)
+					continue;
+
+				var argType = typeProcessor(idxArgs[0].ParameterType);
+				var distance = argType.DistanceFrom(idxType);
+
+				indexers.Add(new Tuple<PropertyInfo, Type, int>(pty, argType, distance));
+			}
+
+			indexers.Sort((x, y) => x.Item3.CompareTo(y.Item3));
+
+			if(indexers.Count == 0 || indexers[0].Item3 == int.MaxValue)
+				Error(
+					"Type '{0}' has no index {1} that accepts an index of type '{1}'!",
+					type,
+					isGetter ? "getter" : "setter",
+					idxType
+				);
+
+			if (indexers.Count > 1 && indexers[0].Item3 == indexers[1].Item3)
+				Error(
+					"Indexer is ambigious, at least two cases apply:" + Environment.NewLine + "{0}[{1}]" + Environment.NewLine + "{0}[{2}]",
+					type,
+					indexers[0].Item2,
+					indexers[1].Item2
+				);
+
+			var it = indexers[0];
+
+			return isGetter ? it.Item1.GetGetMethod() : it.Item1.GetSetMethod();
 		}
 
 		/// <summary>

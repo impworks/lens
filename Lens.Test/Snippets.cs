@@ -845,22 +845,24 @@ list[1].Value + list[2].Value
 
 		private void Test(string src, object value)
 		{
-			Assert.AreEqual(value, new LensCompiler().Run(src));
+			Assert.AreEqual(value, Compile(src));
 		}
 
 		private void Test(IEnumerable<NodeBase> nodes, object value)
 		{
-			Assert.AreEqual(value, new LensCompiler().Run(nodes));
+			Assert.AreEqual(value, Compile(nodes));
 		}
 
 		private object Compile(string src)
 		{
-			return new LensCompiler().Run(src);
+			var opts = new CompilerOptions {AllowSave = true};
+			return new LensCompiler(opts).Run(src);
 		}
 
 		private object Compile(IEnumerable<NodeBase> src)
 		{
-			return new LensCompiler().Run(src);
+			var opts = new CompilerOptions { AllowSave = true };
+			return new LensCompiler(opts).Run(src);
 		}
 	}
 }

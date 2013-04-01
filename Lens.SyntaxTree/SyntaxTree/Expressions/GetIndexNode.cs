@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -13,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
-		private PropertyInfo IndexProperty;
+		private MethodWrapper m_Getter;
 
 		/// <summary>
 		/// Array indexer can return a pointer.
@@ -27,8 +26,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				return exprType.GetElementType();
 
 			var idxType = Index.GetExpressionType(ctx);
-			IndexProperty = findIndexer(exprType, idxType, false);
-			return IndexProperty.GetGetMethod().ReturnType;
+			m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+			return m_Getter.ReturnType;
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -71,16 +70,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private void compileCustom(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var method = IndexProperty.GetGetMethod();
 
 			if (Expression is IPointerProvider)
 				(Expression as IPointerProvider).PointerRequired = PointerRequired;
 			Expression.Compile(ctx, true);
 
-			var cast = Expr.Cast(Index, method.GetParameters()[0].ParameterType);
+			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);
 			cast.Compile(ctx, true);
 
-			gen.EmitCall(method);
+			gen.EmitCall(m_Getter.MethodInfo);
 		}
 
 		public override string ToString()

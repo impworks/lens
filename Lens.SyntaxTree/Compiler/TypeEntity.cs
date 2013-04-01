@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Lens.SyntaxTree.SyntaxTree;
-using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
