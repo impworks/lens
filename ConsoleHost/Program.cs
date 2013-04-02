@@ -38,7 +38,7 @@ namespace ConsoleHost
 
 		static bool RequestInput(out string input)
 		{
-			var sb = new StringBuilder();
+			var lines = new List<string>();
 			var prefix = 0;
 
 			while (true)
@@ -62,15 +62,25 @@ namespace ConsoleHost
 
 					if (line == "#run")
 					{
+						var sb = new StringBuilder(lines.Count);
+						foreach (var curr in lines)
+							sb.AppendLine(curr);
 						input = sb.ToString();
 						return true;
 					}
 
 					if (line == "#clr")
 					{
-						sb = new StringBuilder();
+						lines = new List<string>();
 						Console.Clear();
 						printPreamble();
+						continue;
+					}
+
+					if (line == "#oops")
+					{
+						if(lines.Count > 0)
+							lines.RemoveAt(lines.Count - 1);
 						continue;
 					}
 
@@ -78,7 +88,7 @@ namespace ConsoleHost
 				}
 
 				prefix = getIdent(line);
-				sb.AppendLine(line.TrimEnd());
+				lines.Add(line.TrimEnd());
 			}
 		}
 
@@ -111,6 +121,7 @@ namespace ConsoleHost
 			Console.WriteLine();
 			Console.WriteLine("  #exit - close the interpreter");
 			Console.WriteLine("  #run  - execute the script and print the output");
+			Console.WriteLine("  #oops - cancel last line");
 			Console.WriteLine("  #clr  - clear the console");
 			Console.WriteLine();
 			Console.ResetColor();
