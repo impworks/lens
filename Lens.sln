@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.SyntaxTree", "Lens.Syn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.Test", "Lens.Test\Lens.Test.csproj", "{479CB258-AA55-402F-B082-4F8E95783B2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleHost", "ConsoleHost\ConsoleHost.csproj", "{C3116F85-F88A-4FAF-B124-C586F067383B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -37,6 +39,10 @@ Global
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Debug|x86.Build.0 = Debug|x86
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Release|x86.ActiveCfg = Release|x86
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Release|x86.Build.0 = Release|x86
+		{C3116F85-F88A-4FAF-B124-C586F067383B}.Debug|x86.ActiveCfg = Debug|x86
+		{C3116F85-F88A-4FAF-B124-C586F067383B}.Debug|x86.Build.0 = Debug|x86
+		{C3116F85-F88A-4FAF-B124-C586F067383B}.Release|x86.ActiveCfg = Release|x86
+		{C3116F85-F88A-4FAF-B124-C586F067383B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

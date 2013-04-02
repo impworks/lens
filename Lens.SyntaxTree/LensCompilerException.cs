@@ -33,6 +33,9 @@ namespace Lens.SyntaxTree
 		{
 			get
 			{
+				if (StartLocation.Line == 0 && StartLocation.Offset == 0 && EndLocation.Line == 0 && EndLocation.Offset == 0)
+					return Message;
+
 				return string.Format(
 					"{0}\nLocation: {1}:{2} ... {3}:{4}",
 					Message,
