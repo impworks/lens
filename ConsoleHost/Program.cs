@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -21,13 +23,7 @@ namespace ConsoleHost
 				{
 					var lc = new LensCompiler();
 					var res = lc.Run(source);
-
-					Console.ForegroundColor = ConsoleColor.DarkGreen;
-					Console.WriteLine("Compiled successfully!");
-					Console.ResetColor();
-
-					Console.WriteLine(res ?? "(null)");
-					Console.WriteLine();
+					printObject(res);
 				}
 				catch (LensCompilerException ex)
 				{
@@ -72,6 +68,7 @@ namespace ConsoleHost
 
 					if (line == "#clr")
 					{
+						sb = new StringBuilder();
 						Console.Clear();
 						printPreamble();
 						continue;
@@ -91,6 +88,7 @@ namespace ConsoleHost
 			Console.WriteLine("=====================");
 			Console.WriteLine("  LENS Console Host");
 			Console.WriteLine("=====================");
+			Console.WriteLine("(type #help for help)");
 			Console.WriteLine();
 			Console.ResetColor();
 		}
@@ -116,6 +114,28 @@ namespace ConsoleHost
 			Console.WriteLine("  #clr  - clear the console");
 			Console.WriteLine();
 			Console.ResetColor();
+		}
+
+		static void printObject(dynamic obj)
+		{
+			Console.WriteLine(getStringRepresentation(obj));
+			Console.WriteLine();
+		}
+
+		static string getStringRepresentation(dynamic obj)
+		{
+			if (obj is string)
+				return string.Format(@"""{0}""", obj);
+
+			if (obj is IEnumerable)
+			{
+				var list = new List<string>();
+				foreach(var curr in obj)
+					list.Add(getStringRepresentation(curr));
+				return string.Format("[ {0} ]", string.Join("; ", list));
+			}
+
+			return obj.ToString();
 		}
 
 		static int getIdent(string line)
