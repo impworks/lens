@@ -31,7 +31,7 @@ namespace ConsoleHost
 				}
 				catch (Exception ex)
 				{
-					printError("Error parsing the script!", ex.Message);
+					printError("An unexpected error has occured!", ex.Message, ConsoleColor.Yellow);
 				}
 			}
 		}
@@ -103,9 +103,9 @@ namespace ConsoleHost
 			Console.ResetColor();
 		}
 
-		static void printError(string msg, string details)
+		static void printError(string msg, string details, ConsoleColor clr = ConsoleColor.Red)
 		{
-			Console.ForegroundColor = ConsoleColor.Red;
+			Console.ForegroundColor = clr;
 			Console.WriteLine(msg);
 			Console.WriteLine();
 			Console.WriteLine(details);
@@ -117,7 +117,9 @@ namespace ConsoleHost
 		{
 			Console.ForegroundColor = ConsoleColor.DarkGray;
 			Console.WriteLine();
-			Console.WriteLine("Available commands:");
+			Console.WriteLine("To enter a script, just type it line by line.");
+			Console.WriteLine();
+			Console.WriteLine("Available interpreter commands:");
 			Console.WriteLine();
 			Console.WriteLine("  #exit - close the interpreter");
 			Console.WriteLine("  #run  - execute the script and print the output");
@@ -135,6 +137,9 @@ namespace ConsoleHost
 
 		static string getStringRepresentation(dynamic obj)
 		{
+			if (obj == null)
+				return "(null)";
+
 			if (obj is string)
 				return string.Format(@"""{0}""", obj);
 

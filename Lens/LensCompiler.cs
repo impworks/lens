@@ -65,7 +65,16 @@ namespace Lens
 		/// </summary>
 		public Func<object> Compile(string src)
 		{
-			var nodes = new TreeBuilder().Parse(src);
+			IEnumerable<NodeBase> nodes;
+			try
+			{
+				nodes = new TreeBuilder().Parse(src);
+			}
+			catch(Exception ex)
+			{
+				throw new LensCompilerException(ex.Message);
+			}
+
 			return Compile(nodes);
 		}
 
