@@ -137,11 +137,23 @@ namespace ConsoleHost
 
 		static string getStringRepresentation(dynamic obj)
 		{
-			if (obj == null)
+			if ((object)obj == null)
 				return "(null)";
 
 			if (obj is string)
 				return string.Format(@"""{0}""", obj);
+
+			if (obj is IDictionary)
+			{
+				var list = new List<string>();
+				foreach (var currKey in obj.Keys)
+					list.Add(string.Format(
+						"{0} => {1}",
+						getStringRepresentation(currKey),
+						getStringRepresentation(obj[currKey])
+					));
+				return string.Format("{{ {0} }}", string.Join("; ", list));
+			}
 
 			if (obj is IEnumerable)
 			{
