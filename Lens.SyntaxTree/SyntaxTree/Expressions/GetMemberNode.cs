@@ -106,25 +106,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			catch (KeyNotFoundException)
 			{ }
 
-			try
-			{
-				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
-				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
-				if (methods.Length > 1)
-					Error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
+			var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
+			var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 
-				m_Method = methods[0];
-				if (m_Method.ArgumentTypes.Length > 16)
-					Error(CompilerMessages.CallableTooManyArguments);
+			if (methods.Length == 0)
+				Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, m_Type.Name, MemberName);
 
-				m_IsStatic = m_Method.IsStatic;
+			if (methods.Length > 1)
+				Error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
 
-				check();
-			}
-			catch (KeyNotFoundException)
-			{
-				Error(CompilerMessages.TypeIdentifierNotFound, m_Type.Name, MemberName);
-			}
+			m_Method = methods[0];
+			if (m_Method.ArgumentTypes.Length > 16)
+				Error(CompilerMessages.CallableTooManyArguments);
+
+			m_IsStatic = m_Method.IsStatic;
+
+			check();
 		}
 
 		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodWrapper method)
