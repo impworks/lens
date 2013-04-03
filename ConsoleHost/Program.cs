@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -158,6 +159,9 @@ namespace ConsoleHost
 			if ((object)obj == null)
 				return "(null)";
 
+			if (obj is bool)
+				return obj ? "true" : "false";
+
 			if (obj is string)
 				return string.Format(@"""{0}""", obj);
 
@@ -181,7 +185,7 @@ namespace ConsoleHost
 				return string.Format("[ {0} ]", string.Join("; ", list));
 			}
 
-			return obj.ToString();
+			return obj.ToString(CultureInfo.InvariantCulture);
 		}
 
 		static int getIdent(string line)
