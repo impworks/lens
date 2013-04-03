@@ -177,6 +177,7 @@ namespace Lens.SyntaxTree.Compiler
 
 	public class TypeMatchException: Exception
 	{
+		public TypeMatchException() { }
 		public TypeMatchException(string msg) : base(msg) { }
 	}
 }
