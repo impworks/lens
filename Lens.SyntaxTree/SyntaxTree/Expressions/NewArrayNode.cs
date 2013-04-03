@@ -19,10 +19,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				Error(CompilerMessages.ArrayEmpty);
 
 			m_ItemType = resolveItemType(Expressions, ctx);
-			if (m_ItemType == null)
-				Error(Expressions[0], CompilerMessages.ArrayTypeUnknown);
-
-			return Expressions[0].GetExpressionType(ctx).MakeArrayType();
+			return m_ItemType.MakeArrayType();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()

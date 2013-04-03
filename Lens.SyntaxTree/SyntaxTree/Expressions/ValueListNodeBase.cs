@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -24,14 +25,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
 		{
-			foreach (var node in nodes)
-			{
-				var type = node.GetExpressionType(ctx);
-				if (type != typeof(NullType) && !type.IsVoid())
-					return type;
-			}
+			foreach(var curr in nodes)
+				if(curr.GetExpressionType(ctx).IsVoid())
+					Error(curr, CompilerMessages.ExpressionVoid);
 
-			return null;
+			var types = nodes.Select(n => n.GetExpressionType(ctx)).Select(t => t == typeof (NullType) ? typeof (object) : t).ToArray();
+			return types.GetMostCommonType();
 		}
 
 		#region Equality members
