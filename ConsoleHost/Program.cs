@@ -133,6 +133,7 @@ namespace ConsoleHost
 			Console.ForegroundColor = ConsoleColor.DarkGray;
 			Console.WriteLine();
 			Console.WriteLine("To enter a script, just type it line by line.");
+			Console.WriteLine("Finish the line with # to execute the script.");
 			Console.WriteLine();
 			Console.WriteLine("Available interpreter commands:");
 			Console.WriteLine();
