@@ -52,44 +52,59 @@ namespace ConsoleHost
 				if (line == null)
 					continue;
 
-				if (line.Length > 0 && line[0] == '#')
+				if (line.Length > 0)
 				{
-					if (line == "#exit")
+					if (line.Length > 1 && line[line.Length - 1] == '#')
 					{
-						input = null;
-						return false;
-					}
-
-					if (line == "#run")
-					{
-						var sb = new StringBuilder(lines.Count);
-						foreach (var curr in lines)
-							sb.AppendLine(curr);
-						input = sb.ToString();
+						lines.Add(line.Substring(0, line.Length - 1));
+						input = buildString(lines);
 						return true;
 					}
 
-					if (line == "#clr")
+					if (line[0] == '#')
 					{
-						lines = new List<string>();
-						Console.Clear();
-						printPreamble();
-						continue;
-					}
+						if (line == "#exit")
+						{
+							input = null;
+							return false;
+						}
 
-					if (line == "#oops")
-					{
-						if(lines.Count > 0)
-							lines.RemoveAt(lines.Count - 1);
-						continue;
-					}
+						if (line == "#run")
+						{
+							input = buildString(lines);
+							return true;
+						}
 
-					printHelp();
+						if (line == "#clr")
+						{
+							lines = new List<string>();
+							Console.Clear();
+							printPreamble();
+							continue;
+						}
+
+						if (line == "#oops")
+						{
+							if (lines.Count > 0)
+								lines.RemoveAt(lines.Count - 1);
+							continue;
+						}
+
+						printHelp();
+					}
 				}
 
 				prefix = getIdent(line);
 				lines.Add(line.TrimEnd());
 			}
+		}
+
+		static string buildString(List<string> lines)
+		{
+			var sb = new StringBuilder(lines.Count);
+			foreach (var curr in lines)
+				sb.AppendLine(curr);
+			return sb.ToString();
 		}
 
 		static void printPreamble()
@@ -132,6 +147,8 @@ namespace ConsoleHost
 		static void printObject(dynamic obj)
 		{
 			Console.WriteLine(getStringRepresentation(obj));
+			if((object)obj != null)
+				Console.WriteLine("({0})", obj.GetType());
 			Console.WriteLine();
 		}
 
