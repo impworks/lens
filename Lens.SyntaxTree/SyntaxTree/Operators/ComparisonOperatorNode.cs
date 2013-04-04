@@ -109,6 +109,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				// ref type .. null
 				if ((right == typeof (NullType) && !left.IsValueType) || (left == typeof (NullType) && !right.IsValueType))
 					return true;
+
+				if (left is TypeBuilder && left == right)
+					return true;
+
 			}
 
 			return false;
@@ -175,6 +179,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				LeftOperand.Compile(ctx, true);
 				RightOperand.Compile(ctx, true);
 				gen.EmitCompareEqual();
+
+				if (Kind == ComparisonOperatorKind.NotEquals)
+					emitInversion(gen);
+
+				return;
+			}
+
+			if (left is TypeBuilder && left == right)
+			{
+				var equals = ctx.ResolveMethod(left, "Equals", new [] { typeof (object) });
+
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
+
+				gen.EmitCall(equals.MethodInfo);
 
 				if (Kind == ComparisonOperatorKind.NotEquals)
 					emitInversion(gen);

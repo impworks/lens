@@ -843,6 +843,35 @@ list[1].Value + list[2].Value
 			Test(src, 5);
 		}
 
+		[Test]
+		public void BuiltInComparison1()
+		{
+			var src = @"
+record MyRecord
+    Integer : int
+    Stringy : string
+var r1 = new MyRecord 4 ""lol""
+var r2 = new MyRecord (2 + 2) (""l"" + ""ol"")
+r1 == r2
+";
+
+			Test(src, true);
+		}
+
+		[Test]
+		public void BuiltInComparison2()
+		{
+			var src = @"
+type MyType
+    Test of string
+var r1 = Test ""hi""
+var r2 = Test (""HI"".ToLower ())
+r1 == r2
+";
+
+			Test(src, true);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
