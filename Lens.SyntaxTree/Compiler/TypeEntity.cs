@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.Translations;
+using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -26,7 +28,6 @@ namespace Lens.SyntaxTree.Compiler
 			IsImported = isImported;
 		}
 
-		// todo!
 		public Type[] Interfaces;
 
 		private Dictionary<string, FieldEntity> _Fields;
@@ -197,6 +198,145 @@ namespace Lens.SyntaxTree.Compiler
 
 			foreach(var currCtor in _Constructors)
 				currCtor.ProcessClosures();
+		}
+
+		/// <summary>
+		/// Creates auto-generated methods for the type.
+		/// </summary>
+		public void CreateEntities()
+		{
+			if (Kind != TypeEntityKind.Internal)
+			{
+				createSpecificEquals();
+				createGenericEquals();
+				createGetHashCode();
+			}
+		}
+
+		#endregion
+
+		#region Auto-generated entities
+
+		private void createSpecificEquals()
+		{
+			var eq = CreateMethod(
+				"Equals",
+				"bool",
+				new[] { Expr.Arg("other", Name) },
+				false,
+				false
+			);
+
+			// var result = true
+			eq.Body.Add(Expr.Var("result", Expr.True()));
+
+			foreach (var f in _Fields.Values)
+			{
+				var left = Expr.GetMember(Expr.This(), f.Name);
+				var right = Expr.GetMember(Expr.Get("other"), f.Name);
+
+				var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof (IEnumerable<>), true);
+				var expr = isSeq
+					? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
+					: Expr.Invoke(Expr.This(), "Equals",  Expr.Cast(left, "object"), Expr.Cast(right, "object"));
+
+				eq.Body.Add(
+					Expr.Set(
+						"result",
+						Expr.And(Expr.Get("result"), expr)
+					)
+				);
+			}
+			
+			eq.Body.Add(Expr.Get("result"));
+		}
+
+		private void createGenericEquals()
+		{
+			var eq = CreateMethod(
+				"Equals",
+				"bool",
+				new[] { Expr.Arg("obj", "object") },
+				false,
+				true
+			);
+
+			// if(this.ReferenceEquals null obj)
+			//    false
+			// else
+			//    (this.ReferenceEquals this obj) || ( (obj.GetType () == this.GetType()) && (this.Equals obj as <Name>))
+
+			eq.Body.Add(
+				Expr.If(
+					Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.Null(), Expr.Get("obj")),
+					Expr.Block(Expr.False()),
+					Expr.Block(
+						Expr.Or(
+							Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.This(), Expr.Get("obj")),
+							Expr.And(
+								Expr.Equal(
+									Expr.Invoke(Expr.Get("obj"), "GetType"),
+									Expr.Invoke(Expr.This(), "GetType")
+								),
+								Expr.Invoke(
+									Expr.This(),
+									"Equals",
+									Expr.Cast(Expr.Get("obj"), Name)
+								)
+							)
+						)
+					)
+				)
+			);
+		}
+
+		private void createGetHashCode()
+		{
+			var ghc = CreateMethod(
+				"GetHashCode",
+				typeof (int),
+				Type.EmptyTypes,
+				false,
+				true
+			);
+
+			// var result = 0
+			ghc.Body.Add(Expr.Var("result", Expr.Int(0)));
+
+			// result ^= (<field> != null ? field.GetHashCode() : 0) * 397
+			var id = 0;
+			foreach (var f in _Fields.Values)
+			{
+				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
+				NodeBase expr;
+				if (fieldType.IsValueType)
+					expr = Expr.GetMember(Expr.This(), f.Name);
+				else
+					expr = Expr.If(
+						Expr.NotEqual(
+							Expr.GetMember(Expr.This(), f.Name),
+							Expr.Null()
+						),
+						Expr.Block(
+							Expr.Invoke(
+								Expr.GetMember(Expr.This(), f.Name),
+								"GetHashCode"
+							)
+						),
+						Expr.Block(Expr.Int(0))
+					);
+
+				if (id < _Fields.Count - 1)
+					expr = Expr.Mult(expr, Expr.Int(397));
+
+				ghc.Body.Add(
+					Expr.Set("result", Expr.Xor(Expr.Get("result"), expr))
+				);
+
+				id++;
+			}
+
+			ghc.Body.Add(Expr.Get("result"));
 		}
 
 		#endregion

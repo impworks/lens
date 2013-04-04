@@ -72,6 +72,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				try
 				{
 					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes, m_TypeHints);
+
+					if (m_Method.IsStatic)
+						m_InvocationSource = null;
+
 					return;
 				}
 				catch (KeyNotFoundException)

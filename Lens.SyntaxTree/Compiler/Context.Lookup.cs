@@ -222,29 +222,38 @@ namespace Lens.SyntaxTree.Compiler
 			if (type is TypeBuilder)
 			{
 				var typeEntity = _DefinedTypes[type.Name];
-				var method = typeEntity.ResolveMethod(name, argTypes);
-
-				if(hints != null)
-					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
-
-				return new MethodWrapper
+				try
 				{
-					Name = name,
-					Type = type,
+					var method = typeEntity.ResolveMethod(name, argTypes);
 
-					MethodInfo = method.MethodInfo,
-					IsStatic = method.IsStatic,
-					IsVirtual = method.IsVirtual,
-					ArgumentTypes = method.GetArgumentTypes(this),
-					GenericArguments = null,
-					ReturnType = method.ReturnType
-				};
+					if (hints != null)
+						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+
+					return new MethodWrapper
+					{
+						Name = name,
+						Type = type,
+
+						MethodInfo = method.MethodInfo,
+						IsStatic = method.IsStatic,
+						IsVirtual = method.IsVirtual,
+						ArgumentTypes = method.GetArgumentTypes(this),
+						GenericArguments = null,
+						ReturnType = method.ReturnType
+					};
+				}
+				catch (KeyNotFoundException)
+				{
+					return ResolveMethod(type.BaseType, name, argTypes, hints);
+				}
 			}
+
+			var flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
 			try
 			{
 				var method = ResolveMethodByArgs(
-					type.GetMethods().Where(m => m.Name == name),
+					type.GetMethods(flags).Where(m => m.Name == name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
 					argTypes
 				);
@@ -282,7 +291,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					genType.GetMethods().Where(m => m.Name == name),
+					genType.GetMethods(flags).Where(m => m.Name == name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					argTypes
 				);

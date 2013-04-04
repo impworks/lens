@@ -170,6 +170,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format(ClosureTypeNameTemplate, ctx.ClosureId);
 			ClosureTypeId = ctx.ClosureId;
 			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
+			ClosureType.Kind = TypeEntityKind.Internal;
 			ctx.ClosureId++;
 			return ClosureType;
 		}

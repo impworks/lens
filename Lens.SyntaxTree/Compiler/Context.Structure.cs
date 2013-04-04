@@ -218,6 +218,17 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Traverses the syntactic tree, searching for closures and curried methods.
+		/// </summary>
+		private void createAutoEntities()
+		{
+			var types = _DefinedTypes.ToArray();
+
+			foreach(var type in types)
+				type.Value.CreateEntities();
+		}
+
+		/// <summary>
 		/// Initializes the context from a stream of nodes.
 		/// </summary>
 		private void loadNodes(IEnumerable<NodeBase> nodes)

@@ -5,7 +5,6 @@ using System.Reflection.Emit;
 using JetBrains.Annotations;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -57,12 +56,14 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			else
 			{
-				ContextId = GlobalPropertyHelper.RegisterContext();
 				MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
 				MainModule = MainAssembly.DefineDynamicModule(an.Name);
 			}
 
+			ContextId = GlobalPropertyHelper.RegisterContext();
+
 			MainType = CreateType(RootTypeName);
+			MainType.Kind = TypeEntityKind.Internal;
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(RootMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
@@ -72,8 +73,13 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			loadNodes(nodes);
 			prepareEntities();
+
+			createAutoEntities();
+			prepareEntities();
+
 			processClosures();
 			prepareEntities();
+
 			compileCore();
 			finalizeAssembly();
 
