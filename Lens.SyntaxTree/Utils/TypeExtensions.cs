@@ -178,7 +178,7 @@ namespace Lens.SyntaxTree.Utils
 
 			// try to get the most wide type
 			Type curr = null;
-			for (var idx = 1; idx < types.Length; idx++)
+			for (var idx = 0; idx < types.Length; idx++)
 			{
 				var type = types[idx];
 				if (type.IsInterface)
@@ -552,6 +552,17 @@ namespace Lens.SyntaxTree.Utils
 			}
 
 			return result;
+		}
+
+		public static bool Implements(this Type type, Type iface, bool unwindGenerics)
+		{
+			if (unwindGenerics && type.IsGenericType && iface.IsGenericType)
+			{
+				type = type.GetGenericTypeDefinition();
+				iface = iface.GetGenericTypeDefinition();
+			}
+
+			return type.GetInterfaces().Contains(iface);
 		}
 	}
 }

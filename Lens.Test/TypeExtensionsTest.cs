@@ -256,7 +256,7 @@ namespace Lens.Test
 		public void CommonArrayTypes()
 		{
 			TestCommonType<int[]>(typeof(int[]), typeof(int[]));
-			TestCommonType<object>(typeof(float[]), typeof(int[]));
+			TestCommonType<IList>(typeof(float[]), typeof(int[]));
 			TestCommonType<ParentClass[]>(typeof(ParentClass[]), typeof(DerivedClass[]));
 			TestCommonType<ParentClass[]>(typeof(DerivedClass[]), typeof(DerivedClass2[]));
 		}
