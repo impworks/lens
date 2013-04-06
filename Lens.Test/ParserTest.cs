@@ -247,7 +247,7 @@ type ArrayHolder
 		[Test]
 		public void ListDeclaration()
 		{
-			var src = "new <true;true;false>";
+			var src = "new [[true;true;false]]";
 			var result = Expr.List(
 				Expr.True(),
 				Expr.True(),
@@ -452,7 +452,6 @@ test
     <| (a:double) ->
         logger.log a
         a ** 2
-
     <| false";
 
 			var result = Expr.Invoke(

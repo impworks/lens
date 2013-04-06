@@ -57,7 +57,7 @@ namespace Lens.Test
 		[Test]
 		public void ListTest()
 		{
-			var result = Compile(@"new <1; 42; 1337>");
+			var result = Compile(@"new [[1; 42; 1337]]");
 			var list = result as List<int>;
 			Assert.AreEqual(new List<int> { 1, 42, 1337 }, list);
 		}

@@ -287,14 +287,14 @@ line_expr_6Ref        := pipe2
 line_expr_7Ref        := choice [new_expr
                                  attempt invoke_expr
                                  value_expr]
-new_exprRef           := keyword "new" >>. choice [new_array_expr
+new_exprRef           := keyword "new" >>. choice [new_list_expr
+                                                   new_array_expr
                                                    new_tuple_expr
-                                                   new_list_expr
                                                    new_dict_expr
                                                    new_obj_expr]
+new_list_exprRef      := between <| token "[[" <| token "]]" <| enumeration_expr |>> Node.listNode
 new_array_exprRef     := between <| token "[" <| token "]" <| enumeration_expr |>> Node.arrayNode
 new_tuple_exprRef     := between <| token "(" <| token ")" <| enumeration_expr |>> Node.tupleNode
-new_list_exprRef      := between <| token "<" <| token ">" <| enumeration_expr |>> Node.listNode
 new_dict_exprRef      := between <| token "{" <| token "}" <| (sepBy1 dict_entry_expr <| token ";") |>> Node.dictNode
 dict_entry_exprRef    := pipe2
                          <| value_expr

@@ -65,7 +65,7 @@ arr[1] + arr[0]";
 		public void ListIndexSetter()
 		{
 			var src = @"
-var list = new <1; 2; 3>
+var list = new [[1; 2; 3]]
 list[1] = 10
 list[1] + list[0]";
 			Test(src, 11);
@@ -284,7 +284,7 @@ a.Max ()";
 		public void CollectionTypeInference()
 		{
 			Test(@"new [null; null; ""test""]", new[] {null, null, "test"});
-			Test(@"new <null; ""test2"">", new[] { null, "test2" });
+			Test(@"new [[null; ""test2""]]", new[] { null, "test2" });
 			Test(@"new {1 => null; 2 => ""test2""}[2]", "test2");
 		}
 
@@ -825,7 +825,7 @@ res.Item1.Value + res.Item2.Value
 			var src = @"
 record MyRecord
     Value : int
-var list = new <new MyRecord 1; new MyRecord 2; new MyRecord 3>
+var list = new [[new MyRecord 1; new MyRecord 2; new MyRecord 3]]
 list.Count
 ";
 			Test(src, 3);
@@ -837,7 +837,7 @@ list.Count
 			var src = @"
 record MyRecord
     Value : int
-var list = new <new MyRecord 1; new MyRecord 2; new MyRecord 3>
+var list = new [[new MyRecord 1; new MyRecord 2; new MyRecord 3]]
 list[1].Value + list[2].Value
 ";
 			Test(src, 5);

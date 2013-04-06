@@ -166,7 +166,7 @@ var a = 1
 		public void GetIndexTest()
 		{
 			Test("new [1; 2; 3][1]", 2);
-			Test(@"new <""a""; ""b""; ""c"">[1]", "b");
+			Test(@"new [[""a""; ""b""; ""c""]][1]", "b");
 			Test(@"new { ""a"" => 1; ""b"" => 2}[""a""]", 1);
 		}
 
