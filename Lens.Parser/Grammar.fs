@@ -183,7 +183,7 @@ blockRef              := ((Indentation.indentedBlockOf block_line)
 block_lineRef         := local_stmt
 typeRef               := pipe2
                          <| ``namespace``
-                         <| opt ((type_params |>> Node.typeParams) <|> (many (token "[" .>>.? token "]") |>> Node.arrayDefinition))
+                         <| opt ((type_params |>> Node.typeParams) <|> (many (token "[]") |>> Node.arrayDefinition))
                          <| Node.typeTag
 local_stmtRef         := choice [var_decl_expr
                                  attempt assign_expr

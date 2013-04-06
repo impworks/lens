@@ -59,6 +59,7 @@ let indent : Parser<unit, ParserState> =
     } <!> "indent level increase"
 
 let dedent : Parser<unit, ParserState> =
+    eof <|>
     parse {
         do! goToNewLine
         let! indent = getVirtualIndent
