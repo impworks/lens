@@ -1152,11 +1152,9 @@ result
 				Expr.Fun(
 					"test",
 					new [] { Expr.Arg("a", "int"), Expr.Arg("x", "int", true) },
-					Expr.Block(
-						Expr.Set(
-							"x",
-							Expr.Mult(Expr.Get("a"), Expr.Int(2))
-						)
+					Expr.Set(
+						"x",
+						Expr.Mult(Expr.Get("a"), Expr.Int(2))
 					)
 				),
 				Expr.Var("result", Expr.Int(0)),
