@@ -146,12 +146,13 @@ let double, doubleRef                         = createAnnotatedParser "double" "
 let identifier, identifierRef                 = createAnnotatedParser "identifier" "identifier"
 
 let main               = many newline >>. many stmt .>> eof
-stmtRef               := choice [using
+stmtRef               := // Only using and local_stmt blocks haven't nextLine as their natural ending.
+                         choice [using .>> nextLineOrEof
                                  recorddef
                                  typedef
                                  funcdef
-                                 (local_stmt .>> nextLineOrEof)]
-usingRef              := keyword "using" >>. ``namespace`` .>> nextLineOrEof |>> Node.using
+                                 local_stmt .>> nextLineOrEof]
+usingRef              := keyword "using" >>. ``namespace`` |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := pipe2
                          <| (keyword "record" >>. identifier)
@@ -166,12 +167,12 @@ typedef_stmtRef       := pipe2
                          <| identifier
                          <| opt (keyword "of" >>. ``type``)
                          <| Node.typeEntry
-funcdefRef            := pipe4
-                         <| (keyword "fun" >>. identifier)
-                         <| opt (keyword "of" >>. ``type``)
-                         <| (func_params .>> token "->")
-                         <| (block .>> nextLineOrEof)
-                         <| Node.functionNode
+funcdefRef            := (pipe4
+                          <| (keyword "fun" >>. identifier)
+                          <| opt (keyword "of" >>. ``type``)
+                          <| (func_params .>> token "->")
+                          <| (Indentation.indentedBlockOf block_line |>> Node.codeBlock)
+                          <| Node.functionNode)
 func_paramsRef        := many ((identifier .>> token ":")
                                .>>.? (opt <| keyword "ref")
                                .>>. ``type``)
