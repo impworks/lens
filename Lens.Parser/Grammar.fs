@@ -321,7 +321,7 @@ value_exprRef         := choice [attempt rvalue
                                  atomar_expr]
 rvalueRef             := pipe2
                          <| lvalue
-                         <| opt type_params
+                         <| opt (attempt type_params) // attempt is significant here because of < operator
                          <| Node.genericGetterNode
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
