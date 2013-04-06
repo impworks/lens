@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.Compiler
 
 		#endregion
 
-		public Context(CompilerOptions options = null)
+		public Context(LensCompilerOptions options = null)
 		{
 			var an = new AssemblyName(getAssemblyName());
 
@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Compiler
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
-			Options = options ?? new CompilerOptions();
+			Options = options ?? new LensCompilerOptions();
 			var saveable = Options.AllowSave;
 			if (saveable)
 			{
@@ -56,12 +56,14 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			else
 			{
-				ContextId = GlobalPropertyHelper.RegisterContext();
 				MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
 				MainModule = MainAssembly.DefineDynamicModule(an.Name);
 			}
 
+			ContextId = GlobalPropertyHelper.RegisterContext();
+
 			MainType = CreateType(RootTypeName);
+			MainType.Kind = TypeEntityKind.Internal;
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(RootMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
@@ -71,8 +73,13 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			loadNodes(nodes);
 			prepareEntities();
+
+			createAutoEntities();
+			prepareEntities();
+
 			processClosures();
 			prepareEntities();
+
 			compileCore();
 			finalizeAssembly();
 
@@ -89,6 +96,15 @@ namespace Lens.SyntaxTree.Compiler
 			throw new LensCompilerException(string.Format(msg, args));
 		}
 
+		/// <summary>
+		/// Throws a new error bound to a location.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		public void Error(LocationEntity ent, string msg, params object[] args)
+		{
+			throw new LensCompilerException(string.Format(msg, args), ent);
+		}
+
 		#region Properties
 
 		/// <summary>
@@ -99,7 +115,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Compiler options.
 		/// </summary>
-		internal CompilerOptions Options { get; private set; }
+		internal LensCompilerOptions Options { get; private set; }
 
 		/// <summary>
 		/// The assembly that's being currently built.

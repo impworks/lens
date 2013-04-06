@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Utils;
-using Lens.Test.TestClassHierarchy;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -28,7 +28,7 @@ namespace Lens.Test
 		[Test]
 		public void BoxTest()
 		{
-//			TestDistanceFrom<object, int>(1);
+			TestDistanceFrom<object, int>(1);
 			TestDistanceFrom<object, Struct>(1);
 		}
 
@@ -233,9 +233,54 @@ namespace Lens.Test
 			TestDistanceFrom<object, IEnumerable<DerivedClass>>(1);
 		}
 
+		[Test]
+		public void CommonNumericTypes()
+		{
+			TestCommonType<int>(typeof(int), typeof(int), typeof(int));
+			TestCommonType<float>(typeof(float), typeof(int), typeof(int));
+			TestCommonType<long>(typeof(int), typeof(int), typeof(int), typeof(long));
+			TestCommonType<double>(typeof(float), typeof(int), typeof(long));
+			TestCommonType<double>(typeof(float), typeof(int), typeof(double));
+		}
+
+		[Test]
+		public void CommonTypes()
+		{
+			TestCommonType<ParentClass>(typeof(ParentClass), typeof(ParentClass));
+			TestCommonType<ParentClass>(typeof(DerivedClass), typeof(ParentClass));
+			TestCommonType<ParentClass>(typeof(DerivedClass), typeof(DerivedClass2));
+			TestCommonType<ParentClass>(typeof(SubDerivedClass), typeof(DerivedClass2));
+		}
+
+		[Test]
+		public void CommonArrayTypes()
+		{
+			TestCommonType<int[]>(typeof(int[]), typeof(int[]));
+			TestCommonType<IList>(typeof(float[]), typeof(int[]));
+			TestCommonType<ParentClass[]>(typeof(ParentClass[]), typeof(DerivedClass[]));
+			TestCommonType<ParentClass[]>(typeof(DerivedClass[]), typeof(DerivedClass2[]));
+		}
+
+		[Test]
+		public void CommonInterfaces()
+		{
+			TestCommonType<IList>(typeof(float[]), typeof(List<int>));
+			TestCommonType<IList<int>>(typeof(int[]), typeof(List<int>));
+			TestCommonType<IEnumerable<int>>(typeof(int[]), typeof(IEnumerable<int>));
+			TestCommonType<IEnumerable<int>>(typeof(List<int>), typeof(IEnumerable<int>));
+		}
+
+		[Test]
+		public void CommonObjectOnly()
+		{
+			TestCommonType<object>(typeof(ParentClass), typeof(DerivedClass2), typeof(IEnumerable<int>));
+			TestCommonType<object>(typeof(object), typeof(int));
+			TestCommonType<object>(typeof(int), typeof(float), typeof(double), typeof(Decimal));
+			TestCommonType<object>(typeof(IEnumerable<int>), typeof(IEnumerable<float>));
+		}
+
 		/// <summary>
-		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call
-		/// result.
+		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call  result.
 		/// </summary>
 		/// <typeparam name="T1">First type.</typeparam>
 		/// <typeparam name="T2">Second type.</typeparam>
@@ -254,6 +299,11 @@ namespace Lens.Test
 		private static void AssertNumericOperationNotPermitted<T1, T2>()
 		{
 			Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
+		}
+
+		private static void TestCommonType<T>(params Type[] types)
+		{
+			Assert.AreEqual(typeof (T), types.GetMostCommonType());
 		}
 	}
 }

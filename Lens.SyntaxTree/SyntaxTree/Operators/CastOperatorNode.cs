@@ -2,6 +2,7 @@
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -52,7 +53,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				}
 
 				else
-					Error("Cannot cast a null to a value type!");
+					Error(CompilerMessages.CastNullValueType, toType);
 			}
 
 			else if (toType.IsExtendablyAssignableFrom(fromType))
@@ -107,18 +108,18 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var toCtor = to.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
-			var fromMethod = from.GetMethod("Invoke");
-			var toMethod = to.GetMethod("Invoke");
+			var toCtor = ctx.ResolveConstructor(to, new[] {typeof (object), typeof (IntPtr)});
+			var fromMethod = ctx.ResolveMethod(from, "Invoke");
+			var toMethod = ctx.ResolveMethod(to, "Invoke");
 
-			var fromArgs = fromMethod.GetParameters().Select(p => p.ParameterType).ToArray();
-			var toArgs = toMethod.GetParameters().Select(p => p.ParameterType).ToArray();
+			var fromArgs = fromMethod.ArgumentTypes;
+			var toArgs = toMethod.ArgumentTypes;
 
 			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
-				Error("Delegate types '{0}' and '{1}' do not have matching argument types!", from, to);
+				Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				Error("Delegate types '{0}' and '{1}' do not have matching return types!", from, to);
+				Error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();
@@ -128,13 +129,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if (from.IsGenericType && to.IsGenericType && from.GetGenericTypeDefinition() == to.GetGenericTypeDefinition())
 				return;
 
-			gen.EmitLoadFunctionPointer(fromMethod);
-			gen.EmitCreateObject(toCtor);
+			gen.EmitLoadFunctionPointer(fromMethod.MethodInfo);
+			gen.EmitCreateObject(toCtor.ConstructorInfo);
 		}
 
 		private void castError(Type from, Type to)
 		{
-			Error("Cannot cast object of type '{0}' to type '{1}'.", from, to);
+			Error(CompilerMessages.CastTypesMismatch, from, to);
 		}
 
 		public static bool IsImplicitlyBoolean(Type type)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -47,7 +48,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error("Cannot apply operator '{0}' to argument of type '{1}'.", OperatorRepresentation, type);
+			Error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
 			return null;
 		}
 
@@ -63,12 +64,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				return;
 			}
 
-			var ps = m_OverloadedMethod.GetParameters();
-			Expr.Cast(Operand, ps[0].ParameterType).Compile(ctx, true);
-			gen.EmitCall(m_OverloadedMethod);
+			var ps = m_OverloadedMethod.ArgumentTypes;
+			Expr.Cast(Operand, ps[0]).Compile(ctx, true);
+			gen.EmitCall(m_OverloadedMethod.MethodInfo);
 		}
 
-		protected Type resolveOperatorType(Context ctx)
+		protected virtual Type resolveOperatorType(Context ctx)
 		{
 			return null;
 		}

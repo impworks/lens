@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -11,8 +11,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	public class SetMemberNode : MemberNodeBase
 	{
 		private bool m_IsStatic;
-		private PropertyInfo m_Property;
-		private FieldInfo m_Field;
+		private PropertyWrapper m_Property;
+		private FieldWrapper m_Field;
 
 		/// <summary>
 		/// Value to be assigned.
@@ -41,12 +41,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var destType = m_Field != null ? m_Field.FieldType : m_Property.PropertyType;
 			var valType = Value.GetExpressionType(ctx);
 
-			if (valType.IsVoid())
-				Error("Cannot use a function or expression that does not return anything as assignment source!");
+			ctx.CheckTypedExpression(Value, valType, true);
 
-			// todo: extract, add check for null
 			if(!destType.IsExtendablyAssignableFrom(valType))
-				Error("Cannot implicitly convert an object of type '{0}' to required type '{1}'!", valType, destType);
+				Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 
 			if (!m_IsStatic)
 			{
@@ -60,9 +58,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Expr.Cast(Value, destType).Compile(ctx, true);
 
 			if(m_Field != null)
-				gen.EmitSaveField(m_Field);
+				gen.EmitSaveField(m_Field.FieldInfo);
 			else
-				gen.EmitCall(m_Property.GetSetMethod(), true);
+				gen.EmitCall(m_Property.Setter, true);
 		}
 
 		private void resolve(Context ctx)
@@ -77,7 +75,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Field = ctx.ResolveField(type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error("Field '{1}' of type '{0}' cannot be used in static context!", type, MemberName);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 
 				return;
 			}
@@ -86,17 +84,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			try
 			{
 				m_Property = ctx.ResolveProperty(type, MemberName);
-				var setMbr = m_Property.GetSetMethod();
-				if(setMbr == null)
-					Error("Property '{0}' of type '{1}' does not have a public setter!");
+				if(!m_Property.CanSet)
+					Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
-				m_IsStatic = setMbr.IsStatic;
+				m_IsStatic = m_Property.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error("Property '{0}' of type '{1}' cannot be used in static context!", type, MemberName);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' does not contain a field or a property named '{1}'!", type, MemberName);
+				Error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
 			}
 		}
 

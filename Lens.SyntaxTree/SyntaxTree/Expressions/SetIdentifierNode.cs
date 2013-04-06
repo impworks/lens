@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -42,15 +43,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			var exprType = Value.GetExpressionType(ctx);
+			ctx.CheckTypedExpression(Value, exprType, true);
 
 			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsConstant && !IsInitialization)
-					Error("'{0}' is a constant and cannot be assigned after definition!", Identifier);
+					Error(CompilerMessages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					Error("Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.", exprType, nameInfo.Type);
+					Error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 
 				if (nameInfo.IsClosured)
 				{
@@ -72,17 +74,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var pty = ctx.ResolveGlobalProperty(Identifier);
 
 				if(!pty.HasSetter)
-					Error("Global property '{0}' has no setter!", Identifier);
+					Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
 
 				var type = pty.PropertyType;
 				if(!type.IsExtendablyAssignableFrom(exprType))
-					Error("Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.", exprType, type);
+					Error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
 
 				var cast = Expr.Cast(Value, type);
 				if (pty.SetterMethod != null)
 				{
 					cast.Compile(ctx, true);
-					gen.EmitCall(pty.SetterMethod);
+					gen.EmitCall(pty.SetterMethod.MethodInfo);
 				}
 				else
 				{
@@ -96,7 +98,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Variable '{0}' is undefined in current scope!", Identifier);
+				Error(CompilerMessages.VariableNotFound, Identifier);
 			}
 		}
 
@@ -134,8 +136,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
-			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitSaveField(clsField);
+			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
+			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
+			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
 		/// <summary>
@@ -152,7 +155,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			while (dist > 1)
 			{
 				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
-				gen.EmitLoadField(rootField);
+				gen.EmitLoadField(rootField.FieldInfo);
 
 				type = rootField.FieldType;
 				dist--;
@@ -161,7 +164,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitSaveField(clsField);
+			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
 		#region Equality members

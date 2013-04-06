@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -21,9 +20,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private bool m_IsResolved;
 
 		private Type m_Type;
-		private PropertyInfo m_Property;
-		private FieldInfo m_Field;
-		private MethodInfo m_Method;
+		private FieldWrapper m_Field;
+		private MethodWrapper m_Method;
+		private PropertyWrapper m_Property;
 
 		private bool m_IsStatic;
 
@@ -51,10 +50,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (m_Property != null)
 				return m_Property.PropertyType;
 
-			var argTypes = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 			return m_Method.ReturnType == typeof (void)
-				? FunctionalHelper.CreateActionType(argTypes)
-				: FunctionalHelper.CreateFuncType(m_Method.ReturnType, argTypes);
+				? FunctionalHelper.CreateActionType(m_Method.ArgumentTypes)
+				: FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.ArgumentTypes);
 		}
 
 		private void resolve(Context ctx)
@@ -62,10 +60,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			Action check = () =>
 			{
 				if (Expression == null && !m_IsStatic)
-					Error("'{0}' cannot be accessed from static context!", MemberName);
+					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName);
 
 				if(m_Method == null && TypeHints.Count > 0)
-					Error("Type arguments can only be applied to methods, and '{0}' is a field or a property!", MemberName);
+					Error(CompilerMessages.TypeArgumentsForNonMethod, m_Type, MemberName);
 
 				m_IsResolved = true;
 			};
@@ -96,10 +94,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			try
 			{
 				m_Property = ctx.ResolveProperty(m_Type, MemberName);
-				if (!m_Property.CanRead)
-					Error("Property '{0}' of type '{1}' does not have a getter!", m_Property.Name, m_Type);
 
-				m_IsStatic = m_Property.GetGetMethod().IsStatic;
+				if(!m_Property.CanGet)
+					Error(CompilerMessages.PropertyNoGetter, m_Type, MemberName);
+
+				m_IsStatic = m_Property.IsStatic;
 
 				check();
 				return;
@@ -107,40 +106,33 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			catch (KeyNotFoundException)
 			{ }
 
-			try
-			{
-				var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
-				var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
-				if (methods.Length > 1)
-					Error("Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.", m_Type.Name, MemberName);
+			var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
+			var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 
-				m_Method = GenericHelper.ResolveMethodGenerics(methods[0], argTypes);
-				if (m_Method.GetParameters().Count() > 16)
-					Error("Cannot create a callable object from a method with more than 16 arguments!");
+			if (methods.Length == 0)
+				Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, m_Type.Name, MemberName);
 
-				m_IsStatic = m_Method.IsStatic;
+			if (methods.Length > 1)
+				Error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
 
-				check();
-			}
-			catch (KeyNotFoundException)
-			{
-				Error("Type '{0}' does not have any field, property or method called '{1}'!", m_Type.Name, MemberName);
-			}
+			m_Method = methods[0];
+			if (m_Method.ArgumentTypes.Length > 16)
+				Error(CompilerMessages.CallableTooManyArguments);
+
+			m_IsStatic = m_Method.IsStatic;
+
+			check();
 		}
 
-		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodInfo method)
+		private bool checkMethodArgs(Context ctx, Type[] argTypes, MethodWrapper method)
 		{
 			if(argTypes.Length == 0)
 				return true;
 
-			var ps = method is MethodBuilder
-				? ctx.FindMethod(method).GetArgumentTypes(ctx)
-				: method.GetParameters().Select(p => p.ParameterType).ToArray();
-
-			if (ps.Length != argTypes.Length)
+			if (method.ArgumentTypes.Length != argTypes.Length)
 				return false;
 
-			return !ps.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
+			return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -190,7 +182,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					var fieldType = m_Field.FieldType;
 					var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
 
-					var value = m_Field.GetValue(null);
+					var value = m_Field.FieldInfo.GetValue(null);
 
 					if (dataType == typeof(int))
 						gen.EmitConstant((int) value);
@@ -224,15 +216,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				}
 				else
 				{ 
-					gen.EmitLoadField(m_Field, PointerRequired);
+					gen.EmitLoadField(m_Field.FieldInfo, PointerRequired);
 				}
 				return;
 			}
 
 			if (m_Property != null)
 			{
-				var getter = m_Property.GetGetMethod();
-				gen.EmitCall(getter);
+				gen.EmitCall(m_Property.Getter);
 				return;
 			}
 
@@ -242,13 +233,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					gen.EmitNull();
 
 				var retType = m_Method.ReturnType;
-				var args = m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
 				var type = retType.IsNotVoid()
-					? FunctionalHelper.CreateFuncType(retType, args)
-					: FunctionalHelper.CreateActionType(args);
+					? FunctionalHelper.CreateFuncType(retType, m_Method.ArgumentTypes)
+					: FunctionalHelper.CreateActionType(m_Method.ArgumentTypes);
 
 				var ctor = type.GetConstructor(new[] { typeof(object), typeof(IntPtr) });
-				gen.EmitLoadFunctionPointer(m_Method);
+				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 			}
 		}

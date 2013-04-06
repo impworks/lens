@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "op_UnaryNegation"; }
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolveOperatorType(Context ctx)
 		{
 			var type = Operand.GetExpressionType(ctx);
 			return type.IsNumericType() ? type : null;

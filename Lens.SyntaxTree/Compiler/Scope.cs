@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.SyntaxTree.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
@@ -103,7 +104,7 @@ namespace Lens.SyntaxTree.Compiler
 		public LocalName DeclareName(string name, Type type, bool isConst, bool isRefArg = false)
 		{
 			if(find(name))
-				throw new LensCompilerException(string.Format("A variable named '{0}' is already defined!", name));
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, name));
 
 			var n = new LocalName(name, type, isConst, isRefArg);
 			Names[name] = n;
@@ -147,10 +148,10 @@ namespace Lens.SyntaxTree.Compiler
 					if (closured)
 					{
 						if (loc.LocalBuilder != null)
-							throw new InvalidOperationException("Cannot closure an implicit variable!");
+							throw new InvalidOperationException(CompilerMessages.ClosureImplicit);
 
 						if(loc.IsRefArgument)
-							throw new LensCompilerException("A ref argument cannot be closured!");
+							throw new LensCompilerException(CompilerMessages.ClosureRef);
 					}
 
 					loc.IsClosured |= closured;
@@ -158,7 +159,7 @@ namespace Lens.SyntaxTree.Compiler
 			);
 
 			if(!found)
-				throw new LensCompilerException(string.Format("A variable named '{0}' does not exist in the scope!", name));
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableNotFound, name));
 		}
 
 		/// <summary>
@@ -169,6 +170,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format(ClosureTypeNameTemplate, ctx.ClosureId);
 			ClosureTypeId = ctx.ClosureId;
 			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
+			ClosureType.Kind = TypeEntityKind.Internal;
 			ctx.ClosureId++;
 			return ClosureType;
 		}

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -9,52 +9,45 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public static class GenericHelper
 	{
-		public static Type ResolveGenericReturnType(MethodInfo method, Type[] args, Type[] hints = null)
+		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
 		{
-			return ResolveMethodGenerics(method, args, hints).ReturnType;
-		}
-
-		public static MethodInfo ResolveMethodGenerics(MethodInfo method, Type[] args, Type[] hints = null)
-		{
-			if (!method.IsGenericMethod)
-				return method;
-
-			var genericDefs = method.GetGenericArguments();
 			var genericValues = new Type[genericDefs.Length];
 
-			resolveGenerics(
-				method.GetParameters().Select(p => p.ParameterType).ToArray(),
-				args,
-				genericDefs,
-				ref genericValues
-			);
+			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, ref genericValues);
 
-			for (var idx = 0; idx < genericDefs.Length; idx++ )
+			for (var idx = 0; idx < genericDefs.Length; idx++)
 			{
 				var hint = hints != null ? hints[idx] : null;
 				var def = genericDefs[idx];
 				var value = genericValues[idx];
 
 				if (value == null && hint == null)
-					throw new TypeMatchException(string.Format("Generic argument '{0}' could not be resolved!", def));
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, def));
 
-				if(hint != null && value != null && hint != value)
-					throw new TypeMatchException(string.Format("Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!", def, hint, value));
+				if (hint != null && value != null && hint != value)
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericHintMismatch, def, hint, value));
 
 				if (value == null)
 					genericValues[idx] = hint;
 			}
 
-			return method.MakeGenericMethod(genericValues);
+			return genericValues;
 		}
 
-		private static void resolveGenerics(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
+		/// <summary>
+		/// Resolves generic argument values for a method by its argument types.
+		/// </summary>
+		/// <param name="expectedTypes">Parameter types from method definition.</param>
+		/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
+		/// <param name="genericDefs">Generic parameters.</param>
+		/// <param name="genericValues">Result array where values for generic parameters will be put.</param>
+		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
 		{
 			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
 
 			if(exLen != actLen)
-				throw new ArgumentException("Number of arguments does not match!");
+				throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);
 
 			for (var idx = 0; idx < exLen; idx++)
 			{
@@ -64,7 +57,7 @@ namespace Lens.SyntaxTree.Compiler
 				if (expected.IsGenericType)
 				{
 					var closest = findImplementation(expected, actual);
-					resolveGenerics(
+					resolveMethodGenericsByArgs(
 						expected.GetGenericArguments(),
 						closest.GetGenericArguments(),
 						genericDefs,
@@ -83,13 +76,69 @@ namespace Lens.SyntaxTree.Compiler
 							continue;
 
 						if (value != null && value != actual)
-							throw new TypeMatchException(string.Format("Generic argument '{0}' has mismatched values: '{1}' and '{2}'.", def, actual, value));
+							throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
 
 						genericValues[defIdx] = actual;
 					}
 				}
 			}
 		}
+
+		/// <summary>
+		/// Processes a type and replaces any references of generic arguments inside it with actual values.
+		/// </summary>
+		/// <param name="type">Type to process.</param>
+		/// <param name="generic">Type that contains the processed type as a generic parameter.</param>
+		public static Type ApplyGenericArguments(Type type, Type generic, bool throwNotFound = true)
+		{
+			if (!generic.IsGenericType)
+				return type;
+
+			return ApplyGenericArguments(
+				type,
+				generic.GetGenericTypeDefinition().GetGenericArguments(),
+				generic.GetGenericArguments(),
+				throwNotFound
+			);
+		}
+
+		/// <summary>
+		/// Processes a type and replaces any references of generic arguments inside it with actual values.
+		/// </summary>
+		/// <param name="type">Type to process.</param>
+		/// <param name="generics">Generic parameters that can be used in the type.</param>
+		/// <param name="values">Actual values of generic parameters.</param>
+		public static Type ApplyGenericArguments(Type type, Type[] generics, Type[] values, bool throwNotFound = true)
+		{
+			if (type.IsArray || type.IsByRef)
+			{
+				var t = ApplyGenericArguments(type.GetElementType(), generics, values);
+				return type.IsArray ? t.MakeArrayType() : t.MakeByRefType();
+			}
+
+			if (type.IsGenericParameter)
+			{
+				for (var idx = 0; idx < generics.Length; idx++)
+					if (generics[idx] == type)
+						return values[idx];
+
+				if (throwNotFound)
+					throw new ArgumentOutOfRangeException(string.Format(CompilerMessages.GenericParameterNotFound, type));
+
+				return type;
+			}
+
+			if (type.IsGenericType)
+			{
+				var def = type.GetGenericTypeDefinition();
+				var processed = type.GetGenericArguments().Select(a => ApplyGenericArguments(a, generics, values)).ToArray();
+				return def.MakeGenericType(processed);
+			}
+
+			return type;
+		}
+
+		#region Helpers
 
 		private static Type findImplementation(Type desired, Type actual)
 		{
@@ -102,14 +151,14 @@ namespace Lens.SyntaxTree.Compiler
 			if (desired.IsInterface)
 			{
 				var matching = actual.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
-				if(matching.Length == 0)
-					throw new TypeMatchException(string.Format("Type '{0}' does not implement any kind of interface '{1}'!", actual, generic));
-				if(matching.Length > 1)
-					throw new TypeMatchException(string.Format("Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!", generic, actual));
+				if (matching.Length == 0)
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
+				if (matching.Length > 1)
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
 
 				return matching[0];
 			}
-			
+
 			// is inherited
 			var currType = actual;
 			while (currType != null)
@@ -120,13 +169,15 @@ namespace Lens.SyntaxTree.Compiler
 				currType = currType.BaseType;
 			}
 
-			throw new TypeMatchException(string.Format("Cannot resolve arguments of '{0}' using type '{1}'!", generic, actual));
+			throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
 		}
+
+		#endregion
 	}
 
 	public class TypeMatchException: Exception
 	{
-		public TypeMatchException(string msg) : base(msg)
-		{ }
+		public TypeMatchException() { }
+		public TypeMatchException(string msg) : base(msg) { }
 	}
 }

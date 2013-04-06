@@ -126,16 +126,17 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var ctor = closureType.ResolveConstructor(Type.EmptyTypes);
 
-				gen.EmitCreateObject(ctor);
+				gen.EmitCreateObject(ctor.ConstructorBuilder);
 				gen.EmitSaveLocal(closure);
 
-				var root = closureType.ResolveField(Scope.ParentScopeFieldName);
-				if (root != null)
+				try
 				{
+					var root = closureType.ResolveField(Scope.ParentScopeFieldName);
 					gen.EmitLoadLocal(closure);
 					gen.EmitLoadArgument(0);
-					gen.EmitSaveField(root);
+					gen.EmitSaveField(root.FieldBuilder);
 				}
+				catch (KeyNotFoundException) { }
 			}
 
 			if (Arguments != null)
@@ -153,7 +154,7 @@ namespace Lens.SyntaxTree.Compiler
 						var fi = closureType.ResolveField(local.ClosureFieldName);
 						gen.EmitLoadLocal(closure);
 						gen.EmitLoadArgument(idx + skip);
-						gen.EmitSaveField(fi);
+						gen.EmitSaveField(fi.FieldBuilder);
 					}
 					else
 					{

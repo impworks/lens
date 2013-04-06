@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -11,7 +12,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// </summary>
 	public class GetIdentifierNode : IdentifierNodeBase, IEndLocationTrackingEntity, IPointerProvider
 	{
-		private MethodInfo m_Method;
+		private MethodEntity m_Method;
 		private GlobalPropertyInfo m_Property;
 
 		/// <summary>
@@ -44,7 +45,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+				Error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (Unit);
@@ -62,7 +63,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (local != null)
 			{
 				if(local.IsConstant && PointerRequired)
-					Error("Constant variables cannot be passed by reference!");
+					Error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
@@ -85,7 +86,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(m_Method);
+				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 
 				return;
@@ -96,12 +97,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				var id = m_Property.PropertyId;
 				if(!m_Property.HasGetter)
-					Error("Global property '{0}' has no getter!", Identifier);
+					Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
 				var type = m_Property.PropertyType;
 				if (m_Property.GetterMethod != null)
 				{
-					gen.EmitCall(m_Property.GetterMethod);
+					gen.EmitCall(m_Property.GetterMethod.MethodInfo);
 				}
 				else
 				{
@@ -113,7 +114,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				return;
 			}
 
-			Error("No local variable or global parameterless function named '{0}' was found.", Identifier);
+			Error(CompilerMessages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>
@@ -126,7 +127,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
 			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitLoadField(clsField, PointerRequired);
+			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired);
 		}
 
 		/// <summary>
@@ -143,14 +144,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			while (dist > 1)
 			{
 				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
-				gen.EmitLoadField(rootField);
+				gen.EmitLoadField(rootField.FieldInfo);
 
 				type = rootField.FieldType;
 				dist--;
 			}
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitLoadField(clsField, PointerRequired);
+			gen.EmitLoadField(clsField.FieldInfo, PointerRequired);
 		}
 
 		private void getLocal(Context ctx, LocalName name)

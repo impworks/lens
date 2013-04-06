@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 using Lens.Utils;
 
@@ -27,7 +28,6 @@ namespace Lens.SyntaxTree.Compiler
 			IsImported = isImported;
 		}
 
-		// todo!
 		public Type[] Interfaces;
 
 		private Dictionary<string, FieldEntity> _Fields;
@@ -150,7 +150,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				method.PrepareSelf();
 
-				MethodInfo mi = null;
+				MethodEntity mi = null;
 				try
 				{
 					mi = ResolveMethod(method.Name, method.ArgumentTypes, true);
@@ -200,6 +200,145 @@ namespace Lens.SyntaxTree.Compiler
 				currCtor.ProcessClosures();
 		}
 
+		/// <summary>
+		/// Creates auto-generated methods for the type.
+		/// </summary>
+		public void CreateEntities()
+		{
+			if (Kind != TypeEntityKind.Internal)
+			{
+				createSpecificEquals();
+				createGenericEquals();
+				createGetHashCode();
+			}
+		}
+
+		#endregion
+
+		#region Auto-generated entities
+
+		private void createSpecificEquals()
+		{
+			var eq = CreateMethod(
+				"Equals",
+				"bool",
+				new[] { Expr.Arg("other", Name) },
+				false,
+				false
+			);
+
+			// var result = true
+			eq.Body.Add(Expr.Var("result", Expr.True()));
+
+			foreach (var f in _Fields.Values)
+			{
+				var left = Expr.GetMember(Expr.This(), f.Name);
+				var right = Expr.GetMember(Expr.Get("other"), f.Name);
+
+				var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof (IEnumerable<>), true);
+				var expr = isSeq
+					? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
+					: Expr.Invoke(Expr.This(), "Equals",  Expr.Cast(left, "object"), Expr.Cast(right, "object"));
+
+				eq.Body.Add(
+					Expr.Set(
+						"result",
+						Expr.And(Expr.Get("result"), expr)
+					)
+				);
+			}
+			
+			eq.Body.Add(Expr.Get("result"));
+		}
+
+		private void createGenericEquals()
+		{
+			var eq = CreateMethod(
+				"Equals",
+				"bool",
+				new[] { Expr.Arg("obj", "object") },
+				false,
+				true
+			);
+
+			// if(this.ReferenceEquals null obj)
+			//    false
+			// else
+			//    (this.ReferenceEquals this obj) || ( (obj.GetType () == this.GetType()) && (this.Equals obj as <Name>))
+
+			eq.Body.Add(
+				Expr.If(
+					Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.Null(), Expr.Get("obj")),
+					Expr.Block(Expr.False()),
+					Expr.Block(
+						Expr.Or(
+							Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.This(), Expr.Get("obj")),
+							Expr.And(
+								Expr.Equal(
+									Expr.Invoke(Expr.Get("obj"), "GetType"),
+									Expr.Invoke(Expr.This(), "GetType")
+								),
+								Expr.Invoke(
+									Expr.This(),
+									"Equals",
+									Expr.Cast(Expr.Get("obj"), Name)
+								)
+							)
+						)
+					)
+				)
+			);
+		}
+
+		private void createGetHashCode()
+		{
+			var ghc = CreateMethod(
+				"GetHashCode",
+				typeof (int),
+				Type.EmptyTypes,
+				false,
+				true
+			);
+
+			// var result = 0
+			ghc.Body.Add(Expr.Var("result", Expr.Int(0)));
+
+			// result ^= (<field> != null ? field.GetHashCode() : 0) * 397
+			var id = 0;
+			foreach (var f in _Fields.Values)
+			{
+				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
+				NodeBase expr;
+				if (fieldType.IsValueType)
+					expr = Expr.GetMember(Expr.This(), f.Name);
+				else
+					expr = Expr.If(
+						Expr.NotEqual(
+							Expr.GetMember(Expr.This(), f.Name),
+							Expr.Null()
+						),
+						Expr.Block(
+							Expr.Invoke(
+								Expr.GetMember(Expr.This(), f.Name),
+								"GetHashCode"
+							)
+						),
+						Expr.Block(Expr.Int(0))
+					);
+
+				if (id < _Fields.Count - 1)
+					expr = Expr.Mult(expr, Expr.Int(397));
+
+				ghc.Body.Add(
+					Expr.Set("result", Expr.Xor(Expr.Get("result"), expr))
+				);
+
+				id++;
+			}
+
+			ghc.Body.Add(Expr.Get("result"));
+		}
+
 		#endregion
 
 		#region Structure methods
@@ -211,7 +350,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var mi = method.Method;
 			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
-				Context.Error("Only public, static, non-generic methods can be imported!");
+				Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
@@ -307,22 +446,22 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Resolves a field assembly entity.
 		/// </summary>
-		internal FieldInfo ResolveField(string name)
+		internal FieldEntity ResolveField(string name)
 		{
 			FieldEntity fe;
 			if (!_Fields.TryGetValue(name, out fe))
-				return null;
+				throw new KeyNotFoundException();
 
 			if(fe.FieldBuilder == null)
 				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
 
-			return fe.FieldBuilder;
+			return fe;
 		}
 
 		/// <summary>
 		/// Resolves a method assembly entity.
 		/// </summary>
-		internal MethodInfo ResolveMethod(string name, Type[] args, bool exact = false)
+		internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false)
 		{
 			List<MethodEntity> group;
 			if (!_Methods.TryGetValue(name, out group))
@@ -330,54 +469,30 @@ namespace Lens.SyntaxTree.Compiler
 
 			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
 			if(exact && info.Item2 != 0)
-				throw new KeyNotFoundException(string.Format("Type '{0}' does not contain a method named '{1}' with given exact arguments!", Name, name));
+				throw new KeyNotFoundException();
 
-			return info.Item1.MethodBuilder;
+			return info.Item1;
 		}
 
 		/// <summary>
 		/// Resolves a group of methods by their name.
 		/// </summary>
-		internal MethodInfo[] ResolveMethodGroup(string name)
+		internal MethodEntity[] ResolveMethodGroup(string name)
 		{
 			List<MethodEntity> group;
-			return _Methods.TryGetValue(name, out group)
-				? group.Select(m => m.MethodBuilder).ToArray()
-				: new MethodInfo[0];
+			if(!_Methods.TryGetValue(name, out group))
+				throw new KeyNotFoundException();
+			
+			return group.ToArray();
 		}
 
 		/// <summary>
 		/// Resolves a method assembly entity.
 		/// </summary>
-		internal ConstructorInfo ResolveConstructor(Type[] args)
+		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
 			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
-			return info.Item1.ConstructorBuilder;
-		}
-
-		/// <summary>
-		/// Finds information about a method in the type.
-		/// </summary>
-		internal MethodEntity FindMethod(MethodInfo method)
-		{
-			foreach(var currGroup in _Methods)
-				foreach(var currMethod in currGroup.Value)
-					if (currMethod.MethodBuilder == method)
-						return currMethod;
-
-			throw new KeyNotFoundException();
-		}
-
-		/// <summary>
-		/// Finds information about a method in the type.
-		/// </summary>
-		internal ConstructorEntity FindConstructor(ConstructorInfo ctor)
-		{
-			foreach (var currCtor in _Constructors)
-				if (currCtor.ConstructorBuilder == ctor)
-					return currCtor;
-
-			throw new KeyNotFoundException();
+			return info.Item1;
 		}
 
 		#endregion

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -19,22 +20,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error("Use explicit constructor to create an empty dictionary!");
+				Error(CompilerMessages.DictionaryEmpty);
 
 			m_KeyType = Expressions[0].Key.GetExpressionType(ctx);
 			m_ValueType = resolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
-			if (m_KeyType == typeof(NullType))
-				Error(Expressions[0].Key, "Dictionary cannot be initialized with null keys!");
+			if (m_ValueType == typeof(NullType))
+				Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
-			if (m_KeyType.IsVoid())
-				Error(Expressions[0].Key, "An expression that returns a value is expected!");
-
-			if (m_ValueType == null)
-				Error(Expressions[0].Value, "Dictionary value type cannot be inferred, at least one value must be non-null!");
-
-			if (m_ValueType.IsVoid())
-				Error(Expressions[0].Value, "An expression that returns a value is expected!");
+			ctx.CheckTypedExpression(Expressions[0].Key, m_KeyType);
+			ctx.CheckTypedExpression(Expressions[0].Value, m_ValueType, true);
 
 			return typeof(Dictionary<,>).MakeGenericType(m_KeyType, m_ValueType);
 		}
@@ -55,12 +50,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
 
-			var ctor = dictType.GetConstructor(new[] {typeof (int)});
-			var addMethod = dictType.GetMethod("Add", new[] { m_KeyType, m_ValueType });
+			var ctor = ctx.ResolveConstructor(dictType, new[] {typeof (int)});
+			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { m_KeyType, m_ValueType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
@@ -68,27 +63,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				var currKeyType = curr.Key.GetExpressionType(ctx);
 				var currValType = curr.Value.GetExpressionType(ctx);
 
-				if (currKeyType == typeof(NullType))
-					Error(curr.Key, "Dictionary cannot be initialized with null keys!");
+				ctx.CheckTypedExpression(curr.Key, currKeyType);
+				ctx.CheckTypedExpression(curr.Value, currValType, true);
 
 				if (currKeyType != m_KeyType)
-					Error(curr.Key, "Cannot add a key of type '{0}' to Dictionary<{1}, {2}>", currKeyType, m_KeyType, m_ValueType);
-
-				if (currKeyType.IsVoid())
-					Error(curr.Key, "An expression that returns a value is expected!");
+					Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, m_KeyType, m_ValueType);
 
 				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
-					Error(curr.Value, "Cannot add a value of type '{0}' to Dictionary<{1}, {2}>", currValType, m_KeyType, m_ValueType);
-
-				if (currValType.IsVoid())
-					Error(curr.Value, "An expression that returns a value is expected!");
+					Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, m_KeyType, m_ValueType);
 
 				gen.EmitLoadLocal(tmpVar);
 
 				curr.Key.Compile(ctx, true);
 				Expr.Cast(curr.Value, m_ValueType).Compile(ctx, true);
 
-				gen.EmitCall(addMethod);
+				gen.EmitCall(addMethod.MethodInfo);
 			}
 
 			gen.EmitLoadLocal(tmpVar);

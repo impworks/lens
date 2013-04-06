@@ -10,13 +10,6 @@ namespace Lens.Test
 	public class GenericHelperTest
 	{
 		[Test]
-		public void Basic()
-		{
-			Test(typeof(void), "Basic1");
-			Test(typeof(int), "Basic2");
-		}
-
-		[Test]
 		public void Unbound()
 		{
 			Test(typeof (int), "UnboundGeneric", new[] {typeof (int)}, new[] {typeof (int)});
@@ -57,17 +50,20 @@ namespace Lens.Test
 		private void Test(Type desired, string name, Type[] args = null, Type[] hints = null)
 		{
 			var method = typeof (GenericHelperTestExample).GetMethods().Single(m => m.Name == name);
-			var result = GenericHelper.ResolveGenericReturnType(method, args, hints);
-			Assert.AreEqual(desired, result);
+			var defs = method.GetGenericArguments();
+			var values = GenericHelper.ResolveMethodGenericsByArgs(
+				method.GetParameters().Select(p => p.ParameterType).ToArray(),
+				args,
+				defs,
+				hints
+			);
+			var newMethod = method.MakeGenericMethod(values);
+			Assert.AreEqual(desired, newMethod.ReturnType);
 		}
 	}
 
 	public static class GenericHelperTestExample
 	{
-		public static void Basic1() { }
-		
-		public static int Basic2() { return 1; }
-
 		public static int UnboundGeneric<T>(int a) { return a; }
 
 		public static T BoundGeneric<T>(int a) { return default(T); }

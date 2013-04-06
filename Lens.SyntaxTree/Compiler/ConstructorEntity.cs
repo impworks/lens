@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -25,7 +26,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			// todo: remove when we support static ctors
 			if(IsStatic)
-				throw new LensCompilerException("A constructor must not be marked as static!");
+				throw new LensCompilerException(CompilerMessages.ConstructorStatic);
 
 			if (ConstructorBuilder != null || IsImported)
 				return;

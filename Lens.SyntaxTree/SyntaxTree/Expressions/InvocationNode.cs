@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		private bool m_IsResolved;
 
 		private NodeBase m_InvocationSource;
-		private MethodInfo m_Method;
+		private MethodWrapper m_Method;
 
 		private Type[] m_ArgTypes;
 		private Type[] m_TypeHints;
@@ -47,24 +47,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
 
 			if (Expression is GetMemberNode)
-			{
-				var getNode = Expression as GetMemberNode;
-
-				if (getNode.TypeHints.Any())
-					m_TypeHints = getNode.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
-
-				resolveGetMember(ctx, getNode);
-			}
+				resolveGetMember(ctx, Expression as GetMemberNode);
 			else if (Expression is GetIdentifierNode)
-			{
 				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
-			}
 			else
-			{
 				resolveExpression(ctx, Expression);
-			}
 
-			m_Method = GenericHelper.ResolveMethodGenerics(m_Method, m_ArgTypes, m_TypeHints);
 			m_IsResolved = true;
 		}
 
@@ -75,12 +63,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
+			if (node.TypeHints.Any())
+				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
+
 			try
 			{
 				// resolve a normal method
 				try
 				{
-					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes);
+					m_Method = ctx.ResolveMethod(type, node.MemberName, m_ArgTypes, m_TypeHints);
+
+					if (m_Method.IsStatic)
+						m_InvocationSource = null;
+
 					return;
 				}
 				catch (KeyNotFoundException)
@@ -102,22 +97,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				try
 				{
-					m_Method = ctx.ResolveMethod(ctx.MainType.Name, node.MemberName, m_ArgTypes);
+					m_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, m_ArgTypes);
 				}
 				catch (KeyNotFoundException)
 				{
 					// resolve a declared extension method
 					// most time-consuming operation, therefore is last checked
-					m_Method = type.FindExtensionMethod(node.MemberName, oldArgTypes);
+					m_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, m_TypeHints);
 				}
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error("Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.", type, node.MemberName);
+				Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!", type, node.MemberName);
+				Error(CompilerMessages.TypeMethodNotFound, type, node.MemberName);
 			}
 		}
 
@@ -132,17 +127,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				m_Method = ctx.MainType.ResolveMethod(node.Identifier, m_ArgTypes);
+				m_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.Identifier, m_ArgTypes);
 				if (m_Method == null)
 					throw new KeyNotFoundException();
 			}
 			catch (KeyNotFoundException)
 			{
-				Error("No global function named '{0}' with suitable arguments is declared!", node.Identifier);
+				Error(CompilerMessages.FunctionNotFound, node.Identifier);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error("There is more than one suitable override of global method '{0}'! Please use type casting to specify the exact override.", node.Identifier);
+				Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
 			}
 		}
 
@@ -150,22 +145,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var exprType = node.GetExpressionType(ctx);
 			if (!exprType.IsCallableType())
-				Error("Type '{0}' cannot be invoked!");
+				Error(CompilerMessages.TypeNotCallable, exprType);
 
-			var argTypes = exprType.GetArgumentTypes();
+			m_Method = ctx.ResolveMethod(exprType, "Invoke");
+			var argTypes = m_Method.ArgumentTypes;
 			if (argTypes.Length != m_ArgTypes.Length)
-				Error("Invoking a '{0}' requires {1} arguments, {2} given instead!", exprType, argTypes.Length, m_ArgTypes.Length);
+				Error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
 
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var fromType = m_ArgTypes[idx];
 				var toType = argTypes[idx];
 				if (!toType.IsExtendablyAssignableFrom(fromType))
-					Error(Arguments[idx], "Cannot use object of type '{0}' as a value for parameter of type '{1}'!", fromType, toType);
+					Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 			}
 
 			m_InvocationSource = node;
-			m_Method = exprType.GetMethod("Invoke", m_ArgTypes);
 		}
 
 		#endregion
@@ -221,9 +216,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			if (m_ArgTypes.Length > 0)
 			{
-				var destTypes = m_Method is MethodBuilder
-					? ctx.FindMethod(m_Method).GetArgumentTypes(ctx)
-					: m_Method.GetParameters().Select(p => p.ParameterType).ToArray();
+				var destTypes = m_Method.ArgumentTypes;
 
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
@@ -245,9 +238,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 
 			if (constraint != null)
-				gen.EmitCall(m_Method, true, constraint);	
+				gen.EmitCall(m_Method.MethodInfo, true, constraint);	
 			else
-				gen.EmitCall(m_Method);
+				gen.EmitCall(m_Method.MethodInfo);
 		}
 
 		#endregion

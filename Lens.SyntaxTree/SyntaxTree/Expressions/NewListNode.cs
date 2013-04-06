@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -15,11 +16,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error("Use explicit constructor to create an empty list!");
+				Error(CompilerMessages.ListEmpty);
 
 			m_ItemType = resolveItemType(Expressions, ctx);
-			if (m_ItemType == null)
-				Error(Expressions[0], "List type cannot be inferred, at least one value must be non-null.");
 
 			return typeof(List<>).MakeGenericType(m_ItemType);
 		}
@@ -35,28 +34,27 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
 			
 			var listType = GetExpressionType(ctx);
-			var ctor = listType.GetConstructor(new[] {typeof (int)});
-			var addMethod = listType.GetMethod("Add", new[] { m_ItemType });
+			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
+			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { m_ItemType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 			gen.EmitSaveLocal(tmpVar);
 
 			foreach (var curr in Expressions)
 			{
 				var currType = curr.GetExpressionType(ctx);
 
-				if (currType.IsVoid())
-					Error(curr, "An expression that returns a value is expected!");
+				ctx.CheckTypedExpression(curr, currType, true);
 
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					Error(curr, "Cannot add an object of type '{0}' to List<{1}>!", currType, m_ItemType);
+					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				
-				Expr.Cast(curr, currType).Compile(ctx, true);
-				gen.EmitCall(addMethod);
+				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Compile(ctx, true);
+				gen.EmitCall(addMethod.MethodInfo);
 			}
 
 			gen.EmitLoadLocal(tmpVar);

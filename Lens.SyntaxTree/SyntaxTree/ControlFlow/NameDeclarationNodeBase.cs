@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
-using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -50,12 +49,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			base.ProcessClosures(ctx);
 
 			var type = Value.GetExpressionType(ctx);
-
-			if(type == typeof(NullType))
-				Error("Value type cannot be inferred from usage. Please cast the null value to a type!");
-
-			if(type == typeof(Unit) || type == typeof(void))
-				Error("A function or expression that does not return any value cannot be used as assignment source!");
+			ctx.CheckTypedExpression(Value, type, true);
 
 			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
 		}

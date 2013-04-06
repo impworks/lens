@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -36,7 +37,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			if(Arguments.Count == 0)
-				Error("A parameterless constructor must be invoked by applying a () to it.");
+				Error(CompilerMessages.ParameterlessConstructorParens);
 
 			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
 
@@ -46,19 +47,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var ctor = ctx.ResolveConstructor(Type.Signature, argTypes);
+				var ctor = ctx.ResolveConstructor(ctx.ResolveType(Type.Signature), argTypes);
 
 				if (!isParameterless)
 				{
-					var destTypes = ctor is ConstructorBuilder
-						? ctx.FindConstructor(ctor).GetArgumentTypes(ctx)
-						: ctor.GetParameters().Select(p => p.ParameterType).ToArray();
-
+					var destTypes = ctor.ArgumentTypes;
 					for (var idx = 0; idx < Arguments.Count; idx++)
 						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
 				}
 
-				gen.EmitCreateObject(ctor);
+				gen.EmitCreateObject(ctor.ConstructorInfo);
 			}
 			catch (KeyNotFoundException)
 			{

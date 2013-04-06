@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Parser;
+using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 
@@ -12,7 +13,7 @@ namespace Lens
 	/// </summary>
 	public class LensCompiler : IDisposable
 	{
-		public LensCompiler(CompilerOptions opts = null)
+		public LensCompiler(LensCompilerOptions opts = null)
 		{
 			m_Context = new Context(opts);
 		}
@@ -64,7 +65,16 @@ namespace Lens
 		/// </summary>
 		public Func<object> Compile(string src)
 		{
-			var nodes = new TreeBuilder().Parse(src);
+			IEnumerable<NodeBase> nodes;
+			try
+			{
+				nodes = new TreeBuilder().Parse(src);
+			}
+			catch(Exception ex)
+			{
+				throw new LensCompilerException(ex.Message);
+			}
+
 			return Compile(nodes);
 		}
 

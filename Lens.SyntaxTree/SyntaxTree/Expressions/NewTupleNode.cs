@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
@@ -17,23 +16,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (Expressions.Count == 0)
-				Error("Tuple must contain at least one object!");
+				Error(CompilerMessages.TupleNoArgs);
 
 			if (Expressions.Count > 8)
-				Error("Tuples cannot contain more than 8 objects. Use a structure or a nested tuple instead!");
+				Error(CompilerMessages.TupleTooManyArgs);
 
-			m_Types = Expressions.Select(x => x.GetExpressionType(ctx)).ToArray();
-			for (var idx = 0; idx < m_Types.Length; idx++)
+			var types = new List<Type>();
+			foreach (var curr in Expressions)
 			{
-				var type = m_Types[idx];
+				var type = curr.GetExpressionType(ctx);
+				ctx.CheckTypedExpression(curr, type);
 
-				if (type == typeof(NullType))
-					Error(Expressions[idx], "Cannot infer type of the tuple item. Please use casting to specify the type!");
-
-				if (type.IsVoid())
-					Error(Expressions[idx], "An expression that returns a value is expected!");
+				types.Add(type);
 			}
 
+			m_Types = types.ToArray();
 			return FunctionalHelper.CreateTupleType(m_Types);
 		}
 
@@ -44,15 +41,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			GetExpressionType(ctx);
+			var tupleType = GetExpressionType(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 
 			foreach(var curr in Expressions)
 				curr.Compile(ctx, true);
 
-			var ctor = GetExpressionType(ctx).GetConstructor(m_Types);
-			gen.EmitCreateObject(ctor);
+			var ctor = ctx.ResolveConstructor(tupleType, m_Types);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
 		public override string ToString()

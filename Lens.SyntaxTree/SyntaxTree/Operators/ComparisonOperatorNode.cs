@@ -2,6 +2,7 @@
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
@@ -71,7 +72,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
 			if(!canCompare(leftType, rightType, isEquality))
-				Error("Types '{0}' and '{1}' cannot be compared.", leftType, rightType);
+				Error(CompilerMessages.TypesIncomparable, leftType, rightType);
 
 			if (isEquality)
 				compileEquality(ctx, leftType, rightType);
@@ -108,6 +109,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				// ref type .. null
 				if ((right == typeof (NullType) && !left.IsValueType) || (left == typeof (NullType) && !right.IsValueType))
 					return true;
+
+				if (left is TypeBuilder && left == right)
+					return true;
+
 			}
 
 			return false;
@@ -180,6 +185,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 				return;
 			}
+
+			if (left is TypeBuilder && left == right)
+			{
+				var equals = ctx.ResolveMethod(left, "Equals", new [] { typeof (object) });
+
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
+
+				gen.EmitCall(equals.MethodInfo);
+
+				if (Kind == ComparisonOperatorKind.NotEquals)
+					emitInversion(gen);
+
+				return;
+			}
 		}
 
 		/// <summary>
@@ -194,7 +214,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var otherNull = otherType.IsNullableType();
 
 			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
-			var hasValueGetter = nullType.GetMethod("get_HasValue");
+			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			var falseLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
@@ -305,7 +325,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 			var nullType = nullValue.GetExpressionType(ctx);
 			var nullVar = ctx.CurrentScope.DeclareImplicitName(ctx, nullType, true);
-			var hasValueGetter = nullType.GetMethod("get_HasValue");
+			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Compile(ctx, true);
 			gen.EmitSaveLocal(nullVar);

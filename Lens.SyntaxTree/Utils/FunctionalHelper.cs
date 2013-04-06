@@ -112,14 +112,6 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
-		/// Gets the argument types of a delegate.
-		/// </summary>
-		public static Type[] GetArgumentTypes(this Delegate method)
-		{
-			return method.GetType().GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
-		}
-
-		/// <summary>
 		/// Gets the argument types of a function or action type.
 		/// </summary>
 		public static Type[] GetArgumentTypes(this Type type)
@@ -128,29 +120,6 @@ namespace Lens.SyntaxTree.Utils
 				throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
 
 			return type.GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
-		}
-
-		/// <summary>
-		/// Gets the return type of a function.
-		/// </summary>
-		public static Type GetReturnType(this Delegate del)
-		{
-			return del.GetType().GetMethod("Invoke").ReturnType;
-		}
-
-		/// <summary>
-		/// Gets the return type of a function.
-		/// </summary>
-		public static Type GetReturnType(this Type type)
-		{
-			if (type.IsActionType())
-				return typeof (void);
-
-			if(!type.IsFuncType())
-				throw new LensCompilerException(string.Format("Type '{0}' is not a callable type!", type.Name));
-
-			var args = type.GetGenericArguments();
-			return args[args.Length - 1];
 		}
 
 		/// <summary>

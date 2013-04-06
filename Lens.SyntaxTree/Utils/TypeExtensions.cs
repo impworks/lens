@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
 
 namespace Lens.SyntaxTree.Utils
@@ -162,6 +166,118 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
+		/// Gets the most common type that all the given types would fit into.
+		/// </summary>
+		public static Type GetMostCommonType(this Type[] types)
+		{
+			if (types.Length == 0)
+				return null;
+
+			if (types.Length == 1)
+				return types[0];
+
+			// try to get the most wide type
+			Type curr = null;
+			for (var idx = 0; idx < types.Length; idx++)
+			{
+				var type = types[idx];
+				if (type.IsInterface)
+				{
+					curr = typeof (object);
+					break;
+				}
+
+				curr = getMostCommonType(curr, type);
+				if (curr == typeof (object))
+					break;
+			}
+
+
+			if (!curr.IsAnyOf(typeof (object), typeof (ValueType), typeof (Delegate), typeof (Enum)))
+				return curr;
+
+			// try to get common interfaces
+			var ifaces = types[0].GetInterfaces().AsEnumerable();
+			for (var idx = 1; idx < types.Length; idx++)
+			{
+				ifaces = ifaces.Intersect(types[idx].IsInterface ? new [] { types[idx] } : types[idx].GetInterfaces());
+				if (!ifaces.Any())
+					break;
+			}
+
+			var iface = getMostSpecificInterface(ifaces);
+			return iface ?? typeof (object);
+		}
+
+		/// <summary>
+		/// Gets the most common type between two.
+		/// </summary>
+		private static Type getMostCommonType(Type left, Type right)
+		{
+			// corner case
+			if (left == null || left == right)
+				return right;
+
+			if (right.IsInterface)
+				return typeof (object);
+
+			// numeric extensions
+			if (left.IsNumericType() && right.IsNumericType())
+				return GetNumericOperationType(left, right) ?? typeof(object);
+
+			// arrays
+			if (left.IsArray && right.IsArray)
+			{
+				var leftElem = left.GetElementType();
+				var rightElem = right.GetElementType();
+				return leftElem.IsValueType || rightElem.IsValueType
+					? typeof (object)
+					: getMostCommonType(leftElem, rightElem).MakeArrayType();
+			}
+
+			// inheritance
+			var currLeft = left;
+			while (currLeft != null)
+			{
+				var currRight = right;
+				while (currRight != null)
+				{
+					if (currLeft == currRight)
+						return currLeft;
+
+					currRight = currRight.BaseType;
+				}
+
+				currLeft = currLeft.BaseType;
+			}
+
+			return typeof(object);
+		}
+
+		private static Type getMostSpecificInterface(IEnumerable<Type> ifaces)
+		{
+			var remaining = ifaces.ToDictionary(i => i, i => true);
+			foreach (var iface in ifaces)
+			{
+				foreach (var curr in iface.GetInterfaces())
+					remaining.Remove(curr);
+			}
+
+			if (remaining.Count == 1)
+				return remaining.First().Key;
+
+			var preferred = new[] {typeof (IList<>), typeof (IEnumerable<>), typeof (IList)};
+			foreach (var pref in preferred)
+			{
+				foreach (var curr in remaining.Keys)
+					if (curr == pref || (curr.IsGenericType && curr.GetGenericTypeDefinition() == pref))
+						return curr;
+			}
+
+			return null;
+		}
+
+		/// <summary>
 		/// Gets assignment type distance.
 		/// </summary>
 		public static int DistanceFrom(this Type varType, Type exprType, bool exactly = false)
@@ -261,7 +377,17 @@ namespace Lens.SyntaxTree.Utils
 
 		private static bool IsImplicitCastable(Type varType, Type exprType)
 		{
-			return (!(exprType is TypeBuilder)) && exprType.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == varType);
+			if (exprType is TypeBuilder)
+				return false;
+
+			try
+			{
+				return exprType.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == varType);
+			}
+			catch(NotSupportedException)
+			{
+				return false;
+			}
 		}
 
 		private static Type MostWideType(Type[] types, Type type1, Type type2)
@@ -426,6 +552,17 @@ namespace Lens.SyntaxTree.Utils
 			}
 
 			return result;
+		}
+
+		public static bool Implements(this Type type, Type iface, bool unwindGenerics)
+		{
+			if (unwindGenerics && type.IsGenericType && iface.IsGenericType)
+			{
+				type = type.GetGenericTypeDefinition();
+				iface = iface.GetGenericTypeDefinition();
+			}
+
+			return type.GetInterfaces().Contains(iface);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -20,6 +20,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// <summary>
 		/// The pointer to overloaded version of the operator.
 		/// </summary>
-		protected MethodInfo m_OverloadedMethod;
+		protected MethodWrapper m_OverloadedMethod;
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -29,12 +30,12 @@ namespace Lens.SyntaxTree.Compiler
 		public static void UnregisterContext(int contextId)
 		{
 			if (contextId < 0 || contextId > m_Properties.Count - 1)
-				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
+				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 #if DEBUG
 			var curr = m_Properties[contextId];
 			if (curr == null)
-				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 #endif
 
 			m_Properties[contextId] = null;
@@ -43,7 +44,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Registers a property and returns its unique ID.
 		/// </summary>
-		public static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
+		internal static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
 		{
 			if (getter == null && setter == null)
 				throw new ArgumentNullException("getter");
@@ -57,20 +58,13 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Registers a property and returns its unique ID.
 		/// </summary>
-		public static GlobalPropertyInfo RegisterProperty(int contextId, MethodInfo getter, MethodInfo setter)
+		internal static GlobalPropertyInfo RegisterProperty(int contextId, Type type, MethodEntity getter, MethodEntity setter)
 		{
-			// todo: additional checks
-
 			if (getter == null && setter == null)
 				throw new ArgumentNullException("getter");
 
-			if(getter != null && setter != null && getter.ReturnType != setter.GetParameters()[0].ParameterType)
-				throw new InvalidOperationException("Getter and setter methods must match in return types!");
-
-			m_Properties[contextId].Add(new GlobalPropertyEntity { GetterMethod = getter, SetterMethod = setter });
+			m_Properties[contextId].Add(new GlobalPropertyEntity { GetterEntity = getter, SetterEntity = setter });
 			var id = m_Properties[contextId].Count - 1;
-
-			var type = getter != null ? getter.ReturnType : setter.GetParameters()[0].ParameterType;
 
 			return new GlobalPropertyInfo(id, type, getter != null, setter != null, getter, setter);
 		}
@@ -85,7 +79,7 @@ namespace Lens.SyntaxTree.Compiler
 
 #if DEBUG
 			if(info.Getter == null)
-				throw new InvalidOperationException(string.Format("Property #{0} has no getter!", id));
+				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoGetter, id));
 #endif
 
 			return (info.Getter as Func<T>).Invoke();
@@ -101,7 +95,7 @@ namespace Lens.SyntaxTree.Compiler
 
 #if DEBUG
 			if (info.Setter == null)
-				throw new InvalidOperationException(string.Format("Property #{0} has no setter!", id));
+				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoSetter, id));
 #endif
 
 			(info.Setter as Action<T>).Invoke(value);
@@ -111,26 +105,26 @@ namespace Lens.SyntaxTree.Compiler
 		private static void validateId(int contextId, int id)
 		{
 			if (contextId < 0 || contextId > m_Properties.Count - 1)
-				throw new ArgumentException(string.Format("Context #{0} does not exist!", contextId));
+				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 			var curr = m_Properties[contextId];
 			if(curr == null)
-				throw new InvalidOperationException(string.Format("Context #{0} has been unregistered!", contextId));
+				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 
 			if(id < 0 || id > m_Properties[contextId].Count - 1)
-				throw new ArgumentException(string.Format("Property #{0} does not exist!", id));
+				throw new ArgumentException(string.Format(CompilerMessages.PropertyIdNotFound, id));
 		}
 
 		private class GlobalPropertyEntity
 		{
 			public Delegate Getter;
 			public Delegate Setter;
-			public MethodInfo GetterMethod;
-			public MethodInfo SetterMethod;
+			public MethodEntity GetterEntity;
+			public MethodEntity SetterEntity;
 		}
 	}
 
-	public class GlobalPropertyInfo
+	internal class GlobalPropertyInfo
 	{
 		public readonly int PropertyId;
 		public readonly Type PropertyType;
@@ -138,10 +132,10 @@ namespace Lens.SyntaxTree.Compiler
 		public readonly bool HasGetter;
 		public readonly bool HasSetter;
 
-		public readonly MethodInfo GetterMethod;
-		public readonly MethodInfo SetterMethod;
+		public readonly MethodEntity GetterMethod;
+		public readonly MethodEntity SetterMethod;
 
-		public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodInfo getterMethod, MethodInfo setterMethod)
+		public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodEntity getterMethod, MethodEntity setterMethod)
 		{
 			PropertyId = id;
 			PropertyType = propType;
