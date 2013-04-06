@@ -24,7 +24,15 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
          then fail "Incorrect indentation dectected on dedent" stream
          else Reply count
     else Reply state.RealIndentation
-    
+
+/// Go to new line if current indentation level is "real" (i.e. real indentation is equals to virtual indentation).
+/// This magic is used for dedent only.
+let private goToNewLine (stream : CharStream<ParserState>) =
+    let state = stream.UserState
+    if state.RealIndentation = state.VirtualIndentation then
+        skipNewline stream
+    else
+        Reply(())
 
 let private checkIndent (stream : CharStream<ParserState>) =
     let state = stream.UserState
@@ -32,6 +40,7 @@ let private checkIndent (stream : CharStream<ParserState>) =
     then Reply(())
     else fail "Incorrect indentation" stream
 
+/// Line separator for indented lines. Preserves indentation.
 let nextLine : Parser<unit, ParserState> =
     parse {
         do! (checkIndent <!> "nextLine > checkIndent")
@@ -50,7 +59,12 @@ let indent : Parser<unit, ParserState> =
 
 let dedent : Parser<unit, ParserState> =
     parse {
+        do! goToNewLine
         let! indent = getVirtualIndent
         let! realIndent = decreaseIndent indent
         do! setIndent realIndent (indent - 1)
     } <!> "indent level decrease"
+
+/// Parse 
+let indentedBlockOf blockLineParser (* : Parser<'a list, ParserState> *) =
+    sepBy1 blockLineParser (attempt nextLine)
