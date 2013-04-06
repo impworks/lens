@@ -29,10 +29,9 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
 /// This magic is used for dedent only.
 let private goToNewLine (stream : CharStream<ParserState>) =
     let state = stream.UserState
-    if state.RealIndentation = state.VirtualIndentation then
-        skipNewline stream
-    else
-        Reply(())
+    if state.RealIndentation = state.VirtualIndentation
+    then skipNewline stream
+    else Reply(())
 
 let private checkIndent (stream : CharStream<ParserState>) =
     let state = stream.UserState
