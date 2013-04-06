@@ -40,14 +40,14 @@ let record name entries =
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
-let typeEntry(name, typeDefinition) =
+let typeEntry name typeDefinition =
     let signature =
         match typeDefinition with
         | Some s -> TypeSignature(s)
         | None   -> null
     TypeLabel(Name = name, TagType = signature)
 
-let typeNode(name, entries) =
+let typeNode name entries =
     let node = TypeDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase

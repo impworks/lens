@@ -53,9 +53,9 @@ byref_arg           = "(" "ref" lvalue ")" | "ref" lvalue
 value_expr          = rvalue | atomar_expr
 rvalue              = lvalue [ type_params ]
 type_operator_expr  = ( "typeof" | "default" ) type
-literal             = "()" | "null" | "true" | "false" | string | double | int
+literal             = "()" | "null" | "true" | "false" | double | int | string
 
-string              = ...
+string              = " [^"] " (any character except double quote inside double quotes)
 int                 = [0-9]+
 double              = [0-9]+\.[0-9]+
 identifier          = [a-zA-Z_][0-9a-zA-Z_]*
