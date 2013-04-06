@@ -307,7 +307,8 @@ invoke_exprRef        := pipe2
                          <| Node.invocation
 invoke_listRef        := (Indentation.indentedBlockOf (token "<|" >>. choice [attempt expr
                                                                               byref_arg]))
-                         <|> ((many1 <| choice [byref_arg
+                         <|> ((many1 <| choice [attempt byref_arg
+                                                // (attempt because byref_arg and value_expr both can include braces)
                                                 value_expr]) <!> "invoke_list_single_line")
 byref_argRef          := choice [between <| token "(" <| token ")" <| (keyword "ref" >>. (lvalue |>> Node.getterNode))
                                  keyword "ref" >>. (lvalue |>> Node.getterNode)] // TODO: Use "ref" keyword
