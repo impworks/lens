@@ -160,7 +160,7 @@ recorddefRef          := pipe2
 recorddef_stmtRef     := (identifier .>>. (token ":" >>. ``type``)) |>> Node.recordEntry
 typedefRef            := pipe2
                          <| (keyword "type" >>. identifier)
-                         <| (Indentation.indentedBlockOf typedef_stmt .>> nextLineOrEof)
+                         <| Indentation.indentedBlockOf typedef_stmt
                          <| Node.typeNode
 typedef_stmtRef       := pipe2
                          <| identifier

@@ -68,4 +68,4 @@ let dedent : Parser<unit, ParserState> =
 
 /// Parse sequence of blockLineParser, all indented and separated by newline character.
 let indentedBlockOf blockLineParser =
-    sepBy1 blockLineParser (attempt nextLine)
+    indent >>. sepBy1 blockLineParser (attempt nextLine)
