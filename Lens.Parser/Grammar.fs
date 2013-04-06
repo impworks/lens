@@ -42,7 +42,7 @@ let keywords = Set.ofList ["using"
 let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
 let space = pchar ' '
-let nextLine = (skipNewline <|> eof) <!> "nextLine"
+let nextLineOrEof = Indentation.nextLine <|> eof
 let keyword k = pstring k .>>? (choice [skipMany1 space
                                         notFollowedBy letter]) <!> sprintf "keyword %s" k
                                                    
@@ -145,23 +145,23 @@ let int, intRef                               = createAnnotatedParser "int" "int
 let double, doubleRef                         = createAnnotatedParser "double" "double literal"
 let identifier, identifierRef                 = createAnnotatedParser "identifier" "identifier"
 
-let main               = many newline >>. (many stmt .>>? eof)
+let main               = many newline >>. many stmt .>> eof
 stmtRef               := choice [attempt using
                                  attempt recorddef
                                  attempt typedef
                                  attempt funcdef
-                                 attempt (local_stmt .>>? nextLine)]
-usingRef              := keyword "using" >>? ``namespace`` .>>? nextLine |>> Node.using
+                                 attempt (local_stmt .>>? nextLineOrEof)]
+usingRef              := keyword "using" >>? ``namespace`` .>>? nextLineOrEof |>> Node.using
 namespaceRef          := sepBy1 identifier <| token "." |>> String.concat "."
 recorddefRef          := pipe2
                          <| (keyword "record" >>? identifier)
-                         <| ((*Indentation.indentedBlock*)many1 recorddef_stmt .>>? nextLine)
+                         <| (Indentation.indentedBlockOf recorddef_stmt)
                          <| Node.record
 recorddef_stmtRef     := (identifier .>>.? (token ":" >>? ``type``)) |>> Node.recordEntry
 typedefRef            := keyword "type"
                          >>? identifier
-                         .>>.? (*Indentation.indentedBlock*)many1 typedef_stmt
-                         .>>? nextLine
+                         .>>.? Indentation.indentedBlockOf typedef_stmt
+                         .>>? nextLineOrEof
                          |>> Node.typeNode
 typedef_stmtRef       := identifier .>>.? opt (keyword "of" >>? ``type``) |>> Node.typeEntry
 funcdefRef            := (pipe4
@@ -169,9 +169,9 @@ funcdefRef            := (pipe4
                           <| opt (keyword "of" >>? ``type``)
                           <| (func_params .>>? token "->")
                           <| block
-                          <| Node.functionNode) .>>? nextLine
+                          <| Node.functionNode) .>>? nextLineOrEof
 func_paramsRef        := many ((identifier .>>? token ":") .>>.? (opt <| keyword "ref") .>>.? ``type``) |>> Node.functionParameters
-blockRef              := (((*Indentation.indentedBlock*)many1 block_line .>>? nextLine)
+blockRef              := ((Indentation.indentedBlockOf block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
@@ -231,7 +231,7 @@ lambda_exprRef        := pipe2
                          <| Node.lambda
 line_exprRef           := pipe2
                           <| attempt line_expr_0
-                          <| attempt (opt ((*Indentation.indentedBlock*)many1 (token "|>" >>? identifier .>>.? invoke_list)))
+                          <| attempt (opt (Indentation.indentedBlockOf (token "|>" >>? identifier .>>.? invoke_list)))
                           <| Node.fluentCall
 line_expr_0Ref         := pipe2
                          <| line_expr_1
@@ -298,8 +298,8 @@ invoke_exprRef        := pipe2
                          <| value_expr
                          <| invoke_list
                          <| Node.invocation
-invoke_listRef        := ((*Indentation.indentedBlock*)many1 (token "<|" >>? choice [attempt expr
-                                                                                     attempt byref_arg]))
+invoke_listRef        := (Indentation.indentedBlockOf (token "<|" >>? choice [attempt expr
+                                                                              attempt byref_arg]))
                          <|> ((many1 <| choice [attempt byref_arg
                                                 attempt value_expr]) <!> "invoke_list_single_line")
 byref_argRef          := choice [attempt (token "(" >>. keyword "ref" .>>. lvalue .>> token ")")
