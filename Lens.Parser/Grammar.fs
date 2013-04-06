@@ -237,7 +237,8 @@ lambda_exprRef        := pipe2
                          <| Node.lambda
 line_exprRef           := pipe2
                           <| line_expr_0
-                          <| opt (Indentation.indentedBlockOf (token "|>" >>. identifier .>>. invoke_list))
+                          <| (opt <| attempt (Indentation.indentedBlockOf (token "|>" >>. identifier .>>. invoke_list)))
+                             // attempt here because indentedBlockOf almost always will consume a newline.
                           <| Node.fluentCall
 line_expr_0Ref         := pipe2
                          <| line_expr_1
