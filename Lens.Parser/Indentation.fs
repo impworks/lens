@@ -65,6 +65,6 @@ let dedent : Parser<unit, ParserState> =
         do! setIndent realIndent (indent - 1)
     } <!> "indent level decrease"
 
-/// Parse 
-let indentedBlockOf blockLineParser (* : Parser<'a list, ParserState> *) =
+/// Parse sequence of blockLineParser, all indented and separated by newline character.
+let indentedBlockOf blockLineParser =
     sepBy1 blockLineParser (attempt nextLine)
