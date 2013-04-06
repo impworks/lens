@@ -167,11 +167,15 @@ typedef_stmtRef       := pipe2
                          <| identifier
                          <| opt (keyword "of" >>. ``type``)
                          <| Node.typeEntry
-funcdefRef            := (pipe4
+funcdefRef            := // There are two types of functions: the ones with indented block do not require explicit newline,
+                         // and the ones with local_stmt do. Conceptually, block expression here is a copy of a "block"
+                         // statement.
+                         (pipe4
                           <| (keyword "fun" >>. identifier)
                           <| opt (keyword "of" >>. ``type``)
                           <| (func_params .>> token "->")
-                          <| (Indentation.indentedBlockOf block_line |>> Node.codeBlock)
+                          <| ((valueToList local_stmt .>> nextLineOrEof
+                               <|> Indentation.indentedBlockOf block_line) |>> Node.codeBlock)
                           <| Node.functionNode)
 func_paramsRef        := many ((identifier .>> token ":")
                                .>>.? (opt <| keyword "ref")
