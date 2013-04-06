@@ -314,8 +314,9 @@ invoke_listRef        := (Indentation.indentedBlockOf (token "<|" >>. choice [at
                          <|> ((many1 <| choice [attempt byref_arg
                                                 // (attempt because byref_arg and value_expr both can include braces)
                                                 value_expr]) <!> "invoke_list_single_line")
-byref_argRef          := choice [between <| token "(" <| token ")" <| (keyword "ref" >>. (lvalue |>> Node.getterNode))
-                                 keyword "ref" >>. (lvalue |>> Node.getterNode)] // TODO: Use "ref" keyword
+byref_argRef          := choice [between <| token "(" <| token ")" <| (keyword "ref" >>. lvalue)
+                                 keyword "ref" >>. lvalue]
+                         |>> Node.byRefArg
 value_exprRef         := choice [attempt rvalue
                                  atomar_expr]
 rvalueRef             := pipe2

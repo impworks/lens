@@ -152,6 +152,11 @@ let lambda parameters code : NodeBase =
     <| parameters
     upcast node
 
+let byRefArg (symbol, accessorChain) =
+    let node = getterNode (symbol, accessorChain)
+    (box node :?> IPointerProvider).PointerRequired <- true
+    node
+
 let invocation expression (parameters : NodeBase list) : NodeBase =
     upcast InvocationNode(Expression = expression, Arguments = ResizeArray<_> parameters)
 
