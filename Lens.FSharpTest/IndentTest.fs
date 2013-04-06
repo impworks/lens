@@ -49,6 +49,6 @@ type IndentTest() =
 
     [<Test>]
     member this.IndentedBlock() =
-        let block = pchar 'b' .>>. indent .>>. indentedBlockOf (pchar 'x') .>>. dedent .>>. pchar 'e' .>>. eof
+        let block = pchar 'b' .>>. indentedBlockOf (pchar 'x') .>>. pchar 'e' .>>. eof
         let source = "b\n    x\n    x\ne"
         testSuccess source block <| ParserState.Create()

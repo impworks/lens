@@ -201,11 +201,11 @@ lvalueRef             := choice [attempt (``type`` .>>? token "::") .>>.? identi
                                  atomar_expr .>>.? accessor_expr |>> Node.expressionSymbol] .>>.? many accessor_expr
 atomar_exprRef        := choice [literal
                                  type_operator_expr
-                                 between <| token "(" <| token "(" <| expr]
+                                 between <| token "(" <| token ")" <| expr]
 accessor_exprRef      := choice [token "." >>? identifier |>> Accessor.Member
                                  (between <| token "[" <| token "]" <| line_expr) |>> Accessor.Indexer]
 type_paramsRef        := between <| token "<" <| token ">" <| (sepBy1 ``type`` <| token ",")
-exprRef               := choice [block_expr
+exprRef               := choice [attempt block_expr // attempt in case of lambdas because lambdas creates many grammar conflicts
                                  line_expr]
 block_exprRef         := choice [if_expr
                                  while_expr
