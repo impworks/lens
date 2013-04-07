@@ -872,6 +872,34 @@ r1 == r2
 			Test(src, true);
 		}
 
+		[Test]
+		public void CustomTypeLinq1()
+		{
+			var src = @"
+record Store
+    Name : string
+    Value : int
+var found = new [new Store ""a"" 1; new Store ""b"" 2; new Store ""c"" 3]
+    |> Where ((x:Store) -> x.Value < 3)
+    |> OrderBy ((x:Store) -> x.Value)
+    |> First ()
+found.Name
+";
+			Test(src, "b");
+		}
+
+		[Test]
+		public void CustomTypeLinq2()
+		{
+			var src = @"
+record Store
+    Value : int
+var data = new [new Store 1; new Store 1; new Store 40]
+data.Sum ()
+";
+			Test(src, 42);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
