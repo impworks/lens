@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Translations;
@@ -58,11 +59,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 				gen.EmitCreateObject(ctor.ConstructorInfo);
 			}
+			catch (AmbiguousMatchException)
+			{
+				Error(CompilerMessages.TypeConstructorAmbiguos, Type.Signature);
+			}
 			catch (KeyNotFoundException)
 			{
 				var type = ctx.ResolveType(Type);
 				if (!isParameterless || !type.IsValueType)
-					throw;
+					Error(CompilerMessages.TypeConstructorNotFound, Type.Signature);
+
 				var castExpr = Expr.Default(Type);
 				castExpr.Compile(ctx, true);
 			}

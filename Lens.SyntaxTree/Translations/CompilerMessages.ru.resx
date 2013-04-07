@@ -330,6 +330,12 @@
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
     <value>Невозможно применить обобщенные параметры к '{0}.{1}', потому что это не метод!</value>
   </data>
+  <data name="TypeConstructorAmbiguos" xml:space="preserve">
+    <value>Тип '{0}' содержит несколько подходящих конструкторов! Воспользуйтесь операцией приведения типов .</value>
+  </data>
+  <data name="TypeConstructorNotFound" xml:space="preserve">
+    <value>Тип '{0}' не содержит конструктор с подходящим списком аргументов!</value>
+  </data>
   <data name="TypeDefined" xml:space="preserve">
     <value>Тип '{0}' уже объявлен!</value>
   </data>
@@ -346,7 +352,7 @@
     <value>Тип '{0}' содержит несколько подходящих переопределений метода '{1}'! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="TypeMethodNotFound" xml:space="preserve">
-    <value>Тип '{0}' не содержит метод '{1}', и подходящего метода-расширения также не найдено!</value>
+    <value>Тип '{0}' не содержит метод '{1}' с подходящим списков аргументов! Соответствующий метод-расширение также не найден.</value>
   </data>
   <data name="TypeNotCallable" xml:space="preserve">
     <value>Тип '{0}' не является делегатом!</value>
