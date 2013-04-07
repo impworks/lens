@@ -364,26 +364,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
-			Type[] genericValues = null;
 			var method = _ExtensionResolver.FindExtensionMethod(type, name, argTypes);
-			if (method.IsGenericMethod)
-			{
-				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
-				var genericDefs = method.GetGenericArguments();
-
-				var extMethodArgs = argTypes.ToList();
-				extMethodArgs.Insert(0, type);
-
-				genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, extMethodArgs.ToArray(), genericDefs, hints);
-
-				method = method.MakeGenericMethod(genericValues);
-			}
-			else if (hints != null)
-			{
-				Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
-			}
-
-			return new MethodWrapper
+			var info = new MethodWrapper
 			{
 				Name = name,
 				Type = method.DeclaringType,
@@ -392,9 +374,30 @@ namespace Lens.SyntaxTree.Compiler
 				IsStatic = true,
 				IsVirtual = false,
 				ReturnType = method.ReturnType,
-				ArgumentTypes = method.GetParameters().Select(p => p.ParameterType).ToArray(),
-				GenericArguments = genericValues
+				ArgumentTypes = method.GetParameters().Select(p => p.ParameterType).ToArray()
 			};
+
+			if (method.IsGenericMethod)
+			{
+				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+				var genericDefs = method.GetGenericArguments();
+
+				var extMethodArgs = argTypes.ToList();
+				extMethodArgs.Insert(0, type);
+
+				var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, extMethodArgs.ToArray(), genericDefs, hints);
+
+				info.GenericArguments = genericValues;
+				info.MethodInfo = info.MethodInfo.MakeGenericMethod(genericValues);
+				info.ReturnType = GenericHelper.ApplyGenericArguments(info.ReturnType, type);
+				info.ArgumentTypes = expectedTypes.Select(t => GenericHelper.ApplyGenericArguments(t, type)).ToArray();
+			}
+			else if (hints != null)
+			{
+				Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+			}
+
+			return info;
 		}
 
 		/// <summary>
