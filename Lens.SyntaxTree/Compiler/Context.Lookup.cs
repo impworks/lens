@@ -365,7 +365,7 @@ namespace Lens.SyntaxTree.Compiler
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
 			Type[] genericValues = null;
-			var method = type.FindExtensionMethod(name, argTypes);
+			var method = _ExtensionResolver.FindExtensionMethod(type, name, argTypes);
 			if (method.IsGenericMethod)
 			{
 				var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
@@ -537,17 +537,13 @@ namespace Lens.SyntaxTree.Compiler
 				return new Tuple<T, int, Type[]>(ent, dist, currArgs);
 			};
 
-			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).ToArray();
+			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).Take(2).ToArray();
 
 			if (result.Length == 0 || result[0].Item2 == int.MaxValue)
 				throw new KeyNotFoundException();
 
-			if (result.Length > 2)
-			{
-				var ambiCount = result.Skip(1).TakeWhile(i => i.Item2 == result[0].Item2).Count();
-				if (ambiCount > 0)
-					throw new AmbiguousMatchException();
-			}
+			if (result.Length == 2 && result[0].Item2 == result[1].Item2)
+				throw new AmbiguousMatchException();
 
 			return result[0];
 		}

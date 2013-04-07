@@ -33,11 +33,6 @@ namespace Lens.SyntaxTree.Compiler
 				}
 			};
 
-			_Namespaces = new List<string>
-			{
-				"System"
-			};
-
 			_TypeAliases = new Dictionary<string, Type>
 			{
 				{"object", typeof (Object)},
@@ -52,17 +47,19 @@ namespace Lens.SyntaxTree.Compiler
 			loadAssemblies();
 		}
 
-		public TypeResolver()
+		public TypeResolver(Dictionary<string, bool> namespaces)
 		{
 			_Cache = new Dictionary<string, Type>();
+			_Namespaces = namespaces;
 		}
 
 		private static IEnumerable<string> _EmptyNamespaces = new[] { string.Empty };
 		private static Dictionary<string, List<string>> _Locations;
-		private static List<string> _Namespaces;
-		private readonly Dictionary<string, Type> _Cache;
 		private static List<Assembly> _Assemblies;
 		private static readonly Dictionary<string, Type> _TypeAliases;
+
+		private readonly Dictionary<string, Type> _Cache;
+		private Dictionary<string, bool> _Namespaces;
 
 		/// <summary>
 		/// The method that allows external types to be looked up.
@@ -112,16 +109,6 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Add a namespace to search types in.
-		/// </summary>
-		/// <param name="nsp">Namespace.</param>
-		public void AddNamespace(string nsp)
-		{
-			if(!_Namespaces.Contains(nsp))
-				_Namespaces.Add(nsp);
-		}
-
-		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
 		private Type parseTypeSignature(string signature, bool allowGeneric)
@@ -159,13 +146,12 @@ namespace Lens.SyntaxTree.Compiler
 				if (candidate != null)
 					return candidate;
 			}
-
 			
 			Type foundType = null;
 
 			foreach (var currAsm in _Assemblies)
 			{
-				var namespaces = checkNamespaces ? _Namespaces : _EmptyNamespaces;
+				var namespaces = checkNamespaces ? _Namespaces.Keys : _EmptyNamespaces;
 				if (checkNamespaces)
 				{
 					List<string> extras;

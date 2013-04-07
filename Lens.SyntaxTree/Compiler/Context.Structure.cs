@@ -166,7 +166,8 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareOpenNamespace(UsingNode node)
 		{
-			_TypeResolver.AddNamespace(node.Namespace);
+			if(!Namespaces.ContainsKey(node.Namespace))
+				Namespaces.Add(node.Namespace, true);
 		}
 
 		/// <summary>

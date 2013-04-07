@@ -10,7 +10,7 @@ namespace Lens.Test
 	[TestFixture]
 	public class TypeResolverTest
 	{
-		private static readonly TypeResolver Resolver = new TypeResolver();
+		private static readonly TypeResolver Resolver = new TypeResolver(new Dictionary<string, bool> { { "System", true } });
 
 		[Test]
 		public void BasicName()

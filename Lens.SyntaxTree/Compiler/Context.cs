@@ -34,9 +34,20 @@ namespace Lens.SyntaxTree.Compiler
 
 		public Context(LensCompilerOptions options = null)
 		{
-			var an = new AssemblyName(getAssemblyName());
+			Options = options ?? new LensCompilerOptions();
 
-			_TypeResolver = new TypeResolver();
+			_DefinedTypes = new Dictionary<string, TypeEntity>();
+			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
+
+			Namespaces = new Dictionary<string, bool>();
+			if (Options.UseDefaultNamespaces)
+			{
+				Namespaces.Add("System", true);
+				Namespaces.Add("System.Linq", true);
+				Namespaces.Add("System.Text.RegularExpressions", true);
+			}
+
+			_TypeResolver = new TypeResolver(Namespaces);
 			_TypeResolver.ExternalLookup = name =>
 			{
 				TypeEntity ent;
@@ -44,10 +55,9 @@ namespace Lens.SyntaxTree.Compiler
 				return ent == null ? null : ent.TypeBuilder;
 			};
 
-			_DefinedTypes = new Dictionary<string, TypeEntity>();
-			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
+			_ExtensionResolver = new ExtensionMethodResolver(Namespaces);
 
-			Options = options ?? new LensCompilerOptions();
+			var an = new AssemblyName(getAssemblyName());
 			var saveable = Options.AllowSave;
 			if (saveable)
 			{
@@ -194,6 +204,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		internal int ClosureId;
 
+		/// <summary>
+		/// The list of namespaces to only look in when resolving a type or an extension method.
+		/// </summary>
+		internal Dictionary<string, bool> Namespaces;
+
 		#endregion
 
 		#region Fields
@@ -207,6 +222,11 @@ namespace Lens.SyntaxTree.Compiler
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
 		private readonly TypeResolver _TypeResolver;
+
+		/// <summary>
+		/// A helper that resolves extension methods by type and arguments.
+		/// </summary>
+		private readonly ExtensionMethodResolver _ExtensionResolver;
 
 		/// <summary>
 		/// The root of type lookup.

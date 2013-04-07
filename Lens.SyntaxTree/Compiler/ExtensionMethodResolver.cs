@@ -10,22 +10,25 @@ namespace Lens.SyntaxTree.Compiler
 	/// <summary>
 	/// Finds a list of possible extension methods for a given type.
 	/// </summary>
-	public static class ExtensionMethodResolver
+	public class ExtensionMethodResolver
 	{
 		static ExtensionMethodResolver()
 		{
 			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
 		}
 
-		/// <summary>
-		/// List of found extension methods
-		/// </summary>
+		public ExtensionMethodResolver(Dictionary<string, bool> namespaces)
+		{
+			_Namespaces = namespaces;
+		}
+
 		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
+		private Dictionary<string, bool> _Namespaces;
 
 		/// <summary>
 		/// Gets an extension method by given arguments.
 		/// </summary>
-		public static MethodInfo FindExtensionMethod(this Type type, string name, Type[] args)
+		public MethodInfo FindExtensionMethod(Type type, string name, Type[] args )
 		{
 			if (!_Cache.ContainsKey(type))
 				findMethodsForType(type);
@@ -37,21 +40,19 @@ namespace Lens.SyntaxTree.Compiler
 			var result = methods.Where(m => m.Name == name)
 								.Select(mi => new { Method = mi, Distance = GetExtensionDistance(mi, type, args) })
 								.OrderBy(p => p.Distance)
+								.Take(2)
 								.ToArray();
 
 			if (result.Length == 0 || result[0].Distance == int.MaxValue)
 				throw new KeyNotFoundException();
 
-			if (result.Length > 2)
-			{
-				if(result.Skip(1).TakeWhile(i => i.Distance == result[0].Distance).Any())
-					throw new AmbiguousMatchException();
-			}
+			if (result.Length > 1 && result[0].Distance == result[1].Distance)
+				throw new AmbiguousMatchException();
 
 			return result[0].Method;
 		}
 
-		private static void findMethodsForType(Type forType)
+		private void findMethodsForType(Type forType)
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
@@ -60,10 +61,13 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				try
 				{
-					var types = asm.GetTypes();
+					var types = asm.GetExportedTypes();
 					foreach (var type in types)
 					{
 						if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
+							continue;
+
+						if (type.Namespace == null || !_Namespaces.ContainsKey(type.Namespace))
 							continue;
 
 						var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
@@ -94,7 +98,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType);
 			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = GetArgumentsDistance(methodArgs.Skip(1).ToArray(), args);
+			var argsDist = GetArgumentsDistance(methodArgs.Skip(1), args);
 
 			try
 			{
@@ -109,21 +113,29 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Gets total distance between two sets of argument types.
 		/// </summary>
-		public static int GetArgumentsDistance(Type[] src, Type[] dst)
+		public static int GetArgumentsDistance(IEnumerable<Type> src, IEnumerable<Type> dst)
 		{
-			if (src.Length != dst.Length)
-				return int.MaxValue;
+			var srcIt = src.GetEnumerator();
+			var dstIt = dst.GetEnumerator();
 
-			var sum = 0;
-			for (var idx = 0; idx < src.Length; idx++)
+			var totalDist = 0;
+			while (true)
 			{
-				var currDist = dst[idx].DistanceFrom(src[idx]);
-				if (currDist == int.MaxValue)
-					return int.MaxValue;
-				sum += currDist;
-			}
+				var srcOk = srcIt.MoveNext();
+				var dstOk = dstIt.MoveNext();
 
-			return sum;
+				if (srcOk != dstOk)
+					return int.MaxValue;
+
+				if (srcOk == false)
+					return totalDist;
+
+				var dist = dstIt.Current.DistanceFrom(srcIt.Current);
+				if (dist == int.MaxValue)
+					return int.MaxValue;
+
+				totalDist += dist;
+			}
 		}
 	}
 }
