@@ -3,6 +3,9 @@
 open FParsec
 open FParsec.Error
 
+open Lens.SyntaxTree
+open Lens.SyntaxTree.SyntaxTree
+
 /// Set to false when debugging complex parser failures.
 let enabled = false
 
@@ -31,8 +34,15 @@ and private produceErrorMessageList (messages : ErrorMessageList) : string =
     |> Seq.map produceMessage
     |> String.concat "\n"
 
-let produce (message : string) (error : ParserError) (userState : ParserState) : string =
+let private getMessage (message : string) (error : ParserError) (userState : ParserState) : string =
     if enabled then
         let position = error.Position
         sprintf "At line %d, column %d: %s" position.Line position.Column <| produceErrorMessageList error.Messages
     else message
+
+let getException message (error : ParserError) userState =
+    let ex = LensCompilerException(getMessage message error userState)
+    let location = LexemLocation(Line = int error.Position.Line, Offset = int error.Position.Column)
+    let locationEntity = LocationEntity(StartLocation = location, EndLocation = location)
+    ex.BindToLocation locationEntity
+    ex
