@@ -5,5 +5,5 @@ type ParserState = {
     VirtualIndentation : int
 }
     with
-        static member Create() = { RealIndentation = 0
+        static member create() = { RealIndentation = 0
                                    VirtualIndentation = 0 }

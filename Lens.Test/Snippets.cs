@@ -234,7 +234,7 @@ var msg = 1
 try
     var zero = 0
     1 / zero
-catch (DivisionByZeroException ex)
+catch (DivideByZeroException ex)
     msg = 2
 msg
 ";

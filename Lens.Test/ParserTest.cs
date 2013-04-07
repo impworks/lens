@@ -531,6 +531,23 @@ if (true)
 		}
 
 		[Test]
+		public void MultilineLoop()
+		{
+			var src = @"while (a > 0)
+    a
+b";
+			var result = Expr.While(
+				Expr.Greater(
+					Expr.Get("a"),
+					Expr.Int(0)
+				),
+				Expr.Block(Expr.Get("a"))
+			);
+
+			Test(src, result, Expr.Get("b"));
+		}
+
+		[Test]
 		public void SingleCatch()
 		{
 			var src = @"

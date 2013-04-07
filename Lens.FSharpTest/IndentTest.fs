@@ -10,7 +10,7 @@ open Lens.Parser.Indentation
 [<TestFixture>]
 type IndentTest() =
     let testSuccess source parser state =
-        match runParserOnString parser (ParserState.Create()) "source" source with
+        match runParserOnString parser (ParserState.create()) "source" source with
         | Success(_, userState, _) -> Assert.AreEqual(state, userState)
         | other                    -> Assert.Fail <| sprintf "Parse failed: %A" other
 
@@ -32,7 +32,7 @@ type IndentTest() =
     member this.Dedent() =
         let parser = indent .>>. dedent .>>. eof
         let source = "\n    \n"
-        testSuccess source parser <| ParserState.Create()
+        testSuccess source parser <| ParserState.create()
 
     [<Test>]
     member this.SingleIndentDedent() =
@@ -45,13 +45,13 @@ type IndentTest() =
     member this.DoubleDedent() =
         let parser = indent .>>. indent .>>. dedent .>>. dedent .>>. pchar 'x'
         let source = "\n    \n        \nx"
-        testSuccess source parser <| ParserState.Create()
+        testSuccess source parser <| ParserState.create()
 
     [<Test>]
     member this.IndentedBlock() =
-        let block = pchar 'b' .>>. indentedBlockOf (pchar 'x') .>>. pchar 'e' .>>. eof
+        let parser = pchar 'b' .>>. indentedBlockOf (pchar 'x') .>>. pchar 'e' .>>. eof
         let source = "b\n    x\n    x\ne"
-        testSuccess source block <| ParserState.Create()
+        testSuccess source parser <| ParserState.create()
 
     [<Test>]
     member this.TwoBlocks() =
@@ -60,4 +60,4 @@ type IndentTest() =
                      .>>. pchar '1'
                      .>>. eof
         let source = "1\n    2\n        3\n    2\n1"
-        testSuccess source parser <| ParserState.Create()
+        testSuccess source parser <| ParserState.create()

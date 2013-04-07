@@ -5,15 +5,17 @@ open Lens.Parser.FParsecHelpers
 
 let private getRealIndent (stream : CharStream<ParserState>) = Reply stream.UserState.RealIndentation
 let private getVirtualIndent (stream : CharStream<ParserState>) = Reply stream.UserState.VirtualIndentation
-let private setIndent realValue virtualValue (stream : CharStream<ParserState>) =
-    stream.UserState <- { stream.UserState with
-                              RealIndentation = realValue
-                              VirtualIndentation = virtualValue }
-    Reply(())
+let private setIndent realValue virtualValue =
+    updateUserState (fun state -> { state with RealIndentation = realValue
+                                               VirtualIndentation = virtualValue })
 
-let private skipIndent indent =
+let private ensureIndent indent (stream : CharStream<ParserState>) =
+    let realCount = int stream.Column - 1
     let count = indent * 4
-    (skipManyMinMaxSatisfy count count (fun c -> c = ' ')) <!> sprintf "skipIndent %d" indent
+    let toSkip = count - realCount
+    if toSkip < 0
+    then fail "Incorrect indent level" stream
+    else skipManyMinMaxSatisfy toSkip toSkip (fun c -> c = ' ') stream
 
 let private decreaseIndent indent (stream : CharStream<ParserState>) =
     let state = stream.UserState
@@ -25,7 +27,19 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
          else Reply count
     else Reply state.RealIndentation
 
-let private skipNewlines = (many1 skipNewline) >>. preturn(())
+// Skips one or more lines in not FreshNewline state. Skips zero or more lines in FreshNewline state.
+let private skipNewlines (stream : CharStream<ParserState>) =
+    let state = stream.UserState
+    let column = int stream.Column
+    let fresh = state.RealIndentation * 4 = (column - 1)
+    
+    if debug
+    then printfn "Inside skipNewlines with fresh = %A" fresh
+
+    let skipper = if fresh
+                  then many skipNewline
+                  else many1 skipNewline
+    (skipper >>. preturn(())) stream
 
 /// Go to new line if current indentation level is "real" (i.e. real indentation is equals to virtual indentation).
 /// This magic is used for dedent only.
@@ -47,14 +61,14 @@ let nextLine : Parser<unit, ParserState> =
         do! (checkIndent <!> "nextLine > checkIndent")
         let! indent = getRealIndent
         do! skipNewlines
-        do! skipIndent indent
+        do! (ensureIndent indent) <!> sprintf "ensureIndent %d" indent
     } <!> "indented line"
 
 let indent : Parser<unit, ParserState> =
     parse {
         let! indent = getRealIndent
         do! nextLine
-        do! skipIndent 1
+        do! ensureIndent (indent + 1)
         do! setIndent (indent + 1) (indent + 1)
     } <!> "indent level increase"
 
@@ -69,4 +83,4 @@ let dedent : Parser<unit, ParserState> =
 
 /// Parse sequence of blockLineParser, all indented and separated by newline character.
 let indentedBlockOf blockLineParser =
-    indent >>. sepBy1 blockLineParser (attempt nextLine) .>> dedent
+    (indent >>. sepBy1 blockLineParser (attempt nextLine) .>> dedent) <!> "indented block"

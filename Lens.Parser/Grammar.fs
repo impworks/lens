@@ -43,10 +43,13 @@ let valueToList parser = parser >>= (Seq.singleton >> Seq.toList >> preturn)
 
 let space = pchar ' '
 let nextLineOrEof = Indentation.nextLine <|> eof
-let keyword k = pstring k .>>? (choice [skipMany1 space
-                                        notFollowedBy letter]) <!> sprintf "keyword %s" k
+
+let keyword k = (pstring k
+                 .>>? choice [skipMany1 space
+                              notFollowedBy letter]) <!> sprintf "keyword %s" k
                                                    
-let token t = (pstring t .>>? many space) <!> sprintf "token %s" t
+let token t = (pstring t
+               .>>? many space) <!> sprintf "token %s" t
 
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
