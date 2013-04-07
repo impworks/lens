@@ -93,6 +93,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch (NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw new KeyNotFoundException();
+
 				var genType = type.GetGenericTypeDefinition();
 				var genField = genType.GetField(name);
 
@@ -140,6 +143,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch(NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw new KeyNotFoundException();
+
 				var genType = type.GetGenericTypeDefinition();
 				var genPty = genType.GetProperty(name);
 
@@ -197,6 +203,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch (NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw new KeyNotFoundException();
+
 				var genType = type.GetGenericTypeDefinition();
 				var genCtor = ResolveMethodByArgs(
 					genType.GetConstructors(),
@@ -289,6 +298,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch (NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw new KeyNotFoundException();
+
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
 					genType.GetMethods(flags).Where(m => m.Name == name),
@@ -397,6 +409,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch (NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw;
+
 				var genType = type.GetGenericTypeDefinition();
 				var genericMethods = genType.GetMethods().Where(m => !m.IsGenericMethod && m.Name == name);
 
@@ -431,6 +446,9 @@ namespace Lens.SyntaxTree.Compiler
 			}
 			catch (NotSupportedException)
 			{
+				if (!type.IsGenericType)
+					throw;
+
 				var genType = type.GetGenericTypeDefinition();
 				var indexer = resolveIndexer(genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
 				return new MethodWrapper
