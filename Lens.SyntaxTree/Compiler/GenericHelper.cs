@@ -138,6 +138,49 @@ namespace Lens.SyntaxTree.Compiler
 			return type;
 		}
 
+		/// <summary>
+		/// Get interfaces of a possibly generic type.
+		/// </summary>
+		public static Type[] GetInterfaces(Type type)
+		{
+			try
+			{
+				return type.GetInterfaces();
+			}
+			catch (NotSupportedException)
+			{
+				if (type.IsGenericType)
+				{
+					var ifaces = type.GetGenericTypeDefinition().GetInterfaces();
+					for (var idx = 0; idx < ifaces.Length; idx++)
+					{
+						var curr = ifaces[idx];
+						if (curr.IsGenericType)
+							ifaces[idx] = ApplyGenericArguments(curr, type);
+					}
+					return ifaces;
+				}
+				
+				if (type.IsArray)
+				{
+					// replace interfaces of any array with element type
+					var elem = type.GetElementType();
+					var ifaces = typeof (int[]).GetInterfaces();
+					for (var idx = 0; idx < ifaces.Length; idx++)
+					{
+						var curr = ifaces[idx];
+						if (curr.IsGenericType)
+							ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
+					}
+
+					return ifaces;
+				}
+				
+				// just a built-in type : no interfaces
+				return Type.EmptyTypes;
+			}
+		}
+
 		#region Helpers
 
 		private static Type findImplementation(Type desired, Type actual)
@@ -150,7 +193,7 @@ namespace Lens.SyntaxTree.Compiler
 			// is interface
 			if (desired.IsInterface)
 			{
-				var matching = actual.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
+				var matching = GetInterfaces(actual).Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
 				if (matching.Length == 0)
 					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
 				if (matching.Length > 1)

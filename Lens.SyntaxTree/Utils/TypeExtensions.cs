@@ -315,7 +315,7 @@ namespace Lens.SyntaxTree.Utils
 					return InterfaceDistance(varType, new[] {exprType});
 
 				// casting expression to interface takes 1 step
-				var dist = InterfaceDistance(varType, exprType.GetInterfaces());
+				var dist = InterfaceDistance(varType, GenericHelper.GetInterfaces(exprType));
 				if (dist < int.MaxValue)
 					return dist + 1;
 			}
