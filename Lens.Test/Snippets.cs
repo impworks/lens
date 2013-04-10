@@ -895,7 +895,7 @@ found.Name
 record Store
     Value : int
 var data = new [new Store 1; new Store 1; new Store 40]
-data.Sum ()
+data.Sum ((x:Store) -> x.Value)
 ";
 			Test(src, 42);
 		}

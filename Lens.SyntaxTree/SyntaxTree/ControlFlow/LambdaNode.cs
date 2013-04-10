@@ -60,12 +60,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var type = retType.IsNotVoid()
 				? FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes)
 				: FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
-			var ctor = type.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
+			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.CurrentScope.ClosureVariable;
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
-			gen.EmitCreateObject(ctor);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 	}
 }

@@ -60,6 +60,9 @@ namespace Lens.SyntaxTree.Compiler
 			var asms = AppDomain.CurrentDomain.GetAssemblies();
 			foreach (var asm in asms)
 			{
+				if (asm.IsDynamic)
+					continue;
+
 				try
 				{
 					var types = asm.GetExportedTypes();
@@ -88,8 +91,10 @@ namespace Lens.SyntaxTree.Compiler
 						}
 					}
 				}
-				catch
-				{ }
+				catch(Exception ex)
+				{
+					Debug.WriteLine(ex);
+				}
 			}
 
 			_Cache[forType] = dict;

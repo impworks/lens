@@ -88,18 +88,30 @@ namespace Lens.SyntaxTree.Compiler
 		/// Processes a type and replaces any references of generic arguments inside it with actual values.
 		/// </summary>
 		/// <param name="type">Type to process.</param>
-		/// <param name="generic">Type that contains the processed type as a generic parameter.</param>
-		public static Type ApplyGenericArguments(Type type, Type generic, bool throwNotFound = true)
+		/// <param name="source">Type that contains the processed type as a generic parameter.</param>
+		public static Type ApplyGenericArguments(Type type, Type source, bool throwNotFound = true)
 		{
-			if (!generic.IsGenericType)
-				return type;
+			if (source.IsGenericType)
+			{
+				return ApplyGenericArguments(
+					type,
+					source.GetGenericTypeDefinition().GetGenericArguments(),
+					source.GetGenericArguments(),
+					throwNotFound
+				);
+			}
 
-			return ApplyGenericArguments(
-				type,
-				generic.GetGenericTypeDefinition().GetGenericArguments(),
-				generic.GetGenericArguments(),
-				throwNotFound
-			);
+			if (source.IsArray && type.IsGenericType)
+			{
+				return ApplyGenericArguments(
+					type,
+					new[] {type.GetGenericArguments()[0]},
+					new[] {source.GetElementType()},
+					throwNotFound
+				);
+			}
+
+			return type;
 		}
 
 		/// <summary>
