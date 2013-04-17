@@ -18,7 +18,7 @@ let rec messageSeq (list : ErrorMessageList) : ErrorMessage seq =
     | _    -> Seq.concat [Seq.singleton list.Head
                           messageSeq list.Tail]
 
-let rec private produceMessage (indent: int) (expectedWordWritten: bool) (message : ErrorMessage) : bool * string =
+let rec private produceMessage (expectedWordWritten: bool) (message : ErrorMessage) : bool * string =
     let expected = if not expectedWordWritten
                    then "Expected "
                    else "      or "
@@ -27,9 +27,9 @@ let rec private produceMessage (indent: int) (expectedWordWritten: bool) (messag
     let result = 
         match message with
         | NestedError(position, userState, errors)          ->
-            false, sprintf "Nested errors: %s"   <| produceErrorMessageList (indent + 1) errors
+            false, sprintf "Nested errors: %s"   <| produceErrorMessageList errors
         | CompoundError(label, position, userState, errors) ->
-            false, sprintf "Compound errors: %s" <| produceErrorMessageList (indent + 1) errors
+            false, sprintf "Compound errors: %s" <| produceErrorMessageList errors
         | Expected           label -> true, expected + String.Format(CompilerMessages.LexemExpected, label)
         | ExpectedString     str
         | ExpectedStringCI   str   -> true, expected + String.Format(CompilerMessages.StringExpected, str)
@@ -39,12 +39,18 @@ let rec private produceMessage (indent: int) (expectedWordWritten: bool) (messag
         | Message            str   -> false, sprintf "Exceptional message: %s" str
         | OtherErrorMessage  o     -> false, sprintf "Exceptional case: %A" o
         | other                    -> false, sprintf "Unknown parse error: %A" other
-    let indentString = List.replicate indent "    " |> String.concat String.Empty
-    (fst result, indentString + snd result)
+    result
 
-and private produceErrorMessageList (indent: int) (messages : ErrorMessageList) : string =
+and private produceErrorMessageList (messages : ErrorMessageList) : string =
+    // TODO: Filter only not nested errors.
+    // TODO: Dispatch message by token from Expected or ExpectedString.
+    let filter = function
+                 | Expected _
+                 | ExpectedString _
+                 | ExpectedStringCI _ -> true
+
     let msgSeq = messageSeq messages
-    let converter (expected, msg) error = let expected', msg' = produceMessage indent expected error
+    let converter (expected, msg) error = let expected', msg' = produceMessage expected error
                                           (expected || expected', msg + "\n" + msg')
     let state = (false, String.Empty)
     snd <| Seq.fold converter state msgSeq
@@ -52,7 +58,7 @@ and private produceErrorMessageList (indent: int) (messages : ErrorMessageList) 
 let private getMessage (message : string) (error : ParserError) (userState : ParserState) : string =
     if enabled then
         let position = error.Position
-        sprintf "At line %d, column %d: %s" position.Line position.Column <| produceErrorMessageList 0 error.Messages
+        sprintf "At line %d, column %d: %s" position.Line position.Column <| produceErrorMessageList error.Messages
     else message
 
 let getException message (error : ParserError) userState =
