@@ -255,7 +255,7 @@ namespace Lens.SyntaxTree.Compiler
 							IsVirtual = method.IsVirtual,
 							ArgumentTypes = method.GetArgumentTypes(this),
 							GenericArguments = genArgs,
-							ReturnType = method.MethodInfo.
+							ReturnType = method.MethodInfo.ReturnType
 						};
 					}
 
@@ -336,7 +336,7 @@ namespace Lens.SyntaxTree.Compiler
 				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
 				var expectedTypes = genMethod.Item3;
 				Type[] genericValues = null;
-				var retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
+				Type retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
