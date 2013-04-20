@@ -79,6 +79,20 @@ r
 			}
 		}
 
+		[Test]
+		public void RandTest3()
+		{
+			var src = "rand (new [1; 2; 3; 4; 5])";
+			var opts = new LensCompilerOptions { AllowSave = true };
+			var fx = new LensCompiler(opts).Compile(src);
+
+			for (var idx = 0; idx < 100; idx++)
+			{
+				var res = (int)fx();
+				Assert.IsTrue(res >= 1 && res <= 5);
+			}
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

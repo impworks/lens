@@ -235,6 +235,30 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					var method = typeEntity.ResolveMethod(name, argTypes);
 
+					var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
+					if (isGeneric)
+					{
+						var genArgs = GenericHelper.ResolveMethodGenericsByArgs(
+							method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray(),
+							argTypes,
+							method.MethodInfo.GetGenericArguments(),
+							hints
+						);
+
+						return new MethodWrapper
+						{
+							Name = name,
+							Type = type,
+
+							MethodInfo = method.MethodInfo.MakeGenericMethod(genArgs),
+							IsStatic = method.IsStatic,
+							IsVirtual = method.IsVirtual,
+							ArgumentTypes = method.GetArgumentTypes(this),
+							GenericArguments = genArgs,
+							ReturnType = method.MethodInfo.
+						};
+					}
+
 					if (hints != null)
 						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 
@@ -312,7 +336,7 @@ namespace Lens.SyntaxTree.Compiler
 				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
 				var expectedTypes = genMethod.Item3;
 				Type[] genericValues = null;
-				Type retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
+				var retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
