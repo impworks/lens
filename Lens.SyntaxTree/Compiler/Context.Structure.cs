@@ -35,6 +35,14 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Imports a method from a standard library.
+		/// </summary>
+		public void ImportFunctionUnchecked(string name, MethodInfo method)
+		{
+			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+		}
+
+		/// <summary>
 		/// Imports an existing external method with given name.
 		/// </summary>
 		public void ImportFunction(string name, MethodInfo method)
@@ -42,7 +50,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+			ImportFunctionUnchecked(name, method);
 		}
 
 		/// <summary>
