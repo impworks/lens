@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
@@ -47,7 +48,7 @@ namespace Lens
 		/// <summary>
 		/// Registers a method to be used by LENS script.
 		/// </summary>
-		public void RegisterFunction(string name, Delegate method)
+		public void RegisterFunction(string name, MethodInfo method)
 		{
 			m_Context.ImportFunction(name, method);
 		}

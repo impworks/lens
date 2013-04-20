@@ -119,25 +119,15 @@ namespace Lens.SyntaxTree.Stdlib
 		#endregion
 
 		#region Read
-
-		public static int Read()
-		{
-			return Console.Read();
-		}
-
+		
 		public static ConsoleKeyInfo ReadKey()
 		{
 			return Console.ReadKey();
 		}
 
-		public static ConsoleKeyInfo ReadKey(bool flag)
+		public static ConsoleKeyInfo WaitKey()
 		{
-			return Console.ReadKey(flag);
-		}
-
-		public static string ReadLine()
-		{
-			return Console.ReadLine();
+			return Console.ReadKey(true);
 		}
 
 		#endregion

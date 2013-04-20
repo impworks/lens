@@ -13,22 +13,22 @@ namespace Lens.SyntaxTree.Stdlib
 			return m_Random.NextDouble();
 		}
 
-		public static int Random(int max)
+		public static int RandomMax(int max)
 		{
 			return m_Random.Next(max);
 		}
 
-		public static int Random(int min, int max)
+		public static int RandomMinMax(int min, int max)
 		{
 			return m_Random.Next(min, max);
 		}
 
-		public static T Random<T>(IList<T> src)
+		public static T RandomOf<T>(IList<T> src)
 		{
-			return src[Random(src.Count)-1];
+			return src[RandomMax(src.Count)-1];
 		}
 
-		public static T Random<T>(IList<T> src, Func<T, double> weighter)
+		public static T RandomOfWeight<T>(IList<T> src, Func<T, double> weighter)
 		{
 			var rnd = m_Random.NextDouble();
 			var weight = src.Sum(weighter);

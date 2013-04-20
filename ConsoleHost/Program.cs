@@ -32,7 +32,7 @@ namespace ConsoleHost
 				}
 				catch (Exception ex)
 				{
-					printError("An unexpected error has occured!", ex.Message, ConsoleColor.Yellow);
+					printError("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace, ConsoleColor.Yellow);
 				}
 			}
 		}

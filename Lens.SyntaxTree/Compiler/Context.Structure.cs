@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
@@ -36,7 +37,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Imports an existing external method with given name.
 		/// </summary>
-		public void ImportFunction(string name, Delegate method)
+		public void ImportFunction(string name, MethodInfo method)
 		{
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);

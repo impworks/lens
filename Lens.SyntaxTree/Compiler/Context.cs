@@ -77,6 +77,9 @@ namespace Lens.SyntaxTree.Compiler
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(RootMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
+
+			if(Options.LoadStandardLibrary)
+				InitStdlib();
 		}
 
 		public IScript Compile(IEnumerable<NodeBase> nodes)

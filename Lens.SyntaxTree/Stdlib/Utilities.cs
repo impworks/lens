@@ -11,10 +11,10 @@ namespace Lens.SyntaxTree.Stdlib
 			throw new Exception(msg);
 		}
 
-		public static void Times(int t, Action<int> action)
+		public static void TimesIndex(int t, Action<int> action)
 		{
 			for (var idx = 0; idx < t; idx++)
-				action(t);
+				action(idx);
 		}
 
 		public static void Times(int t, Action action)
