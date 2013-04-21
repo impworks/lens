@@ -235,7 +235,6 @@ namespace Lens.SyntaxTree.Compiler
 
 		private MethodWrapper resolveInternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
 		{
-			
 			var typeEntity = _DefinedTypes[type.Name];
 			try
 			{
@@ -253,21 +252,22 @@ namespace Lens.SyntaxTree.Compiler
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
 				if (isGeneric)
 				{
-					var genArgs = GenericHelper.ResolveMethodGenericsByArgs(
-						method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray(),
+					var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
+					var genArgs = method.MethodInfo.GetGenericArguments();
+					var genValues = GenericHelper.ResolveMethodGenericsByArgs(
+						argTypeDefs,
 						argTypes,
-						method.MethodInfo.GetGenericArguments(),
+						genArgs,
 						hints
 					);
 
-					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genArgs);
-					mw.ArgumentTypes = method.GetArgumentTypes(this);
-					mw.GenericArguments = genArgs;
-					mw.ReturnType = method.MethodInfo.ReturnType;
+					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genValues);
+					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genArgs, genValues)).ToArray();
+					mw.GenericArguments = genValues;
+					mw.ReturnType = GenericHelper.ApplyGenericArguments(method.MethodInfo.ReturnType, genArgs, genValues);
 				}
 				else
 				{
-
 					if (hints != null)
 						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 

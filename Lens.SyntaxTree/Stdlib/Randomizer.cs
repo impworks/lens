@@ -25,7 +25,8 @@ namespace Lens.SyntaxTree.Stdlib
 
 		public static T RandomOf<T>(IList<T> src)
 		{
-			return src[RandomMax(src.Count)-1];
+			var max = src.Count - 1;
+			return src[RandomMax(max)];
 		}
 
 		public static T RandomOfWeight<T>(IList<T> src, Func<T, double> weighter)
