@@ -10,7 +10,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
         
-            <Grid Margin="16">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="16" />
@@ -40,7 +40,7 @@
                 
                 <Button Grid.Column="6" Grid.RowSpan="3" Content="Run" Click="Run_OnClick" Padding="16,0" />
             </Grid>
-            <d3:ChartPlotter x:Name="Chart" Grid.Row="1" Margin="16,0,16,16" />
+            <d3:ChartPlotter x:Name="Chart" Grid.Row="1" Margin="0,16,0,0" />
         </Grid>
     </Border>
 </Window>
