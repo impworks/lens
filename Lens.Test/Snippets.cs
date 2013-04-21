@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
-using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -348,24 +346,11 @@ result";
 		[Test]
 		public void Algebraic1()
 		{
-//			var src = @"
-//type TestType
-//    Value of int
-//
-//(Value 1).Tag";
+			var src = @"
+type TestType
+    Value of int
 
-			var src = new NodeBase[]
-			{
-				Expr.Type(
-					"TestType",
-					Expr.Label("Value", "int")
-				),
-
-				Expr.GetMember(
-					Expr.Invoke("Value", Expr.Int(1)),
-					"Tag"
-				)
-			};
+(Value 1).Tag";
 
 			Test(src, 1);
 		}
@@ -373,30 +358,14 @@ result";
 		[Test]
 		public void Algebraic2()
 		{
-//			var src = @"
-//type TestType
-//    Small of int
-//    Large of int
-//
-//var a = Small 1
-//var b = Large 100
-//a.Tag + b.Tag";
+			var src = @"
+type TestType
+    Small of int
+    Large of int
 
-			var src = new NodeBase[]
-			{
-				Expr.Type(
-					"TestType",
-					Expr.Label("Small", "int"),
-					Expr.Label("Large", "int")
-				),
-
-				Expr.Var("a", Expr.Invoke("Small", Expr.Int(1))),
-				Expr.Var("b", Expr.Invoke("Large", Expr.Int(100))),
-				Expr.Add(
-					Expr.GetMember(Expr.Get("a"), "Tag"),
-					Expr.GetMember(Expr.Get("b"), "Tag")
-				)
-			};
+var a = Small 1
+var b = Large 100
+a.Tag + b.Tag";
 
 			Test(src, 101);
 		}
@@ -404,55 +373,19 @@ result";
 		[Test]
 		public void Algebraic3()
 		{
-//			var src = @"
-//type TestType
-//    Small of int
-//    Large of int
-//
-//fun part of TestType x:int ->
-//    if (x > 100)
-//        (Large x) as TestType
-//    else
-//        Small x
-//
-//var a = part 10
-//new [ a is TestType; a is Small; a is Large ]";
+			var src = @"
+type TestType
+    Small of int
+    Large of int
 
-			var src = new NodeBase[]
-			{
-				Expr.Type(
-					"TestType",
-					Expr.Label("Small", "int"),
-					Expr.Label("Large", "int")
-				),
-				
-				Expr.Fun(
-					"part",
-					"TestType",
-					new [] { Expr.Arg("x", "int") },
-					Expr.Block(
-						Expr.If(
-							Expr.Greater(Expr.Get("x"), Expr.Int(100)),
-							Expr.Block(
-								Expr.Cast(
-									Expr.Invoke("Large", Expr.Get("x")),
-									"TestType"
-								)
-							),
-							Expr.Block(
-								Expr.Invoke("Small", Expr.Get("x"))
-							)
-						)
-					)
-				),
-				
-				Expr.Var("a", Expr.Invoke("part", Expr.Int(10))),
-				Expr.Array(
-					Expr.Is(Expr.Get("a"), "TestType"),
-					Expr.Is(Expr.Get("a"), "Small"),
-					Expr.Is(Expr.Get("a"), "Large")
-				)
-			};
+fun part of TestType x:int ->
+    if (x > 100)
+        (Large x) as TestType
+    else
+        Small x
+
+var a = part 10
+new [ a is TestType; a is Small; a is Large ]";
 
 			Test(src, new [] { true, true, false });
 		}
@@ -460,44 +393,16 @@ result";
 		[Test]
 		public void Algebraic4()
 		{
-//			var src = @"
-//type Test
-//    Value1
-//    Value2 of Test
-//    Value3 of Tuple<Test, string>
-//
-//let v1 = Value1
-//let v2 = Value2 v1
-//let v3 = Value3 new(v2; ""hello"")
-//new [v1 is Test; v2 is Test; v3 is Test]";
+			var src = @"
+type Test
+    Value1
+    Value2 of Test
+    Value3 of Tuple<Test, string>
 
-			var src = new NodeBase[]
-			{
-				Expr.Type(
-					"Test",
-					Expr.Label("Value1"),
-					Expr.Label("Value2", "Test"),
-					Expr.Label("Value3", "Tuple<Test, string>")
-				),
-
-				Expr.Let("v1", Expr.Get("Value1")),
-				Expr.Let("v2", Expr.Invoke("Value2", Expr.Get("v1"))),
-				Expr.Let(
-					"v3",
-					Expr.Invoke(
-						"Value3",
-						Expr.Tuple(
-							Expr.Cast(Expr.Get("v2"), "Test"),
-							Expr.Str("hello")
-						)
-					)
-				),
-				Expr.Array(
-					Expr.Is(Expr.Get("v1"), "Test"),
-					Expr.Is(Expr.Get("v2"), "Test"),
-					Expr.Is(Expr.Get("v3"), "Test")
-				)
-			};
+let v1 = Value1
+let v2 = Value2 v1
+let v3 = Value3 (new(v2 as Test; ""hello""))
+new [v1 is Test; v2 is Test; v3 is Test]";
 
 			Test(src, new[] {true, true, true});
 		}
@@ -505,32 +410,14 @@ result";
 		[Test]
 		public void Records1()
 		{
-//			var src = @"
-//record Holder
-//    A : int
-//    B : int
-//
-//var a = new Holder 2 3
-//a.A * a.B
-//";
+			var src = @"
+record Holder
+    A : int
+    B : int
 
-			var src = new NodeBase[]
-			{
-				Expr.Record(
-					"Holder",
-					Expr.Field("A", "int"),
-					Expr.Field("B", "int")
-				),
-
-				Expr.Var(
-					"a",
-					Expr.New("Holder", Expr.Int(2), Expr.Int(3))
-				),
-				Expr.Mult(
-					Expr.GetMember(Expr.Get("a"), "A"),
-					Expr.GetMember(Expr.Get("a"), "B")
-				)
-			};
+var a = new Holder 2 3
+a.A * a.B
+";
 
 			Test(src, 6);
 		}
@@ -538,29 +425,17 @@ result";
 		[Test]
 		public void Records2()
 		{
-//			var src = @"
-//record First
-//    A : int
-//
-//record Second
-//    B : int
-//
-//var a = new First 2
-//var b = new Second 3
-//a.A * b.B
-//";
-			var src = new NodeBase[]
-			{
-				Expr.Record("First", Expr.Field("A", "int")),
-				Expr.Record("Second", Expr.Field("B", "int")),
+			var src = @"
+record First
+    A : int
 
-				Expr.Var("a", Expr.New("First", Expr.Int(2))),
-				Expr.Var("b", Expr.New("Second", Expr.Int(3))),
-				Expr.Mult(
-					Expr.GetMember(Expr.Get("a"), "A"),
-					Expr.GetMember(Expr.Get("b"), "B")
-				)
-			};
+record Second
+    B : int
+
+var a = new First 2
+var b = new Second 3
+a.A * b.B
+";
 
 			Test(src, 6);
 		}
@@ -568,20 +443,10 @@ result";
 		[Test]
 		public void RefFunction1()
 		{
-//			var src = @"
-//var x = 0
-//int::TryParse ""100"" ref x
-//x";
-			var src = new NodeBase[]
-			{
-				Expr.Var("x", Expr.Int(0)),
-				Expr.Invoke(
-					"int", "TryParse",
-					Expr.Str("100"),
-					Expr.Ref(Expr.Get("x"))
-				),
-				Expr.Get("x")
-			};
+			var src = @"
+var x = 0
+int::TryParse ""100"" ref x
+x";
 
 			Test(src, 100);
 		}
@@ -589,28 +454,13 @@ result";
 		[Test]
 		public void RefFunction2()
 		{
-//			var src = @"
-//fun test a:int x:ref int -> x = a * 2
-//var result = 0
-//test 21 (ref result)
-//result
-//";
-			var src = new NodeBase[]
-			{
-				Expr.Fun(
-					"test",
-					new [] { Expr.Arg("a", "int"), Expr.Arg("x", "int", true) },
-					Expr.Block(
-						Expr.Set(
-							"x",
-							Expr.Mult(Expr.Get("a"), Expr.Int(2))
-						)
-					)
-				),
-				Expr.Var("result", Expr.Int(0)),
-				Expr.Invoke("test", Expr.Int(21), Expr.Ref(Expr.Get("result"))),
-				Expr.Get("result")
-			};
+			var src = @"
+fun test a:int x:ref int -> x = a * 2
+
+var result = 0
+test 21 (ref result)
+result
+";
 
 			Test(src, 42);
 		}
@@ -630,29 +480,13 @@ new [ a.HasValue; b.HasValue ]
 		[Test]
 		public void ImplicitExtensionMethod()
 		{
-//			var src = @"
-//fun add of int a:int b:int -> a + b
-//
-//let x = add 1 2
-//let y = 1.add 2
-//x == y
-//";
-			var src = new NodeBase[]
-			{
-				Expr.Fun(
-					"add",
-					"int",
-					new [] { Expr.Arg("a", "int"), Expr.Arg("b", "int") },
-					Expr.Add(
-						Expr.Get("a"),
-						Expr.Get("b")
-					)
-				),
+			var src = @"
+fun add of int a:int b:int -> a + b
 
-				Expr.Let("x", Expr.Invoke("add", Expr.Int(1), Expr.Int(2))),
-				Expr.Let("y", Expr.Invoke( Expr.Int(1), "add", Expr.Int(2))),
-				Expr.Equal(Expr.Get("x"), Expr.Get("y"))
-			};
+let x = add 1 2
+let y = 1.add 2
+x == y
+";
 
 			Test(src, true);
 		}
@@ -672,69 +506,24 @@ new [ a.HasValue; b.HasValue ]
 		[Test]
 		public void CustomIf()
 		{
-//			var src = @"
-//type Clauses
-//    Else
-//fun If x:bool t:Action s:Else f:Action ->
-//    let tAction = ->
-//        t ()
-//        true
-//    let fAction = ->
-//        f ()
-//        false
-//    x && tAction()
-//    x || fAction()
-//var res = string::Empty
-//If (1 > 2) (-> res = ""a"") Else (-> res = ""b"")
-//res
-//";
-			var src = new NodeBase[]
-			{
-				Expr.Type("Clauses", Expr.Label("Else")),
-				Expr.Fun(
-					"If",
-					new [] { Expr.Arg("x", "bool"), Expr.Arg("t", "Action"), Expr.Arg("s", "Else"), Expr.Arg("f", "Action")},
-					Expr.Let(
-						"tAction",
-						Expr.Lambda(
-							Expr.Invoke(Expr.Get("t")),
-							Expr.True()
-						)
-					),
-					Expr.Let(
-						"fAction",
-						Expr.Lambda(
-							Expr.Invoke(Expr.Get("f")),
-							Expr.False()
-						)
-					),
-					Expr.And(
-						Expr.Get("x"),
-						Expr.Invoke("tAction")
-					),
-					Expr.And(
-						Expr.Not(Expr.Get("x")),
-						Expr.Invoke("fAction")
-					),
-					Expr.Unit()
-				),
-				Expr.Var("res", Expr.Str()),
-				Expr.Invoke(
-					"If",
-					Expr.Greater(
-						Expr.Int(1),
-						Expr.Int(2)
-					),
-					Expr.Lambda(
-						Expr.Set("res", Expr.Str("a"))
-					),
-					Expr.Get("Else"),
-					Expr.Lambda(
-						Expr.Set("res", Expr.Str("b"))
-					)
-				),
-				Expr.Get("res")
-			};
+			var src = @"
+type Clauses
+    Else
+
+fun If of bool x:bool t:Action s:Else f:Action ->
+    let tAction = ->
+        t ()
+        true
+    let fAction = ->
+        f ()
+        false
+    x && tAction()
+    x || fAction()
+
+var res = string::Empty
+If (1 > 2) (-> res = ""a"") Else (-> res = ""b"")
+res
+";
 
 			Test(src, "b");
 		}
@@ -742,64 +531,25 @@ new [ a.HasValue; b.HasValue ]
 		[Test]
 		public void CustomWhile()
 		{
-//			var src = @"
-//fun While cond:Func<bool> body:Action ->
-//    var act = null as Action
-//    act = ->
-//        if(cond ())
-//            body ()
-//            act ()
-//    act ()
-//
-//var result = new List<int> ()
-//var idx = 0
-//While
-//    <| -> idx < 10
-//    <| ->
-//        result.Add idx
-//        idx = idx + 1
-//
-//result.Count
-//";
+			var src = @"
+fun While cond:Func<bool> body:Action ->
+    var act = null as Action
+    act = ->
+        if(cond ())
+            body ()
+            act ()
+    act ()
 
-			var src = new NodeBase[]
-			{
-				Expr.Fun(
-					"While",
-					new [] { Expr.Arg("cond", "Func<bool>"), Expr.Arg("body", "Action") },
-					Expr.Var("act", Expr.Cast(Expr.Null(), "Action")),
-					Expr.Set(
-						"act",
-						Expr.Lambda(
-							Expr.If(
-								Expr.Invoke("cond"),
-								Expr.Block(
-									Expr.Invoke("body"),
-									Expr.Invoke("act")
-								)
-							)
-						)
-					),
-					Expr.Invoke("act")
-				),
+var result = new List<int> ()
+var idx = 0
+While 
+    <| -> idx < 10
+    <| ->
+        result.Add idx
+        idx = idx + 1
 
-				Expr.Var("result", Expr.New("List<int>")),
-				Expr.Var("idx", Expr.Int(0)),
-				Expr.Invoke(
-					"While",
-					Expr.Lambda(
-						Expr.Less(Expr.Get("idx"), Expr.Int(10))
-					),
-					Expr.Lambda(
-						Expr.Invoke(Expr.Get("result"), "Add", Expr.Get("idx")),
-						Expr.Set(
-							"idx",
-							Expr.Add(Expr.Get("idx"), Expr.Int(1))
-						)
-					)
-				),
-				Expr.GetMember(Expr.Get("result"), "Count")
-			};
+result.Count
+";
 
 			Test(src, 10);
 		}
@@ -810,6 +560,7 @@ new [ a.HasValue; b.HasValue ]
 			var src = @"
 record MyRecord
     Value : int
+
 var r1 = new MyRecord 1
 var r2 = new MyRecord 2
 var res = new (r1; r2)
@@ -825,6 +576,7 @@ res.Item1.Value + res.Item2.Value
 			var src = @"
 record MyRecord
     Value : int
+
 var list = new [[new MyRecord 1; new MyRecord 2; new MyRecord 3]]
 list.Count
 ";
@@ -837,6 +589,7 @@ list.Count
 			var src = @"
 record MyRecord
     Value : int
+
 var list = new [[new MyRecord 1; new MyRecord 2; new MyRecord 3]]
 list[1].Value + list[2].Value
 ";
@@ -850,6 +603,7 @@ list[1].Value + list[2].Value
 record MyRecord
     Integer : int
     Stringy : string
+
 var r1 = new MyRecord 4 ""lol""
 var r2 = new MyRecord (2 + 2) (""l"" + ""ol"")
 r1 == r2
@@ -864,6 +618,7 @@ r1 == r2
 			var src = @"
 type MyType
     Test of string
+
 var r1 = Test ""hi""
 var r2 = Test (""HI"".ToLower ())
 r1 == r2
@@ -879,10 +634,12 @@ r1 == r2
 record Store
     Name : string
     Value : int
+
 var found = new [new Store ""a"" 1; new Store ""b"" 2; new Store ""c"" 3]
     |> Where ((x:Store) -> x.Value < 3)
     |> OrderBy ((x:Store) -> x.Value)
     |> First ()
+
 found.Name
 ";
 			Test(src, "b");
@@ -894,6 +651,7 @@ found.Name
 			var src = @"
 record Store
     Value : int
+
 var data = new [new Store 1; new Store 1; new Store 40]
 data.Sum ((x:Store) -> x.Value)
 ";

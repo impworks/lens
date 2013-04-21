@@ -253,18 +253,18 @@ namespace Lens.SyntaxTree.Compiler
 				if (isGeneric)
 				{
 					var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
-					var genArgs = method.MethodInfo.GetGenericArguments();
-					var genValues = GenericHelper.ResolveMethodGenericsByArgs(
+					var genericDefs = method.MethodInfo.GetGenericArguments();
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(
 						argTypeDefs,
 						argTypes,
-						genArgs,
+						genericDefs,
 						hints
 					);
 
-					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genValues);
-					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genArgs, genValues)).ToArray();
-					mw.GenericArguments = genValues;
-					mw.ReturnType = GenericHelper.ApplyGenericArguments(method.MethodInfo.ReturnType, genArgs, genValues);
+					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genericValues);
+					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
+					mw.GenericArguments = genericValues;
+					mw.ReturnType = GenericHelper.ApplyGenericArguments(method.MethodInfo.ReturnType, genericDefs, genericValues);
 				}
 				else
 				{
@@ -409,12 +409,17 @@ namespace Lens.SyntaxTree.Compiler
 				var extMethodArgs = argTypes.ToList();
 				extMethodArgs.Insert(0, type);
 
-				var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, extMethodArgs.ToArray(), genericDefs, hints);
+				var genericValues = GenericHelper.ResolveMethodGenericsByArgs(
+					expectedTypes,
+					extMethodArgs.ToArray(),
+					genericDefs,
+					hints
+				);
 
 				info.GenericArguments = genericValues;
 				info.MethodInfo = info.MethodInfo.MakeGenericMethod(genericValues);
-				info.ReturnType = GenericHelper.ApplyGenericArguments(info.ReturnType, type);
-				info.ArgumentTypes = expectedTypes.Select(t => GenericHelper.ApplyGenericArguments(t, type)).ToArray();
+				info.ReturnType = GenericHelper.ApplyGenericArguments(info.ReturnType, genericDefs, genericValues);
+				info.ArgumentTypes = expectedTypes.Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
 			}
 			else if (hints != null)
 			{
