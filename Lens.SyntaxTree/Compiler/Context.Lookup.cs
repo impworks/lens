@@ -228,59 +228,65 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
-			if (type is TypeBuilder)
+			return type is TypeBuilder
+				       ? resolveInternalMethod(type, name, argTypes, hints)
+				       : resolveExternalMethod(type, name, argTypes, hints);
+		}
+
+		private MethodWrapper resolveInternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
+		{
+			
+			var typeEntity = _DefinedTypes[type.Name];
+			try
 			{
-				var typeEntity = _DefinedTypes[type.Name];
-				try
+				var method = typeEntity.ResolveMethod(name, argTypes);
+
+				var mw = new MethodWrapper
 				{
-					var method = typeEntity.ResolveMethod(name, argTypes);
+					Name = name,
+					Type = type,
 
-					var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
-					if (isGeneric)
-					{
-						var genArgs = GenericHelper.ResolveMethodGenericsByArgs(
-							method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray(),
-							argTypes,
-							method.MethodInfo.GetGenericArguments(),
-							hints
-						);
+					IsStatic = method.IsStatic,
+					IsVirtual = method.IsVirtual
+				};
 
-						return new MethodWrapper
-						{
-							Name = name,
-							Type = type,
+				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
+				if (isGeneric)
+				{
+					var genArgs = GenericHelper.ResolveMethodGenericsByArgs(
+						method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray(),
+						argTypes,
+						method.MethodInfo.GetGenericArguments(),
+						hints
+					);
 
-							MethodInfo = method.MethodInfo.MakeGenericMethod(genArgs),
-							IsStatic = method.IsStatic,
-							IsVirtual = method.IsVirtual,
-							ArgumentTypes = method.GetArgumentTypes(this),
-							GenericArguments = genArgs,
-							ReturnType = method.MethodInfo.ReturnType
-						};
-					}
+					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genArgs);
+					mw.ArgumentTypes = method.GetArgumentTypes(this);
+					mw.GenericArguments = genArgs;
+					mw.ReturnType = method.MethodInfo.ReturnType;
+				}
+				else
+				{
 
 					if (hints != null)
 						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 
-					return new MethodWrapper
-					{
-						Name = name,
-						Type = type,
+					mw.MethodInfo = method.MethodInfo;
+					mw.ArgumentTypes = method.GetArgumentTypes(this);
+					mw.ReturnType = method.ReturnType;
+				}
 
-						MethodInfo = method.MethodInfo,
-						IsStatic = method.IsStatic,
-						IsVirtual = method.IsVirtual,
-						ArgumentTypes = method.GetArgumentTypes(this),
-						GenericArguments = null,
-						ReturnType = method.ReturnType
-					};
-				}
-				catch (KeyNotFoundException)
-				{
-					return ResolveMethod(type.BaseType, name, argTypes, hints);
-				}
+				return mw;
 			}
+			catch (KeyNotFoundException)
+			{
+				return ResolveMethod(type.BaseType, name, argTypes, hints);
+			}
+		}
 
+		private MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
+		{
+			var mw = new MethodWrapper { Name = name, Type = type };
 			var flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
 			try
@@ -293,32 +299,27 @@ namespace Lens.SyntaxTree.Compiler
 
 				var mInfo = method.Item1;
 				var expectedTypes = method.Item3;
-				Type[] genericValues = null;
 
 				if (mInfo.IsGenericMethod)
 				{
 					var genericDefs = mInfo.GetGenericArguments();
-					genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
+					mw.GenericArguments = genericValues;
 				}
 				else if (hints != null)
 				{
 					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 				}
 
-				return new MethodWrapper
-				{
-					Name = name,
-					Type = type,
+				mw.MethodInfo = mInfo;
+				mw.IsStatic = mInfo.IsStatic;
+				mw.IsVirtual = mInfo.IsVirtual;
+				mw.ArgumentTypes = expectedTypes;
+				mw.ReturnType = mInfo.ReturnType;
 
-					MethodInfo = mInfo,
-					IsStatic = mInfo.IsStatic,
-					IsVirtual = mInfo.IsVirtual,
-					ArgumentTypes = expectedTypes,
-					GenericArguments = genericValues,
-					ReturnType = mInfo.ReturnType
-				};
+				return mw;
 			}
 			catch (NotSupportedException)
 			{
@@ -373,7 +374,6 @@ namespace Lens.SyntaxTree.Compiler
 				};
 			}
 		}
-
 
 		/// <summary>
 		/// Resolves a method within the type, assuming it's the only one with such name.
