@@ -254,12 +254,7 @@ namespace Lens.SyntaxTree.Compiler
 				{
 					var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
 					var genericDefs = method.MethodInfo.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(
-						argTypeDefs,
-						argTypes,
-						genericDefs,
-						hints
-					);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints);
 
 					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genericValues);
 					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
@@ -336,43 +331,36 @@ namespace Lens.SyntaxTree.Compiler
 				var mInfoOriginal = genMethod.Item1;
 				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
 				var expectedTypes = genMethod.Item3;
-				Type[] genericValues = null;
-				Type retType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
 					var genericDefs = mInfoOriginal.GetGenericArguments();
-					genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 
-					// setting generic argument values unresolved by containing type to values of current method
+					var totalGenericDefs = genericDefs.Union(genType.GetGenericTypeDefinition().GetGenericArguments()).ToArray();
+					var totalGenericValues = genericValues.Union(type.GetGenericArguments()).ToArray();
 
-					if (retType.IsGenericParameter)
-						retType = genericValues[Array.IndexOf(genericDefs, retType)];
-
-					for (var idx = 0; idx < expectedTypes.Length; idx++)
-						if (expectedTypes[idx].IsGenericParameter)
-							expectedTypes[idx] = genericValues[Array.IndexOf(genericDefs, expectedTypes[idx])];
+					mw.GenericArguments = genericValues;
+					mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, totalGenericDefs, totalGenericValues);
+					mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, totalGenericDefs, totalGenericValues)).ToArray();
 				}
-				else if (hints != null)
+				else 
 				{
-					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+					if (hints != null)
+						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+
+					mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray();
+					mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
 				}
 
-				return new MethodWrapper
-				{
-					Name = name,
-					Type = type,
-
-					MethodInfo = mInfo,
-					IsStatic = mInfoOriginal.IsStatic,
-					IsVirtual = mInfoOriginal.IsVirtual,
-					ArgumentTypes = expectedTypes,
-					GenericArguments = genericValues,
-					ReturnType = retType
-				};
+				mw.MethodInfo = mInfo;
+				mw.IsStatic = mInfoOriginal.IsStatic;
+				mw.IsVirtual = mInfoOriginal.IsVirtual;
 			}
+
+			return mw;
 		}
 
 		/// <summary>
