@@ -279,6 +279,14 @@ namespace Lens.Test
 			TestCommonType<object>(typeof(IEnumerable<int>), typeof(IEnumerable<float>));
 		}
 
+		[Test]
+		public void TestInterfaceInheritance()
+		{
+			var from = typeof (IOrderedEnumerable<int>);
+			var to = typeof (IEnumerable<>);
+			Assert.IsTrue(to.DistanceFrom(from) < int.MaxValue);
+		}
+
 		/// <summary>
 		/// Checks if the <see cref="expected"/> value are equal to the <see cref="TypeExtensions.DistanceFrom"/> call  result.
 		/// </summary>

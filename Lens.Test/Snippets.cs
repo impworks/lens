@@ -637,7 +637,7 @@ record Store
 
 var found = new [new Store ""a"" 1; new Store ""b"" 2; new Store ""c"" 3]
     |> Where ((x:Store) -> x.Value < 3)
-    |> OrderBy ((x:Store) -> x.Value)
+    |> OrderByDescending ((x:Store) -> x.Value)
     |> First ()
 
 found.Name

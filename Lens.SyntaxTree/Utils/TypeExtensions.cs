@@ -312,7 +312,7 @@ namespace Lens.SyntaxTree.Utils
 			if (varType.IsInterface)
 			{
 				if (exprType.IsInterface)
-					return InterfaceDistance(varType, new[] {exprType});
+					return InterfaceDistance(varType, new[] { exprType }.Union(GenericHelper.GetInterfaces(exprType)));
 
 				// casting expression to interface takes 1 step
 				var dist = InterfaceDistance(varType, GenericHelper.GetInterfaces(exprType));
@@ -347,7 +347,7 @@ namespace Lens.SyntaxTree.Utils
 			return int.MaxValue;
 		}
 
-		private static int InterfaceDistance(Type interfaceType, Type[] ifaces, bool exactly = false)
+		private static int InterfaceDistance(Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
 		{
 			var min = int.MaxValue;
 			foreach (var iface in ifaces)
