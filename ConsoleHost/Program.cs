@@ -185,7 +185,9 @@ namespace ConsoleHost
 				return string.Format("[ {0} ]", string.Join("; ", list));
 			}
 
-			return obj.ToString(CultureInfo.InvariantCulture);
+			return obj is double || obj is float
+				? obj.ToString(CultureInfo.InvariantCulture)
+				: obj.ToString();
 		}
 
 		static int getIdent(string line)
