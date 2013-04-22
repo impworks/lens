@@ -327,6 +327,9 @@
   <data name="TupleTooManyArgs" xml:space="preserve">
     <value>Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead.</value>
   </data>
+  <data name="TypeAbstract" xml:space="preserve">
+    <value>Cannot create an instance of type '{0}' because it is abstract!</value>
+  </data>
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
     <value>Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
   </data>

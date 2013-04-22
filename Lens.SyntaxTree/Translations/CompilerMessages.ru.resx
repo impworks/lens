@@ -327,6 +327,9 @@
   <data name="TupleTooManyArgs" xml:space="preserve">
     <value>Кортеж не может содержать больше 8 объектов! Воспользуйтесь структурой или вложенным кортежом.</value>
   </data>
+  <data name="TypeAbstract" xml:space="preserve">
+    <value>Невозможно создать экземпляр абстрактного типа '{0}'!</value>
+  </data>
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
     <value>Невозможно применить обобщенные параметры к '{0}.{1}', потому что это не метод!</value>
   </data>
