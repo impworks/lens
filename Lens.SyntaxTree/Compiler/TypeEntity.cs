@@ -313,8 +313,13 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
 				NodeBase expr;
-				if (fieldType.IsValueType)
+				if (fieldType.IsIntegerType())
 					expr = Expr.GetMember(Expr.This(), f.Name);
+				else if (fieldType.IsValueType)
+					expr = Expr.Invoke(
+						Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
+						"GetHashCode"
+					);
 				else
 					expr = Expr.If(
 						Expr.NotEqual(
