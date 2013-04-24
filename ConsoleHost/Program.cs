@@ -116,11 +116,19 @@ namespace ConsoleHost
 						if (line.StartsWith("#load"))
 						{
 							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
-							using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
-							using(var sr = new StreamReader(fs))
+							try
 							{
-								input = sr.ReadToEnd();
-								return true;
+								using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
+								using (var sr = new StreamReader(fs))
+								{
+									input = sr.ReadToEnd();
+									return true;
+								}
+							}
+							catch
+							{
+								printHint(string.Format("File '{0}' could not be loaded!", param));
+								continue;
 							}
 						}
 
