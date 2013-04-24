@@ -38,11 +38,15 @@ namespace Lens.SyntaxTree.Utils
 				typeof (float),
 				typeof (double)
 			};
+
+			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
 		}
 
 		public static Type[] SignedIntegerTypes { get; private set; }
 		public static Type[] UnsignedIntegerTypes { get; private set; }
 		public static Type[] FloatTypes { get; private set; }
+
+		private static Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
 
 		/// <summary>
 		/// Checks if a type is a <see cref="Nullable{T}"/>.
@@ -125,7 +129,12 @@ namespace Lens.SyntaxTree.Utils
 		/// <returns></returns>
 		public static bool IsExtendablyAssignableFrom(this Type varType, Type exprType, bool exactly = false)
 		{
-			return varType.DistanceFrom(exprType, exactly) < int.MaxValue;
+			var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
+
+			if (!m_DistanceCache.ContainsKey(key))
+				m_DistanceCache.Add(key, varType.DistanceFrom(exprType, exactly));
+
+			return m_DistanceCache[key] < int.MaxValue;
 		}
 
 		/// <summary>
