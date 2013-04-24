@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -109,6 +110,17 @@ namespace ConsoleHost
 								timer = false;
 								printHint("Timer disabled.");
 								continue;
+							}
+						}
+
+						if (line.StartsWith("#load"))
+						{
+							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
+							using(var sr = new StreamReader(fs))
+							{
+								input = sr.ReadToEnd();
+								return true;
 							}
 						}
 
