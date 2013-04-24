@@ -129,12 +129,7 @@ namespace Lens.SyntaxTree.Utils
 		/// <returns></returns>
 		public static bool IsExtendablyAssignableFrom(this Type varType, Type exprType, bool exactly = false)
 		{
-			var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
-
-			if (!m_DistanceCache.ContainsKey(key))
-				m_DistanceCache.Add(key, varType.DistanceFrom(exprType, exactly));
-
-			return m_DistanceCache[key] < int.MaxValue;
+			return varType.DistanceFrom(exprType, exactly) < int.MaxValue;
 		}
 
 		/// <summary>
@@ -287,9 +282,21 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
-		/// Gets assignment type distance.
+		/// Gets distance between two types.
+		/// This method is memoized.
 		/// </summary>
 		public static int DistanceFrom(this Type varType, Type exprType, bool exactly = false)
+		{
+			var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
+
+			if (!m_DistanceCache.ContainsKey(key))
+				m_DistanceCache.Add(key, distanceFrom(varType, exprType, exactly));
+
+			return m_DistanceCache[key];
+		}
+
+		
+		private static int distanceFrom(Type varType, Type exprType, bool exactly = false)
 		{
 			if (varType == exprType)
 				return 0;
