@@ -82,7 +82,6 @@ namespace Lens
 			var x = Compile(nodes);
 			Console.WriteLine("Compiling: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
 
-			Console.WriteLine("Interface resolution: {0:0.00} ms", GenericHelper.InfTest.TotalMilliseconds);
 			return x;
 		}
 

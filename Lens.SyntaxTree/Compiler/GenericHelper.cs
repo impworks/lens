@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Translations;
 
@@ -9,6 +10,8 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public static class GenericHelper
 	{
+		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
+
 		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
 		{
 			var genericValues = new Type[genericDefs.Length];
@@ -150,14 +153,14 @@ namespace Lens.SyntaxTree.Compiler
 			return type;
 		}
 
-		public static TimeSpan InfTest = TimeSpan.Zero;
-
 		/// <summary>
 		/// Get interfaces of a possibly generic type.
 		/// </summary>
 		public static Type[] GetInterfaces(Type type)
 		{
-			var t = DateTime.Now;
+			if (m_InterfaceCache.ContainsKey(type))
+				return m_InterfaceCache[type];
+
 			Type[] ifaces;
 			try
 			{
@@ -195,7 +198,7 @@ namespace Lens.SyntaxTree.Compiler
 					ifaces = Type.EmptyTypes;
 			}
 
-			InfTest += (DateTime.Now - t);
+			m_InterfaceCache.Add(type, ifaces);
 			return ifaces;
 		}
 
