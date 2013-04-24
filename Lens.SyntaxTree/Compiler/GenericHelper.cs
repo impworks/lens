@@ -150,47 +150,53 @@ namespace Lens.SyntaxTree.Compiler
 			return type;
 		}
 
+		public static TimeSpan InfTest = TimeSpan.Zero;
+
 		/// <summary>
 		/// Get interfaces of a possibly generic type.
 		/// </summary>
 		public static Type[] GetInterfaces(Type type)
 		{
+			var t = DateTime.Now;
+			Type[] ifaces;
 			try
 			{
-				return type.GetInterfaces();
+				ifaces = type.GetInterfaces();
 			}
 			catch (NotSupportedException)
 			{
 				if (type.IsGenericType)
 				{
-					var ifaces = type.GetGenericTypeDefinition().GetInterfaces();
+					ifaces = type.GetGenericTypeDefinition().GetInterfaces();
 					for (var idx = 0; idx < ifaces.Length; idx++)
 					{
 						var curr = ifaces[idx];
 						if (curr.IsGenericType)
 							ifaces[idx] = ApplyGenericArguments(curr, type);
 					}
-					return ifaces;
+					
 				}
 				
-				if (type.IsArray)
+				else if (type.IsArray)
 				{
 					// replace interfaces of any array with element type
 					var elem = type.GetElementType();
-					var ifaces = typeof (int[]).GetInterfaces();
+					ifaces = typeof (int[]).GetInterfaces();
 					for (var idx = 0; idx < ifaces.Length; idx++)
 					{
 						var curr = ifaces[idx];
 						if (curr.IsGenericType)
 							ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
 					}
-
-					return ifaces;
 				}
 				
 				// just a built-in type : no interfaces
-				return Type.EmptyTypes;
+				else
+					ifaces = Type.EmptyTypes;
 			}
+
+			InfTest += (DateTime.Now - t);
+			return ifaces;
 		}
 
 		#region Helpers
