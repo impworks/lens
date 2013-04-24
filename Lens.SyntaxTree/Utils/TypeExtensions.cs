@@ -346,9 +346,6 @@ namespace Lens.SyntaxTree.Utils
 			if (IsDerivedFrom(exprType, varType, out result))
 				return result;
 
-			if (!exactly && IsImplicitCastable(varType, exprType))
-				return 1;
-
 			if (varType.IsArray && exprType.IsArray)
 			{
 				var varElType = varType.GetElementType();

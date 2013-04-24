@@ -175,12 +175,6 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void ImplicitCast()
-		{
-			TestDistanceFrom<int, ImplicitCastable>(1);
-		}
-
-		[Test]
 		public void ArrayInterface()
 		{
 			TestDistanceFrom<IEnumerable<int>, int[]>(1);
