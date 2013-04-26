@@ -144,6 +144,12 @@
   <data name="CastTypesMismatch" xml:space="preserve">
     <value>Cannot cast object of type '{0}' to type '{1}'!</value>
   </data>
+  <data name="CatchClauseUnreachable" xml:space="preserve">
+    <value>This catch clause is unreachable because the previous one catches all exceptions!\</value>
+  </data>
+  <data name="CatchTypeDuplicate" xml:space="preserve">
+    <value>Type '{0}' has already been used in a catch clause of current try block!</value>
+  </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
   </data>

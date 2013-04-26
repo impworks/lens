@@ -144,6 +144,12 @@
   <data name="CastTypesMismatch" xml:space="preserve">
     <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
+  <data name="CatchClauseUnreachable" xml:space="preserve">
+    <value>Это выражение catch недостижимо, поскольку предыдущее выражение перехватывает все исключения!</value>
+  </data>
+  <data name="CatchTypeDuplicate" xml:space="preserve">
+    <value>Тип '{0}' уже был использован в выражении catch текущего блока try!</value>
+  </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Тип '{0}' не может быть использован в выражении catch, поскольку он не наследуется от System.Exception!</value>
   </data>
