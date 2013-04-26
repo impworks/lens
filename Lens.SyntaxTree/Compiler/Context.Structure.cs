@@ -37,9 +37,9 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Imports a method from a standard library.
 		/// </summary>
-		public void ImportFunctionUnchecked(string name, MethodInfo method)
+		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
 		{
-			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+			_DefinedTypes[RootTypeName].ImportMethod(name, method, check);
 		}
 
 		/// <summary>
@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			ImportFunctionUnchecked(name, method);
+			ImportFunctionUnchecked(name, method, true);
 		}
 
 		/// <summary>

@@ -355,7 +355,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Imports a new method to the given type.
 		/// </summary>
-		internal void ImportMethod(string name, MethodInfo mi)
+		internal void ImportMethod(string name, MethodInfo mi, bool check)
 		{
 			if(!mi.IsStatic || !mi.IsPublic)
 				Context.Error(CompilerMessages.ImportUnsupportedMethod);
@@ -373,7 +373,17 @@ namespace Lens.SyntaxTree.Compiler
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
 			};
 
-			_MethodList.Add(me);
+			if (check)
+			{
+				_MethodList.Add(me);
+			}
+			else
+			{
+				if(_Methods.ContainsKey(name))
+					_Methods[name].Add(me);
+				else
+					_Methods.Add(name, new List<MethodEntity> { me });
+			}
 		}
 
 		/// <summary>
