@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	{
 		public CatchNode()
 		{
-			Code = new CodeBlockNode();	
+			Code = new CodeBlockNode();
 		}
 
 		/// <summary>
@@ -32,6 +32,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
+		private LocalName m_ExceptionVariable;
+
 		public override LexemLocation EndLocation
 		{
 			get { return Code.EndLocation; }
@@ -43,6 +45,18 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			yield return Code;
 		}
 
+		public override void ProcessClosures(Context ctx)
+		{
+			base.ProcessClosures(ctx);
+
+			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
+			if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
+				Error(CompilerMessages.CatchTypeNotException, type);
+
+			if(!string.IsNullOrEmpty(ExceptionVariable))
+				m_ExceptionVariable = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
+		}
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
@@ -51,16 +65,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			ctx.CurrentCatchBlock = this;
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
-			if(!type.IsSubclassOf(typeof(Exception)))
-				Error(CompilerMessages.CatchTypeNotException, type);
-
 			gen.BeginCatchBlock(type);
 
-			if (string.IsNullOrEmpty(ExceptionVariable))
-			{
-				var tmpVar = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
-				gen.EmitSaveLocal(tmpVar);
-			}
+			if (m_ExceptionVariable == null)
+				gen.EmitPop();
+			else
+				gen.EmitSaveLocal(m_ExceptionVariable);
 
 			Code.Compile(ctx, false);
 

@@ -64,6 +64,7 @@
     <Compile Include="ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Snippets.cs" />
+    <Compile Include="StdlibTest.cs" />
     <Compile Include="TestClassHierarchy.cs" />
     <Compile Include="TypeExtensionsTest.cs" />
     <Compile Include="TypeResolverTest.cs" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
@@ -34,14 +35,22 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Imports a method from a standard library.
+		/// </summary>
+		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
+		{
+			_DefinedTypes[RootTypeName].ImportMethod(name, method, check);
+		}
+
+		/// <summary>
 		/// Imports an existing external method with given name.
 		/// </summary>
-		public void ImportFunction(string name, Delegate method)
+		public void ImportFunction(string name, MethodInfo method)
 		{
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			_DefinedTypes[RootTypeName].ImportMethod(name, method);
+			ImportFunctionUnchecked(name, method, true);
 		}
 
 		/// <summary>
@@ -98,7 +107,7 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var curr in node.Entries)
 			{
 				var tagName = curr.Name;
-				var labelType = CreateType(tagName, mainType.TypeInfo, isSealed: true, prepare: true);
+				var labelType = CreateType(tagName, mainType.TypeInfo, isSealed: true, prepare: true, defaultCtor: false);
 				labelType.Kind = TypeEntityKind.TypeLabel;
 
 				var ctor = labelType.CreateConstructor();

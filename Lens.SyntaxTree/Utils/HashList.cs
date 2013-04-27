@@ -20,7 +20,7 @@ namespace Lens.Utils
 			_Keys = new List<string>();
 		}
 
-		public HashList(IEnumerable<T> src, Func<T, string> nameGetter)
+		public HashList(IEnumerable<T> src, Func<T, string> nameGetter) : this()
 		{
 			foreach (var curr in src)
 				Add(nameGetter(curr), curr);

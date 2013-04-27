@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Compiler;
@@ -47,7 +48,7 @@ namespace Lens
 		/// <summary>
 		/// Registers a method to be used by LENS script.
 		/// </summary>
-		public void RegisterFunction(string name, Delegate method)
+		public void RegisterFunction(string name, MethodInfo method)
 		{
 			m_Context.ImportFunction(name, method);
 		}
@@ -66,6 +67,7 @@ namespace Lens
 		public Func<object> Compile(string src)
 		{
 			IEnumerable<NodeBase> nodes;
+			var t = DateTime.Now;
 			try
 			{
 				nodes = new TreeBuilder().Parse(src);
@@ -74,8 +76,13 @@ namespace Lens
 			{
 				throw new LensCompilerException(ex.Message);
 			}
+			Console.WriteLine("Parsing: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
 
-			return Compile(nodes);
+			t = DateTime.Now;
+			var x = Compile(nodes);
+			Console.WriteLine("Compiling: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
+
+			return x;
 		}
 
 		/// <summary>

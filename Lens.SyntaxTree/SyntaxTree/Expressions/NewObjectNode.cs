@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Translations;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Expressions
 {
@@ -37,6 +38,13 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
+			var type = ctx.ResolveType(Type);
+			if(type.IsVoid())
+				Error(CompilerMessages.VoidTypeDefault);
+
+			if(type.IsAbstract)
+				Error(CompilerMessages.TypeAbstract, Type.Signature);
+
 			if(Arguments.Count == 0)
 				Error(CompilerMessages.ParameterlessConstructorParens);
 
@@ -48,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			try
 			{
-				var ctor = ctx.ResolveConstructor(ctx.ResolveType(Type.Signature), argTypes);
+				var ctor = ctx.ResolveConstructor(type, argTypes);
 
 				if (!isParameterless)
 				{
@@ -65,7 +73,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				var type = ctx.ResolveType(Type);
 				if (!isParameterless || !type.IsValueType)
 					Error(CompilerMessages.TypeConstructorNotFound, Type.Signature);
 

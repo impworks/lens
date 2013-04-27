@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Context.Stdlib.cs" />
     <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
@@ -74,6 +75,9 @@
     <Compile Include="Compiler\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
+    <Compile Include="Stdlib\ConsoleWrapper.cs" />
+    <Compile Include="Stdlib\Utilities.cs" />
+    <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

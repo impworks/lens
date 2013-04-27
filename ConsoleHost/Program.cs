@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -17,14 +19,23 @@ namespace ConsoleHost
 			printPreamble();
 
 			string source;
-			while (RequestInput(out source))
+			var timer = false;
+			while (RequestInput(out source, ref timer))
 			{
 				Console.WriteLine();
 				try
 				{
 					var lc = new LensCompiler();
-					var res = lc.Run(source);
+
+					Func<object> fx = null;
+					object res = null;
+
+					var compileTime = measureTime(() => fx = lc.Compile(source));
+					var runTime = measureTime(() => res = fx());
+
 					printObject(res);
+
+					printInfo(timer, compileTime, runTime);
 				}
 				catch (LensCompilerException ex)
 				{
@@ -32,12 +43,12 @@ namespace ConsoleHost
 				}
 				catch (Exception ex)
 				{
-					printError("An unexpected error has occured!", ex.Message, ConsoleColor.Yellow);
+					printError("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace, ConsoleColor.Yellow);
 				}
 			}
 		}
 
-		static bool RequestInput(out string input)
+		static bool RequestInput(out string input, ref bool timer)
 		{
 			var lines = new List<string>();
 			var prefix = 0;
@@ -62,6 +73,7 @@ namespace ConsoleHost
 						return true;
 					}
 
+					#region Commands
 					if (line[0] == '#')
 					{
 						if (line == "#exit")
@@ -84,6 +96,42 @@ namespace ConsoleHost
 							continue;
 						}
 
+						if (line.StartsWith("#timer"))
+						{
+							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							if (param == "on")
+							{
+								timer = true;
+								printHint("Timer enabled.");
+								continue;
+							}
+							if (param == "off")
+							{
+								timer = false;
+								printHint("Timer disabled.");
+								continue;
+							}
+						}
+
+						if (line.StartsWith("#load"))
+						{
+							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							try
+							{
+								using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
+								using (var sr = new StreamReader(fs))
+								{
+									input = sr.ReadToEnd();
+									return true;
+								}
+							}
+							catch
+							{
+								printHint(string.Format("File '{0}' could not be loaded!", param));
+								continue;
+							}
+						}
+
 						if (line == "#oops")
 						{
 							if (lines.Count > 0)
@@ -92,7 +140,10 @@ namespace ConsoleHost
 						}
 
 						printHelp();
+						continue;
 					}
+
+					#endregion
 				}
 
 				prefix = getIdent(line);
@@ -100,7 +151,7 @@ namespace ConsoleHost
 			}
 		}
 
-		static string buildString(List<string> lines)
+		static string buildString(ICollection<string> lines)
 		{
 			var sb = new StringBuilder(lines.Count);
 			foreach (var curr in lines)
@@ -110,47 +161,85 @@ namespace ConsoleHost
 
 		static void printPreamble()
 		{
-			Console.ForegroundColor = ConsoleColor.DarkGray;
-			Console.WriteLine("=====================");
-			Console.WriteLine("  LENS Console Host");
-			Console.WriteLine("=====================");
-			Console.WriteLine("(type #help for help)");
-			Console.WriteLine();
-			Console.ResetColor();
+			using (new OutputColor(ConsoleColor.DarkGray))
+			{
+				Console.WriteLine("=====================");
+				Console.WriteLine("  LENS Console Host");
+				Console.WriteLine("=====================");
+				Console.WriteLine("(type #help for help)");
+				Console.WriteLine();
+			}
 		}
 
 		static void printError(string msg, string details, ConsoleColor clr = ConsoleColor.Red)
 		{
-			Console.ForegroundColor = clr;
-			Console.WriteLine(msg);
-			Console.WriteLine();
-			Console.WriteLine(details);
-			Console.ResetColor();
-			Console.WriteLine();
+			using (new OutputColor(clr))
+			{
+				Console.WriteLine(msg);
+				Console.WriteLine();
+				Console.WriteLine(details);
+				Console.ResetColor();
+			}
+		}
+
+		static void printHint(string hint)
+		{
+			using (new OutputColor(ConsoleColor.DarkGray))
+			{
+				Console.WriteLine();
+				Console.WriteLine(hint);
+				Console.WriteLine();
+			}
 		}
 
 		static void printHelp()
 		{
-			Console.ForegroundColor = ConsoleColor.DarkGray;
-			Console.WriteLine();
-			Console.WriteLine("To enter a script, just type it line by line.");
-			Console.WriteLine("Finish the line with # to execute the script.");
-			Console.WriteLine();
-			Console.WriteLine("Available interpreter commands:");
-			Console.WriteLine();
-			Console.WriteLine("  #exit - close the interpreter");
-			Console.WriteLine("  #run  - execute the script and print the output");
-			Console.WriteLine("  #oops - cancel last line");
-			Console.WriteLine("  #clr  - clear the console");
-			Console.WriteLine();
-			Console.ResetColor();
+			using (new OutputColor(ConsoleColor.DarkGray))
+			{
+				Console.WriteLine();
+				Console.WriteLine("To enter a script, just type it line by line.");
+				Console.WriteLine("Finish the line with # to execute the script.");
+				Console.WriteLine();
+				Console.WriteLine("Available interpreter commands:");
+				Console.WriteLine();
+				Console.WriteLine("  #exit - close the interpreter");
+				Console.WriteLine("  #run  - execute the script and print the output");
+				Console.WriteLine("  #oops - cancel last line");
+				Console.WriteLine("  #clr  - clear the console");
+				Console.WriteLine();
+				Console.WriteLine("  #timer (on|off)  - enable/disable time measurement");
+				Console.WriteLine();
+			}
+		}
+
+		static double measureTime(Action act)
+		{
+			var tStart = DateTime.Now;
+			act();
+			var tEnd = DateTime.Now;
+			return (tEnd - tStart).TotalMilliseconds;
+		}
+
+		static void printInfo(bool printTime, double compileTime, double runTime)
+		{
+			if (!printTime)
+				return;
+
+			using (new OutputColor(ConsoleColor.DarkGray))
+			{
+				Console.WriteLine("Compilation: {0} msec.", compileTime);
+				Console.WriteLine("Execution: {0} msec.", runTime);
+				Console.WriteLine();
+			}
 		}
 
 		static void printObject(dynamic obj)
 		{
 			Console.WriteLine(getStringRepresentation(obj));
-			if((object)obj != null)
-				Console.WriteLine("({0})", obj.GetType());
+			if ((object) obj != null)
+				using(new OutputColor(ConsoleColor.DarkGray))
+					Console.WriteLine("({0})", obj.GetType());
+
 			Console.WriteLine();
 		}
 
@@ -185,7 +274,9 @@ namespace ConsoleHost
 				return string.Format("[ {0} ]", string.Join("; ", list));
 			}
 
-			return obj.ToString(CultureInfo.InvariantCulture);
+			return obj is double || obj is float
+				? obj.ToString(CultureInfo.InvariantCulture)
+				: obj.ToString();
 		}
 
 		static int getIdent(string line)
@@ -199,7 +290,7 @@ namespace ConsoleHost
 			return idx;
 		}
 
-		private static Regex[] LineFeeds = new[]
+		private static readonly Regex[] LineFeeds = new[]
 		{
 			new Regex(@"^type [_a-z][_a-z0-9]*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 			new Regex(@"^record [_a-z][_a-z0-9]*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
@@ -211,14 +302,7 @@ namespace ConsoleHost
 		static bool shouldIdent(string line)
 		{
 			var trim = line.Trim();
-			if (trim.EndsWith("->"))
-				return true;
-
-			foreach (var curr in LineFeeds)
-				if (curr.IsMatch(trim))
-					return true;
-
-			return false;
+			return trim.EndsWith("->") || LineFeeds.Any(curr => curr.IsMatch(trim));
 		}
 	}
 }

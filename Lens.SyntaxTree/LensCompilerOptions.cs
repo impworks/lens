@@ -22,5 +22,11 @@
 		/// Default is true.
 		/// </summary>
 		public bool AllowExtensionMethods = true;
+
+		/// <summary>
+		/// Checks whether LENS standard library should be registered.
+		/// Default is true.
+		/// </summary>
+		public bool LoadStandardLibrary = true;
 	}
 }

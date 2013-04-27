@@ -153,7 +153,7 @@ namespace Lens.SyntaxTree.Compiler
 				MethodEntity mi = null;
 				try
 				{
-					mi = ResolveMethod(method.Name, method.ArgumentTypes, true);
+					mi = ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
 				}
 				catch (KeyNotFoundException) { }
 				
@@ -178,11 +178,13 @@ namespace Lens.SyntaxTree.Compiler
 			Context.CurrentType = this;
 
 			foreach (var curr in _Constructors)
-				curr.Compile();
+				if (!curr.IsImported)
+					curr.Compile();
 
 			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
-					curr.Compile();
+					if(!curr.IsImported)
+						curr.Compile();
 
 			Context.CurrentType = backup;
 		}
@@ -194,10 +196,12 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			foreach (var currGroup in _Methods)
 				foreach(var currMethod in currGroup.Value)
-					currMethod.ProcessClosures();
+					if (!currMethod.IsImported)
+						currMethod.ProcessClosures();
 
 			foreach(var currCtor in _Constructors)
-				currCtor.ProcessClosures();
+				if (!currCtor.IsImported)
+					currCtor.ProcessClosures();
 		}
 
 		/// <summary>
@@ -309,8 +313,13 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
 				NodeBase expr;
-				if (fieldType.IsValueType)
+				if (fieldType.IsIntegerType())
 					expr = Expr.GetMember(Expr.This(), f.Name);
+				else if (fieldType.IsValueType)
+					expr = Expr.Invoke(
+						Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
+						"GetHashCode"
+					);
 				else
 					expr = Expr.If(
 						Expr.NotEqual(
@@ -346,24 +355,35 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Imports a new method to the given type.
 		/// </summary>
-		internal void ImportMethod(string name, Delegate method)
+		internal void ImportMethod(string name, MethodInfo mi, bool check)
 		{
-			var mi = method.Method;
-			if(!mi.IsStatic || !mi.IsPublic || mi.IsGenericMethod)
+			if(!mi.IsStatic || !mi.IsPublic)
 				Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
 			{
 				Name = name,
+				IsImported = true,
 				IsStatic = true,
 				IsVirtual = false,
 				ContainerType = this,
 				MethodInfo = mi,
+				ReturnType = mi.ReturnType,
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
 			};
 
-			_MethodList.Add(me);
+			if (check)
+			{
+				_MethodList.Add(me);
+			}
+			else
+			{
+				if(_Methods.ContainsKey(name))
+					_Methods[name].Add(me);
+				else
+					_Methods.Add(name, new List<MethodEntity> { me });
+			}
 		}
 
 		/// <summary>

@@ -175,12 +175,6 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void ImplicitCast()
-		{
-			TestDistanceFrom<int, ImplicitCastable>(1);
-		}
-
-		[Test]
 		public void ArrayInterface()
 		{
 			TestDistanceFrom<IEnumerable<int>, int[]>(1);
@@ -277,6 +271,14 @@ namespace Lens.Test
 			TestCommonType<object>(typeof(object), typeof(int));
 			TestCommonType<object>(typeof(int), typeof(float), typeof(double), typeof(Decimal));
 			TestCommonType<object>(typeof(IEnumerable<int>), typeof(IEnumerable<float>));
+		}
+
+		[Test]
+		public void TestInterfaceInheritance()
+		{
+			var from = typeof (IOrderedEnumerable<int>);
+			var to = typeof (IEnumerable<>);
+			Assert.IsTrue(to.DistanceFrom(from) < int.MaxValue);
 		}
 
 		/// <summary>

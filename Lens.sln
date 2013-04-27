@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens", "Lens\Lens.csproj", "{C25C8A95-F24A-4914-9000-A73313E1E464}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleHost", "SampleHost\SampleHost.csproj", "{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lens.Parser", "Lens.Parser\Lens.Parser.fsproj", "{8771C27C-8D41-42D4-B99C-56545E20D547}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.SyntaxTree", "Lens.SyntaxTree\Lens.SyntaxTree.csproj", "{7987774D-17A7-4E76-AE13-C03F2CC31B9C}"
@@ -14,6 +12,8 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lens.FSharpTest", "Lens.FSharpTest\Lens.FSharpTest.fsproj", "{B7A53070-A071-4E9E-82A7-E2FC75F32D3F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleHost", "ConsoleHost\ConsoleHost.csproj", "{C3116F85-F88A-4FAF-B124-C586F067383B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphHost", "GraphHost\GraphHost.csproj", "{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +25,6 @@ Global
 		{C25C8A95-F24A-4914-9000-A73313E1E464}.Debug|x86.Build.0 = Debug|x86
 		{C25C8A95-F24A-4914-9000-A73313E1E464}.Release|x86.ActiveCfg = Release|x86
 		{C25C8A95-F24A-4914-9000-A73313E1E464}.Release|x86.Build.0 = Release|x86
-		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Debug|x86.ActiveCfg = Debug|x86
-		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Debug|x86.Build.0 = Debug|x86
-		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Release|x86.ActiveCfg = Release|x86
-		{A09886D4-B2DC-4141-AD47-ACFAF0232ADE}.Release|x86.Build.0 = Release|x86
 		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|x86.ActiveCfg = Debug|x86
 		{8771C27C-8D41-42D4-B99C-56545E20D547}.Debug|x86.Build.0 = Debug|x86
 		{8771C27C-8D41-42D4-B99C-56545E20D547}.Release|x86.ActiveCfg = Release|x86
@@ -48,6 +44,10 @@ Global
 		{C3116F85-F88A-4FAF-B124-C586F067383B}.Debug|x86.Build.0 = Debug|x86
 		{C3116F85-F88A-4FAF-B124-C586F067383B}.Release|x86.ActiveCfg = Release|x86
 		{C3116F85-F88A-4FAF-B124-C586F067383B}.Release|x86.Build.0 = Release|x86
+		{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}.Debug|x86.ActiveCfg = Debug|x86
+		{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}.Debug|x86.Build.0 = Debug|x86
+		{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}.Release|x86.ActiveCfg = Release|x86
+		{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

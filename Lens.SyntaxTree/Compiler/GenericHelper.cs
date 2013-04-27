@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Translations;
 
@@ -9,6 +10,8 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	public static class GenericHelper
 	{
+		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
+
 		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
 		{
 			var genericValues = new Type[genericDefs.Length];
@@ -155,42 +158,48 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public static Type[] GetInterfaces(Type type)
 		{
+			if (m_InterfaceCache.ContainsKey(type))
+				return m_InterfaceCache[type];
+
+			Type[] ifaces;
 			try
 			{
-				return type.GetInterfaces();
+				ifaces = type.GetInterfaces();
 			}
 			catch (NotSupportedException)
 			{
 				if (type.IsGenericType)
 				{
-					var ifaces = type.GetGenericTypeDefinition().GetInterfaces();
+					ifaces = type.GetGenericTypeDefinition().GetInterfaces();
 					for (var idx = 0; idx < ifaces.Length; idx++)
 					{
 						var curr = ifaces[idx];
 						if (curr.IsGenericType)
 							ifaces[idx] = ApplyGenericArguments(curr, type);
 					}
-					return ifaces;
+					
 				}
 				
-				if (type.IsArray)
+				else if (type.IsArray)
 				{
 					// replace interfaces of any array with element type
 					var elem = type.GetElementType();
-					var ifaces = typeof (int[]).GetInterfaces();
+					ifaces = typeof (int[]).GetInterfaces();
 					for (var idx = 0; idx < ifaces.Length; idx++)
 					{
 						var curr = ifaces[idx];
 						if (curr.IsGenericType)
 							ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
 					}
-
-					return ifaces;
 				}
 				
 				// just a built-in type : no interfaces
-				return Type.EmptyTypes;
+				else
+					ifaces = Type.EmptyTypes;
 			}
+
+			m_InterfaceCache.Add(type, ifaces);
+			return ifaces;
 		}
 
 		#region Helpers

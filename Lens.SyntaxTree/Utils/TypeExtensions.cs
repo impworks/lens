@@ -38,11 +38,15 @@ namespace Lens.SyntaxTree.Utils
 				typeof (float),
 				typeof (double)
 			};
+
+			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
 		}
 
 		public static Type[] SignedIntegerTypes { get; private set; }
 		public static Type[] UnsignedIntegerTypes { get; private set; }
 		public static Type[] FloatTypes { get; private set; }
+
+		private static Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
 
 		/// <summary>
 		/// Checks if a type is a <see cref="Nullable{T}"/>.
@@ -278,9 +282,21 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
-		/// Gets assignment type distance.
+		/// Gets distance between two types.
+		/// This method is memoized.
 		/// </summary>
 		public static int DistanceFrom(this Type varType, Type exprType, bool exactly = false)
+		{
+			var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
+
+			if (!m_DistanceCache.ContainsKey(key))
+				m_DistanceCache.Add(key, distanceFrom(varType, exprType, exactly));
+
+			return m_DistanceCache[key];
+		}
+
+		
+		private static int distanceFrom(Type varType, Type exprType, bool exactly = false)
 		{
 			if (varType == exprType)
 				return 0;
@@ -312,7 +328,7 @@ namespace Lens.SyntaxTree.Utils
 			if (varType.IsInterface)
 			{
 				if (exprType.IsInterface)
-					return InterfaceDistance(varType, new[] {exprType});
+					return InterfaceDistance(varType, new[] { exprType }.Union(GenericHelper.GetInterfaces(exprType)));
 
 				// casting expression to interface takes 1 step
 				var dist = InterfaceDistance(varType, GenericHelper.GetInterfaces(exprType));
@@ -330,9 +346,6 @@ namespace Lens.SyntaxTree.Utils
 			if (IsDerivedFrom(exprType, varType, out result))
 				return result;
 
-			if (!exactly && IsImplicitCastable(varType, exprType))
-				return 1;
-
 			if (varType.IsArray && exprType.IsArray)
 			{
 				var varElType = varType.GetElementType();
@@ -347,7 +360,7 @@ namespace Lens.SyntaxTree.Utils
 			return int.MaxValue;
 		}
 
-		private static int InterfaceDistance(Type interfaceType, Type[] ifaces, bool exactly = false)
+		private static int InterfaceDistance(Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
 		{
 			var min = int.MaxValue;
 			foreach (var iface in ifaces)

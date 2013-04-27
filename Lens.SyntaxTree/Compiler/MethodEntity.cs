@@ -41,9 +41,6 @@ namespace Lens.SyntaxTree.Compiler
 			get { return IsImported ? m_MethodInfo : MethodBuilder; }
 			set
 			{
-				if (!IsImported)
-					throw new LensCompilerException(string.Format("Method '{0}' is not imported!", Name));
-
 				m_MethodInfo = value;
 			}
 		}

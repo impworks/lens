@@ -142,6 +142,24 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This catch clause is unreachable because the previous one catches all exceptions!\.
+        /// </summary>
+        public static string CatchClauseUnreachable {
+            get {
+                return ResourceManager.GetString("CatchClauseUnreachable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has already been used in a catch clause of current try block!.
+        /// </summary>
+        public static string CatchTypeDuplicate {
+            get {
+                return ResourceManager.GetString("CatchTypeDuplicate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used in catch clause because it does not derive from System.Exception!.
         /// </summary>
         public static string CatchTypeNotException {
@@ -705,6 +723,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string TupleTooManyArgs {
             get {
                 return ResourceManager.GetString("TupleTooManyArgs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create an instance of type &apos;{0}&apos; because it is abstract!.
+        /// </summary>
+        public static string TypeAbstract {
+            get {
+                return ResourceManager.GetString("TypeAbstract", resourceCulture);
             }
         }
         

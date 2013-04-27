@@ -144,6 +144,12 @@
   <data name="CastTypesMismatch" xml:space="preserve">
     <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
+  <data name="CatchClauseUnreachable" xml:space="preserve">
+    <value>Это выражение catch недостижимо, поскольку предыдущее выражение перехватывает все исключения!</value>
+  </data>
+  <data name="CatchTypeDuplicate" xml:space="preserve">
+    <value>Тип '{0}' уже был использован в выражении catch текущего блока try!</value>
+  </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Тип '{0}' не может быть использован в выражении catch, поскольку он не наследуется от System.Exception!</value>
   </data>
@@ -326,6 +332,9 @@
   </data>
   <data name="TupleTooManyArgs" xml:space="preserve">
     <value>Кортеж не может содержать больше 8 объектов! Воспользуйтесь структурой или вложенным кортежом.</value>
+  </data>
+  <data name="TypeAbstract" xml:space="preserve">
+    <value>Невозможно создать экземпляр абстрактного типа '{0}'!</value>
   </data>
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
     <value>Невозможно применить обобщенные параметры к '{0}.{1}', потому что это не метод!</value>
