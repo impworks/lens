@@ -106,6 +106,15 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Incorrect indentation.
+        /// </summary>
+        public static string IncorrectIndentation {
+            get {
+                return ResourceManager.GetString("IncorrectIndentation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Lexem expected: {0}.
         /// </summary>
         public static string LexemExpected {
@@ -170,11 +179,83 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unknown binary operator: {0}.
+        /// </summary>
+        public static string UnknownBinaryOperator {
+            get {
+                return ResourceManager.GetString("UnknownBinaryOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown boolean value: {0}.
+        /// </summary>
+        public static string UnknownBooleanValue {
+            get {
+                return ResourceManager.GetString("UnknownBooleanValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown cast operator: {0}.
+        /// </summary>
+        public static string UnknownCastOperator {
+            get {
+                return ResourceManager.GetString("UnknownCastOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown comparison operator: {0}.
+        /// </summary>
+        public static string UnknownComparisonOperator {
+            get {
+                return ResourceManager.GetString("UnknownComparisonOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unknown error: {0}.
         /// </summary>
         public static string UnknownError {
             get {
                 return ResourceManager.GetString("UnknownError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown logical operator: {0}.
+        /// </summary>
+        public static string UnknownLogicalOperator {
+            get {
+                return ResourceManager.GetString("UnknownLogicalOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown type operator: {0}.
+        /// </summary>
+        public static string UnknownTypeOperator {
+            get {
+                return ResourceManager.GetString("UnknownTypeOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown unary operator: {0}.
+        /// </summary>
+        public static string UnknownUnaryOperator {
+            get {
+                return ResourceManager.GetString("UnknownUnaryOperator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown value binding type: {0}.
+        /// </summary>
+        public static string UnknownValueBindingType {
+            get {
+                return ResourceManager.GetString("UnknownValueBindingType", resourceCulture);
             }
         }
     }

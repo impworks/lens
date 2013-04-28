@@ -148,6 +148,11 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Translations\ParserLexems.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ParserLexems.resx</DependentUpon>
+    </Compile>
     <Compile Include="Translations\ParserMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -176,6 +181,10 @@
       <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
+    <EmbeddedResource Include="Translations\ParserLexems.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ParserLexems.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserMessages.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>

@@ -7,6 +7,7 @@ open Lens.Parser.FParsecHelpers
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Operators
+open Lens.SyntaxTree.Translations
 open Lens.SyntaxTree.Utils
 
 let isStartTracked obj = 
@@ -54,7 +55,7 @@ let token t = (pstring t
 let createParser s =
     let parser, parserRef = createParserForwardedToRef()
     let whitespaced = choice [parser .>>? many space
-                              many1 space >>. fail "wrong indentation"]
+                              many1 space >>. fail ParserMessages.IncorrectIndentation]
     whitespaced <!> s, parserRef
 
 let createNodeParser name =
@@ -87,66 +88,66 @@ let createAnnotatedNodeParser name annotation =
     let parser, ref = createNodeParser name
     annotate parser annotation, ref
 
-let stmt, stmtRef                             = createAnnotatedNodeParser "stmt" "statement"
-let using, usingRef                           = createAnnotatedNodeParser "using" "using statement"
-let ``namespace``, namespaceRef               = createAnnotatedParser "namespace" "namespace declaration"
-let recorddef, recorddefRef                   = createAnnotatedNodeParser "recorddef" "record definition"
-let recorddef_stmt, recorddef_stmtRef         = createAnnotatedParser "recorddef_stmt" "record definition statement"
-let typedef, typedefRef                       = createAnnotatedNodeParser "typedef" "type definition"
-let typedef_stmt, typedef_stmtRef             = createAnnotatedParser "typedef_stmt" "type definition statement"
-let funcdef, funcdefRef                       = createAnnotatedNodeParser "funcdef" "function definition"
-let func_params, func_paramsRef               = createAnnotatedParser "func_params" "function parameters"
-let block, blockRef                           = createAnnotatedNodeParser "block" "code block"
-let block_line, block_lineRef                 = createAnnotatedNodeParser "block_line" "code block line"
-let ``type``, typeRef                         = createAnnotatedParser "type" "type"
-let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local_stmt" "local statement"
-let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" "variable declaration"
-let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" "assignment expression"
-let lvalue, lvalueRef                         = createAnnotatedParser "lvalue" "lvalue"
-let atomar_expr, atomar_exprRef               = createAnnotatedParser "atomar_expr" "atomar_expr"
-let accessor_expr, accessor_exprRef           = createAnnotatedParser "accessor_expr" "accessor expression"
-let type_params, type_paramsRef               = createAnnotatedParser "type_params" "type parameters"
-let expr, exprRef                             = createAnnotatedNodeParser "expr" "expression"
-let block_expr, block_exprRef                 = createAnnotatedNodeParser "block_expr" "block expression"
-let throw_expr, throw_exprRef                 = createAnnotatedNodeParser "throw_expr" "throw expression"
-let if_expr, if_exprRef                       = createAnnotatedNodeParser "if_expr" "if expression"
-let while_expr, while_exprRef                 = createAnnotatedNodeParser "while_expr" "while expression"
-let try_expr, try_exprRef                     = createAnnotatedNodeParser "try_expr" "try expression"
-let catch_expr, catch_exprRef                 = createAnnotatedNodeParser "catch_expr" "catch expression"
-let lambda_expr, lambda_exprRef               = createAnnotatedNodeParser "lambda_expr" "lambda expression"
-let line_expr, line_exprRef                   = createAnnotatedNodeParser "line_expr" "line expression"
-let line_expr_0, line_expr_0Ref               = createAnnotatedNodeParser "line_expr_0" "line expression"
-let line_expr_1, line_expr_1Ref               = createAnnotatedNodeParser "line_expr_1" "line expression"
-let sign_1, sign_1Ref                         = createAnnotatedParser "sign_1" "operator"
-let line_expr_2, line_expr_2Ref               = createAnnotatedNodeParser "line_expr_2" "line expression"
-let sign_2, sign_2Ref                         = createAnnotatedParser "sign_2" "operator"
-let line_expr_3, line_expr_3Ref               = createAnnotatedNodeParser "line_expr_3" "line expression"
-let sign_3, sign_3Ref                         = createAnnotatedParser "sign_3" "operator"
-let line_expr_4, line_expr_4Ref               = createAnnotatedNodeParser "line_expr_4" "line expression"
-let sign_4, sign_4Ref                         = createAnnotatedParser "sign_4" "operator"
-let line_expr_5, line_expr_5Ref               = createAnnotatedNodeParser "line_expr_5" "line expression"
-let line_expr_6, line_expr_6Ref               = createAnnotatedNodeParser "line_expr_6" "line expression"
-let line_expr_7, line_expr_7Ref               = createAnnotatedNodeParser "line_expr_7" "line expression"
-let new_expr, new_exprRef                     = createAnnotatedNodeParser "new_expr" "constructor invocation"
-let new_array_expr, new_array_exprRef         = createAnnotatedNodeParser "new_array_expr" "array expression"
-let new_tuple_expr, new_tuple_exprRef         = createAnnotatedNodeParser "new_tuple_expr" "tuple expression"
-let new_list_expr, new_list_exprRef           = createAnnotatedNodeParser "new_list_expr" "list expression"
-let new_dict_expr, new_dict_exprRef           = createAnnotatedNodeParser "new_dict_expr" "dict expression"
-let dict_entry_expr, dict_entry_exprRef       = createAnnotatedParser "dict_entry_expr" "dict entry"
-let new_obj_expr, new_obj_exprRef             = createAnnotatedNodeParser "new_obj_expr" "new object expression"
-let enumeration_expr, enumeration_exprRef     = createAnnotatedParser "enumeration_expr" "enumeration expression"
-let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invoke_expr" "invocation"
-let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" "invocation list"
-let byref_arg, byref_argRef                   = createAnnotatedParser "byref_arg" "byref argument"
-let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" "value"
-let rvalue, rvalueRef                         = createAnnotatedParser "rvalue" "rvalue"
-let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" "type operator"
-let literal, literalRef                       = createAnnotatedNodeParser "literal" "literal"
+let stmt, stmtRef                             = createAnnotatedNodeParser "stmt" ParserLexems.Stmt
+let using, usingRef                           = createAnnotatedNodeParser "using" ParserLexems.Using
+let ``namespace``, namespaceRef               = createAnnotatedParser "namespace" ParserLexems.Namespace
+let recorddef, recorddefRef                   = createAnnotatedNodeParser "recorddef" ParserLexems.RecordDef
+let recorddef_stmt, recorddef_stmtRef         = createAnnotatedParser "recorddef_stmt" ParserLexems.RecordDefStmt
+let typedef, typedefRef                       = createAnnotatedNodeParser "typedef" ParserLexems.TypeDef
+let typedef_stmt, typedef_stmtRef             = createAnnotatedParser "typedef_stmt" ParserLexems.TypeDefStmt
+let funcdef, funcdefRef                       = createAnnotatedNodeParser "funcdef" ParserLexems.FuncDef
+let func_params, func_paramsRef               = createAnnotatedParser "func_params" ParserLexems.FuncParams
+let block, blockRef                           = createAnnotatedNodeParser "block" ParserLexems.Block
+let block_line, block_lineRef                 = createAnnotatedNodeParser "block_line" ParserLexems.BlockLine
+let ``type``, typeRef                         = createAnnotatedParser "type" ParserLexems.Type
+let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local_stmt" ParserLexems.LocalStmt
+let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" ParserLexems.VarDeclExpr
+let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" ParserLexems.AssignExpr
+let lvalue, lvalueRef                         = createAnnotatedParser "lvalue" ParserLexems.LValue
+let atomar_expr, atomar_exprRef               = createAnnotatedParser "atomar_expr" ParserLexems.AtomarExpr
+let accessor_expr, accessor_exprRef           = createAnnotatedParser "accessor_expr" ParserLexems.AccessorExpr
+let type_params, type_paramsRef               = createAnnotatedParser "type_params" ParserLexems.TypeParams
+let expr, exprRef                             = createAnnotatedNodeParser "expr" ParserLexems.Expr
+let block_expr, block_exprRef                 = createAnnotatedNodeParser "block_expr" ParserLexems.BlockExpr
+let throw_expr, throw_exprRef                 = createAnnotatedNodeParser "throw_expr" ParserLexems.ThrowExpr
+let if_expr, if_exprRef                       = createAnnotatedNodeParser "if_expr" ParserLexems.IfExpr
+let while_expr, while_exprRef                 = createAnnotatedNodeParser "while_expr" ParserLexems.WhileExpr
+let try_expr, try_exprRef                     = createAnnotatedNodeParser "try_expr" ParserLexems.TryExpr
+let catch_expr, catch_exprRef                 = createAnnotatedNodeParser "catch_expr" ParserLexems.CatchExpr
+let lambda_expr, lambda_exprRef               = createAnnotatedNodeParser "lambda_expr" ParserLexems.LambdaExpr
+let line_expr, line_exprRef                   = createAnnotatedNodeParser "line_expr" ParserLexems.LineExpr
+let line_expr_0, line_expr_0Ref               = createAnnotatedNodeParser "line_expr_0" ParserLexems.LineExpr0
+let line_expr_1, line_expr_1Ref               = createAnnotatedNodeParser "line_expr_1" ParserLexems.LineExpr1
+let sign_1, sign_1Ref                         = createAnnotatedParser "sign_1" ParserLexems.Sign1
+let line_expr_2, line_expr_2Ref               = createAnnotatedNodeParser "line_expr_2" ParserLexems.LineExpr2
+let sign_2, sign_2Ref                         = createAnnotatedParser "sign_2" ParserLexems.Sign2
+let line_expr_3, line_expr_3Ref               = createAnnotatedNodeParser "line_expr_3" ParserLexems.LineExpr3
+let sign_3, sign_3Ref                         = createAnnotatedParser "sign_3" ParserLexems.Sign3
+let line_expr_4, line_expr_4Ref               = createAnnotatedNodeParser "line_expr_4" ParserLexems.LineExpr4
+let sign_4, sign_4Ref                         = createAnnotatedParser "sign_4" ParserLexems.Sign4
+let line_expr_5, line_expr_5Ref               = createAnnotatedNodeParser "line_expr_5" ParserLexems.LineExpr5
+let line_expr_6, line_expr_6Ref               = createAnnotatedNodeParser "line_expr_6" ParserLexems.LineExpr6
+let line_expr_7, line_expr_7Ref               = createAnnotatedNodeParser "line_expr_7" ParserLexems.LineExpr7
+let new_expr, new_exprRef                     = createAnnotatedNodeParser "new_expr" ParserLexems.NewExpr
+let new_array_expr, new_array_exprRef         = createAnnotatedNodeParser "new_array_expr" ParserLexems.NewArrayExpr
+let new_tuple_expr, new_tuple_exprRef         = createAnnotatedNodeParser "new_tuple_expr" ParserLexems.NewTupleExpr
+let new_list_expr, new_list_exprRef           = createAnnotatedNodeParser "new_list_expr" ParserLexems.NewListExpr
+let new_dict_expr, new_dict_exprRef           = createAnnotatedNodeParser "new_dict_expr" ParserLexems.NewDictExpr
+let dict_entry_expr, dict_entry_exprRef       = createAnnotatedParser "dict_entry_expr" ParserLexems.DictEntryExpr
+let new_obj_expr, new_obj_exprRef             = createAnnotatedNodeParser "new_obj_expr" ParserLexems.NewObjExpr
+let enumeration_expr, enumeration_exprRef     = createAnnotatedParser "enumeration_expr" ParserLexems.EnumerationExpr
+let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invoke_expr" ParserLexems.InvokeExpr
+let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" ParserLexems.InvokeList
+let byref_arg, byref_argRef                   = createAnnotatedParser "byref_arg" ParserLexems.ByRefArg
+let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" ParserLexems.Value
+let rvalue, rvalueRef                         = createAnnotatedParser "rvalue" ParserLexems.RValue
+let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" ParserLexems.TypeOperatorExpr
+let literal, literalRef                       = createAnnotatedNodeParser "literal" ParserLexems.Literal
 
-let string, stringRef                         = createAnnotatedParser "string" "string literal"
-let int, intRef                               = createAnnotatedParser "int" "integer literal"
-let double, doubleRef                         = createAnnotatedParser "double" "double literal"
-let identifier, identifierRef                 = createAnnotatedParser "identifier" "identifier"
+let string, stringRef                         = createAnnotatedParser "string" ParserLexems.String
+let int, intRef                               = createAnnotatedParser "int" ParserLexems.Int
+let double, doubleRef                         = createAnnotatedParser "double" ParserLexems.Double
+let identifier, identifierRef                 = createAnnotatedParser "identifier" ParserLexems.Identifier
 
 let main               = many newline >>. many stmt .>> eof
 stmtRef               := // Only using and local_stmt blocks haven't nextLine as their natural ending.
