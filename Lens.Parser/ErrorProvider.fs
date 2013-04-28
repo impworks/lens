@@ -35,12 +35,16 @@ let rec private produceMessage (message : ErrorMessage) : string =
     | other                    -> String.Format(ParserMessages.UnknownError, other)
 
 and private produceErrorMessageList (messages : ErrorMessageList) : string =
+    let filtered = Set.ofList ["end of input"
+                               "newline"]
+    
     let expectedFilter = function
     | Expected         string
     | ExpectedString   string
     | ExpectedStringCI string
-        when not (String.IsNullOrWhiteSpace string) -> true
-    | other                                         -> false
+        when not (String.IsNullOrWhiteSpace string
+                  || Set.contains string filtered) -> true
+    | other                                        -> false
 
     let getLabel = function
     | Expected         label  -> label
