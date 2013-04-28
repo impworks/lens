@@ -21,18 +21,18 @@ let rec messageSeq (list : ErrorMessageList) : ErrorMessage seq =
 let rec private produceMessage (message : ErrorMessage) : string =
     match message with
     | NestedError(position, userState, errors)          ->
-        sprintf "Nested errors: %s"   <| produceErrorMessageList errors
+        String.Format(ParserMessages.NestedErrors, produceErrorMessageList errors)
     | CompoundError(label, position, userState, errors) ->
-        sprintf "Compound errors: %s" <| produceErrorMessageList errors
-    | Expected           label -> String.Format(CompilerMessages.LexemExpected, label)
+        String.Format(ParserMessages.CompoundErrors, produceErrorMessageList errors)
+    | Expected           label -> String.Format(ParserMessages.LexemExpected, label)
     | ExpectedString     str
-    | ExpectedStringCI   str   -> String.Format(CompilerMessages.StringExpected, str)
-    | Unexpected         label -> sprintf "Unexpected %s" label
+    | ExpectedStringCI   str   -> String.Format(ParserMessages.StringExpected, str)
+    | Unexpected         label -> String.Format(ParserMessages.Unexpected, label)
     | UnexpectedString   str
-    | UnexpectedStringCI str   -> sprintf "Unexpected string '%s'" str
-    | Message            str   -> sprintf "Exceptional message: %s" str
-    | OtherErrorMessage  o     -> sprintf "Exceptional case: %A" o
-    | other                    -> sprintf "Unknown parse error: %A" other
+    | UnexpectedStringCI str   -> String.Format(ParserMessages.StringUnexpected, str)
+    | Message            str   -> String.Format(ParserMessages.ErrorMessage, str)
+    | OtherErrorMessage  o     -> String.Format(ParserMessages.ErrorCase, o)
+    | other                    -> String.Format(ParserMessages.UnknownError, other)
 
 and private produceErrorMessageList (messages : ErrorMessageList) : string =
     let expectedFilter = function
@@ -45,8 +45,8 @@ and private produceErrorMessageList (messages : ErrorMessageList) : string =
     let getLabel = function
     | Expected         label  -> label
     | ExpectedString   string 
-    | ExpectedStringCI string -> sprintf "\"%s\"" string
-    | other                   -> failwith "Impossible happened"
+    | ExpectedStringCI string -> String.Format(ParserMessages.QuoteString, string)
+    | other                   -> failwith ParserMessages.ImpossibleHappened
     
     let errors = messageSeq messages
     let expectedTokens =
@@ -60,8 +60,8 @@ and private produceErrorMessageList (messages : ErrorMessageList) : string =
     
     if Seq.isEmpty expectedTokens
     then Seq.head errors |> produceMessage
-    else let tokenString = String.concat "\n      or " expectedTokens
-         String.Format("Expected {0}", tokenString)
+    else let tokenString = String.concat ParserMessages.Or expectedTokens
+         String.Format(ParserMessages.Expected, tokenString)
 
 let private getMessage (message : string) (error : ParserError) (userState : ParserState) : string =
     if enabled then

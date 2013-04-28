@@ -547,15 +547,6 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to lexem: {0}.
-        /// </summary>
-        public static string LexemExpected {
-            get {
-                return ResourceManager.GetString("LexemExpected", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot add object of type &apos;{0}&apos; to List&lt;{1}&gt;!.
         /// </summary>
         public static string ListElementTypeMismatch {
@@ -678,15 +669,6 @@ namespace Lens.SyntaxTree.Translations {
         public static string ReturnTypeMismatch {
             get {
                 return ResourceManager.GetString("ReturnTypeMismatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to string: &apos;{0}&apos;.
-        /// </summary>
-        public static string StringExpected {
-            get {
-                return ResourceManager.GetString("StringExpected", resourceCulture);
             }
         }
         

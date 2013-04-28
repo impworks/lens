@@ -279,9 +279,6 @@
   <data name="LambdaReturnTypeUnknown" xml:space="preserve">
     <value>Lambda return type cannot be inferred! Please use type casting to specify type.</value>
   </data>
-  <data name="LexemExpected" xml:space="preserve">
-    <value>lexem: {0}</value>
-  </data>
   <data name="ListElementTypeMismatch" xml:space="preserve">
     <value>Cannot add object of type '{0}' to List&lt;{1}&gt;!</value>
   </data>
@@ -323,9 +320,6 @@
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
-  </data>
-  <data name="StringExpected" xml:space="preserve">
-    <value>string: '{0}'</value>
   </data>
   <data name="ThrowArgumentExpected" xml:space="preserve">
     <value>Expression is expected! An exception can only be rethrown from a catch clause.</value>

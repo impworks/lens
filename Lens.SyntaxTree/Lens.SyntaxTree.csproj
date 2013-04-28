@@ -148,6 +148,11 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="Translations\ParserMessages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ParserMessages.resx</DependentUpon>
+    </Compile>
     <Compile Include="Utils\Annotations.cs" />
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="SyntaxTree\LocationEntity.cs" />
@@ -171,6 +176,10 @@
       <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
+    <EmbeddedResource Include="Translations\ParserMessages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
