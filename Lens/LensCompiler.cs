@@ -71,7 +71,11 @@ namespace Lens
 			{
 				nodes = new TreeBuilder().Parse(src);
 			}
-			catch(Exception ex)
+			catch (LensCompilerException)
+			{
+				throw;
+			}
+			catch (Exception ex)
 			{
 				throw new LensCompilerException(ex.Message);
 			}

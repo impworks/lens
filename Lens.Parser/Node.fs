@@ -4,12 +4,13 @@ open System
 open System.Collections.Generic
 open Lens.Parser.Accessor
 open Lens.Parser.Symbol
+open Lens.SyntaxTree.Compiler
 open Lens.SyntaxTree.SyntaxTree
 open Lens.SyntaxTree.SyntaxTree.ControlFlow
 open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.SyntaxTree.Literals
 open Lens.SyntaxTree.SyntaxTree.Operators
-open Lens.SyntaxTree.Compiler
+open Lens.SyntaxTree.Translations
 open Lens.Utils
 
 // Special nodes
@@ -85,7 +86,7 @@ let variableDeclaration binding name value =
         match binding with
         | "let" -> upcast LetNode()
         | "var" -> upcast VarNode()
-        | _     -> failwith "Unknown value binding type"
+        | other -> failwith <| String.Format(ParserMessages.UnknownValueBindingType, other)
     node.Name <- name
     node.Value <- value
     node :> NodeBase
@@ -210,7 +211,7 @@ let boolean value =
         match value with
         | "true"  -> true
         | "false" -> false
-        | other   -> failwithf "Unknown boolean value %s" other
+        | other   -> failwith <| String.Format(ParserMessages.UnknownBooleanValue, other)
     BooleanNode(Value = v) :> NodeBase
 
 let int (value : string) =
@@ -226,49 +227,49 @@ let string value =
 let castNode expression castOption : NodeBase =
     match castOption with
     | None              -> expression
-    | Some ("is", name) -> upcast IsOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
-    | Some ("as", name) -> upcast CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
-    | Some (op, name)   -> failwithf "Unknown cast operator kind %s" op
+    | Some("is", name)  -> upcast IsOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
+    | Some("as", name)  -> upcast CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
+    | Some(other, name) -> failwith <| String.Format(ParserMessages.UnknownCastOperator, other)
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     let booleanKind = function
     | "&&"  -> BooleanOperatorKind.And
     | "||"  -> BooleanOperatorKind.Or
     | "^^"  -> BooleanOperatorKind.Xor
-    | other -> failwithf "Unknown boolean operator kind %s" other
+    | other -> failwith <| String.Format(ParserMessages.UnknownLogicalOperator, other)
 
     let comparisonKind = function
-    | "==" -> ComparisonOperatorKind.Equals
-    | "<>" -> ComparisonOperatorKind.NotEquals
-    | "<"  -> ComparisonOperatorKind.Less
-    | ">"  -> ComparisonOperatorKind.Greater
-    | "<=" -> ComparisonOperatorKind.LessEquals
-    | ">=" -> ComparisonOperatorKind.GreaterEquals
-    | other -> failwithf "Unknown comparison operator kind %s" other
+    | "=="  -> ComparisonOperatorKind.Equals
+    | "<>"  -> ComparisonOperatorKind.NotEquals
+    | "<"   -> ComparisonOperatorKind.Less
+    | ">"   -> ComparisonOperatorKind.Greater
+    | "<="  -> ComparisonOperatorKind.LessEquals
+    | ">="  -> ComparisonOperatorKind.GreaterEquals
+    | other -> failwith <| String.Format(ParserMessages.UnknownComparisonOperator, other)
 
     match symbol with
     | "&&"
     | "||"
-    | "^^" -> upcast BooleanOperatorNode(Kind = booleanKind symbol)
+    | "^^"  -> upcast BooleanOperatorNode(Kind = booleanKind symbol)
     | "=="
     | "<>"
     | "<"
     | ">"
     | "<="
-    | ">=" -> upcast ComparisonOperatorNode(Kind = comparisonKind symbol)
-    | "**" -> upcast PowOperatorNode()
-    | "*"  -> upcast MultiplyOperatorNode()
-    | "/"  -> upcast DivideOperatorNode()
-    | "%"  -> upcast RemainderOperatorNode()
-    | "+"  -> upcast AddOperatorNode()
-    | "-"  -> upcast SubtractOperatorNode()
-    | _    -> failwithf "Unknown binary operator %s" symbol
+    | ">="  -> upcast ComparisonOperatorNode(Kind = comparisonKind symbol)
+    | "**"  -> upcast PowOperatorNode()
+    | "*"   -> upcast MultiplyOperatorNode()
+    | "/"   -> upcast DivideOperatorNode()
+    | "%"   -> upcast RemainderOperatorNode()
+    | "+"   -> upcast AddOperatorNode()
+    | "-"   -> upcast SubtractOperatorNode()
+    | other -> failwith <| String.Format(ParserMessages.UnknownBinaryOperator, other)
 
 let unaryOperator symbol operand : NodeBase =
     match symbol with
     | Some "not" -> upcast InversionOperatorNode(Operand = operand)
     | Some "-"   -> upcast NegationOperatorNode(Operand = operand)
-    | Some other -> failwithf "Unknown unary operator %s" other
+    | Some other -> failwith <| String.Format(ParserMessages.UnknownUnaryOperator, other)
     | None       -> operand
 
 let private binaryOperator symbol left right =
@@ -289,7 +290,7 @@ let typeOperator symbol typeName =
         match symbol with
         | "typeof"  -> upcast TypeofOperatorNode()
         | "default" -> upcast DefaultOperatorNode()
-        | other     -> failwithf "Unknown type operator %s" other
+        | other     -> failwith <| String.Format(ParserMessages.UnknownTypeOperator, other)
     node.TypeSignature <- TypeSignature typeName
     node :> NodeBase
 

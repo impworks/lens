@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -57,8 +59,23 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			Code.Compile(ctx, false);
 			gen.EmitLeave(EndLabel);
 
-			foreach(var curr in CatchClauses)
+			var catchTypes = new Dictionary<Type, bool>();
+			var catchAll = false;
+			foreach (var curr in CatchClauses)
+			{
+				if(catchAll)
+					Error(curr, CompilerMessages.CatchClauseUnreachable);
+
+				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof (Exception);
+
+				if(catchTypes.ContainsKey(currType))
+					Error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+
+				if (currType == typeof (Exception))
+					catchAll = true;
+
 				curr.Compile(ctx, false);
+			}
 
 			gen.EndExceptionBlock();
 

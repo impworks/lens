@@ -2,6 +2,7 @@
 
 open FParsec
 open Lens.Parser.FParsecHelpers
+open Lens.SyntaxTree.Translations
 
 let private getRealIndent (stream : CharStream<ParserState>) = Reply stream.UserState.RealIndentation
 let private getVirtualIndent (stream : CharStream<ParserState>) = Reply stream.UserState.VirtualIndentation
@@ -14,7 +15,7 @@ let private ensureIndent indent (stream : CharStream<ParserState>) =
     let count = indent * 4
     let toSkip = count - realCount
     if toSkip < 0
-    then fail "Incorrect indent level" stream
+    then fail ParserMessages.IncorrectIndentation stream
     else skipManyMinMaxSatisfy toSkip toSkip (fun c -> c = ' ') stream
 
 let private decreaseIndent indent (stream : CharStream<ParserState>) =
@@ -23,7 +24,7 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
     then let reply = ((many (pstring "    ") |>> List.length) <!> sprintf "decreaseIndent %d" indent) stream
          let count = reply.Result
          if count > indent
-         then fail "Incorrect indentation dectected on dedent" stream
+         then fail ParserMessages.IncorrectIndentation stream
          else Reply count
     else Reply state.RealIndentation
 
@@ -53,7 +54,7 @@ let private checkIndent (stream : CharStream<ParserState>) =
     let state = stream.UserState
     if state.RealIndentation = state.VirtualIndentation
     then Reply(())
-    else fail "Incorrect indentation" stream
+    else fail ParserMessages.IncorrectIndentation stream
 
 /// Line separator for indented lines. Preserves indentation.
 let nextLine : Parser<unit, ParserState> =
