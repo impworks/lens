@@ -39,11 +39,11 @@ namespace ConsoleHost
 				}
 				catch (LensCompilerException ex)
 				{
-					printError("Error compiling the script!", ex.FullMessage);
+					printError("Ошибка компиляции!", ex.FullMessage);
 				}
 				catch (Exception ex)
 				{
-					printError("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace, ConsoleColor.Yellow);
+					printError("Неизвестная ошибка!", ex.Message + Environment.NewLine + ex.StackTrace, ConsoleColor.Yellow);
 				}
 			}
 		}
@@ -102,20 +102,20 @@ namespace ConsoleHost
 							if (param == "on")
 							{
 								timer = true;
-								printHint("Timer enabled.");
+								printHint("Таймер включен.");
 								continue;
 							}
 							if (param == "off")
 							{
 								timer = false;
-								printHint("Timer disabled.");
+								printHint("Таймер выключен.");
 								continue;
 							}
 						}
 
 						if (line.StartsWith("#load"))
 						{
-							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							var param = line.Substring("#load".Length).Trim().ToLowerInvariant();
 							try
 							{
 								using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
@@ -127,7 +127,7 @@ namespace ConsoleHost
 							}
 							catch
 							{
-								printHint(string.Format("File '{0}' could not be loaded!", param));
+								printHint(string.Format("Файл '{0}' не может быть загружен!", param));
 								continue;
 							}
 						}
@@ -163,10 +163,10 @@ namespace ConsoleHost
 		{
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
-				Console.WriteLine("=====================");
-				Console.WriteLine("  LENS Console Host");
-				Console.WriteLine("=====================");
-				Console.WriteLine("(type #help for help)");
+				Console.WriteLine("==================================");
+				Console.WriteLine("          Консоль LENS            ");
+				Console.WriteLine("==================================");
+				Console.WriteLine("(команда #help отображает справку)");
 				Console.WriteLine();
 			}
 		}
@@ -178,6 +178,7 @@ namespace ConsoleHost
 				Console.WriteLine(msg);
 				Console.WriteLine();
 				Console.WriteLine(details);
+				Console.WriteLine();
 				Console.ResetColor();
 			}
 		}
@@ -197,17 +198,18 @@ namespace ConsoleHost
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
 				Console.WriteLine();
-				Console.WriteLine("To enter a script, just type it line by line.");
-				Console.WriteLine("Finish the line with # to execute the script.");
+				Console.WriteLine("Чтобы выполнить программу, введите ее построчно");
+				Console.WriteLine("и поставьте символ # в конце последней строки.");
 				Console.WriteLine();
-				Console.WriteLine("Available interpreter commands:");
+				Console.WriteLine("Доступные команды консоли:");
 				Console.WriteLine();
-				Console.WriteLine("  #exit - close the interpreter");
-				Console.WriteLine("  #run  - execute the script and print the output");
-				Console.WriteLine("  #oops - cancel last line");
-				Console.WriteLine("  #clr  - clear the console");
+				Console.WriteLine("  #exit - закрыть консоль");
+				Console.WriteLine("  #run  - выполнить скрипт и вывести результат");
+				Console.WriteLine("  #oops - отменить последнюю строчку");
+				Console.WriteLine("  #clr  - очистить консоль");
 				Console.WriteLine();
-				Console.WriteLine("  #timer (on|off)  - enable/disable time measurement");
+				Console.WriteLine("  #timer (on|off)  - включить/выключить замер времени");
+				Console.WriteLine("  #load <file>     - загрузить и выполнить программу из файла");
 				Console.WriteLine();
 			}
 		}
@@ -227,8 +229,8 @@ namespace ConsoleHost
 
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
-				Console.WriteLine("Compilation: {0} msec.", compileTime);
-				Console.WriteLine("Execution: {0} msec.", runTime);
+				Console.WriteLine("Компиляция: {0} мсек.", compileTime);
+				Console.WriteLine("Выполнение: {0} мсек.", runTime);
 				Console.WriteLine();
 			}
 		}

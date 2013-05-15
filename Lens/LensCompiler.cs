@@ -67,7 +67,6 @@ namespace Lens
 		public Func<object> Compile(string src)
 		{
 			IEnumerable<NodeBase> nodes;
-			var t = DateTime.Now;
 			try
 			{
 				nodes = new TreeBuilder().Parse(src);
@@ -76,13 +75,7 @@ namespace Lens
 			{
 				throw new LensCompilerException(ex.Message);
 			}
-			Console.WriteLine("Parsing: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			t = DateTime.Now;
-			var x = Compile(nodes);
-			Console.WriteLine("Compiling: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			return x;
+			return Compile(nodes);
 		}
 
 		/// <summary>

@@ -118,270 +118,270 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ArgumentTypeMismatch" xml:space="preserve">
-    <value>Cannot use object of type '{0}' as a value for parameter of type '{1}'!</value>
+    <value>Невозможно использовать выражения типа '{0}' в качестве значения параметра типа '{1}'!</value>
   </data>
   <data name="ArrayElementTypeMismatch" xml:space="preserve">
-    <value>Cannot add object of type '{0}' to array of type '{1}'!</value>
+    <value>Невозможно добавить объект типа '{0}' в массив типа '{1}'!</value>
   </data>
   <data name="ArrayEmpty" xml:space="preserve">
-    <value>Array initializer must contain at least one object! Use explicit constructor to create an empty array.</value>
+    <value>Инициализатор массива должен содержать хотя бы один элемент! Для создания пустых массивов воспользуйтесь явным конструктором.</value>
   </data>
   <data name="ArrayTypeUnknown" xml:space="preserve">
-    <value>Array type cannot be inferred! Use type casting to specify element types.</value>
+    <value>Тип массива не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="CallableTooManyArguments" xml:space="preserve">
-    <value>Cannot create a callable object from a method with more than 16 arguments!</value>
+    <value>Невозможно создать делегат из метода, принимающего более 16 аргументов.</value>
   </data>
   <data name="CastDelegateArgTypesMismatch" xml:space="preserve">
-    <value>Delegate types '{0}' and '{1}' do not have matching argument types!</value>
+    <value>У делегатов '{0}' и '{1}' не совпадают аргументы!</value>
   </data>
   <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
-    <value>Delegate types '{0}' and '{1}' do not have matching return types!</value>
+    <value>У делегатов '{0}' и '{1}' не совпадают возвращаемые значения!</value>
   </data>
   <data name="CastNullValueType" xml:space="preserve">
-    <value>Cannot cast a null to type '{0}' because it is a value type!</value>
+    <value>Невозможно привести выражение null к типу '{0}', поскольку он передается по значению!</value>
   </data>
   <data name="CastTypesMismatch" xml:space="preserve">
-    <value>Cannot cast object of type '{0}' to type '{1}'!</value>
+    <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
   <data name="CatchTypeNotException" xml:space="preserve">
-    <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
+    <value>Тип '{0}' не может быть использован в выражении catch, поскольку он не наследуется от System.Exception!</value>
   </data>
   <data name="ClosureImplicit" xml:space="preserve">
-    <value>Cannot closure an implicit variable!</value>
+    <value>Невозможно использовать неявную переменную в замыкании!</value>
   </data>
   <data name="ClosureRef" xml:space="preserve">
-    <value>Cannot closure a ref argument!</value>
+    <value>Невозможно использовать аргумент, передаваемый по ссылке, в замыкании!</value>
   </data>
   <data name="CodeBlockEmpty" xml:space="preserve">
-    <value>Code block contains no statements!</value>
+    <value>Блок кода должен содержать хотя бы одно выражение!</value>
   </data>
   <data name="CodeBlockLastVar" xml:space="preserve">
-    <value>A declaration of a variable or a constant cannot be the last statement in a code block!</value>
+    <value>Объявление переменной или константы не может быть последним выражением в блоке!</value>
   </data>
   <data name="ConditionInconsistentTyping" xml:space="preserve">
-    <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
+    <value>Невозможно определить общий тип для ветвей условия! Типы выражений -  '{0}' и '{1}'.</value>
   </data>
   <data name="ConstantByRef" xml:space="preserve">
-    <value>Constant variables cannot be passed by reference!</value>
+    <value>Константы нельзя передавать в функции по ссылке!</value>
   </data>
   <data name="ConstantDivisionByZero" xml:space="preserve">
-    <value>Constant division by zero!</value>
+    <value>Деление на ноль!</value>
   </data>
   <data name="ConstructorStatic" xml:space="preserve">
-    <value>A constructor must not be marked as static!</value>
+    <value>Конструктор не может быть статическим!</value>
   </data>
   <data name="ContextNotFound" xml:space="preserve">
-    <value>Context #{0} does not exist!</value>
+    <value>Контекст #{0} не существует!</value>
   </data>
   <data name="ContextUnregistered" xml:space="preserve">
-    <value>Context #{0} has been unregistered!</value>
+    <value>Контекст #{0} был освобожден!</value>
   </data>
   <data name="DelegateArgumentsCountMismatch" xml:space="preserve">
-    <value>Invoking a delegate of type '{0}' requires {1} arguments, {2} given instead!</value>
+    <value>Вызов делегата типа '{0}' требует {1} аргументов, а передано {2}!</value>
   </data>
   <data name="DictionaryEmpty" xml:space="preserve">
-    <value>Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary.</value>
+    <value>Инициализатор словаря должен содержать хотя бы один элемент! Для создания пустых словарей воспользуйтесь явным конструктором.</value>
   </data>
   <data name="DictionaryKeyTypeMismatch" xml:space="preserve">
-    <value>Cannot add a key of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+    <value>Невозможно добавить ключ типа '{0}' в Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DictionaryTypeUnknown" xml:space="preserve">
-    <value>Dictionary type cannot be inferred! Use type casting to specify element types.</value>
+    <value>Тип словаря не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="DictionaryValueTypeMismatch" xml:space="preserve">
-    <value>Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+    <value>Невозможно добавить значение типа '{0}' в Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DynamicMemberFromStaticContext" xml:space="preserve">
-    <value>'{0}' cannot be accessed from static context!</value>
+    <value>Невозможно получить доступ к '{0}' из статического контекста!</value>
   </data>
   <data name="ExpressionNull" xml:space="preserve">
-    <value>Expression type cannot be inferred! Please use type casting to specify actual type.</value>
+    <value>Тип выражения не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="ExpressionVoid" xml:space="preserve">
-    <value>Expression that returns a value is expected!</value>
+    <value>Требуется выражение, возвращающее значение!</value>
   </data>
   <data name="FunctionInvocationAmbiguous" xml:space="preserve">
-    <value>There is more than one suitable override of function '{0}'! Please use type casting to specify the exact override.</value>
+    <value>Найдено несколько подходящих переопределений функции '{0}'! Воспользуйтесь операцией приведения типов для указания конкретного переопределения!</value>
   </data>
   <data name="FunctionNotFound" xml:space="preserve">
-    <value>No function named '{0}' with suitable arguments is declared!</value>
+    <value>Не найдено ни одного переопределения функции '{0}', принимающей переданные аргументы!</value>
   </data>
   <data name="GenericArgCountMismatch" xml:space="preserve">
-    <value>Number of generic arguments does not match!</value>
+    <value>Количество обобщенных аргументов не совпадает!</value>
   </data>
   <data name="GenericArgMismatch" xml:space="preserve">
-    <value>Generic argument '{0}' has mismatched values: '{1}' and '{2}'!</value>
+    <value>Для обобщенного аргумента '{0}' переданы несовпадающие значения: '{1}' и '{2}'!</value>
   </data>
   <data name="GenericArgsToNonGenericMethod" xml:space="preserve">
-    <value>Cannot apply generic arguments to non-generic method '{0}'!</value>
+    <value>Метод '{0}' не принимает обобщенных аргументов!</value>
   </data>
   <data name="GenericArgumentNotResolved" xml:space="preserve">
-    <value>Generic argument '{0}' could not be resolved!</value>
+    <value>Значение обобщенного аргумента '{0}' не может быть вычислено!</value>
   </data>
   <data name="GenericHintMismatch" xml:space="preserve">
-    <value>Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!</value>
+    <value>Для обобщенного аргумента '{0}' был явно указан тип '{1}', но использование подразумевает тип '{2}'!</value>
   </data>
   <data name="GenericImplementationWrongType" xml:space="preserve">
-    <value>Cannot resolve arguments of '{0}' using type '{1}'!</value>
+    <value>Невозможно вычислить значение обобщенного аргумента '{0}', используя тип '{1}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
-    <value>Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
+    <value>Невозможно определить обобщенные аргументы интерфейса '{0}': тип '{1}' реализует несколько его переопределений!</value>
   </data>
   <data name="GenericInterfaceNotImplemented" xml:space="preserve">
-    <value>Type '{0}' does not implement any kind of interface '{1}'!</value>
+    <value>Тип '{0}' не реализует интерфейс '{1}'!</value>
   </data>
   <data name="GenericParameterNotFound" xml:space="preserve">
-    <value>Generic parameter '{0}' was not found!</value>
+    <value>Обобщенный аргумент '{0}' не был найден!</value>
   </data>
   <data name="GlobalPropertyNoGetter" xml:space="preserve">
-    <value>Global property '{0}' has no getter!</value>
+    <value>Невозможно получить значение глобального свойства '{0}'!</value>
   </data>
   <data name="GlobalPropertyNoSetter" xml:space="preserve">
-    <value>Global property '{0}' has no setter!</value>
+    <value>Невозможно задать значение глобального свойства '{0}'!</value>
   </data>
   <data name="GlobalPropertyTypeMismatch" xml:space="preserve">
-    <value>Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.</value>
+    <value>Невозможно присвоить глобальному свойству '{0}' значение типа '{1}'! Возможно, требуется явное приведение типа.</value>
   </data>
   <data name="IdentifierIsConstant" xml:space="preserve">
-    <value>'{0}' is a constant and cannot be assigned after definition!</value>
+    <value>'{0}' является константой и изменение ее значения запрещено!</value>
   </data>
   <data name="IdentifierNotFound" xml:space="preserve">
-    <value>No local variable or global parameterless function named '{0}' was found!</value>
+    <value>Переменная или функция без параметров с названием '{0}' не найдена!</value>
   </data>
   <data name="IdentifierTypeMismatch" xml:space="preserve">
-    <value>Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.</value>
+    <value>Невозможно присвоить переменной '{0}' значение типа '{1}'! Возможно. требуется явное приведение типа.</value>
   </data>
   <data name="ImplicitCastImpossible" xml:space="preserve">
-    <value>Cannot implicitly convert an object of type '{0}' to required type '{1}'!</value>
+    <value>Невозможно неявно привести выражение типа '{0}' к типу '{1}'!</value>
   </data>
   <data name="ImportIntoSaveableAssembly" xml:space="preserve">
-    <value>Entities cannot be imported into a saveable assembly!</value>
+    <value>Сохраняемые сборки не поддерживают импорт!</value>
   </data>
   <data name="ImportUnsupportedMethod" xml:space="preserve">
-    <value>Only public, static, non-generic methods can be imported!</value>
+    <value>Только публичные, статические и не содержащие обобщенных аргументов методы могут быть импортированы!</value>
   </data>
   <data name="IndexAmbigious" xml:space="preserve">
-    <value>Indexer is ambigious! At least two cases apply:{3}{0}[{1}]{3}{0}[{2}]</value>
+    <value>Индексатор не может быть однозначно определен! Подходят как минимум два переопределения:{3}{0}[{1}]{3}{0}[{2}]</value>
   </data>
   <data name="IndexGetterNotFound" xml:space="preserve">
-    <value>Type '{0}' has no index getter that accepts an index of type '{1}'!</value>
+    <value>Тип '{0}' не содержит индексатора на чтение, который бы принимал индекс типа '{1}'!</value>
   </data>
   <data name="IndexSetterNotFound" xml:space="preserve">
-    <value>Type '{0}' has no index setter that accepts an index of type '{1}'!</value>
+    <value>Тип '{0}' не содержит индексатора на запись, который бы принимал индекс типа '{1}'!</value>
   </data>
   <data name="LambdaReturnTypeUnknown" xml:space="preserve">
-    <value>Lambda return type cannot be inferred! Please use type casting to specify type.</value>
+    <value>Возвращаемый тип анонимной функции не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="ListElementTypeMismatch" xml:space="preserve">
-    <value>Cannot add object of type '{0}' to List&lt;{1}&gt;!</value>
+    <value>Невозможно добавить объект типа '{0}' в List&lt;{1}&gt;!</value>
   </data>
   <data name="ListEmpty" xml:space="preserve">
-    <value>List initializer must contain at least one object! Use explicit constructor to create an empty list.</value>
+    <value>Инициализатор списка должен содержать хотя бы один элемент! Для создания пустых списков воспользуйтесь явным конструктором.</value>
   </data>
   <data name="ListTypeUnknown" xml:space="preserve">
-    <value>List type cannot be inferred! Use type casting to specify element types.</value>
+    <value>Тип списка не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
-    <value>Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>
+    <value>Невозможно применить оператор '{0}' к аргументам типов '{1}' и '{2}'!</value>
   </data>
   <data name="OperatorTypesSignednessMismatch" xml:space="preserve">
-    <value>Cannot apply apply math operations to arguments of different signedness!</value>
+    <value>Невозможно провести математическую операцию к числам разной знаковости!</value>
   </data>
   <data name="OperatorUnaryTypeMismatch" xml:space="preserve">
-    <value>Cannot apply operator '{0}' to argument of type '{1}'!</value>
+    <value>Невозможно применить оператор '{0}' к аргументу типа '{1}'!</value>
   </data>
   <data name="ParameterlessConstructorParens" xml:space="preserve">
-    <value>A parameterless constructor must be invoked by applying a () to it!</value>
+    <value>Для вызова конструктора без параметров требуется указать пустые скобки!</value>
   </data>
   <data name="PropertyIdNoGetter" xml:space="preserve">
-    <value>Property #{0} has no getter!</value>
+    <value>Значение свойства #{0} не может быть получено!</value>
   </data>
   <data name="PropertyIdNoSetter" xml:space="preserve">
-    <value>Property #{0} has no setter!</value>
+    <value>Значение свойства #{0} не может быть задано!</value>
   </data>
   <data name="PropertyIdNotFound" xml:space="preserve">
-    <value>Property #{0} does not exist!</value>
+    <value>Свойство #{0} не найдено!</value>
   </data>
   <data name="PropertyImported" xml:space="preserve">
-    <value>Property '{0}' has already been imported!</value>
+    <value>Свойство '{0}' уже было импортировано!</value>
   </data>
   <data name="PropertyNoGetter" xml:space="preserve">
-    <value>Property '{0}.{1}' does not have a getter!</value>
+    <value>Значение свойства '{0}.{1}' не может быть получено!</value>
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
-    <value>Property '{0}.{1}' does not have a setter!</value>
+    <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
-    <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
+    <value>Функция типа '{0}' не может вернуть объект типа '{1}'!</value>
   </data>
   <data name="ThrowArgumentExpected" xml:space="preserve">
-    <value>Expression is expected! An exception can only be rethrown from a catch clause.</value>
+    <value>Требуется выражение! Повторный выброс исключения допустим только в выражении catch.</value>
   </data>
   <data name="ThrowTypeNotException" xml:space="preserve">
-    <value>Type '{0}' cannot be used in throw statement because it does not derive from System.Exception!</value>
+    <value>Тип '{0}' не может быть использован в выражении throw, поскольку он не наследуется от System.Exception!</value>
   </data>
   <data name="TupleNoArgs" xml:space="preserve">
-    <value>Tuple must contain at least one object!</value>
+    <value>Кортеж должен содержать хотя бы один объект!</value>
   </data>
   <data name="TupleTooManyArgs" xml:space="preserve">
-    <value>Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead.</value>
+    <value>Кортеж не может содержать больше 8 объектов! Воспользуйтесь структурой или вложенным кортежом.</value>
   </data>
   <data name="TypeAbstract" xml:space="preserve">
-    <value>Cannot create an instance of type '{0}' because it is abstract!</value>
+    <value>Невозможно создать экземпляр абстрактного типа '{0}'!</value>
   </data>
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
-    <value>Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
+    <value>Невозможно применить обобщенные параметры к '{0}.{1}', потому что это не метод!</value>
   </data>
   <data name="TypeConstructorAmbiguos" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable constructor! Please specify type casting to specify the exact override.</value>
+    <value>Тип '{0}' содержит несколько подходящих конструкторов! Воспользуйтесь операцией приведения типов .</value>
   </data>
   <data name="TypeConstructorNotFound" xml:space="preserve">
-    <value>Type '{0}' does not have a constructor accepting given arguments!</value>
+    <value>Тип '{0}' не содержит конструктор с подходящим списком аргументов!</value>
   </data>
   <data name="TypeDefined" xml:space="preserve">
-    <value>Type '{0}' has already been defined!</value>
+    <value>Тип '{0}' уже объявлен!</value>
   </data>
   <data name="TypeIdentifierNotFound" xml:space="preserve">
-    <value>Type '{0}' does not have any field, property or method called '{1}'!</value>
+    <value>Тип '{0}' не содержит свойства, метода или поля под названием '{1}'!</value>
   </data>
   <data name="TypeIsAmbiguous" xml:space="preserve">
-    <value>Ambigious type reference: type '{0}' is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}</value>
+    <value>Неоднозначное указание типа: тип '{0}' найден как минимум в двух пространствах имен:{5}{1} в сборке {2}{5}{3} в сборке {4}</value>
   </data>
   <data name="TypeMethodAmbiguous" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.</value>
+    <value>Тип '{0}' содержит несколько подходящих переопределений метода '{1}'! Укажите типы аргументов явно.</value>
   </data>
   <data name="TypeMethodInvocationAmbiguous" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.</value>
+    <value>Тип '{0}' содержит несколько подходящих переопределений метода '{1}'! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="TypeMethodNotFound" xml:space="preserve">
-    <value>Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!</value>
+    <value>Тип '{0}' не содержит метод '{1}' с подходящим списков аргументов! Соответствующий метод-расширение также не найден.</value>
   </data>
   <data name="TypeNotCallable" xml:space="preserve">
-    <value>Type '{0}' is not a delegate!</value>
+    <value>Тип '{0}' не является делегатом!</value>
   </data>
   <data name="TypeNotFound" xml:space="preserve">
-    <value>Type '{0}' could not be resolved!</value>
+    <value>Тип '{0}' не найден!</value>
   </data>
   <data name="TypeNotImplicitlyBoolean" xml:space="preserve">
-    <value>Type '{0}' cannot be used in a boolean context!</value>
+    <value>Тип '{0}' нельзя использовать в булевом контексте!</value>
   </data>
   <data name="TypeNotNumeric" xml:space="preserve">
-    <value>Type '{0}' is not numeric!</value>
+    <value>Тип '{0}' не является числовым!</value>
   </data>
   <data name="TypeSettableIdentifierNotFound" xml:space="preserve">
-    <value>Type '{0}' does not contain a field or a property named '{1}'!</value>
+    <value>Тип '{0}' не содержит поля или свойства '{1}'!</value>
   </data>
   <data name="TypesIncomparable" xml:space="preserve">
-    <value>Types '{0}' and '{1}' cannot be compared!</value>
+    <value>Невозможно сравнить объекты типов '{0}' и '{1}'!</value>
   </data>
   <data name="VariableDefined" xml:space="preserve">
-    <value>A variable named '{0}' is already defined!</value>
+    <value>Переменная '{0}' уже объявлена!</value>
   </data>
   <data name="VariableNotFound" xml:space="preserve">
-    <value>A variable named '{0}' does not exist in the scope!</value>
+    <value>Переменная '{0}' не объявлена в данной области видимости!</value>
   </data>
   <data name="VoidTypeDefault" xml:space="preserve">
-    <value>Cannot create an instance of Unit or Void types!</value>
+    <value>Невозможно создать экземпляр типа Unit или void!</value>
   </data>
 </root>
