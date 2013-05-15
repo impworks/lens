@@ -118,180 +118,180 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AccessorExpr" xml:space="preserve">
-    <value>accessor expression</value>
+    <value>оператор доступа</value>
   </data>
   <data name="AssignExpr" xml:space="preserve">
-    <value>assignment expression</value>
+    <value>оператор присваивания</value>
   </data>
   <data name="AtomarExpr" xml:space="preserve">
-    <value>atomar expression</value>
+    <value>атомарное выражение</value>
   </data>
   <data name="Block" xml:space="preserve">
-    <value>block</value>
+    <value>блок</value>
   </data>
   <data name="BlockExpr" xml:space="preserve">
-    <value>block expression</value>
+    <value>выражение блока</value>
   </data>
   <data name="BlockLine" xml:space="preserve">
-    <value>block line</value>
+    <value>строка блока</value>
   </data>
   <data name="ByRefArg" xml:space="preserve">
-    <value>by ref argument</value>
+    <value>аргумент по ссылке</value>
   </data>
   <data name="CatchExpr" xml:space="preserve">
-    <value>catch expression</value>
+    <value>выражение catch</value>
   </data>
   <data name="DictEntryExpr" xml:space="preserve">
-    <value>dictionary entry expression</value>
+    <value>элемент словаря</value>
   </data>
   <data name="Double" xml:space="preserve">
-    <value>double value</value>
+    <value>дробное число</value>
   </data>
   <data name="EnumerationExpr" xml:space="preserve">
-    <value>enumeration expression</value>
+    <value>перечисление</value>
   </data>
   <data name="Expr" xml:space="preserve">
-    <value>expression</value>
+    <value>выражение</value>
   </data>
   <data name="FuncDef" xml:space="preserve">
-    <value>function definition</value>
+    <value>определение функции</value>
   </data>
   <data name="FuncParams" xml:space="preserve">
-    <value>function parameters</value>
+    <value>параметры функции</value>
   </data>
   <data name="Identifier" xml:space="preserve">
-    <value>identifier</value>
+    <value>идентификатор</value>
   </data>
   <data name="IfExpr" xml:space="preserve">
-    <value>if expression</value>
+    <value>выражение if</value>
   </data>
   <data name="Int" xml:space="preserve">
-    <value>integer value</value>
+    <value>целое число</value>
   </data>
   <data name="InvokeExpr" xml:space="preserve">
-    <value>invocation expression</value>
+    <value>вызов метода</value>
   </data>
   <data name="InvokeList" xml:space="preserve">
-    <value>invocation list</value>
+    <value>список вызова</value>
   </data>
   <data name="LambdaExpr" xml:space="preserve">
-    <value>lambda expression</value>
+    <value>анонимная функция</value>
   </data>
   <data name="LineExpr" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr0" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr1" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr2" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr3" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr4" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr5" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr6" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr7" xml:space="preserve">
-    <value>line expression</value>
+    <value>выражение</value>
   </data>
   <data name="Literal" xml:space="preserve">
-    <value>literal</value>
+    <value>литерал</value>
   </data>
   <data name="LocalStmt" xml:space="preserve">
-    <value>local statement</value>
+    <value>инструкция</value>
   </data>
   <data name="LValue" xml:space="preserve">
     <value>lvalue</value>
   </data>
   <data name="Namespace" xml:space="preserve">
-    <value>namespace</value>
+    <value>пространство имён</value>
   </data>
   <data name="NewArrayExpr" xml:space="preserve">
-    <value>new array expression</value>
+    <value>инициализатор массива</value>
   </data>
   <data name="NewDictExpr" xml:space="preserve">
-    <value>new dictonary expression</value>
+    <value>инициализатор словаря</value>
   </data>
   <data name="NewExpr" xml:space="preserve">
-    <value>new expression</value>
+    <value>оператор new</value>
   </data>
   <data name="NewListExpr" xml:space="preserve">
-    <value>new list expression</value>
+    <value>инициализатор списка</value>
   </data>
   <data name="NewObjExpr" xml:space="preserve">
-    <value>new object expression</value>
+    <value>инициализатор объекта</value>
   </data>
   <data name="NewTupleExpr" xml:space="preserve">
-    <value>new tuple expression</value>
+    <value>инициализатор кортежа</value>
   </data>
   <data name="RecordDef" xml:space="preserve">
-    <value>record definition</value>
+    <value>объявление записи</value>
   </data>
   <data name="RecordDefStmt" xml:space="preserve">
-    <value>record definition statement</value>
+    <value>объявление поля записи</value>
   </data>
   <data name="RValue" xml:space="preserve">
     <value>rvalue</value>
   </data>
   <data name="Sign1" xml:space="preserve">
-    <value>sign</value>
+    <value>знак</value>
   </data>
   <data name="Sign2" xml:space="preserve">
-    <value>sign</value>
+    <value>знак</value>
   </data>
   <data name="Sign3" xml:space="preserve">
-    <value>sign</value>
+    <value>знак</value>
   </data>
   <data name="Sign4" xml:space="preserve">
-    <value>sign</value>
+    <value>знак</value>
   </data>
   <data name="Stmt" xml:space="preserve">
-    <value>statement</value>
+    <value>выражение</value>
   </data>
   <data name="String" xml:space="preserve">
-    <value>string value</value>
+    <value>строка</value>
   </data>
   <data name="ThrowExpr" xml:space="preserve">
-    <value>throw expression</value>
+    <value>выражение throw</value>
   </data>
   <data name="TryExpr" xml:space="preserve">
-    <value>try expression</value>
+    <value>выражение try</value>
   </data>
   <data name="Type" xml:space="preserve">
-    <value>type</value>
+    <value>тип</value>
   </data>
   <data name="TypeDef" xml:space="preserve">
-    <value>type definition</value>
+    <value>объявление типа</value>
   </data>
   <data name="TypeDefStmt" xml:space="preserve">
-    <value>type definiton statement</value>
+    <value>объявление метки</value>
   </data>
   <data name="TypeOperatorExpr" xml:space="preserve">
-    <value>type operator expression</value>
+    <value>оператор приведения типов</value>
   </data>
   <data name="TypeParams" xml:space="preserve">
-    <value>type parameters</value>
+    <value>параметры типа</value>
   </data>
   <data name="Using" xml:space="preserve">
-    <value>using statement</value>
+    <value>выражение using</value>
   </data>
   <data name="Value" xml:space="preserve">
-    <value>value</value>
+    <value>значение</value>
   </data>
   <data name="VarDeclExpr" xml:space="preserve">
-    <value>variable declaration expression</value>
+    <value>объявление переменной</value>
   </data>
   <data name="WhileExpr" xml:space="preserve">
-    <value>while expression</value>
+    <value>выражение while</value>
   </data>
 </root>

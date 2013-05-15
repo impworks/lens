@@ -180,12 +180,6 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="Translations\ParserLexems.ru.resx">
-      <LastGenOutput>ParserLexems.ru.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Translations\ParserMessages.ru.resx">
-      <LastGenOutput>ParserMessages.ru.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserLexems.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>ParserLexems.Designer.cs</LastGenOutput>

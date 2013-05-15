@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to accessor expression.
+        ///   Looks up a localized string similar to оператор доступа.
         /// </summary>
         public static string AccessorExpr {
             get {
@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to assignment expression.
+        ///   Looks up a localized string similar to оператор присваивания.
         /// </summary>
         public static string AssignExpr {
             get {
@@ -79,7 +79,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to atomar expression.
+        ///   Looks up a localized string similar to атомарное выражение.
         /// </summary>
         public static string AtomarExpr {
             get {
@@ -88,7 +88,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to block.
+        ///   Looks up a localized string similar to блок.
         /// </summary>
         public static string Block {
             get {
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to block expression.
+        ///   Looks up a localized string similar to выражение блока.
         /// </summary>
         public static string BlockExpr {
             get {
@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to block line.
+        ///   Looks up a localized string similar to строка блока.
         /// </summary>
         public static string BlockLine {
             get {
@@ -115,7 +115,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to by ref argument.
+        ///   Looks up a localized string similar to аргумент по ссылке.
         /// </summary>
         public static string ByRefArg {
             get {
@@ -124,7 +124,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to catch expression.
+        ///   Looks up a localized string similar to выражение catch.
         /// </summary>
         public static string CatchExpr {
             get {
@@ -133,7 +133,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to dictionary entry expression.
+        ///   Looks up a localized string similar to элемент словаря.
         /// </summary>
         public static string DictEntryExpr {
             get {
@@ -142,7 +142,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to double value.
+        ///   Looks up a localized string similar to дробное число.
         /// </summary>
         public static string Double {
             get {
@@ -151,7 +151,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to enumeration expression.
+        ///   Looks up a localized string similar to перечисление.
         /// </summary>
         public static string EnumerationExpr {
             get {
@@ -160,7 +160,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string Expr {
             get {
@@ -169,7 +169,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to function definition.
+        ///   Looks up a localized string similar to определение функции.
         /// </summary>
         public static string FuncDef {
             get {
@@ -178,7 +178,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to function parameters.
+        ///   Looks up a localized string similar to параметры функции.
         /// </summary>
         public static string FuncParams {
             get {
@@ -187,7 +187,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to identifier.
+        ///   Looks up a localized string similar to идентификатор.
         /// </summary>
         public static string Identifier {
             get {
@@ -196,7 +196,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to if expression.
+        ///   Looks up a localized string similar to выражение if.
         /// </summary>
         public static string IfExpr {
             get {
@@ -205,7 +205,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to integer value.
+        ///   Looks up a localized string similar to целое число.
         /// </summary>
         public static string Int {
             get {
@@ -214,7 +214,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to invocation expression.
+        ///   Looks up a localized string similar to вызов метода.
         /// </summary>
         public static string InvokeExpr {
             get {
@@ -223,7 +223,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to invocation list.
+        ///   Looks up a localized string similar to список вызова.
         /// </summary>
         public static string InvokeList {
             get {
@@ -232,7 +232,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to lambda expression.
+        ///   Looks up a localized string similar to анонимная функция.
         /// </summary>
         public static string LambdaExpr {
             get {
@@ -241,7 +241,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr {
             get {
@@ -250,7 +250,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr0 {
             get {
@@ -259,7 +259,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr1 {
             get {
@@ -268,7 +268,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr2 {
             get {
@@ -277,7 +277,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr3 {
             get {
@@ -286,7 +286,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr4 {
             get {
@@ -295,7 +295,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr5 {
             get {
@@ -304,7 +304,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr6 {
             get {
@@ -313,7 +313,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to line expression.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string LineExpr7 {
             get {
@@ -322,7 +322,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to literal.
+        ///   Looks up a localized string similar to литерал.
         /// </summary>
         public static string Literal {
             get {
@@ -331,7 +331,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to local statement.
+        ///   Looks up a localized string similar to инструкция.
         /// </summary>
         public static string LocalStmt {
             get {
@@ -349,7 +349,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to namespace.
+        ///   Looks up a localized string similar to пространство имён.
         /// </summary>
         public static string Namespace {
             get {
@@ -358,7 +358,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new array expression.
+        ///   Looks up a localized string similar to инициализатор массива.
         /// </summary>
         public static string NewArrayExpr {
             get {
@@ -367,7 +367,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new dictonary expression.
+        ///   Looks up a localized string similar to инициализатор словаря.
         /// </summary>
         public static string NewDictExpr {
             get {
@@ -376,7 +376,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new expression.
+        ///   Looks up a localized string similar to оператор new.
         /// </summary>
         public static string NewExpr {
             get {
@@ -385,7 +385,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new list expression.
+        ///   Looks up a localized string similar to инициализатор списка.
         /// </summary>
         public static string NewListExpr {
             get {
@@ -394,7 +394,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new object expression.
+        ///   Looks up a localized string similar to инициализатор объекта.
         /// </summary>
         public static string NewObjExpr {
             get {
@@ -403,7 +403,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to new tuple expression.
+        ///   Looks up a localized string similar to инициализатор кортежа.
         /// </summary>
         public static string NewTupleExpr {
             get {
@@ -412,7 +412,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to record definition.
+        ///   Looks up a localized string similar to объявление записи.
         /// </summary>
         public static string RecordDef {
             get {
@@ -421,7 +421,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to record definition statement.
+        ///   Looks up a localized string similar to объявление поля записи.
         /// </summary>
         public static string RecordDefStmt {
             get {
@@ -439,7 +439,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to sign.
+        ///   Looks up a localized string similar to знак.
         /// </summary>
         public static string Sign1 {
             get {
@@ -448,7 +448,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to sign.
+        ///   Looks up a localized string similar to знак.
         /// </summary>
         public static string Sign2 {
             get {
@@ -457,7 +457,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to sign.
+        ///   Looks up a localized string similar to знак.
         /// </summary>
         public static string Sign3 {
             get {
@@ -466,7 +466,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to sign.
+        ///   Looks up a localized string similar to знак.
         /// </summary>
         public static string Sign4 {
             get {
@@ -475,7 +475,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to statement.
+        ///   Looks up a localized string similar to выражение.
         /// </summary>
         public static string Stmt {
             get {
@@ -484,7 +484,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to string value.
+        ///   Looks up a localized string similar to строка.
         /// </summary>
         public static string String {
             get {
@@ -493,7 +493,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to throw expression.
+        ///   Looks up a localized string similar to выражение throw.
         /// </summary>
         public static string ThrowExpr {
             get {
@@ -502,7 +502,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to try expression.
+        ///   Looks up a localized string similar to выражение try.
         /// </summary>
         public static string TryExpr {
             get {
@@ -511,7 +511,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to type.
+        ///   Looks up a localized string similar to тип.
         /// </summary>
         public static string Type {
             get {
@@ -520,7 +520,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to type definition.
+        ///   Looks up a localized string similar to объявление типа.
         /// </summary>
         public static string TypeDef {
             get {
@@ -529,7 +529,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to type definiton statement.
+        ///   Looks up a localized string similar to объявление метки.
         /// </summary>
         public static string TypeDefStmt {
             get {
@@ -538,7 +538,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to type operator expression.
+        ///   Looks up a localized string similar to оператор приведения типов.
         /// </summary>
         public static string TypeOperatorExpr {
             get {
@@ -547,7 +547,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to type parameters.
+        ///   Looks up a localized string similar to параметры типа.
         /// </summary>
         public static string TypeParams {
             get {
@@ -556,7 +556,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using statement.
+        ///   Looks up a localized string similar to выражение using.
         /// </summary>
         public static string Using {
             get {
@@ -565,7 +565,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to value.
+        ///   Looks up a localized string similar to значение.
         /// </summary>
         public static string Value {
             get {
@@ -574,7 +574,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to variable declaration expression.
+        ///   Looks up a localized string similar to объявление переменной.
         /// </summary>
         public static string VarDeclExpr {
             get {
@@ -583,7 +583,7 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to while expression.
+        ///   Looks up a localized string similar to выражение while.
         /// </summary>
         public static string WhileExpr {
             get {

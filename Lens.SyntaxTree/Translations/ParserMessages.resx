@@ -118,70 +118,70 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CompoundErrors" xml:space="preserve">
-    <value>Compound errors: {0}</value>
+    <value>Составляющие ошибки: {0}</value>
   </data>
   <data name="ErrorCase" xml:space="preserve">
-    <value>Error case: {0}</value>
+    <value>Ошибка: {0}</value>
   </data>
   <data name="ErrorMessage" xml:space="preserve">
-    <value>Error message: {0}</value>
+    <value>Сообщение ошибки: {0}</value>
   </data>
   <data name="Expected" xml:space="preserve">
-    <value>Expected {0}</value>
+    <value>Ожидалось {0}</value>
   </data>
   <data name="ImpossibleHappened" xml:space="preserve">
-    <value>Impossible happened</value>
+    <value>Случилось невозможное</value>
   </data>
   <data name="IncorrectIndentation" xml:space="preserve">
-    <value>Incorrect indentation</value>
+    <value>Некорректный отступ</value>
   </data>
   <data name="LexemExpected" xml:space="preserve">
-    <value>Lexem expected: {0}</value>
+    <value>Ожидалась лексема: {0}</value>
   </data>
   <data name="NestedErrors" xml:space="preserve">
-    <value>Nested errors: {0}</value>
+    <value>Вложенные ошибки: {0}</value>
   </data>
   <data name="Or" xml:space="preserve">
     <value>
-      or </value>
+      или </value>
   </data>
   <data name="QuoteString" xml:space="preserve">
     <value>"{0}"</value>
   </data>
   <data name="StringExpected" xml:space="preserve">
-    <value>String expected: "{0}"</value>
+    <value>Ожидалась строка: "{0}"</value>
   </data>
   <data name="StringUnexpected" xml:space="preserve">
-    <value>Unexpected string: "{0}"</value>
+    <value>Неожиданная строка: "{0}"</value>
   </data>
   <data name="Unexpected" xml:space="preserve">
-    <value>Unexpected: {0}</value>
+    <value>Не ожидалось: {0}</value>
   </data>
   <data name="UnknownBinaryOperator" xml:space="preserve">
-    <value>Unknown binary operator: {0}</value>
+    <value>Неизвестный бинарный оператор: {0}</value>
   </data>
   <data name="UnknownBooleanValue" xml:space="preserve">
-    <value>Unknown boolean value: {0}</value>
+    <value>Неизвестное булевое значение: {0}</value>
   </data>
   <data name="UnknownCastOperator" xml:space="preserve">
-    <value>Unknown cast operator: {0}</value>
+    <value>Неизвестный оператор приведения: {0}</value>
   </data>
   <data name="UnknownComparisonOperator" xml:space="preserve">
-    <value>Unknown comparison operator: {0}</value>
+    <value>Неизвестный оператор сравнения: {0}</value>
   </data>
   <data name="UnknownError" xml:space="preserve">
-    <value>Unknown error: {0}</value>
+    <value>Неизвестная ошибка: {0}</value>
   </data>
   <data name="UnknownLogicalOperator" xml:space="preserve">
-    <value>Unknown logical operator: {0}</value>
+    <value>Неизвестный логический оператор: {0}</value>
   </data>
   <data name="UnknownTypeOperator" xml:space="preserve">
-    <value>Unknown type operator: {0}</value>
+    <value>Неизвестный оператор типа: {0}</value>
   </data>
   <data name="UnknownUnaryOperator" xml:space="preserve">
-    <value>Unknown unary operator: {0}</value>
+    <value>Неизвестный унарный оператор: {0}</value>
   </data>
   <data name="UnknownValueBindingType" xml:space="preserve">
-    <value>Unknown value binding type: {0}</value>
+    <value>Неизвестный тип связывания значения: {0}</value>
   </data>
 </root>
