@@ -103,7 +103,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				{
 					// resolve a declared extension method
 					// most time-consuming operation, therefore is last checked
-					m_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, m_TypeHints);
+					if(ctx.Options.AllowExtensionMethods)
+						m_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, m_TypeHints);
 				}
 			}
 			catch (AmbiguousMatchException)
