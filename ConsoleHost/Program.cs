@@ -115,7 +115,7 @@ namespace ConsoleHost
 
 						if (line.StartsWith("#load"))
 						{
-							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							var param = line.Substring("#load".Length).Trim().ToLowerInvariant();
 							try
 							{
 								using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
@@ -208,6 +208,7 @@ namespace ConsoleHost
 				Console.WriteLine("  #clr  - clear the console");
 				Console.WriteLine();
 				Console.WriteLine("  #timer (on|off)  - enable/disable time measurement");
+				Console.WriteLine("  #load <filename> - load file and execute its contents");
 				Console.WriteLine();
 			}
 		}
