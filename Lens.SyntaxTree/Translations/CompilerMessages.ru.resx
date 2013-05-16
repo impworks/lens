@@ -225,11 +225,20 @@
   <data name="GenericArgumentNotResolved" xml:space="preserve">
     <value>Значение обобщенного аргумента '{0}' не может быть вычислено!</value>
   </data>
+  <data name="GenericClassConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a reference type!</value>
+  </data>
+  <data name="GenericConstructorConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not have a default constructor!</value>
+  </data>
   <data name="GenericHintMismatch" xml:space="preserve">
     <value>Для обобщенного аргумента '{0}' был явно указан тип '{1}', но использование подразумевает тип '{2}'!</value>
   </data>
   <data name="GenericImplementationWrongType" xml:space="preserve">
     <value>Невозможно вычислить значение обобщенного аргумента '{0}', используя тип '{1}'!</value>
+  </data>
+  <data name="GenericInheritanceConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not implement class or interface '{3}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
     <value>Невозможно определить обобщенные аргументы интерфейса '{0}': тип '{1}' реализует несколько его переопределений!</value>
@@ -239,6 +248,9 @@
   </data>
   <data name="GenericParameterNotFound" xml:space="preserve">
     <value>Обобщенный аргумент '{0}' не был найден!</value>
+  </data>
+  <data name="GenericStructConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a value type!</value>
   </data>
   <data name="GlobalPropertyNoGetter" xml:space="preserve">
     <value>Невозможно получить значение глобального свойства '{0}'!</value>

@@ -202,6 +202,27 @@ namespace Lens.SyntaxTree.Compiler
 			return ifaces;
 		}
 
+		/// <summary>
+		/// Ensures that actual arguments can be applied to corresponding placeholders.
+		/// </summary>
+		public static Type MakeGenericTypeChecked(Type type, Type[] values)
+		{
+			if (!type.IsGenericTypeDefinition)
+				return type;
+
+			var args = type.GetGenericArguments();
+			if(args.Length != values.Length)
+				throw new ArgumentOutOfRangeException("values");
+
+			for (var idx = 0; idx < args.Length; idx++)
+			{
+				var arg = args[idx];
+				var value = values[idx];
+			}
+
+			return type.MakeGenericType(values);
+		}
+
 		#region Helpers
 
 		private static Type findImplementation(Type desired, Type actual)

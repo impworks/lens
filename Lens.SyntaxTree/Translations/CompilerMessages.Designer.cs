@@ -385,6 +385,24 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used as value for generic argument &apos;{1}&apos; of type &apos;{2}&apos; because it is not a reference type!.
+        /// </summary>
+        public static string GenericClassConstraintViolated {
+            get {
+                return ResourceManager.GetString("GenericClassConstraintViolated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used as value for generic argument &apos;{1}&apos; of type &apos;{2}&apos; because it does not have a default constructor!.
+        /// </summary>
+        public static string GenericConstructorConstraintViolated {
+            get {
+                return ResourceManager.GetString("GenericConstructorConstraintViolated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Generic argument &apos;{0}&apos; was has hint type &apos;{1}&apos;, but inferred type was &apos;{2}&apos;!.
         /// </summary>
         public static string GenericHintMismatch {
@@ -399,6 +417,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string GenericImplementationWrongType {
             get {
                 return ResourceManager.GetString("GenericImplementationWrongType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used as value for generic argument &apos;{1}&apos; of type &apos;{2}&apos; because it does not implement class or interface &apos;{3}&apos;!.
+        /// </summary>
+        public static string GenericInheritanceConstraintViolated {
+            get {
+                return ResourceManager.GetString("GenericInheritanceConstraintViolated", resourceCulture);
             }
         }
         
@@ -426,6 +453,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string GenericParameterNotFound {
             get {
                 return ResourceManager.GetString("GenericParameterNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used as value for generic argument &apos;{1}&apos; of type &apos;{2}&apos; because it is not a value type!.
+        /// </summary>
+        public static string GenericStructConstraintViolated {
+            get {
+                return ResourceManager.GetString("GenericStructConstraintViolated", resourceCulture);
             }
         }
         
