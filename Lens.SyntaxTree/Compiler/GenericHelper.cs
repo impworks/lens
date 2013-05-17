@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lens.SyntaxTree.Translations;
+using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -203,6 +205,32 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Checks if the possibly generic type has a default constructor.
+		/// </summary>
+		public static bool HasDefaultConstructor(this Type type)
+		{
+			if (type.IsValueType)
+				return true;
+
+			try
+			{
+				return type.GetConstructor(Type.EmptyTypes) != null;
+			}
+			catch (NotSupportedException)
+			{
+				if (type.IsGenericType)
+					return type.GetGenericTypeDefinition().HasDefaultConstructor();
+
+				// arrays do not have constructors
+				if (type.IsArray)
+					return false;
+
+				// type labels and records have constructors
+				return true;
+			}
+		}
+
+		/// <summary>
 		/// Ensures that actual arguments can be applied to corresponding placeholders.
 		/// </summary>
 		public static Type MakeGenericTypeChecked(Type type, Type[] values)
@@ -217,7 +245,23 @@ namespace Lens.SyntaxTree.Compiler
 			for (var idx = 0; idx < args.Length; idx++)
 			{
 				var arg = args[idx];
+				var constr = arg.GenericParameterAttributes;
 				var value = values[idx];
+
+				if (constr.HasFlag(GenericParameterAttributes.ReferenceTypeConstraint) && value.IsValueType)
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, arg, type));
+
+				if (constr.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
+					if(!value.IsValueType || (value.IsGenericType && value.GetGenericTypeDefinition() == typeof(Nullable<>)))
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, arg, type));
+
+				if (constr.HasFlag(GenericParameterAttributes.DefaultConstructorConstraint) && !value.HasDefaultConstructor())
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, arg, type));
+
+				var bases = arg.GetGenericParameterConstraints();
+				foreach (var currBase in bases)
+					if(!currBase.IsExtendablyAssignableFrom(value, true))
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, arg, type, currBase));
 			}
 
 			return type.MakeGenericType(values);
