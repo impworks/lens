@@ -179,10 +179,10 @@ let ifNode condition thenBlock elseBlock =
         match elseBlock with
         | Some a -> a
         | None   -> null
-    ConditionNode(Condition = condition, TrueAction = thenBlock, FalseAction = falseAction) :> NodeBase
+    IfNode(Condition = condition, TrueAction = thenBlock, FalseAction = falseAction) :> NodeBase
 
 let whileNode condition block =
-    LoopNode(Condition = condition, Body = block) :> NodeBase
+    WhileNode(Condition = condition, Body = block) :> NodeBase
 
 let tryCatchNode expression catchClauses =
     let node = TryNode(Code = expression)

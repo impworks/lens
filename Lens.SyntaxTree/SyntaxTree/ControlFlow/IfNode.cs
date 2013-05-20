@@ -9,9 +9,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A conditional expression.
 	/// </summary>
-	public class ConditionNode : NodeBase, IStartLocationTrackingEntity
+	public class IfNode : NodeBase, IStartLocationTrackingEntity
 	{
-		public ConditionNode()
+		public IfNode()
 		{
 			TrueAction = new CodeBlockNode();
 		}
@@ -103,7 +103,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		#region Equality members
 
-		protected bool Equals(ConditionNode other)
+		protected bool Equals(IfNode other)
 		{
 			return Equals(Condition, other.Condition) && Equals(TrueAction, other.TrueAction) && Equals(FalseAction, other.FalseAction);
 		}
@@ -113,7 +113,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((ConditionNode)obj);
+			return Equals((IfNode)obj);
 		}
 
 		public override int GetHashCode()

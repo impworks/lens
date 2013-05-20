@@ -78,6 +78,8 @@
     <Compile Include="Stdlib\ConsoleWrapper.cs" />
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\FinallyNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -86,7 +88,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\ConditionNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\IfNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LambdaNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\RecordDefinitionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ThrowNode.cs" />
@@ -130,7 +132,7 @@
     <Compile Include="SyntaxTree\ControlFlow\FunctionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\LoopNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\WhileNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\NameDeclarationNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TryNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
