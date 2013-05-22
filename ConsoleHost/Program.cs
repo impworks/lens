@@ -178,6 +178,7 @@ namespace ConsoleHost
 				Console.WriteLine(msg);
 				Console.WriteLine();
 				Console.WriteLine(details);
+				Console.WriteLine();
 				Console.ResetColor();
 			}
 		}
@@ -236,6 +237,7 @@ namespace ConsoleHost
 
 		static void printObject(dynamic obj)
 		{
+			Console.WriteLine();
 			Console.WriteLine(getStringRepresentation(obj));
 			if ((object) obj != null)
 				using(new OutputColor(ConsoleColor.DarkGray))
