@@ -106,5 +106,39 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			return t1;
 		}
+
+		#region Equality members
+
+		protected bool Equals(ForeachNode other)
+		{
+			return string.Equals(VariableName, other.VariableName)
+			       && Equals(IterableExpression, other.IterableExpression)
+			       && Equals(RangeStart, other.RangeStart)
+				   && Equals(RangeEnd, other.RangeEnd)
+				   && Equals(Body, other.Body);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != this.GetType()) return false;
+			return Equals((ForeachNode)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hashCode = (VariableName != null ? VariableName.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (IterableExpression != null ? IterableExpression.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (RangeStart != null ? RangeStart.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (RangeEnd != null ? RangeEnd.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Body != null ? Body.GetHashCode() : 0);
+				return hashCode;
+			}
+		}
+
+		#endregion
 	}
 }

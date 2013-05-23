@@ -18,6 +18,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		/// </summary>
 		public TypeSignature ReturnTypeSignature { get; set; }
 
+		/// <summary>
+		/// Checks whether the function can be memoized.
+		/// </summary>
+		public bool IsPure { get; set; }
+
 		public override void Compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
@@ -27,7 +32,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(FunctionNode other)
 		{
-			return base.Equals(other) && string.Equals(Name, other.Name) && Equals(ReturnTypeSignature, other.ReturnTypeSignature);
+			return base.Equals(other)
+			       && string.Equals(Name, other.Name)
+			       && IsPure.Equals(other.IsPure)
+			       && Equals(ReturnTypeSignature, other.ReturnTypeSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -35,7 +43,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((FunctionNode) obj);
+			return Equals((FunctionNode)obj);
 		}
 
 		public override int GetHashCode()
@@ -44,6 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			{
 				int hashCode = base.GetHashCode();
 				hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ IsPure.GetHashCode();
 				hashCode = (hashCode * 397) ^ (ReturnTypeSignature != null ? ReturnTypeSignature.GetHashCode() : 0);
 				return hashCode;
 			}

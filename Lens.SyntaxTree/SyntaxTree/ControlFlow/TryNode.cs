@@ -17,17 +17,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			Code = new CodeBlockNode();
 			CatchClauses = new List<CatchNode>();
+			Finally = new CodeBlockNode();
 		}
 
-		/// <summary>
-		/// The protected code.
-		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
-		/// <summary>
-		/// The list of catch clauses.
-		/// </summary>
 		public List<CatchNode> CatchClauses { get; set; }
+
+		public CodeBlockNode Finally { get; set; }
 
 		/// <summary>
 		/// Label to jump to when there's no exception.
@@ -45,6 +42,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			yield return Code;
 			foreach(var curr in CatchClauses)
 				yield return curr;
+			if (Finally != null)
+				yield return Finally;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -86,7 +85,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected bool Equals(TryNode other)
 		{
-			return Equals(Code, other.Code) && CatchClauses.SequenceEqual(other.CatchClauses);
+			return Equals(Code, other.Code) && Equals(Finally, other.Finally) && CatchClauses.SequenceEqual(other.CatchClauses);
 		}
 
 		public override bool Equals(object obj)
@@ -101,10 +100,13 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			unchecked
 			{
-				return ((Code != null ? Code.GetHashCode() : 0) * 397) ^ (CatchClauses != null ? CatchClauses.GetHashCode() : 0);
+				int hashCode = (Code != null ? Code.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (CatchClauses != null ? CatchClauses.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Finally != null ? Finally.GetHashCode() : 0);
+				return hashCode;
 			}
 		}
-
+		
 		#endregion
 	}
 }
