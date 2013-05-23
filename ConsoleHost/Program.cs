@@ -115,7 +115,7 @@ namespace ConsoleHost
 
 						if (line.StartsWith("#load"))
 						{
-							var param = line.Substring("#timer".Length).Trim().ToLowerInvariant();
+							var param = line.Substring("#load".Length).Trim().ToLowerInvariant();
 							try
 							{
 								using (var fs = new FileStream(param, FileMode.Open, FileAccess.Read))
@@ -178,6 +178,7 @@ namespace ConsoleHost
 				Console.WriteLine(msg);
 				Console.WriteLine();
 				Console.WriteLine(details);
+				Console.WriteLine();
 				Console.ResetColor();
 			}
 		}
@@ -208,6 +209,7 @@ namespace ConsoleHost
 				Console.WriteLine("  #clr  - clear the console");
 				Console.WriteLine();
 				Console.WriteLine("  #timer (on|off)  - enable/disable time measurement");
+				Console.WriteLine("  #load <filename> - load file and execute its contents");
 				Console.WriteLine();
 			}
 		}
@@ -235,6 +237,7 @@ namespace ConsoleHost
 
 		static void printObject(dynamic obj)
 		{
+			Console.WriteLine();
 			Console.WriteLine(getStringRepresentation(obj));
 			if ((object) obj != null)
 				using(new OutputColor(ConsoleColor.DarkGray))

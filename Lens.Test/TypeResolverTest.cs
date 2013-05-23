@@ -74,15 +74,6 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void Generics()
-		{
-			var type1 = typeof (Tuple<>);
-			var type2 = typeof(Func<,,>);
-			Assert.AreEqual(Resolver.ResolveType("Tuple<_>", true), type1);
-			Assert.AreEqual(Resolver.ResolveType("Func<_, _, _>", true), type2);
-		}
-
-		[Test]
 		public void Generics2()
 		{
 			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<_>[]"));

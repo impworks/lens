@@ -225,11 +225,20 @@
   <data name="GenericArgumentNotResolved" xml:space="preserve">
     <value>Generic argument '{0}' could not be resolved!</value>
   </data>
+  <data name="GenericClassConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a reference type!</value>
+  </data>
+  <data name="GenericConstructorConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not have a default constructor!</value>
+  </data>
   <data name="GenericHintMismatch" xml:space="preserve">
     <value>Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!</value>
   </data>
   <data name="GenericImplementationWrongType" xml:space="preserve">
     <value>Cannot resolve arguments of '{0}' using type '{1}'!</value>
+  </data>
+  <data name="GenericInheritanceConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not implement class or interface '{3}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
     <value>Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
@@ -239,6 +248,9 @@
   </data>
   <data name="GenericParameterNotFound" xml:space="preserve">
     <value>Generic parameter '{0}' was not found!</value>
+  </data>
+  <data name="GenericStructConstraintViolated" xml:space="preserve">
+    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a value type!</value>
   </data>
   <data name="GlobalPropertyNoGetter" xml:space="preserve">
     <value>Global property '{0}' has no getter!</value>

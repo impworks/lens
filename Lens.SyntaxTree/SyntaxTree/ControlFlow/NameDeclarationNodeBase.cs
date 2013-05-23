@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			base.ProcessClosures(ctx);
 
 			var type = Value.GetExpressionType(ctx);
-			ctx.CheckTypedExpression(Value, type, true);
+			ctx.CheckTypedExpression(Value, type);
 
 			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
 		}

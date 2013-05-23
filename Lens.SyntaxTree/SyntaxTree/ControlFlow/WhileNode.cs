@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree.Literals;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 {
-	public class LoopNode : NodeBase, IStartLocationTrackingEntity
+	public class WhileNode : NodeBase, IStartLocationTrackingEntity
 	{
-		public LoopNode()
+		public WhileNode()
 		{
 			Body = new CodeBlockNode();	
 		}
@@ -76,7 +75,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		#region Equality members
 
-		protected bool Equals(LoopNode other)
+		protected bool Equals(WhileNode other)
 		{
 			return Equals(Condition, other.Condition) && Equals(Body, other.Body);
 		}
@@ -86,7 +85,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((LoopNode)obj);
+			return Equals((WhileNode)obj);
 		}
 
 		public override int GetHashCode()

@@ -225,11 +225,20 @@
   <data name="GenericArgumentNotResolved" xml:space="preserve">
     <value>Значение обобщенного аргумента '{0}' не может быть вычислено!</value>
   </data>
+  <data name="GenericClassConstraintViolated" xml:space="preserve">
+    <value>Тип '{0}' не может быть использован как значение обобщенного аргумента '{1}' для типа '{2}', поскольку не является ссылочным типом!</value>
+  </data>
+  <data name="GenericConstructorConstraintViolated" xml:space="preserve">
+    <value>Тип '{0}' не может быть использован как значение обобщенного аргумента '{1}' для типа '{2}', поскольку не имеет конструктор по умолчанию!</value>
+  </data>
   <data name="GenericHintMismatch" xml:space="preserve">
     <value>Для обобщенного аргумента '{0}' был явно указан тип '{1}', но использование подразумевает тип '{2}'!</value>
   </data>
   <data name="GenericImplementationWrongType" xml:space="preserve">
     <value>Невозможно вычислить значение обобщенного аргумента '{0}', используя тип '{1}'!</value>
+  </data>
+  <data name="GenericInheritanceConstraintViolated" xml:space="preserve">
+    <value>Тип '{0}' не может быть использован как значение обобщенного аргумента '{1}' для типа '{2}', поскольку не реализует класс или интерфейс '{3}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
     <value>Невозможно определить обобщенные аргументы интерфейса '{0}': тип '{1}' реализует несколько его переопределений!</value>
@@ -239,6 +248,9 @@
   </data>
   <data name="GenericParameterNotFound" xml:space="preserve">
     <value>Обобщенный аргумент '{0}' не был найден!</value>
+  </data>
+  <data name="GenericStructConstraintViolated" xml:space="preserve">
+    <value>Тип '{0}' не может быть использован как значение обобщенного аргумента '{1}' для типа '{2}', поскольку не является передаваемым по значению!</value>
   </data>
   <data name="GlobalPropertyNoGetter" xml:space="preserve">
     <value>Невозможно получить значение глобального свойства '{0}'!</value>
@@ -256,7 +268,7 @@
     <value>Переменная или функция без параметров с названием '{0}' не найдена!</value>
   </data>
   <data name="IdentifierTypeMismatch" xml:space="preserve">
-    <value>Невозможно присвоить переменной '{0}' значение типа '{1}'! Возможно. требуется явное приведение типа.</value>
+    <value>Невозможно присвоить значение типа '{0}' переменной типа '{1}'! Возможно. требуется явное приведение типа.</value>
   </data>
   <data name="ImplicitCastImpossible" xml:space="preserve">
     <value>Невозможно неявно привести выражение типа '{0}' к типу '{1}'!</value>

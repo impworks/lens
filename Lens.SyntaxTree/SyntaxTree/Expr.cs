@@ -338,14 +338,14 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new LetNode { LocalName = name, Value = expr };
 		}
 
-		public static LoopNode While(NodeBase condition, CodeBlockNode body)
+		public static WhileNode While(NodeBase condition, CodeBlockNode body)
 		{
-			return new LoopNode {Condition = condition, Body = body};
+			return new WhileNode {Condition = condition, Body = body};
 		}
 
-		public static ConditionNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
+		public static IfNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
 		{
-			return new ConditionNode {Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse};
+			return new IfNode {Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse};
 		}
 
 		public static ThrowNode Throw()

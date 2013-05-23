@@ -130,7 +130,7 @@
     <value>блок</value>
   </data>
   <data name="BlockExpr" xml:space="preserve">
-    <value>выражение блока</value>
+    <value>инструкция</value>
   </data>
   <data name="BlockLine" xml:space="preserve">
     <value>строка блока</value>
@@ -145,7 +145,7 @@
     <value>элемент словаря</value>
   </data>
   <data name="Double" xml:space="preserve">
-    <value>число с плавающей точкой</value>
+    <value>дробное число</value>
   </data>
   <data name="EnumerationExpr" xml:space="preserve">
     <value>перечисление</value>
@@ -154,7 +154,7 @@
     <value>выражение</value>
   </data>
   <data name="FuncDef" xml:space="preserve">
-    <value>определение функции</value>
+    <value>объявление функции</value>
   </data>
   <data name="FuncParams" xml:space="preserve">
     <value>параметры функции</value>
@@ -172,43 +172,43 @@
     <value>вызов метода</value>
   </data>
   <data name="InvokeList" xml:space="preserve">
-    <value>список вызова</value>
+    <value>список аргументов вызова</value>
   </data>
   <data name="LambdaExpr" xml:space="preserve">
-    <value>лямбда-выражение</value>
+    <value>анонимная функция</value>
   </data>
   <data name="LineExpr" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr0" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr1" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr2" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr3" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr4" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr5" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr6" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="LineExpr7" xml:space="preserve">
-    <value>строчное выражение</value>
+    <value>выражение</value>
   </data>
   <data name="Literal" xml:space="preserve">
     <value>литерал</value>
   </data>
   <data name="LocalStmt" xml:space="preserve">
-    <value>локальное выражение</value>
+    <value>инструкция</value>
   </data>
   <data name="LValue" xml:space="preserve">
     <value>lvalue</value>
@@ -217,28 +217,28 @@
     <value>пространство имён</value>
   </data>
   <data name="NewArrayExpr" xml:space="preserve">
-    <value>выражение массива</value>
+    <value>инициализатор массива</value>
   </data>
   <data name="NewDictExpr" xml:space="preserve">
-    <value>выражение словаря</value>
+    <value>инициализатор словаря</value>
   </data>
   <data name="NewExpr" xml:space="preserve">
     <value>оператор new</value>
   </data>
   <data name="NewListExpr" xml:space="preserve">
-    <value>выражение списка</value>
+    <value>инициализатор списка</value>
   </data>
   <data name="NewObjExpr" xml:space="preserve">
-    <value>выражение объекта</value>
+    <value>инициализатор объекта</value>
   </data>
   <data name="NewTupleExpr" xml:space="preserve">
-    <value>выражение кортежа</value>
+    <value>инициализатор кортежа</value>
   </data>
   <data name="RecordDef" xml:space="preserve">
-    <value>определение записи</value>
+    <value>объявление записи</value>
   </data>
   <data name="RecordDefStmt" xml:space="preserve">
-    <value>выражение определения записи</value>
+    <value>объявление поля записи</value>
   </data>
   <data name="RValue" xml:space="preserve">
     <value>rvalue</value>
@@ -271,10 +271,10 @@
     <value>тип</value>
   </data>
   <data name="TypeDef" xml:space="preserve">
-    <value>определение типа</value>
+    <value>объявление типа</value>
   </data>
   <data name="TypeDefStmt" xml:space="preserve">
-    <value>выражение определения типа</value>
+    <value>объявление метки типа</value>
   </data>
   <data name="TypeOperatorExpr" xml:space="preserve">
     <value>оператор приведения типов</value>
@@ -289,7 +289,7 @@
     <value>значение</value>
   </data>
   <data name="VarDeclExpr" xml:space="preserve">
-    <value>определение переменной</value>
+    <value>объявление переменной</value>
   </data>
   <data name="WhileExpr" xml:space="preserve">
     <value>выражение while</value>
