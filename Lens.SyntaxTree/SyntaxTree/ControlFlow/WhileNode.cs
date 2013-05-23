@@ -12,14 +12,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			Body = new CodeBlockNode();	
 		}
 
-		/// <summary>
-		/// The condition.
-		/// </summary>
 		public NodeBase Condition { get; set; }
 
-		/// <summary>
-		/// The body of the loop.
-		/// </summary>
 		public CodeBlockNode Body { get; set; }
 
 		public override LexemLocation EndLocation
