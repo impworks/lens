@@ -704,6 +704,35 @@ data.Sum (x:Store -> x.Value)
 			Test(code, new [] { 1, 2 });
 		}
 
+		[Test]
+		public void ForLoop1()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Var("a", Expr.Str("")),
+				Expr.For(
+					"i",
+					Expr.Int(5),
+					Expr.Int(1),
+					Expr.Block(
+						Expr.Set(
+							"a",
+							Expr.Add(
+								Expr.Get("a"),
+								Expr.Invoke(
+									Expr.Get("i"),
+									"ToString"
+								)
+							)
+						)
+					)
+				),
+				Expr.Get("a")
+			};
+
+			Test(code, "54321");
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

@@ -34,6 +34,8 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public CodeBlockNode Body { get; set; }
 
+		private LocalName m_Variable;
+
 		public override LexemLocation EndLocation
 		{
 			get { return Body.EndLocation; }
@@ -53,7 +55,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				? getEnumerableType(ctx)
 				: getRangeType(ctx);
 
-			ctx.CurrentScope.DeclareName(VariableName, type, false);
+			m_Variable = ctx.CurrentScope.DeclareName(VariableName, type, false);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -73,7 +75,50 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
-			throw new NotImplementedException();
+			if(IterableExpression != null)
+				compileEnumerable(ctx, mustReturn);
+			else
+				compileRange(ctx, mustReturn);
+		}
+
+		private void compileEnumerable(Context ctx, bool mustReturn)
+		{
+			
+		}
+
+		private void compileRange(Context ctx, bool mustReturn)
+		{
+			var signVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_Variable.Type, false);
+			var code = Expr.Block(
+				Expr.Set(m_Variable, RangeStart),
+				Expr.Set(
+					signVar,
+					Expr.Invoke(
+						"Math",
+						"Sign",
+						Expr.Sub(RangeEnd, Expr.Get(m_Variable))
+					)
+				),
+				Expr.While(
+					Expr.If(
+						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
+						Expr.Block(Expr.LessEqual(Expr.Get(m_Variable), RangeEnd)),
+						Expr.Block(Expr.GreaterEqual(Expr.Get(m_Variable), RangeEnd))
+					),
+					Expr.Block(
+						Body,
+						Expr.Set(
+							m_Variable,
+							Expr.Add(
+								Expr.Get(m_Variable),
+								Expr.Get(signVar)
+							)
+						)
+					)
+				)
+			);
+
+			code.Compile(ctx, mustReturn);
 		}
 
 		private Type getEnumerableType(Context ctx)
