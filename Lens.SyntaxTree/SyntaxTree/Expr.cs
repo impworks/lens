@@ -323,6 +323,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new VarNode(name) {Value = expr};
 		}
 
+		public static VarNode Var(string name, TypeSignature type)
+		{
+			return new VarNode(name) { Type = type };
+		}
+
 		public static VarNode Var(LocalName name, NodeBase expr)
 		{
 			return new VarNode { LocalName = name, Value = expr };
@@ -346,6 +351,16 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static IfNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
 		{
 			return new IfNode {Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse};
+		}
+
+		public static ForeachNode For(string name, NodeBase seq, CodeBlockNode body)
+		{
+			return new ForeachNode {VariableName = name, IterableExpression = seq, Body = body};
+		}
+
+		public static ForeachNode For(string name, NodeBase from, NodeBase to, CodeBlockNode body)
+		{
+			return new ForeachNode { VariableName = name, RangeStart = from, RangeEnd = to, Body = body };
 		}
 
 		public static ThrowNode Throw()

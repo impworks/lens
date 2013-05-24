@@ -110,7 +110,7 @@ type ArrayHolder
 		[Test]
 		public void SimpleFunction()
 		{
-			var src = @"fun negate of int x:int -> -x";
+			var src = @"fun negate:int (x:int) -> -x";
 			var result = Expr.Fun(
 				"negate",
 				"int",
@@ -138,7 +138,7 @@ type ArrayHolder
 		[Test]
 		public void ComplexFunction()
 		{
-			var src = @"fun hypo of double a:int b:int ->
+			var src = @"fun hypo:double (a:int b:int) ->
     let sq1 = a * a
     let sq2 = b * b
     sqrt (sq1 + sq2)";
@@ -269,6 +269,25 @@ type ArrayHolder
 		[Test]
 		public void ParametricLambda()
 		{
+			var src = "a.Where (x:int -> x < 10)";
+			var result = Expr.Invoke(
+				Expr.Get("a"),
+				"Where",
+				Expr.Lambda(
+					new [] { Expr.Arg("x", "int") },
+					Expr.Less(
+						Expr.Get("x"),
+						Expr.Int(10)
+					)
+				)
+			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void ParametricLambda2()
+		{
 			var src = "let div = (a:System.Float b:System.Float) -> a / b";
 			var result = Expr.Let(
 				"div",
@@ -306,7 +325,7 @@ type ArrayHolder
 		}
 
 		[Test]
-		public void GetDynamicMember()
+		public void GetDynamicMember1()
 		{
 			var src = "a = b.someShit";
 			var result = Expr.Set(
@@ -348,7 +367,7 @@ type ArrayHolder
 		}
 
 		[Test]
-		public void SetDynamicMember()
+		public void SetDynamicMember1()
 		{
 			var src = "a.b.c = false";
 			var result = Expr.SetMember(
@@ -480,7 +499,7 @@ test
 		public void ConditionSimple()
 		{
 			var src = @"
-if (true)
+if true then
     a = 1
     b = 2";
 			var result = Expr.If(
@@ -497,7 +516,7 @@ if (true)
 		[Test]
 		public void ConditionFull()
 		{
-			var src = "if (true) a else b";
+			var src = "if true then a else b";
 			var result = Expr.If(
 				Expr.True(),
 				Expr.Block(Expr.Get("a")),
@@ -510,7 +529,7 @@ if (true)
 		[Test]
 		public void Loop()
 		{
-			var src = @"while (a > 0) a = a - 1";
+			var src = @"while a > 0 do a = a - 1";
 			var result = Expr.While(
 				Expr.Greater(
 					Expr.Get("a"),
@@ -533,7 +552,8 @@ if (true)
 		[Test]
 		public void MultilineLoop()
 		{
-			var src = @"while (a > 0)
+			var src = @"
+while a > 0 do
     a
 b";
 			var result = Expr.While(
@@ -553,7 +573,7 @@ b";
 			var src = @"
 try
     1 / 0
-catch (DivisionByZeroException ex)
+catch ex:DivisionByZeroException
     log ex
 ";
 
@@ -579,7 +599,7 @@ catch (DivisionByZeroException ex)
 			var src = @"
 try
     1 / 0
-catch (DivisionByZeroException ex)
+catch ex:DivisionByZeroException
     log ex
 catch
     doStuff ()
@@ -743,7 +763,7 @@ catch
 		[Test]
 		public void DefinitionAndInvocation()
 		{
-			var src = @"fun test of int -> 10
+			var src = @"fun test:int -> 10
 test ()";
 			var definition = Expr.Fun("test", "int", Expr.Int(10));
 			var invocation = Expr.Invoke("test", Expr.Unit());
@@ -766,7 +786,7 @@ test ()";
 			var src = @"
 try
     1 / 0
-catch (DivisionByZeroException ex)
+catch ex:DivisionByZeroException
     throw";
 
 			var result = Expr.Try(
@@ -786,7 +806,7 @@ catch (DivisionByZeroException ex)
 		[Test]
 		public void LinqCall()
 		{
-			var src = @"(new [1; 2]). Where ((x:int) -> x > 1)";
+			var src = @"(new [1; 2]).Where (x:int -> x > 1)";
 			var result = Expr.Invoke(
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
@@ -823,8 +843,8 @@ catch (DivisionByZeroException ex)
 		public void FluentCall()
 		{
 			var src = @"Enumerable::Range 1 100
-    |> Where ((i:int) -> i % 2 == 0)
-    |> Select ((i:int) -> i * 2)";
+    |> Where (i:int -> i % 2 == 0)
+    |> Select (i:int -> i * 2)";
 
 			var result = Expr.Invoke(
 				Expr.Invoke(
@@ -909,7 +929,7 @@ catch (DivisionByZeroException ex)
 		[Test]
 		public void RefArgDeclaration()
 		{
-			var src = "fun test of object x:int y:ref int -> y = x";
+			var src = "fun test:object (x:int y:ref int) -> y = x";
 			var result = Expr.Fun
 			(
 				"test",
@@ -994,8 +1014,8 @@ a.Tag + b.Tag";
 		public void FunWithIfThenElse()
 		{
 			var src = @"
-fun part x:int ->
-    if (x > 100)
+fun part (x:int) ->
+    if x > 100 then
         (new Large x) as TestType
     else
         new Small x";
@@ -1028,8 +1048,8 @@ fun part x:int ->
 type TestType
     Small of int
     Large of int
-fun part of TestType x:int ->
-    if (x > 100)
+fun part:TestType (x:int) ->
+    if x > 100 then
         (new Large x) as TestType
     else
         new Small x
@@ -1158,7 +1178,7 @@ x";
 		public void RefFunction2()
 		{
 			var src = @"
-fun test a:int x:ref int -> x = a * 2
+fun test (a:int x:ref int) -> x = a * 2
 var result = 0
 test 21 (ref result)
 result
@@ -1185,12 +1205,64 @@ result
 		public void IfThenElse()
 		{
 			var src = @"
-if (x)
+if x then
     1
 else
     2
 ";
 			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
+			Test(src, result);
+		}
+
+		[Test]
+		public void NonInitializedVariable()
+		{
+			var src = @"
+var a : int
+a = 1";
+			var result = new NodeBase[]
+			{
+				Expr.Var("a", "int"),
+				Expr.Set("a", Expr.Int(1))
+			};
+
+			Test(src, result);
+		}
+
+		public void For1()
+		{
+			var src = "for x in y do test ()";
+			var result = new NodeBase[]
+				{
+					Expr.For(
+						"x",
+						Expr.Get("y"),
+						Expr.Block(
+							Expr.Invoke("get")
+						)
+					)
+				};
+
+			Test(src, result);
+		}
+
+		public void For2()
+		{
+			var src = @"
+for a in x..y do
+    test ()";
+			var result = new NodeBase[]
+				{
+					Expr.For(
+						"a",
+						Expr.Get("x"),
+						Expr.Get("y"),
+						Expr.Block(
+							Expr.Invoke("get")
+						)
+					)
+				};
+
 			Test(src, result);
 		}
 

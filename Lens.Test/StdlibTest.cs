@@ -45,7 +45,7 @@ r
 		{
 			var src = @"
 var r = string::Empty
-5.times ((x:int) -> r = r + x.ToString())
+5.times (x:int -> r = r + x.ToString())
 r
 ";
 			Test(src, "01234");

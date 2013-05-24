@@ -24,6 +24,11 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		public LocalName LocalName { get; set; }
 
 		/// <summary>
+		/// Type signature for non-initialized variables.
+		/// </summary>
+		public TypeSignature Type { get; set; }
+
+		/// <summary>
 		/// The value to assign to the variable.
 		/// </summary>
 		public NodeBase Value { get; set; }

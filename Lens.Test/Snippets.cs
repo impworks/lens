@@ -44,7 +44,7 @@ b";
 		public void DeclareAndInvoke()
 		{
 			var src = @"
-fun test of int -> 10
+fun test:int -> 10
 test ()";
 			Test(src, 10);
 		}
@@ -86,7 +86,7 @@ dict[""a""] + dict[""b""]
 			var src = @"
 var a = 1
 var idx = 0
-while(idx < 5)
+while idx < 5 do
     a = a * 2
     idx = idx + 1
 a";
@@ -99,7 +99,7 @@ a";
 		{
 			var src = @"
 var a = 1
-var res = while (a < 10)
+var res = while a < 10 do
     a = a * 2
     a
 res";
@@ -232,7 +232,7 @@ var msg = 1
 try
     var zero = 0
     1 / zero
-catch (DivideByZeroException ex)
+catch ex:DivisionByZeroException
     msg = 2
 msg
 ";
@@ -253,7 +253,7 @@ string::Compare
 		[Test]
 		public void Linq1()
 		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where ((a:int) -> a > 2)";
+			var src = @"(new [1; 2; 3; 4; 5]).Where (a:int -> a > 2)";
 			Test(src, new [] {3, 4, 5});
 		}
 
@@ -262,8 +262,8 @@ string::Compare
 		{
 			var src = @"
 Enumerable::Range 1 10
-    |> Where ((x:int) -> x % 2 == 0)
-    |> Select ((x:int) -> x * 2)";
+    |> Where (x:int -> x % 2 == 0)
+    |> Select (x:int -> x * 2)";
 
 			var result = new[] { 4, 8, 12, 16, 20};
 			Test(src, result);
@@ -299,7 +299,7 @@ ts ()";
 		public void DelegateCasting2()
 		{
 			var src = @"
-var filter = ((x:int) -> x > 2) as Predicate<int>
+var filter = (x:int -> x > 2) as Predicate<int>
 var arr = new [1; 2; 3; 4; 5]
 Array::FindAll arr filter";
 
@@ -309,7 +309,7 @@ Array::FindAll arr filter";
 		[Test]
 		public void RecursiveDeclararion()
 		{
-			var src = @"fun fact of int a:int -> if (a == 0) 1 else 1 * fact(a-1)";
+			var src = @"fun fact:int (a:int) -> if a == 0 then 1 else 1 * fact(a-1)";
 			Test(src, null);
 		}
 
@@ -319,7 +319,7 @@ Array::FindAll arr filter";
 			var src = @"
 var a = 0
 var b = 2
-var fx = (x:int) -> a = b * x
+var fx = x:int -> a = b * x
 fx 3
 a";
 			Test(src, 6);
@@ -331,10 +331,10 @@ a";
 			var src = @"
 var result = 0
 var x1 = 1
-var fx1 = (a:int) ->
+var fx1 = a:int ->
     x1 = x1 + 1
     var x2 = 1
-    var fx2 = (b:int) ->
+    var fx2 = b:int ->
         x2 = x2 + 1
         result = x1 + x2 + b
     fx2 a
@@ -378,8 +378,8 @@ type TestType
     Small of int
     Large of int
 
-fun part of TestType x:int ->
-    if (x > 100)
+fun part:TestType (x:int) ->
+    if x > 100 then
         (Large x) as TestType
     else
         Small x
@@ -455,7 +455,7 @@ x";
 		public void RefFunction2()
 		{
 			var src = @"
-fun test a:int x:ref int -> x = a * 2
+fun test (a:int x:ref int) -> x = a * 2
 
 var result = 0
 test 21 (ref result)
@@ -481,7 +481,7 @@ new [ a.HasValue; b.HasValue ]
 		public void ImplicitExtensionMethod()
 		{
 			var src = @"
-fun add of int a:int b:int -> a + b
+fun add:int (a:int b:int) -> a + b
 
 let x = add 1 2
 let y = 1.add 2
@@ -510,7 +510,7 @@ x == y
 type Clauses
     Else
 
-fun If of bool x:bool t:Action s:Else f:Action ->
+fun If:bool (x:bool t:Action s:Else f:Action) ->
     let tAction = ->
         t ()
         true
@@ -532,10 +532,10 @@ res
 		public void CustomWhile()
 		{
 			var src = @"
-fun While cond:Func<bool> body:Action ->
+fun While (cond:Func<bool> body:Action) ->
     var act = null as Action
     act = ->
-        if(cond ())
+        if cond () then
             body ()
             act ()
     act ()
@@ -636,8 +636,8 @@ record Store
     Value : int
 
 var found = new [new Store ""a"" 1; new Store ""b"" 2; new Store ""c"" 3]
-    |> Where ((x:Store) -> x.Value < 3)
-    |> OrderByDescending ((x:Store) -> x.Value)
+    |> Where (x:Store -> x.Value < 3)
+    |> OrderByDescending (x:Store -> x.Value)
     |> First ()
 
 found.Name
@@ -653,7 +653,7 @@ record Store
     Value : int
 
 var data = new [new Store 1; new Store 1; new Store 40]
-data.Sum ((x:Store) -> x.Value)
+data.Sum (x:Store -> x.Value)
 ";
 			Test(src, 42);
 		}
