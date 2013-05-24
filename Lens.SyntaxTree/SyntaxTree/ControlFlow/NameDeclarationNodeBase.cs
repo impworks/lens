@@ -61,13 +61,15 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override void Compile(Context ctx, bool mustReturn)
 		{
+			if (Value == null)
+				Value = Expr.Default(Type);
+
 			var assignNode = new SetIdentifierNode
 			{
 				Identifier = Name,
 				LocalName = LocalName,
 				Value = Value,
 				IsInitialization = true,
-				StartLocation = StartLocation
 			};
 
 			assignNode.Compile(ctx, mustReturn);
