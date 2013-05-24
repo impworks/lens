@@ -435,20 +435,40 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		public static FunctionNode Fun(string name, params NodeBase[] body)
 		{
-			return Fun(name, null, new FunctionArgument[0], body);
+			return Fun(name, null, false, new FunctionArgument[0], body);
 		}
 
 		public static FunctionNode Fun(string name, FunctionArgument[] args, params NodeBase[] body)
 		{
-			return Fun(name, null, args, body);
+			return Fun(name, null, false, args, body);
 		}
 
 		public static FunctionNode Fun(string name, TypeSignature type, params NodeBase[] body)
 		{
-			return Fun(name, type, new FunctionArgument[0], body);
+			return Fun(name, type, false, new FunctionArgument[0], body);
 		}
 
 		public static FunctionNode Fun(string name, TypeSignature type, FunctionArgument[] args, params NodeBase[] body)
+		{
+			return Fun(name, type, false, args, body);
+		}
+
+		public static FunctionNode Fun(string name, bool isPure, params NodeBase[] body)
+		{
+			return Fun(name, null, isPure, new FunctionArgument[0], body);
+		}
+
+		public static FunctionNode Fun(string name, bool isPure, FunctionArgument[] args, params NodeBase[] body)
+		{
+			return Fun(name, null, isPure, args, body);
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, bool isPure, params NodeBase[] body)
+		{
+			return Fun(name, type, isPure, new FunctionArgument[0], body);
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, bool isPure, FunctionArgument[] args, params NodeBase[] body)
 		{
 			return new FunctionNode
 			{
@@ -456,6 +476,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 				Arguments = args.ToList(),
 				ReturnTypeSignature = type,
 				Body = Block(body),
+				IsPure = isPure
 			};
 		}
 

@@ -1295,6 +1295,25 @@ for a in x..y do
 			Test(src, result);
 		}
 
+		[Test]
+		public void PureFunction()
+		{
+			var src = @"pure fun add:int (x:int y:int) -> x + y";
+
+			var result = Expr.Fun(
+				"add",
+				"int",
+				true,
+				new[] { Expr.Arg("x", "int"), Expr.Arg("y", "int") },
+				Expr.Add(
+					Expr.Get("x"),
+					Expr.Get("y")
+				)
+			);
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();
