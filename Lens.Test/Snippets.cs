@@ -658,6 +658,52 @@ data.Sum (x:Store -> x.Value)
 			Test(src, 42);
 		}
 
+		[Test]
+		public void UninitializedVariables()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Var("a", "int"),
+				Expr.Var("b", "string"),
+				Expr.Var("c", "Point"),
+				Expr.Array(
+					Expr.Equal(Expr.Get("a"), Expr.Int(0)),
+					Expr.Equal(Expr.Get("b"), Expr.Null()),
+					Expr.Equal(Expr.Get("c"), Expr.New("Point"))
+				)
+			};
+
+			Test(code, new [] { true, true, true });
+		}
+
+		[Test]
+		public void TryFinally()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Var("a", "int"),
+				Expr.Var("b", "int"),
+				Expr.Try(
+					Expr.Block(
+						Expr.Var("c", Expr.Int(0)),
+						Expr.Div(Expr.Int(1), Expr.Get("c"))
+					),
+					Expr.Block(
+						Expr.Set("a", Expr.Int(1))
+					),
+					Expr.CatchAll(
+						Expr.Set("b", Expr.Int(2))
+					)
+				),
+				Expr.Array(
+					Expr.Get("a"),
+					Expr.Get("b")
+				)
+			};
+
+			Test(code, new [] { 1, 2 });
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

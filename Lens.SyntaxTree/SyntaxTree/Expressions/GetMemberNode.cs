@@ -137,8 +137,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
-			if (Expression != null)
-				yield return Expression;
+			yield return Expression;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

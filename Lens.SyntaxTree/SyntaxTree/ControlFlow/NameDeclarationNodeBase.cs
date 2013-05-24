@@ -53,7 +53,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			base.ProcessClosures(ctx);
 
-			var type = Value.GetExpressionType(ctx);
+			var type = Value != null
+				? Value.GetExpressionType(ctx)
+				: ctx.ResolveType(Type);
 			ctx.CheckTypedExpression(Value, type);
 
 			ctx.CurrentScope.DeclareName(Name, type, IsConstant);

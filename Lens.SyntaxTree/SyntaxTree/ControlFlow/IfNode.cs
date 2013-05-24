@@ -59,8 +59,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			yield return Condition;
 			yield return TrueAction;
-			if (FalseAction != null)
-				yield return FalseAction;
+			yield return FalseAction;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)

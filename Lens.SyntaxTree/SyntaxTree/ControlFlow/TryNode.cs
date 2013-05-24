@@ -42,8 +42,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			yield return Code;
 			foreach(var curr in CatchClauses)
 				yield return curr;
-			if (Finally != null)
-				yield return Finally;
+			yield return Finally;
 		}
 
 		public override void Compile(Context ctx, bool mustReturn)
@@ -74,6 +73,12 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 					catchAll = true;
 
 				curr.Compile(ctx, false);
+			}
+
+			if (Finally != null)
+			{
+				gen.BeginFinallyBlock();
+				Finally.Compile(ctx, false);
 			}
 
 			gen.EndExceptionBlock();
