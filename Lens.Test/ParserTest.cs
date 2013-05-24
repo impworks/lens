@@ -604,11 +604,16 @@ catch ex:DivisionByZeroException
 catch
     doStuff ()
     log ""whoopsie""
+finally
+    log ""finally""
 ";
 
 			var result = Expr.Try(
 				Expr.Block(
 					Expr.Div(Expr.Int(1), Expr.Int(0))
+				),
+				Expr.Block(
+					Expr.Invoke("log", Expr.Str("finally"))
 				),
 				Expr.Catch(
 					"DivisionByZeroException",
@@ -620,6 +625,28 @@ catch
 				Expr.CatchAll(
 					Expr.Invoke("doStuff", Expr.Unit()),
 					Expr.Invoke("log", Expr.Str("whoopsie"))
+				)
+			);
+
+			Test(src, result);
+		}
+
+		[Test]
+		public void Finally()
+		{
+			var src = @"
+try
+    1 / 0
+finally
+    log ""finally""
+";
+
+			var result = Expr.Try(
+				Expr.Block(
+					Expr.Div(Expr.Int(1), Expr.Int(0))
+				),
+				Expr.Block(
+					Expr.Invoke("log", Expr.Str("finally"))
 				)
 			);
 
@@ -1229,6 +1256,7 @@ a = 1";
 			Test(src, result);
 		}
 
+		[Test]
 		public void For1()
 		{
 			var src = "for x in y do test ()";
@@ -1246,6 +1274,7 @@ a = 1";
 			Test(src, result);
 		}
 
+		[Test]
 		public void For2()
 		{
 			var src = @"

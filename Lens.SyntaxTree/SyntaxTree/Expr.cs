@@ -383,6 +383,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new TryNode {Code = body, CatchClauses = catches.ToList()};
 		}
 
+		public static TryNode Try(CodeBlockNode body, CodeBlockNode final, params CatchNode[] catches)
+		{
+			return new TryNode { Code = body, CatchClauses = catches.ToList(), Finally = final };
+		}
+
 		public static CatchNode Catch(TypeSignature excType, string varName, CodeBlockNode body)
 		{
 			return new CatchNode {Code = body, ExceptionType = excType, ExceptionVariable = varName};
