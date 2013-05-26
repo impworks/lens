@@ -733,6 +733,53 @@ data.Sum (x:Store -> x.Value)
 			Test(code, "54321");
 		}
 
+		[Test]
+		public void ForLoop2()
+		{
+			var code = new[]
+			{
+				Expr.For(
+					"x",
+					Expr.Array(
+						Expr.Int(1),
+						Expr.Int(2),
+						Expr.Int(3),
+						Expr.Int(4),
+						Expr.Int(5)
+					),
+					Expr.Block(
+						Expr.Invoke("println", Expr.Str("and {0}"), Expr.Get("x")),
+						Expr.Get("x")
+					)
+				)
+			};
+
+			Test(code, 5);
+		}
+
+		[Test]
+		public void ForLoop3()
+		{
+			var code = new[]
+			{
+				Expr.For(
+					"x",
+					Expr.List(
+						Expr.Int(1),
+						Expr.Int(2),
+						Expr.Int(3),
+						Expr.Int(4),
+						Expr.Int(5)
+					),
+					Expr.Block(
+						Expr.Invoke("println", Expr.Str("and {0}"), Expr.Get("x"))
+					)
+				)
+			};
+
+			Test(code, null);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

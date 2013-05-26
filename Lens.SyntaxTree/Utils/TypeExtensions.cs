@@ -567,6 +567,12 @@ namespace Lens.SyntaxTree.Utils
 			return result;
 		}
 
+		/// <summary>
+		/// Checks if a type implements an interface.
+		/// </summary>
+		/// <param name="type">Type to check.</param>
+		/// <param name="iface">Desired interface.</param>
+		/// <param name="unwindGenerics">A flag indicating that generic arguments should be discarded from both the type and the interface.</param>
 		public static bool Implements(this Type type, Type iface, bool unwindGenerics)
 		{
 			if (unwindGenerics && type.IsGenericType && iface.IsGenericType)
