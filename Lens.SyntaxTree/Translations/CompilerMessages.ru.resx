@@ -207,6 +207,12 @@
   <data name="ExpressionVoid" xml:space="preserve">
     <value>Требуется выражение, возвращающее значение!</value>
   </data>
+  <data name="ForeachRangeNotInteger" xml:space="preserve">
+    <value>Тип '{0}' невозможно использовать в качестве границы диапазона, поскольку он не является целочисленным!</value>
+  </data>
+  <data name="ForeachRangeTypeMismatch" xml:space="preserve">
+    <value>Невозможно получить диапазон из выражений типов '{0}' и '{1}'!</value>
+  </data>
   <data name="FunctionInvocationAmbiguous" xml:space="preserve">
     <value>Найдено несколько подходящих переопределений функции '{0}'! Воспользуйтесь операцией приведения типов для указания конкретного переопределения!</value>
   </data>
@@ -383,6 +389,9 @@
   </data>
   <data name="TypeNotImplicitlyBoolean" xml:space="preserve">
     <value>Тип '{0}' нельзя использовать в булевом контексте!</value>
+  </data>
+  <data name="TypeNotIterable" xml:space="preserve">
+    <value>Тип '{0}' не является перечислимым!</value>
   </data>
   <data name="TypeNotNumeric" xml:space="preserve">
     <value>Тип '{0}' не является числовым!</value>

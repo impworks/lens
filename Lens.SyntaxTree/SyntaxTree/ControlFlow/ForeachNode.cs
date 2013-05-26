@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
@@ -244,7 +245,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			
 			var ifaces = GenericHelper.GetInterfaces(seqType);
 			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
-				Error("Type {0} is not iterable!", seqType);
+				Error(CompilerMessages.TypeNotIterable, seqType);
 
 			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
 			m_EnumeratorType = enumerator.ReturnType;
@@ -259,10 +260,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var t2 = RangeEnd.GetExpressionType(ctx);
 
 			if(t1 != t2)
-				Error("");
+				Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
 			if(!t1.IsIntegerType())
-				Error("");
+				Error(CompilerMessages.ForeachRangeNotInteger, t1);
 
 			m_VariableType = t1;
 		}

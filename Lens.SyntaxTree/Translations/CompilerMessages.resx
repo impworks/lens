@@ -207,6 +207,12 @@
   <data name="ExpressionVoid" xml:space="preserve">
     <value>Expression that returns a value is expected!</value>
   </data>
+  <data name="ForeachRangeNotInteger" xml:space="preserve">
+    <value>Type '{0}' cannot be used as range limit because it is not an integer!</value>
+  </data>
+  <data name="ForeachRangeTypeMismatch" xml:space="preserve">
+    <value>Cannot create a range from expressions of types '{0}' and '{1}'!</value>
+  </data>
   <data name="FunctionInvocationAmbiguous" xml:space="preserve">
     <value>There is more than one suitable override of function '{0}'! Please use type casting to specify the exact override.</value>
   </data>
@@ -383,6 +389,9 @@
   </data>
   <data name="TypeNotImplicitlyBoolean" xml:space="preserve">
     <value>Type '{0}' cannot be used in a boolean context!</value>
+  </data>
+  <data name="TypeNotIterable" xml:space="preserve">
+    <value>Type '{0}' is not iterable!</value>
   </data>
   <data name="TypeNotNumeric" xml:space="preserve">
     <value>Type '{0}' is not numeric!</value>
