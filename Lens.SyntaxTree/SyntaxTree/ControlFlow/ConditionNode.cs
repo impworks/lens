@@ -39,18 +39,16 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			if (!mustReturn)
+			if (!mustReturn || FalseAction == null)
 				return typeof (Unit);
 
 			var type = TrueAction.GetExpressionType(ctx);
-			if (FalseAction != null)
-			{
-				var otherType = FalseAction.GetExpressionType(ctx);
-				if (otherType.IsExtendablyAssignableFrom(type))
-					type = otherType;
-				else if(!type.IsExtendablyAssignableFrom(otherType))
-					Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
-			}
+			var otherType = FalseAction.GetExpressionType(ctx);
+			if (otherType.IsExtendablyAssignableFrom(type))
+				return otherType;
+
+			if(!type.IsExtendablyAssignableFrom(otherType))
+				Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
 
 			return type;
 		}
@@ -69,35 +67,38 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
-
+			
 			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
 			if (FalseAction == null)
 			{
 				gen.EmitBranchFalse(endLabel);
 				TrueAction.Compile(ctx, mustReturn);
-				gen.MarkLabel(endLabel);
-				if(!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+				if(TrueAction.GetExpressionType(ctx).IsNotVoid())
 					gen.EmitPop();
-				else
-					gen.EmitNop();
+
+				gen.MarkLabel(endLabel);
+				gen.EmitNop();
 			}
 			else
 			{
+				var canReturn = mustReturn && FalseAction != null;
+
 				gen.EmitBranchFalse(falseLabel);
 				TrueAction.Compile(ctx, mustReturn);
 
-				if (!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+				if (!canReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
 					gen.EmitPop();
 
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
 				FalseAction.Compile(ctx, mustReturn);
-				gen.MarkLabel(endLabel);
-				if (!mustReturn && FalseAction.GetExpressionType(ctx).IsNotVoid())
+				
+				if (!canReturn && FalseAction.GetExpressionType(ctx).IsNotVoid())
 					gen.EmitPop();
-				else
-					gen.EmitNop();
+
+				gen.MarkLabel(endLabel);
+				gen.EmitNop();
 			}
 		}
 
