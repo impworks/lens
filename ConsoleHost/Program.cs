@@ -297,7 +297,7 @@ namespace ConsoleHost
 			new Regex(@"^type [_a-z][_a-z0-9]*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 			new Regex(@"^record [_a-z][_a-z0-9]*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 			new Regex(@"^(if|while)\s*\(.+\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-			new Regex(@"^try$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+			new Regex(@"^(try|else)$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
 			new Regex(@"^catch(\([_a-][_a-z0-9]*(\s+[_a-][_a-z0-9]*)?\))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled)
 		};
 
