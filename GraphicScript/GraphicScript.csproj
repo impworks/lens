@@ -69,6 +69,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Objects\Circle.cs" />
+    <Compile Include="Objects\Figure.cs" />
+    <Compile Include="Objects\FigureManager.cs" />
+    <Compile Include="Objects\Rect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
