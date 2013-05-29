@@ -233,9 +233,9 @@ let castNode expression castOption : NodeBase =
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     let booleanKind = function
-    | "&&"  -> BooleanOperatorKind.And
-    | "||"  -> BooleanOperatorKind.Or
-    | "^^"  -> BooleanOperatorKind.Xor
+    | "&&"  -> LogicalOperatorKind.And
+    | "||"  -> LogicalOperatorKind.Or
+    | "^^"  -> LogicalOperatorKind.Xor
     | other -> failwith <| String.Format(ParserMessages.UnknownLogicalOperator, other)
 
     let comparisonKind = function

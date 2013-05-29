@@ -132,7 +132,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new IsOperatorNode { Expression = node, Type = type };
 		}
 
-		public static BinaryOperatorNodeBase Binary(BooleanOperatorKind kind, NodeBase left, NodeBase right)
+		public static BinaryOperatorNodeBase Binary(LogicalOperatorKind kind, NodeBase left, NodeBase right)
 		{
 			return new BooleanOperatorNode { Kind = kind, LeftOperand = left, RightOperand = right };
 		}
@@ -144,12 +144,12 @@ namespace Lens.SyntaxTree.SyntaxTree
 
 		public static BinaryOperatorNodeBase Or(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { Kind = BooleanOperatorKind.Or, LeftOperand = left, RightOperand = right };
+			return new BooleanOperatorNode { Kind = LogicalOperatorKind.Or, LeftOperand = left, RightOperand = right };
 		}
 
 		public static BinaryOperatorNodeBase Xor(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { Kind = BooleanOperatorKind.Xor, LeftOperand = left, RightOperand = right };
+			return new BooleanOperatorNode { Kind = LogicalOperatorKind.Xor, LeftOperand = left, RightOperand = right };
 		}
 
 		public static ComparisonOperatorNode Compare(ComparisonOperatorKind kind, NodeBase left, NodeBase right)

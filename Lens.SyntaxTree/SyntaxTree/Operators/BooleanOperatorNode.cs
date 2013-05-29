@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// </summary>
 	public class BooleanOperatorNode : BinaryOperatorNodeBase
 	{
-		public BooleanOperatorNode(BooleanOperatorKind kind = default(BooleanOperatorKind))
+		public BooleanOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{
 			Kind = kind;
 		}
@@ -16,21 +16,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// <summary>
 		/// The kind of boolean operator.
 		/// </summary>
-		public BooleanOperatorKind Kind { get; set; }
+		public LogicalOperatorKind Kind { get; set; }
 
 		public override string OperatorRepresentation
 		{
 			get
 			{
-				switch (Kind)
-				{
-					case BooleanOperatorKind.And: return "&&";
-					case BooleanOperatorKind.Or:  return "||";
-					case BooleanOperatorKind.Xor: return "^^";
-
-					default: throw new ArgumentException("Boolean operator kind is invalid!");
-				}
+				return Kind == LogicalOperatorKind.And ? "&&" : (Kind == LogicalOperatorKind.Or ? "||" : "^^");
 			}
+		}
+
+		public override string OverloadedMethodName
+		{
+			get { return Kind == LogicalOperatorKind.Xor ? "op_ExclusiveOr" : null; }
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -40,24 +38,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				       : null;
 		}
 
-		protected override void  compileOperator(Context ctx)
+		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 
 			// validate nodes
 			GetExpressionType(ctx);
 
-			if (Kind == BooleanOperatorKind.And)
+			if (Kind == LogicalOperatorKind.And)
 			{
 				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.False()));
 				cond.Compile(ctx, true);
 			}
-			else if (Kind == BooleanOperatorKind.Or)
+			else if (Kind == LogicalOperatorKind.Or)
 			{
 				var cond = Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(RightOperand));
 				cond.Compile(ctx, true);
 			}
-			else if (Kind == BooleanOperatorKind.Xor)
+			else if (Kind == LogicalOperatorKind.Xor)
 			{
 				LeftOperand.Compile(ctx, true);
 				RightOperand.Compile(ctx, true);
@@ -69,7 +67,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	/// <summary>
 	/// The kind of boolean operators.
 	/// </summary>
-	public enum BooleanOperatorKind
+	public enum LogicalOperatorKind
 	{
 		And,
 		Or,
