@@ -68,23 +68,23 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var falseLabel = gen.DefineLabel();
 			
 			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
-			if (FalseAction == null)
-			{
-				gen.EmitBranchFalse(endLabel);
-				TrueAction.Compile(ctx, mustReturn);
-				if(TrueAction.GetExpressionType(ctx).IsNotVoid())
-					gen.EmitPop();
+            if (FalseAction == null)
+            {
+                gen.EmitBranchFalse(endLabel);
+                TrueAction.Compile(ctx, mustReturn);
+                if (TrueAction.GetExpressionType(ctx).IsNotVoid())
+                    gen.EmitPop();
 
-				gen.MarkLabel(endLabel);
-				gen.EmitNop();
-			}
-			else
-			{
-				var canReturn = mustReturn && FalseAction != null;
+                gen.MarkLabel(endLabel);
+                gen.EmitNop();
+            }
+            else
+            {
+                var canReturn = mustReturn && FalseAction != null;
                 var resultType = GetExpressionType(ctx);
 
-				gen.EmitBranchFalse(falseLabel);
-				
+                gen.EmitBranchFalse(falseLabel);
+
                 if (TrueAction.GetExpressionType(ctx).IsNotVoid())
                 {
                     Expr.Cast(TrueAction, resultType).Compile(ctx, mustReturn);
@@ -96,9 +96,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
                     TrueAction.Compile(ctx, mustReturn);
                 }
 
-				gen.EmitJump(endLabel);
+                gen.EmitJump(endLabel);
 
-				gen.MarkLabel(falseLabel);
+                gen.MarkLabel(falseLabel);
                 if (FalseAction.GetExpressionType(ctx).IsNotVoid())
                 {
                     Expr.Cast(FalseAction, resultType).Compile(ctx, mustReturn);
@@ -110,8 +110,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
                     FalseAction.Compile(ctx, mustReturn);
                 }
 
-				gen.MarkLabel(endLabel);
-				gen.EmitNop();
+                gen.MarkLabel(endLabel);
+                gen.EmitNop();
+            }
 		}
 
 		#region Equality members

@@ -84,7 +84,25 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 						throw;
 				}
 
-				// resolve a local function that is implicitly used as an extension method
+                // resolve a callable field
+                try
+                {
+                    ctx.ResolveField(type, node.MemberName);
+                    resolveExpression(ctx, node);
+                    return;
+                }
+                catch (KeyNotFoundException) { }
+
+                // resolve a callable field
+                try
+                {
+                    ctx.ResolveProperty(type, node.MemberName);
+                    resolveExpression(ctx, node);
+                    return;
+                }
+                catch (KeyNotFoundException) { }
+
+                // resolve a local function that is implicitly used as an extension method
 				// move invocation source to arguments
 				if (Arguments[0] is UnitNode)
 					Arguments[0] = m_InvocationSource;
