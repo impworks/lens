@@ -69,6 +69,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Status.cs" />
     <Compile Include="Objects\Circle.cs" />
     <Compile Include="Objects\Figure.cs" />
     <Compile Include="Objects\FigureManager.cs" />

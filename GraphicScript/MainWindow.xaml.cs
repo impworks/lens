@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
+using GraphicScript.Misc;
 
 namespace GraphicScript
 {
@@ -13,6 +14,8 @@ namespace GraphicScript
 		{
 			InitializeComponent();
 			DataContext = this;
+
+			Status = Status.Ready;
 		}
 
 		#region Properties
@@ -28,16 +31,33 @@ namespace GraphicScript
 			}
 		}
 
-		private string m_State;
-		public string State
+		private string m_ErrorMessage;
+		public string ErrorMessage
 		{
-			get { return m_State; }
+			get { return m_ErrorMessage; }
 			set
 			{
-				m_State = value;
-				notify(() => State);
+				m_ErrorMessage = value;
+				notify(() => ErrorMessage);
 			}
 		}
+
+		private Status m_Status;
+		public Status Status
+		{
+			get { return m_Status; }
+			set
+			{
+				m_Status = value;
+				notify(() => Status);
+			}
+		}
+
+		#endregion
+
+		#region Commands
+
+
 
 		#endregion
 
