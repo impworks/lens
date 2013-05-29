@@ -61,8 +61,15 @@ namespace GraphHost
 
 				while (currX < endX)
 				{
-					fx();
-					obs.AppendAsync(Chart.Dispatcher, new Point(currX, currY));
+				    try
+				    {
+				        fx();
+				    }
+				    catch
+				    {
+				        currY = 0;
+				    }
+				    obs.AppendAsync(Chart.Dispatcher, new Point(currX, currY));
 					currX += step;
 				}
 			}
