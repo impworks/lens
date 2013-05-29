@@ -20,7 +20,9 @@ namespace Lens.SyntaxTree.Stdlib
 
 		public static int RandomMinMax(int min, int max)
 		{
-			return m_Random.Next(min, max);
+		    if (min == max)
+		        return min;
+            return min < max ? m_Random.Next(min, max) : m_Random.Next(max, min);
 		}
 
 		public static T RandomOf<T>(IList<T> src)
