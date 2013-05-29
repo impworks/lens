@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override string OperatorRepresentation
 		{
-			get { return IsLeft ? "shl" : "shr"; }
+			get { return IsLeft ? "<:" : ":>"; }
 		}
 
 		public override string OverloadedMethodName
