@@ -1,8 +1,9 @@
 ﻿<Window x:Class="GraphHost.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0"
+        xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0" xmlns:gh="clr-namespace:GraphHost"
         Title="MainWindow" Height="480" Width="640">
+
     <Border BorderBrush="Black" BorderThickness="1" Margin="16" Padding="16">
         <Grid>
             <Grid.RowDefinitions>
@@ -26,16 +27,37 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Text="Graph:" />
-                <TextBox x:Name="Func" Grid.Column="1" Grid.ColumnSpan="5" Margin="8,0" Text="y = Math::Sin x" />
+                <TextBlock Text="График:" />
+                <Grid Grid.Column="1" Grid.ColumnSpan="5" Margin="8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="Func"  Text="y = Math::Sin x" />
+                    <Button Grid.Column="2" Content="?" Click="Help_OnClick" Padding="10,2">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Прямая" Tag="y = 10" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Наклонная" Tag="y = 2*x" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Парабола" Tag="y = x**2" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Синус" Tag="y = Math::Sin x" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Сложная функция" Tag="y = Math::Sin x / Math::Cos x" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Ступенчатая" Tag="y = if((x as int)%2 == 0) (x as int) else 0" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Зубчатая" Tag="y = if((x as int)%2 == 0) x else 0" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Случайная" Tag="y = rand x 20" Click="MenuItem_OnClick" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </Grid>
                 
-                <TextBlock Text="From:" Grid.Row="2" />
+                <TextBlock Text="Начало:" Grid.Row="2" />
                 <TextBox x:Name="StartPos" Grid.Row="2" Grid.Column="1" Text="-10" Margin="8,0" />
 
-                <TextBlock Text="To:" Grid.Row="2" Grid.Column="2" />
+                <TextBlock Text="Конец:" Grid.Row="2" Grid.Column="2" />
                 <TextBox x:Name="EndPos" Grid.Row="2" Grid.Column="3" Text="10" Margin="8,0" />
                 
-                <TextBlock Text="Step:" Grid.Row="2" Grid.Column="4" />
+                <TextBlock Text="Шаг:" Grid.Row="2" Grid.Column="4" />
                 <TextBox x:Name="Step" Grid.Row="2" Grid.Column="5" Text="0.1" Margin="8,0" />
                 
                 <Button Grid.Column="6" Grid.RowSpan="3" Content="Run" Click="Run_OnClick" Padding="16,0" />
