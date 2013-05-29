@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var endLabel = gen.DefineLabel();
+		    var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
 
 			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
