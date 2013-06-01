@@ -8,18 +8,18 @@ namespace GraphicScript.Objects
 {
 	public abstract class Figure
 	{
-		public int X { get; set; }
-		public int Y { get; set; }
+		public double X { get; set; }
+		public double Y { get; set; }
 
-		public Tuple<int, int> Position
+		public Tuple<double, double> Position
 		{
-			get { return new Tuple<int, int>(X, Y);}
+			get { return new Tuple<double, double>(X, Y); }
 			set { X = value.Item1; Y = value.Item2; }
 		}
 
 		public Color Fill;
 		public Color Outline;
-		public int Thickness;
+		public double Thickness;
 
 		public Shape Shape { get; protected set; }
 

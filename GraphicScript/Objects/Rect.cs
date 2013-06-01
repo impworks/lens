@@ -9,7 +9,7 @@ namespace GraphicScript.Objects
 
 		public Rect()
 		{
-			Width = Height = 100;
+			Width = Height = 50;
 		}
 
 		protected override Shape createShape()
