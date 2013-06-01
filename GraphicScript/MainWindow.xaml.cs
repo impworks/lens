@@ -113,6 +113,7 @@ namespace GraphicScript
 			{
 				Status = Status.Error;
 				ErrorMessage = ex.FullMessage;
+				MarkErrorLocation(ex);
 			}
 		}
 
@@ -120,6 +121,23 @@ namespace GraphicScript
 		{
 			Status = Status.Ready;
 			m_Manager.StopDrawing();
+		}
+
+		private void MarkErrorLocation(LensCompilerException ex)
+		{
+			var start = FlattenLocation(ex.StartLocation.Line, ex.StartLocation.Offset);
+			var end = FlattenLocation(ex.EndLocation.Line, ex.EndLocation.Offset);
+			CodeEditor.Select(start, end - start);
+		}
+
+		private int FlattenLocation(int line, int offset)
+		{
+			var lines = Code.Split('\n');
+			var pos = 0;
+			for (var idx = 0; idx < line-1; idx++)
+				pos += lines[idx].Length;
+
+			return pos + offset-1;
 		}
 
 		#endregion

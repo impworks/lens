@@ -44,7 +44,7 @@
         </Grid.ColumnDefinitions>
 
         <Border Margin="10,10,0,10" BorderBrush="Black" BorderThickness="1">
-            <TextBox Margin="0" Background="#171E1F" Foreground="White" FontFamily="Consolas" BorderThickness="0" AcceptsReturn="True"
+            <TextBox Margin="0" Background="#171E1F" Foreground="White" FontFamily="Consolas" BorderThickness="0" AcceptsReturn="True" x:Name="CodeEditor"
                      IsReadOnly="{Binding EditDisabled, Mode=OneWay}" Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         </Border>
         
