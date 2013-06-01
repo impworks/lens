@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace GraphicScript.Objects
 {
@@ -10,37 +11,53 @@ namespace GraphicScript.Objects
 		public int X { get; set; }
 		public int Y { get; set; }
 
-		public Color FillColor;
-		public Color StrokeColor;
-		public int StrokeThickness;
+		public Tuple<int, int> Position
+		{
+			get { return new Tuple<int, int>(X, Y);}
+			set { X = value.Item1; Y = value.Item2; }
+		}
 
-		protected Shape m_Shape;
+		public Color Fill;
+		public Color Outline;
+		public int Thickness;
 
-		public Action<Figure> UpdateAction;
+		public Shape Shape { get; protected set; }
+
+		public Action UpdateAction;
+
+		private Dispatcher m_Dispatcher;
 
 		public Figure()
 		{
-			FillColor = Colors.White;
-			StrokeColor = Colors.Black;
-			StrokeThickness = 1;
+			Fill = Colors.White;
+			Outline = Colors.Black;
+			Thickness = 2;
 		}
 
-		public void Register(Canvas cvs)
+		public void Register(Canvas cvs, Dispatcher disp)
 		{
-			m_Shape = createShape();
-			cvs.Children.Add(m_Shape);
+			m_Dispatcher = disp;
+			Shape = createShape();
+			cvs.Children.Add(Shape);
 		}
 
 		public void Update()
 		{
-			UpdateAction(this);
+			if (UpdateAction != null)
+				UpdateAction();
 
-			m_Shape.Stroke = new SolidColorBrush(StrokeColor);
-			m_Shape.Fill = new SolidColorBrush(FillColor);
-			m_Shape.StrokeThickness = StrokeThickness;
+			m_Dispatcher.Invoke(
+				new Action(() =>
+				{
+					updateShape();
+					Shape.Stroke = new SolidColorBrush(Outline);
+					Shape.Fill = new SolidColorBrush(Fill);
+					Shape.StrokeThickness = Thickness;
 
-			Canvas.SetLeft(m_Shape, X);
-			Canvas.SetTop(m_Shape, Y);
+					Canvas.SetLeft(Shape, X);
+					Canvas.SetTop(Shape, Y);
+				}
+			));
 		}
 
 		protected abstract Shape createShape();

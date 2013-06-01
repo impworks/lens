@@ -22,15 +22,21 @@ namespace GraphicScript.Objects
 			m_Canvas = null;
 		}
 
-		public void Register(Figure fig)
+		public void Add(Figure fig)
 		{
 			m_Figures.Add(fig);
 		}
 
-		public void Draw(Canvas cvs)
+		public void Add(IEnumerable<Figure> figs)
+		{
+			foreach(var curr in figs)
+				m_Figures.Add(curr);
+		}
+
+		public void Draw(Canvas cvs, Dispatcher disp)
 		{
 			foreach (var curr in m_Figures)
-				curr.Register(cvs);
+				curr.Register(cvs, disp);
 
 			m_Canvas = cvs;
 			new Thread(drawLoop).Start();
@@ -42,7 +48,7 @@ namespace GraphicScript.Objects
 				return;
 
 			m_Canvas.Children.Clear();
-			m_Canvas = null;
+			Clear();
 		}
 
 		private void drawLoop()
@@ -53,10 +59,10 @@ namespace GraphicScript.Objects
 				{
 					if (m_Canvas == null)
 						return;
-					Dispatcher.CurrentDispatcher.Invoke(new Action(curr.Update));
+					curr.Update();
 				}
 
-				Thread.Sleep(100);
+				Thread.Sleep(10);
 			}
 		}
 	}

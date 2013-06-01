@@ -18,7 +18,7 @@ namespace GraphicScript.Objects
 
 		protected override void updateShape()
 		{
-			m_Shape.Width = m_Shape.Height = Radius;
+			Shape.Width = Shape.Height = Radius;
 		}
 	}
 }

@@ -14,13 +14,13 @@ namespace GraphicScript.Objects
 
 		protected override Shape createShape()
 		{
-			return new Ellipse();
+			return new Rectangle();
 		}
 
 		protected override void updateShape()
 		{
-			m_Shape.Width = Width;
-			m_Shape.Height = Height;
+			Shape.Width = Width;
+			Shape.Height = Height;
 		}
 	}
 }

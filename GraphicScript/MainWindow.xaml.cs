@@ -1,7 +1,13 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Windows.Input;
 using GraphicScript.Misc;
+using GraphicScript.Objects;
+using Lens;
+using Lens.SyntaxTree;
+using Lens.SyntaxTree.Utils;
 
 namespace GraphicScript
 {
@@ -16,9 +22,12 @@ namespace GraphicScript
 			DataContext = this;
 
 			Status = Status.Ready;
+			m_Manager = new FigureManager();
 		}
 
 		#region Properties
+
+		private FigureManager m_Manager;
 
 		private string m_Code;
 		public string Code
@@ -50,14 +59,68 @@ namespace GraphicScript
 			{
 				m_Status = value;
 				notify(() => Status);
+				notify(() => EditDisabled);
 			}
+		}
+
+		public bool EditDisabled
+		{
+			get { return Status == Status.Compiling || Status == Status.Success; }
 		}
 
 		#endregion
 
 		#region Commands
 
+		protected override void OnClosing(CancelEventArgs e)
+		{
+			if(Status == Status.Success)
+				Stop();
 
+			base.OnClosing(e);
+		}
+
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+
+			if (e.Key == Key.F5 && Status.IsAnyOf(Status.Error, Status.Ready))
+				Run();
+
+			if (e.Key == Key.Escape && Status == Status.Success)
+				Stop();
+		}
+
+		public void Run()
+		{
+			var lc = new LensCompiler();
+
+			lc.RegisterType(typeof(Figure));
+			lc.RegisterType("Rect", typeof(Rect));
+			lc.RegisterType("Circle", typeof(Circle));
+			lc.RegisterProperty("Screen", () => m_Manager);
+
+			try
+			{
+				var fx = lc.Compile(Code);
+				fx();
+				
+				Status = Status.Success;
+
+				m_Manager.Draw(Canvas, Dispatcher);
+			}
+			catch (LensCompilerException ex)
+			{
+				Status = Status.Error;
+				ErrorMessage = ex.FullMessage;
+			}
+		}
+
+		public void Stop()
+		{
+			Status = Status.Ready;
+			m_Manager.StopDrawing();
+		}
 
 		#endregion
 
