@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a local variable or a function.
 	/// </summary>
-	public class SetIdentifierNode : IdentifierNodeBase
+	public class SetIdentifierNode : IdentifierNodeBase, IStartLocationTrackingEntity
 	{
 		public SetIdentifierNode(string identifier = null)
 		{
