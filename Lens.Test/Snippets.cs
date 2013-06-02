@@ -209,13 +209,16 @@ fx (1.0 / 0)";
 			Test("new float ()", 0.0f);
 			Test("new double ()", 0.0);
 
-			Test("(new Point ()).IsEmpty", true);
+			Test(@"
+using System.Drawing
+(new Point ()).IsEmpty", true);
 		}
 
 		[Test]
 		public void SetField()
 		{
 			var src = @"
+using System.Drawing
 var pt = new Point ()
 pt.X = 10
 pt.Y = 20

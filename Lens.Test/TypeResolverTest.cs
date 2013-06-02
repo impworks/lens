@@ -69,7 +69,7 @@ namespace Lens.Test
 		[Test]
 		public void DefaultNamespaces()
 		{
-			Test<System.Drawing.Point>("Point");
+			Test<System.Byte>("Byte");
 			Assert.AreEqual(Resolver.ResolveType("Enumerable"), typeof(System.Linq.Enumerable));
 		}
 
