@@ -98,7 +98,10 @@ namespace GraphicScript
 				Run();
 
 			if (e.Key == Key.Escape && Status == Status.Success)
+			{
 				Stop();
+				CodeEditor.Focus();
+			}
 		}
 
 		public void Run()

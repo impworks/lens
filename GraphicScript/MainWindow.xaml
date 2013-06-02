@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:gs="clr-namespace:GraphicScript" xmlns:misc="clr-namespace:GraphicScript.Misc"
-        Title="Графический скрипт" Height="600" Width="800" MinWidth="640" MinHeight="480"
+        Title="Графический скрипт" Height="768" Width="1024" MinWidth="640" MinHeight="480"
         d:DataContext="{d:DesignInstance gs:MainWindow}"
         mc:Ignorable="d">
     <Window.Resources>
@@ -73,7 +73,7 @@
         <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="6" ShowsPreview="True" ResizeBehavior="PreviousAndNext" />
 
         <Border Grid.Column="2" BorderBrush="Black" BorderThickness="1" Margin="0,10,10,10">
-            <Canvas x:Name="Canvas" />
+            <Canvas x:Name="Canvas" ClipToBounds="True" />
         </Border>
         
         <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Style="{StaticResource StatusStyle}" Margin="10,0,10,10" />
