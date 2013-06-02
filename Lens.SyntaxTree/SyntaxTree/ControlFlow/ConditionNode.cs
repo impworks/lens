@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
@@ -43,16 +44,14 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				return typeof (Unit);
 
 			var type = TrueAction.GetExpressionType(ctx);
-			if (FalseAction != null)
-			{
-				var otherType = FalseAction.GetExpressionType(ctx);
-				if (otherType.IsExtendablyAssignableFrom(type))
-					type = otherType;
-				else if(!type.IsExtendablyAssignableFrom(otherType))
-					Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
-			}
+			if (FalseAction == null)
+				return typeof (Unit);
 
-			return type;
+			var otherType = FalseAction.GetExpressionType(ctx);
+			if(type.IsVoid() ^ otherType.IsVoid())
+				Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
+
+			return new[] {type, otherType}.GetMostCommonType();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
