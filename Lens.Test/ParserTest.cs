@@ -5,6 +5,7 @@ using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
+using Lens.SyntaxTree.SyntaxTree.Operators;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -1210,6 +1211,26 @@ x = 20";
 			var result = new TreeBuilder().Parse(script);
 			var node2 = result.Single();
 			Assert.AreEqual(1, node2.StartLocation.Line);
+		}
+
+		[Test]
+		public void VariableLocation()
+		{
+			var script = @"x  + 1";
+			var result = new TreeBuilder().Parse(script);
+			var node = (AddOperatorNode)result.Single();
+			var variable = node.LeftOperand;
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 1
+			}, variable.StartLocation);
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 2
+			}, variable.EndLocation);
 		}
 
 		private static void Test(string source, params NodeBase[] expected)
