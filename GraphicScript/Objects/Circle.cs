@@ -4,7 +4,7 @@ namespace GraphicScript.Objects
 {
 	public class Circle : Figure
 	{
-		public int Radius;
+		public double Radius;
 
 		public Circle()
 		{

@@ -1,11 +1,18 @@
-﻿using System.Windows.Shapes;
+﻿using System;
+using System.Windows.Shapes;
 
 namespace GraphicScript.Objects
 {
 	public class Rect : Figure
 	{
-		public int Width;
-		public int Height;
+		public double Width;
+		public double Height;
+
+		public Tuple<double, double> Size
+		{
+			get { return new Tuple<double, double>(Width, Height); }
+			set { Width = value.Item1; Height = value.Item2; }
+		}
 
 		public Rect()
 		{

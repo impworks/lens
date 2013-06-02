@@ -1,15 +1,17 @@
-fun maker of Figure id:int ->
-    let curr = if(id % 2 == 0)
-        new Rect () as Figure
-    else
-        new Circle ()
+fun maker of Rect x:int y:int ->
+    let r = new Rect ()
+    r.X = (x + 1) * 50
+    r.Y = (y + 1) * 50
+    r.Focus = ->
+        r.Fill = System.Windows.Media.Color::FromRgb
+            <| (rand 100 255) as byte
+            <| (rand 100 255) as byte
+            <| (rand 100 255) as byte
+    r
 
-    curr.Position = new (10.0; id*50.0)
-    curr.UpdateAction = ->
-        curr.X = curr.X + id / 10.0
-
-    curr
-
-let range = Enumerable::Range 1 10
-let objs = range.Select ((x:int) -> maker(x))
-Screen.Add objs
+10.times
+    <| (x:int) ->
+        10.times
+            <| (y:int) ->
+                let c = maker x y
+                Screen.Add c

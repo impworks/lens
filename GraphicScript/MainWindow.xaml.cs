@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
-using System.Threading;
 using System.Windows.Input;
 using GraphicScript.Misc;
 using GraphicScript.Objects;
@@ -22,7 +21,18 @@ namespace GraphicScript
 			DataContext = this;
 
 			Status = Status.Ready;
-			m_Manager = new FigureManager();
+			m_Manager = new FigureManager(Canvas, Dispatcher);
+
+			CodeEditor.PreviewKeyDown += (s, e) =>
+			{
+				if (e.Key == Key.Tab)
+				{
+					CodeEditor.SelectedText = "    ";
+					CodeEditor.SelectionStart += 4;
+					CodeEditor.SelectionLength = 0;
+					e.Handled = true;
+				}
+			};
 		}
 
 		#region Properties
@@ -59,13 +69,13 @@ namespace GraphicScript
 			{
 				m_Status = value;
 				notify(() => Status);
-				notify(() => EditDisabled);
+				notify(() => EditEnabled);
 			}
 		}
 
-		public bool EditDisabled
+		public bool EditEnabled
 		{
-			get { return Status == Status.Compiling || Status == Status.Success; }
+			get { return Status == Status.Ready || Status == Status.Error; }
 		}
 
 		#endregion
@@ -107,7 +117,7 @@ namespace GraphicScript
 				
 				Status = Status.Success;
 
-				m_Manager.Draw(Canvas, Dispatcher);
+				m_Manager.Draw();
 			}
 			catch (LensCompilerException ex)
 			{
@@ -125,6 +135,9 @@ namespace GraphicScript
 
 		private void MarkErrorLocation(LensCompilerException ex)
 		{
+			if (ex.StartLocation.Line == 0 || ex.EndLocation.Line == 0)
+				return;
+
 			var start = FlattenLocation(ex.StartLocation.Line, ex.StartLocation.Offset);
 			var end = FlattenLocation(ex.EndLocation.Line, ex.EndLocation.Offset);
 			CodeEditor.Select(start, end - start);
@@ -135,7 +148,7 @@ namespace GraphicScript
 			var lines = Code.Split('\n');
 			var pos = 0;
 			for (var idx = 0; idx < line-1; idx++)
-				pos += lines[idx].Length;
+				pos += lines[idx].Length + 1;
 
 			return pos + offset-1;
 		}

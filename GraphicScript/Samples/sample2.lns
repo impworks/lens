@@ -1,0 +1,35 @@
+using System.Windows.Media
+
+fun color of Color frac:double ->
+    let thr = 0.9
+    let x = if(frac < thr)
+        0.0
+    else
+        (frac - thr) / (1-thr)
+    let v = x as float
+    Color::FromScRgb 1 1 v v
+
+fun maker of Figure x:int y:int ->
+    let size = 100.0
+    var hover = false
+
+    let c = new Circle ()
+    c.Radius = size
+    c.Position = new (x*size+10; y*size+10)
+    c.Focus = -> hover = true
+    c.Blur = -> hover = false
+    c.Update = ->
+        if(hover && c.Radius > 10)
+            c.Y = c.Y + 2
+            c.X = c.X + 2
+            c.Radius = c.Radius - 4
+            c.Fill = color (c.Radius / size)
+        if(not hover && c.Radius < size)
+            c.X = c.X - 0.5
+            c.Y = c.Y - 0.5
+            c.Radius = c.Radius + 1
+            c.Fill = color (c.Radius / size)
+    c
+
+let create = (x:int y:int) -> Screen.Add (maker x y)
+5.times ((x:int) -> 5.times ((y:int) -> create x y))

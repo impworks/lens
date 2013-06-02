@@ -2,7 +2,6 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace GraphicScript.Objects
 {
@@ -23,30 +22,44 @@ namespace GraphicScript.Objects
 
 		public Shape Shape { get; protected set; }
 
-		public Action UpdateAction;
+		public Action Update;
+		public Action Focus;
+		public Action Blur;
+		public Action Click;
 
-		private Dispatcher m_Dispatcher;
+		private FigureManager m_Manager;
 
 		public Figure()
 		{
 			Fill = Colors.White;
 			Outline = Colors.Black;
-			Thickness = 2;
+			Thickness = 1;
 		}
 
-		public void Register(Canvas cvs, Dispatcher disp)
+		public void Register(FigureManager manager)
 		{
-			m_Dispatcher = disp;
+			m_Manager = manager;
+
 			Shape = createShape();
-			cvs.Children.Add(Shape);
+
+			Shape.MouseEnter += (s, e) => { if (Focus != null) Focus(); };
+			Shape.MouseLeave += (s, e) => { if (Blur != null) Blur(); };
+			Shape.MouseLeftButtonDown += (s, e) => { if (Click != null) Click(); };
+
+			m_Manager.Canvas.Children.Add(Shape);
 		}
 
-		public void Update()
+		public void Unregister()
 		{
-			if (UpdateAction != null)
-				UpdateAction();
+			m_Manager.Dispatcher.Invoke(new Action(() => m_Manager.Canvas.Children.Remove(Shape)));
+		}
 
-			m_Dispatcher.Invoke(
+		public void UpdateObject()
+		{
+			if (Update != null)
+				Update();
+
+			m_Manager.Dispatcher.Invoke(
 				new Action(() =>
 				{
 					updateShape();

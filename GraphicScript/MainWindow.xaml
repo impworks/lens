@@ -8,6 +8,29 @@
         d:DataContext="{d:DesignInstance gs:MainWindow}"
         mc:Ignorable="d">
     <Window.Resources>
+        <Style TargetType="TextBox" x:Key="EditorStyle">
+            <Setter Property="Background" Value="#171E1F" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Name="Bd" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"
+                                SnapsToDevicePixels="true">
+                            <ScrollViewer Name="PART_ContentHost" Background="{TemplateBinding Background}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="PART_ContentHost" Property="Opacity" Value="0.3" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TextBlock" x:Key="StatusStyle">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static misc:Status.Ready}">
@@ -25,7 +48,7 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static misc:Status.Success}">
                     <Setter Property="Foreground" Value="DarkGreen" />
-                    <Setter Property="Text" Value="Скрипт скомпилирован успешно." />
+                    <Setter Property="Text" Value="Скрипт выполняется. Нажмите Esc для возврата в режим редактирования." />
                     <Setter Property="FontWeight" Value="Bold" />
                 </DataTrigger>
             </Style.Triggers>
@@ -44,8 +67,7 @@
         </Grid.ColumnDefinitions>
 
         <Border Margin="10,10,0,10" BorderBrush="Black" BorderThickness="1">
-            <TextBox Margin="0" Background="#171E1F" Foreground="White" FontFamily="Consolas" BorderThickness="0" AcceptsReturn="True" x:Name="CodeEditor"
-                     IsReadOnly="{Binding EditDisabled, Mode=OneWay}" Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox x:Name="CodeEditor" Style="{StaticResource EditorStyle}" IsEnabled="{Binding EditEnabled, Mode=OneWay}" Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         </Border>
         
         <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="6" ShowsPreview="True" ResizeBehavior="PreviousAndNext" />
