@@ -718,6 +718,24 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Argument {0} requires a reference of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string ReferenceArgExpected {
+            get {
+                return ResourceManager.GetString("ReferenceArgExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use reference as a value for non-reference argument!.
+        /// </summary>
+        public static string ReferenceArgUnexpected {
+            get {
+                return ResourceManager.GetString("ReferenceArgUnexpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function of type &apos;{0}&apos; cannot return an expression of type &apos;{1}&apos;!.
         /// </summary>
         public static string ReturnTypeMismatch {

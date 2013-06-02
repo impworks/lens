@@ -336,6 +336,12 @@
   <data name="PropertyNoSetter" xml:space="preserve">
     <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
   </data>
+  <data name="ReferenceArgExpected" xml:space="preserve">
+    <value>Аргумент {0} требует ссылку типа '{1}'!</value>
+  </data>
+  <data name="ReferenceArgUnexpected" xml:space="preserve">
+    <value>Нельзя использовать ссылку в качестве значения не-ссылочного параметра!</value>
+  </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Функция типа '{0}' не может вернуть объект типа '{1}'!</value>
   </data>
