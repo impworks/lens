@@ -318,6 +318,12 @@
   <data name="PropertyNoSetter" xml:space="preserve">
     <value>Property '{0}.{1}' does not have a setter!</value>
   </data>
+  <data name="ReferenceArgExpected" xml:space="preserve">
+    <value>Argument {0} requires a reference of type '{1}'!</value>
+  </data>
+  <data name="ReferenceArgUnexpected" xml:space="preserve">
+    <value>Cannot use reference as a value for non-reference argument!</value>
+  </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
   </data>
