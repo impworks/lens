@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
 
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.ErrorScope(Expr.Cast(Condition, typeof(bool)), Condition).Compile(ctx, true);
 			if (FalseAction == null)
 			{
 				gen.EmitBranchFalse(endLabel);
