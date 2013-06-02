@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
@@ -39,18 +40,18 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			if (!mustReturn || FalseAction == null)
+			if (!mustReturn)
 				return typeof (Unit);
 
 			var type = TrueAction.GetExpressionType(ctx);
-			var otherType = FalseAction.GetExpressionType(ctx);
-			if (otherType.IsExtendablyAssignableFrom(type))
-				return otherType;
+			if (FalseAction == null)
+				return typeof (Unit);
 
-			if(!type.IsExtendablyAssignableFrom(otherType))
+			var otherType = FalseAction.GetExpressionType(ctx);
+			if(type.IsVoid() ^ otherType.IsVoid())
 				Error(CompilerMessages.ConditionInconsistentTyping, type, otherType);
 
-			return type;
+			return new[] {type, otherType}.GetMostCommonType();
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -65,54 +66,37 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
-		    var endLabel = gen.DefineLabel();
+			var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
-			
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+
+			Expr.ErrorScope(Expr.Cast(Condition, typeof(bool)), Condition).Compile(ctx, true);
 			if (FalseAction == null)
 			{
 				gen.EmitBranchFalse(endLabel);
 				TrueAction.Compile(ctx, mustReturn);
-				if(TrueAction.GetExpressionType(ctx).IsNotVoid())
-					gen.EmitPop();
-
 				gen.MarkLabel(endLabel);
-				gen.EmitNop();
+				if(!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
+				else
+					gen.EmitNop();
 			}
 			else
 			{
-				var canReturn = mustReturn && FalseAction != null;
-                var resultType = GetExpressionType(ctx);
-
 				gen.EmitBranchFalse(falseLabel);
-				
-                if (TrueAction.GetExpressionType(ctx).IsNotVoid())
-                {
-                    Expr.Cast(TrueAction, resultType).Compile(ctx, mustReturn);
-                    if (!canReturn)
-                        gen.EmitPop();
-                }
-                else
-                {
-                    TrueAction.Compile(ctx, mustReturn);
-                }
+				TrueAction.Compile(ctx, mustReturn);
+
+				if (!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
 
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-                if (FalseAction.GetExpressionType(ctx).IsNotVoid())
-                {
-                    Expr.Cast(FalseAction, resultType).Compile(ctx, mustReturn);
-                    if (!canReturn)
-                        gen.EmitPop();
-                }
-                else
-                {
-                    FalseAction.Compile(ctx, mustReturn);
-                }
-
+				FalseAction.Compile(ctx, mustReturn);
 				gen.MarkLabel(endLabel);
-				gen.EmitNop();
+				if (!mustReturn && FalseAction.GetExpressionType(ctx).IsNotVoid())
+					gen.EmitPop();
+				else
+					gen.EmitNop();
 			}
 		}
 

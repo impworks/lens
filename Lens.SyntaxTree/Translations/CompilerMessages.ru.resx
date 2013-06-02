@@ -130,7 +130,7 @@
     <value>Тип массива не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
   <data name="CallableTooManyArguments" xml:space="preserve">
-    <value>Невозможно создать делегат из метода, принимающего более 16 аргументов!</value>
+    <value>Невозможно создать делегат из метода, принимающего более 16 аргументов.</value>
   </data>
   <data name="CastDelegateArgTypesMismatch" xml:space="preserve">
     <value>У делегатов '{0}' и '{1}' не совпадают аргументы!</value>
@@ -145,10 +145,10 @@
     <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
   <data name="CatchClauseUnreachable" xml:space="preserve">
-    <value>Выражение catch недостижимо, поскольку предыдущее перехватывает все типы исключений!</value>
+    <value>Это выражение catch недостижимо, поскольку предыдущее выражение перехватывает все исключения!</value>
   </data>
   <data name="CatchTypeDuplicate" xml:space="preserve">
-    <value>Тип '{0}' уже использован в выражении catch текущего блока try!</value>
+    <value>Тип '{0}' уже был использован в выражении catch текущего блока try!</value>
   </data>
   <data name="CatchTypeNotException" xml:space="preserve">
     <value>Тип '{0}' не может быть использован в выражении catch, поскольку он не наследуется от System.Exception!</value>
@@ -319,10 +319,10 @@
     <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
   </data>
   <data name="ReferenceArgExpected" xml:space="preserve">
-    <value>Argument {0} requires a reference of type '{1}'!</value>
+    <value>Аргумент {0} требует ссылку типа '{1}'!</value>
   </data>
   <data name="ReferenceArgUnexpected" xml:space="preserve">
-    <value>Cannot use reference as a value for non-reference argument!</value>
+    <value>Нельзя использовать ссылку в качестве значения не-ссылочного параметра!</value>
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Функция типа '{0}' не может вернуть объект типа '{1}'!</value>

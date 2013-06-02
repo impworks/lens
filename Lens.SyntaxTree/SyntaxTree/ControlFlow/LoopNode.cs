@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 			gen.MarkLabel(beginLabel);
 
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.ErrorScope(Expr.Cast(Condition, typeof(bool)), Condition).Compile(ctx, true);
 			gen.EmitConstant(false);
 			gen.EmitBranchEquals(endLabel);
 

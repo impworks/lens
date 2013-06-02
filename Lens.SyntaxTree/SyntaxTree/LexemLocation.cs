@@ -7,5 +7,10 @@
 	{
 		public int Line;
 		public int Offset;
+
+		public bool IsEmpty
+		{
+			get { return Line == 0 && Offset == 0; }
+		}
 	}
 }

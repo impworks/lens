@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Lens.Parser;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
-using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using NUnit.Framework;
 
@@ -1192,6 +1192,45 @@ else
 ";
 			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
 			Test(src, result);
+		}
+
+		[Test]
+		public void AssignmentLocation()
+		{
+			var script = @"let x = 10
+x = 20";
+			var result = new TreeBuilder().Parse(script);
+			var node2 = result.Skip(1).Single();
+			Assert.AreEqual(2, node2.StartLocation.Line);
+		}
+
+		[Test]
+		public void MemberAssignmentLocation()
+		{
+			var script = @"a.b = 1";
+			var result = new TreeBuilder().Parse(script);
+			var node2 = result.Single();
+			Assert.AreEqual(1, node2.StartLocation.Line);
+		}
+
+		[Test]
+		public void VariableLocation()
+		{
+			var script = @"x  + 1";
+			var result = new TreeBuilder().Parse(script);
+			var node = (AddOperatorNode)result.Single();
+			var variable = node.LeftOperand;
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 1
+			}, variable.StartLocation);
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 2
+			}, variable.EndLocation);
 		}
 
 		private static void Test(string source, params NodeBase[] expected)

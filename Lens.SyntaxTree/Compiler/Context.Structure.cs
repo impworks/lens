@@ -310,7 +310,8 @@ namespace Lens.SyntaxTree.Compiler
 //			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
 
 			foreach (var curr in _DefinedTypes)
-				curr.Value.TypeBuilder.CreateType();
+				if(!curr.Value.IsImported)
+					curr.Value.TypeBuilder.CreateType();
 
 			if(Options.AllowSave)
 				MainAssembly.Save("_MainModule.dll");

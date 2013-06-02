@@ -52,41 +52,66 @@ let keyword k = (pstring k
 let token t = (pstring t
                .>>? many space) <!> sprintf "token %s" t
 
-let createParser s =
+
+let createRawParser s =
     let parser, parserRef = createParserForwardedToRef()
-    let whitespaced = choice [parser .>>? many space
-                              many1 space >>. fail ParserMessages.IncorrectIndentation]
-    whitespaced <!> s, parserRef
+    parser <!> s, parserRef
 
-let createNodeParser name =
-    let lexemLocation (position : Position) =
-        LexemLocation(Line = int position.Line, Offset = int position.Column)
-
-    let parser, parserRef = createParser name
+let createRawNodeParser name =
+    let parser, parserRef = createRawParser name
     let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
+        let locationFrom (position : Position) =
+            LexemLocation(Line = int position.Line, Offset = int position.Column)
+
+        let getEndPosition (position : Position) =
+            let initialIndex = position.Index
+            let result = [0L .. initialIndex - 1L]
+                         |> List.rev
+                         |> Seq.map (fun index -> stream.Seek index
+                                                  let character = stream.Peek()
+                                                  stream.Seek(index + 1L)
+                                                  let position = stream.Position
+                                                  character, position)
+                         |> Seq.filter (fun (c, _) -> c <> ' ')
+                         |> Seq.head
+                         |> snd
+            stream.Seek initialIndex
+            result
+
         let startPosition = stream.Position
         let reply = parser stream
         match reply.Status with
-        | Ok -> let endPosition = stream.Position
+        | Ok -> let endPosition = getEndPosition stream.Position
                 let result = reply.Result :> NodeBase
                 if isStartTracked result then
-                    result.StartLocation <- lexemLocation startPosition
+                    result.StartLocation <- locationFrom startPosition
                 if isEndTracked result then
-                    result.EndLocation <- lexemLocation endPosition
+                    result.EndLocation <- locationFrom endPosition
                 reply
         | _  -> reply
     informed, parserRef
+
+
+let whitespaced p =
+    choice [p .>>? many space
+            many1 space >>. fail ParserMessages.IncorrectIndentation]
+
+let createParser s =
+    let parser, parserRef = createRawParser s
+    whitespaced parser, parserRef
+
 
 let annotate parser annotation =
     parser <?> annotation
 
 let createAnnotatedParser name annotation =
-    let parser, ref = createParser name
-    annotate parser annotation, ref
+    let parser, ref = createRawParser name
+    annotate (whitespaced parser) annotation, ref
 
 let createAnnotatedNodeParser name annotation =
-    let parser, ref = createNodeParser name
-    annotate parser annotation, ref
+    let parser, ref = createRawNodeParser name
+    annotate (whitespaced parser) annotation, ref
+
 
 let stmt, stmtRef                             = createAnnotatedNodeParser "stmt" ParserLexems.Stmt
 let using, usingRef                           = createAnnotatedNodeParser "using" ParserLexems.Using

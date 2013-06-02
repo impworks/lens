@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		[ContractAnnotation("=> halt")]
 		public void Error(string message, params object[] args)
 		{
-			Error(null, message, args);
+			Error(this, message, args);
 		}
 
 		/// <summary>

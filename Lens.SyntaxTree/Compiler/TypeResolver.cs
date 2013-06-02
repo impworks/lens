@@ -24,10 +24,6 @@ namespace Lens.SyntaxTree.Compiler
 					new List<string> { "System.Text.RegularExpressions" }
 				},
 				{
-					"System.Drawing",
-					new List<string> { "System.Drawing" }
-				},
-				{
 					"System.Core",
 					new List<string> { "System.Linq" }
 				}
@@ -37,6 +33,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				{"object", typeof (Object)},
 				{"bool", typeof (Boolean)},
+				{"byte", typeof (Byte)},
 				{"int", typeof (Int32)},
 				{"long", typeof (Int64)},
 				{"float", typeof (Single)},

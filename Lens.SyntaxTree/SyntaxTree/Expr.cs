@@ -455,5 +455,14 @@ namespace Lens.SyntaxTree.SyntaxTree
 		}
 
 		#endregion
+
+		#region Specials
+
+		public static NodeBase ErrorScope(NodeBase expr, LocationEntity loc)
+		{
+			return new ErrorScopeNode {Expression = expr, Location = loc};
+		}
+
+		#endregion
 	}
 }

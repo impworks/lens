@@ -78,6 +78,7 @@
     <Compile Include="Stdlib\ConsoleWrapper.cs" />
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
+    <Compile Include="SyntaxTree\ErrorScopeNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
