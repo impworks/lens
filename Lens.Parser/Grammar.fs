@@ -82,7 +82,7 @@ let createRawNodeParser name =
         let reply = parser stream
         match reply.Status with
         | Ok -> let endPosition = getEndPosition stream.Position
-                let result = reply.Result :> NodeBase
+                let result = reply.Result :> LocationEntity
                 if isStartTracked result then
                     result.StartLocation <- locationFrom startPosition
                 if isEndTracked result then
@@ -124,7 +124,7 @@ let funcdef, funcdefRef                       = createAnnotatedNodeParser "funcd
 let func_params, func_paramsRef               = createAnnotatedParser "func_params" ParserLexems.FuncParams
 let block, blockRef                           = createAnnotatedNodeParser "block" ParserLexems.Block
 let block_line, block_lineRef                 = createAnnotatedNodeParser "block_line" ParserLexems.BlockLine
-let ``type``, typeRef                         = createAnnotatedParser "type" ParserLexems.Type
+let ``type``, typeRef                         = createAnnotatedNodeParser "type" ParserLexems.Type
 let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local_stmt" ParserLexems.LocalStmt
 let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" ParserLexems.VarDeclExpr
 let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" ParserLexems.AssignExpr

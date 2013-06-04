@@ -1249,23 +1249,24 @@ x = 20";
 		}
 
 		[Test]
-		public void NewLocation()
+		public void TypeSignatureLocation()
 		{
 			var script = "new SomeType ()";
 			var result = new TreeBuilder().Parse(script);
-			var node = result.Single();
+			var node = (NewObjectNode)result.Single();
+			var typeSignature = node.Type;
 
 			Assert.AreEqual(new LexemLocation
 			{
 				Line = 1,
-				Offset = 1
-			}, node.StartLocation);
+				Offset = 5
+			}, typeSignature.StartLocation);
 
 			Assert.AreEqual(new LexemLocation
 			{
 				Line = 1,
-				Offset = 16
-			}, node.EndLocation);
+				Offset = 13
+			}, typeSignature.EndLocation);
 		}
 
 		[Test]
