@@ -1234,6 +1234,21 @@ x = 20";
 		}
 
 		[Test]
+		public void ArgumentLocation()
+		{
+			var script = "int::TryParse (ref x)";
+			var result = new TreeBuilder().Parse(script);
+			var node = (InvocationNodeBase)result.Single();
+			var argument = node.Arguments.Single();
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 15
+			}, argument.StartLocation);
+		}
+
+		[Test]
 		public void ComplexWhileTest()
 		{
 			var src = @"using System.Net

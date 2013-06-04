@@ -59,7 +59,7 @@ let createRawParser s =
 
 let createRawNodeParser name =
     let parser, parserRef = createRawParser name
-    let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
+    let informed (stream : CharStream<ParserState>) : Reply<#LocationEntity> =
         let locationFrom (position : Position) =
             LexemLocation(Line = int position.Line, Offset = int position.Column)
 
@@ -163,7 +163,7 @@ let new_obj_expr, new_obj_exprRef             = createAnnotatedNodeParser "new_o
 let enumeration_expr, enumeration_exprRef     = createAnnotatedParser "enumeration_expr" ParserLexems.EnumerationExpr
 let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invoke_expr" ParserLexems.InvokeExpr
 let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" ParserLexems.InvokeList
-let byref_arg, byref_argRef                   = createAnnotatedParser "byref_arg" ParserLexems.ByRefArg
+let byref_arg, byref_argRef                   = createAnnotatedNodeParser "byref_arg" ParserLexems.ByRefArg
 let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" ParserLexems.Value
 let rvalue, rvalueRef                         = createAnnotatedParser "rvalue" ParserLexems.RValue
 let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" ParserLexems.TypeOperatorExpr
