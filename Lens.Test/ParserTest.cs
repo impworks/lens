@@ -1233,6 +1233,39 @@ x = 20";
 			}, variable.EndLocation);
 		}
 
+		[Test]
+		public void ComplexWhileTest()
+		{
+			var src = @"using System.Net
+
+let listener = new HttpListener ()
+listener.Prefixes.Add ""http://127.0.0.1:8080/""
+listener.Prefixes.Add ""http://localhost:8080/""
+
+var count = 1
+
+while(true)
+    listener.Start ()
+    
+    let ctx = listener.GetContext ()
+    let rq = ctx.Request
+    let resp = ctx.Response
+
+    let respStr = fmt ""Hello from LENS! This page has been viewed {0} times."" count
+    let buf = Encoding::UTF8.GetBytes respStr
+
+    resp.ContentLength64 = buf.Length
+    let output = resp.OutputStream
+    output.Write buf 0 (buf.Length)
+    output.Close ()
+
+    listener.Stop ()
+
+    count = count + 1
+";
+			new TreeBuilder().Parse(src);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			var treeBuilder = new TreeBuilder();
