@@ -18,10 +18,13 @@ let using nameSpace =
     UsingNode(Namespace = nameSpace) :> NodeBase
 
 // Definitions
-let typeTag (fullName : string) (additional : string option) : string =
+let typeTag (fullName : string, additional : string option) : string =
     match additional with
     | Some s -> fullName + s
     | None   -> fullName
+
+let typeSignature (fullName : string, additional : string option) : TypeSignature =
+    TypeSignature(typeTag(fullName, additional))
 
 let typeParams types =
     types
@@ -33,18 +36,18 @@ let arrayDefinition braces =
     |> Seq.map (fun _ -> "[]")
     |> String.concat String.Empty
 
-let recordEntry(entryName, typeName) =
-    RecordField(Name = entryName, Type = TypeSignature(typeName))
+let recordEntry(entryName, typeSig) =
+    RecordField(Name = entryName, Type = typeSig)
 
 let record name entries =
     let node = RecordDefinitionNode(Name = name)
     entries |> Seq.iter (fun e -> node.Entries.Add e)
     node :> NodeBase
 
-let typeEntry name typeDefinition =
+let typeEntry name typeSig =
     let signature =
-        match typeDefinition with
-        | Some s -> TypeSignature(s)
+        match typeSig with
+        | Some t -> t
         | None   -> null
     TypeLabel(Name = name, TagType = signature)
 
@@ -57,19 +60,19 @@ let functionParameters parameters =
     let list = List<_>()
     
     parameters
-    |> Seq.map (fun((name, flag), typeTag) ->
+    |> Seq.map (fun((name, flag), typeSig) ->
         let isRef = flag = Some "ref"
-        FunctionArgument(Name = name, IsRefArgument = isRef, TypeSignature = TypeSignature(typeTag)))
+        FunctionArgument(Name = name, IsRefArgument = isRef, TypeSignature = typeSig))
     |> Seq.iter (fun fa -> list.Add(fa))
     
     list
 
-let functionNode name ``type`` parameters body =
+let functionNode name typeSig parameters body =
     FunctionNode(
         Name = name,
-        ReturnTypeSignature = (match ``type`` with
-                               | Some(typeName) -> TypeSignature typeName
-                               | None           -> null),
+        ReturnTypeSignature = (match typeSig with
+                               | Some t -> t
+                               | None   -> null),
         Arguments = parameters, Body = body) :> NodeBase
 
 // Code
@@ -106,8 +109,8 @@ let getterChain node (accessors : Accessor list) =
     <| node
     <| accessors
 
-let staticSymbol(typeName, symbolName) =
-    Static(typeName, symbolName)
+let staticSymbol(typeSig, symbolName) =
+    Static(typeSig, symbolName)
 
 let localSymbol name =
     Local name
@@ -135,13 +138,11 @@ let getterNode (symbol, accessorChain) =
             last.Expression <- top
             upcast root
 
-let genericGetterNode (symbol, chain) typeArguments : NodeBase =
+let genericGetterNode (symbol, chain) (typeArguments : TypeSignature list option) : NodeBase =
     match typeArguments with
     | Some(arguments) ->
         let node : GetMemberNode = downcast getterNode (symbol, chain)
-        node.TypeHints <- arguments
-                          |> Seq.map (fun t -> TypeSignature(t))
-                          |> (fun l -> ResizeArray<_>(l))
+        node.TypeHints <- ResizeArray<_> arguments
         upcast node
     | None           ->
         getterNode (symbol, chain)
@@ -192,8 +193,8 @@ let tryCatchNode expression catchClauses =
 let catchNode variableDefinition code =
     let node =
         match variableDefinition with
-        | Some (typeName, variableName) -> CatchNode(
-                                               ExceptionType = TypeSignature(typeName),
+        | Some (typeSig, variableName) -> CatchNode(
+                                               ExceptionType = typeSig,
                                                ExceptionVariable = variableName)
         | None                          -> CatchNode()
     node.Code <- code
@@ -226,10 +227,10 @@ let string value =
 // Operators
 let castNode expression castOption : NodeBase =
     match castOption with
-    | None              -> expression
-    | Some("is", name)  -> upcast IsOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
-    | Some("as", name)  -> upcast CastOperatorNode(Expression = expression, TypeSignature = TypeSignature name)
-    | Some(other, name) -> failwith <| String.Format(ParserMessages.UnknownCastOperator, other)
+    | None                -> expression
+    | Some("is", typeSig) -> upcast IsOperatorNode(Expression = expression, TypeSignature = typeSig)
+    | Some("as", typeSig) -> upcast CastOperatorNode(Expression = expression, TypeSignature = typeSig)
+    | Some(other, name)   -> failwith <| String.Format(ParserMessages.UnknownCastOperator, other)
 
 let binaryOperatorNode symbol : BinaryOperatorNodeBase =
     let booleanKind = function
@@ -285,25 +286,25 @@ let rec operatorChain node operations =
         let newNode = binaryOperator op node node2
         operatorChain newNode other
 
-let typeOperator symbol typeName =
+let typeOperator symbol typeSig =
     let node : TypeOperatorNodeBase =
         match symbol with
         | "typeof"  -> upcast TypeofOperatorNode()
         | "default" -> upcast DefaultOperatorNode()
         | other     -> failwith <| String.Format(ParserMessages.UnknownTypeOperator, other)
-    node.TypeSignature <- TypeSignature typeName
+    node.TypeSignature <- typeSig
     node :> NodeBase
 
 // New objects
 let dictEntry key value =
     KeyValuePair(key, value)
 
-let objectNode typeName (parameters : NodeBase list option) =
+let objectNode typeSig (parameters : NodeBase list option) =
     let arguments =
         match parameters with
         | Some args -> ResizeArray<_> args
         | None      -> ResizeArray<_>()
-    NewObjectNode(Type = TypeSignature typeName, Arguments = arguments) :> NodeBase
+    NewObjectNode(Type = typeSig, Arguments = arguments) :> NodeBase
 
 let tupleNode (elements : NodeBase list) =
     NewTupleNode(Expressions = ResizeArray<_> elements) :> NodeBase

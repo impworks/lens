@@ -6,14 +6,14 @@ open Lens.SyntaxTree.SyntaxTree.Expressions
 open Lens.SyntaxTree.Compiler
 
 type Symbol =
-| Static     of string * string // type * name
+| Static     of TypeSignature * string
 | Local      of string
 | Expression of NodeBase * Accessor
 
 let symbolGetter symbol : NodeBase =
     match symbol with
     | Local name                       -> upcast GetIdentifierNode(Identifier = name)
-    | Static(typeName, name)           -> upcast GetMemberNode(StaticType = TypeSignature typeName, MemberName = name)
+    | Static(typeSig, name)            -> upcast GetMemberNode(StaticType = typeSig, MemberName = name)
     | Expression(expression, accessor) ->
         let node = accessorGetter accessor
         node.Expression <- expression
@@ -22,8 +22,8 @@ let symbolGetter symbol : NodeBase =
 let symbolSetter symbol value : NodeBase =
     match symbol with
     | Local name                       -> upcast SetIdentifierNode(Identifier = name, Value = value)
-    | Static(typeName, name)           -> upcast SetMemberNode(
-                                              StaticType = TypeSignature typeName,
+    | Static(typeSig, name)            -> upcast SetMemberNode(
+                                              StaticType = typeSig,
                                               MemberName = name,
                                               Value = value)
     | Expression(expression, accessor) ->

@@ -174,6 +174,12 @@ let int, intRef                               = createAnnotatedParser "int" Pars
 let double, doubleRef                         = createAnnotatedParser "double" ParserLexems.Double
 let identifier, identifierRef                 = createAnnotatedParser "identifier" ParserLexems.Identifier
 
+// For type signature:
+let typeParser = ``namespace``
+                 .>>. opt ((type_params |>> Node.typeParams)
+                           <|> (many (token "[]") |>> Node.arrayDefinition))
+let typeTag = typeParser |>> Node.typeTag
+
 let main               = many newline >>. many stmt .>> eof
 stmtRef               := // Only using and local_stmt blocks haven't nextLine as their natural ending.
                          choice [using .>> nextLineOrEof
@@ -214,10 +220,7 @@ blockRef              := ((Indentation.indentedBlockOf block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
-typeRef               := pipe2
-                         <| ``namespace``
-                         <| opt ((type_params |>> Node.typeParams) <|> (many (token "[]") |>> Node.arrayDefinition))
-                         <| Node.typeTag
+typeRef               := typeParser |>> Node.typeSignature
 local_stmtRef         := choice [var_decl_expr
                                  attempt assign_expr
                                  expr]
@@ -238,7 +241,7 @@ atomar_exprRef        := choice [literal
                                  between <| token "(" <| token ")" <| expr]
 accessor_exprRef      := choice [token "." >>? identifier |>> Accessor.Member
                                  (between <| token "[" <| token "]" <| line_expr) |>> Accessor.Indexer]
-type_paramsRef        := between <| token "<" <| token ">" <| (sepBy1 ``type`` <| token ",")
+type_paramsRef        := between <| token "<" <| token ">" <| (sepBy1 typeTag <| token ",")
 exprRef               := choice [attempt block_expr // attempt in case of lambdas because lambdas creates many grammar conflicts
                                  line_expr]
 block_exprRef         := choice [if_expr
@@ -350,7 +353,7 @@ value_exprRef         := choice [attempt rvalue
                                  atomar_expr]
 rvalueRef             := pipe2
                          <| lvalue
-                         <| opt (attempt type_params) // attempt is significant here because of < operator
+                         <| opt (attempt (between <| token "<" <| token ">" <| (sepBy1 ``type`` <| token ","))) // attempt is significant here because of < operator
                          <| Node.genericGetterNode
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")

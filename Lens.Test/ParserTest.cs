@@ -1249,6 +1249,26 @@ x = 20";
 		}
 
 		[Test]
+		public void NewLocation()
+		{
+			var script = "new SomeType ()";
+			var result = new TreeBuilder().Parse(script);
+			var node = result.Single();
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 1
+			}, node.StartLocation);
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 16
+			}, node.EndLocation);
+		}
+
+		[Test]
 		public void ComplexWhileTest()
 		{
 			var src = @"using System.Net
