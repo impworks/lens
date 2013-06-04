@@ -244,7 +244,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	        }
 	        else
 	        {
-	            var isVirt = m_InvocationSource != null;
+	            var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
 	            gen.EmitCall(m_Method.MethodInfo, isVirt);
 	        }
 	    }
