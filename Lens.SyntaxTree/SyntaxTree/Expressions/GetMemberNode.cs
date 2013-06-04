@@ -211,8 +211,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 					else
 						throw new NotImplementedException("Unknown literal field type!");
 
-					if(fieldType.IsEnum)
-						gen.EmitBox(fieldType);
+//					if(fieldType.IsEnum)
+//						gen.EmitBox(fieldType);
 				}
 				else
 				{ 
