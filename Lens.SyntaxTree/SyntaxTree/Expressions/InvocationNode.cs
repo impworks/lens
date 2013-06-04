@@ -176,79 +176,85 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		}
 
 		#region Compile
-		
-		public override void Compile(Context ctx, bool mustReturn)
-		{
-			if (!m_IsResolved)
-				resolve(ctx);
 
-			var gen = ctx.CurrentILGenerator;
+	    public override void Compile(Context ctx, bool mustReturn)
+	    {
+	        if (!m_IsResolved)
+	            resolve(ctx);
 
-			Type constraint = null;
+	        var gen = ctx.CurrentILGenerator;
 
-			if (m_InvocationSource != null)
-			{
-				var type = m_InvocationSource.GetExpressionType(ctx);
+	        Type constraint = null;
 
-				if (type.IsValueType)
-				{
-					constraint = type;
-					if (m_InvocationSource is IPointerProvider)
-					{
-						(m_InvocationSource as IPointerProvider).PointerRequired = true;
-						m_InvocationSource.Compile(ctx, true);
-					}
-					else
-					{
-						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
-						gen.EmitLoadLocal(tmpVar, true);
+	        if (m_InvocationSource != null)
+	        {
+	            var type = m_InvocationSource.GetExpressionType(ctx);
 
-						m_InvocationSource.Compile(ctx, true);
-						gen.EmitSaveObject(type);
-						
-						gen.EmitLoadLocal(tmpVar, true);
-					}
-				}
-				else
-				{
-					m_InvocationSource.Compile(ctx, true);
-				}
-			}
+	            if (type.IsValueType)
+	            {
+	                constraint = type;
+	                if (m_InvocationSource is IPointerProvider)
+	                {
+	                    (m_InvocationSource as IPointerProvider).PointerRequired = true;
+	                    m_InvocationSource.Compile(ctx, true);
+	                }
+	                else
+	                {
+	                    var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
+	                    gen.EmitLoadLocal(tmpVar, true);
 
-			if (m_ArgTypes.Length > 0)
-			{
-				var destTypes = m_Method.ArgumentTypes;
+	                    m_InvocationSource.Compile(ctx, true);
+	                    gen.EmitSaveObject(type);
 
-				for (var idx = 0; idx < Arguments.Count; idx++)
-				{
-					var arg = Arguments[idx];
-					var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
-					var targetRef = destTypes[idx].IsByRef;
+	                    gen.EmitLoadLocal(tmpVar, true);
+	                }
+	            }
+	            else
+	            {
+	                m_InvocationSource.Compile(ctx, true);
+	            }
+	        }
 
-					if (argRef != targetRef)
-					{
-						if(argRef)
-							Error(arg, CompilerMessages.ReferenceArgUnexpected);
-						else
-							Error(arg, CompilerMessages.ReferenceArgExpected, idx+1, destTypes[idx].GetElementType());
-					}
+	        if (m_ArgTypes.Length > 0)
+	        {
+	            var destTypes = m_Method.ArgumentTypes;
 
-					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
-					expr.Compile(ctx, true);
-				}
-			}
+	            for (var idx = 0; idx < Arguments.Count; idx++)
+	            {
+	                var arg = Arguments[idx];
+	                var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
+	                var targetRef = destTypes[idx].IsByRef;
 
-			if (constraint != null)
-				gen.EmitCall(m_Method.MethodInfo, true, constraint);	
-			else
-				gen.EmitCall(m_Method.MethodInfo);
-		}
+	                if (argRef != targetRef)
+	                {
+	                    if (argRef)
+	                        Error(arg, CompilerMessages.ReferenceArgUnexpected);
+	                    else
+	                        Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+	                }
 
-		#endregion
+	                var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
+	                expr.Compile(ctx, true);
+	            }
+	        }
+
+	        if (constraint != null)
+	        {
+	            gen.EmitCall(m_Method.MethodInfo, true, constraint);
+	        }
+	        else
+	        {
+	            var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
+	            gen.EmitCall(m_Method.MethodInfo, isVirt);
+	        }
+	    }
+
+	    #endregion
 
 		#region Equality members
 
-		protected bool Equals(InvocationNode other)
+		    protected
+		    bool Equals(InvocationNode other)
 		{
 			return base.Equals(other)
 				&& Equals(Expression, other.Expression);
