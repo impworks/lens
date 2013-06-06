@@ -18,12 +18,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The name of the main type in the assembly.
 		/// </summary>
-		private const string RootTypeName = "<ScriptRootType>";
+		private const string MainTypeName = "<MainScriptType>";
 
 		/// <summary>
-		/// The name of the entry point of the assembly.
+		/// The name of the main method in which the code is situated.
 		/// </summary>
-		private const string RootMethodName = "Run";
+		private const string RunMethodName = "Run";
+
+		/// <summary>
+		/// The name of the assembly entry point (when it's saved as exe).
+		/// </summary>
+		private const string EntryPointMethodName = "Main";
 
 		/// <summary>
 		/// The default size of a method's IL Generator stream.
@@ -74,10 +79,10 @@ namespace Lens.SyntaxTree.Compiler
 
 			ContextId = GlobalPropertyHelper.RegisterContext();
 
-			MainType = CreateType(RootTypeName);
+			MainType = CreateType(MainTypeName);
 			MainType.Kind = TypeEntityKind.Internal;
 			MainType.Interfaces = new[] {typeof (IScript)};
-			MainMethod = MainType.CreateMethod(RootMethodName, typeof(object), Type.EmptyTypes, false, true);
+			MainMethod = MainType.CreateMethod(RunMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
 
 			if(Options.LoadStandardLibrary)
@@ -98,7 +103,7 @@ namespace Lens.SyntaxTree.Compiler
 			compileCore();
 			finalizeAssembly();
 
-			var inst = Activator.CreateInstance(ResolveType(RootTypeName));
+			var inst = Activator.CreateInstance(ResolveType(MainTypeName));
 			return inst as IScript;
 		}
 
@@ -194,14 +199,6 @@ namespace Lens.SyntaxTree.Compiler
 		internal ILGenerator CurrentILGenerator
 		{
 			get { return CurrentMethod == null ? null : CurrentMethod.Generator; }
-		}
-
-		/// <summary>
-		/// Root type.
-		/// </summary>
-		internal TypeEntity RootType
-		{
-			get { return _DefinedTypes[RootTypeName]; }
 		}
 
 		/// <summary>

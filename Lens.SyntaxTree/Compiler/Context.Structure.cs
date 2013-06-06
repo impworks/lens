@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
 		{
-			_DefinedTypes[RootTypeName].ImportMethod(name, method, check);
+			_DefinedTypes[MainTypeName].ImportMethod(name, method, check);
 		}
 
 		/// <summary>
@@ -118,7 +118,7 @@ namespace Lens.SyntaxTree.Compiler
 
 					var args = new HashList<FunctionArgument> { { "value", new FunctionArgument("value", curr.TagType) } };
 
-					var staticCtor = RootType.CreateMethod(tagName, tagName, new string[0], true);
+					var staticCtor = MainType.CreateMethod(tagName, tagName, new string[0], true);
 					ctor.Arguments = staticCtor.Arguments = args;
 
 					ctor.Body.Add(
@@ -229,14 +229,25 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
-		/// Traverses the syntactic tree, searching for closures and curried methods.
+		/// Creates automatically generated entities.
 		/// </summary>
 		private void createAutoEntities()
 		{
 			var types = _DefinedTypes.ToArray();
-
 			foreach(var type in types)
 				type.Value.CreateEntities();
+
+			if (Options.AllowSave && Options.SaveAsExe)
+				createEntryPoint();
+		}
+
+		private void createEntryPoint()
+		{
+			var ep = MainType.CreateMethod(EntryPointMethodName, "Void", args: null, isStatic: true);
+			ep.Body = Expr.Block(
+				Expr.Invoke(Expr.New(MainTypeName), "Run"),
+				Expr.Unit()
+			);
 		}
 
 		/// <summary>
@@ -310,14 +321,16 @@ namespace Lens.SyntaxTree.Compiler
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
 
-			if (Options.SaveAsExe)
+			if (Options.AllowSave)
 			{
-				var ep = ResolveMethod(ResolveType(RootTypeName), RootMethodName);
-				MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
-			}
+				if (Options.SaveAsExe)
+				{
+					var ep = ResolveMethod(ResolveType(MainTypeName), EntryPointMethodName);
+					MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
+				}
 
-			if(Options.AllowSave)
 				MainAssembly.Save(Options.FileName);
+			}
 		}
 
 		#endregion
