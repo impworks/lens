@@ -58,11 +58,13 @@ namespace Lens.SyntaxTree.Compiler
 			_ExtensionResolver = new ExtensionMethodResolver(Namespaces);
 
 			var an = new AssemblyName(getAssemblyName());
-			var saveable = Options.AllowSave;
-			if (saveable)
+			if (Options.AllowSave)
 			{
+				if(string.IsNullOrEmpty(Options.FileName))
+					Options.FileName = an.Name + (Options.SaveAsExe ? ".exe" : ".dll");
+
 				MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
-				MainModule = MainAssembly.DefineDynamicModule(an.Name, an.Name + ".dll");
+				MainModule = MainAssembly.DefineDynamicModule(an.Name, Options.FileName);
 			}
 			else
 			{

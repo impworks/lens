@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Literals;
@@ -306,14 +307,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		private void finalizeAssembly()
 		{
-//			var ep = ResolveMethod(RootTypeName, RootMethodName);
-//			MainAssembly.SetEntryPoint(ep, PEFileKinds.ConsoleApplication);
-
 			foreach (var curr in _DefinedTypes)
 				curr.Value.TypeBuilder.CreateType();
 
+			if (Options.SaveAsExe)
+			{
+				var ep = ResolveMethod(ResolveType(RootTypeName), RootMethodName);
+				MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
+			}
+
 			if(Options.AllowSave)
-				MainAssembly.Save("_MainModule.dll");
+				MainAssembly.Save(Options.FileName);
 		}
 
 		#endregion
