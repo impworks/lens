@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
 		{
-			_DefinedTypes[MainTypeName].ImportMethod(name, method, check);
+			_DefinedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
 		}
 
 		/// <summary>
@@ -169,6 +169,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			validateFunction(node);
 			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true);
+			method.IsPure = node.IsPure;
 			method.Body = node.Body;
 		}
 
@@ -235,18 +236,18 @@ namespace Lens.SyntaxTree.Compiler
 		private void createAutoEntities()
 		{
 			var types = _DefinedTypes.ToArray();
-			foreach(var type in types)
+			foreach (var type in types)
 				type.Value.CreateEntities();
-
+			
 			if (Options.AllowSave && Options.SaveAsExe)
 				createEntryPoint();
 		}
 
 		private void createEntryPoint()
 		{
-			var ep = MainType.CreateMethod(EntryPointMethodName, "Void", args: null, isStatic: true);
+			var ep = MainType.CreateMethod(EntityNames.EntryPointMethodName, "Void", args: null, isStatic: true);
 			ep.Body = Expr.Block(
-				Expr.Invoke(Expr.New(MainTypeName), "Run"),
+				Expr.Invoke(Expr.New(EntityNames.MainTypeName), "Run"),
 				Expr.Unit()
 			);
 		}
@@ -326,7 +327,7 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				if (Options.SaveAsExe)
 				{
-					var ep = ResolveMethod(ResolveType(MainTypeName), EntryPointMethodName);
+					var ep = ResolveMethod(ResolveType(EntityNames.MainTypeName), EntityNames.EntryPointMethodName);
 					MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
 				}
 
@@ -342,7 +343,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (node.Arguments.Count > 0)
 				return;
 
-			if(node.Name == RunMethodName || node.Name == EntryPointMethodName)
+			if (node.Name == EntityNames.RunMethodName || node.Name == EntityNames.EntryPointMethodName)
 				Error(CompilerMessages.ReservedFunctionRedefinition, node.Name);
 		}
 

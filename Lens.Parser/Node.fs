@@ -303,7 +303,7 @@ let objectNode typeName (parameters : NodeBase list option) =
         match parameters with
         | Some args -> ResizeArray<_> args
         | None      -> ResizeArray<_>()
-    NewObjectNode(Type = TypeSignature typeName, Arguments = arguments) :> NodeBase
+    NewObjectNode(TypeSignature = TypeSignature typeName, Arguments = arguments) :> NodeBase
 
 let tupleNode (elements : NodeBase list) =
     NewTupleNode(Expressions = ResizeArray<_> elements) :> NodeBase

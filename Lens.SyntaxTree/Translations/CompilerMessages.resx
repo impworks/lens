@@ -219,6 +219,9 @@
   <data name="FunctionNotFound" xml:space="preserve">
     <value>No function named '{0}' with suitable arguments is declared!</value>
   </data>
+  <data name="FunctionRedefinition" xml:space="preserve">
+    <value>A function named '{0}' with identical set of arguments has already been defined!</value>
+  </data>
   <data name="GenericArgCountMismatch" xml:space="preserve">
     <value>Number of generic arguments does not match!</value>
   </data>
@@ -305,6 +308,9 @@
   </data>
   <data name="ListTypeUnknown" xml:space="preserve">
     <value>List type cannot be inferred! Use type casting to specify element types.</value>
+  </data>
+  <data name="MethodRedefinition" xml:space="preserve">
+    <value>A method named '{0}' in type '{1}' with identical set of arguments has already been defined!</value>
   </data>
   <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
     <value>Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>

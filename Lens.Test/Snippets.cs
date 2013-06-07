@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree;
+using Lens.SyntaxTree.SyntaxTree.Operators;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -778,6 +779,54 @@ data.Sum (x:Store -> x.Value)
 			};
 
 			Test(code, null);
+		}
+
+		[Test]
+		public void PureFunc0()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Fun(
+					"Test",
+					"int",
+					true,
+					Expr.Invoke("println", Expr.Str("calculated")),
+					Expr.Int(42)
+				),
+
+				Expr.Array(
+					Expr.Invoke("Test"),
+					Expr.Invoke("Test")
+				)
+			};
+
+			Test(code, new [] { 42, 42 });
+		}
+
+		[Test]
+		public void PureFunc1()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Fun(
+					"Test",
+					"int",
+					true,
+					new [] { Expr.Arg("x", "int") },
+					Expr.Invoke("println", Expr.Str("calculated")),
+					Expr.Mult(Expr.Get("x"), Expr.Int(2))
+				),
+
+				Expr.Array(
+					Expr.Invoke("Test", Expr.Int(1)),
+					Expr.Invoke("Test", Expr.Int(2)),
+					Expr.Invoke("Test", Expr.Int(2)),
+					Expr.Invoke("Test", Expr.Int(3)),
+					Expr.Invoke("Test", Expr.Int(1))
+				)
+			};
+
+			Test(code, new[] { 2, 4, 4, 6, 2 });
 		}
 
 		private void Test(string src, object value)

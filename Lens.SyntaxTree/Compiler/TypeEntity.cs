@@ -156,9 +156,14 @@ namespace Lens.SyntaxTree.Compiler
 					mi = ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
 				}
 				catch (KeyNotFoundException) { }
-				
-				if(mi != null)
-					Context.Error("Type '{0}' already contains a method named '{1}' with identical set of arguments!", Name, method.Name);
+
+				if (mi != null)
+				{
+					if(this == Context.MainType)
+						Context.Error(CompilerMessages.FunctionRedefinition, method.Name);
+					else
+						Context.Error(CompilerMessages.MethodRedefinition, method.Name, Name);
+				}
 
 				if(!_Methods.ContainsKey(method.Name))
 					_Methods.Add(method.Name, new List<MethodEntity>());
@@ -213,7 +218,15 @@ namespace Lens.SyntaxTree.Compiler
 			{
 				createSpecificEquals();
 				createGenericEquals();
-				createGetHashCode();
+				createGetHashCode();	
+			}
+
+			if (this == Context.MainType)
+			{
+				foreach (var currGroup in _Methods)
+					foreach (var currMethod in currGroup.Value)
+						if (currMethod.IsPure)
+							createPureWrapper(currMethod);		
 			}
 		}
 
@@ -223,13 +236,7 @@ namespace Lens.SyntaxTree.Compiler
 
 		private void createSpecificEquals()
 		{
-			var eq = CreateMethod(
-				"Equals",
-				"bool",
-				new[] { Expr.Arg("other", Name) },
-				false,
-				false
-			);
+			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
 
 			// var result = true
 			eq.Body.Add(Expr.Var("result", Expr.True()));
@@ -346,6 +353,105 @@ namespace Lens.SyntaxTree.Compiler
 			}
 
 			ghc.Body.Add(Expr.Get("result"));
+		}
+
+		private void createPureWrapper(MethodEntity method)
+		{
+			if(method.ReturnType.IsVoid())
+				Context.Error("A function with no return value cannot be marked as pure!");
+
+			var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
+			var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
+			pure.Body = method.Body;
+			method.Body = null;
+
+			var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
+
+			if (argCount >= 8)
+				Context.Error("A function with 8 or more arguments cannot be declared as pure!");
+
+			if(argCount == 0)
+				createPureWrapper0(method, pureName);
+			else if(argCount == 1)
+				createPureWrapper1(method, pureName);
+			else
+				createPureWrapperMany(method, pureName);
+		}
+
+		private void createPureWrapper0(MethodEntity wrapper, string originalName)
+		{
+			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+			var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
+			
+			CreateField(fieldName, wrapper.ReturnTypeSignature, true);
+			CreateField(flagName, typeof(bool), true);
+
+			wrapper.Body = Expr.Block(
+				Expr.If(
+					Expr.Not(Expr.GetMember(EntityNames.MainTypeName, flagName)),
+					Expr.Block(
+						Expr.SetMember(
+							EntityNames.MainTypeName,
+							fieldName,
+							Expr.Invoke(EntityNames.MainTypeName, originalName)
+						),
+						Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
+					)
+				),
+				Expr.GetMember(EntityNames.MainTypeName, fieldName)
+			);
+		}
+
+		private void createPureWrapper1(MethodEntity wrapper, string originalName)
+		{
+			var args = wrapper.GetArgumentTypes(Context);
+			var argName = wrapper.Arguments[0].Name;
+
+			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+			var fieldType = typeof (Dictionary<,>).MakeGenericType(args[0], wrapper.ReturnType);
+
+			CreateField(fieldName, fieldType, true);
+
+			wrapper.Body = Expr.Block(
+				Expr.If(
+					Expr.Equal(
+						Expr.GetMember(EntityNames.MainTypeName, fieldName),
+						Expr.Null()
+					),
+					Expr.Block(
+						Expr.SetMember(
+							EntityNames.MainTypeName, fieldName,
+							Expr.New(fieldType)
+						)
+					)
+				),
+				Expr.If(
+					Expr.Not(
+						Expr.Invoke(
+							Expr.GetMember(EntityNames.MainTypeName, fieldName),
+							"ContainsKey",
+							Expr.Get(argName)
+						)
+					),
+					Expr.Block(
+						Expr.Invoke(
+							Expr.GetMember(EntityNames.MainTypeName, fieldName),
+							"Add",
+							Expr.Get(argName),
+							Expr.Invoke(EntityNames.MainTypeName, originalName, Expr.Get(argName))
+						)
+					)
+				),
+				Expr.GetIdx(
+					Expr.GetMember(EntityNames.MainTypeName, fieldName),
+					Expr.Get(argName)
+				)
+			);
+		}
+
+		private void createPureWrapperMany(MethodEntity wrapper, string originalName)
+		{
+
 		}
 
 		#endregion

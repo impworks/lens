@@ -16,17 +16,22 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		public NewObjectNode(string type = null)
 		{
-			Type = type;
+			TypeSignature = type;
 		}
-		
+
 		/// <summary>
 		/// The type of the object to create.
 		/// </summary>
-		public TypeSignature Type { get; set; }
+		public Type Type;
+
+		/// <summary>
+		/// The type signature of the object to create.
+		/// </summary>
+		public TypeSignature TypeSignature;
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return ctx.ResolveType(Type.Signature);
+			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -38,12 +43,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var type = ctx.ResolveType(Type);
+			var type = GetExpressionType(ctx);
 			if(type.IsVoid())
 				Error(CompilerMessages.VoidTypeDefault);
 
 			if(type.IsAbstract)
-				Error(CompilerMessages.TypeAbstract, Type.Signature);
+				Error(CompilerMessages.TypeAbstract, TypeSignature.Signature);
 
 			if(Arguments.Count == 0)
 				Error(CompilerMessages.ParameterlessConstructorParens);
@@ -51,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
 
 			var argTypes = isParameterless
-				? System.Type.EmptyTypes
+				? Type.EmptyTypes
 				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
 
 			try
@@ -69,14 +74,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.TypeConstructorAmbiguos, Type.Signature);
+				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.Signature);
 			}
 			catch (KeyNotFoundException)
 			{
 				if (!isParameterless || !type.IsValueType)
-					Error(CompilerMessages.TypeConstructorNotFound, Type.Signature);
+					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.Signature);
 
-				var castExpr = Expr.Default(Type);
+				var castExpr = Expr.Default(TypeSignature);
 				castExpr.Compile(ctx, true);
 			}
 		}
@@ -85,7 +90,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		protected bool Equals(NewObjectNode other)
 		{
-			return base.Equals(other) && Equals(Type, other.Type);
+			return base.Equals(other) && Equals(TypeSignature, other.TypeSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -100,7 +105,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			unchecked
 			{
-				return (base.GetHashCode() * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+				return (base.GetHashCode() * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
 			}
 		}
 
@@ -108,7 +113,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
-			return string.Format("new({0}, args: {1})", Type.Signature, string.Join(";", Arguments));
+			return string.Format("new({0}, args: {1})", TypeSignature.Signature, string.Join(";", Arguments));
 		}
 	}
 }
