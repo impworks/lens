@@ -167,6 +167,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public void DeclareFunction(FunctionNode node)
 		{
+			validateFunction(node);
 			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true);
 			method.Body = node.Body;
 		}
@@ -331,6 +332,18 @@ namespace Lens.SyntaxTree.Compiler
 
 				MainAssembly.Save(Options.FileName);
 			}
+		}
+
+		/// <summary>
+		/// Checks if the function does not collide with internal functions.
+		/// </summary>
+		private void validateFunction(FunctionNode node)
+		{
+			if (node.Arguments.Count > 0)
+				return;
+
+			if(node.Name == RunMethodName || node.Name == EntryPointMethodName)
+				Error(CompilerMessages.ReservedFunctionRedefinition, node.Name);
 		}
 
 		#endregion

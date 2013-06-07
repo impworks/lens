@@ -345,7 +345,7 @@
   <data name="ReservedFunctionInvocation" xml:space="preserve">
     <value>Cannot invoke function '{0}' because it is reserved for internal purposes.</value>
   </data>
-  <data name="ReservedFunctionRefefinition" xml:space="preserve">
+  <data name="ReservedFunctionRedefinition" xml:space="preserve">
     <value>Cannot define a function named '{0}' because it is reserved for internal purposes.</value>
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">

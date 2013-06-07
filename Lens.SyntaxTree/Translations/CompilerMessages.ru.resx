@@ -343,10 +343,10 @@
     <value>Нельзя использовать ссылку в качестве значения не-ссылочного параметра!</value>
   </data>
   <data name="ReservedFunctionInvocation" xml:space="preserve">
-    <value>Невозможно вызвать функцию '{0}' поскольку она является зарезервированной!</value>
+    <value>Невозможно вызвать функцию '{0}', поскольку она является зарезервированной!</value>
   </data>
-  <data name="ReservedFunctionRefefinition" xml:space="preserve">
-    <value>Невозможно объявить функцию с именем '{0}' поскольку она является зарезервированной!</value>
+  <data name="ReservedFunctionRedefinition" xml:space="preserve">
+    <value>Невозможно объявить функцию с именем '{0}', поскольку она является зарезервированной!</value>
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Функция типа '{0}' не может вернуть объект типа '{1}'!</value>

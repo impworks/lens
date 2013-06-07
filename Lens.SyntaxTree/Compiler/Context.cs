@@ -18,17 +18,17 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The name of the main type in the assembly.
 		/// </summary>
-		private const string MainTypeName = "<MainScriptType>";
+		public const string MainTypeName = "<MainScriptType>";
 
 		/// <summary>
 		/// The name of the main method in which the code is situated.
 		/// </summary>
-		private const string RunMethodName = "Run";
+		public const string RunMethodName = "Run";
 
 		/// <summary>
 		/// The name of the assembly entry point (when it's saved as exe).
 		/// </summary>
-		private const string EntryPointMethodName = "Main";
+		public const string EntryPointMethodName = "Main";
 
 		/// <summary>
 		/// The default size of a method's IL Generator stream.

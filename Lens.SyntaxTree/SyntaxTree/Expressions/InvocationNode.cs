@@ -149,6 +149,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				m_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.Identifier, m_ArgTypes);
 				if (m_Method == null)
 					throw new KeyNotFoundException();
+
+				if(m_ArgTypes.Length == 0 && node.Identifier.IsAnyOf(Context.RunMethodName, Context.EntryPointMethodName))
+					Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
 			}
 			catch (KeyNotFoundException)
 			{
