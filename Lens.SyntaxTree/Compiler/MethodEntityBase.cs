@@ -22,30 +22,19 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		public bool IsImported;
-
-		/// <summary>
-		/// Checks if the method belongs to the type, not its instances.
-		/// </summary>
 		public bool IsStatic;
 
 		/// <summary>
-		/// The argument list.
+		/// The complete argument list with variable names and detailed info.
 		/// </summary>
 		public HashList<FunctionArgument> Arguments;
 
 		/// <summary>
-		/// The types of arguments.
+		/// The types of arguments (for auto-generated methods).
 		/// </summary>
 		public Type[] ArgumentTypes;
 
-		/// <summary>
-		/// The body of the method.
-		/// </summary>
 		public CodeBlockNode Body;
-
-		/// <summary>
-		/// The scope of the method.
-		/// </summary>
 		public Scope Scope { get; private set; }
 
 		/// <summary>
@@ -53,14 +42,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public ILGenerator Generator { get; protected set; }
 
-		/// <summary>
-		/// 
-		/// </summary>
 		public TryNode CurrentTryBlock { get; set; }
-
-		/// <summary>
-		/// The current catch block.
-		/// </summary>
 		public CatchNode CurrentCatchBlock { get; set; }
 
 		/// <summary>
@@ -131,7 +113,7 @@ namespace Lens.SyntaxTree.Compiler
 
 				try
 				{
-					var root = closureType.ResolveField(Scope.ParentScopeFieldName);
+					var root = closureType.ResolveField(EntityNames.ParentScopeFieldName);
 					gen.EmitLoadLocal(closure);
 					gen.EmitLoadArgument(0);
 					gen.EmitSaveField(root.FieldBuilder);

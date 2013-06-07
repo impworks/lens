@@ -10,36 +10,6 @@ namespace Lens.SyntaxTree.Compiler
 	/// </summary>
 	internal class Scope
 	{
-		/// <summary>
-		/// The name of a field that contains a pointer to root type.
-		/// </summary>
-		public const string ParentScopeFieldName = "<root>";
-
-		/// <summary>
-		/// The template for implicitly defined local variables.
-		/// </summary>
-		public const string ImplicitVariableNameTemplate = "<loc_{0}>";
-
-		/// <summary>
-		/// The template name for a local variable that stores the pointer to current closure instance.
-		/// </summary>
-		public const string ClosureInstanceVariableNameTemplate = "<inst_{0}>";
-
-		/// <summary>
-		/// The template for closure type field names.
-		/// </summary>
-		public const string ClosureFieldNameTemplate = "<f_{0}>";
-
-		/// <summary>
-		/// The template for closure type names.
-		/// </summary>
-		public const string ClosureTypeNameTemplate = "<ClosuredClass{0}>";
-
-		/// <summary>
-		/// The template for closure method names.
-		/// </summary>
-		public const string ClosureMethodNameTemplate = "<ClosuredMethod{0}>";
-
 		public Scope()
 		{
 			Names = new Dictionary<string, LocalName>();
@@ -118,7 +88,7 @@ namespace Lens.SyntaxTree.Compiler
 		public LocalName DeclareImplicitName(Context ctx, Type type, bool isConst)
 		{
 			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
-			var name = string.Format(ImplicitVariableNameTemplate, lb.LocalIndex);
+			var name = string.Format(EntityNames.ImplicitVariableNameTemplate, lb.LocalIndex);
 			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
 			Names[name] = ln;
 			return ln;
@@ -167,7 +137,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// </summary>
 		public TypeEntity CreateClosureType(Context ctx)
 		{
-			var closureName = string.Format(ClosureTypeNameTemplate, ctx.ClosureId);
+			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, ctx.ClosureId);
 			ClosureTypeId = ctx.ClosureId;
 			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
 			ClosureType.Kind = TypeEntityKind.Internal;
@@ -183,7 +153,7 @@ namespace Lens.SyntaxTree.Compiler
 			if (ClosureType == null)
 				ClosureType = CreateClosureType(ctx);
 
-			var closureName = string.Format(ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
+			var closureName = string.Format(EntityNames.ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;
 
 			var method = ClosureType.CreateMethod(closureName, "Unit", args);
@@ -201,7 +171,7 @@ namespace Lens.SyntaxTree.Compiler
 				if (curr.IsClosured)
 				{
 					// create a field in the closured class
-					var name = string.Format(ClosureFieldNameTemplate, curr.Name);
+					var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
 					curr.ClosureFieldName = name;
 					ClosureType.CreateField(name, curr.Type);
 				}
@@ -213,11 +183,11 @@ namespace Lens.SyntaxTree.Compiler
 
 			// create a field for base scope in the current type
 			if(OuterScope != null && ClosureType != null)
-				ClosureType.CreateField(ParentScopeFieldName, OuterScope.ClosureType.TypeBuilder);
+				ClosureType.CreateField(EntityNames.ParentScopeFieldName, OuterScope.ClosureType.TypeBuilder);
 
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)
-				ClosureVariable = DeclareInternalName(string.Format(ClosureInstanceVariableNameTemplate, ClosureTypeId), ctx, ClosureType.TypeBuilder, false);
+				ClosureVariable = DeclareInternalName(string.Format(EntityNames.ClosureInstanceVariableNameTemplate, ClosureTypeId), ctx, ClosureType.TypeBuilder, false);
 		}
 
 		/// <summary>

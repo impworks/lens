@@ -150,7 +150,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if (m_Method == null)
 					throw new KeyNotFoundException();
 
-				if(m_ArgTypes.Length == 0 && node.Identifier.IsAnyOf(Context.RunMethodName, Context.EntryPointMethodName))
+				if(m_ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
 					Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
 			}
 			catch (KeyNotFoundException)

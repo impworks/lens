@@ -215,6 +215,15 @@ namespace Lens.SyntaxTree.SyntaxTree
 		{
 			return new NewObjectNode
 			{
+				TypeSignature = type,
+				Arguments = args.Length == 0 ? new List<NodeBase> { new UnitNode() } : args.ToList()
+			};
+		}
+
+		public static NewObjectNode New(Type type, params NodeBase[] args)
+		{
+			return new NewObjectNode
+			{
 				Type = type,
 				Arguments = args.Length == 0 ? new List<NodeBase> { new UnitNode() } : args.ToList()
 			};

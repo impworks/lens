@@ -367,6 +367,15 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A function named &apos;{0}&apos; with identical set of arguments has already been defined!.
+        /// </summary>
+        public static string FunctionRedefinition {
+            get {
+                return ResourceManager.GetString("FunctionRedefinition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Number of generic arguments does not match!.
         /// </summary>
         public static string GenericArgCountMismatch {
@@ -624,6 +633,15 @@ namespace Lens.SyntaxTree.Translations {
         public static string ListTypeUnknown {
             get {
                 return ResourceManager.GetString("ListTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A method named &apos;{0}&apos; in type &apos;{1}&apos; with identical set of arguments has already been defined!.
+        /// </summary>
+        public static string MethodRedefinition {
+            get {
+                return ResourceManager.GetString("MethodRedefinition", resourceCulture);
             }
         }
         

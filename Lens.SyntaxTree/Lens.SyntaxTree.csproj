@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Context.Stdlib.cs" />
+    <Compile Include="Compiler\EntityNames.cs" />
     <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />

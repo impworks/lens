@@ -143,7 +143,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var type = (Type)ctx.CurrentType.TypeBuilder;
 			while (dist > 1)
 			{
-				var rootField = ctx.ResolveField(type, Scope.ParentScopeFieldName);
+				var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
 				gen.EmitLoadField(rootField.FieldInfo);
 
 				type = rootField.FieldType;

@@ -16,21 +16,6 @@ namespace Lens.SyntaxTree.Compiler
 		#region Constants
 
 		/// <summary>
-		/// The name of the main type in the assembly.
-		/// </summary>
-		public const string MainTypeName = "<MainScriptType>";
-
-		/// <summary>
-		/// The name of the main method in which the code is situated.
-		/// </summary>
-		public const string RunMethodName = "Run";
-
-		/// <summary>
-		/// The name of the assembly entry point (when it's saved as exe).
-		/// </summary>
-		public const string EntryPointMethodName = "Main";
-
-		/// <summary>
 		/// The default size of a method's IL Generator stream.
 		/// </summary>
 		public const int ILStreamSize = 16384;
@@ -79,10 +64,10 @@ namespace Lens.SyntaxTree.Compiler
 
 			ContextId = GlobalPropertyHelper.RegisterContext();
 
-			MainType = CreateType(MainTypeName);
+			MainType = CreateType(EntityNames.MainTypeName);
 			MainType.Kind = TypeEntityKind.Internal;
 			MainType.Interfaces = new[] {typeof (IScript)};
-			MainMethod = MainType.CreateMethod(RunMethodName, typeof(object), Type.EmptyTypes, false, true);
+			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
 
 			if(Options.LoadStandardLibrary)
@@ -103,7 +88,7 @@ namespace Lens.SyntaxTree.Compiler
 			compileCore();
 			finalizeAssembly();
 
-			var inst = Activator.CreateInstance(ResolveType(MainTypeName));
+			var inst = Activator.CreateInstance(ResolveType(EntityNames.MainTypeName));
 			return inst as IScript;
 		}
 

@@ -15,9 +15,6 @@ namespace Lens.SyntaxTree.Compiler
 
 		#region Fields
 
-		/// <summary>
-		/// Checks if the method can be overridden in derived types or is overriding a parent method itself.
-		/// </summary>
 		public bool IsVirtual;
 
 		/// <summary>
@@ -39,11 +36,10 @@ namespace Lens.SyntaxTree.Compiler
 		public MethodInfo MethodInfo
 		{
 			get { return IsImported ? m_MethodInfo : MethodBuilder; }
-			set
-			{
-				m_MethodInfo = value;
-			}
+			set { m_MethodInfo = value; }
 		}
+
+		public bool IsPure;
 
 		#endregion
 
