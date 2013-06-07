@@ -342,6 +342,12 @@
   <data name="PropertyNoSetter" xml:space="preserve">
     <value>Property '{0}.{1}' does not have a setter!</value>
   </data>
+  <data name="PureFunctionReturnUnit" xml:space="preserve">
+    <value>Function '{0}' cannot be marked as pure because it does not return a value!</value>
+  </data>
+  <data name="PureFunctionTooManyArgs" xml:space="preserve">
+    <value>Function '{0}' cannot be marked as pure because it contains more than 7 arguments!</value>
+  </data>
   <data name="ReferenceArgExpected" xml:space="preserve">
     <value>Argument {0} requires a reference of type '{1}'!</value>
   </data>

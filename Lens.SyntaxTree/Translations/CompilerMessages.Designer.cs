@@ -736,6 +736,24 @@ namespace Lens.SyntaxTree.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Function &apos;{0}&apos; cannot be marked as pure because it does not return a value!.
+        /// </summary>
+        public static string PureFunctionReturnUnit {
+            get {
+                return ResourceManager.GetString("PureFunctionReturnUnit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Function &apos;{0}&apos; cannot be marked as pure because it contains more than 7 arguments!.
+        /// </summary>
+        public static string PureFunctionTooManyArgs {
+            get {
+                return ResourceManager.GetString("PureFunctionTooManyArgs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Argument {0} requires a reference of type &apos;{1}&apos;!.
         /// </summary>
         public static string ReferenceArgExpected {

@@ -358,7 +358,7 @@ namespace Lens.SyntaxTree.Compiler
 		private void createPureWrapper(MethodEntity method)
 		{
 			if(method.ReturnType.IsVoid())
-				Context.Error("A function with no return value cannot be marked as pure!");
+				Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
 
 			var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
 			var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
@@ -368,7 +368,7 @@ namespace Lens.SyntaxTree.Compiler
 			var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
 
 			if (argCount >= 8)
-				Context.Error("A function with 8 or more arguments cannot be declared as pure!");
+				Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);
 
 			if(argCount == 0)
 				createPureWrapper0(method, pureName);
@@ -387,6 +387,8 @@ namespace Lens.SyntaxTree.Compiler
 			CreateField(flagName, typeof(bool), true);
 
 			wrapper.Body = Expr.Block(
+				
+				// if (not $flag) $cache = $internal (); $flag = true
 				Expr.If(
 					Expr.Not(Expr.GetMember(EntityNames.MainTypeName, flagName)),
 					Expr.Block(
@@ -398,6 +400,8 @@ namespace Lens.SyntaxTree.Compiler
 						Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
 					)
 				),
+
+				// $cache
 				Expr.GetMember(EntityNames.MainTypeName, fieldName)
 			);
 		}
@@ -413,6 +417,8 @@ namespace Lens.SyntaxTree.Compiler
 			CreateField(fieldName, fieldType, true);
 
 			wrapper.Body = Expr.Block(
+
+				// if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
 				Expr.If(
 					Expr.Equal(
 						Expr.GetMember(EntityNames.MainTypeName, fieldName),
@@ -425,6 +431,8 @@ namespace Lens.SyntaxTree.Compiler
 						)
 					)
 				),
+
+				// if(not $dict.ContainsKey key) $dict.Add ($internal arg)
 				Expr.If(
 					Expr.Not(
 						Expr.Invoke(
@@ -442,6 +450,8 @@ namespace Lens.SyntaxTree.Compiler
 						)
 					)
 				),
+
+				// $dict[arg]
 				Expr.GetIdx(
 					Expr.GetMember(EntityNames.MainTypeName, fieldName),
 					Expr.Get(argName)
@@ -451,7 +461,62 @@ namespace Lens.SyntaxTree.Compiler
 
 		private void createPureWrapperMany(MethodEntity wrapper, string originalName)
 		{
+			var args = wrapper.GetArgumentTypes(Context);
+			
+			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+			var tupleType = FunctionalHelper.CreateTupleType(args);
+			var fieldType = typeof(Dictionary<,>).MakeGenericType(tupleType, wrapper.ReturnType);
 
+			CreateField(fieldName, fieldType, true);
+
+			var argGetters = wrapper.Arguments.Select(a => (NodeBase)Expr.Get(a)).ToArray();
+			var tupleName = "<args>";
+			
+			wrapper.Body = Expr.Block(
+
+				// $tmp = new Tuple<...> $arg1 $arg2 ...
+				Expr.Let(tupleName, Expr.New(tupleType, argGetters)),
+
+				// if ($dict == null) $dict = new Dictionary<$tupleType, $valueType> ()
+				Expr.If(
+					Expr.Equal(
+						Expr.GetMember(EntityNames.MainTypeName, fieldName),
+						Expr.Null()
+					),
+					Expr.Block(
+						Expr.SetMember(
+							EntityNames.MainTypeName, fieldName,
+							Expr.New(fieldType)
+						)
+					)
+				),
+
+				// if(not $dict.ContainsKey key) $dict.Add ($internal arg)
+				Expr.If(
+					Expr.Not(
+						Expr.Invoke(
+							Expr.GetMember(EntityNames.MainTypeName, fieldName),
+							"ContainsKey",
+							Expr.Get(tupleName)
+						)
+					),
+					Expr.Block(
+						Expr.Invoke(
+							Expr.GetMember(EntityNames.MainTypeName, fieldName),
+							"Add",
+							Expr.Get(tupleName),
+							Expr.Invoke(EntityNames.MainTypeName, originalName, argGetters)
+						)
+					)
+				),
+
+				// $dict[arg]
+				Expr.GetIdx(
+					Expr.GetMember(EntityNames.MainTypeName, fieldName),
+					Expr.Get(tupleName)
+				)
+
+			);
 		}
 
 		#endregion
