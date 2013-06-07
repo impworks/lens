@@ -829,6 +829,32 @@ data.Sum (x:Store -> x.Value)
 			Test(code, new[] { 2, 4, 4, 6, 2 });
 		}
 
+		[Test]
+		public void PureFunc2()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Fun(
+					"Sum",
+					"int",
+					true,
+					new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int") },
+					Expr.Invoke("println", Expr.Str("calculated")),
+					Expr.Add(Expr.Get("x"), Expr.Get("y"))
+				),
+
+				Expr.Array(
+					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(1)),
+					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(2)),
+					Expr.Invoke("Sum", Expr.Int(2), Expr.Int(3)),
+					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(1)),
+					Expr.Invoke("Sum", Expr.Int(2), Expr.Int(3))
+				)
+			};
+
+			Test(code, new[] { 2, 3, 5, 2, 5 });
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));
