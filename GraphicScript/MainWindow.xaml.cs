@@ -1,12 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq.Expressions;
+using System.Windows;
 using System.Windows.Input;
 using GraphicScript.Misc;
 using GraphicScript.Objects;
 using Lens;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Utils;
+using Microsoft.Win32;
+using Rect = GraphicScript.Objects.Rect;
 
 namespace GraphicScript
 {
@@ -33,6 +37,8 @@ namespace GraphicScript
 					e.Handled = true;
 				}
 			};
+
+			RegisterCommands();
 		}
 
 		#region Properties
@@ -82,6 +88,10 @@ namespace GraphicScript
 
 		#region Commands
 
+		public ICommand LoadCommand { get; set; }
+		public ICommand RunCommand { get; set; }
+		public ICommand StopCommand { get; set; }
+
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			if(Status == Status.Success)
@@ -90,17 +100,23 @@ namespace GraphicScript
 			base.OnClosing(e);
 		}
 
-		protected override void OnKeyDown(KeyEventArgs e)
+		private void Load()
 		{
-			base.OnKeyDown(e);
-
-			if (e.Key == Key.F5 && Status.IsAnyOf(Status.Error, Status.Ready))
-				Run();
-
-			if (e.Key == Key.Escape && Status == Status.Success)
+			var dlg = new OpenFileDialog
 			{
-				Stop();
-				CodeEditor.Focus();
+				CheckFileExists = true,
+				InitialDirectory = Path.Combine(Environment.CurrentDirectory, "Examples"),
+				DefaultExt = ".lns",
+				Multiselect = false,
+				Title = "Выберите скрипт для заргрузки"
+			};
+
+			var result = dlg.ShowDialog();
+			if (result == true)
+			{
+				using (var fs = new FileStream(dlg.FileName, FileMode.Open, FileAccess.Read))
+				using (var sr = new StreamReader(fs))
+					Code = sr.ReadToEnd();
 			}
 		}
 
@@ -134,6 +150,7 @@ namespace GraphicScript
 		{
 			Status = Status.Ready;
 			m_Manager.StopDrawing();
+			CodeEditor.Focus();
 		}
 
 		private void MarkErrorLocation(LensCompilerException ex)
@@ -154,6 +171,17 @@ namespace GraphicScript
 				pos += lines[idx].Length + 1;
 
 			return pos + offset-1;
+		}
+
+		private void RegisterCommands()
+		{
+			LoadCommand = new RoutedCommand("LoadCommand", GetType(), new InputGestureCollection { new KeyGesture(Key.O, ModifierKeys.Control) } );
+			RunCommand = new RoutedCommand("RunCommand", GetType(), new InputGestureCollection { new KeyGesture(Key.F5) });
+			StopCommand = new RoutedCommand("StopCommand", GetType(), new InputGestureCollection { new KeyGesture(Key.Escape) });
+
+			CommandBindings.Add(new CommandBinding(LoadCommand, (s, e) => Load(), (s, e) => e.CanExecute = EditEnabled));
+			CommandBindings.Add(new CommandBinding(RunCommand, (s, e) => Run(), (s, e) => e.CanExecute = EditEnabled && !string.IsNullOrEmpty(Code)));
+			CommandBindings.Add(new CommandBinding(StopCommand, (s, e) => Stop(), (s, e) => e.CanExecute = Status == Status.Success));
 		}
 
 		#endregion
