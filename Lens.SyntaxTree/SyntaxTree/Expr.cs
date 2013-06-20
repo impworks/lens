@@ -107,9 +107,19 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new DefaultOperatorNode {TypeSignature = type};
 		}
 
+		public static DefaultOperatorNode Default(Type type)
+		{
+			return new DefaultOperatorNode { Type = type };
+		}
+
 		public static TypeofOperatorNode Typeof(TypeSignature type)
 		{
 			return new TypeofOperatorNode {TypeSignature = type};
+		}
+
+		public static TypeofOperatorNode Typeof(Type type)
+		{
+			return new TypeofOperatorNode { Type = type };
 		}
 
 		public static CastOperatorNode Cast(NodeBase node, TypeSignature type)

@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return ctx.ResolveType(TypeSignature.Signature);
+			return Type ?? ctx.ResolveType(TypeSignature.Signature);
 		}
 
 		protected override void compile(Context ctx, bool mustReturn)
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		public override string ToString()
 		{
-			return string.Format("default({0})", TypeSignature);
+			return string.Format("default({0})", Type != null ? Type.Name : TypeSignature);
 		}
 	}
 }

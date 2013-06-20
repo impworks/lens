@@ -25,7 +25,7 @@ namespace ConsoleHost
 				Console.WriteLine();
 				try
 				{
-					var lc = new LensCompiler();
+					var lc = new LensCompiler(new LensCompilerOptions { AllowSave = true });
 
 					Func<object> fx = null;
 					object res = null;

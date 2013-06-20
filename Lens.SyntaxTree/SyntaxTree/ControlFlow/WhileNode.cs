@@ -36,16 +36,26 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
+			var loopType = GetExpressionType(ctx);
+			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
+
+			if (Condition.IsConstant && Condition.ConstantValue == false)
+			{
+				if(saveLast)
+					Expr.Default(loopType).Compile(ctx, true);
+
+				return;
+			}
 
 			var beginLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
 
-			var loopType = GetExpressionType(ctx);
-			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
-
 			LocalName tmpVar = null;
 			if (saveLast)
+			{
 				tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, loopType, false);
+				Expr.Set(tmpVar, Expr.Default(loopType));
+			}
 
 			gen.MarkLabel(beginLabel);
 

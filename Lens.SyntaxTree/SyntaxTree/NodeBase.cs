@@ -15,10 +15,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		public virtual bool IsConstant { get { return false; } }
 
-		/// <summary>
-		/// Returns the constant value of current node.
-		/// </summary>
-		public virtual dynamic ConstantValue { get { throw new InvalidOperationException("Not a constant!"); }}
+		public virtual dynamic ConstantValue { get { throw new InvalidOperationException("Not a constant!"); } }
 
 		/// <summary>
 		/// The cached expression type.

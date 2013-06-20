@@ -64,6 +64,19 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
+			if (Condition.IsConstant)
+			{
+				if (FalseAction != null)
+				{
+					var node = Condition.ConstantValue ? TrueAction : FalseAction;
+					node.Compile(ctx, mustReturn);
+					if (!mustReturn && node.GetExpressionType(ctx).IsNotVoid())
+						gen.EmitPop();
+				}
+
+				return;
+			}
+
 		    var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
 			

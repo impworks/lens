@@ -20,16 +20,17 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
+			var type = Type ?? ctx.ResolveType(TypeSignature);
 			var gen = ctx.CurrentILGenerator;
 			var method = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
 
-			gen.EmitConstant(ctx.ResolveType(TypeSignature));
+			gen.EmitConstant(type);
 			gen.EmitCall(method);
 		}
 
 		public override string ToString()
 		{
-			return string.Format("typeof({0})", TypeSignature);
+			return string.Format("typeof({0})", Type != null ? Type.Name : TypeSignature);
 		}
 	}
 }
