@@ -16,7 +16,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 			return ctx.CurrentType.TypeBuilder;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			GetExpressionType(ctx);
 

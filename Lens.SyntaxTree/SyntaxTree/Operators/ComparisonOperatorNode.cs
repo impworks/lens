@@ -395,6 +395,21 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			}
 		}
 
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			switch (Kind)
+			{
+				case ComparisonOperatorKind.Equals: return left == right;
+				case ComparisonOperatorKind.NotEquals: return left != right;
+				case ComparisonOperatorKind.Less: return left < right;
+				case ComparisonOperatorKind.LessEquals: return left <= right;
+				case ComparisonOperatorKind.Greater: return left > right;
+				case ComparisonOperatorKind.GreaterEquals: return left >= right;
+			}
+
+			return null;
+		}
+
 		#region Equality members
 
 		protected bool Equals(ComparisonOperatorNode other)

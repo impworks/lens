@@ -1,7 +1,5 @@
 ﻿using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Translations;
-using Lens.SyntaxTree.Utils;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -22,15 +20,20 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			if(LeftOperand.GetExpressionType(ctx).IsIntegerType() && RightOperand is IntNode && (RightOperand as IntNode).Value == 0)
-				Error(CompilerMessages.ConstantDivisionByZero);
-			
 			var gen = ctx.CurrentILGenerator;
 
 			GetExpressionType(ctx);
 			loadAndConvertNumerics(ctx);
 
 			gen.EmitDivide();
+		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			if(left is int && right is int && right == 0)
+				Error(CompilerMessages.ConstantDivisionByZero);
+
+			return left/right;
 		}
 	}
 }

@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			return Statements;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
@@ -60,6 +60,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			{
 				var subReturn = mustReturn && idx == Statements.Count - 1;
 				var curr = Statements[idx];
+
+				if (!subReturn && curr.IsConstant)
+					continue;
+
 				curr.Compile(ctx, subReturn);
 
 				var retType = curr.GetExpressionType(ctx, subReturn);

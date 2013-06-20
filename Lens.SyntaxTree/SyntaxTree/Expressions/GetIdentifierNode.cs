@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return typeof (Unit);
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var resultType = GetExpressionType(ctx);
 

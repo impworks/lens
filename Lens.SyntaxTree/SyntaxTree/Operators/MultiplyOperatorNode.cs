@@ -1,4 +1,6 @@
-﻿using Lens.SyntaxTree.Compiler;
+﻿using System;
+using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -23,6 +25,19 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			GetExpressionType(ctx);
 			loadAndConvertNumerics(ctx);
 			gen.EmitMultiply();
+		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			try
+			{
+				return checked(left * right);
+			}
+			catch (OverflowException)
+			{
+				Error(CompilerMessages.ConstantOverflow);
+				return null;
+			}
 		}
 	}
 }

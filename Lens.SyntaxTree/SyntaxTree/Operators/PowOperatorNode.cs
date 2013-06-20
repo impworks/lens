@@ -28,5 +28,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var method = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
 			gen.EmitCall(method);
 		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			return Math.Pow(left, right);
+		}
 	}
 }

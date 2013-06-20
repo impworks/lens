@@ -24,5 +24,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			loadAndConvertNumerics(ctx);
 			gen.EmitSubtract();
 		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			return left - right;
+		}
 	}
 }

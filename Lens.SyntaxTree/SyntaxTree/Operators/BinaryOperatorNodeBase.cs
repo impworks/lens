@@ -21,24 +21,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		public NodeBase RightOperand { get; set; }
 
-		public override LexemLocation StartLocation
-		{
-			get { return LeftOperand.StartLocation; }
-			set { LocationSetError(); }
-		}
-
-		public override LexemLocation EndLocation
-		{
-			get { return RightOperand.EndLocation; }
-			set { LocationSetError(); }
-		}
-
-		public override IEnumerable<NodeBase> GetChildNodes()
-		{
-			yield return LeftOperand;
-			yield return RightOperand;
-		}
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var leftType = LeftOperand.GetExpressionType(ctx);
@@ -68,7 +50,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			return null;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
@@ -92,6 +74,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		}
 
 		protected abstract void compileOperator(Context ctx);
+
+		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
+
+		#region Helper methods
 
 		/// <summary>
 		/// Resolves a common numeric type.
@@ -129,6 +115,33 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			if (right != type)
 				gen.EmitConvert(type);
 		}
+
+		#endregion
+
+		#region NodeBase overrides
+
+		public override LexemLocation StartLocation
+		{
+			get { return LeftOperand.StartLocation; }
+			set { LocationSetError(); }
+		}
+
+		public override LexemLocation EndLocation
+		{
+			get { return RightOperand.EndLocation; }
+			set { LocationSetError(); }
+		}
+
+		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
+		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
+
+		public override IEnumerable<NodeBase> GetChildNodes()
+		{
+			yield return LeftOperand;
+			yield return RightOperand;
+		}
+
+		#endregion
 
 		#region Equality members
 

@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 			return typeof (NullType);
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			gen.EmitNull();

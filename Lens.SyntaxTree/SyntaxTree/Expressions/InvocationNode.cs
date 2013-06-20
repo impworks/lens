@@ -196,7 +196,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 		#region Compile
 
-	    public override void Compile(Context ctx, bool mustReturn)
+	    protected override void compile(Context ctx, bool mustReturn)
 	    {
 	        if (!m_IsResolved)
 	            resolve(ctx);

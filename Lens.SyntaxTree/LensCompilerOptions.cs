@@ -32,15 +32,21 @@
 		/// <summary>
 		/// Checks whether the generated assembly must be saved as a console executable.
 		/// Depends on AllowSave.
-		/// Default = false;
+		/// Default = false.
 		/// </summary>
 		public bool SaveAsExe = false;
 
 		/// <summary>
 		/// Specifies the file name for generated assembly.
 		/// Depends on AllowSave.
-		/// Default = none
+		/// Default = none.
 		/// </summary>
 		public string FileName = string.Empty;
+
+		/// <summary>
+		/// Checks if operations on constants must be performed at compile time.
+		/// Default = true.
+		/// </summary>
+		public bool UnrollConstants = true;
 	}
 }

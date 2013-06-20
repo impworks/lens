@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			return Expressions;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var tupleType = GetExpressionType(ctx);
 

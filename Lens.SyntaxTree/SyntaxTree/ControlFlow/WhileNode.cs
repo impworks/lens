@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			yield return Body;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 

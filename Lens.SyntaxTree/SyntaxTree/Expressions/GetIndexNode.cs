@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			yield return Index;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			// ensure validation
 			GetExpressionType(ctx);

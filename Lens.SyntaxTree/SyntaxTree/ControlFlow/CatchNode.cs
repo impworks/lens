@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				m_ExceptionVariable = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 

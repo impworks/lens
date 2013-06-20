@@ -35,5 +35,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			else
 				gen.EmitShiftRight();
 		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			return IsLeft ? left << right : left >> right;
+		}
 	}
 }

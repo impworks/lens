@@ -62,6 +62,11 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				gen.EmitXor();
 			}
 		}
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			return Kind == LogicalOperatorKind.And ? left && right : (Kind == LogicalOperatorKind.Or ? left || right : left ^ right);
+		}
 	}
 
 	/// <summary>

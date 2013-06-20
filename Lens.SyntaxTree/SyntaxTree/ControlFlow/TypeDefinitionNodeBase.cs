@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			set { base.EndLocation = value; }
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			throw new System.NotImplementedException();
 		}

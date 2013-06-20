@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// </summary>
 	public class UnitNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			// does nothing
 		}

@@ -7,7 +7,6 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 	/// <summary>
 	/// The base class for literal nodes.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
 	public abstract class LiteralNodeBase<T> : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		/// <summary>
@@ -19,6 +18,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Literals
 		{
 			return typeof (T);
 		}
+
+		public override bool IsConstant { get { return true; } }
+		public override object ConstantValue { get { return Value; } }
 
 		#region Equality members
 

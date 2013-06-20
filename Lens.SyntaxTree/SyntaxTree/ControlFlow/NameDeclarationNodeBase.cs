@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			if (Value == null)
 				Value = Expr.Default(Type);

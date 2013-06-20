@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			yield return Value;
 		}
 
-		public override void Compile(Context ctx, bool mustReturn)
+		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var exprType = Expression.GetExpressionType(ctx);
 
