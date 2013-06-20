@@ -75,6 +75,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				gen.EmitBranchFalse(endLabel);
 				TrueAction.Compile(ctx, mustReturn);
 				gen.MarkLabel(endLabel);
+
 				if(!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
 					gen.EmitPop();
 				else
@@ -82,21 +83,38 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			}
 			else
 			{
-				gen.EmitBranchFalse(falseLabel);
-				TrueAction.Compile(ctx, mustReturn);
+				var canReturn = mustReturn && FalseAction != null;
+				var resultType = GetExpressionType(ctx);
 
-				if (!mustReturn && TrueAction.GetExpressionType(ctx).IsNotVoid())
-					gen.EmitPop();
+				gen.EmitBranchFalse(falseLabel);
+
+				if (TrueAction.GetExpressionType(ctx).IsNotVoid())
+				{
+					Expr.Cast(TrueAction, resultType).Compile(ctx, mustReturn);
+					if (!canReturn)
+						gen.EmitPop();
+				}
+				else
+				{
+					TrueAction.Compile(ctx, mustReturn);
+				}
 
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				FalseAction.Compile(ctx, mustReturn);
-				gen.MarkLabel(endLabel);
-				if (!mustReturn && FalseAction.GetExpressionType(ctx).IsNotVoid())
-					gen.EmitPop();
+				if (FalseAction.GetExpressionType(ctx).IsNotVoid())
+				{
+					Expr.Cast(FalseAction, resultType).Compile(ctx, mustReturn);
+					if (!canReturn)
+						gen.EmitPop();
+				}
 				else
-					gen.EmitNop();
+				{
+					FalseAction.Compile(ctx, mustReturn);
+				}
+
+				gen.MarkLabel(endLabel);
+				gen.EmitNop();
 			}
 		}
 

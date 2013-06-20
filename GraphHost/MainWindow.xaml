@@ -45,7 +45,7 @@
                                 <MenuItem Header="Сложная функция" Tag="y = Math::Sin x / Math::Cos x" Click="MenuItem_OnClick" />
                                 <MenuItem Header="Ступенчатая" Tag="y = if((x as int)%2 == 0) (x as int) else 0" Click="MenuItem_OnClick" />
                                 <MenuItem Header="Зубчатая" Tag="y = if((x as int)%2 == 0) x else 0" Click="MenuItem_OnClick" />
-                                <MenuItem Header="Случайная" Tag="y = rand x 20" Click="MenuItem_OnClick" />
+                                <MenuItem Header="Случайная" Tag="y = rand (x as int) 20" Click="MenuItem_OnClick" />
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
