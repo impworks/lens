@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (nameInfo != null)
 			{
-				if (nameInfo.IsConstant && !IsInitialization)
+				if (nameInfo.IsImmutable && !IsInitialization)
 					Error(CompilerMessages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))

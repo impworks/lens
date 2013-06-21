@@ -61,12 +61,13 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				var subReturn = mustReturn && idx == Statements.Count - 1;
 				var curr = Statements[idx];
 
+				var retType = curr.GetExpressionType(ctx, subReturn);
+
 				if (!subReturn && curr.IsConstant)
 					continue;
 
 				curr.Compile(ctx, subReturn);
 
-				var retType = curr.GetExpressionType(ctx, subReturn);
 				if(!subReturn && retType.IsNotVoid())
 					gen.EmitPop();
 			}

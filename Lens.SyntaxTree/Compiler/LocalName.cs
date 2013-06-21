@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Name = name;
 			Type = type;
-			IsConstant = isConst;
+			IsImmutable = isConst;
 			IsRefArgument = isRefArg;
 		}
 
@@ -20,10 +20,15 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			Name = other.Name;
 			Type = other.Type;
+			IsImmutable = other.IsImmutable;
 			IsRefArgument = other.IsRefArgument;
+
 			IsClosured = other.IsClosured;
-			IsConstant = other.IsConstant;
 			ClosureFieldName = other.ClosureFieldName;
+
+			IsConstant = other.IsConstant;
+			ConstantValue = other.ConstantValue;
+
 			LocalBuilder = other.LocalBuilder;
 
 			ClosureDistance = dist;
@@ -42,7 +47,7 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// Is the name a constant or a variable?
 		/// </summary>
-		public readonly bool IsConstant;
+		public readonly bool IsImmutable;
 
 		/// <summary>
 		/// Does the variable represent a function argument that is passed by ref?
@@ -75,7 +80,18 @@ namespace Lens.SyntaxTree.Compiler
 		/// <summary>
 		/// The local builder identifier.
 		/// </summary>
-		public LocalBuilder LocalBuilder { get; set; }
+		public LocalBuilder LocalBuilder;
+
+		/// <summary>
+		/// Checks if the current local name represents a constant.
+		/// Must also be immutable!
+		/// </summary>
+		public bool IsConstant;
+
+		/// <summary>
+		/// The compile-time constant value for current local name.
+		/// </summary>
+		public dynamic ConstantValue;
 
 		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.

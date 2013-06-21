@@ -14,11 +14,15 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 	{
 		private MethodEntity m_Method;
 		private GlobalPropertyInfo m_Property;
+		private LocalName m_LocalConstant;
 
 		/// <summary>
 		/// Local and closured variables can provide a location pointer.
 		/// </summary>
 		public bool PointerRequired { get; set; }
+
+		public override bool IsConstant { get { return m_LocalConstant != null; } }
+		public override dynamic ConstantValue { get { return m_LocalConstant != null ? m_LocalConstant.ConstantValue : base.ConstantValue; } }
 
 		public GetIdentifierNode(string identifier = null)
 		{
@@ -29,7 +33,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (local != null)
+			{
+				// only local constants are cached
+				// because mutable variables could be closured later on
+				if (local.IsConstant && local.IsImmutable)
+					m_LocalConstant = local;
+
 				return local.Type;
+			}
 
 			try
 			{
@@ -57,12 +68,12 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 
 			var gen = ctx.CurrentILGenerator;
 
-			// load local variable
 			// local name is not cached because it can be closured.
+			// if the identifier is actually a local constant, the 'compile' method is not invoked at all
 			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (local != null)
 			{
-				if(local.IsConstant && PointerRequired)
+				if(local.IsImmutable && PointerRequired)
 					Error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)

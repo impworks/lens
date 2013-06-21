@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.SyntaxTree.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Compiler
 {
@@ -168,6 +167,9 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			foreach (var curr in Names.Values)
 			{
+				if (curr.IsConstant && curr.IsImmutable)
+					continue;
+
 				if (curr.IsClosured)
 				{
 					// create a field in the closured class

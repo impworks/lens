@@ -10,10 +10,10 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 	/// </summary>
 	public abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
-		protected NameDeclarationNodeBase(string name, bool isConst)
+		protected NameDeclarationNodeBase(string name, bool immutable)
 		{
 			Name = name;
-			IsConstant = isConst;
+			IsImmutable = immutable;
 		}
 
 		/// <summary>
@@ -34,9 +34,9 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		public NodeBase Value { get; set; }
 
 		/// <summary>
-		/// A flag indicating that the current value is contant.
+		/// A flag indicating that the current value is read-only.
 		/// </summary>
-		public readonly bool IsConstant;
+		public readonly bool IsImmutable;
 
 		public override LexemLocation EndLocation
 		{
@@ -58,11 +58,23 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 				: ctx.ResolveType(Type);
 			ctx.CheckTypedExpression(Value, type);
 
-			ctx.CurrentScope.DeclareName(Name, type, IsConstant);
+			if(LocalName != null)
+				return;
+
+			var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
+			if (Value != null && Value.IsConstant)
+			{
+				name.IsConstant = true;
+				name.ConstantValue = Value.ConstantValue;
+			}
 		}
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
+			var name = LocalName ?? ctx.CurrentScope.FindName(Name);
+			if (name.IsConstant && name.IsImmutable)
+				return;
+
 			if (Value == null)
 				Value = Expr.Default(Type);
 
@@ -107,7 +119,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 
 		public override string ToString()
 		{
-			return string.Format("{0}({1} = {2})", IsConstant ? "let" : "var", Name, Value);
+			return string.Format("{0}({1} = {2})", IsImmutable ? "let" : "var", Name, Value);
 		}
 	}
 }
