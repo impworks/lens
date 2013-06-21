@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			{
 				// only local constants are cached
 				// because mutable variables could be closured later on
-				if (local.IsConstant && local.IsImmutable)
+				if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
 					m_LocalConstant = local;
 
 				return local.Type;

@@ -167,7 +167,7 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			foreach (var curr in Names.Values)
 			{
-				if (curr.IsConstant && curr.IsImmutable)
+				if (curr.IsConstant && curr.IsImmutable && ctx.Options.UnrollConstants)
 					continue;
 
 				if (curr.IsClosured)
