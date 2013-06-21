@@ -16,6 +16,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		/// </summary>
 		public NodeBase Operand { get; set; }
 
+		public override bool IsConstant { get { return Operand.IsConstant; } }
+		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
+
 		public override LexemLocation EndLocation
 		{
 			get { return Operand.EndLocation; }
@@ -75,6 +78,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 		}
 
 		protected abstract void compileOperator(Context ctx);
+		protected abstract dynamic unrollConstant(dynamic value);
 
 		#region Equality members
 

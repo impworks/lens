@@ -32,5 +32,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			Operand.Compile(ctx, true);
 			gen.EmitNegate();
 		}
+
+		protected override dynamic unrollConstant(dynamic value)
+		{
+			return -value;
+		}
 	}
 }

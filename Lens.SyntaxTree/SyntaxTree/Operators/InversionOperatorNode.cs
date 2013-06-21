@@ -27,5 +27,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			gen.EmitConstant(0);
 			gen.EmitCompareEqual();
 		}
+
+		protected override dynamic unrollConstant(dynamic value)
+		{
+			return !value;
+		}
 	}
 }
