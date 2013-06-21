@@ -1,4 +1,6 @@
-﻿using Lens.SyntaxTree.Compiler;
+﻿using System;
+using System.Reflection;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree.SyntaxTree.Operators
 {
@@ -17,16 +19,37 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			get { return "op_Subtraction"; }
 		}
 
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			GetExpressionType(ctx);
-			loadAndConvertNumerics(ctx);
-			gen.EmitSubtract();
+			var type = GetExpressionType(ctx);
+
+			if (type == typeof (string))
+			{
+				var replaceMethod = typeof (string).GetMethod("Replace", new[] {typeof (string), typeof (string)});
+
+				LeftOperand.Compile(ctx, true);
+				RightOperand.Compile(ctx, true);
+				gen.EmitConstant(string.Empty);
+				gen.EmitCall(replaceMethod);
+			}
+			else
+			{
+				loadAndConvertNumerics(ctx);
+				gen.EmitSubtract();
+			}
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
+			if (left is string && right is string)
+				return left.Replace(right, "");
+
 			return left - right;
 		}
 	}

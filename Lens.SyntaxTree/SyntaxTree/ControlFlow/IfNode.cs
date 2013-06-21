@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			if (Condition.IsConstant)
+			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
 				if (FalseAction != null)
 				{

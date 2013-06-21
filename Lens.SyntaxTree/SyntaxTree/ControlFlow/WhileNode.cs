@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var loopType = GetExpressionType(ctx);
 			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
 
-			if (Condition.IsConstant && Condition.ConstantValue == false)
+			if (Condition.IsConstant && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
 			{
 				if(saveLast)
 					Expr.Default(loopType).Compile(ctx, true);
