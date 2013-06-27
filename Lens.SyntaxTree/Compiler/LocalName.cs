@@ -30,6 +30,7 @@ namespace Lens.SyntaxTree.Compiler
 			ConstantValue = other.ConstantValue;
 
 			LocalBuilder = other.LocalBuilder;
+			ArgumentId = other.ArgumentId;
 
 			ClosureDistance = dist;
 		}
@@ -61,6 +62,11 @@ namespace Lens.SyntaxTree.Compiler
 		{
 			get { return LocalBuilder == null ? (int?)null : LocalBuilder.LocalIndex; }
 		}
+
+		/// <summary>
+		/// The ID of the argument if this name represents one.
+		/// </summary>
+		public int? ArgumentId;
 
 		/// <summary>
 		/// Is the name referenced in nested scopes?

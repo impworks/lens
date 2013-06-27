@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Translations;
 using Lens.SyntaxTree.Utils;
@@ -169,7 +168,16 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			gen.EmitLoadLocal(name, PointerRequired);
+			if (name.IsRefArgument && name.ArgumentId.HasValue)
+			{
+				gen.EmitLoadArgument(name.ArgumentId.Value);
+				if(!PointerRequired)
+					gen.EmitLoadFromPointer(name.Type);
+			}
+			else
+			{
+				gen.EmitLoadLocal(name, PointerRequired);
+			}
 		}
 
 		public override string ToString()

@@ -354,6 +354,35 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Load an object indirectly from a pointer.
+		/// </summary>
+		public static void EmitLoadFromPointer(this ILGenerator gen, Type itemType)
+		{
+			if (itemType == typeof(sbyte))
+				gen.Emit(OpCodes.Ldind_I1);
+			else if (itemType == typeof(short))
+				gen.Emit(OpCodes.Ldind_I2);
+			else if (itemType == typeof(int))
+				gen.Emit(OpCodes.Ldind_I4);
+			else if (itemType == typeof(long) || itemType == typeof(ulong))
+				gen.Emit(OpCodes.Ldind_I8);
+			else if (itemType == typeof(float))
+				gen.Emit(OpCodes.Ldind_R4);
+			else if (itemType == typeof(double))
+				gen.Emit(OpCodes.Ldind_R8);
+			else if (itemType == typeof(byte))
+				gen.Emit(OpCodes.Ldind_U1);
+			else if (itemType == typeof(ushort))
+				gen.Emit(OpCodes.Ldind_U2);
+			else if (itemType == typeof(uint))
+				gen.Emit(OpCodes.Ldind_U4);
+			else if (itemType.IsClass || itemType.IsInterface)
+				gen.Emit(OpCodes.Ldind_Ref);
+			else
+				throw new InvalidOperationException("Unknown type!");
+		}
+
+		/// <summary>
 		/// Loads an array item of the specified type onto the stack.
 		/// </summary>
 		public static void EmitLoadIndex(this ILGenerator gen, Type itemType, bool getPointer = false)

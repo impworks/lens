@@ -53,7 +53,8 @@ namespace Lens.SyntaxTree.Compiler
 			for(var idx = 0; idx < method.Arguments.Count; idx++)
 			{
 				var arg = method.Arguments[idx];
-				DeclareName(arg.Name, arg.Type ?? ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
+				var name = DeclareName(arg.Name, arg.Type ?? ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
+				name.ArgumentId = method.IsStatic ? idx : idx + 1;
 			}
 		}
 
