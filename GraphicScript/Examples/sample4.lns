@@ -1,0 +1,30 @@
+using System.Windows.Media
+
+let bound = new Rect ()
+bound.X = 50
+bound.Y = 50
+bound.Width = 500
+bound.Height = 500
+bound.Fill = Colors::Yellow
+Screen.Add bound
+
+fun maker of Figure x:int ->
+    let left = 50
+    let right = 500
+
+    let f = new Circle ()
+    f.X = 50
+    f.Y = (x+1)*50
+    var speed = rand()*5
+    f.Update = ->
+        if(f.X < left && speed < 0)
+            speed = -speed
+        if(f.X > right && speed > 0)
+            speed = -speed
+        f.X = f.X + speed
+
+    f
+
+let objs = Enumerable::Range 0 10
+    |> Select ((x:int) -> maker x)
+Screen.Add objs
