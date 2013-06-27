@@ -192,7 +192,7 @@ throw ex";
 var fx = double::IsInfinity
 fx (1.0 / 0)";
 
-			Test(src, true);
+			Test(src, true, true);
 		}
 
 		[Test]
@@ -610,7 +610,7 @@ var r2 = new MyRecord (2 + 2) (""l"" + ""ol"")
 r1 == r2
 ";
 
-			Test(src, true);
+			Test(src, true, true);
 		}
 
 		[Test]
@@ -855,25 +855,29 @@ data.Sum (x:Store -> x.Value)
 			Test(code, new[] { 2, 3, 5, 2, 5 });
 		}
 
-		private void Test(string src, object value)
+		private void Test(string src, object value, bool testConstants = false)
 		{
-			Assert.AreEqual(value, Compile(src));
+			Assert.AreEqual(value, Compile(src, testConstants));
+			if(testConstants)
+				Assert.AreEqual(value, Compile(src));
 		}
 
-		private void Test(IEnumerable<NodeBase> nodes, object value)
+		private void Test(IEnumerable<NodeBase> nodes, object value, bool testConstants = false)
 		{
-			Assert.AreEqual(value, Compile(nodes));
+			Assert.AreEqual(value, Compile(nodes, testConstants));
+			if (testConstants)
+				Assert.AreEqual(value, Compile(nodes));
 		}
 
-		private object Compile(string src)
+		private object Compile(string src, bool testConstants = false)
 		{
-			var opts = new LensCompilerOptions {AllowSave = true};
+			var opts = new LensCompilerOptions {AllowSave = true, UnrollConstants = testConstants };
 			return new LensCompiler(opts).Run(src);
 		}
 
-		private object Compile(IEnumerable<NodeBase> src)
+		private object Compile(IEnumerable<NodeBase> src, bool testConstants = false)
 		{
-			var opts = new LensCompilerOptions { AllowSave = true };
+			var opts = new LensCompilerOptions { AllowSave = true, UnrollConstants = testConstants };
 			return new LensCompiler(opts).Run(src);
 		}
 	}

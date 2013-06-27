@@ -57,22 +57,22 @@ namespace Lens.Test
 		[Test]
 		public void ArithmeticsTest()
 		{
-			Test("1 + 2", 3);
-			Test("13 + 0.37", 13.37);
-			Test("1336.9 + 0.1", 1337);
-			Test("(1336 as UInt32) + (1 as UInt32)", 1337);
+			Test("1 + 2", 3, true);
+			Test("13 + 0.37", 13.37, true);
+			Test("1336.9 + 0.1", 1337, true);
+			Test("(1336 as UInt32) + (1 as UInt32)", 1337, true);
 
-			Test("43 - 1", 42);
+			Test("43 - 1", 42, true);
 
-			Test("21 * 2", 42);
-			Test("1.5 * 1.5", 2.25);
+			Test("21 * 2", 42, true);
+			Test("1.5 * 1.5", 2.25, true);
 
-			Test("84 / 2", 42);
+			Test("84 / 2", 42, true);
 
-			Test("92 % 50", 42);
+			Test("92 % 50", 42, true);
 
-			Test("2 ** 2", 4);
-			Test("1.5 ** 5", 7.59375);
+			Test("2 ** 2", 4, true);
+			Test("1.5 ** 5", 7.59375, true);
 
 			Assert.Throws<LensCompilerException>(() => Compile("1 + (1 as UInt32)"));
 			Assert.Throws<LensCompilerException>(() => Compile(@"1 + ""hello"""));
@@ -81,74 +81,74 @@ namespace Lens.Test
 		[Test]
 		public void StringConcatTest()
 		{
-			Test(@"""a"" + ""b""", "ab");
-			Test(@"""a"" + ""b"" + ""c""", "abc");
+			Test(@"""a"" + ""b""", "ab", true);
+			Test(@"""a"" + ""b"" + ""c""", "abc", true);
 		}
 
 		[Test]
 		public void NegationTest()
 		{
-			Test("-1", -1);
-			Test("-1.5", -1.5);
+			Test("-1", -1, true);
+			Test("-1.5", -1.5, true);
 
 			var src = @"
-var a = 1
+let a = 1
 -(a * 2)
 ";
-			Test(src, -2);
+			Test(src, -2, true);
 		}
 
 		[Test]
 		public void OperatorPrecedenceTest()
 		{
-			Test("2 + 2 * 2", 6);
-			Test("2 / 2 + 1", 2);
-			Test("1 + 2 * 3 ** 4", 163);
+			Test("2 + 2 * 2", 6, true);
+			Test("2 / 2 + 1", 2, true);
+			Test("1 + 2 * 3 ** 4", 163, true);
 		}
 
 		[Test]
 		public void BooleanOperatorsTest()
 		{
-			Test("true || true", true);
-			Test("true || false", true);
-			Test("false || true", true);
-			Test("false || false", false);
+			Test("true || true", true, true);
+			Test("true || false", true, true);
+			Test("false || true", true, true);
+			Test("false || false", false, true);
 
-			Test("true && true", true);
-			Test("true && false", false);
-			Test("false && true", false);
-			Test("false && false", false);
+			Test("true && true", true, true);
+			Test("true && false", false, true);
+			Test("false && true", false, true);
+			Test("false && false", false, true);
 
-			Test("true ^^ true", false);
-			Test("true ^^ false", true);
-			Test("false ^^ true", true);
-			Test("false ^^ false", false);
+			Test("true ^^ true", false, true);
+			Test("true ^^ false", true, true);
+			Test("false ^^ true", true, true);
+			Test("false ^^ false", false, true);
 		}
 
 		[Test]
 		public void InversionTest()
 		{
-			Test("not true", false);
-			Test("not false", true);
+			Test("not true", false, true);
+			Test("not false", true, true);
 
-			Test("not true || true", true);
+			Test("not true || true", true, true);
 		}
 
 		[Test]
 		public void ComparisonTest()
 		{
-			Test("1 == 1", true);
-			Test("1 == 2", false);
-			Test("1 <> 1", false);
-			Test("1 <> 2", true);
+			Test("1 == 1", true, true);
+			Test("1 == 2", false, true);
+			Test("1 <> 1", false, true);
+			Test("1 <> 2", true, true);
 
-			Test("1 == 1.0", true);
-			Test("1 == 1.2", false);
-			Test("1 <> 1.0", false);
-			Test("1 <> 1.2", true);
+			Test("1 == 1.0", true, true);
+			Test("1 == 1.2", false, true);
+			Test("1 <> 1.0", false, true);
+			Test("1 <> 1.2", true, true);
 
-			Test("1.0 == 1.0", true);
-			Test("1.0 <> 1.0", false);
+			Test("1.0 == 1.0", true, true);
+			Test("1.0 <> 1.0", false, true);
 
 			Test("1 == (1 as Nullable<int>)", true);
 			Test("1 <> (1 as Nullable<int>)", false);
@@ -158,7 +158,7 @@ var a = 1
 			Test("(1 as Nullable<int>) == null", false);
 			Test("(1 as Nullable<int>) <> null", true);
 
-			Test("null == null", true);
+			Test("null == null", true, true);
 			Test("null == new object ()", false);
 		}
 
@@ -187,10 +187,11 @@ var a = 1
 			Test("(new Decimal 1) >= (new Decimal 2)", false);
 		}
 
-		private void Test(string src, object value)
+		private void Test(string src, object value, bool testConstants = false)
 		{
-			var result = Compile(src);
-			Assert.AreEqual(value, result);
+			Assert.AreEqual(value, Compile(src, testConstants));
+			if(testConstants)
+				Assert.AreEqual(value, Compile(src));
 		}
 
 		private void TestType<T>(string src)
@@ -199,9 +200,10 @@ var a = 1
 			Assert.AreEqual(obj, typeof(T));
 		}
 
-		private object Compile(string src)
+		private object Compile(string src, bool testConstants = false)
 		{
-			return new LensCompiler().Run(src);
+			var opts = new LensCompilerOptions {UnrollConstants = testConstants};
+			return new LensCompiler(opts).Run(src);
 		}
 	}
 }
