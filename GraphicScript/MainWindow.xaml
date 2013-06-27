@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:gs="clr-namespace:GraphicScript"
-        Title="Графический скрипт" Height="768" Width="1024" MinWidth="640" MinHeight="480"
+        Title="GraphicScript: a demo host for LENS compiler" Height="768" Width="1024" MinWidth="640" MinHeight="480"
         d:DataContext="{d:DesignInstance gs:MainWindow}"
         mc:Ignorable="d">
     <Window.Resources>
