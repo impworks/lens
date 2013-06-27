@@ -168,10 +168,10 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			if (name.IsRefArgument && name.ArgumentId.HasValue)
+			if (name.ArgumentId.HasValue)
 			{
 				gen.EmitLoadArgument(name.ArgumentId.Value);
-				if(!PointerRequired)
+				if(name.IsRefArgument && !PointerRequired)
 					gen.EmitLoadFromPointer(name.Type);
 			}
 			else

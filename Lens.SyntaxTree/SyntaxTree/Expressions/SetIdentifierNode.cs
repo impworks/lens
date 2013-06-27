@@ -111,15 +111,14 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!name.IsRefArgument)
 			{
 				castNode.Compile(ctx, true);
-				gen.EmitSaveLocal(name);
+				if(name.ArgumentId.HasValue)
+					gen.EmitSaveArgument(name.ArgumentId.Value);
+				else
+					gen.EmitSaveLocal(name);
 			}
 			else
 			{
-				var argId = ctx.CurrentMethod.Arguments.IndexOf(name.Name);
-				if (!ctx.CurrentMethod.IsStatic)
-					argId++;
-
-				gen.EmitLoadArgument(argId);
+				gen.EmitLoadArgument(name.ArgumentId.Value);
 				castNode.Compile(ctx, true);
 				gen.EmitSaveObject(name.Type);
 			}
