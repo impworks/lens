@@ -5,6 +5,7 @@ using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.SyntaxTree.Expressions;
+using Lens.SyntaxTree.SyntaxTree.Operators;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -1238,6 +1239,95 @@ else
 ";
 			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
 			Test(src, result);
+		}
+
+		[Test]
+		public void VariableLocation()
+		{
+			var script = @"x  + 1";
+			var result = new TreeBuilder().Parse(script);
+			var node = (AddOperatorNode)result.Single();
+			var variable = node.LeftOperand;
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 1
+			}, variable.StartLocation);
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 2
+			}, variable.EndLocation);
+		}
+
+		[Test]
+		public void ArgumentLocation()
+		{
+			var script = "int::TryParse (ref x)";
+			var result = new TreeBuilder().Parse(script);
+			var node = (InvocationNodeBase)result.Single();
+			var argument = node.Arguments.Single();
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 15
+			}, argument.StartLocation);
+		}
+
+		[Test]
+		public void TypeSignatureLocation()
+		{
+			var script = "new SomeType ()";
+			var result = new TreeBuilder().Parse(script);
+			var node = (NewObjectNode)result.Single();
+			var typeSignature = node.TypeSignature;
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 5
+			}, typeSignature.StartLocation);
+
+			Assert.AreEqual(new LexemLocation
+			{
+				Line = 1,
+				Offset = 13
+			}, typeSignature.EndLocation);
+		}
+
+		[Test]
+		public void ComplexWhileTest()
+		{
+			var src = @"using System.Net
+
+let listener = new HttpListener ()
+listener.Prefixes.Add ""http://127.0.0.1:8080/""
+listener.Prefixes.Add ""http://localhost:8080/""
+
+var count = 1
+
+while(true)
+    listener.Start ()
+    
+    let ctx = listener.GetContext ()
+    let rq = ctx.Request
+    let resp = ctx.Response
+
+    let respStr = fmt ""Hello from LENS! This page has been viewed {0} times."" count
+    let buf = Encoding::UTF8.GetBytes respStr
+
+    resp.ContentLength64 = buf.Length
+    let output = resp.OutputStream
+    output.Write buf 0 (buf.Length)
+    output.Close ()
+
+    listener.Stop ()
+
+    count = count + 1
+";
+			new TreeBuilder().Parse(src);
 		}
 
 		[Test]

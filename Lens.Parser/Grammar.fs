@@ -52,41 +52,66 @@ let keyword k = (pstring k
 let token t = (pstring t
                .>>? many space) <!> sprintf "token %s" t
 
-let createParser s =
+
+let createRawParser s =
     let parser, parserRef = createParserForwardedToRef()
-    let whitespaced = choice [parser .>>? many space
-                              many1 space >>. fail ParserMessages.IncorrectIndentation]
-    whitespaced <!> s, parserRef
+    parser <!> s, parserRef
 
-let createNodeParser name =
-    let lexemLocation (position : Position) =
-        LexemLocation(Line = int position.Line, Offset = int position.Column)
+let createRawNodeParser name =
+    let parser, parserRef = createRawParser name
+    let informed (stream : CharStream<ParserState>) : Reply<#LocationEntity> =
+        let locationFrom (position : Position) =
+            LexemLocation(Line = int position.Line, Offset = int position.Column)
 
-    let parser, parserRef = createParser name
-    let informed (stream : CharStream<ParserState>) : Reply<#NodeBase> =
+        let getEndPosition (position : Position) =
+            let initialIndex = position.Index
+            let result = [0L .. initialIndex - 1L]
+                         |> List.rev
+                         |> Seq.map (fun index -> stream.Seek index
+                                                  let character = stream.Peek()
+                                                  stream.Seek(index + 1L)
+                                                  let position = stream.Position
+                                                  character, position)
+                         |> Seq.filter (fun (c, _) -> c <> ' ')
+                         |> Seq.head
+                         |> snd
+            stream.Seek initialIndex
+            result
+
         let startPosition = stream.Position
         let reply = parser stream
         match reply.Status with
-        | Ok -> let endPosition = stream.Position
-                let result = reply.Result :> NodeBase
+        | Ok -> let endPosition = getEndPosition stream.Position
+                let result = reply.Result :> LocationEntity
                 if isStartTracked result then
-                    result.StartLocation <- lexemLocation startPosition
+                    result.StartLocation <- locationFrom startPosition
                 if isEndTracked result then
-                    result.EndLocation <- lexemLocation endPosition
+                    result.EndLocation <- locationFrom endPosition
                 reply
         | _  -> reply
     informed, parserRef
+
+
+let whitespaced p =
+    choice [p .>>? many space
+            many1 space >>. fail ParserMessages.IncorrectIndentation]
+
+let createParser s =
+    let parser, parserRef = createRawParser s
+    whitespaced parser, parserRef
+
 
 let annotate parser annotation =
     parser <?> annotation
 
 let createAnnotatedParser name annotation =
-    let parser, ref = createParser name
-    annotate parser annotation, ref
+    let parser, ref = createRawParser name
+    annotate (whitespaced parser) annotation, ref
 
 let createAnnotatedNodeParser name annotation =
-    let parser, ref = createNodeParser name
-    annotate parser annotation, ref
+    let parser, ref = createRawNodeParser name
+    annotate (whitespaced parser) annotation, ref
+
 
 let stmt, stmtRef                             = createAnnotatedNodeParser "stmt" ParserLexems.Stmt
 let using, usingRef                           = createAnnotatedNodeParser "using" ParserLexems.Using
@@ -99,7 +124,7 @@ let funcdef, funcdefRef                       = createAnnotatedNodeParser "funcd
 let func_params, func_paramsRef               = createAnnotatedParser "func_params" ParserLexems.FuncParams
 let block, blockRef                           = createAnnotatedNodeParser "block" ParserLexems.Block
 let block_line, block_lineRef                 = createAnnotatedNodeParser "block_line" ParserLexems.BlockLine
-let ``type``, typeRef                         = createAnnotatedParser "type" ParserLexems.Type
+let ``type``, typeRef                         = createAnnotatedNodeParser "type" ParserLexems.Type
 let local_stmt, local_stmtRef                 = createAnnotatedNodeParser "local_stmt" ParserLexems.LocalStmt
 let var_decl_expr, var_decl_exprRef           = createAnnotatedNodeParser "var_decl_expr" ParserLexems.VarDeclExpr
 let assign_expr, assign_exprRef               = createAnnotatedNodeParser "assign_expr" ParserLexems.AssignExpr
@@ -138,7 +163,7 @@ let new_obj_expr, new_obj_exprRef             = createAnnotatedNodeParser "new_o
 let enumeration_expr, enumeration_exprRef     = createAnnotatedParser "enumeration_expr" ParserLexems.EnumerationExpr
 let invoke_expr, invoke_exprRef               = createAnnotatedNodeParser "invoke_expr" ParserLexems.InvokeExpr
 let invoke_list, invoke_listRef               = createAnnotatedParser "invoke_list" ParserLexems.InvokeList
-let byref_arg, byref_argRef                   = createAnnotatedParser "byref_arg" ParserLexems.ByRefArg
+let byref_arg, byref_argRef                   = createAnnotatedNodeParser "byref_arg" ParserLexems.ByRefArg
 let value_expr, value_exprRef                 = createAnnotatedNodeParser "value_expr" ParserLexems.Value
 let rvalue, rvalueRef                         = createAnnotatedParser "rvalue" ParserLexems.RValue
 let type_operator_expr, type_operator_exprRef = createAnnotatedNodeParser "type_operator_expr" ParserLexems.TypeOperatorExpr
@@ -148,6 +173,12 @@ let string, stringRef                         = createAnnotatedParser "string" P
 let int, intRef                               = createAnnotatedParser "int" ParserLexems.Int
 let double, doubleRef                         = createAnnotatedParser "double" ParserLexems.Double
 let identifier, identifierRef                 = createAnnotatedParser "identifier" ParserLexems.Identifier
+
+// For type signature:
+let typeParser = ``namespace``
+                 .>>. opt ((type_params |>> Node.typeParams)
+                           <|> (many (token "[]") |>> Node.arrayDefinition))
+let typeTag = typeParser |>> Node.typeTag
 
 let main               = many newline >>. many stmt .>> eof
 stmtRef               := // Only using and local_stmt blocks haven't nextLine as their natural ending.
@@ -189,10 +220,7 @@ blockRef              := ((Indentation.indentedBlockOf block_line)
                           <|> (valueToList local_stmt))
                          |>> Node.codeBlock
 block_lineRef         := local_stmt
-typeRef               := pipe2
-                         <| ``namespace``
-                         <| opt ((type_params |>> Node.typeParams) <|> (many (token "[]") |>> Node.arrayDefinition))
-                         <| Node.typeTag
+typeRef               := typeParser |>> Node.typeSignature
 local_stmtRef         := choice [var_decl_expr
                                  attempt assign_expr
                                  expr]
@@ -213,7 +241,7 @@ atomar_exprRef        := choice [literal
                                  between <| token "(" <| token ")" <| expr]
 accessor_exprRef      := choice [token "." >>? identifier |>> Accessor.Member
                                  (between <| token "[" <| token "]" <| line_expr) |>> Accessor.Indexer]
-type_paramsRef        := between <| token "<" <| token ">" <| (sepBy1 ``type`` <| token ",")
+type_paramsRef        := between <| token "<" <| token ">" <| (sepBy1 typeTag <| token ",")
 exprRef               := choice [attempt block_expr // attempt in case of lambdas because lambdas creates many grammar conflicts
                                  line_expr]
 block_exprRef         := choice [if_expr
@@ -325,7 +353,7 @@ value_exprRef         := choice [attempt rvalue
                                  atomar_expr]
 rvalueRef             := pipe2
                          <| lvalue
-                         <| opt (attempt type_params) // attempt is significant here because of < operator
+                         <| opt (attempt (between <| token "<" <| token ">" <| (sepBy1 ``type`` <| token ","))) // attempt is significant here because of < operator
                          <| Node.genericGetterNode
 type_operator_exprRef := pipe2
                          <| (keyword "typeof" <|> keyword "default")
