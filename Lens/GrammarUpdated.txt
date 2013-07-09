@@ -64,7 +64,7 @@ catch_stmt <CatchNode>                      = "catch" [ identifier ":" type ] bl
 finally_stmt <CodeBlockNode>                = "finally" block
 
 // headers
-if_header <IfNode>                          = if" line_expr "then"
+if_header <IfNode>                          = "if" line_expr "then"
 while_header <WhileNode>                    = "while" line_expr "do"
 for_block <ForNode>                         = "for" identifier "in" line_expr [ ".." line_expr ] "do"
 
