@@ -112,14 +112,13 @@ namespace Lens.SyntaxTree.Utils
 		}
 
 		/// <summary>
-		/// Gets the argument types of a function or action type.
+		/// Creates a Func or Action depending on return type.
 		/// </summary>
-		public static Type[] GetArgumentTypes(this Type type)
+		public static Type CreateDelegateType(Type returnType, params Type[] args)
 		{
-			if(!type.IsCallableType())
-				throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
-
-			return type.GetMethod("Invoke").GetParameters().Select(p => p.ParameterType).ToArray();
+			return returnType.IsVoid()
+				? CreateActionType(args)
+				: CreateFuncType(returnType, args);
 		}
 
 		/// <summary>

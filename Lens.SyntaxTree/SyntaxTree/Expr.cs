@@ -92,6 +92,16 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return Op<PowOperatorNode>(left, right);
 		}
 
+		public static ShiftOperatorNode ShiftLeft(NodeBase left, NodeBase right)
+		{
+			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true};
+		}
+
+		public static ShiftOperatorNode ShiftRight(NodeBase left, NodeBase right)
+		{
+			return new ShiftOperatorNode { LeftOperand = left, RightOperand = right, IsLeft = false };
+		}
+
 		public static InversionOperatorNode Not(NodeBase node)
 		{
 			return new InversionOperatorNode {Operand = node};

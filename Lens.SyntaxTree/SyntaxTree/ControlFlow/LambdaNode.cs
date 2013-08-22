@@ -46,9 +46,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 		{
 			var retType = Body.GetExpressionType(ctx);
 			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature.Signature)).ToArray();
-			return retType == typeof (Unit) || retType == typeof(void)
-				? FunctionalHelper.CreateActionType(argTypes)
-				: FunctionalHelper.CreateFuncType(retType, argTypes);
+			return FunctionalHelper.CreateDelegateType(retType, argTypes);
 		}
 
 		protected override void compile(Context ctx, bool mustReturn)
@@ -56,10 +54,7 @@ namespace Lens.SyntaxTree.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentILGenerator;
 
 			// find constructor
-			var retType = Body.GetExpressionType(ctx);
-			var type = retType.IsNotVoid()
-				? FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes)
-				: FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
+			var type = FunctionalHelper.CreateDelegateType(Body.GetExpressionType(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.CurrentScope.ClosureVariable;

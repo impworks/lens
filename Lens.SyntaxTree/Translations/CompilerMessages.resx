@@ -189,6 +189,9 @@
   <data name="DelegateArgumentsCountMismatch" xml:space="preserve">
     <value>Invoking a delegate of type '{0}' requires {1} arguments, {2} given instead!</value>
   </data>
+  <data name="DelegatesNotCombinable" xml:space="preserve">
+    <value>Delegates of types '{0}' and '{1}' cannot be combined because their signatures are incompatible!</value>
+  </data>
   <data name="DictionaryEmpty" xml:space="preserve">
     <value>Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary.</value>
   </data>

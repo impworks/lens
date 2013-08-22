@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.Utils;
 
@@ -7,6 +8,57 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 	public class ShiftOperatorNode : BinaryOperatorNodeBase
 	{
 		public bool IsLeft { get; set; }
+
+		/// <summary>
+		/// The resulting method if the shift operation is used in function composition semantics.
+		/// </summary>
+		private MethodEntity _Method;
+	
+		public override void ProcessClosures(Context ctx)
+		{
+			var leftType = LeftOperand.GetExpressionType(ctx);
+			var rightType = RightOperand.GetExpressionType(ctx);
+
+			if (!IsLeft && leftType.IsCallableType() && rightType.IsCallableType())
+			{
+				if (!ctx.CanCombineDelegates(leftType, rightType))
+					Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
+
+				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
+				var args = argTypes.Select((a, id) => new FunctionArgument("p" + id, a));
+				var argGetters = argTypes.Select((a, id) => Expr.Get("p" + id)).Cast<NodeBase>().ToArray();
+
+				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, args);
+				_Method.ReturnType = ctx.WrapDelegate(rightType).ReturnType;
+				_Method.Body = 
+					Expr.Block(
+						Expr.Invoke(
+							RightOperand,
+							Expr.Invoke(
+								LeftOperand,
+								argGetters
+							)
+						)
+					);
+
+				var methodBackup = ctx.CurrentMethod;
+				ctx.CurrentMethod = _Method;
+
+				var scope = _Method.Scope;
+				scope.InitializeScope(ctx);
+
+				_Method.Body.ProcessClosures(ctx);
+				_Method.PrepareSelf();
+
+				scope.FinalizeScope(ctx);
+
+				ctx.CurrentMethod = methodBackup;
+			}
+			else
+			{
+				base.ProcessClosures(ctx);
+			}
+		}
 
 		public override string OperatorRepresentation
 		{
@@ -20,10 +72,24 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int) ? leftType : null;
+			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
+				return leftType;
+
+			if (!IsLeft && ctx.CanCombineDelegates(leftType, rightType))
+				return ctx.CombineDelegates(leftType, rightType);
+
+			return null;
 		}
 
 		protected override void compileOperator(Context ctx)
+		{
+			if(_Method == null)
+				compileShift(ctx);
+			else
+				compileComposition(ctx);
+		}
+
+		private void compileShift(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 
@@ -34,6 +100,20 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 				gen.EmitShiftLeft();
 			else
 				gen.EmitShiftRight();
+		}
+
+		private void compileComposition(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			// find constructor
+			var type = FunctionalHelper.CreateDelegateType(_Method.ReturnType, _Method.ArgumentTypes);
+			var ctor = ctx.ResolveConstructor(type, new[] { typeof(object), typeof(IntPtr) });
+
+			var closureInstance = ctx.CurrentScope.ClosureVariable;
+			gen.EmitLoadLocal(closureInstance);
+			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
+			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
