@@ -25,11 +25,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 					Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 
 				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
-				var args = argTypes.Select((a, id) => new FunctionArgument("p" + id, a));
-				var argGetters = argTypes.Select((a, id) => Expr.Get("p" + id)).Cast<NodeBase>().ToArray();
+				var argGetters = argTypes.Select((a, id) => Expr.GetArg(id)).Cast<NodeBase>().ToArray();
 
-				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, args);
-				_Method.ReturnType = ctx.WrapDelegate(rightType).ReturnType;
+				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
 				_Method.Body = 
 					Expr.Block(
 						Expr.Invoke(

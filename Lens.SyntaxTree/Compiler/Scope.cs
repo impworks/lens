@@ -146,9 +146,25 @@ namespace Lens.SyntaxTree.Compiler
 		}
 
 		/// <summary>
+		/// Creates a closured method in the current scope's closure type using function argument records.
+		/// </summary>
+		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, TypeSignature returnType = null)
+		{
+			return createClosureMethodInternal(ctx, name => ClosureType.CreateMethod(name, returnType ?? "Unit", args));
+		}
+
+		/// <summary>
+		/// Creates a closured method in the current scope's closure type using argument types.
+		/// </summary>
+		public MethodEntity CreateClosureMethod(Context ctx, Type[] args, Type returnType = null)
+		{
+			return createClosureMethodInternal(ctx, name => ClosureType.CreateMethod(name, returnType ?? typeof(Unit), args));
+		}
+
+		/// <summary>
 		/// Creates a closured method in the current scope's closure type.
 		/// </summary>
-		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args)
+		public MethodEntity createClosureMethodInternal(Context ctx, Func<string, MethodEntity> creator)
 		{
 			if (ClosureType == null)
 				ClosureType = CreateClosureType(ctx);
@@ -156,7 +172,7 @@ namespace Lens.SyntaxTree.Compiler
 			var closureName = string.Format(EntityNames.ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;
 
-			var method = ClosureType.CreateMethod(closureName, "Unit", args);
+			var method = creator(closureName);
 			method.Scope.OuterScope = this;
 			return method;
 		}

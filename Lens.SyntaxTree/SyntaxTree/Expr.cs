@@ -303,6 +303,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return new SetMemberNode { StaticType = type, MemberName = name, Value = value };
 		}
 
+		public static GetArgumentNode GetArg(int id)
+		{
+			return new GetArgumentNode {ArgumentId = id};
+		}
+
 		public static InvocationNode Invoke(TypeSignature type, string name, params NodeBase[] args)
 		{
 			return Invoke(GetMember(type, name), args);

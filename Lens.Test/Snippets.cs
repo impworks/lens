@@ -881,17 +881,28 @@ data.Sum (x:Store -> x.Value)
 				),
 
 				Expr.Let(
-					"asq",
-					Expr.ShiftRight(
-						Expr.Get("add"),
-						Expr.Get("square")
+					"inc",
+					Expr.Lambda(
+						new [] { Expr.Arg("x", "int") },
+						Expr.Add(Expr.Get("x"), Expr.Int(1))
 					)
 				),
 
-				Expr.Invoke("asq", Expr.Int(1), Expr.Int(2))
+				Expr.Let(
+					"asi",
+					Expr.ShiftRight(
+						Expr.ShiftRight(
+							Expr.Get("add"),
+							Expr.Get("square")
+						),
+						Expr.Get("inc")
+					)
+				),
+
+				Expr.Invoke("asi", Expr.Int(1), Expr.Int(2))
 			};
 
-			Test(code, 9);
+			Test(code, 10);
 		}
 
 		private void Test(string src, object value, bool testConstants = false)
