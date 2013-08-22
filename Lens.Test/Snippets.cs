@@ -857,6 +857,24 @@ data.Sum (x:Store -> x.Value)
 		}
 
 		[Test]
+		public void Shift()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Array(
+					Expr.ShiftLeft(Expr.Int(2), Expr.Int(1)),
+					Expr.ShiftLeft(Expr.Int(3), Expr.Int(4)),
+
+					Expr.ShiftRight(Expr.Int(32), Expr.Int(1)),
+					Expr.ShiftRight(Expr.Int(18), Expr.Int(2)),
+					Expr.ShiftRight(Expr.Int(10), Expr.Int(10))
+				)
+			};
+
+			Test(code, new [] { 4, 48, 16, 4, 0 });
+		}
+
+		[Test]
 		public void FunctionComposition1()
 		{
 			var code = new NodeBase[]
