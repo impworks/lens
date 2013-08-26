@@ -80,6 +80,27 @@ namespace Lens.Test
 			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<int, Predicate<_>>"));
 		}
 
+		[Test]
+		public void Nullable()
+		{
+			Test<int?>("int?");
+			Test<bool?>("bool?");
+			Assert.Throws<TypeMatchException>(() => Resolver.ResolveType("string?"));
+		}
+
+		[Test]
+		public void IEnumerable()
+		{
+			Test<IEnumerable<int>>("int~");
+			Test<IEnumerable<string>>("string~");
+		}
+
+		[Test]
+		public void CompoundPostfixes()
+		{
+			Test<IEnumerable<Nullable<int>>[]>("int?~[]");
+		}
+
 		private static void Test<T>(string signature)
 		{
 			Assert.AreEqual(Resolver.ResolveType(signature), typeof(T));

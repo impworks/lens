@@ -44,6 +44,12 @@ namespace Lens.SyntaxTree.Compiler
 				{"string", typeof (String)},
 			};
 
+			_TypePostfixes = new Dictionary<string, Type>
+			{
+				{ "?", typeof(Nullable<>) },
+				{ "~", typeof(IEnumerable<>) }
+			};
+
 			loadAssemblies();
 		}
 
@@ -57,6 +63,7 @@ namespace Lens.SyntaxTree.Compiler
 		private static Dictionary<string, List<string>> _Locations;
 		private static List<Assembly> _Assemblies;
 		private static readonly Dictionary<string, Type> _TypeAliases;
+		private static readonly Dictionary<string, Type> _TypePostfixes;
 
 		private readonly Dictionary<string, Type> _Cache;
 		private Dictionary<string, bool> _Namespaces;
@@ -117,9 +124,18 @@ namespace Lens.SyntaxTree.Compiler
 			if (_TypeAliases.ContainsKey(signature))
 				return _TypeAliases[signature];
 
-			// array
+			// postfixes
 			if (signature.EndsWith("[]"))
 				return parseTypeSignature(signature.Substring(0, signature.Length - 2)).MakeArrayType();
+
+			foreach(var postfix in _TypePostfixes)
+			{
+				if (!signature.EndsWith(postfix.Key))
+					continue;
+
+				var bare = parseTypeSignature(signature.Substring(0, signature.Length - postfix.Key.Length));
+				return GenericHelper.MakeGenericTypeChecked(postfix.Value, new[] {bare});
+			}
 
 			// generic type
 			var open = signature.IndexOf('<');
