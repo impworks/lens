@@ -93,6 +93,16 @@ r
 			}
 		}
 
+		[Test]
+		public void ClampTest()
+		{
+			Test("1.clamp 10 20", 10);
+			Test("100.clamp 10 20", 20);
+
+			Test("1.2.clamp 10 20", 10.0);
+			Test("1337.1.clamp 10 20", 20.0);
+		}
+
 		private void Test(string src, object value)
 		{
 			Assert.AreEqual(value, Compile(src));

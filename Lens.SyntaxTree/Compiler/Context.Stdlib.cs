@@ -56,6 +56,11 @@ namespace Lens.SyntaxTree.Compiler
 			ImportFunctionUnchecked("readln", typeof(Console).GetMethod("ReadLine"));
 			ImportFunctionUnchecked("readkey", typeof(ConsoleWrapper).GetMethod("ReadKey"));
 			ImportFunctionUnchecked("waitkey", typeof(ConsoleWrapper).GetMethod("WaitKey"));
+
+			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampInt"));
+			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampFloat"));
+			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampDouble"));
+			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampLong"));
 		}
 	}
 }

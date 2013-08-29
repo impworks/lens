@@ -23,6 +23,26 @@ namespace Lens.SyntaxTree.Stdlib
 				action();
 		}
 
+		public static int ClampInt(int value, int min, int max)
+		{
+			return value < min ? min : (value > max ? max : value);
+		}
+
+		public static float ClampFloat(float value, float min, float max)
+		{
+			return value < min ? min : (value > max ? max : value);
+		}
+
+		public static double ClampDouble(double value, double min, double max)
+		{
+			return value < min ? min : (value > max ? max : value);
+		}
+
+		public static long ClampLong(long value, long min, long max)
+		{
+			return value < min ? min : (value > max ? max : value);
+		}
+
 		#endregion
 
 		#region Formatting
