@@ -30,6 +30,8 @@ let private decreaseIndent indent (stream : CharStream<ParserState>) =
 
 // Skips one or more lines in not FreshNewline state. Skips zero or more lines in FreshNewline state.
 let private skipNewlines (stream : CharStream<ParserState>) =
+    let skipSpaceAndNewline = attempt ((many <| skipChar ' ') >>. skipNewline)
+    
     let state = stream.UserState
     let column = int stream.Column
     let fresh = state.RealIndentation * 4 = (column - 1)
@@ -38,8 +40,8 @@ let private skipNewlines (stream : CharStream<ParserState>) =
     then printfn "Inside skipNewlines with fresh = %A" fresh
 
     let skipper = if fresh
-                  then many skipNewline
-                  else many1 skipNewline
+                  then many skipSpaceAndNewline
+                  else many1 skipSpaceAndNewline
     (skipper >>. preturn(())) stream
 
 /// Go to new line if current indentation level is "real" (i.e. real indentation is equals to virtual indentation).

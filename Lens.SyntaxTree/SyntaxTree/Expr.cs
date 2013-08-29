@@ -92,6 +92,16 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return Op<PowOperatorNode>(left, right);
 		}
 
+		public static ShiftOperatorNode ShiftLeft(NodeBase left, NodeBase right)
+		{
+			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true};
+		}
+
+		public static ShiftOperatorNode ShiftRight(NodeBase left, NodeBase right)
+		{
+			return new ShiftOperatorNode { LeftOperand = left, RightOperand = right, IsLeft = false };
+		}
+
 		public static InversionOperatorNode Not(NodeBase node)
 		{
 			return new InversionOperatorNode {Operand = node};
@@ -291,6 +301,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static SetMemberNode SetMember(TypeSignature type, string name, NodeBase value)
 		{
 			return new SetMemberNode { StaticType = type, MemberName = name, Value = value };
+		}
+
+		public static GetArgumentNode GetArg(int id)
+		{
+			return new GetArgumentNode {ArgumentId = id};
 		}
 
 		public static InvocationNode Invoke(TypeSignature type, string name, params NodeBase[] args)

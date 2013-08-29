@@ -567,5 +567,44 @@ namespace Lens.SyntaxTree.Compiler
 
 			return result[0];
 		}
+
+		/// <summary>
+		/// Gets the information about a delegate by its type.
+		/// </summary>
+		public MethodWrapper WrapDelegate(Type type)
+		{
+			if(!type.IsCallableType())
+				throw new ArgumentException("type");
+
+			return ResolveMethod(type, "Invoke");
+		}
+
+		/// <summary>
+		/// Checks if two delegates can be combined.
+		/// </summary>
+		public bool CanCombineDelegates(Type left, Type right)
+		{
+			if (!left.IsCallableType() || !right.IsCallableType())
+				return false;
+
+			var rt = WrapDelegate(left).ReturnType;
+			var args = WrapDelegate(right).ArgumentTypes;
+
+			return args.Count() == 1 && args[0].IsAssignableFrom(rt);
+		}
+
+		/// <summary>
+		/// Creates a new delegate that combines the two given ones.
+		/// </summary>
+		public Type CombineDelegates(Type left, Type right)
+		{
+			if (!left.IsCallableType() || !right.IsCallableType())
+				return null;
+
+			var args = WrapDelegate(left).ArgumentTypes;
+			var rt = WrapDelegate(right).ReturnType;
+
+			return FunctionalHelper.CreateDelegateType(rt, args);
+		}
 	}
 }

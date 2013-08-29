@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.Compiler;
 using Lens.SyntaxTree.SyntaxTree;
 using Lens.SyntaxTree.SyntaxTree.Operators;
 using NUnit.Framework;
@@ -853,6 +854,73 @@ data.Sum (x:Store -> x.Value)
 			};
 
 			Test(code, new[] { 2, 3, 5, 2, 5 });
+		}
+
+		[Test]
+		public void Shift()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Array(
+					Expr.ShiftLeft(Expr.Int(2), Expr.Int(1)),
+					Expr.ShiftLeft(Expr.Int(3), Expr.Int(4)),
+
+					Expr.ShiftRight(Expr.Int(32), Expr.Int(1)),
+					Expr.ShiftRight(Expr.Int(18), Expr.Int(2)),
+					Expr.ShiftRight(Expr.Int(10), Expr.Int(10))
+				)
+			};
+
+			Test(code, new [] { 4, 48, 16, 4, 0 });
+		}
+
+		[Test]
+		public void FunctionComposition1()
+		{
+			var code = new NodeBase[]
+			{
+				Expr.Let(
+					"add",
+					Expr.Lambda(
+						new [] { Expr.Arg("a", "int"), Expr.Arg("b", "int") },
+						Expr.Add(Expr.Get("a"), Expr.Get("b"))
+					)
+				),
+
+				Expr.Let(
+					"square",
+					Expr.Lambda(
+						new [] { Expr.Arg("x", "int") },
+						Expr.Cast(
+							Expr.Pow(Expr.Get("x"), Expr.Int(2)),
+							"int"
+						)
+					)
+				),
+
+				Expr.Let(
+					"inc",
+					Expr.Lambda(
+						new [] { Expr.Arg("x", "int") },
+						Expr.Add(Expr.Get("x"), Expr.Int(1))
+					)
+				),
+
+				Expr.Let(
+					"asi",
+					Expr.ShiftRight(
+						Expr.ShiftRight(
+							Expr.Get("add"),
+							Expr.Get("square")
+						),
+						Expr.Get("inc")
+					)
+				),
+
+				Expr.Invoke("asi", Expr.Int(1), Expr.Int(2))
+			};
+
+			Test(code, 10);
 		}
 
 		private void Test(string src, object value, bool testConstants = false)

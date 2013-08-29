@@ -189,6 +189,9 @@
   <data name="DelegateArgumentsCountMismatch" xml:space="preserve">
     <value>Вызов делегата типа '{0}' требует {1} аргументов, а передано {2}!</value>
   </data>
+  <data name="DelegatesNotCombinable" xml:space="preserve">
+    <value>Невозможно применить композицию к делегатам типов '{0}' и '{1}', поскольку их подписи несовместимы!</value>
+  </data>
   <data name="DictionaryEmpty" xml:space="preserve">
     <value>Инициализатор словаря должен содержать хотя бы один элемент! Для создания пустых словарей воспользуйтесь явным конструктором.</value>
   </data>

@@ -48,24 +48,6 @@ namespace Lens.Test
 		}
 
 		[Test]
-		public void GetArgumentTypesTest()
-		{
-			var cases = new Dictionary<Type, Type[]>
-			{
-				{typeof (Func<>), new Type[0]},
-				{typeof (Func<int, int>), new [] { typeof(int) }},
-				{typeof (Func<string, Dictionary<int, int>, object>), new [] { typeof(string), typeof(Dictionary<int,int>) } },
-				{typeof (Action), new Type[0]},
-				{typeof (Action<int, bool>), new [] { typeof(int), typeof(bool) } }
-			};
-
-			foreach (var curr in cases)
-				Assert.AreEqual(curr.Key.GetArgumentTypes().SequenceEqual(curr.Value), true);
-
-			Assert.Throws<LensCompilerException>(() => typeof (int).GetArgumentTypes());
-		}
-
-		[Test]
 		public void DiscardParametersTest1()
 		{
 			var t1 = typeof (Func<int, string, bool, double, float, long>);
@@ -154,9 +136,6 @@ namespace Lens.Test
 		{
 			Assert.IsTrue(typeof(ThreadStart).IsCallableType());
 			Assert.IsTrue(typeof(ParameterizedThreadStart).IsCallableType());
-
-			Assert.AreEqual(typeof(ThreadStart).GetArgumentTypes(), Type.EmptyTypes);
-			Assert.AreEqual(typeof(ParameterizedThreadStart).GetArgumentTypes(), new [] { typeof(object) });
 		}
 	}
 }
