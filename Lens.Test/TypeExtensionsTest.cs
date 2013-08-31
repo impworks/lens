@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.SyntaxTree.SyntaxTree.Literals;
 using Lens.SyntaxTree.Utils;
 using NUnit.Framework;
 
@@ -271,6 +272,19 @@ namespace Lens.Test
 			TestCommonType<object>(typeof(object), typeof(int));
 			TestCommonType<object>(typeof(int), typeof(float), typeof(double), typeof(Decimal));
 			TestCommonType<object>(typeof(IEnumerable<int>), typeof(IEnumerable<float>));
+		}
+
+		[Test]
+		public void CommonNullables()
+		{
+			TestCommonType<int?>(typeof(int), typeof(NullType));
+			TestCommonType<int?>(typeof(int), typeof(int?));
+
+			TestCommonType<double?>(typeof(NullType), typeof(double));
+			TestCommonType<double?>(typeof(double?), typeof(double));
+
+			TestCommonType<object>(typeof(int), typeof(double?));
+			TestCommonType<object>(typeof(int), typeof(double), typeof(NullType));
 		}
 
 		[Test]

@@ -195,6 +195,10 @@ namespace Lens.SyntaxTree.Utils
 					break;
 			}
 
+			// check for cases that are not transitively castable
+			// for example: new [1; 1.2; null]
+			// int -> double is fine, double -> Nullable<double> is fine as well
+			// but int -> Nullable<double> is currently forbidden
 			foreach (var type in types)
 			{
 				if (!curr.IsExtendablyAssignableFrom(type))
