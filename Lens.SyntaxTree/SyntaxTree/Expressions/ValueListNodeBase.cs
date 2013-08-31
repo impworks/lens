@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				if(curr.GetExpressionType(ctx).IsVoid())
 					Error(curr, CompilerMessages.ExpressionVoid);
 
-			var types = nodes.Select(n => n.GetExpressionType(ctx)).Select(t => t == typeof (NullType) ? typeof (object) : t).ToArray();
+			var types = nodes.Select(n => n.GetExpressionType(ctx)).ToArray();
 			return types.GetMostCommonType();
 		}
 

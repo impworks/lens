@@ -182,9 +182,8 @@ namespace Lens.SyntaxTree.Utils
 
 			// try to get the most wide type
 			Type curr = null;
-			for (var idx = 0; idx < types.Length; idx++)
+			foreach (var type in types)
 			{
-				var type = types[idx];
 				if (type.IsInterface)
 				{
 					curr = typeof (object);
@@ -196,6 +195,14 @@ namespace Lens.SyntaxTree.Utils
 					break;
 			}
 
+			foreach (var type in types)
+			{
+				if (!curr.IsExtendablyAssignableFrom(type))
+				{
+					curr = typeof (object);
+					break;
+				}
+			}
 
 			if (!curr.IsAnyOf(typeof (object), typeof (ValueType), typeof (Delegate), typeof (Enum)))
 				return curr;
@@ -224,6 +231,20 @@ namespace Lens.SyntaxTree.Utils
 
 			if (right.IsInterface)
 				return typeof (object);
+
+			// valuetype & null
+			if (left == typeof (NullType) && right.IsValueType)
+				return typeof (Nullable<>).MakeGenericType(right);
+
+			if (right == typeof(NullType) && left.IsValueType)
+				return typeof(Nullable<>).MakeGenericType(left);
+
+			// valuetype & Nullable<valuetype>
+			if (left.IsNullableType() && left.GetGenericArguments()[0] == right)
+				return left;
+
+			if (right.IsNullableType() && right.GetGenericArguments()[0] == left)
+				return right;
 
 			// numeric extensions
 			if (left.IsNumericType() && right.IsNumericType())
