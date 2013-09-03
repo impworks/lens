@@ -61,6 +61,11 @@ namespace Lens.SyntaxTree.Compiler
 			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampFloat"));
 			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampDouble"));
 			ImportFunctionUnchecked("clamp", typeof(Utilities).GetMethod("ClampLong"));
+
+			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeInt"));
+			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeIntStep"));
+			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeString"));
+			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeStringStep"));
 		}
 	}
 }

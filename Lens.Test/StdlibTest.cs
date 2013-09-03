@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Lens.SyntaxTree;
 using NUnit.Framework;
 
@@ -101,6 +102,24 @@ r
 
 			Test("1.2.clamp 10 20", 10.0);
 			Test("1337.1.clamp 10 20", 20.0);
+		}
+
+		[Test]
+		public void RangeIntTest()
+		{
+			Test("1.to 5", new[] {1, 2, 3, 4, 5});
+			Test("5.to 1", new[] { 5, 4, 3, 2, 1 });
+			Test("1.to 100 3", Enumerable.Range(1, 100).Where((x, id) => id % 3 == 0));
+			Test("100.to 1 3", Enumerable.Range(1, 100).Reverse().Where((x, id) => id % 3 == 0));
+		}
+
+		[Test]
+		public void RangeStringTest()
+		{
+			Test(@"""A"".to ""F""", new[] { "A", "B", "C", "D", "E", "F" });
+			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
+			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
+			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
 		}
 
 		private void Test(string src, object value)

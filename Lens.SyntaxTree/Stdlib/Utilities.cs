@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Lens.SyntaxTree.Stdlib
 {
@@ -41,6 +43,52 @@ namespace Lens.SyntaxTree.Stdlib
 		public static long ClampLong(long value, long min, long max)
 		{
 			return value < min ? min : (value > max ? max : value);
+		}
+
+		#endregion
+
+		#region Range
+
+		public static IEnumerable<int> RangeInt(int from, int to)
+		{
+			return RangeIntStep(from, to, 1);
+		}
+
+		public static IEnumerable<int> RangeIntStep(int from, int to, int step)
+		{
+			if(step <= 0)
+				throw new ArgumentException("step");
+
+			if (from < to)
+				for (var i = from; i <= to; i += step)
+					yield return i;
+
+			else if (from > to)
+				for (var i = from; i >= to; i -= step)
+					yield return i;
+		}
+
+		public static IEnumerable<string> RangeString(string from, string to)
+		{
+			return RangeStringStep(from, to, 1);
+		}
+
+		public static IEnumerable<string> RangeStringStep(string from, string to, int step)
+		{
+			if (from.Length != 1) throw new ArgumentException("from");
+			if (to.Length != 1) throw new ArgumentException("to");
+			if (step <= 0) throw new ArgumentException("step");
+
+			var fromChar = from[0];
+			var toChar = to[0];
+
+			if (fromChar < toChar)
+				for (var i = fromChar; i <= toChar; i = (char)(i + step))
+					yield return i.ToString();
+
+			else if (fromChar > toChar)
+				for (var i = fromChar; i >= toChar; i = (char)(i - step))
+					yield return i.ToString();
 		}
 
 		#endregion
