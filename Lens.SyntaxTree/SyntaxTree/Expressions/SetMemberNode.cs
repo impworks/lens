@@ -68,6 +68,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? ctx.ResolveType(StaticType)
 				: Expression.GetExpressionType(ctx);
 
+			SafeModeCheckType(ctx, type);
+
 			// check for field
 			try
 			{

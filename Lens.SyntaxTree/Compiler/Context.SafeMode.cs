@@ -23,18 +23,18 @@ namespace Lens.SyntaxTree.Compiler
 
 		#region Methods
 
-		private void initSafeMode(LensCompilerOptions opts)
+		private void InitSafeMode()
 		{
-			if (opts.SafeMode == SafeMode.Disabled)
+			if (Options.SafeMode == SafeMode.Disabled)
 				return;
 
 			Action<string> addNsp = nsp => _ExplicitNamespaces[nsp] = true;
 			Action<string> addType = type => _ExplicitTypes[type] = true;
 
-			_ExplicitNamespaces = opts.SafeModeExplicitNamespaces.ToDictionary(n => n, n => true);
-			_ExplicitTypes = opts.SafeModeExplicitTypes.ToDictionary(n => n, n => true);
+			_ExplicitNamespaces = Options.SafeModeExplicitNamespaces.ToDictionary(n => n, n => true);
+			_ExplicitTypes = Options.SafeModeExplicitTypes.ToDictionary(n => n, n => true);
 
-			if (opts.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Environment))
+			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Environment))
 			{
 				addNsp("System.Diagnostics");
 				addNsp("System.Runtime");
@@ -45,17 +45,17 @@ namespace Lens.SyntaxTree.Compiler
 				addType("System.GC");
 			}
 
-			if (opts.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.IO))
+			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.IO))
 			{
 				addNsp("System.IO");
 			}
 
-			if (opts.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Threading))
+			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Threading))
 			{
 				addNsp("System.Threading");
 			}
 
-			if (opts.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Reflection))
+			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Reflection))
 			{
 				addNsp("System.Reflection");
 
@@ -64,23 +64,20 @@ namespace Lens.SyntaxTree.Compiler
 				addType("System.Type");
 			}
 
-			if (opts.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Network))
+			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Network))
 			{
 				addNsp("System.Net");
 				addNsp("System.Web");
 			}
 		}
 
-		public void EnsureAllowed(Type type)
+		public bool IsTypeAllowed(Type type)
 		{
 			if (Options.SafeMode == SafeMode.Disabled)
-				return;
+				return true;
 
-			var exists = _ExplicitTypes.ContainsKey(type.FullName)
-			             || _ExplicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k));
-
-			if(exists ^ Options.SafeMode == SafeMode.Whitelist)
-				Error(CompilerMessages.SafeModeIllegalType, type.FullName);
+			var exists = _ExplicitTypes.ContainsKey(type.FullName) || (type.Namespace != null && _ExplicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+			return exists ^ Options.SafeMode == SafeMode.Whitelist;
 		}
 
 		#endregion
