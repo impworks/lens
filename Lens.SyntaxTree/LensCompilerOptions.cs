@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Lens.SyntaxTree.Compiler.SafeMode;
+using Lens.SyntaxTree.Compiler;
 
 namespace Lens.SyntaxTree
 {

@@ -1,4 +1,4 @@
-﻿namespace Lens.SyntaxTree.Compiler.SafeMode
+﻿namespace Lens.SyntaxTree.Compiler
 {
 	public enum SafeMode
 	{

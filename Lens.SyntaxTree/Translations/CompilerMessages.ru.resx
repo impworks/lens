@@ -369,6 +369,9 @@
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Функция типа '{0}' не может вернуть объект типа '{1}'!</value>
   </data>
+  <data name="SafeModeIllegalType" xml:space="preserve">
+    <value>Растройки безопасного режима не позволяют использовать тип '{0}'!</value>
+  </data>
   <data name="ThrowArgumentExpected" xml:space="preserve">
     <value>Требуется выражение! Повторный выброс исключения допустим только в выражении catch.</value>
   </data>
