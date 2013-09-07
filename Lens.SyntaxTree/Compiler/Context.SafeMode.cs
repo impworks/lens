@@ -76,8 +76,12 @@ namespace Lens.SyntaxTree.Compiler
 			if (Options.SafeMode == SafeMode.Disabled)
 				return true;
 
+			var genericChecks = !type.IsGenericType || type.GetGenericArguments().All(IsTypeAllowed);
+			if (!genericChecks)
+				return false;
+
 			var exists = _ExplicitTypes.ContainsKey(type.FullName) || (type.Namespace != null && _ExplicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
-			return exists ^ Options.SafeMode == SafeMode.Whitelist;
+			return exists ^ Options.SafeMode == SafeMode.Blacklist;
 		}
 
 		#endregion
