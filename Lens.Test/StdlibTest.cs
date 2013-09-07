@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class StdlibTest
+	public class StdlibTest : TestBase
 	{
 		[Test]
 		public void FormatTest()
@@ -120,17 +120,6 @@ r
 			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
 			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
 			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
-		}
-
-		private void Test(string src, object value)
-		{
-			Assert.AreEqual(value, Compile(src));
-		}
-
-		private object Compile(string src)
-		{
-			var opts = new LensCompilerOptions { AllowSave = true };
-			return new LensCompiler(opts).Run(src);
 		}
 	}
 }

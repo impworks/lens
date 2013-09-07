@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class OperatorsTest
+	public class OperatorsTest : TestBase
 	{
 		[Test]
 		public void TypeofTest()
@@ -187,23 +187,10 @@ let a = 1
 			Test("(new Decimal 1) >= (new Decimal 2)", false);
 		}
 
-		private void Test(string src, object value, bool testConstants = false)
-		{
-			Assert.AreEqual(value, Compile(src, testConstants));
-			if(testConstants)
-				Assert.AreEqual(value, Compile(src));
-		}
-
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);
 			Assert.AreEqual(obj, typeof(T));
-		}
-
-		private object Compile(string src, bool testConstants = false)
-		{
-			var opts = new LensCompilerOptions {UnrollConstants = testConstants};
-			return new LensCompiler(opts).Run(src);
 		}
 	}
 }

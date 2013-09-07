@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class Snippets
+	public class Snippets : TestBase
 	{
 		[Test]
 		public void SaveAndLoadLocal()
@@ -921,32 +921,6 @@ data.Sum (x:Store -> x.Value)
 			};
 
 			Test(code, 10);
-		}
-
-		private void Test(string src, object value, bool testConstants = false)
-		{
-			Assert.AreEqual(value, Compile(src, testConstants));
-			if(testConstants)
-				Assert.AreEqual(value, Compile(src));
-		}
-
-		private void Test(IEnumerable<NodeBase> nodes, object value, bool testConstants = false)
-		{
-			Assert.AreEqual(value, Compile(nodes, testConstants));
-			if (testConstants)
-				Assert.AreEqual(value, Compile(nodes));
-		}
-
-		private object Compile(string src, bool testConstants = false)
-		{
-			var opts = new LensCompilerOptions {AllowSave = true, UnrollConstants = testConstants };
-			return new LensCompiler(opts).Run(src);
-		}
-
-		private object Compile(IEnumerable<NodeBase> src, bool testConstants = false)
-		{
-			var opts = new LensCompilerOptions { AllowSave = true, UnrollConstants = testConstants };
-			return new LensCompiler(opts).Run(src);
 		}
 	}
 }

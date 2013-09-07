@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class LiteralsTest
+	public class LiteralsTest : TestBase
 	{
 		[Test]
 		public void IntTest()
@@ -69,16 +69,6 @@ namespace Lens.Test
 			var list = result as Dictionary<int, bool>;
 			var expected = new Dictionary<int, bool> {{1, true}, {2, false}, {42, true}};
 			Assert.AreEqual(expected, list);
-		}
-
-		private void Test(string src, object expected)
-		{
-			Assert.AreEqual(expected, Compile(src));
-		}
-
-		private object Compile(string src)
-		{
-			return new LensCompiler().Run(src);
 		}
 	}
 }
