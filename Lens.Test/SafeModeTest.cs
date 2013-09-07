@@ -115,5 +115,63 @@ GC::Collect ()
 				);
 			}
 		}
+
+		[Test]
+		public void BlacklistEnvironment1()
+		{
+			var src = @"GC::Collect ()";
+			testSubsystem(typeof(GC), SafeModeSubsystem.Environment, src);
+		}
+
+		[Test]
+		public void BlacklistEnvironment2()
+		{
+			var src = @"Environment::StackTrace";
+			testSubsystem(typeof(Environment), SafeModeSubsystem.Environment, src);
+		}
+
+		[Test]
+		public void BlacklistEnvironment3()
+		{
+			var src = @"AppDomain::CurrentDomain.IsFullyTrusted";
+			testSubsystem(typeof(AppDomain), SafeModeSubsystem.Environment, src);
+		}
+
+		[Test]
+		public void BlacklistEnvironment4()
+		{
+			var src = @"System.Diagnostics.Debug::WriteLine ""test""";
+			testSubsystem(typeof(System.Diagnostics.Debug), SafeModeSubsystem.Environment, src);
+		}
+
+
+		[Test]
+		public void BlacklistEnvironment5()
+		{
+			var src = @"System.Runtime.InteropServices.Marshal::IsComObject (new object ())";
+			testSubsystem(typeof(System.Runtime.InteropServices.Marshal), SafeModeSubsystem.Environment, src);
+		}
+
+		private void testSubsystem(Type type, SafeModeSubsystem system, string code)
+		{
+			var opts = new LensCompilerOptions
+			{
+				SafeMode = SafeMode.Blacklist,
+				SafeModeExplicitSubsystems = system
+			};
+
+			try
+			{
+				Compile(code, opts);
+				Assert.Fail();
+			}
+			catch (LensCompilerException ex)
+			{
+				Assert.AreEqual(
+					string.Format(CompilerMessages.SafeModeIllegalType, type.FullName),
+					ex.Message
+				);
+			}
+		}
 	}
 }
