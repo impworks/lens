@@ -72,6 +72,8 @@ namespace Lens.SyntaxTree.Compiler
 
 			if(Options.LoadStandardLibrary)
 				InitStdlib();
+
+			InitSafeMode();
 		}
 
 		public IScript Compile(IEnumerable<NodeBase> nodes)

@@ -41,6 +41,9 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 			if (!m_IsResolved)
 				resolve(ctx);
 
+			if (m_Type != null)
+				SafeModeCheckType(ctx, m_Type);
+
 			if (Expression != null && Expression.GetExpressionType(ctx).IsArray && MemberName == "Length")
 				return typeof (int);
 

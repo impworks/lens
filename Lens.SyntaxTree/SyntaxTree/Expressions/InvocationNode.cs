@@ -63,6 +63,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Expressions
 				? m_InvocationSource.GetExpressionType(ctx)
 				: ctx.ResolveType(node.StaticType);
 
+			SafeModeCheckType(ctx, type);
+
 			if (node.TypeHints.Any())
 				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
 

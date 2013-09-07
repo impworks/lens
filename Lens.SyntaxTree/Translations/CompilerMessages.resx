@@ -369,6 +369,9 @@
   <data name="ReturnTypeMismatch" xml:space="preserve">
     <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
   </data>
+  <data name="SafeModeIllegalType" xml:space="preserve">
+    <value>Type '{0}' cannot be used in the script due to safe mode settings!</value>
+  </data>
   <data name="ThrowArgumentExpected" xml:space="preserve">
     <value>Expression is expected! An exception can only be rethrown from a catch clause.</value>
   </data>

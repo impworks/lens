@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Lens.SyntaxTree.Compiler;
+using Lens.SyntaxTree.Translations;
 
 namespace Lens.SyntaxTree.SyntaxTree
 {
@@ -27,7 +28,13 @@ namespace Lens.SyntaxTree.SyntaxTree
 		/// </summary>
 		public Type GetExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return m_ExpressionType ?? (m_ExpressionType = resolveExpressionType(ctx, mustReturn));
+			if (m_ExpressionType == null)
+			{
+				m_ExpressionType = resolveExpressionType(ctx, mustReturn);
+				SafeModeCheckType(ctx, m_ExpressionType);
+			}
+
+			return m_ExpressionType;
 		}
 
 		protected virtual Type resolveExpressionType(Context ctx, bool mustReturn = true)
@@ -103,7 +110,7 @@ namespace Lens.SyntaxTree.SyntaxTree
 		[ContractAnnotation("=> halt")]
 		public void Error(string message, params object[] args)
 		{
-			Error(null, message, args);
+			Error(this, message, args);
 		}
 
 		/// <summary>
@@ -119,12 +126,21 @@ namespace Lens.SyntaxTree.SyntaxTree
 		}
 
 		/// <summary>
-		/// Throw a generic error for incorrect location setting.
+		/// Throws a generic error for incorrect location setting.
 		/// </summary>
 		[ContractAnnotation("=> halt")]
 		protected void LocationSetError()
 		{
 			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));
+		}
+
+		/// <summary>
+		/// Throws an error that the current type is not alowed in safe mode.
+		/// </summary>
+		protected void SafeModeCheckType(Context ctx, Type type)
+		{
+			if(!ctx.IsTypeAllowed(type))
+				Error(CompilerMessages.SafeModeIllegalType, type.FullName);
 		}
 	}
 }

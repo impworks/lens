@@ -1,4 +1,7 @@
-﻿namespace Lens.SyntaxTree
+﻿using System.Collections.Generic;
+using Lens.SyntaxTree.Compiler;
+
+namespace Lens.SyntaxTree
 {
 	/// <summary>
 	/// A list of options to tweak the compiler.
@@ -48,5 +51,26 @@
 		/// Default = true.
 		/// </summary>
 		public bool UnrollConstants = true;
+
+		/// <summary>
+		/// Checks whether the script should be compiled in a sandbox environment.
+		/// Default = Disabled
+		/// </summary>
+		public SafeMode SafeMode = SafeMode.Disabled;
+
+		/// <summary>
+		/// The list of types that form a blacklist or a whitelist depending on safe mode.
+		/// </summary>
+		public List<string> SafeModeExplicitTypes = new List<string>();
+
+		/// <summary>
+		/// The list of namespaces that form a blacklist or a whitelist depending on safe mode.
+		/// </summary>
+		public List<string> SafeModeExplicitNamespaces = new List<string>();
+
+		/// <summary>
+		/// The whitelisted or blacklisted subsystems for safe mode (networking, IO, etc).
+		/// </summary>
+		public SafeModeSubsystem SafeModeExplicitSubsystems = SafeModeSubsystem.None;
 	}
 }

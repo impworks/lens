@@ -20,6 +20,8 @@ namespace Lens.SyntaxTree.SyntaxTree.Operators
 			var exprType = Expression.GetExpressionType(ctx);
 			var desiredType = ctx.ResolveType(TypeSignature);
 
+			SafeModeCheckType(ctx, desiredType);
+
 			// types are identical
 			if (exprType == desiredType)
 			{
