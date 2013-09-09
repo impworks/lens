@@ -328,6 +328,18 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return invoke(Get(name), args);
 		}
 
+		public static ShiftOperatorNode Compose(params NodeBase[] args)
+		{
+			if(args.Length < 2)
+				throw new ArgumentException("At least 2 functions are required for composition!");
+
+			var node = ShiftRight(args[0], args[1]);
+			for (var idx = 2; idx < args.Length; idx++)
+				node = ShiftRight(node, args[idx]);
+
+			return node;
+		}
+
 		private static InvocationNode invoke(NodeBase expr, params NodeBase[] args)
 		{
 			return new InvocationNode
@@ -487,16 +499,6 @@ namespace Lens.SyntaxTree.SyntaxTree
 			return Fun(name, type, false, args, body);
 		}
 
-		public static FunctionNode Fun(string name, bool isPure, params NodeBase[] body)
-		{
-			return Fun(name, null, isPure, new FunctionArgument[0], body);
-		}
-
-		public static FunctionNode Fun(string name, bool isPure, FunctionArgument[] args, params NodeBase[] body)
-		{
-			return Fun(name, null, isPure, args, body);
-		}
-
 		public static FunctionNode Fun(string name, TypeSignature type, bool isPure, params NodeBase[] body)
 		{
 			return Fun(name, type, isPure, new FunctionArgument[0], body);
@@ -517,6 +519,11 @@ namespace Lens.SyntaxTree.SyntaxTree
 		public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
 		{
 			return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};
+		}
+
+		public static FunctionArgument Arg<T>(string name, bool isRef = false)
+		{
+			return new FunctionArgument { Name = name, TypeSignature = typeof(T).FullName, IsRefArgument = isRef };
 		}
 
 		public static LambdaNode Lambda(FunctionArgument[] args, params NodeBase[] body)
