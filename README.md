@@ -36,6 +36,17 @@ Why yes indeed! Here's a snippet that shows how to embed the compiler into your 
 
 The code above creates the compiler and registers local variables `x`, `y`, and `result` in the script. The body of the script is compiled into a native .NET object that can be invoked several times without recompilation. Finally, the result of the expression is printed out - and guess what the result is!
 
+### Why might one need an embeddable scripting language?
+
+There are many cases in which your application can benefit from an embeddable scripting language:
+
+* **Tasks automation**
+    Write scripts to execute tasks automatically within the application, like processing a batch of images in a graphical editor, backing up databases.
+* **Formulas support**
+    Enable Excel-like formulas in your application, with functions and all kinds of cool features.
+* **Easy tweaking**
+    Embeddable scripting is a much more powerful alternative to config files. Scripts can contain some logic which can be altered without recompiling the entire application. Especially useful in game engines!
+
 ### What features does the language support?
 
 The compiler already supports the following features:
@@ -62,6 +73,48 @@ Some cool features are on the way:
 The complete list of expected features (in russian) can be found in the Issues tab.
 
 Contributions are always welcome - especially if you would like to help create a text editor with code suggestions and syntax highlighting!
+
+### A few examples of the syntax
+
+A basic script:
+
+    let a = 1
+    let b = 2
+    print "the result is: {0}" (a + b)
+    
+A loop:
+
+    for x in 10..0 do
+        println "{0}..." x
+        
+    println "blastoff!"
+    
+Some LINQ magic with lambdas & closures:
+
+    let squares = range 1 100
+        |> Where (x:int -> x % 2 == 0)
+        |> Select (x:int -> x ** 2)
+        
+Function declaration:
+
+    fun dist:double (p1:Point p2:Point) ->
+        let x = p1.X - p2.X
+        let y = p1.Y - p2.Y
+        Math::Sqrt (x ** 2 + y ** 2)
+        
+    let pA = new Point 1 2
+    let pB = new Point 10 20
+    print "The distance is: {0}" (dist pA pB)
+    
+Custom data structures:
+
+    record Store
+        Name : string
+        Stock : int
+        
+    let stores = new [new Store "A" 10; new Store "B" 42]
+    for s in stores.OrderByDescending (x:Store -> x.Stock) do
+        println "Store {0} contains has {1} products in stock" (s.Name) (s.Stock)
 
 ### What NOT to expect
 
