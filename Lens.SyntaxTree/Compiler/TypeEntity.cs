@@ -267,7 +267,7 @@ namespace Lens.SyntaxTree.Compiler
 			var eq = CreateMethod(
 				"Equals",
 				"bool",
-				new[] { Expr.Arg("obj", "object") },
+				new[] { Expr.Arg<object>("obj") },
 				false,
 				true
 			);

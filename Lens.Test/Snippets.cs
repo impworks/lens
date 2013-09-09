@@ -813,7 +813,7 @@ data.Sum (x:Store -> x.Value)
 					"Test",
 					"int",
 					true,
-					new [] { Expr.Arg("x", "int") },
+					new [] { Expr.Arg<int>("x") },
 					Expr.Invoke("println", Expr.Str("calculated")),
 					Expr.Mult(Expr.Get("x"), Expr.Int(2))
 				),
@@ -839,7 +839,7 @@ data.Sum (x:Store -> x.Value)
 					"Sum",
 					"int",
 					true,
-					new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int") },
+					new [] { Expr.Arg<int>("x"), Expr.Arg<int>("y") },
 					Expr.Invoke("println", Expr.Str("calculated")),
 					Expr.Add(Expr.Get("x"), Expr.Get("y"))
 				),
@@ -882,7 +882,7 @@ data.Sum (x:Store -> x.Value)
 				Expr.Let(
 					"add",
 					Expr.Lambda(
-						new [] { Expr.Arg("a", "int"), Expr.Arg("b", "int") },
+						new [] { Expr.Arg<int>("a"), Expr.Arg<int>("b") },
 						Expr.Add(Expr.Get("a"), Expr.Get("b"))
 					)
 				),
@@ -890,7 +890,7 @@ data.Sum (x:Store -> x.Value)
 				Expr.Let(
 					"square",
 					Expr.Lambda(
-						new [] { Expr.Arg("x", "int") },
+						new [] { Expr.Arg<int>("x") },
 						Expr.Cast(
 							Expr.Pow(Expr.Get("x"), Expr.Int(2)),
 							"int"
@@ -901,7 +901,7 @@ data.Sum (x:Store -> x.Value)
 				Expr.Let(
 					"inc",
 					Expr.Lambda(
-						new [] { Expr.Arg("x", "int") },
+						new [] { Expr.Arg<int>("x") },
 						Expr.Add(Expr.Get("x"), Expr.Int(1))
 					)
 				),
