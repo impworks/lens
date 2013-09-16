@@ -54,7 +54,7 @@ accessor_mbr                                = "." identifier
 expr <NodeBase>                             = block_expr | line_expr
 
 // block control structures
-block_expr <NodeBase>                       = if_expr | while_expr | for_expr | try_stmt | throw_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
+block_expr <NodeBase>                       = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
 if_block <IfNode>                           = if_header block [ "else" block ]
 while_block <WhileNode>                     = while_header block
 for_block <ForNode>                         = for_header block
@@ -94,13 +94,13 @@ lambda_args_block_expr <LambdaNode>         = fun_args "->" block
 lambda_bare_block_expr <LambdaNode>         = "->" block
 
 // line expressions
-line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | line_typeop_expr
+line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | line_typeop_expr
 line_typeop_expr <NodeBase>                 = line_op_expr [ typecheck_op_expr ]
 line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { binary_op line_base_expr }
 typecheck_op_expr <NodeBase>                = as_op_expr | is_op_expr
 as_op_expr <CastOperatorNode>               = "as" type
 as_op_expr <IsOperatorNode>                 = "is" type
-line_base_expr <NodeBase>                   = get_expr [ invoke_line_arg ]
+line_base_expr <NodeBase>                   = get_expr | "(" get_expr invoke_line_arg invoke_line_args ")"
 atom <NodeBase>                             = literal | get_id_expr | get_stmbr_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 
@@ -109,6 +109,10 @@ if_line <IfNode>                            = if_header line_expr [ "else" line_
 while_line <IfNode>                         = while_header line_expr
 for_line <IfNode>                           = for_header line_expr
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
+yield_stmt <YieldNode>						= "yield" line_expr
+
+// line with extra block lambda
+invoke_line_xtra <InvocationNode>			= get_expr [ invoke_line_args ] lambda_block_expr
 
 // line lambdas
 lambda_line_expr <LambdaNode>               = lambda_args_line_expr | lambda_bare_line_stmt
@@ -125,7 +129,7 @@ init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_line <~NodeBase>                  = init_dict_expr { ";" init_dict_expr }
 
 // literals
-literal <NodeBase>                          = unit | null | bool | string | int | double
+literal <NodeBase>                          = unit | null | bool | string | int | double | char
 unit <UnitNode>                             = "()"
 null <NullNode>                             = "null"
 bool <BoolNode>                             = "true" | "false"
@@ -135,7 +139,8 @@ unary_op                                    = "-" | "not"
 binary_op                                   = ...
 
 // value literals
-string <StringNode>                         = " [^"] " (any character except double quote inside double quotes)
+string <StringNode>                         = "[^"]*" (any character except double quote inside double quotes)
 int <IntNode>                               = [0-9]+
 double <DoubleNode>                         = [0-9]+\.[0-9]+
+char <CharNode>								= '.' (one character in single quotes)
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

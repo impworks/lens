@@ -67,8 +67,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Grammar.txt" />
-    <Content Include="GrammarUpdated.txt" />
+    <Content Include="Grammar.v1.txt" />
+    <Content Include="Grammar.v2.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
