@@ -109,7 +109,7 @@ if_line <IfNode>                            = if_header line_expr [ "else" line_
 while_line <IfNode>                         = while_header line_expr
 for_line <IfNode>                           = for_header line_expr
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
-yield_stmt <YieldNode>						= "yield" line_expr
+yield_stmt <YieldNode>						= "yield" [ "from" ] line_expr
 
 // line with extra block lambda
 invoke_line_xtra <InvocationNode>			= get_expr [ invoke_line_args ] lambda_block_expr
