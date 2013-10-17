@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Lens.Compiler;
@@ -103,6 +102,46 @@ namespace Lens.Parser
 			ensure(LexemType.NewLine, "A using statement should end with a newline!");
 
 			return new UsingNode {Namespace = nsp.FullSignature};
+		}
+
+		/// <summary>
+		/// record_def                                  = "record" identifier INDENT record_stmt { record_stmt } DEDENT
+		/// </summary>
+		private RecordDefinitionNode parseRecordDef()
+		{
+			if (!check(LexemType.Record))
+				return null;
+
+			var node = new RecordDefinitionNode();
+
+			node.Name = ensure(LexemType.Identifier, "Record name must be an identifier!").Value;
+			ensure(LexemType.Indent, "Record body must be indented block!");
+			
+			var field = bind(parseRecordStmt);
+			node.Entries.Add(field);
+
+			while (!check(LexemType.Dedent))
+			{
+				field = bind(parseRecordStmt);
+				node.Entries.Add(field);
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// record_stmt                                 = identifier ":" type NL
+		/// </summary>
+		/// <returns></returns>
+		private RecordField parseRecordStmt()
+		{
+			var node = new RecordField();
+
+			node.Name = ensure(LexemType.Identifier, "Record field name must be an identifier!").Value;
+			ensure(LexemType.Colon, "Colon is expected!");
+			node.Type = ensure(parseType, "Record field type specified is expected!");
+
+			return node;
 		}
 
 		#endregion
