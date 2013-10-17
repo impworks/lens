@@ -96,12 +96,8 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Lens.SyntaxTree\Lens.SyntaxTree.csproj">
+    <ProjectReference Include="..\Lens.SyntaxTree\Lens.csproj">
       <Project>{7987774D-17A7-4E76-AE13-C03F2CC31B9C}</Project>
-      <Name>Lens.SyntaxTree</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Lens\Lens.csproj">
-      <Project>{C25C8A95-F24A-4914-9000-A73313E1E464}</Project>
       <Name>Lens</Name>
     </ProjectReference>
   </ItemGroup>

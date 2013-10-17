@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.Translations;
+using Lens.Compiler;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test

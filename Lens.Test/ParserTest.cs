@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Lens.Parser;
-using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree;
-using Lens.SyntaxTree.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.SyntaxTree.Expressions;
-using Lens.SyntaxTree.SyntaxTree.Operators;
+using Lens.Compiler;
+using Lens.SyntaxTree;
+using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Operators;
 using NUnit.Framework;
 
 namespace Lens.Test

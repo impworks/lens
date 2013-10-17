@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Lens.Parser;
+using Lens.Compiler;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens
 {

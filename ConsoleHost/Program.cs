@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Lens;
-using Lens.SyntaxTree;
 
 namespace ConsoleHost
 {

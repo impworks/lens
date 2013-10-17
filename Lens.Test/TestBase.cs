@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.SyntaxTree;
 using NUnit.Framework;
 
 namespace Lens.Test

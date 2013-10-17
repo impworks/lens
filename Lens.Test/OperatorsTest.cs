@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Lens.SyntaxTree;
 using NUnit.Framework;
 
 namespace Lens.Test
