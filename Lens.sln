@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens", "Lens\Lens.csproj", "{C25C8A95-F24A-4914-9000-A73313E1E464}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Lens.Parser", "Lens.Parser\Lens.Parser.fsproj", "{8771C27C-8D41-42D4-B99C-56545E20D547}"
