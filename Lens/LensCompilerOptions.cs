@@ -72,5 +72,11 @@ namespace Lens
 		/// The whitelisted or blacklisted subsystems for safe mode (networking, IO, etc).
 		/// </summary>
 		public SafeModeSubsystem SafeModeExplicitSubsystems = SafeModeSubsystem.None;
+
+		/// <summary>
+		/// Checks whether compilation stage times must be measured & printed.
+		/// Default = false
+		/// </summary>
+		public bool DebugOutput;
 	}
 }

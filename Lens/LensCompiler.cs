@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.Lexer;
+using Lens.Parser;
 using Lens.SyntaxTree;
 
 namespace Lens
@@ -64,11 +66,12 @@ namespace Lens
 		/// </summary>
 		public Func<object> Compile(string src)
 		{
-			IEnumerable<NodeBase> nodes;
-			var t = DateTime.Now;
 			try
 			{
-				nodes = new TreeBuilder().Parse(src);
+				var lexer = measure(() => new LensLexer(src), "Lexer");
+				var parser = measure(() => new LensParser(lexer.Lexems), "Parser");
+				var λ = measure(() => Compile(parser.Nodes), "Compiler");
+				return λ;
 			}
 			catch (LensCompilerException)
 			{
@@ -78,13 +81,6 @@ namespace Lens
 			{
 				throw new LensCompilerException(ex.Message);
 			}
-			Console.WriteLine("Parsing: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			t = DateTime.Now;
-			var x = Compile(nodes);
-			Console.WriteLine("Compiling: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			return x;
 		}
 
 		/// <summary>
@@ -110,6 +106,21 @@ namespace Lens
 		public object Run(IEnumerable<NodeBase> nodes)
 		{
 			return Compile(nodes)();
+		}
+
+		/// <summary>
+		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
+		/// </summary>
+		private T measure<T>(Func<T> action, string title)
+		{
+			var start = DateTime.Now;
+			var res = action();
+			var end = DateTime.Now;
+
+			if(m_Context.Options.DebugOutput)
+				Console.WriteLine("{0}: {1:0.00} ms", title, (end - start).TotalMilliseconds);
+
+			return res;
 		}
 	}
 }
