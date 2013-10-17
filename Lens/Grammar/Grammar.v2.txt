@@ -16,7 +16,7 @@ type_stmt <TypeLabel>                       = identifier [ "of" type ] NL
 fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
 fun_args <~FunctionArgument>                = fun_single_arg | fun_many_args
 fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
-fun_arg_list <~FunctionArgument>            = "(" fun_single_arg { fun_single_arg } ")"
+fun_arg_list <~FunctionArgument>            = "(" { fun_single_arg } ")"
 
 // blocks
 block <CodeBlockNode>                       = local_stmt | local_stmt_list
