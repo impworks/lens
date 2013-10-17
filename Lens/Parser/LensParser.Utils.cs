@@ -7,9 +7,12 @@ namespace Lens.Parser
 {
 	internal partial class LensParser
 	{
-		private void Error(string msg)
+		private void error(string msg, params object[] args)
 		{
-			throw new LensCompilerException(msg, Lexems[LexemId]);
+			throw new LensCompilerException(
+				string.Format(msg, args),
+				Lexems[LexemId]
+			);
 		}
 
 		#region Lexem handling
@@ -17,15 +20,15 @@ namespace Lens.Parser
 		/// <summary>
 		/// Checks if current lexem is of any of the given types.
 		/// </summary>
-		private bool peekLexem(params LexemType[] types)
+		private bool peek(params LexemType[] types)
 		{
-			return peekLexem(0, types);
+			return peek(0, types);
 		}
 
 		/// <summary>
 		/// Checks if lexem at offset is of any of the given types.
 		/// </summary>
-		private bool peekLexem(int offset, params LexemType[] types)
+		private bool peek(int offset, params LexemType[] types)
 		{
 			var id = Math.Min(LexemId + offset, Lexems.Length - 1);
 			var lex = Lexems[id];
@@ -33,16 +36,47 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// Returns current lexem and advances to next one.
+		/// Returns current lexem if it of given type, or throws an error.
 		/// </summary>
-		private Lexem getLexem()
+		private Lexem ensure(LexemType type, string msg, params object[] args)
 		{
 			var lex = Lexems[LexemId];
-			skipLexem();
+
+			if(lex.Type != type)
+				error(msg, args);
+
+			skip();
 			return lex;
 		}
 
-		private void skipLexem(int count = 1)
+		/// <summary>
+		/// Checks if the current lexem is of given type and advances to next one.
+		/// </summary>
+		private bool check(LexemType lexem)
+		{
+			var lex = Lexems[LexemId];
+
+			if (lex.Type != lexem)
+				return false;
+
+			skip();
+			return true;
+		}
+
+		/// <summary>
+		/// Gets the value of the current identifier and skips it.
+		/// </summary>
+		private string getValue()
+		{
+			var value = Lexems[LexemId].Value;
+			skip();
+			return value;
+		}
+
+		/// <summary>
+		/// Ignores N next lexems.
+		/// </summary>
+		private void skip(int count = 1)
 		{
 			LexemId = Math.Min(LexemId + count, Lexems.Length - 1);
 		}
@@ -56,7 +90,7 @@ namespace Lens.Parser
 		/// If the node does not match, the parser state is silently reset to original.
 		/// </summary>
 		private T attempt<T>(Func<T> getter)
-			where T : NodeBase
+			where T : LocationEntity
 		{
 			var backup = LexemId;
 			var result = bind(getter);
@@ -70,11 +104,11 @@ namespace Lens.Parser
 		/// If the node does not match, an error is thrown.
 		/// </summary>
 		private T ensure<T>(Func<T> getter, string error)
-			where T : NodeBase
+			where T : LocationEntity
 		{
 			var result = bind(getter);
 			if(result == null)
-				Error(error);
+				this.error(error);
 
 			return result;
 		}
@@ -83,7 +117,7 @@ namespace Lens.Parser
 		/// Sets StartLocation and EndLocation to a node if it requires.
 		/// </summary>
 		private T bind<T>(Func<T> getter)
-			where T : NodeBase
+			where T : LocationEntity
 		{
 			var start = Lexems[LexemId];
 			var result = getter();
