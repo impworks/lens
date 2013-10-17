@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Lens.Compiler;
@@ -83,7 +84,7 @@ namespace Lens.Parser
 		/// </summary>
 		private TypeSignature parseType()
 		{
-			
+			throw new NotImplementedException();
 		}
 
 		#endregion
@@ -132,7 +133,6 @@ namespace Lens.Parser
 		/// <summary>
 		/// record_stmt                                 = identifier ":" type NL
 		/// </summary>
-		/// <returns></returns>
 		private RecordField parseRecordStmt()
 		{
 			var node = new RecordField();
@@ -142,6 +142,117 @@ namespace Lens.Parser
 			node.Type = ensure(parseType, "Record field type specified is expected!");
 
 			return node;
+		}
+
+		/// <summary>
+		/// type_def                                    = "type" identifier INDENT type_stmt { type_stmt } DEDENT
+		/// </summary>
+		private TypeDefinitionNode parseTypeDef()
+		{
+			if (!check(LexemType.Type))
+				return null;
+
+			var node = new TypeDefinitionNode();
+
+			node.Name = ensure(LexemType.Identifier, "Type name must be an identifier!").Value;
+			ensure(LexemType.Indent, "Type body must be indented block!");
+
+			var field = bind(parseTypeStmt);
+			node.Entries.Add(field);
+
+			while (!check(LexemType.Dedent))
+			{
+				field = bind(parseTypeStmt);
+				node.Entries.Add(field);
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// type_stmt                                   = identifier [ "of" type ] NL
+		/// </summary>
+		private TypeLabel parseTypeStmt()
+		{
+			var node = new TypeLabel();
+
+			node.Name = ensure(LexemType.Identifier, "Type label name must be an identifier!").Value;
+			if (check(LexemType.Of))
+				node.TagType = ensure(parseType, "Label type is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// fun_def                                     = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
+		/// </summary>
+		private FunctionNode parseFunDef()
+		{
+			var node = new FunctionNode();
+			node.IsPure = check(LexemType.Pure);
+
+			if (!check(LexemType.Fun))
+			{
+				if (node.IsPure)
+					error("Function definition is expected!");
+				else
+					return null;
+			}
+
+			node.Name = ensure(LexemType.Identifier, "Function name must be an identifier!").Value;
+			if (check(LexemType.Colon))
+				node.ReturnTypeSignature = ensure(parseType, "Function return type is expected!");
+
+			node.Arguments = parseFunArgs();
+			ensure(LexemType.Arrow, "Arrow is expected!");
+			node.Body = ensure(parseBlock, "Function body is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// fun_args                                    = fun_single_arg | fun_many_args
+		/// </summary>
+		private List<FunctionArgument> parseFunArgs()
+		{
+			var single = attempt(parseFunSingleArg);
+			if (single != null)
+				return new List<FunctionArgument> {single};
+
+			var many = parseFunManyArgs().ToList();
+			if (many.Count > 0)
+				return many;
+
+			return null;
+		}
+
+		/// <summary>
+		/// fun_arg                                     = identifier ":" [ "ref" ] type
+		/// </summary>
+		private FunctionArgument parseFunSingleArg()
+		{
+			if (!peek(LexemType.Identifier))
+				return null;
+
+			var node = new FunctionArgument();
+			node.Name = getValue();
+			ensure(LexemType.Colon, "Colon is expected!");
+			node.IsRefArgument = check(LexemType.Ref);
+			node.TypeSignature = ensure(parseType, "Argument type is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// fun_arg_list                                = "(" { fun_single_arg } ")"
+		/// </summary>
+		private IEnumerable<FunctionArgument> parseFunManyArgs()
+		{
+			if (!check(LexemType.ParenOpen))
+				yield break;
+
+			while(!check(LexemType.ParenClose))
+				yield return ensure(parseFunSingleArg, "A function argument is expected!");
 		}
 
 		#endregion
