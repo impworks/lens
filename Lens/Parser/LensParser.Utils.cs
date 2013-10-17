@@ -119,15 +119,17 @@ namespace Lens.Parser
 		private T bind<T>(Func<T> getter)
 			where T : LocationEntity
 		{
+			var startId = LexemId;
 			var start = Lexems[LexemId];
+
 			var result = getter();
-			var end = Lexems[LexemId-1];
 
 			if (result is IStartLocationTrackingEntity)
 				result.StartLocation = start.StartLocation;
 
-			if (result is IEndLocationTrackingEntity)
-				result.EndLocation = end.EndLocation;
+			var endId = LexemId;
+			if (endId > startId && endId > 0 && result is IEndLocationTrackingEntity)
+				result.EndLocation = Lexems[LexemId - 1].EndLocation;
 
 			return result;
 		}
