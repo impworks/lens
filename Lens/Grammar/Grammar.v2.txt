@@ -25,9 +25,7 @@ local_stmt <NodeBase>                       = name_def_stmt | set_stmt | expr
 
 // let & var
 name_def_stmt <NameDeclarationBase>         = var_stmt | let_stmt
-var_stmt <VarNode>                          = var_init_node | var_type_node
-var_init_node <VarNode>                     = "var" identifier "=" expr
-var_type_node <VarNode>                     = "var" identifier ":" type
+var_stmt <VarNode>                          = "var" identifier ( "=" expr | ":" type )
 let_stmt <LetNode>                          = "let" identifier "=" expr
 
 // assignment
