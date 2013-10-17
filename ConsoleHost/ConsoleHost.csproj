@@ -49,7 +49,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Lens.SyntaxTree\Lens.csproj">
+    <ProjectReference Include="..\Lens\Lens.csproj">
       <Project>{7987774D-17A7-4E76-AE13-C03F2CC31B9C}</Project>
       <Name>Lens</Name>
     </ProjectReference>
