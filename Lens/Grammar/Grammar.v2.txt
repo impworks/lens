@@ -19,7 +19,7 @@ fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
 fun_arg_list <~FunctionArgument>            = "(" { fun_single_arg } ")"
 
 // blocks
-block <CodeBlockNode>                       = local_stmt | local_stmt_list
+block <CodeBlockNode>                       = local_stmt_list | local_stmt
 local_stmt_list <~NodeBase>                 = INDENT local_stmt { NL local_stmt } DEDENT
 local_stmt <NodeBase>                       = name_def_stmt | set_stmt | expr
 
