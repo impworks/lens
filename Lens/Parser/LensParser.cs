@@ -256,5 +256,101 @@ namespace Lens.Parser
 		}
 
 		#endregion
+
+		#region Blocks
+
+		/// <summary>
+		/// block                                       = local_stmt_list | local_stmt
+		/// </summary>
+		private CodeBlockNode parseBlock()
+		{
+			var many = parseLocalStmtList().ToList();
+			if (many.Count > 0)
+				return new CodeBlockNode { Statements = many };
+
+			var single = parseLetStmt();
+			if (single != null)
+				return new CodeBlockNode { single };
+
+			return null;
+		}
+
+		/// <summary>
+		/// local_stmt_list                             = INDENT local_stmt { NL local_stmt } DEDENT
+		/// </summary>
+		private IEnumerable<NodeBase> parseLocalStmtList()
+		{
+			if (!check(LexemType.Indent))
+				yield break;
+
+			yield return ensure(parseLocalStmt, "An expression is expected!");
+
+			while (!check(LexemType.Dedent))
+			{
+				ensure(LexemType.NewLine, "Newline is expected!");
+				yield return ensure(parseLocalStmt, "An expression is expected!");
+			}
+		}
+
+		/// <summary>
+		/// local_stmt                                  = name_def_stmt | set_stmt | expr
+		/// </summary>
+		private NodeBase parseLocalStmt()
+		{
+			return attempt(parseNameDefStmt)
+			       ?? attempt(parseSetStmt)
+			       ?? attempt(parseExpr);
+		}
+
+		#endregion
+
+		#region Let & var
+
+		/// <summary>
+		/// name_def_stmt                               = var_stmt | let_stmt
+		/// </summary>
+		private NameDeclarationNodeBase parseNameDefStmt()
+		{
+			return attempt(parseVarStmt)
+				   ?? (NameDeclarationNodeBase)attempt(parseLetStmt);
+		}
+
+		/// <summary>
+		/// var_stmt                                    = "var" identifier ( "=" expr | ":" type )
+		/// </summary>
+		private VarNode parseVarStmt()
+		{
+			if (!check(LexemType.Var))
+				return null;
+
+			var node = new VarNode();
+			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
+			if (check(LexemType.Colon))
+				node.Type = ensure(parseType, "Variable type is expected!");
+			else if(check(LexemType.Equal))
+				node.Value = ensure(parseExpr, "Initializer expression is expected!");
+			else
+				error("Initializer expresion or type signature is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// let_stmt                                    = "let" identifier "=" expr
+		/// </summary>
+		private LetNode parseLetStmt()
+		{
+			if (!check(LexemType.Let))
+				return null;
+
+			var node = new LetNode();
+			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
+			ensure(LexemType.Equal, "Assignment sign is expected!");
+			node.Value = ensure(parseExpr, "Initializer expression is expected!");
+
+			return node;
+		}
+
+		#endregion
 	}
 }
