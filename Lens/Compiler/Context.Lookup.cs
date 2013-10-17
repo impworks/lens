@@ -45,7 +45,7 @@ namespace Lens.Compiler
 		{
 			try
 			{
-				return ResolveType(signature.Signature);
+				return ResolveType(signature.FullSignature);
 			}
 			catch (LensCompilerException ex)
 			{

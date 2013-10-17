@@ -62,7 +62,7 @@ namespace Lens.Compiler
 				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
 			if (ReturnType == null)
-				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.Signature)
+				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
 					? typeof(Unit)
 					: ctx.ResolveType(ReturnTypeSignature);
 

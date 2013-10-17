@@ -1,4 +1,5 @@
-﻿using Lens.SyntaxTree;
+﻿using System.Text;
+using Lens.SyntaxTree;
 
 namespace Lens.Compiler
 {
@@ -7,21 +8,47 @@ namespace Lens.Compiler
 	/// </summary>
 	public class TypeSignature : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
-		public TypeSignature(string signature)
+		public TypeSignature(string name, params TypeSignature[] args)
 		{
-			Signature = signature;
+			Name = name;
+			Arguments = args.Length > 0 ? args : null;
+			FullSignature = getSignature(name, args);
 		}
 
 		#region Fields
-		
-		/// <summary>
-		/// The signature of the type.
-		/// </summary>
-		public string Signature { get; private set; }
+
+		public readonly string Name;
+		public readonly TypeSignature[] Arguments;
+
+		public readonly string FullSignature;
 
 		#endregion
 
 		#region Methods
+
+		private string getSignature(string name, TypeSignature[] args)
+		{
+			if (args.Length == 0)
+				return name;
+
+			var sb = new StringBuilder(name);
+			sb.Append("<");
+
+			var idx = 0;
+			foreach (var curr in args)
+			{
+				if (idx > 0)
+					sb.Append(", ");
+
+				sb.Append(curr.FullSignature);
+
+				idx++;
+			}
+
+			sb.Append(">");
+
+			return sb.ToString();
+		}
 
 		/// <summary>
 		/// Initializes a type signature with it's string representation.
@@ -37,7 +64,7 @@ namespace Lens.Compiler
 
 		protected bool Equals(TypeSignature other)
 		{
-			return string.Equals(Signature, other.Signature);
+			return string.Equals(FullSignature, other.FullSignature);
 		}
 
 		public override bool Equals(object obj)
@@ -50,7 +77,7 @@ namespace Lens.Compiler
 
 		public override int GetHashCode()
 		{
-			return (Signature != null ? Signature.GetHashCode() : 0);
+			return FullSignature.GetHashCode();
 		}
 
 		#endregion

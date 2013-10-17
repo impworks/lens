@@ -45,7 +45,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var retType = Body.GetExpressionType(ctx);
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature.Signature)).ToArray();
+			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
 			return FunctionalHelper.CreateDelegateType(retType, argTypes);
 		}
 

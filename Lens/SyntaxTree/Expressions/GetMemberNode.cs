@@ -109,7 +109,7 @@ namespace Lens.SyntaxTree.Expressions
 			catch (KeyNotFoundException)
 			{ }
 
-			var argTypes = TypeHints.Select(t => t.Signature == "_" ? null : ctx.ResolveType(t)).ToArray();
+			var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
 			var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 
 			if (methods.Length == 0)

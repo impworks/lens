@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree.Expressions
 			SafeModeCheckType(ctx, type);
 
 			if (node.TypeHints.Any())
-				m_TypeHints = node.TypeHints.Select(x => x.Signature == "_" ? null : ctx.ResolveType(x)).ToArray();
+				m_TypeHints = node.TypeHints.Select(x => x.FullSignature == "_" ? null : ctx.ResolveType(x)).ToArray();
 
 			try
 			{

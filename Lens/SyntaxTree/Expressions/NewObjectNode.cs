@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Expressions
 				Error(CompilerMessages.VoidTypeDefault);
 
 			if(type.IsAbstract)
-				Error(CompilerMessages.TypeAbstract, TypeSignature.Signature);
+				Error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
 			if(Arguments.Count == 0)
 				Error(CompilerMessages.ParameterlessConstructorParens);
@@ -73,12 +73,12 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.Signature);
+				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
 			}
 			catch (KeyNotFoundException)
 			{
 				if (!isParameterless || !type.IsValueType)
-					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.Signature);
+					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
 				var castExpr = Expr.Default(TypeSignature);
 				castExpr.Compile(ctx, true);
@@ -112,7 +112,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		public override string ToString()
 		{
-			return string.Format("new({0}, args: {1})", TypeSignature.Signature, string.Join(";", Arguments));
+			return string.Format("new({0}, args: {1})", TypeSignature.FullSignature, string.Join(";", Arguments));
 		}
 	}
 }

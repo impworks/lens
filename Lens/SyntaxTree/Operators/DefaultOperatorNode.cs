@@ -25,14 +25,14 @@ namespace Lens.SyntaxTree.Operators
 			typeof (uint)
 		};
 
-		public DefaultOperatorNode(string type = null)
+		public DefaultOperatorNode(TypeSignature type = null)
 		{
 			TypeSignature = type;
 		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return Type ?? ctx.ResolveType(TypeSignature.Signature);
+			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
 		protected override void compile(Context ctx, bool mustReturn)

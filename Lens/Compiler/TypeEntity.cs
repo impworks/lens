@@ -111,15 +111,15 @@ namespace Lens.Compiler
 			if(IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
-			if (Parent != null || (ParentSignature != null && ParentSignature.Signature != null))
+			if (Parent != null || (ParentSignature != null && ParentSignature.FullSignature != null))
 			{
 				if (Parent == null)
 				{
-					var parentType = Context.FindType(ParentSignature.Signature);
+					var parentType = Context.FindType(ParentSignature.FullSignature);
 					if (parentType != null)
 						parentType.PrepareSelf();
 
-					Parent = Context.ResolveType(ParentSignature.Signature);
+					Parent = Context.ResolveType(ParentSignature.FullSignature);
 				}
 
 				TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
