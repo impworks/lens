@@ -1,7 +1,6 @@
 ﻿using System;
 using Lens.Lexer;
 using Lens.SyntaxTree;
-using Lens.Utils;
 
 namespace Lens.Parser
 {
@@ -30,9 +29,18 @@ namespace Lens.Parser
 		/// </summary>
 		private bool peek(int offset, params LexemType[] types)
 		{
-			var id = Math.Min(LexemId + offset, Lexems.Length - 1);
-			var lex = Lexems[id];
-			return lex.Type.IsAnyOf(types);
+			foreach (var curr in types)
+			{
+				var id = Math.Min(LexemId + offset, Lexems.Length - 1);
+				var lex = Lexems[id];
+
+				if (lex.Type != curr)
+					return false;
+
+				offset++;
+			}
+
+			return true;
 		}
 
 		/// <summary>

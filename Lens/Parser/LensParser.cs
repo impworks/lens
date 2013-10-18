@@ -6,6 +6,7 @@ using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Expressions;
 
 namespace Lens.Parser
 {
@@ -348,6 +349,268 @@ namespace Lens.Parser
 			ensure(LexemType.Equal, "Assignment sign is expected!");
 			node.Value = ensure(parseExpr, "Initializer expression is expected!");
 
+			return node;
+		}
+
+		#endregion
+
+		#region Assignment
+
+		/// <summary>
+		/// set_stmt                                    = set_id_stmt | set_stmbr_stmt | set_any_stmt
+		/// </summary>
+		private NodeBase parseSetStmt()
+		{
+			return attempt(parseSetIdStmt)
+			       ?? attempt(parseSetStmbrStmt)
+			       ?? attempt(parseSetAnyStmt);
+		}
+
+		/// <summary>
+		/// set_id_stmt                                 = identifier "=" expr
+		/// </summary>
+		private SetIdentifierNode parseSetIdStmt()
+		{
+			if (!peek(LexemType.Identifier, LexemType.Equal))
+				return null;
+
+			var node = new SetIdentifierNode();
+			node.Identifier = getValue();
+			skip();
+			node.Value = ensure(parseExpr, "Expression is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// set_stmbr_stmt <SetMemberNode>              = type "::" identifier "=" expr
+		/// </summary>
+		private SetMemberNode parseSetStmbrStmt()
+		{
+			var type = attempt(parseType);
+			if (type == null)
+				return null;
+
+			if (!check(LexemType.DoubleСolon))
+				return null;
+
+			var node = new SetMemberNode();
+			node.StaticType = type;
+			node.MemberName = ensure(LexemType.Identifier, "Member name is expected!").Value;
+
+			if (!check(LexemType.Equal))
+				return null;
+
+			node.Value = ensure(parseExpr, "Expression is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// set_any_stmt                                = lvalue_expr "=" expr
+		/// </summary>
+		private NodeBase parseSetAnyStmt()
+		{
+			throw new NotImplementedException();
+		}
+
+		#endregion
+
+		#region Lvalues
+		#endregion
+
+		#region Accessors
+		#endregion
+
+		#region Expression root
+
+		/// <summary>
+		/// expr                                        = block_expr | line_expr
+		/// </summary>
+		private NodeBase parseExpr()
+		{
+			return attempt(parseBlockExpr)
+			       ?? attempt(parseLineExpr);
+		}
+
+		#endregion
+
+		#region Block control structures
+
+		/// <summary>
+		/// block_expr                                  = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
+		/// </summary>
+		private NodeBase parseBlockExpr()
+		{
+			return attempt(parseIfExpr)
+			       ?? attempt(parseWhileExpr)
+			       ?? attempt(parseForExpr)
+			       ?? attempt(parseTryStmt)
+			       ?? attempt(parseNewBlockExpr)
+			       ?? attempt(parseInvokeBlockExpr)
+			       ?? attempt(parseLambdaBlockExpr);
+		}
+
+		/// <summary>
+		/// if_block                                    = if_header block [ "else" block ]
+		/// </summary>
+		private IfNode parseIfExpr()
+		{
+			var node = attempt(parseIfHeader);
+			if (node == null)
+				return null;
+
+			node.TrueAction = ensure(parseBlock, "Condition block is expected!");
+			if (check(LexemType.Else))
+				node.FalseAction = ensure(parseBlock, "Code block is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// while_block                                 = while_header block
+		/// </summary>
+		private WhileNode parseWhileExpr()
+		{
+			var node = attempt(parseWhileHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, "Loop body block is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// for_block                                   = for_header block
+		/// </summary>
+		private ForeachNode parseForExpr()
+		{
+			var node = attempt(parseForHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, "Loop body block is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// try_stmt                                    = "try" block catch_stmt_list [ finally_stmt ]
+		/// </summary>
+		private TryNode parseTryStmt()
+		{
+			if (!check(LexemType.Try))
+				return null;
+
+			var node = new TryNode();
+			node.Code = ensure(parseBlock, "Try block is expected!");
+			node.CatchClauses = parseCatchStmtList().ToList();
+
+			if(node.CatchClauses.Count == 0)
+				error("Catch clause is expected!");
+
+			node.Finally = attempt(parseFinallyStmt);
+
+			return node;
+		}
+
+		/// <summary>
+		/// catch_stmt_list                             = catch_stmt { catch_stmt }
+		/// </summary>
+		private IEnumerable<CatchNode> parseCatchStmtList()
+		{
+			while (peek(LexemType.Catch))
+				yield return parseCatchStmt();
+		}
+
+		/// <summary>
+		/// catch_stmt                                  = "catch" [ identifier ":" type ] block
+		/// </summary>
+		private CatchNode parseCatchStmt()
+		{
+			if (!check(LexemType.Catch))
+				return null;
+
+			var node = new CatchNode();
+			if (peek(LexemType.Identifier))
+			{
+				node.ExceptionVariable = getValue();
+				ensure(LexemType.Colon, "Colon is expected!");
+				node.ExceptionType = ensure(parseType, "Exception type is expected!");
+			}
+
+			node.Code = ensure(parseBlock, "Exception handler code block is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// finally_stmt                                = "finally" block
+		/// </summary>
+		private CodeBlockNode parseFinallyStmt()
+		{
+			if (!check(LexemType.Finally))
+				return null;
+
+			return parseBlock();
+		}
+
+		#endregion
+
+		#region Headers
+
+		/// <summary>
+		/// if_header                                   = "if" line_expr "then"
+		/// </summary>
+		private IfNode parseIfHeader()
+		{
+			if (!check(LexemType.If))
+				return null;
+
+			var node = new IfNode();
+			node.Condition = ensure(parseLineExpr, "Condition is expected!");
+			ensure(LexemType.Then, "Then keyword is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// while_header                                = "while" line_expr "do"
+		/// </summary>
+		private WhileNode parseWhileHeader()
+		{
+			if (!check(LexemType.While))
+				return null;
+
+			var node = new WhileNode();
+			node.Condition = ensure(parseLineExpr, "Condition is expected!");
+			ensure(LexemType.Do, "Do keyword is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// for_block                                   = "for" identifier "in" line_expr [ ".." line_expr ] "do"
+		/// </summary>
+		private ForeachNode parseForHeader()
+		{
+			if (!check(LexemType.For))
+				return null;
+
+			var node = new ForeachNode();
+			node.VariableName = ensure(LexemType.Identifier, "Variable name is expected!").Value;
+			ensure(LexemType.In, "In keyword is expected!");
+
+			var iter = ensure(parseLineExpr, "Sequence expression is expected!");
+			if (check(LexemType.DoubleDot))
+			{
+				node.RangeStart = iter;
+				node.RangeEnd = ensure(parseLineExpr, "Range end expression is expected!");
+			}
+			else
+			{
+				node.IterableExpression = iter;
+			}
+
+			ensure(LexemType.Do, "Do keyword is expected!");
 			return node;
 		}
 
