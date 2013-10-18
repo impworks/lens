@@ -111,12 +111,12 @@ namespace Lens.Parser
 		/// Attempts to parse a node.
 		/// If the node does not match, an error is thrown.
 		/// </summary>
-		private T ensure<T>(Func<T> getter, string error)
+		private T ensure<T>(Func<T> getter, string msg)
 			where T : LocationEntity
 		{
 			var result = bind(getter);
 			if(result == null)
-				this.error(error);
+				error(msg);
 
 			return result;
 		}

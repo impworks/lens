@@ -615,5 +615,169 @@ namespace Lens.Parser
 		}
 
 		#endregion
+
+		#region Block initializers
+
+		/// <summary>
+		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+		/// </summary>
+		private NodeBase parseNewBlockExpr()
+		{
+			if (!check(LexemType.New))
+				return null;
+
+			return attempt(parseNewTupleBlock)
+			       ?? attempt(parseNewListBlock)
+			       ?? attempt(parseNewArrayBlock)
+			       ?? attempt(parseNewDictBlock)
+			       ?? attempt(parseNewObjectBlock) as NodeBase;
+		}
+
+		/// <summary>
+		/// new_tuple_block                             = "(" init_expr_block ")"
+		/// </summary>
+		private NewTupleNode parseNewTupleBlock()
+		{
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var node = new NewTupleNode();
+			node.Expressions = parseInitExprBlock().ToList();
+			if(node.Expressions.Count == 0)
+				error("A tuple must contain at least one item!");
+
+			ensure(LexemType.ParenClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_list_block                              = "[[" init_expr_block "]]"
+		/// </summary>
+		private NewListNode parseNewListBlock()
+		{
+			if (!check(LexemType.DoubleSquareOpen))
+				return null;
+
+			var node = new NewListNode();
+			node.Expressions = parseInitExprBlock().ToList();
+			if (node.Expressions.Count == 0)
+				error("A list must contain at least one item!");
+
+			ensure(LexemType.DoubleSquareClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_array_block                             = "[" init_expr_block "]"
+		/// </summary>
+		private NewArrayNode parseNewArrayBlock()
+		{
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new NewArrayNode();
+			node.Expressions = parseInitExprBlock().ToList();
+			if (node.Expressions.Count == 0)
+				error("An array must contain at least one item!");
+
+			ensure(LexemType.SquareClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_dict_block                              = "{" init_dict_expr_block "}"
+		/// </summary>
+		private NewDictionaryNode parseNewDictBlock()
+		{
+			if (!check(LexemType.CurlyOpen))
+				return null;
+
+			var node = new NewDictionaryNode();
+			node.Expressions = parseInitExprDictBlock().ToList();
+			if (node.Expressions.Count == 0)
+				error("A dictionary must contain at least one item!");
+
+			ensure(LexemType.CurlyClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// init_expr_block                             = INDENT line_expr { NL line_expr } DEDENT
+		/// </summary>
+		private IEnumerable<NodeBase> parseInitExprBlock()
+		{
+			if (!check(LexemType.Indent))
+				yield break;
+
+			yield return ensure(parseLineExpr, "Initializer expression expected!");
+
+			while (!check(LexemType.Dedent))
+			{
+				ensure(LexemType.NewLine, "Initializer expressions must be separated by a newline!");
+				yield return ensure(parseLineExpr, "Initializer expression expected!");
+			}
+		}
+
+		/// <summary>
+		/// init_expr_dict_block                        = INDENT init_dict_expr { NL init_dict_expr } DEDENT
+		/// </summary>
+		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictBlock()
+		{
+			if (!check(LexemType.Indent))
+				yield break;
+
+			var value = parseInitDictExpr();
+			if (value != null)
+				yield return value.Value;
+			else
+				error("Initializer expression expected!");
+
+			while (!check(LexemType.Dedent))
+			{
+				ensure(LexemType.NewLine, "Initializer expressions must be separated by a newline!");
+				value = parseInitDictExpr();
+				if (value != null)
+					yield return value.Value;
+				else
+					error("Initializer expression expected!");
+			}
+		}
+
+		/// <summary>
+		/// init_dict_expr                              = line_expr "=>" line_expr
+		/// </summary>
+		private KeyValuePair<NodeBase, NodeBase>? parseInitDictExpr()
+		{
+			var key = ensure(parseLineExpr, "Dictionary key expression is expected!");
+			ensure(LexemType.FatArrow, "Arrow is expected!");
+			var value = ensure(parseLineExpr, "Dictionary value expression is expected!");
+
+			return new KeyValuePair<NodeBase, NodeBase>(key, value);
+		}
+
+		/// <summary>
+		/// new_object_block                            = type invoke_block_args
+		/// </summary>
+		private NewObjectNode parseNewObjectBlock()
+		{
+			var type = attempt(parseType);
+			if (type == null)
+				return null;
+
+			var args = parseInvokeBlockArgs().ToList();
+			if (args.Count == 0)
+				return null;
+
+			var node = new NewObjectNode();
+			node.TypeSignature = type;
+			node.Arguments = args;
+			return node;
+		}
+
+		#endregion
 	}
 }
