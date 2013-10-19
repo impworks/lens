@@ -24,6 +24,8 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("try", LexemType.Try),
 			new StaticLexemDefinition("catch", LexemType.Catch),
 			new StaticLexemDefinition("finally", LexemType.Finally),
+			new StaticLexemDefinition("yield", LexemType.Yield),
+			new StaticLexemDefinition("from", LexemType.From),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),

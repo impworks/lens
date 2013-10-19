@@ -31,6 +31,8 @@
 		Typeof,
 		Default,
 		Ref,
+		Yield,
+		From,
 
 		// Literals
 		Null,
