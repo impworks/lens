@@ -9,6 +9,7 @@ using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Literals;
+using Lens.SyntaxTree.Operators;
 
 namespace Lens.Parser
 {
@@ -917,24 +918,67 @@ namespace Lens.Parser
 
 		#region Line expressions
 
+		/// <summary>
+		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | line_typeop_expr
+		/// </summary>
 		private NodeBase parseLineExpr()
 		{
-			throw new NotImplementedException();
+			return attempt(parseIfLine)
+			       ?? attempt(parseWhileLine)
+			       ?? attempt(parseForLine)
+			       ?? attempt(parseThrowStmt)
+			       ?? attempt(parseYieldStmt)
+			       ?? attempt(parseNewLineExpr)
+			       ?? attempt(parseLineTypeopExpr);
+
+			// todo: invoke_line_xtra
 		}
 
+		/// <summary>
+		/// line_typeop_expr                            = line_op_expr [ typecheck_op_expr ]
+		/// </summary>
 		private NodeBase parseLineTypeopExpr()
 		{
-			
+			var node = ensure(parseLineOpExpr, "Expression is expected!");
+			var typeop = attempt(parseTypecheckOpExpr);
+
+			var cast = typeop as CastOperatorNode;
+			if (cast != null)
+			{
+				cast.Expression = node;
+				return cast;
+			}
+
+			var check = typeop as IsOperatorNode;
+			if (check != null)
+			{
+				check.Expression = node;
+				return check;
+			}
+
+			return node;
 		}
 
+		/// <summary>
+		/// line_op_expr                                = [ unary_op ] line_base_expr { binary_op line_base_expr }
+		/// </summary>
 		private NodeBase parseLineOpExpr()
 		{
 			
 		}
 
+		/// <summary>
+		/// typecheck_op_expr                           = "as" type | "is" type
+		/// </summary>
 		private NodeBase parseTypecheckOpExpr()
 		{
-			
+			if (check(LexemType.Is))
+				return new IsOperatorNode {TypeSignature = ensure(parseType, "Type signature is expected!")};
+
+			if (check(LexemType.As))
+				return new CastOperatorNode { TypeSignature = ensure(parseType, "Type signature is expected!") };
+
+			return null;
 		}
 
 		private NodeBase parseLineBaseExpr()
@@ -942,14 +986,48 @@ namespace Lens.Parser
 			
 		}
 
+
+		/// <summary>
+		/// atom                                        = literal | get_id_expr | get_stmbr_expr | paren_expr
+		/// </summary>
 		private NodeBase parseAtom()
 		{
-			
+			return attempt(parseLiteral)
+			       ?? attempt(parseGetIdExpr)
+			       ?? attempt(parseGetStmbrExpr)
+			       ?? attempt(parseParenExpr);
 		}
 
+		/// <summary>
+		/// paren_expr                                  = "(" ( line_expr | lambda_line_expr ) ")"
+		/// </summary>
 		private NodeBase parseParenExpr()
 		{
-			
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var expr = attempt(parseLineExpr)
+			           ?? attempt(parseLambdaLineExpr);
+
+			if (expr != null)
+				ensure(LexemType.ParenClose, "Unclosed paren!");
+
+			return expr;
+		}
+
+		/// <summary>
+		/// lambda_line_expr                            = [ fun_args ] "->" line_expr
+		/// </summary>
+		private LambdaNode parseLambdaLineExpr()
+		{
+			var node = new LambdaNode();
+			node.Arguments = parseFunArgs();
+
+			if (!check(LexemType.Arrow))
+				return null;
+
+			node.Body.Add(ensure(parseLineExpr, "Function body is expected!"));
+			return node;
 		}
 
 		#endregion
@@ -1014,7 +1092,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// yield_stmt                                  = "yield" [ "from" ] line_expr
 		/// </summary>
-		private NodeBase parseYield()
+		private NodeBase parseYieldStmt()
 		{
 			// to be merged from Yield branch
 			return null;
