@@ -553,6 +553,21 @@ namespace Lens.Parser
 			return parseBlock();
 		}
 
+		/// <summary>
+		/// lambda_block_expr                           = [ fun_args ] "->" block
+		/// </summary>
+		private LambdaNode parseLambdaBlockExpr()
+		{
+			var node = new LambdaNode();
+			node.Arguments = parseFunArgs();
+
+			if (!check(LexemType.Arrow))
+				return null;
+
+			node.Body = ensure(parseBlock, "Function body is expected!");
+			return node;
+		}
+
 		#endregion
 
 		#region Headers
@@ -776,6 +791,133 @@ namespace Lens.Parser
 			node.TypeSignature = type;
 			node.Arguments = args;
 			return node;
+		}
+
+		#endregion
+
+		#region Block invocations
+
+		/// <summary>
+		/// invoke_block_expr                           = line_expr { invoke_pass }
+		/// </summary>
+		private NodeBase parseInvokeBlockExpr()
+		{
+			var expr = attempt(parseLineExpr);
+			if (expr == null)
+				return null;
+
+			var pass = attempt(parseInvokePass);
+			if (pass == null)
+				return null;
+
+			while (true)
+			{
+				(pass.Expression as GetMemberNode).Expression = expr;
+				expr = pass;
+
+				pass = attempt(parseInvokePass);
+				if (pass == null)
+					return expr;
+			}
+		}
+
+		/// <summary>
+		/// invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
+		/// </summary>
+		private InvocationNode parseInvokePass()
+		{
+			if (!check(LexemType.PassRight))
+				return null;
+
+			var getter = new GetMemberNode();
+			var invoker = new InvocationNode { Expression = getter };
+
+			getter.MemberName = ensure(LexemType.Identifier, "Method name is expected!").Value;
+
+			invoker.Arguments = parseInvokeBlockArgs().ToList();
+			if (invoker.Arguments.Count == 0)
+				invoker.Arguments = parseInvokeLineArgs().ToList();
+
+			if (invoker.Arguments.Count == 0)
+				error("Arguments for method call are expected!");
+
+			return invoker;
+		}
+
+		/// <summary>
+		/// invoke_block_args                           = INDENT { invoke_block_arg } DEDENT
+		/// </summary>
+		private IEnumerable<NodeBase> parseInvokeBlockArgs()
+		{
+			if (!check(LexemType.Indent))
+				yield break;
+
+			while (!check(LexemType.Dedent))
+				yield return parseInvokeBlockArg();
+		}
+
+		/// <summary>
+		/// invoke_block_arg                            = "<|" ( ref_arg | expr )
+		/// </summary>
+		private NodeBase parseInvokeBlockArg()
+		{
+			if(!check(LexemType.PassLeft))
+				error("Left pass is expected before block arguments!");
+
+			return attempt(parseRefArg)
+			       ?? ensure(parseExpr, "Expression is expected!");
+		}
+		
+		/// <summary>
+		/// invoke_line_args                            = { invoke_line_arg }
+		/// </summary>
+		private IEnumerable<NodeBase> parseInvokeLineArgs()
+		{
+			while (true)
+			{
+				var curr = attempt(parseInvokeLineArg);
+				if (curr == null)
+					yield break;
+
+				yield return curr;
+			}
+		}
+
+		/// <summary>
+		/// invoke_line_arg                             = ref_arg | get_expr
+		/// </summary>
+		private NodeBase parseInvokeLineArg()
+		{
+			return attempt(parseRefArg)
+				   ?? ensure(parseGetExpr, "Expression is expected!");
+		}
+
+		/// <summary>
+		/// ref_arg                                     = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
+		/// </summary>
+		private NodeBase parseRefArg()
+		{
+			var paren = check(LexemType.ParenOpen);
+
+			if (!check(LexemType.Ref))
+				return null;
+
+			var node = ensure(parseLvalueExpr, "Lvalue expression is expected!");
+			(node as IPointerProvider).PointerRequired = true;
+
+			if (paren)
+				ensure(LexemType.ParenClose, "Unmatched paren!");
+
+			return node;
+		}
+
+		#endregion
+
+		#region Line expressions
+
+		private NodeBase parseLineExpr()
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion

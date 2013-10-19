@@ -75,8 +75,8 @@
 
 		// Specials
 		ArrayDef,
-		MoveLeft,
-		MoveRight,
+		PassLeft,
+		PassRight,
 		Arrow,
 		FatArrow,
 		DoubleDot,

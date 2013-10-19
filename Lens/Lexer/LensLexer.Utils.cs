@@ -46,8 +46,8 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("()", LexemType.Unit),
 			new StaticLexemDefinition("[]", LexemType.ArrayDef),
 
-			new StaticLexemDefinition("|>", LexemType.MoveRight),
-			new StaticLexemDefinition("<|", LexemType.MoveLeft),
+			new StaticLexemDefinition("|>", LexemType.PassRight),
+			new StaticLexemDefinition("<|", LexemType.PassLeft),
 			new StaticLexemDefinition("=>", LexemType.FatArrow),
 			new StaticLexemDefinition("->", LexemType.Arrow),
 
