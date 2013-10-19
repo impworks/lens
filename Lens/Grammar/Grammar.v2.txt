@@ -109,13 +109,13 @@ invoke_line_xtra <InvocationNode>           = get_expr [ invoke_line_args ] lamb
 
 // line initializers
 new_line_expr <NodeBase>                    = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line | new_object_line )
-new_tuple_expr <NewTupleNode>               = "(" init_expr_line ")"
-new_list_expr <NewListNode>                 = "[[" init_expr_line "]]"
-new_array_expr <NewArrayNode>               = "[" init_expr_line "]"
-new_dict_expr <NewDictionaryNode>           = "{" init_dict_expr_line "}"
+new_tuple_line <NewTupleNode>               = "(" init_expr_line ")"
+new_list_line <NewListNode>                 = "[[" init_expr_line "]]"
+new_array_line <NewArrayNode>               = "[" init_expr_line "]"
+new_dict_line <NewDictionaryNode>           = "{" init_dict_expr_line "}"
 new_object_line <NewObjectNode>             = type [ invoke_line_args ]
 init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
-init_expr_line <~NodeBase>                  = init_dict_expr { ";" init_dict_expr }
+init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }
 
 // literals
 literal <NodeBase>                          = unit | null | bool | string | int | double | char
