@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using Lens.Compiler;
@@ -7,6 +8,7 @@ using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Literals;
 
 namespace Lens.Parser
 {
@@ -442,9 +444,9 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseBlockExpr()
 		{
-			return attempt(parseIfExpr)
-			       ?? attempt(parseWhileExpr)
-			       ?? attempt(parseForExpr)
+			return attempt(parseIfBlock)
+			       ?? attempt(parseWhileBlock)
+			       ?? attempt(parseForBlock)
 			       ?? attempt(parseTryStmt)
 			       ?? attempt(parseNewBlockExpr)
 			       ?? attempt(parseInvokeBlockExpr)
@@ -454,7 +456,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// if_block                                    = if_header block [ "else" block ]
 		/// </summary>
-		private IfNode parseIfExpr()
+		private IfNode parseIfBlock()
 		{
 			var node = attempt(parseIfHeader);
 			if (node == null)
@@ -470,7 +472,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// while_block                                 = while_header block
 		/// </summary>
-		private WhileNode parseWhileExpr()
+		private WhileNode parseWhileBlock()
 		{
 			var node = attempt(parseWhileHeader);
 			if (node == null)
@@ -483,7 +485,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// for_block                                   = for_header block
 		/// </summary>
-		private ForeachNode parseForExpr()
+		private ForeachNode parseForBlock()
 		{
 			var node = attempt(parseForHeader);
 			if (node == null)
@@ -918,6 +920,196 @@ namespace Lens.Parser
 		private NodeBase parseLineExpr()
 		{
 			throw new NotImplementedException();
+		}
+
+		private NodeBase parseLineTypeopExpr()
+		{
+			
+		}
+
+		private NodeBase parseLineOpExpr()
+		{
+			
+		}
+
+		private NodeBase parseTypecheckOpExpr()
+		{
+			
+		}
+
+		private NodeBase parseLineBaseExpr()
+		{
+			
+		}
+
+		private NodeBase parseAtom()
+		{
+			
+		}
+
+		private NodeBase parseParenExpr()
+		{
+			
+		}
+
+		#endregion
+
+		#region Line control structures
+
+		/// <summary>
+		/// if_line                                     = if_header line_expr [ "else" line_expr ]
+		/// </summary>
+		private IfNode parseIfLine()
+		{
+			var node = attempt(parseIfHeader);
+			if (node == null)
+				return null;
+
+			node.TrueAction = ensure(parseBlock, "Condition expression is expected!");
+			if (check(LexemType.Else))
+				node.FalseAction = ensure(parseBlock, "Expression is expected!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// while_line                                  = while_header line_expr
+		/// </summary>
+		private WhileNode parseWhileLine()
+		{
+			var node = attempt(parseWhileHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, "Loop body expression is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// for_line                                    = for_header line_expr
+		/// </summary>
+		private ForeachNode parseForLine()
+		{
+			var node = attempt(parseForHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, "Loop body expression is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// throw_stmt                                  = "throw" [ line_expr ]
+		/// </summary>
+		private ThrowNode parseThrowStmt()
+		{
+			if (!check(LexemType.Throw))
+				return null;
+
+			var node = new ThrowNode();
+			node.Expression = attempt(parseLineExpr);
+			return node;
+		}
+
+		/// <summary>
+		/// yield_stmt                                  = "yield" [ "from" ] line_expr
+		/// </summary>
+		private NodeBase parseYield()
+		{
+			// to be merged from Yield branch
+			return null;
+		}
+
+		#endregion
+
+		#region Line initializers
+
+
+		#endregion
+
+		#region Literals
+
+		/// <summary>
+		/// literal                                     = unit | null | bool | string | int | double | char
+		/// </summary>
+		private NodeBase parseLiteral()
+		{
+			return attempt(parseUnit)
+			       ?? attempt(parseNull)
+			       ?? attempt(parseBool)
+			       ?? attempt(parseString)
+			       ?? attempt(parseInt)
+			       ?? attempt(parseDouble)
+			       ?? attempt(parseChar);
+		}
+
+		private UnitNode parseUnit()
+		{
+			return check(LexemType.Unit) ? new UnitNode() : null;
+		}
+
+		private NullNode parseNull()
+		{
+			return check(LexemType.Null) ? new NullNode() : null;
+		}
+
+		private BooleanNode parseBool()
+		{
+			if(check(LexemType.True))
+				return new BooleanNode(true);
+
+			if (check(LexemType.False))
+				return new BooleanNode();
+
+			return null;
+		}
+
+		private StringNode parseString()
+		{
+			if (!peek(LexemType.String))
+				return null;
+
+			return new StringNode(getValue());
+		}
+
+		private IntNode parseInt()
+		{
+			if (!peek(LexemType.Int))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new IntNode(int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error("Value '{0}' is not a valid integer!", value);
+				return null;
+			}
+		}
+
+		private DoubleNode parseDouble()
+		{
+			if (!peek(LexemType.Double))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new DoubleNode(double.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error("Value '{0}' is not a valid double!", value);
+				return null;
+			}
+		}
+
+		private NodeBase parseChar()
+		{
+			// todo
+			return null;
 		}
 
 		#endregion

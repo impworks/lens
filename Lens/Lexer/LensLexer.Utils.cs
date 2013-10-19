@@ -26,6 +26,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("finally", LexemType.Finally),
 			new StaticLexemDefinition("yield", LexemType.Yield),
 			new StaticLexemDefinition("from", LexemType.From),
+			new StaticLexemDefinition("throw", LexemType.Throw),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),

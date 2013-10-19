@@ -33,6 +33,7 @@
 		Ref,
 		Yield,
 		From,
+		Throw,
 
 		// Literals
 		Null,
