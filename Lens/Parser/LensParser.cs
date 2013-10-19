@@ -1102,6 +1102,146 @@ namespace Lens.Parser
 
 		#region Line initializers
 
+		/// <summary>
+		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+		/// </summary>
+		private NodeBase parseNewLineExpr()
+		{
+			if (!check(LexemType.New))
+				return null;
+
+			return attempt(parseNewTupleLine)
+				   ?? attempt(parseNewListLine)
+				   ?? attempt(parseNewArrayLine)
+				   ?? attempt(parseNewDictLine)
+				   ?? attempt(parseNewObjectLine) as NodeBase;
+		}
+
+		/// <summary>
+		/// new_tuple_line                              = "(" init_expr_block ")"
+		/// </summary>
+		private NewTupleNode parseNewTupleLine()
+		{
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var node = new NewTupleNode();
+			node.Expressions = parseInitExprLine().ToList();
+			if (node.Expressions.Count == 0)
+				error("A tuple must contain at least one item!");
+
+			ensure(LexemType.ParenClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_list_line                               = "[[" init_expr_block "]]"
+		/// </summary>
+		private NewListNode parseNewListLine()
+		{
+			if (!check(LexemType.DoubleSquareOpen))
+				return null;
+
+			var node = new NewListNode();
+			node.Expressions = parseInitExprLine().ToList();
+			if (node.Expressions.Count == 0)
+				error("A list must contain at least one item!");
+
+			ensure(LexemType.DoubleSquareClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_array_line                              = "[" init_expr_block "]"
+		/// </summary>
+		private NewArrayNode parseNewArrayLine()
+		{
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new NewArrayNode();
+			node.Expressions = parseInitExprLine().ToList();
+			if (node.Expressions.Count == 0)
+				error("An array must contain at least one item!");
+
+			ensure(LexemType.SquareClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// new_dict_line                               = "{" init_dict_expr_block "}"
+		/// </summary>
+		private NewDictionaryNode parseNewDictLine()
+		{
+			if (!check(LexemType.CurlyOpen))
+				return null;
+
+			var node = new NewDictionaryNode();
+			node.Expressions = parseInitExprDictLine().ToList();
+			if (node.Expressions.Count == 0)
+				error("A dictionary must contain at least one item!");
+
+			ensure(LexemType.CurlyClose, "Unmatched brace!");
+
+			return node;
+		}
+
+		/// <summary>
+		/// init_expr_line                              = line_expr { ";" line_expr }
+		/// </summary>
+		private IEnumerable<NodeBase> parseInitExprLine()
+		{
+			var node = attempt(parseLineExpr);
+			if(node == null)
+				yield break;
+
+			yield return node;
+			while (check(LexemType.Semicolon))
+				yield return ensure(parseLineExpr, "Expression expected!");
+		}
+
+		/// <summary>
+		/// init_expr_dict_line                         = init_dict_expr { ";" init_dict_expr }
+		/// </summary>
+		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictLine()
+		{
+			var node = parseInitDictExpr();
+			if (node == null)
+				yield break;
+
+			yield return node.Value;
+
+			while (check(LexemType.Semicolon))
+			{
+				node = parseInitDictExpr();
+				if(node == null)
+					error("Expression expected!");
+
+				yield return node.Value;
+			}
+		}
+
+		/// <summary>
+		/// new_object_line                             = type invoke_line_args
+		/// </summary>
+		private NewObjectNode parseNewObjectLine()
+		{
+			var type = attempt(parseType);
+			if (type == null)
+				return null;
+
+			var args = parseInvokeBlockArgs().ToList();
+			if (args.Count == 0)
+				return null;
+
+			var node = new NewObjectNode();
+			node.TypeSignature = type;
+			node.Arguments = args;
+			return node;
+		}
 
 		#endregion
 
