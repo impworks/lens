@@ -79,6 +79,9 @@ namespace Lens.Lexer
 				IndentLookup.Pop();
 			}
 
+			if(Lexems[Lexems.Count-1].Type == LexemType.NewLine)
+				Lexems.RemoveAt(Lexems.Count-1);
+
 			addLexem(LexemType.EOF, getPosition());
 		}
 
@@ -188,13 +191,15 @@ namespace Lens.Lexer
 		private Lexem processStaticLexem()
 		{
 			return processLexemList(Keywords, ch => ch != '_' && !char.IsLetterOrDigit(ch))
-			       ?? processLexemList(Operators, ch => ch == '_' || char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch));
+			       ?? processLexemList(Operators);
+
+			// ch == '_' || char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch)
 		}
 
 		/// <summary>
 		/// Attempts to find any of the given lexems at the current position in the string.
 		/// </summary>
-		private Lexem processLexemList(StaticLexemDefinition[] lexems, Func<char, bool> nextChecker)
+		private Lexem processLexemList(StaticLexemDefinition[] lexems, Func<char, bool> nextChecker = null)
 		{
 			foreach (var curr in lexems)
 			{
@@ -206,7 +211,7 @@ namespace Lens.Lexer
 				if (Position + len < Source.Length)
 				{
 					var nextCh = Source[Position + len];
-					if (!nextChecker(nextCh))
+					if (nextChecker != null && !nextChecker(nextCh))
 						continue;
 				}
 

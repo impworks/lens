@@ -5,11 +5,13 @@ using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
+using Lens.Utils;
 
 namespace Lens.Parser
 {
 	public partial class LensParser
 	{
+		[DebuggerStepThrough]
 		private void error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(
@@ -21,16 +23,18 @@ namespace Lens.Parser
 		#region Lexem handling
 
 		/// <summary>
-		/// Checks if current lexem is of any of the given types.
+		/// Checks if the pattern at current location matches given one.
 		/// </summary>
+		[DebuggerStepThrough]
 		private bool peek(params LexemType[] types)
 		{
 			return peek(0, types);
 		}
 
 		/// <summary>
-		/// Checks if lexem at offset is of any of the given types.
+		/// Checks if the pattern at offset matches given one.
 		/// </summary>
+		[DebuggerStepThrough]
 		private bool peek(int offset, params LexemType[] types)
 		{
 			foreach (var curr in types)
@@ -48,8 +52,19 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
+		/// Checks if current lexem is of any of the given types.
+		/// </summary>
+		private bool peekAny(LexemType[] types)
+		{
+			var id = Math.Min(LexemId, Lexems.Length - 1);
+			var lex = Lexems[id];
+			return lex.Type.IsAnyOf(types);
+		}
+
+		/// <summary>
 		/// Returns current lexem if it of given type, or throws an error.
 		/// </summary>
+		[DebuggerStepThrough]
 		private Lexem ensure(LexemType type, string msg, params object[] args)
 		{
 			var lex = Lexems[LexemId];
@@ -64,6 +79,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Checks if the current lexem is of given type and advances to next one.
 		/// </summary>
+		[DebuggerStepThrough]
 		private bool check(LexemType lexem)
 		{
 			var lex = Lexems[LexemId];
@@ -78,6 +94,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Gets the value of the current identifier and skips it.
 		/// </summary>
+		[DebuggerStepThrough]
 		private string getValue()
 		{
 			var value = Lexems[LexemId].Value;
@@ -88,6 +105,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Ignores N next lexems.
 		/// </summary>
+		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
 			LexemId = Math.Min(LexemId + count, Lexems.Length - 1);
@@ -279,7 +297,7 @@ namespace Lens.Parser
 			var node = processOperator(getter, priority + 1);
 
 			var ops = _OperatorPriorities[priority];
-			while (peek(ops.Keys.ToArray()))
+			while (peekAny(ops.Keys.ToArray()))
 			{
 				foreach (var curr in ops)
 					if (check(curr.Key))

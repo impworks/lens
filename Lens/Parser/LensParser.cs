@@ -274,7 +274,7 @@ namespace Lens.Parser
 		/// </summary>
 		private FunctionArgument parseFunSingleArg()
 		{
-			if (!peek(LexemType.Identifier))
+			if (!peek(LexemType.Identifier, LexemType.Colon))
 				return null;
 
 			var node = new FunctionArgument();
@@ -311,7 +311,7 @@ namespace Lens.Parser
 			if (many.Count > 0)
 				return new CodeBlockNode { Statements = many };
 
-			var single = parseLetStmt();
+			var single = parseLocalStmt();
 			if (single != null)
 				return new CodeBlockNode { single };
 
@@ -1151,7 +1151,10 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseLineTypeopExpr()
 		{
-			var node = ensure(parseLineOpExpr, "Expression is expected!");
+			var node = attempt(parseLineOpExpr);
+			if (node == null)
+				return null;
+
 			var typeop = attempt(parseTypecheckOpExpr);
 
 			var cast = typeop as CastOperatorNode;
@@ -1585,7 +1588,7 @@ namespace Lens.Parser
 			var value = getValue();
 			try
 			{
-				return new DoubleNode(double.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture));
+				return new DoubleNode(double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
