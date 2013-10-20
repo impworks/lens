@@ -114,8 +114,8 @@ namespace Lens.Compiler
 		{
 			try
 			{
-				if (signature.IsArray)
-					return parseTypeSignature(signature.Arguments[0]).MakeArrayType();
+				if (string.IsNullOrEmpty(signature.Postfix))
+					return processPostfix(parseTypeSignature(signature.Arguments[0]), signature.Postfix);
 
 				var name = signature.Name;
 				var hasArgs = signature.Arguments.Length > 0;
@@ -131,6 +131,23 @@ namespace Lens.Compiler
 			{
 				throw new LensCompilerException(ex.Message, signature);
 			}
+		}
+
+		/// <summary>
+		/// Wraps a type into a specific postfix.
+		/// </summary>
+		private Type processPostfix(Type type, string postfix)
+		{
+			if (postfix == "[]")
+				return type.MakeArrayType();
+
+			if (postfix == "~")
+				return GenericHelper.MakeGenericTypeChecked(typeof (IEnumerable<>), type);
+
+			if (postfix == "?")
+				return GenericHelper.MakeGenericTypeChecked(typeof(Nullable<>), type);
+
+			throw new ArgumentException(string.Format("Unknown postfix '{0}'!", postfix));
 		}
 
 		/// <summary>

@@ -86,6 +86,8 @@
 		DoubleСolon,
 		Semicolon,
 		Comma,
+		Tilde,
+		QuestionMark,
 		Indent,
 		Dedent
 	}

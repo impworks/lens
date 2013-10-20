@@ -233,7 +233,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Ensures that actual arguments can be applied to corresponding placeholders.
 		/// </summary>
-		public static Type MakeGenericTypeChecked(Type type, Type[] values)
+		public static Type MakeGenericTypeChecked(Type type, params Type[] values)
 		{
 			if (!type.IsGenericTypeDefinition)
 				return type;

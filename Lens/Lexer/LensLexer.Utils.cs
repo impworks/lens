@@ -84,7 +84,9 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(",", LexemType.Comma),
 			new StaticLexemDefinition("..", LexemType.DoubleDot),
 			new StaticLexemDefinition(".", LexemType.Dot),
-			new StaticLexemDefinition(";", LexemType.Semicolon)
+			new StaticLexemDefinition(";", LexemType.Semicolon),
+			new StaticLexemDefinition("?", LexemType.QuestionMark),
+			new StaticLexemDefinition("~", LexemType.Tilde),
 		};
 
 		private RegexLexemDefinition[] RegexLexems = new[]

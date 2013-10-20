@@ -11,14 +11,14 @@ namespace Lens.Compiler
 	public class TypeSignature : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		public TypeSignature(string name, params TypeSignature[] args)
-			: this(name, false, args)
+			: this(name, null, args)
 		{ }
 
-		public TypeSignature(string name, bool isArray, params TypeSignature[] args)
+		public TypeSignature(string name, string postfix, params TypeSignature[] args)
 		{
 			Name = name;
 			Arguments = args.Length > 0 ? args : null;
-			IsArray = isArray;
+			Postfix = postfix;
 			FullSignature = getSignature(name, args);
 		}
 
@@ -26,7 +26,7 @@ namespace Lens.Compiler
 
 		public readonly string Name;
 		public readonly TypeSignature[] Arguments;
-		public bool IsArray;
+		public readonly string Postfix;
 
 		public readonly string FullSignature;
 
@@ -39,8 +39,8 @@ namespace Lens.Compiler
 			if (args.Length == 0)
 				return name;
 
-			if (IsArray)
-				return Arguments[0].FullSignature + "[]";
+			if (!string.IsNullOrEmpty(Postfix))
+				return Arguments[0].FullSignature + Postfix;
 
 			var sb = new StringBuilder(name);
 			sb.Append("<");
@@ -73,23 +73,16 @@ namespace Lens.Compiler
 
 		#region Static constructors
 
-		private static Dictionary<string, string> _Postfixes = new Dictionary<string, string>
-		{
-			{"?", "System.Nullable"},
-			{"~", "System.Collections.IEnumerable"}
-		};
+		private static List<string> _Postfixes = new List<string> {"[]", "?", "~"};
 
 		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
 		public static TypeSignature Parse(string signature)
 		{
-			if(signature.EndsWith("[]"))
-				return new TypeSignature(null, true, Parse(signature.Substring(0, signature.Length - 2)));
-
-			foreach(var postfix in _Postfixes)
-				if(signature.EndsWith(postfix.Key))
-					return new TypeSignature(postfix.Value, Parse(signature.Substring(0, signature.Length - postfix.Key.Length)));
+			foreach (var postfix in _Postfixes)
+				if (signature.EndsWith(postfix))
+					return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
 
 			var open = signature.IndexOf('<');
 			if(open == -1)

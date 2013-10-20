@@ -84,11 +84,50 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// type                                        = namespace [ type_args ] { "[]" }
+		/// type                                        = namespace [ type_args ] { "[]" | "?" | "~" }
 		/// </summary>
 		private TypeSignature parseType()
 		{
-			throw new NotImplementedException();
+			var node = attempt(parseNamespace);
+			if (node == null)
+				return null;
+
+			var args = parseTypeArgs().ToArray();
+			if(args.Length > 0)
+				node = new TypeSignature(node.Name, args);
+
+			while (true)
+			{
+				if(check(LexemType.ArrayDef))
+					node = new TypeSignature(null, "[]", node);
+				else if(check(LexemType.Tilde))
+					node = new TypeSignature(null, "~", node);
+				else if(check(LexemType.QuestionMark))
+					node = new TypeSignature(null, "?", node);
+				else
+					return node;
+			}
+		}
+
+		/// <summary>
+		/// type_args                                   = "<" type { "," type } ">"
+		/// </summary>
+		private IEnumerable<TypeSignature> parseTypeArgs()
+		{
+			if (!check(LexemType.Less))
+				yield break;
+
+			var arg = attempt(parseType);
+			if (arg == null)
+				yield break;
+
+			if (peek(LexemType.Comma, LexemType.Greater))
+				yield return arg;
+
+			while (check(LexemType.Comma))
+				yield return ensure(parseType, "Type argument is expected!");
+
+			ensure(LexemType.Greater, "Unmatched paren!");
 		}
 
 		#endregion
@@ -544,7 +583,7 @@ namespace Lens.Parser
 			var node = attempt(parseLvalueIdExpr);
 			return node;
 
-			// todo : type args!
+			// todo: type args
 		}
 
 		/// <summary>
@@ -553,9 +592,12 @@ namespace Lens.Parser
 		private GetMemberNode parseGetStmbrExpr()
 		{
 			var node = attempt(parseLvalueStmbrExpr);
-			return node;
 
-			// todo : type args!
+			var hints = parseTypeArgs().ToList();
+			if (hints.Count > 0)
+				node.TypeHints = hints;
+
+			return node;
 		}
 
 		/// <summary>
@@ -1151,9 +1193,46 @@ namespace Lens.Parser
 			return null;
 		}
 
+		/// <summary>
+		/// line_base_expr                              = line_invoke_base_expr | get_expr
+		/// </summary>
 		private NodeBase parseLineBaseExpr()
 		{
-			
+			return attempt(parseLineInvokeBaseExpr)
+			       ?? attempt(parseGetExpr);
+		}
+
+		/// <summary>
+		/// line_invoke_base_expr                       = "(" get_expr invoke_line_arg invoke_line_args ")"
+		/// </summary>
+		private NodeBase parseLineInvokeBaseExpr()
+		{
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var expr = attempt(parseGetExpr);
+			if (expr == null)
+				return null;
+
+			var arg = attempt(parseInvokeLineArg);
+			if (arg == null)
+				return null;
+
+			var node = new InvocationNode();
+			node.Expression = expr;
+			node.Arguments.Add(arg);
+
+			while (true)
+			{
+				arg = attempt(parseInvokeLineArg);
+				if (arg == null)
+					break;
+				
+				node.Arguments.Add(arg);
+			}
+
+			ensure(LexemType.ParenClose, "Unmatched paren!");
+			return node;
 		}
 
 
