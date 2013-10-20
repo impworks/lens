@@ -414,15 +414,185 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseSetAnyStmt()
 		{
-			throw new NotImplementedException();
+			var node = attempt(parseLvalueExpr);
+			if (node == null || !check(LexemType.Equal))
+				return null;
+
+			var expr = ensure(parseExpr, "Assignment expression is expected!");
+			return makeSetter(node, expr);
 		}
 
 		#endregion
 
 		#region Lvalues
+
+		/// <summary>
+		/// lvalue_expr                                 = lvalue_name_expr | lvalue_paren_expr
+		/// </summary>
+		private NodeBase parseLvalueExpr()
+		{
+			return attempt(parseLvalueNameExpr)
+			       ?? attempt(parseLvalueParenExpr);
+		}
+
+		/// <summary>
+		/// lvalue_name_expr                            = lvalue_name { accessor }
+		/// </summary>
+		private NodeBase parseLvalueNameExpr()
+		{
+			var node = attempt(parseLvalueName);
+			if (node == null)
+				return null;
+
+			while (true)
+			{
+				var acc = attempt(parseAccessor);
+				if (acc == null)
+					return node;
+
+				node = attachAccessor(node, acc);
+			}
+		}
+
+		/// <summary>
+		/// lvalue_paren_expr                           = paren_expr accessor { accessor }
+		/// </summary>
+		private NodeBase parseLvalueParenExpr()
+		{
+			var node = attempt(parseParenExpr);
+			if (node == null)
+				return null;
+
+			var acc = attempt(parseAccessor);
+			if (acc == null)
+				return null;
+
+			node = attachAccessor(node, acc);
+			while (true)
+			{
+				acc = attempt(parseAccessor);
+				if (acc == null)
+					return node;
+
+				node = attachAccessor(node, acc);
+			}
+		}
+
+		/// <summary>
+		/// lvalue_name                                 = lvalue_stmbr_expr | lvalue_id_expr
+		/// </summary>
+		private NodeBase parseLvalueName()
+		{
+			return attempt(parseLvalueStmbrExpr)
+			       ?? attempt(parseLvalueIdExpr) as NodeBase;
+		}
+
+		/// <summary>
+		/// lvalue_stmbr_expr                           = type "::" identifier
+		/// </summary>
+		private GetMemberNode parseLvalueStmbrExpr()
+		{
+			var type = attempt(parseType);
+			if (type == null || !check(LexemType.DoubleСolon))
+				return null;
+
+			var node = new GetMemberNode();
+			node.StaticType = type;
+			node.MemberName = ensure(LexemType.Identifier, "Member name is expected!").Value;
+			return node;
+		}
+
+		/// <summary>
+		/// lvalue_id_expr                              = identifier
+		/// </summary>
+		private GetIdentifierNode parseLvalueIdExpr()
+		{
+			if (!peek(LexemType.Identifier))
+				return null;
+
+			return new GetIdentifierNode(getValue());
+		}
+
 		#endregion
 
 		#region Accessors
+
+		/// <summary>
+		/// get_expr                                    = atom { accessor }
+		/// </summary>
+		private NodeBase parseGetExpr()
+		{
+			var node = attempt(parseAtom);
+			if (node == null)
+				return null;
+
+			while (true)
+			{
+				var acc = attempt(parseAccessor);
+				if (acc == null)
+					return node;
+
+				node = attachAccessor(node, acc);
+			}
+		}
+
+		/// <summary>
+		/// get_id_expr                                 = identifier [ type_args ]
+		/// </summary>
+		private GetIdentifierNode parseGetIdExpr()
+		{
+			var node = attempt(parseLvalueIdExpr);
+			return node;
+
+			// todo : type args!
+		}
+
+		/// <summary>
+		/// get_stmbr_expr                              = type "::" identifier [ type_args ]
+		/// </summary>
+		private GetMemberNode parseGetStmbrExpr()
+		{
+			var node = attempt(parseLvalueStmbrExpr);
+			return node;
+
+			// todo : type args!
+		}
+
+		/// <summary>
+		/// accessor                                    = accessor_idx | accessor_mbr
+		/// </summary>
+		private NodeBase parseAccessor()
+		{
+			return attempt(parseAccessorIdx)
+			       ?? attempt(parseAccessorMbr) as NodeBase;
+		}
+
+		/// <summary>
+		/// accessor_idx                                = "[" line_expr "]"
+		/// </summary>
+		private GetIndexNode parseAccessorIdx()
+		{
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new GetIndexNode();
+			node.Index = ensure(parseLineExpr, "Index expression is expected!");
+			return node;
+		}
+
+		/// <summary>
+		/// accessor_mbr                                = "." identifier
+		/// </summary>
+		private GetMemberNode parseAccessorMbr()
+		{
+			if (!check(LexemType.Dot))
+				return null;
+
+			var node = new GetMemberNode();
+			node.MemberName = ensure(LexemType.Identifier, "Identifier is expected!").Value;
+			return node;
+		}
+
 		#endregion
 
 		#region Expression root

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using Lens.Lexer;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.Expressions;
 
 namespace Lens.Parser
 {
@@ -140,6 +142,80 @@ namespace Lens.Parser
 				result.EndLocation = Lexems[LexemId - 1].EndLocation;
 
 			return result;
+		}
+
+		#endregion
+
+		#region Setters
+
+		private NodeBase makeSetter(NodeBase getter, NodeBase expr)
+		{
+			if (getter is GetIdentifierNode)
+			{
+				var res = setterOf(getter as GetIdentifierNode);
+				res.Value = expr;
+				return res;
+			}
+
+			if (getter is GetMemberNode)
+			{
+				var res = setterOf(getter as GetMemberNode);
+				res.Value = expr;
+				return res;
+			}
+
+			if (getter is GetIndexNode)
+			{
+				var res = setterOf(getter as GetIndexNode);
+				res.Value = expr;
+				return res;
+			}
+
+			throw new InvalidOperationException(string.Format("Node {0} is not a getter!", getter.GetType()));
+		}
+
+		private SetIdentifierNode setterOf(GetIdentifierNode node)
+		{
+			return new SetIdentifierNode
+			{
+				Identifier = node.Identifier,
+				LocalName = node.LocalName
+			};
+		}
+
+		private SetMemberNode setterOf(GetMemberNode node)
+		{
+			return new SetMemberNode
+			{
+				Expression = node.Expression,
+				StaticType = node.StaticType,
+				MemberName = node.MemberName
+			};
+		}
+
+		private SetIndexNode setterOf(GetIndexNode node)
+		{
+			return new SetIndexNode
+			{
+				Expression = node.Expression,
+				Index = node.Index
+			};
+		}
+		
+		#endregion
+
+		#region Accessors
+
+		private NodeBase attachAccessor(NodeBase node, NodeBase accessor)
+		{
+			if (accessor is GetMemberNode)
+				(accessor as GetMemberNode).Expression = node;
+			else if (accessor is GetIndexNode)
+				(accessor as GetIndexNode).Expression = node;
+			else
+				throw new InvalidOperationException(string.Format("Node {0} is not an accessor!", accessor.GetType()));
+
+			return accessor;
 		}
 
 		#endregion
