@@ -262,11 +262,7 @@ namespace Lens.Parser
 			if (single != null)
 				return new List<FunctionArgument> {single};
 
-			var many = parseFunManyArgs().ToList();
-			if (many.Count > 0)
-				return many;
-
-			return null;
+			return parseFunManyArgs();
 		}
 
 		/// <summary>
@@ -279,7 +275,7 @@ namespace Lens.Parser
 
 			var node = new FunctionArgument();
 			node.Name = getValue();
-			ensure(LexemType.Colon, "Colon is expected!");
+			skip();
 			node.IsRefArgument = check(LexemType.Ref);
 			node.TypeSignature = ensure(parseType, "Argument type is expected!");
 
@@ -289,13 +285,22 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_arg_list                                = "(" { fun_single_arg } ")"
 		/// </summary>
-		private IEnumerable<FunctionArgument> parseFunManyArgs()
+		private List<FunctionArgument> parseFunManyArgs()
 		{
 			if (!check(LexemType.ParenOpen))
-				yield break;
+				return null;
 
-			while(!check(LexemType.ParenClose))
-				yield return ensure(parseFunSingleArg, "A function argument is expected!");
+			var args = new List<FunctionArgument>();
+			while (!check(LexemType.ParenClose))
+			{
+				var arg = attempt(parseFunSingleArg);
+				if (arg == null)
+					return null;
+
+				args.Add(arg);
+			}
+
+			return args;
 		}
 
 		#endregion
@@ -774,7 +779,9 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			// node.Arguments = parseFunArgs();
+			node.Arguments = parseFunArgs();
+			if (node.Arguments == null)
+				return null;
 
 			if (!check(LexemType.Arrow))
 				return null;
@@ -1294,7 +1301,9 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			// node.Arguments = parseFunArgs();
+			node.Arguments = parseFunArgs();
+			if (node.Arguments == null)
+				return null;
 
 			if (!check(LexemType.Arrow))
 				return null;

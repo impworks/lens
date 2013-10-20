@@ -673,7 +673,7 @@ finally
 		[Test]
 		public void Not()
 		{
-			var src = "not a && b";
+			var src = "(not a) && b";
 			var result = Expr.And(
 				Expr.Not(Expr.Get("a")),
 				Expr.Get("b")
