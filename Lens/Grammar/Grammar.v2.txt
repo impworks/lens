@@ -32,10 +32,12 @@ let_stmt <LetNode>                          = "let" identifier "=" expr
 set_stmt <NodeBase>                         = set_id_stmt | set_stmbr_stmt | set_any_stmt
 set_id_stmt <SetIdentifierNode>             = identifier "=" expr
 set_stmbr_stmt <SetMemberNode>              = type "::" identifier "=" expr
-set_any_stmt                                = lvalue_expr "=" expr
+set_any_stmt <NodeBase>                     = lvalue_expr "=" expr
 
 // lvalues
-lvalue_expr <NodeBase>                      = lvalue_name { accessor } | paren_expr accessor { accessor }
+lvalue_expr <NodeBase>                      = lvalue_name_expr | lvalue_paren_expr
+lvalue_name_expr <NodeBase>                 = lvalue_name { accessor }
+lvalue_paren_expr <NodeBase>                = paren_expr accessor { accessor }
 lvalue_name <NodeBase>                      = lvalue_stmbr_expr | lvalue_id_expr
 lvalue_stmbr_expr <GetMemberNode>           = type "::" identifier
 lvalue_id_expr <GetIdentifierNode>          = identifier
@@ -44,9 +46,9 @@ lvalue_id_expr <GetIdentifierNode>          = identifier
 get_expr <NodeBase>                         = atom { accessor }
 get_id_expr <GetIdentifierNode>             = identifier [ type_args ]
 get_stmbr_expr <GetMemberNode>              = type "::" identifier [ type_args ]
-accessor                                    = accessor_idx | accessor_mbr
-accessor_idx                                = "[" line_expr "]"
-accessor_mbr                                = "." identifier
+accessor <NodeBase>                         = accessor_idx | accessor_mbr
+accessor_idx <GetIndexNode>                 = "[" line_expr "]"
+accessor_mbr <GetMemberNode>                = "." identifier
 
 // expression root
 expr <NodeBase>                             = block_expr | line_expr
