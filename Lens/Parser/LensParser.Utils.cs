@@ -1,12 +1,11 @@
 ﻿using System;
-using System.IO;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
 
 namespace Lens.Parser
 {
-	internal partial class LensParser
+	public partial class LensParser
 	{
 		private void error(string msg, params object[] args)
 		{

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Lexer;
+using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
@@ -1244,7 +1246,7 @@ else
 		public void VariableLocation()
 		{
 			var script = @"x  + 1";
-			var result = new TreeBuilder().Parse(script);
+			var result = Parse(script);
 			var node = (AddOperatorNode)result.Single();
 			var variable = node.LeftOperand;
 
@@ -1264,7 +1266,7 @@ else
 		public void ArgumentLocation()
 		{
 			var script = "int::TryParse (ref x)";
-			var result = new TreeBuilder().Parse(script);
+			var result = Parse(script);
 			var node = (InvocationNodeBase)result.Single();
 			var argument = node.Arguments.Single();
 
@@ -1279,7 +1281,7 @@ else
 		public void TypeSignatureLocation()
 		{
 			var script = "new SomeType ()";
-			var result = new TreeBuilder().Parse(script);
+			var result = Parse(script);
 			var node = (NewObjectNode)result.Single();
 			var typeSignature = node.TypeSignature;
 
@@ -1326,7 +1328,7 @@ while(true)
 
     count = count + 1
 ";
-			new TreeBuilder().Parse(src);
+			Parse(src);
 		}
 
 		[Test]
@@ -1407,7 +1409,7 @@ for a in x..y do
 		{
 			var script = @"let x = 10
 x = 20";
-			var result = new TreeBuilder().Parse(script);
+			var result = Parse(script);
 			var node2 = result.Skip(1).Single();
 			Assert.AreEqual(2, node2.StartLocation.Line);
 		}
@@ -1416,16 +1418,21 @@ x = 20";
 		public void MemberAssignmentLocation()
 		{
 			var script = @"a.b = 1";
-			var result = new TreeBuilder().Parse(script);
+			var result = Parse(script);
 			var node2 = result.Single();
 			Assert.AreEqual(1, node2.StartLocation.Line);
 		}
 
 		private static void Test(string source, params NodeBase[] expected)
 		{
-			var treeBuilder = new TreeBuilder();
-			var result = treeBuilder.Parse(source);
-			Assert.AreEqual(expected, result);
+			Assert.AreEqual(expected, Parse(source));
+		}
+
+		private static IEnumerable<NodeBase> Parse(string source)
+		{
+			var lexer = new LensLexer(source);
+			var parser = new LensParser(lexer.Lexems);
+			return parser.Nodes;
 		}
 	}
 }

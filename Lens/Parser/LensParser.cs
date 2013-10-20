@@ -13,7 +13,7 @@ using Lens.SyntaxTree.Operators;
 
 namespace Lens.Parser
 {
-	internal partial class LensParser
+	public partial class LensParser
 	{
 		public List<NodeBase> Nodes { get; private set; }
 
