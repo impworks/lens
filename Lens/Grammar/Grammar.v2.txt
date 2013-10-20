@@ -4,7 +4,7 @@ stmt <NodeBase>                             = using | record_def | type_def | fu
 
 // namespace & type signatures
 namespace <TypeSignature>                   = identifier { "." identifier }
-type <TypeSignature>                        = namespace [ type_args ] { "[]" }
+type <TypeSignature>                        = namespace [ type_args ] { "[]" | "?" | "~" }
 type_args                                   = "<" type { "," type } ">"
 
 // structures
@@ -94,7 +94,8 @@ line_expr <NodeBase>                        = if_line | while_line | for_line | 
 line_typeop_expr <NodeBase>                 = line_op_expr [ typecheck_op_expr ]
 line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { binary_op line_base_expr }
 typecheck_op_expr <NodeBase>                = "as" type | "is" type
-line_base_expr <NodeBase>                   = get_expr | "(" get_expr invoke_line_arg invoke_line_args ")"
+line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
+line_invoke_base_expr <NodeBase>            = "(" get_expr invoke_line_arg invoke_line_args ")"
 atom <NodeBase>                             = literal | get_id_expr | get_stmbr_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_expr
