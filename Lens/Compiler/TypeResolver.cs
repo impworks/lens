@@ -44,12 +44,6 @@ namespace Lens.Compiler
 				{"string", typeof (String)},
 			};
 
-			_TypePostfixes = new Dictionary<string, Type>
-			{
-				{ "?", typeof(Nullable<>) },
-				{ "~", typeof(IEnumerable<>) }
-			};
-
 			loadAssemblies();
 		}
 
@@ -63,7 +57,6 @@ namespace Lens.Compiler
 		private static Dictionary<string, List<string>> _Locations;
 		private static List<Assembly> _Assemblies;
 		private static readonly Dictionary<string, Type> _TypeAliases;
-		private static readonly Dictionary<string, Type> _TypePostfixes;
 
 		private readonly Dictionary<string, Type> _Cache;
 		private Dictionary<string, bool> _Namespaces;
@@ -101,16 +94,15 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Resolves a type by its string signature.
 		/// </summary>
-		public Type ResolveType(string signature)
+		public Type ResolveType(TypeSignature signature)
 		{
-			var trimmed = signature.Replace(" ", string.Empty);
 			Type cached;
-			if (_Cache.TryGetValue(trimmed, out cached))
+			if (_Cache.TryGetValue(signature.FullSignature, out cached))
 				return cached;
 
-			var type = parseTypeSignature(trimmed);
+			var type = parseTypeSignature(signature.FullSignature);
 			if (type != null)
-				_Cache.Add(trimmed, type);
+				_Cache.Add(signature.FullSignature, type);
 
 			return type;
 		}
@@ -118,35 +110,27 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
-		private Type parseTypeSignature(string signature)
+		private Type parseTypeSignature(TypeSignature signature)
 		{
-			// simple cases: type is an alias
-			if (_TypeAliases.ContainsKey(signature))
-				return _TypeAliases[signature];
-
-			// postfixes
-			if (signature.EndsWith("[]"))
-				return parseTypeSignature(signature.Substring(0, signature.Length - 2)).MakeArrayType();
-
-			foreach(var postfix in _TypePostfixes)
+			try
 			{
-				if (!signature.EndsWith(postfix.Key))
-					continue;
+				if (signature.IsArray)
+					return parseTypeSignature(signature.Arguments[0]).MakeArrayType();
 
-				var bare = parseTypeSignature(signature.Substring(0, signature.Length - postfix.Key.Length));
-				return GenericHelper.MakeGenericTypeChecked(postfix.Value, new[] {bare});
+				var name = signature.Name;
+				var hasArgs = signature.Arguments.Length > 0;
+				if (hasArgs)
+					name += "`" + signature.Arguments.Length;
+
+				var type = findType(name);
+				return hasArgs
+					? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(parseTypeSignature).ToArray())
+					: type;
 			}
-
-			// generic type
-			var open = signature.IndexOf('<');
-			if (open == -1)
-				return findType(signature);
-
-			var close = signature.LastIndexOf('>');
-			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
-			var typeName = signature.Substring(0, open) + '`' + args.Length;
-			var type = findType(typeName);
-			return GenericHelper.MakeGenericTypeChecked(type, args);
+			catch (ArgumentException ex)
+			{
+				throw new LensCompilerException(ex.Message, signature);
+			}
 		}
 
 		/// <summary>
@@ -205,28 +189,6 @@ namespace Lens.Compiler
 				throw new ArgumentException(string.Format(CompilerMessages.TypeNotFound, name));
 
 			return foundType;
-		}
-
-		/// <summary>
-		/// Parses out the list of generic type arguments delimited by commas.
-		/// </summary>
-		private IEnumerable<Type> parseTypeArgs(string args)
-		{
-			var depth = 0;
-			var start = 0;
-			var len = args.Length;
-			for (var idx = 0; idx < len; idx++)
-			{
-				if (args[idx] == '<') depth++;
-				if (args[idx] == '>') depth--;
-				if (depth == 0 && args[idx] == ',')
-				{
-					yield return parseTypeSignature(args.Substring(start, idx - start));
-					start = idx + 1;
-				}
-			}
-
-			yield return parseTypeSignature(args.Substring(start, args.Length - start));
 		}
 	}
 }

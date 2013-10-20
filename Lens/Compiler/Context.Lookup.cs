@@ -13,10 +13,10 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Finds a declared type by its name.
 		/// </summary>
-		internal TypeEntity FindType(string signature)
+		internal TypeEntity FindType(string name)
 		{
 			TypeEntity type;
-			return _DefinedTypes.TryGetValue(signature, out type) ? type : null;
+			return _DefinedTypes.TryGetValue(name, out type) ? type : null;
 		}
 
 		/// <summary>
@@ -25,17 +25,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public Type ResolveType(string signature)
 		{
-			try
-			{
-				var local = FindType(signature);
-				return local != null
-					? local.TypeInfo
-					: _TypeResolver.ResolveType(signature);
-			}
-			catch (ArgumentException ex)
-			{
-				throw new LensCompilerException(ex.Message);
-			}
+			return ResolveType(TypeSignature.Parse(signature));
 		}
 
 		/// <summary>
@@ -43,15 +33,10 @@ namespace Lens.Compiler
 		/// </summary>
 		public Type ResolveType(TypeSignature signature)
 		{
-			try
-			{
-				return ResolveType(signature.FullSignature);
-			}
-			catch (LensCompilerException ex)
-			{
-				ex.BindToLocation(signature);
-				throw;
-			}
+			var local = FindType(signature.FullSignature);
+			return local != null
+				? local.TypeInfo
+				: _TypeResolver.ResolveType(signature);
 		}
 
 		/// <summary>
