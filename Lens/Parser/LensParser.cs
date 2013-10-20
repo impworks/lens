@@ -388,7 +388,7 @@ namespace Lens.Parser
 
 			var node = new LetNode();
 			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
-			ensure(LexemType.Equal, "Assignment sign is expected!");
+			ensure(LexemType.Assign, "Assignment sign is expected!");
 			node.Value = ensure(parseExpr, "Initializer expression is expected!");
 
 			return node;
@@ -1176,7 +1176,28 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseLineOpExpr()
 		{
-			
+			var unary = parseUnaryOp();
+			var expr = processOperator(parseLineBaseExpr);
+
+			if (unary == null)
+				return expr;
+
+			unary.Operand = expr;
+			return unary;
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		private UnaryOperatorNodeBase parseUnaryOp()
+		{
+			if(check(LexemType.Minus))
+				return new NegationOperatorNode();
+
+			if(check(LexemType.Not))
+				return new InversionOperatorNode();
+
+			return null;
 		}
 
 		/// <summary>

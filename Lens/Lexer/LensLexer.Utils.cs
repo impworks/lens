@@ -52,6 +52,9 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("=>", LexemType.FatArrow),
 			new StaticLexemDefinition("->", LexemType.Arrow),
 
+			new StaticLexemDefinition("<:", LexemType.ShiftLeft),
+			new StaticLexemDefinition(":>", LexemType.ShiftRight),
+
 			new StaticLexemDefinition("==", LexemType.Equal),
 			new StaticLexemDefinition("<=", LexemType.LessEqual),
 			new StaticLexemDefinition(">=", LexemType.GreaterEqual),

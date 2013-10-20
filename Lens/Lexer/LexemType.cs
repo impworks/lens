@@ -72,6 +72,8 @@
 		And,
 		Or,
 		Xor,
+		ShiftLeft,
+		ShiftRight,
 		Assign,
 
 		// Specials

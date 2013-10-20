@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
@@ -215,6 +217,72 @@ namespace Lens.Parser
 				throw new InvalidOperationException(string.Format("Node {0} is not an accessor!", accessor.GetType()));
 
 			return accessor;
+		}
+
+		#endregion
+
+		#region Operators
+
+		private static List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _OperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
+		{
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.And, Expr.And },
+				{ LexemType.Or, Expr.Or },
+				{ LexemType.Xor, Expr.Xor },
+			},
+
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.Equal, Expr.Equal },
+				{ LexemType.NotEqual, Expr.NotEqual },
+				{ LexemType.Less, Expr.Less },
+				{ LexemType.LessEqual, Expr.LessEqual },
+				{ LexemType.Greater, Expr.Greater },
+				{ LexemType.GreaterEqual, Expr.GreaterEqual },
+			},
+
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.ShiftLeft, Expr.ShiftLeft },
+				{ LexemType.ShiftRight, Expr.ShiftRight },
+			},
+
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.Plus, Expr.Add },
+				{ LexemType.Minus, Expr.Sub },
+			},
+
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.Multiply, Expr.Mult },
+				{ LexemType.Divide, Expr.Div },
+				{ LexemType.Remainder, Expr.Mod },
+			},
+
+			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.Power, Expr.Pow },
+			},
+		};
+
+		private NodeBase processOperator(Func<NodeBase> getter, int priority = 0)
+		{
+			if (priority == _OperatorPriorities.Count)
+				return getter();
+
+			var node = processOperator(getter, priority + 1);
+
+			var ops = _OperatorPriorities[priority];
+			while (peek(ops.Keys.ToArray()))
+			{
+				foreach (var curr in ops)
+					if (check(curr.Key))
+						node = curr.Value(node, processOperator(getter, priority + 1));
+			}
+
+			return node;
 		}
 
 		#endregion
