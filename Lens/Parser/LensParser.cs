@@ -774,7 +774,7 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs();
+			// node.Arguments = parseFunArgs();
 
 			if (!check(LexemType.Arrow))
 				return null;
@@ -874,7 +874,7 @@ namespace Lens.Parser
 			var node = new NewTupleNode();
 			node.Expressions = parseInitExprBlock().ToList();
 			if(node.Expressions.Count == 0)
-				error("A tuple must contain at least one item!");
+				return null;
 
 			ensure(LexemType.ParenClose, "Unmatched brace!");
 
@@ -892,7 +892,7 @@ namespace Lens.Parser
 			var node = new NewListNode();
 			node.Expressions = parseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
-				error("A list must contain at least one item!");
+				return null;
 
 			ensure(LexemType.DoubleSquareClose, "Unmatched brace!");
 
@@ -910,7 +910,7 @@ namespace Lens.Parser
 			var node = new NewArrayNode();
 			node.Expressions = parseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
-				error("An array must contain at least one item!");
+				return null;
 
 			ensure(LexemType.SquareClose, "Unmatched brace!");
 
@@ -928,7 +928,7 @@ namespace Lens.Parser
 			var node = new NewDictionaryNode();
 			node.Expressions = parseInitExprDictBlock().ToList();
 			if (node.Expressions.Count == 0)
-				error("A dictionary must contain at least one item!");
+				return null;
 
 			ensure(LexemType.CurlyClose, "Unmatched brace!");
 
@@ -1294,7 +1294,7 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs();
+			// node.Arguments = parseFunArgs();
 
 			if (!check(LexemType.Arrow))
 				return null;
@@ -1391,7 +1391,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// new_tuple_line                              = "(" init_expr_block ")"
+		/// new_tuple_line                              = "(" init_expr_line ")"
 		/// </summary>
 		private NewTupleNode parseNewTupleLine()
 		{
