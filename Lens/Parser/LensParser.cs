@@ -370,7 +370,7 @@ namespace Lens.Parser
 			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
 			if (check(LexemType.Colon))
 				node.Type = ensure(parseType, "Variable type is expected!");
-			else if(check(LexemType.Equal))
+			else if(check(LexemType.Assign))
 				node.Value = ensure(parseExpr, "Initializer expression is expected!");
 			else
 				error("Initializer expresion or type signature is expected!");
@@ -413,7 +413,7 @@ namespace Lens.Parser
 		/// </summary>
 		private SetIdentifierNode parseSetIdStmt()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Equal))
+			if (!peek(LexemType.Identifier, LexemType.Assign))
 				return null;
 
 			var node = new SetIdentifierNode();
@@ -440,7 +440,7 @@ namespace Lens.Parser
 			node.StaticType = type;
 			node.MemberName = ensure(LexemType.Identifier, "Member name is expected!").Value;
 
-			if (!check(LexemType.Equal))
+			if (!check(LexemType.Assign))
 				return null;
 
 			node.Value = ensure(parseExpr, "Expression is expected!");
@@ -454,7 +454,7 @@ namespace Lens.Parser
 		private NodeBase parseSetAnyStmt()
 		{
 			var node = attempt(parseLvalueExpr);
-			if (node == null || !check(LexemType.Equal))
+			if (node == null || !check(LexemType.Assign))
 				return null;
 
 			var expr = ensure(parseExpr, "Assignment expression is expected!");

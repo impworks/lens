@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
@@ -100,6 +101,7 @@ namespace Lens.Parser
 		/// Attempts to parse a node.
 		/// If the node does not match, the parser state is silently reset to original.
 		/// </summary>
+		[DebuggerStepThrough]
 		private T attempt<T>(Func<T> getter)
 			where T : LocationEntity
 		{
@@ -114,6 +116,7 @@ namespace Lens.Parser
 		/// Attempts to parse a node.
 		/// If the node does not match, an error is thrown.
 		/// </summary>
+		[DebuggerStepThrough]
 		private T ensure<T>(Func<T> getter, string msg)
 			where T : LocationEntity
 		{
@@ -127,6 +130,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Sets StartLocation and EndLocation to a node if it requires.
 		/// </summary>
+		[DebuggerStepThrough]
 		private T bind<T>(Func<T> getter)
 			where T : LocationEntity
 		{

@@ -200,10 +200,10 @@ namespace Lens.Lexer
 			{
 				var rep = curr.Representation;
 				var len = rep.Length;
-				if (Position + len >= Source.Length || Source.Substring(Position, len) != rep)
+				if (Position + len > Source.Length || Source.Substring(Position, len) != rep)
 					continue;
 
-				if (Position + len <= Source.Length)
+				if (Position + len < Source.Length)
 				{
 					var nextCh = Source[Position + len];
 					if (!nextChecker(nextCh))
