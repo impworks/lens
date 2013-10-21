@@ -1186,7 +1186,7 @@ a.A * b.B
 		{
 			var src = @"
 var x = 0
-int::TryParse ""100"" ref x
+int::TryParse ""100"" (ref x)
 x";
 			var result = new NodeBase[]
 			{
@@ -1309,7 +1309,7 @@ listener.Prefixes.Add ""http://localhost:8080/""
 
 var count = 1
 
-while(true)
+while true do
     listener.Start ()
     
     let ctx = listener.GetContext ()

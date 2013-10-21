@@ -245,7 +245,7 @@ namespace Lens.Parser
 			if (check(LexemType.Colon))
 				node.ReturnTypeSignature = ensure(parseType, "Function return type is expected!");
 
-			node.Arguments = parseFunArgs();
+			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, "Arrow is expected!");
 			node.Body = ensure(parseBlock, "Function body is expected!");
 
@@ -777,10 +777,8 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs();
-			if (node.Arguments == null)
-				return null;
-
+			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
+			
 			if (!check(LexemType.Arrow))
 				return null;
 
@@ -1109,7 +1107,7 @@ namespace Lens.Parser
 		private NodeBase parseInvokeLineArg()
 		{
 			return attempt(parseRefArg)
-				   ?? ensure(parseGetExpr, "Expression is expected!");
+				   ?? attempt(parseGetExpr);
 		}
 
 		/// <summary>
@@ -1244,35 +1242,21 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// line_invoke_base_expr                       = "(" get_expr invoke_line_arg invoke_line_args ")"
+		/// line_invoke_base_expr                       = get_expr [ invoke_line_args ]
 		/// </summary>
 		private NodeBase parseLineInvokeBaseExpr()
 		{
-			if (!check(LexemType.ParenOpen))
-				return null;
-
 			var expr = attempt(parseGetExpr);
 			if (expr == null)
 				return null;
 
-			var arg = attempt(parseInvokeLineArg);
-			if (arg == null)
-				return null;
+			var args = parseInvokeLineArgs().ToList();
+			if (args.Count == 0)
+				return expr;
 
 			var node = new InvocationNode();
 			node.Expression = expr;
-			node.Arguments.Add(arg);
-
-			while (true)
-			{
-				arg = attempt(parseInvokeLineArg);
-				if (arg == null)
-					break;
-				
-				node.Arguments.Add(arg);
-			}
-
-			ensure(LexemType.ParenClose, "Unmatched paren!");
+			node.Arguments = args;
 			return node;
 		}
 
@@ -1283,8 +1267,8 @@ namespace Lens.Parser
 		private NodeBase parseAtom()
 		{
 			return attempt(parseLiteral)
+				   ?? attempt(parseGetStmbrExpr)
 			       ?? attempt(parseGetIdExpr)
-			       ?? attempt(parseGetStmbrExpr)
 			       ?? attempt(parseParenExpr);
 		}
 
@@ -1300,7 +1284,12 @@ namespace Lens.Parser
 			           ?? attempt(parseLambdaLineExpr);
 
 			if (expr != null)
+			{
+				if (peek(LexemType.Colon))
+					return null;
+
 				ensure(LexemType.ParenClose, "Unclosed paren!");
+			}
 
 			return expr;
 		}
@@ -1311,10 +1300,8 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs();
-			if (node.Arguments == null)
-				return null;
-
+			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
+			
 			if (!check(LexemType.Arrow))
 				return null;
 
@@ -1525,7 +1512,7 @@ namespace Lens.Parser
 			if (type == null)
 				return null;
 
-			var args = parseInvokeBlockArgs().ToList();
+			var args = parseInvokeLineArgs().ToList();
 			if (args.Count == 0)
 				return null;
 

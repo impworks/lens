@@ -90,7 +90,7 @@ invoke_line_arg <NodeBase>                  = ref_arg | get_expr
 ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
 
 // line expressions
-line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
+line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | yield_stmt | new_line_expr | typeop_expr | line_typecheck_expr
 typeop_expr <NodeBase>                      = default_expr | typeof_expr
 default_expr <DefaultOperatorNode>          = "default" type
 typeof_expr <TypeofOperatorNode>            = "typeof" type
@@ -98,8 +98,8 @@ line_typecheck_expr <NodeBase>              = line_op_expr [ typecheck_op_expr ]
 line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { binary_op line_base_expr }
 typecheck_op_expr <NodeBase>                = "as" type | "is" type
 line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
-line_invoke_base_expr <NodeBase>            = "(" get_expr invoke_line_arg invoke_line_args ")"
-atom <NodeBase>                             = literal | get_id_expr | get_stmbr_expr | paren_expr
+line_invoke_base_expr <NodeBase>            = get_expr [ invoke_line_args ]
+atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_expr
 
@@ -109,9 +109,6 @@ while_line <IfNode>                         = while_header line_expr
 for_line <IfNode>                           = for_header line_expr
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
 yield_stmt <YieldNode>                      = "yield" [ "from" ] line_expr
-
-// line with extra block lambda
-invoke_line_xtra <InvocationNode>           = get_expr [ invoke_line_args ] lambda_block_expr
 
 // line initializers
 new_line_expr <NodeBase>                    = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line | new_object_line )
