@@ -1,5 +1,5 @@
 ﻿// globals
-main <~NodeBase>                            = { stmt } EOF
+main <~NodeBase>                            = stmt { NL stmt } EOF
 stmt <NodeBase>                             = using | record_def | type_def | fun_def | local_stmt
 
 // namespace & type signatures
@@ -8,7 +8,7 @@ type <TypeSignature>                        = namespace [ type_args ] { "[]" | "
 type_args                                   = "<" type { "," type } ">"
 
 // structures
-using <UsingNode>                           = "using" namespace NL
+using <UsingNode>                           = "using" namespace
 record_def <RecordDefinitionNode>           = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
 record_stmt <RecordField>                   = identifier ":" type
 type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
