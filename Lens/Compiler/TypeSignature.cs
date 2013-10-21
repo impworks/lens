@@ -80,6 +80,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public static TypeSignature Parse(string signature)
 		{
+			if(signature[0] == ' ' || signature[signature.Length - 1] == ' ')
+				signature = signature.Trim();
+
 			foreach (var postfix in _Postfixes)
 				if (signature.EndsWith(postfix))
 					return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));

@@ -62,7 +62,7 @@ namespace Lens.Test
 		[Test]
 		public void SelfReference()
 		{
-			Test<Unit>("Lens.SyntaxTree.Unit");
+			Test<Unit>("Lens.Unit");
 		}
 
 		[Test]

@@ -100,7 +100,7 @@ namespace Lens.Compiler
 			if (_Cache.TryGetValue(signature.FullSignature, out cached))
 				return cached;
 
-			var type = parseTypeSignature(signature.FullSignature);
+			var type = parseTypeSignature(signature);
 			if (type != null)
 				_Cache.Add(signature.FullSignature, type);
 
@@ -114,13 +114,16 @@ namespace Lens.Compiler
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(signature.Postfix))
+				if (!string.IsNullOrEmpty(signature.Postfix))
 					return processPostfix(parseTypeSignature(signature.Arguments[0]), signature.Postfix);
 
 				var name = signature.Name;
-				var hasArgs = signature.Arguments.Length > 0;
+				var hasArgs = signature.Arguments != null && signature.Arguments.Length > 0;
 				if (hasArgs)
 					name += "`" + signature.Arguments.Length;
+
+				if (_TypeAliases.ContainsKey(name))
+					return _TypeAliases[name];
 
 				var type = findType(name);
 				return hasArgs
