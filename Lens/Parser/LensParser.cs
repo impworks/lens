@@ -29,14 +29,14 @@ namespace Lens.Parser
 		#region Globals
 
 		/// <summary>
-		/// main                                        = { stmt } EOF
+		/// main                                        = stmt { NL stmt } EOF
 		/// </summary>
 		private IEnumerable<NodeBase> parseMain()
 		{
-			while (!peek(LexemType.EOF))
-				yield return parseStmt();
+			yield return parseStmt();
 
-			skip();
+			while (check(LexemType.NewLine))
+				yield return parseStmt();
 		}
 
 		/// <summary>
@@ -142,8 +142,6 @@ namespace Lens.Parser
 				return null;
 
 			var nsp = ensure(parseNamespace, "A namespace is expected!");
-			ensure(LexemType.NewLine, "A using statement should end with a newline!");
-
 			return new UsingNode {Namespace = nsp.FullSignature};
 		}
 
@@ -725,11 +723,10 @@ namespace Lens.Parser
 			var node = new TryNode();
 			node.Code = ensure(parseBlock, "Try block is expected!");
 			node.CatchClauses = parseCatchStmtList().ToList();
-
-			if(node.CatchClauses.Count == 0)
-				error("Catch clause is expected!");
-
 			node.Finally = attempt(parseFinallyStmt);
+
+			if (node.Finally == null && node.CatchClauses.Count == 0)
+				error("Catch clause is expected!");
 
 			return node;
 		}

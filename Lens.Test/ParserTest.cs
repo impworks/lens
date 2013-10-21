@@ -1425,7 +1425,7 @@ x = 20";
 
 		private static void Test(string source, params NodeBase[] expected)
 		{
-			Assert.AreEqual(expected, Parse(source));
+			Assert.AreEqual(expected, Parse(source).ToArray());
 		}
 
 		private static IEnumerable<NodeBase> Parse(string source)
