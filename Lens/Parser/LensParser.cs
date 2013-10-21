@@ -1137,7 +1137,7 @@ namespace Lens.Parser
 		#region Line expressions
 
 		/// <summary>
-		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | line_typeop_expr
+		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
 		/// </summary>
 		private NodeBase parseLineExpr()
 		{
@@ -1147,15 +1147,47 @@ namespace Lens.Parser
 			       ?? attempt(parseThrowStmt)
 			       ?? attempt(parseYieldStmt)
 			       ?? attempt(parseNewLineExpr)
-			       ?? attempt(parseLineTypeopExpr);
+				   ?? attempt(parseTypeopExpr)
+			       ?? attempt(parseLineTypecheckExpr);
 
 			// todo: invoke_line_xtra
 		}
 
 		/// <summary>
-		/// line_typeop_expr                            = line_op_expr [ typecheck_op_expr ]
+		/// typeop_expr                                 = default_expr | typeof_expr
 		/// </summary>
-		private NodeBase parseLineTypeopExpr()
+		private NodeBase parseTypeopExpr()
+		{
+			return attempt(parseDefaultExpr)
+			       ?? attempt(parseTypeofExpr) as NodeBase;
+		}
+
+		/// <summary>
+		/// default_expr                                = "default" type
+		/// </summary>
+		private DefaultOperatorNode parseDefaultExpr()
+		{
+			if (!check(LexemType.Default))
+				return null;
+
+			return new DefaultOperatorNode { TypeSignature = ensure(parseType, "Type signature is expected!") };
+		}
+
+		/// <summary>
+		/// typeof_expr                                 = "typeof" type
+		/// </summary>
+		private TypeofOperatorNode parseTypeofExpr()
+		{
+			if (!check(LexemType.Typeof))
+				return null;
+
+			return new TypeofOperatorNode {TypeSignature = ensure(parseType, "Type signature is expected!") };
+		}
+
+		/// <summary>
+		/// line_typecheck_expr                         = line_op_expr [ typecheck_op_expr ]
+		/// </summary>
+		private NodeBase parseLineTypecheckExpr()
 		{
 			var node = attempt(parseLineOpExpr);
 			if (node == null)
