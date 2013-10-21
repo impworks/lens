@@ -9,10 +9,10 @@ type_args                                   = "<" type { "," type } ">"
 
 // structures
 using <UsingNode>                           = "using" namespace NL
-record_def <RecordDefinitionNode>           = "record" identifier INDENT record_stmt { record_stmt } DEDENT
-record_stmt <RecordField>                   = identifier ":" type NL
-type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { type_stmt } DEDENT
-type_stmt <TypeLabel>                       = identifier [ "of" type ] NL
+record_def <RecordDefinitionNode>           = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
+record_stmt <RecordField>                   = identifier ":" type
+type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
+type_stmt <TypeLabel>                       = identifier [ "of" type ]
 fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
 fun_args <~FunctionArgument>                = fun_single_arg | fun_many_args
 fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
