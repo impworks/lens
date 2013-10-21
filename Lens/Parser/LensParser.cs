@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -1186,28 +1185,8 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseLineOpExpr()
 		{
-			var unary = parseUnaryOp();
-			var expr = processOperator(parseLineBaseExpr);
-
-			if (unary == null)
-				return expr;
-
-			unary.Operand = expr;
-			return unary;
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		private UnaryOperatorNodeBase parseUnaryOp()
-		{
-			if(check(LexemType.Minus))
-				return new NegationOperatorNode();
-
-			if(check(LexemType.Not))
-				return new InversionOperatorNode();
-
-			return null;
+			// parser magic
+			return processOperator(parseLineBaseExpr);
 		}
 
 		/// <summary>

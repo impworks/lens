@@ -245,7 +245,7 @@ namespace Lens.Parser
 
 		#region Operators
 
-		private static List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _OperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
+		private static List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
 		{
 			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 			{
@@ -289,14 +289,26 @@ namespace Lens.Parser
 			},
 		};
 
+		private Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
+		{
+			{ 3, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Minus, Expr.Negate) },
+			{ 0, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Not, Expr.Not) }
+		};
+
 		private NodeBase processOperator(Func<NodeBase> getter, int priority = 0)
 		{
-			if (priority == _OperatorPriorities.Count)
+			if (priority == _BinaryOperatorPriorities.Count)
 				return getter();
 
+			var unaryCvt = _UnaryOperatorPriorities.ContainsKey(priority) && check(_UnaryOperatorPriorities[priority].Item1)
+				? _UnaryOperatorPriorities[priority].Item2
+				: null;
+			
 			var node = processOperator(getter, priority + 1);
+			if (unaryCvt != null)
+				node = unaryCvt(node);
 
-			var ops = _OperatorPriorities[priority];
+			var ops = _BinaryOperatorPriorities[priority];
 			while (peekAny(ops.Keys.ToArray()))
 			{
 				foreach (var curr in ops)
