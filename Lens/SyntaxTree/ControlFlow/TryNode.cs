@@ -16,7 +16,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			Code = new CodeBlockNode();
 			CatchClauses = new List<CatchNode>();
-			Finally = new CodeBlockNode();
 		}
 
 		public CodeBlockNode Code { get; set; }
@@ -89,7 +88,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected bool Equals(TryNode other)
 		{
-			return Equals(Code, other.Code) && Equals(Finally, other.Finally) && CatchClauses.SequenceEqual(other.CatchClauses);
+			return Equals(Code, other.Code)
+			       && CatchClauses.SequenceEqual(other.CatchClauses)
+			       && Equals(Finally, other.Finally);
 		}
 
 		public override bool Equals(object obj)

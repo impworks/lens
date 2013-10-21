@@ -99,11 +99,13 @@ namespace Lens.Lexer
 				currIndent++;
 			}
 
+			// empty line?
+			if (Source[Position] == '\n' || Source[Position] == '\r')
+				return;
+
 			// first line?
 			if (IndentLookup.Count == 0)
-			{
 				IndentLookup.Push(currIndent);
-			}
 
 				// indent increased
 			else if (currIndent > IndentLookup.Peek())

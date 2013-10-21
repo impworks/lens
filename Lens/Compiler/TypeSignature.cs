@@ -66,7 +66,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public static implicit operator TypeSignature(string type)
 		{
-			return new TypeSignature(type);
+			return type == null ? null : Parse(type);
 		}
 
 		#endregion
@@ -90,7 +90,7 @@ namespace Lens.Compiler
 
 			var close = signature.LastIndexOf('>');
 			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
-			var typeName = signature.Substring(0, open) + '`' + args.Length;
+			var typeName = signature.Substring(0, open);
 
 			return new TypeSignature(typeName, args);
 		}
@@ -123,7 +123,13 @@ namespace Lens.Compiler
 
 		protected bool Equals(TypeSignature other)
 		{
-			return string.Equals(FullSignature, other.FullSignature);
+			var basic = string.Equals(Name, other.Name)
+			            && string.Equals(Postfix, other.Postfix);
+
+			if (!basic || (Arguments == null ^ other.Arguments == null))
+				return false;
+
+			return Arguments == null || Arguments.SequenceEqual(other.Arguments);
 		}
 
 		public override bool Equals(object obj)

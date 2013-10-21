@@ -35,7 +35,7 @@ namespace Lens.Parser
 		{
 			yield return parseStmt();
 
-			while (check(LexemType.NewLine))
+			while (!check(LexemType.EOF))
 				yield return parseStmt();
 		}
 
@@ -48,7 +48,7 @@ namespace Lens.Parser
 			       ?? attempt(parseRecordDef)
 			       ?? attempt(parseTypeDef)
 			       ?? attempt(parseFunDef)
-			       ?? ensure(parseLocalStmt, "Unknown kind of statement!");
+				   ?? ensure(parseGlobalStmt, "Unknown kind of statement!");
 		}
 
 		#endregion
@@ -120,7 +120,7 @@ namespace Lens.Parser
 			if (arg == null)
 				yield break;
 
-			if (peek(LexemType.Comma, LexemType.Greater))
+			if (peekAny(new [] { LexemType.Comma, LexemType.Greater }))
 				yield return arg;
 
 			while (check(LexemType.Comma))
@@ -142,7 +142,12 @@ namespace Lens.Parser
 				return null;
 
 			var nsp = ensure(parseNamespace, "A namespace is expected!");
-			return new UsingNode {Namespace = nsp.FullSignature};
+			var node = new UsingNode {Namespace = nsp.FullSignature};
+
+			if(!check(LexemType.NewLine) && !peek(LexemType.EOF))
+				error("Newline is expected after using statement!");
+
+			return node;
 		}
 
 		/// <summary>
@@ -249,6 +254,8 @@ namespace Lens.Parser
 			ensure(LexemType.Arrow, "Arrow is expected!");
 			node.Body = ensure(parseBlock, "Function body is expected!");
 
+			check(LexemType.NewLine);
+
 			return node;
 		}
 
@@ -337,6 +344,16 @@ namespace Lens.Parser
 				ensure(LexemType.NewLine, "Newline is expected!");
 				yield return ensure(parseLocalStmt, "An expression is expected!");
 			}
+		}
+
+		private NodeBase parseGlobalStmt()
+		{
+			var node = parseLocalStmt();
+
+			if (!check(LexemType.NewLine) && !peekAny(LexemType.EOF, LexemType.Dedent))
+				error("Statements must be separated by newlines!");
+
+			return node;
 		}
 
 		/// <summary>
@@ -623,6 +640,7 @@ namespace Lens.Parser
 
 			var node = new GetIndexNode();
 			node.Index = ensure(parseLineExpr, "Index expression is expected!");
+			ensure(LexemType.SquareClose, "Unmatched paren!");
 			return node;
 		}
 

@@ -54,7 +54,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Checks if current lexem is of any of the given types.
 		/// </summary>
-		private bool peekAny(LexemType[] types)
+		private bool peekAny(params LexemType[] types)
 		{
 			var id = Math.Min(LexemId, Lexems.Length - 1);
 			var lex = Lexems[id];
