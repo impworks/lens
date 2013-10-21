@@ -148,7 +148,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// record_def                                  = "record" identifier INDENT record_stmt { record_stmt } DEDENT
+		/// record_def                                  = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
 		/// </summary>
 		private RecordDefinitionNode parseRecordDef()
 		{
@@ -165,6 +165,7 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
+				ensure(LexemType.NewLine, "Record fields must be separated by a newline!");
 				field = bind(parseRecordStmt);
 				node.Entries.Add(field);
 			}
@@ -173,7 +174,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// record_stmt                                 = identifier ":" type NL
+		/// record_stmt                                 = identifier ":" type
 		/// </summary>
 		private RecordField parseRecordStmt()
 		{
@@ -187,7 +188,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// type_def                                    = "type" identifier INDENT type_stmt { type_stmt } DEDENT
+		/// type_def                                    = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
 		/// </summary>
 		private TypeDefinitionNode parseTypeDef()
 		{
@@ -204,6 +205,7 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
+				ensure(LexemType.NewLine, "Type labels must be separated by a newline!");
 				field = bind(parseTypeStmt);
 				node.Entries.Add(field);
 			}
@@ -212,7 +214,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// type_stmt                                   = identifier [ "of" type ] NL
+		/// type_stmt                                   = identifier [ "of" type ]
 		/// </summary>
 		private TypeLabel parseTypeStmt()
 		{

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Lens.SyntaxTree;
+using Lens.Utils;
 
 namespace Lens.Lexer
 {
@@ -34,6 +35,7 @@ namespace Lens.Lexer
 			Source = src;
 
 			parse();
+			filterNewlines();
 		}
 
 		/// <summary>
@@ -159,7 +161,7 @@ namespace Lens.Lexer
 
 				if (isEscaped)
 				{
-					sb.Append(EscapeChar(Source[Position + 1]));
+					sb.Append(escapeChar(Source[Position + 1]));
 					skip(2);
 					isEscaped = false;
 					continue;
@@ -192,8 +194,6 @@ namespace Lens.Lexer
 		{
 			return processLexemList(Keywords, ch => ch != '_' && !char.IsLetterOrDigit(ch))
 			       ?? processLexemList(Operators);
-
-			// ch == '_' || char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch)
 		}
 
 		/// <summary>
@@ -245,9 +245,44 @@ namespace Lens.Lexer
 		}
 
 		/// <summary>
+		/// Removes redundant newlines from the list.
+		/// </summary>
+		private void filterNewlines()
+		{
+			var eaters = new[] {LexemType.Indent, LexemType.Dedent, LexemType.EOF};
+			var result = new List<Lexem>(Lexems.Count);
+
+			var isStart = true;
+			Lexem nl = null;
+			foreach (var curr in Lexems)
+			{
+				if (curr.Type == LexemType.NewLine)
+				{
+					if (!isStart)
+						nl = curr;
+				}
+				else
+				{
+					if (nl != null)
+					{
+						if (!curr.Type.IsAnyOf(eaters))
+							result.Add(nl);
+
+						nl = null;
+					}
+
+					isStart = false;
+					result.Add(curr);
+				}
+			}
+
+			Lexems = result;
+		}
+
+		/// <summary>
 		/// Returns an escaped version of the given character.
 		/// </summary>
-		private char EscapeChar(char t)
+		private char escapeChar(char t)
 		{
 			switch (t)
 			{
