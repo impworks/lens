@@ -8,7 +8,7 @@ namespace Lens.Test
 	{
 		protected static void Test(string src, object value, bool testConstants = false)
 		{
-			Assert.AreEqual(value, Compile(src, new LensCompilerOptions { UnrollConstants = true }));
+			Assert.AreEqual(value, Compile(src, new LensCompilerOptions { UnrollConstants = true, AllowSave = true }));
 			if (testConstants)
 				Assert.AreEqual(value, Compile(src));
 		}

@@ -48,7 +48,7 @@ get_id_expr <GetIdentifierNode>             = identifier [ type_args ]
 get_stmbr_expr <GetMemberNode>              = type "::" identifier [ type_args ]
 accessor <NodeBase>                         = accessor_idx | accessor_mbr
 accessor_idx <GetIndexNode>                 = "[" line_expr "]"
-accessor_mbr <GetMemberNode>                = "." identifier
+accessor_mbr <GetMemberNode>                = "." identifier [ type_args ]
 
 // expression root
 expr <NodeBase>                             = block_expr | line_expr
@@ -90,6 +90,7 @@ invoke_line_arg <NodeBase>                  = ref_arg | get_expr
 ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
 
 // line expressions
+line_stmt <NodeBase>                        = set_stmt | line_expr
 line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | yield_stmt | new_line_expr | typeop_expr | line_typecheck_expr
 typeop_expr <NodeBase>                      = default_expr | typeof_expr
 default_expr <DefaultOperatorNode>          = "default" type
@@ -101,12 +102,12 @@ line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
 line_invoke_base_expr <NodeBase>            = get_expr [ invoke_line_args ]
 atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
-lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_expr
+lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_stmt
 
 // line control structures
-if_line <IfNode>                            = if_header line_expr [ "else" line_expr ]
-while_line <IfNode>                         = while_header line_expr
-for_line <IfNode>                           = for_header line_expr
+if_line <IfNode>                            = if_header line_stmt [ "else" line_stmt ]
+while_line <IfNode>                         = while_header line_stmt
+for_line <IfNode>                           = for_header line_stmt
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
 yield_stmt <YieldNode>                      = "yield" [ "from" ] line_expr
 

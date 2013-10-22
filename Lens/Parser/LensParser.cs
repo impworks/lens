@@ -252,7 +252,7 @@ namespace Lens.Parser
 			if (check(LexemType.Colon))
 				node.ReturnTypeSignature = ensure(parseType, "Function return type is expected!");
 
-			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
+			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, "Arrow is expected!");
 			node.Body = ensure(parseBlock, "Function body is expected!");
 
@@ -367,7 +367,7 @@ namespace Lens.Parser
 		private NameDeclarationNodeBase parseNameDefStmt()
 		{
 			return attempt(parseVarStmt)
-				   ?? (NameDeclarationNodeBase)attempt(parseLetStmt);
+				   ?? attempt(parseLetStmt) as NameDeclarationNodeBase;
 		}
 
 		/// <summary>
@@ -638,7 +638,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// accessor_mbr                                = "." identifier
+		/// accessor_mbr                                = "." identifier [ type_args ]
 		/// </summary>
 		private GetMemberNode parseAccessorMbr()
 		{
@@ -647,6 +647,11 @@ namespace Lens.Parser
 
 			var node = new GetMemberNode();
 			node.MemberName = ensure(LexemType.Identifier, "Identifier is expected!").Value;
+
+			var args = parseTypeArgs().ToList();
+			if (args.Count > 0)
+				node.TypeHints = args;
+
 			return node;
 		}
 
@@ -790,7 +795,7 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
+			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
 			
 			if (!check(LexemType.Arrow))
 				return null;
@@ -1037,27 +1042,27 @@ namespace Lens.Parser
 			if (expr == null)
 				return null;
 
-			if (check(LexemType.Indent))
+			if (!check(LexemType.Indent))
+				return null;
+			
+			var pass = attempt(parseInvokePass);
+			if (pass == null)
+				return null;
+
+			(pass.Expression as GetMemberNode).Expression = expr;
+			expr = pass;
+
+			while (!check(LexemType.Dedent))
 			{
-				var pass = attempt(parseInvokePass);
+				ensure(LexemType.NewLine, "Invoke passes must be separated by newlines!");
+				pass = attempt(parseInvokePass);
 				if (pass == null)
-					return null;
+					return expr;
 
 				(pass.Expression as GetMemberNode).Expression = expr;
 				expr = pass;
-
-				while (!check(LexemType.Dedent))
-				{
-					ensure(LexemType.NewLine, "Invoke passes must be separated by newlines!");
-					pass = attempt(parseInvokePass);
-					if (pass == null)
-						return expr;
-
-					(pass.Expression as GetMemberNode).Expression = expr;
-					expr = pass;
-				}
 			}
-
+			
 			return expr;
 		}
 
@@ -1186,6 +1191,15 @@ namespace Lens.Parser
 		#endregion
 
 		#region Line expressions
+
+		/// <summary>
+		/// line_stmt                                   = set_stmt | line_expr
+		/// </summary>
+		private NodeBase parseLineStmt()
+		{
+			return attempt(parseSetStmt)
+				   ?? attempt(parseLineExpr);
+		}
 
 		/// <summary>
 		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
@@ -1335,7 +1349,7 @@ namespace Lens.Parser
 				return null;
 
 			var expr = attempt(parseLambdaLineExpr)
-			           ?? attempt(parseLineExpr);
+			           ?? attempt(parseLineStmt);
 
 			if (expr != null)
 			{
@@ -1354,12 +1368,12 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
+			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
 			
 			if (!check(LexemType.Arrow))
 				return null;
 
-			node.Body.Add(ensure(parseLineExpr, "Function body is expected!"));
+			node.Body.Add(ensure(parseLineStmt, "Function body is expected!"));
 			return node;
 		}
 
@@ -1368,7 +1382,7 @@ namespace Lens.Parser
 		#region Line control structures
 
 		/// <summary>
-		/// if_line                                     = if_header line_expr [ "else" line_expr ]
+		/// if_line                                     = if_header line_stmt [ "else" line_stmt ]
 		/// </summary>
 		private IfNode parseIfLine()
 		{
@@ -1376,15 +1390,15 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.TrueAction = ensure(parseBlock, "Condition expression is expected!");
+			node.TrueAction.Add(ensure(parseLineStmt, "Condition expression is expected!"));
 			if ( check(LexemType.Else))
-				node.FalseAction = ensure(parseBlock, "Expression is expected!");
+				node.FalseAction.Add(ensure(parseLineStmt, "Expression is expected!"));
 
 			return node;
 		}
 
 		/// <summary>
-		/// while_line                                  = while_header line_expr
+		/// while_line                                  = while_header line_stmt
 		/// </summary>
 		private WhileNode parseWhileLine()
 		{
@@ -1392,12 +1406,12 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, "Loop body expression is expected!");
+			node.Body.Add(ensure(parseLineStmt, "Loop body expression is expected!"));
 			return node;
 		}
 
 		/// <summary>
-		/// for_line                                    = for_header line_expr
+		/// for_line                                    = for_header line_stmt
 		/// </summary>
 		private ForeachNode parseForLine()
 		{
@@ -1405,7 +1419,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, "Loop body expression is expected!");
+			node.Body.Add(ensure(parseLineStmt, "Loop body expression is expected!"));
 			return node;
 		}
 
@@ -1430,7 +1444,7 @@ namespace Lens.Parser
 			// to be merged from Yield branch
 			return null;
 		}
-
+		
 		#endregion
 
 		#region Line initializers

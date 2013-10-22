@@ -139,6 +139,18 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
+		/// Attempts to parse a list of values.
+		/// </summary>
+		private List<T> attempt<T>(Func<List<T>> getter)
+		{
+			var backup = LexemId;
+			var result = getter();
+			if (result == null || result.Count == 0)
+				LexemId = backup;
+			return result;
+		}
+
+			/// <summary>
 		/// Attempts to parse a node.
 		/// If the node does not match, an error is thrown.
 		/// </summary>

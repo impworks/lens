@@ -69,6 +69,11 @@ namespace Lens.Compiler
 			return type == null ? null : Parse(type);
 		}
 
+		public override string ToString()
+		{
+			return FullSignature;
+		}
+
 		#endregion
 
 		#region Static constructors

@@ -45,7 +45,22 @@ r
 		{
 			var src = @"
 var r = string::Empty
-5.times (x:int -> r = r + x.ToString())
+5.times (x:int -> r = r + x.ToString ())
+r
+";
+			Test(src, "01234");
+		}
+
+		[Test]
+		public void TimesTest3()
+		{
+			var src = @"
+var r = string::Empty
+let fx = x:int ->
+    println ""R = {0}"" r
+    println ""X = {0}"" x
+    r = r + x.ToString ()
+5.times fx
 r
 ";
 			Test(src, "01234");
