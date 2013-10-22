@@ -1335,7 +1335,7 @@ a = 1";
 						"x",
 						Expr.Get("y"),
 						Expr.Block(
-							Expr.Invoke("get")
+							Expr.Invoke("test")
 						)
 					)
 				};
@@ -1356,7 +1356,7 @@ for a in x..y do
 						Expr.Get("x"),
 						Expr.Get("y"),
 						Expr.Block(
-							Expr.Invoke("get")
+							Expr.Invoke("test")
 						)
 					)
 				};
