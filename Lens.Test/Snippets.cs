@@ -660,262 +660,150 @@ data.Sum (x:Store -> x.Value)
 		[Test]
 		public void UninitializedVariables()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Var("a", "int"),
-				Expr.Var("b", "string"),
-				Expr.Var("c", "Point"),
-				Expr.Array(
-					Expr.Equal(Expr.Get("a"), Expr.Int(0)),
-					Expr.Equal(Expr.Get("b"), Expr.Null()),
-					Expr.Equal(Expr.Get("c"), Expr.New("Point"))
-				)
-			};
+			var src = @"
+var a : int
+var b : string
+var c : Point
 
-			Test(code, new [] { true, true, true });
+new [a == 0; b == null; c == (new Point ())]";
+
+			Test(src, new [] { true, true, true });
 		}
 
 		[Test]
 		public void TryFinally()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Var("a", "int"),
-				Expr.Var("b", "int"),
-				Expr.Try(
-					Expr.Block(
-						Expr.Var("c", Expr.Int(0)),
-						Expr.Div(Expr.Int(1), Expr.Get("c"))
-					),
-					Expr.Block(
-						Expr.Set("a", Expr.Int(1))
-					),
-					Expr.CatchAll(
-						Expr.Set("b", Expr.Int(2))
-					)
-				),
-				Expr.Array(
-					Expr.Get("a"),
-					Expr.Get("b")
-				)
-			};
+			var src = @"
+var a : int
+var b : int
+try
+    var c = 0
+    1 / c
+catch
+    b = 2
+finally
+    a = 1
 
-			Test(code, new [] { 1, 2 });
+new [a; b]";
+
+			Test(src, new [] { 1, 2 });
 		}
 
 		[Test]
 		public void ForLoop1()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Var("a", Expr.Str("")),
-				Expr.For(
-					"i",
-					Expr.Int(5),
-					Expr.Int(1),
-					Expr.Block(
-						Expr.Set(
-							"a",
-							Expr.Add(
-								Expr.Get("a"),
-								Expr.Invoke(
-									Expr.Get("i"),
-									"ToString"
-								)
-							)
-						)
-					)
-				),
-				Expr.Get("a")
-			};
+			var src = @"
+var a = """"
+for i in 5..1 do
+    a = a + i.ToString ()
+a";
 
-			Test(code, "54321");
+			Test(src, "54321");
 		}
 
 		[Test]
 		public void ForLoop2()
 		{
-			var code = new[]
-			{
-				Expr.For(
-					"x",
-					Expr.Array(
-						Expr.Int(1),
-						Expr.Int(2),
-						Expr.Int(3),
-						Expr.Int(4),
-						Expr.Int(5)
-					),
-					Expr.Block(
-						Expr.Invoke("println", Expr.Str("and {0}"), Expr.Get("x")),
-						Expr.Get("x")
-					)
-				)
-			};
+			var src = @"
+for x in new [1; 2; 3; 4; 5] do
+    println ""and {0}"" x
+    x
+";
 
-			Test(code, 5);
+			Test(src, 5);
 		}
 
 		[Test]
 		public void ForLoop3()
 		{
-			var code = new[]
-			{
-				Expr.For(
-					"x",
-					Expr.List(
-						Expr.Int(1),
-						Expr.Int(2),
-						Expr.Int(3),
-						Expr.Int(4),
-						Expr.Int(5)
-					),
-					Expr.Block(
-						Expr.Invoke("println", Expr.Str("and {0}"), Expr.Get("x"))
-					)
-				)
-			};
+			var src = @"
+for x in new [1; 2; 3; 4; 5] do
+    println ""and {0}"" x";
 
-			Test(code, null);
+			Test(src, null);
 		}
 
 		[Test]
 		public void PureFunc0()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Fun(
-					"Test",
-					"int",
-					true,
-					Expr.Invoke("println", Expr.Str("calculated")),
-					Expr.Int(42)
-				),
+			var src = @"
+pure fun Test:int ->
+    println ""calculated""
+    42
 
-				Expr.Array(
-					Expr.Invoke("Test"),
-					Expr.Invoke("Test")
-				)
-			};
+new [Test (); Test ()]";
 
-			Test(code, new [] { 42, 42 });
+			Test(src, new [] { 42, 42 });
 		}
 
 		[Test]
 		public void PureFunc1()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Fun(
-					"Test",
-					"int",
-					true,
-					new [] { Expr.Arg<int>("x") },
-					Expr.Invoke("println", Expr.Str("calculated")),
-					Expr.Mult(Expr.Get("x"), Expr.Int(2))
-				),
+			var src = @"
+pure fun Test:int (x:int) ->
+    println ""calculated""
+    x * 2
 
-				Expr.Array(
-					Expr.Invoke("Test", Expr.Int(1)),
-					Expr.Invoke("Test", Expr.Int(2)),
-					Expr.Invoke("Test", Expr.Int(2)),
-					Expr.Invoke("Test", Expr.Int(3)),
-					Expr.Invoke("Test", Expr.Int(1))
-				)
-			};
+new [
+    Test 1
+    Test 2
+    Test 2
+    Test 3
+    Test 1
+]
+";
 
-			Test(code, new[] { 2, 4, 4, 6, 2 });
+			Test(src, new[] { 2, 4, 4, 6, 2 });
 		}
 
 		[Test]
 		public void PureFunc2()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Fun(
-					"Sum",
-					"int",
-					true,
-					new [] { Expr.Arg<int>("x"), Expr.Arg<int>("y") },
-					Expr.Invoke("println", Expr.Str("calculated")),
-					Expr.Add(Expr.Get("x"), Expr.Get("y"))
-				),
+			var src = @"
+pure fun Sum:int (x:int y:int) ->
+    println ""calculated""
+    x + y
 
-				Expr.Array(
-					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(1)),
-					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(2)),
-					Expr.Invoke("Sum", Expr.Int(2), Expr.Int(3)),
-					Expr.Invoke("Sum", Expr.Int(1), Expr.Int(1)),
-					Expr.Invoke("Sum", Expr.Int(2), Expr.Int(3))
-				)
-			};
+new [
+    Sum 1 1
+    Sum 1 2
+    Sum 2 3
+    Sum 1 1
+    Sum 2 3
+]";
 
-			Test(code, new[] { 2, 3, 5, 2, 5 });
+			Test(src, new[] { 2, 3, 5, 2, 5 });
 		}
 
 		[Test]
 		public void Shift()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Array(
-					Expr.ShiftLeft(Expr.Int(2), Expr.Int(1)),
-					Expr.ShiftLeft(Expr.Int(3), Expr.Int(4)),
+			var src = @"
+new [
+    2 <: 1
+    3 <: 4
+    32 :> 1
+    18 :> 2
+    10 :> 10
+]
+";
 
-					Expr.ShiftRight(Expr.Int(32), Expr.Int(1)),
-					Expr.ShiftRight(Expr.Int(18), Expr.Int(2)),
-					Expr.ShiftRight(Expr.Int(10), Expr.Int(10))
-				)
-			};
-
-			Test(code, new [] { 4, 48, 16, 4, 0 });
+			Test(src, new [] { 4, 48, 16, 4, 0 });
 		}
 
 		[Test]
 		public void FunctionComposition1()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Let(
-					"add",
-					Expr.Lambda(
-						new [] { Expr.Arg<int>("a"), Expr.Arg<int>("b") },
-						Expr.Add(Expr.Get("a"), Expr.Get("b"))
-					)
-				),
+			var src = @"
+let add = (a:int b:int) -> a + b
+let square = x:int -> x ** 2 as int
+let inc = x:int -> x + 1
 
-				Expr.Let(
-					"square",
-					Expr.Lambda(
-						new [] { Expr.Arg<int>("x") },
-						Expr.Cast(
-							Expr.Pow(Expr.Get("x"), Expr.Int(2)),
-							"int"
-						)
-					)
-				),
+let asi = add :> square :> inc
+asi 1 2
+";
 
-				Expr.Let(
-					"inc",
-					Expr.Lambda(
-						new [] { Expr.Arg<int>("x") },
-						Expr.Add(Expr.Get("x"), Expr.Int(1))
-					)
-				),
-
-				Expr.Let(
-					"asi",
-					Expr.Compose(
-						Expr.Get("add"),
-						Expr.Get("square"),
-						Expr.Get("inc")
-					)
-				),
-
-				Expr.Invoke("asi", Expr.Int(1), Expr.Int(2))
-			};
-
-			Test(code, 10);
+			Test(src, 10);
 		}
 
 		[Test]
