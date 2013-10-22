@@ -282,7 +282,7 @@ a.Max ()";
 		{
 			Test(@"new [null; null; ""test""]", new[] {null, null, "test"});
 			Test(@"new [[null; ""test2""]]", new[] { null, "test2" });
-			Test(@"new {1 => null; 2 => ""test2""}[2]", "test2");
+			Test(@"(new {1 => null; 2 => ""test2""})[2]", "test2");
 		}
 
 		[Test]

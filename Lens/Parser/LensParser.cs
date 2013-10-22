@@ -604,6 +604,8 @@ namespace Lens.Parser
 		private GetMemberNode parseGetStmbrExpr()
 		{
 			var node = attempt(parseLvalueStmbrExpr);
+			if (node == null)
+				return null;
 
 			var hints = parseTypeArgs().ToList();
 			if (hints.Count > 0)
@@ -666,7 +668,7 @@ namespace Lens.Parser
 		#region Block control structures
 
 		/// <summary>
-		/// block_expr                                  = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
+		/// block_expr                                  = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
 		/// </summary>
 		private NodeBase parseBlockExpr()
 		{
@@ -676,7 +678,8 @@ namespace Lens.Parser
 			       ?? attempt(parseTryStmt)
 			       ?? attempt(parseNewBlockExpr)
 			       ?? attempt(parseInvokeBlockExpr)
-			       ?? attempt(parseLambdaBlockExpr);
+				   ?? attempt(parseInvokeBlockPassExpr)
+			       ?? attempt(parseLambdaBlockExpr) as NodeBase;
 		}
 
 		/// <summary>
@@ -1026,7 +1029,7 @@ namespace Lens.Parser
 		#region Block invocations
 
 		/// <summary>
-		/// invoke_block_expr                           = line_expr { invoke_pass }
+		/// invoke_block_expr                           = line_expr [ INDENT invoke_pass { NL invoke_pass } DEDENT ]
 		/// </summary>
 		private NodeBase parseInvokeBlockExpr()
 		{
@@ -1034,21 +1037,47 @@ namespace Lens.Parser
 			if (expr == null)
 				return null;
 
-			var pass = attempt(parseInvokePass);
-			if (pass == null)
-				return null;
-
-			while (true)
+			if (check(LexemType.Indent))
 			{
+				var pass = attempt(parseInvokePass);
+				if (pass == null)
+					return null;
+
 				(pass.Expression as GetMemberNode).Expression = expr;
 				expr = pass;
 
-				pass = attempt(parseInvokePass);
-				if (pass == null)
-					return expr;
+				while (!check(LexemType.Dedent))
+				{
+					ensure(LexemType.NewLine, "Invoke passes must be separated by newlines!");
+					pass = attempt(parseInvokePass);
+					if (pass == null)
+						return expr;
+
+					(pass.Expression as GetMemberNode).Expression = expr;
+					expr = pass;
+				}
 			}
+
+			return expr;
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		private InvocationNode parseInvokeBlockPassExpr()
+		{
+			var expr = attempt(parseLineExpr);
+			if (expr == null)
+				return null;
+
+			var args = parseInvokeBlockArgs().ToList();
+			if (args.Count == 0)
+				return null;
+
+			return new InvocationNode {Expression = expr, Arguments = args};
+		}
+		
 		/// <summary>
 		/// invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
 		/// </summary>
@@ -1073,15 +1102,30 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// invoke_block_args                           = INDENT { invoke_block_arg } DEDENT
+		/// invoke_block_args                           = INDENT invoke_block_arg { NL invoke_block_arg } DEDENT
 		/// </summary>
 		private IEnumerable<NodeBase> parseInvokeBlockArgs()
 		{
 			if (!check(LexemType.Indent))
 				yield break;
 
+			var node = attempt(parseInvokeBlockArg);
+			if (node == null)
+				yield break;
+
+			yield return node;
+
 			while (!check(LexemType.Dedent))
-				yield return parseInvokeBlockArg();
+			{
+				if(!isStmtSeparator())
+					error("Argument passes must be separated by newlines!");
+
+				node = attempt(parseInvokeBlockArg);
+				if (node == null)
+					yield break;
+
+				yield return node;
+			}
 		}
 
 		/// <summary>
@@ -1089,8 +1133,8 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseInvokeBlockArg()
 		{
-			if(!check(LexemType.PassLeft))
-				error("Left pass is expected before block arguments!");
+			if (!check(LexemType.PassLeft))
+				return null;
 
 			return attempt(parseRefArg)
 			       ?? ensure(parseExpr, "Expression is expected!");
@@ -1283,15 +1327,15 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// paren_expr                                  = "(" ( line_expr | lambda_line_expr ) ")"
+		/// paren_expr                                  = "(" ( lambda_line_expr | line_expr ) ")"
 		/// </summary>
 		private NodeBase parseParenExpr()
 		{
 			if (!check(LexemType.ParenOpen))
 				return null;
 
-			var expr = attempt(parseLineExpr)
-			           ?? attempt(parseLambdaLineExpr);
+			var expr = attempt(parseLambdaLineExpr)
+			           ?? attempt(parseLineExpr);
 
 			if (expr != null)
 			{

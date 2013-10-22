@@ -153,7 +153,7 @@ GC::Collect ()
 		[Test]
 		public void BlacklistIO1()
 		{
-			var src = @"System.IO.Directory::Exists ""C:\A\B""";
+			var src = @"System.IO.Directory::Exists ""C:\\A\\B""";
 			testSubsystem(typeof(System.IO.Directory), SafeModeSubsystem.IO, src);
 		}
 
