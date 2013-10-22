@@ -60,6 +60,11 @@ namespace Lens.Lexer
 					if (!inBounds())
 						break;
 				}
+				else if (isComment())
+				{
+					while (inBounds() && Source[Position] != '\r' && Source[Position] != '\n')
+						Position++;
+				}
 				else
 				{
 					var lex = processStaticLexem() ?? processRegexLexem();
@@ -313,6 +318,15 @@ namespace Lens.Lexer
 		private bool inBounds()
 		{
 			return Position < Source.Length;
+		}
+
+		/// <summary>
+		/// Checks if the cursor is at comment start.
+		/// </summary>
+		/// <returns></returns>
+		private bool isComment()
+		{
+			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
 		}
 
 		/// <summary>

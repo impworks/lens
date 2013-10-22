@@ -1402,6 +1402,23 @@ x = 20";
 			Assert.AreEqual(1, node2.StartLocation.Line);
 		}
 
+		[Test]
+		public void Comments()
+		{
+			var src = @"
+let x = 1 // test
+// test2
+let y = 2
+//test3
+";
+			var result = new[] {
+				Expr.Let("x", Expr.Int(1)),
+				Expr.Let("y", Expr.Int(2))
+			};
+
+			Test(src, result);
+		}
+
 		private static void Test(string source, params NodeBase[] expected)
 		{
 			Assert.AreEqual(expected, Parse(source).ToArray());
