@@ -25,7 +25,7 @@ namespace Lens.Lexer
 		public LensLexer(string src)
 		{
 			Position = 0;
-			Offset = 0;
+			Offset = 1;
 			Line = 1;
 			NewLine = true;
 
@@ -178,7 +178,7 @@ namespace Lens.Lexer
 
 				if (ch == '\n')
 				{
-					Offset = 0;
+					Offset = 1;
 					Line++;
 				}
 

@@ -1250,16 +1250,8 @@ else
 			var node = (AddOperatorNode)result.Single();
 			var variable = node.LeftOperand;
 
-			Assert.AreEqual(new LexemLocation
-			{
-				Line = 1,
-				Offset = 1
-			}, variable.StartLocation);
-			Assert.AreEqual(new LexemLocation
-			{
-				Line = 1,
-				Offset = 2
-			}, variable.EndLocation);
+			Assert.AreEqual(new LexemLocation { Line = 1, Offset = 1 }, variable.StartLocation);
+			Assert.AreEqual(new LexemLocation { Line = 1, Offset = 2 }, variable.EndLocation);
 		}
 
 		[Test]
@@ -1270,11 +1262,7 @@ else
 			var node = (InvocationNodeBase)result.Single();
 			var argument = node.Arguments.Single();
 
-			Assert.AreEqual(new LexemLocation
-			{
-				Line = 1,
-				Offset = 15
-			}, argument.StartLocation);
+			Assert.AreEqual(new LexemLocation { Line = 1, Offset = 15 }, argument.StartLocation);
 		}
 
 		[Test]
@@ -1285,17 +1273,8 @@ else
 			var node = (NewObjectNode)result.Single();
 			var typeSignature = node.TypeSignature;
 
-			Assert.AreEqual(new LexemLocation
-			{
-				Line = 1,
-				Offset = 5
-			}, typeSignature.StartLocation);
-
-			Assert.AreEqual(new LexemLocation
-			{
-				Line = 1,
-				Offset = 13
-			}, typeSignature.EndLocation);
+			Assert.AreEqual(new LexemLocation { Line = 1, Offset = 5 }, typeSignature.StartLocation);
+			Assert.AreEqual(new LexemLocation { Line = 1, Offset = 13 }, typeSignature.EndLocation);
 		}
 
 		[Test]
