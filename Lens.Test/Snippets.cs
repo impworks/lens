@@ -822,7 +822,7 @@ invParse ""37"" ""13""
 		public void FunctionComposition3()
 		{
 			var src = @"
-fun invConcat:string (x:string y:string) -> x + y
+fun invConcat:string (x:string y:string) -> y + x
 let invParse = invConcat :> int::Parse
 invParse ""37"" ""13""
 ";
