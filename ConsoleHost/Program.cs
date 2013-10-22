@@ -25,7 +25,7 @@ namespace ConsoleHost
 				try
 				{
 					var lc = new LensCompiler(new LensCompilerOptions { AllowSave = true, MeasureTime = timer });
-					var res = lc.Compile(source);
+					var res = lc.Run(source);
 					printObject(res);
 
 					if (timer)
