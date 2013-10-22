@@ -158,15 +158,15 @@ let a = 1
 			Test("(1 as Nullable<int>) <> null", true);
 
 			Test("null == null", true, true);
-			Test("null == new object ()", false);
+			Test("null == (new object ())", false);
 		}
 
 		[Test]
 		public void GetIndexTest()
 		{
-			Test("new [1; 2; 3][1]", 2);
-			Test(@"new [[""a""; ""b""; ""c""]][1]", "b");
-			Test(@"new { ""a"" => 1; ""b"" => 2}[""a""]", 1);
+			Test("(new [1; 2; 3])[1]", 2);
+			Test(@"(new [[""a""; ""b""; ""c""]])[1]", "b");
+			Test(@"(new { ""a"" => 1; ""b"" => 2})[""a""]", 1);
 		}
 
 		[Test]
