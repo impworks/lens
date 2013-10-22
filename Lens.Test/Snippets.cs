@@ -809,69 +809,25 @@ asi 1 2
 		[Test]
 		public void FunctionComposition2()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Let(
-					"invConcat",
-					Expr.Lambda(
-						new [] { Expr.Arg<string>("x"), Expr.Arg<string>("y") },
-						Expr.Add(
-							Expr.Get("y"),
-							Expr.Get("x")
-						)
-					)
-				),
+			var src = @"
+let invConcat = (x:string y:string) -> y + x
+let invParse = invConcat :> int::Parse
+invParse ""37"" ""13""
+";
 
-				Expr.Let(
-					"invParse",
-					Expr.Compose(
-						Expr.Get("invConcat"),
-						Expr.GetMember("int", "Parse")
-					)
-				),
-
-				Expr.Invoke(
-					"invParse",
-					Expr.Str("37"),
-					Expr.Str("13")
-				)
-			};
-
-			Test(code, 1337);
+			Test(src, 1337);
 		}
 
 		[Test]
 		public void FunctionComposition3()
 		{
-			var code = new NodeBase[]
-			{
-				Expr.Fun(
-					"invConcat",
-					"string",
-					true,
-					new [] { Expr.Arg<string>("x"), Expr.Arg<string>("y") },
-					Expr.Add(
-						Expr.Get("x"),
-						Expr.Get("y")
-					)
-				),
+			var src = @"
+fun invConcat:string (x:string y:string) -> x + y
+let invParse = invConcat :> int::Parse
+invParse ""37"" ""13""
+";
 
-				Expr.Let(
-					"invParse",
-					Expr.Compose(
-						Expr.Get("invConcat"),
-						Expr.GetMember("int", "Parse")
-					)
-				),
-
-				Expr.Invoke(
-					"invParse",
-					Expr.Str("37"),
-					Expr.Str("13")
-				)
-			};
-
-			Test(code, 1337);
+			Test(src, 1337);
 		}
 	}
 }
