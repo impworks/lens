@@ -125,6 +125,7 @@ namespace Lens.Lexer
 						Error("Inconsistent identation!");
 
 					addLexem(LexemType.Dedent, getPosition());
+
 					if (currIndent == IndentLookup.Peek())
 						break;
 				}

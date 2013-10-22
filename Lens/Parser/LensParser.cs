@@ -36,7 +36,12 @@ namespace Lens.Parser
 			yield return parseStmt();
 
 			while (!check(LexemType.EOF))
+			{
+				if(!isStmtSeparator())
+					error("Statements must be separated by newlines!");
+
 				yield return parseStmt();
+			}
 		}
 
 		/// <summary>
@@ -48,7 +53,7 @@ namespace Lens.Parser
 			       ?? attempt(parseRecordDef)
 			       ?? attempt(parseTypeDef)
 			       ?? attempt(parseFunDef)
-				   ?? ensure(parseGlobalStmt, "Unknown kind of statement!");
+				   ?? ensure(parseLocalStmt, "Unknown kind of statement!");
 		}
 
 		#endregion
@@ -144,9 +149,6 @@ namespace Lens.Parser
 			var nsp = ensure(parseNamespace, "A namespace is expected!");
 			var node = new UsingNode {Namespace = nsp.FullSignature};
 
-			if(!check(LexemType.NewLine) && !peek(LexemType.EOF))
-				error("Newline is expected after using statement!");
-
 			return node;
 		}
 
@@ -191,7 +193,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// type_def                                    = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
+		/// type_def                                    = "type" identifier INDENT type_stmt { type_stmt } DEDENT
 		/// </summary>
 		private TypeDefinitionNode parseTypeDef()
 		{
@@ -253,8 +255,6 @@ namespace Lens.Parser
 			node.Arguments = parseFunArgs() ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, "Arrow is expected!");
 			node.Body = ensure(parseBlock, "Function body is expected!");
-
-			check(LexemType.NewLine);
 
 			return node;
 		}
@@ -341,19 +341,10 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Newline is expected!");
+				if(!isStmtSeparator())
+					error("Statements must be separated by a newline!");
 				yield return ensure(parseLocalStmt, "An expression is expected!");
 			}
-		}
-
-		private NodeBase parseGlobalStmt()
-		{
-			var node = parseLocalStmt();
-
-			if (!check(LexemType.NewLine) && !peekAny(LexemType.EOF, LexemType.Dedent))
-				error("Statements must be separated by newlines!");
-
-			return node;
 		}
 
 		/// <summary>
@@ -689,7 +680,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// if_block                                    = if_header block [ "else" block ]
+		/// if_block                                    = if_header block [ NL "else" block ]
 		/// </summary>
 		private IfNode parseIfBlock()
 		{
@@ -786,7 +777,8 @@ namespace Lens.Parser
 			if (!check(LexemType.Finally))
 				return null;
 
-			return parseBlock();
+			var block = parseBlock();
+			return block;
 		}
 
 		/// <summary>
@@ -1341,7 +1333,7 @@ namespace Lens.Parser
 				return null;
 
 			node.TrueAction = ensure(parseBlock, "Condition expression is expected!");
-			if (check(LexemType.Else))
+			if ( check(LexemType.Else))
 				node.FalseAction = ensure(parseBlock, "Expression is expected!");
 
 			return node;

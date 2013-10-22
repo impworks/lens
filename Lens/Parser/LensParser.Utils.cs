@@ -111,6 +111,14 @@ namespace Lens.Parser
 			LexemId = Math.Min(LexemId + count, Lexems.Length - 1);
 		}
 
+		/// <summary>
+		/// Checks if there is a newline or the block has ended.
+		/// </summary>
+		private bool isStmtSeparator()
+		{
+			return check(LexemType.NewLine) || Lexems[LexemId - 1].Type == LexemType.Dedent;
+		}
+
 		#endregion
 
 		#region Node handling
