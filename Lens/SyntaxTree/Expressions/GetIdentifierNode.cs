@@ -43,8 +43,12 @@ namespace Lens.SyntaxTree.Expressions
 
 			try
 			{
-				m_Method = ctx.MainType.ResolveMethod(Identifier, Type.EmptyTypes);
-				return FunctionalHelper.CreateFuncType(m_Method.ReturnType);
+				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
+				if (methods.Length > 1)
+					Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
+
+				m_Method = methods[0];
+				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.ArgumentTypes);
 			}
 			catch (KeyNotFoundException) { }
 

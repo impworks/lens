@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
@@ -17,7 +19,21 @@ namespace Lens.SyntaxTree.Operators
 		public override void ProcessClosures(Context ctx)
 		{
 			var leftType = LeftOperand.GetExpressionType(ctx);
+
+			var rightGetter = RightOperand as GetMemberNode;
+			if (!IsLeft && leftType.IsCallableType() && rightGetter != null)
+			{
+				if (rightGetter.TypeHints.IsEmpty())
+				{
+					var returnType = ctx.ResolveMethod(leftType, "Invoke").ReturnType;
+					rightGetter.TypeHints = new List<TypeSignature> {TypeSignature.Parse(returnType.FullName)};
+				}
+			}
+
 			var rightType = RightOperand.GetExpressionType(ctx);
+
+			if (rightGetter != null)
+				rightGetter.TypeHints.Clear();
 
 			if (!IsLeft && leftType.IsCallableType() && rightType.IsCallableType())
 			{
