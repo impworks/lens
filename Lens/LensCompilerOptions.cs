@@ -74,9 +74,9 @@ namespace Lens
 		public SafeModeSubsystem SafeModeExplicitSubsystems = SafeModeSubsystem.None;
 
 		/// <summary>
-		/// Checks whether compilation stage times must be measured & printed.
+		/// Checks whether compilation stage times must be measured.
 		/// Default = false
 		/// </summary>
-		public bool DebugOutput;
+		public bool MeasureTime;
 	}
 }

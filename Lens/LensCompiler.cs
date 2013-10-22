@@ -17,12 +17,15 @@ namespace Lens
 		public LensCompiler(LensCompilerOptions opts = null)
 		{
 			m_Context = new Context(opts);
+			Measurements = new Dictionary<string, TimeSpan>();
 		}
 
 		public void Dispose()
 		{
 			GlobalPropertyHelper.UnregisterContext(m_Context.ContextId);
 		}
+
+		public Dictionary<string, TimeSpan> Measurements;
 
 		private Context m_Context;
 
@@ -117,8 +120,8 @@ namespace Lens
 			var res = action();
 			var end = DateTime.Now;
 
-			if(m_Context.Options.DebugOutput)
-				Console.WriteLine("{0}: {1:0.00} ms", title, (end - start).TotalMilliseconds);
+			if (m_Context.Options.MeasureTime)
+				Measurements[title] = end - start;
 
 			return res;
 		}
