@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class StdlibTest : TestBase
+	internal class StdlibTest : TestBase
 	{
 		[Test]
 		public void FormatTest()

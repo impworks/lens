@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// An operator node that subtracts a value from another value.
 	/// </summary>
-	public class SubtractOperatorNode : BinaryOperatorNodeBase
+	internal class SubtractOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

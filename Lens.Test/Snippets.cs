@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
 using NUnit.Framework;
@@ -7,7 +6,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class Snippets : TestBase
+	internal class Snippets : TestBase
 	{
 		[Test]
 		public void SaveAndLoadLocal()

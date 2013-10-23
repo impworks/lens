@@ -12,7 +12,7 @@ using Lens.SyntaxTree.Operators;
 
 namespace Lens.Parser
 {
-	public partial class LensParser
+	internal partial class LensParser
 	{
 		public List<NodeBase> Nodes { get; private set; }
 

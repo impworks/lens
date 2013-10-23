@@ -2,7 +2,7 @@
 
 namespace Lens.Utils
 {
-	public static class DictionaryExtensions
+	internal static class DictionaryExtensions
 	{
 		/// <summary>
 		/// Compare two dictionaries by their key value pairs.

@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the exception being thrown or rethrown.
 	/// </summary>
-	public class ThrowNode : NodeBase, IStartLocationTrackingEntity
+	internal class ThrowNode : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The exception expression to be thrown.

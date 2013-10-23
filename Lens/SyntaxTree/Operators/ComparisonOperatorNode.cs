@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing object comparison operations.
 	/// </summary>
-	public class ComparisonOperatorNode : BinaryOperatorNodeBase
+	internal class ComparisonOperatorNode : BinaryOperatorNodeBase
 	{
 		public ComparisonOperatorNode(ComparisonOperatorKind kind = default(ComparisonOperatorKind))
 		{

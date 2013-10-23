@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace Lens.Test
 {
-	public class TestBase
+	internal class TestBase
 	{
 		protected static void Test(string src, object value, bool testConstants = false)
 		{

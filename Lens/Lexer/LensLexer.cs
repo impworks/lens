@@ -9,7 +9,7 @@ namespace Lens.Lexer
 	/// <summary>
 	/// Parses the given string into a sequence of lexems.
 	/// </summary>
-	public partial class LensLexer
+	internal partial class LensLexer
 	{
 		public List<Lexem> Lexems { get; private set; }
 

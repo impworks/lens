@@ -2,7 +2,7 @@
 
 namespace Lens.Lexer
 {
-	public partial class LensLexer
+	internal partial class LensLexer
 	{
 		private StaticLexemDefinition[] Keywords = new[]
 		{

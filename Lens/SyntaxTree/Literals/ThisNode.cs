@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Literals
 	/// A node that represents the `this` pointer.
 	/// For compiler's internal usage only!
 	/// </summary>
-	public class ThisNode : NodeBase
+	internal class ThisNode : NodeBase
 	{
 		protected override System.Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

@@ -89,7 +89,7 @@ namespace Lens
 		/// <summary>
 		/// Compile the script for many invocations.
 		/// </summary>
-		public Func<object> Compile(IEnumerable<NodeBase> nodes)
+		internal Func<object> Compile(IEnumerable<NodeBase> nodes)
 		{
 			var script = m_Context.Compile(nodes);
 			return script.Run;
@@ -106,7 +106,7 @@ namespace Lens
 		/// <summary>
 		/// Run the script and get a return value.
 		/// </summary>
-		public object Run(IEnumerable<NodeBase> nodes)
+		internal object Run(IEnumerable<NodeBase> nodes)
 		{
 			return Compile(nodes)();
 		}

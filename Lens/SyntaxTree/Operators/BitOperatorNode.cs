@@ -4,7 +4,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
-	public class BitOperatorNode : BinaryOperatorNodeBase
+	internal class BitOperatorNode : BinaryOperatorNodeBase
 	{
 		public BitOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{

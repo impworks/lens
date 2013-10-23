@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing the operator that returns a default value for the type.
 	/// </summary>
-	public class DefaultOperatorNode : TypeOperatorNodeBase
+	internal class DefaultOperatorNode : TypeOperatorNodeBase
 	{
 		/// <summary>
 		/// Types that are equal to i4.0 in bytecode (according to C# compiler)

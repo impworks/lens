@@ -11,7 +11,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// Finds a list of possible extension methods for a given type.
 	/// </summary>
-	public class ExtensionMethodResolver
+	internal class ExtensionMethodResolver
 	{
 		static ExtensionMethodResolver()
 		{

@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node representing string literals.
 	/// </summary>
-	public class StringNode : LiteralNodeBase<string>
+	internal class StringNode : LiteralNodeBase<string>
 	{
 		public StringNode(string value = null)
 		{

@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing AND, OR or XOR binary operations.
 	/// </summary>
-	public class BooleanOperatorNode : BinaryOperatorNodeBase
+	internal class BooleanOperatorNode : BinaryOperatorNodeBase
 	{
 		public BooleanOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{

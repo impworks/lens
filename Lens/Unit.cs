@@ -3,7 +3,7 @@
 	/// <summary>
 	/// The void-like class for LENS.
 	/// </summary>
-	public class Unit
+	internal class Unit
 	{
 		public override string ToString()
 		{

@@ -9,7 +9,7 @@ using Lens.Utils;
 
 namespace Lens.Parser
 {
-	public partial class LensParser
+	internal partial class LensParser
 	{
 		[DebuggerStepThrough]
 		private void error(string msg, params object[] args)

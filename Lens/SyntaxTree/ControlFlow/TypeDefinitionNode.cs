@@ -5,13 +5,13 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the algebraic type definition construct.
 	/// </summary>
-	public class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
+	internal class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
 	{ }
 
 	/// <summary>
 	/// Definition of an algebraic type entry.
 	/// </summary>
-	public class TypeLabel : LocationEntity
+	internal class TypeLabel : LocationEntity
 	{
 		/// <summary>
 		/// The name of the entry.

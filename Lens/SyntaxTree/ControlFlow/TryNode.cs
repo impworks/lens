@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// The try node.
 	/// </summary>
-	public class TryNode : NodeBase, IStartLocationTrackingEntity
+	internal class TryNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public TryNode()
 		{

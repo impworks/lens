@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// An operator node that multiplies one value by another value.
 	/// </summary>
-	public class MultiplyOperatorNode : BinaryOperatorNodeBase
+	internal class MultiplyOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

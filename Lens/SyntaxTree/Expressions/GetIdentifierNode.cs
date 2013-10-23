@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a local variable or a function.
 	/// </summary>
-	public class GetIdentifierNode : IdentifierNodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity, IPointerProvider
+	internal class GetIdentifierNode : IdentifierNodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity, IPointerProvider
 	{
 		private MethodEntity m_Method;
 		private GlobalPropertyInfo m_Property;

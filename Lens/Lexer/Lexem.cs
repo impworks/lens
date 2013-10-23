@@ -2,7 +2,7 @@
 
 namespace Lens.Lexer
 {
-	public class Lexem : LocationEntity
+	internal class Lexem : LocationEntity
 	{
 		public readonly LexemType Type;
 

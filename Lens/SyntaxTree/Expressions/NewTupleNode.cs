@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new tuple declaration.
 	/// </summary>
-	public class NewTupleNode : ValueListNodeBase<NodeBase>
+	internal class NewTupleNode : ValueListNodeBase<NodeBase>
 	{
 		private Type[] m_Types;
 

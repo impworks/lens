@@ -8,7 +8,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// A cache-friendly version of type signature.
 	/// </summary>
-	public class TypeSignature : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal class TypeSignature : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		public TypeSignature(string name, params TypeSignature[] args)
 			: this(name, null, args)

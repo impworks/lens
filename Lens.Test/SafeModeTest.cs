@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class SafeModeTest : TestBase
+	internal class SafeModeTest : TestBase
 	{
 		[Test]
 		public void BlacklistNamespaces1()

@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// The base node for 
 	/// </summary>
-	abstract public class MemberNodeBase : AccessorNodeBase
+	abstract internal class MemberNodeBase : AccessorNodeBase
 	{
 		/// <summary>
 		/// Type signature to access a static type.

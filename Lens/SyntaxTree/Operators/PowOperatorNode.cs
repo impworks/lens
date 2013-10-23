@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// An operator node that raises one value to the power of another value.
 	/// </summary>
-	public class PowOperatorNode : BinaryOperatorNodeBase
+	internal class PowOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

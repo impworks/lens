@@ -3,7 +3,7 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Expressions
 {
-	public class GetArgumentNode : NodeBase
+	internal class GetArgumentNode : NodeBase
 	{
 		public int ArgumentId;
 

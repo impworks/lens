@@ -1,6 +1,6 @@
 ﻿namespace Lens.Lexer
 {
-	public class StaticLexemDefinition
+	internal class StaticLexemDefinition
 	{
 		public readonly string Representation;
 

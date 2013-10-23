@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new array declaration.
 	/// </summary>
-	public class NewArrayNode : ValueListNodeBase<NodeBase>
+	internal class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
 		private Type m_ItemType;
 

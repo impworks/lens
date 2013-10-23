@@ -8,7 +8,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	public class ForeachNode : NodeBase
+	internal class ForeachNode : NodeBase
 	{
 		/// <summary>
 		/// A variable to assign current item to.

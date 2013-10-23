@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// Base node for value lists: dictionaries, arrays, lists etc.
 	/// </summary>
-	public abstract class ValueListNodeBase<T> : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal abstract class ValueListNodeBase<T> : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		protected ValueListNodeBase()
 		{

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -9,7 +10,7 @@ namespace Lens.SyntaxTree
 	/// <summary>
 	/// The base class for all syntax tree nodes.
 	/// </summary>
-	public abstract class NodeBase : LocationEntity
+	internal abstract class NodeBase : LocationEntity
 	{
 		/// <summary>
 		/// Checks if the current node is a constant.
@@ -26,6 +27,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// Calculates the type of expression represented by current node.
 		/// </summary>
+		[DebuggerStepThrough]
 		public Type GetExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (m_ExpressionType == null)
@@ -47,6 +49,7 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		/// <param name="ctx">Pointer to current context.</param>
 		/// <param name="mustReturn">Flag indicating the node should return a value.</param>
+		[DebuggerStepThrough]
 		public void Compile(Context ctx, bool mustReturn)
 		{
 			if (IsConstant && ctx.Options.UnrollConstants)
@@ -108,6 +111,7 @@ namespace Lens.SyntaxTree
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
 		public void Error(string message, params object[] args)
 		{
 			Error(this, message, args);
@@ -119,6 +123,7 @@ namespace Lens.SyntaxTree
 		/// <param name="message">Error message.</param>
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
 		public void Error(LocationEntity entity, string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
@@ -129,6 +134,7 @@ namespace Lens.SyntaxTree
 		/// Throws a generic error for incorrect location setting.
 		/// </summary>
 		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
 		protected void LocationSetError()
 		{
 			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));

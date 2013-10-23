@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing the typeof operator.
 	/// </summary>
-	public class TypeofOperatorNode : TypeOperatorNodeBase
+	internal class TypeofOperatorNode : TypeOperatorNodeBase
 	{
 		public TypeofOperatorNode(string type = null)
 		{

@@ -9,7 +9,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// A class to resolve types by their string signatures.
 	/// </summary>
-	public class TypeResolver
+	internal class TypeResolver
 	{
 		static TypeResolver()
 		{

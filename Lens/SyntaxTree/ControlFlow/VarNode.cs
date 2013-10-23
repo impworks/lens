@@ -3,7 +3,7 @@
 	/// <summary>
 	/// The variable declaration node.
 	/// </summary>
-	public class VarNode : NameDeclarationNodeBase
+	internal class VarNode : NameDeclarationNodeBase
 	{
 		public VarNode(string name = null) : base(name, false)
 		{ }

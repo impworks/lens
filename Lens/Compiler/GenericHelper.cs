@@ -10,7 +10,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// Resolves generic arguments for types and methods.
 	/// </summary>
-	public static class GenericHelper
+	internal static class GenericHelper
 	{
 		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
 

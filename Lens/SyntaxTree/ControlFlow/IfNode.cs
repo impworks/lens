@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A conditional expression.
 	/// </summary>
-	public class IfNode : NodeBase, IStartLocationTrackingEntity
+	internal class IfNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public IfNode()
 		{

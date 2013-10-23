@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing write access to a member of a type, field or property.
 	/// </summary>
-	public class SetMemberNode : MemberNodeBase
+	internal class SetMemberNode : MemberNodeBase
 	{
 		private bool m_IsStatic;
 		private PropertyWrapper m_Property;

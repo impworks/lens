@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node representing an integer literal.
 	/// </summary>
-	public class IntNode : LiteralNodeBase<int>
+	internal class IntNode : LiteralNodeBase<int>
 	{
 		public IntNode(int value = 0)
 		{

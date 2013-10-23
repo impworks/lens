@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// An operator node that divides one value by another value.
 	/// </summary>
-	public class RemainderOperatorNode : BinaryOperatorNodeBase
+	internal class RemainderOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

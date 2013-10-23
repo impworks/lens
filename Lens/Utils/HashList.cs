@@ -9,7 +9,7 @@ namespace Lens.Utils
 	/// Dictionary, учитывающий также порядок добавления элементов.
 	/// </summary>
 	/// <typeparam name="T">Тип данных</typeparam>
-	public class HashList<T> : IEnumerable<string>
+	internal class HashList<T> : IEnumerable<string>
 	{
 		private readonly Dictionary<string, T> _Data;
 		private readonly List<string> _Keys;

@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// The base for all unary operators.
 	/// </summary>
-	public abstract class UnaryOperatorNodeBase : OperatorNodeBase, IStartLocationTrackingEntity
+	internal abstract class UnaryOperatorNodeBase : OperatorNodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The operand.

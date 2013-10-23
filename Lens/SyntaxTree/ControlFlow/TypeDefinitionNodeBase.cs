@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base node for algebraic types and records.
 	/// </summary>
-	public abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
+	internal abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
 	{
 		protected TypeDefinitionNodeBase()
 		{

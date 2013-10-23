@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node representing a unit literal ().
 	/// </summary>
-	public class UnitNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal class UnitNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		protected override void compile(Context ctx, bool mustReturn)
 		{

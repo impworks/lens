@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// An anonymous function definition node.
 	/// </summary>
-	public abstract class FunctionNodeBase : NodeBase, IStartLocationTrackingEntity
+	internal abstract class FunctionNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
 		protected FunctionNodeBase()
 		{

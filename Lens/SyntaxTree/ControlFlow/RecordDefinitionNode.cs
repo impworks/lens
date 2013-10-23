@@ -5,13 +5,13 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the record definition construct.
 	/// </summary>
-	public class RecordDefinitionNode : TypeDefinitionNodeBase<RecordField>
+	internal class RecordDefinitionNode : TypeDefinitionNodeBase<RecordField>
 	{ }
 
 	/// <summary>
 	/// Definition of a record entry.
 	/// </summary>
-	public class RecordField : LocationEntity, IStartLocationTrackingEntity
+	internal class RecordField : LocationEntity, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// The name of the entry.

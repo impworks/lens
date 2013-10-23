@@ -2,7 +2,7 @@
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	public class UsingNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal class UsingNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
 	{
 		/// <summary>
 		/// Namespace to be resolved.

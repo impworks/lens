@@ -10,7 +10,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// The base entity for a method and a constructor that allows lookup by argument types.
 	/// </summary>
-	abstract class MethodEntityBase : TypeContentsBase
+	abstract internal class MethodEntityBase : TypeContentsBase
 	{
 		protected MethodEntityBase(bool isImported = false)
 		{

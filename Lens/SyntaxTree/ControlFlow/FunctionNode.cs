@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A function that has a name.
 	/// </summary>
-	public class FunctionNode : FunctionNodeBase
+	internal class FunctionNode : FunctionNodeBase
 	{
 		/// <summary>
 		/// Function name.

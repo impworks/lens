@@ -7,7 +7,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
-	public class ShiftOperatorNode : BinaryOperatorNodeBase
+	internal class ShiftOperatorNode : BinaryOperatorNodeBase
 	{
 		public bool IsLeft { get; set; }
 

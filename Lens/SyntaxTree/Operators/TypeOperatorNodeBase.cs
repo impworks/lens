@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// The base node for operators that accept a type name.
 	/// </summary>
-	public abstract class TypeOperatorNodeBase : NodeBase
+	internal abstract class TypeOperatorNodeBase : NodeBase
 	{
 		/// <summary>
 		/// Type signature parameter.
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// The base node for operators that accept a type name.
 	/// </summary>
-	public abstract class TypeCheckOperatorNodeBase : TypeOperatorNodeBase
+	internal abstract class TypeCheckOperatorNodeBase : TypeOperatorNodeBase
 	{
 		/// <summary>
 		///  The expression to check against the type.

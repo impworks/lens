@@ -8,7 +8,7 @@ using Lens.Utils;
 
 namespace Lens.Compiler
 {
-	partial class Context
+	internal partial class Context
 	{
 		/// <summary>
 		/// Finds a declared type by its name.

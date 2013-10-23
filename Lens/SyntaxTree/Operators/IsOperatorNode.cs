@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// Checks if the object is of given type.
 	/// </summary>
-	public class IsOperatorNode : TypeCheckOperatorNodeBase
+	internal class IsOperatorNode : TypeCheckOperatorNodeBase
 	{
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

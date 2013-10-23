@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new dictionary.
 	/// </summary>
-	public class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
+	internal class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
 	{
 		private Type m_KeyType;
 		private Type m_ValueType;

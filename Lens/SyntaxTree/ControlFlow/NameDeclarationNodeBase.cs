@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	public abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
+	internal abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
 		protected NameDeclarationNodeBase(string name, bool immutable)
 		{

@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// An operator node that adds two values together.
 	/// </summary>
-	public class AddOperatorNode : BinaryOperatorNodeBase
+	internal class AddOperatorNode : BinaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

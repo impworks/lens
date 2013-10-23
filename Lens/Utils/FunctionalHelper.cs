@@ -7,7 +7,7 @@ namespace Lens.Utils
 	/// <summary>
 	/// A type that provides helpers for manipulating Func and Action types.
 	/// </summary>
-	public static class FunctionalHelper
+	internal static class FunctionalHelper
 	{
 		static FunctionalHelper()
 		{

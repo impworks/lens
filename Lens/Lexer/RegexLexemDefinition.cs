@@ -2,7 +2,7 @@
 
 namespace Lens.Lexer
 {
-	public class RegexLexemDefinition
+	internal class RegexLexemDefinition
 	{
 		public readonly Regex Regex;
 

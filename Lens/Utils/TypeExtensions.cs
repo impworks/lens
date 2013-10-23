@@ -12,7 +12,7 @@ namespace Lens.Utils
 	/// <summary>
 	/// A collection of helpful methods for types.
 	/// </summary>
-	public static class TypeExtensions
+	internal static class TypeExtensions
 	{
 		static TypeExtensions()
 		{

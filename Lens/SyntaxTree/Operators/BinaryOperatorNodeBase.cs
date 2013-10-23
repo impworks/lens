@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// The base for all binary operators.
 	/// </summary>
-	public abstract class BinaryOperatorNodeBase : OperatorNodeBase
+	internal abstract class BinaryOperatorNodeBase : OperatorNodeBase
 	{
 		/// <summary>
 		/// The operand to the left side.

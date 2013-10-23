@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class ParserTest : TestBase
+	internal class ParserTest : TestBase
 	{
 		[Test]
 		public void Testy()

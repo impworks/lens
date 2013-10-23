@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing a cast expression.
 	/// </summary>
-	public class CastOperatorNode : TypeCheckOperatorNodeBase
+	internal class CastOperatorNode : TypeCheckOperatorNodeBase
 	{
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

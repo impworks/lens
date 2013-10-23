@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing the boolean inversion operator.
 	/// </summary>
-	public class InversionOperatorNode : UnaryOperatorNodeBase
+	internal class InversionOperatorNode : UnaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

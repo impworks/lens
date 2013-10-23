@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A node representing the unary numeric negation operation.
 	/// </summary>
-	public class NegationOperatorNode : UnaryOperatorNodeBase
+	internal class NegationOperatorNode : UnaryOperatorNodeBase
 	{
 		public override string OperatorRepresentation
 		{

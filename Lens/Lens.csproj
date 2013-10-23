@@ -201,7 +201,6 @@
     <Compile Include="Utils\EnumerableExtensions.cs" />
     <Compile Include="Utils\FunctionalHelper.cs" />
     <Compile Include="Utils\HashList.cs" />
-    <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
     <Compile Include="Compiler\LocalName.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />

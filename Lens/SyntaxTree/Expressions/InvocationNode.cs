@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a method being invoked.
 	/// </summary>
-	public class InvocationNode : InvocationNodeBase
+	internal class InvocationNode : InvocationNodeBase
 	{
 		/// <summary>
 		/// An expression to invoke the method on.
@@ -85,25 +85,25 @@ namespace Lens.SyntaxTree.Expressions
 						throw;
 				}
 
-                // resolve a callable field
-                try
-                {
-                    ctx.ResolveField(type, node.MemberName);
-                    resolveExpression(ctx, node);
-                    return;
-                }
-                catch (KeyNotFoundException) { }
+				// resolve a callable field
+				try
+				{
+					ctx.ResolveField(type, node.MemberName);
+					resolveExpression(ctx, node);
+					return;
+				}
+				catch (KeyNotFoundException) { }
 
-                // resolve a callable field
-                try
-                {
-                    ctx.ResolveProperty(type, node.MemberName);
-                    resolveExpression(ctx, node);
-                    return;
-                }
-                catch (KeyNotFoundException) { }
+				// resolve a callable field
+				try
+				{
+					ctx.ResolveProperty(type, node.MemberName);
+					resolveExpression(ctx, node);
+					return;
+				}
+				catch (KeyNotFoundException) { }
 
-                // resolve a local function that is implicitly used as an extension method
+				// resolve a local function that is implicitly used as an extension method
 				// move invocation source to arguments
 				if (Arguments[0] is UnitNode)
 					Arguments[0] = m_InvocationSource;
@@ -197,66 +197,66 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Compile
 
-	    protected override void compile(Context ctx, bool mustReturn)
-	    {
-	        if (!m_IsResolved)
-	            resolve(ctx);
+		protected override void compile(Context ctx, bool mustReturn)
+		{
+			if (!m_IsResolved)
+				resolve(ctx);
 
-	        var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentILGenerator;
 
 //	        Type constraint = null;
 
-	        if (m_InvocationSource != null)
-	        {
-	            var type = m_InvocationSource.GetExpressionType(ctx);
+			if (m_InvocationSource != null)
+			{
+				var type = m_InvocationSource.GetExpressionType(ctx);
 
-	            if (type.IsValueType)
-	            {
+				if (type.IsValueType)
+				{
 //	                constraint = type;
-	                if (m_InvocationSource is IPointerProvider)
-	                {
-	                    (m_InvocationSource as IPointerProvider).PointerRequired = true;
-	                    m_InvocationSource.Compile(ctx, true);
-	                }
-	                else
-	                {
-	                    var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
-	                    gen.EmitLoadLocal(tmpVar, true);
+					if (m_InvocationSource is IPointerProvider)
+					{
+						(m_InvocationSource as IPointerProvider).PointerRequired = true;
+						m_InvocationSource.Compile(ctx, true);
+					}
+					else
+					{
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
+						gen.EmitLoadLocal(tmpVar, true);
 
-	                    m_InvocationSource.Compile(ctx, true);
-	                    gen.EmitSaveObject(type);
+						m_InvocationSource.Compile(ctx, true);
+						gen.EmitSaveObject(type);
 
-	                    gen.EmitLoadLocal(tmpVar, true);
-	                }
-	            }
-	            else
-	            {
-	                m_InvocationSource.Compile(ctx, true);
-	            }
-	        }
+						gen.EmitLoadLocal(tmpVar, true);
+					}
+				}
+				else
+				{
+					m_InvocationSource.Compile(ctx, true);
+				}
+			}
 
-	        if (m_ArgTypes.Length > 0)
-	        {
-	            var destTypes = m_Method.ArgumentTypes;
+			if (m_ArgTypes.Length > 0)
+			{
+				var destTypes = m_Method.ArgumentTypes;
 
-	            for (var idx = 0; idx < Arguments.Count; idx++)
-	            {
-	                var arg = Arguments[idx];
-	                var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
-	                var targetRef = destTypes[idx].IsByRef;
+				for (var idx = 0; idx < Arguments.Count; idx++)
+				{
+					var arg = Arguments[idx];
+					var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
+					var targetRef = destTypes[idx].IsByRef;
 
-	                if (argRef != targetRef)
-	                {
-	                    if (argRef)
-	                        Error(arg, CompilerMessages.ReferenceArgUnexpected);
-	                    else
-	                        Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
-	                }
+					if (argRef != targetRef)
+					{
+						if (argRef)
+							Error(arg, CompilerMessages.ReferenceArgUnexpected);
+						else
+							Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+					}
 
-	                var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
-	                expr.Compile(ctx, true);
-	            }
-	        }
+					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
+					expr.Compile(ctx, true);
+				}
+			}
 
 //	        if (constraint != null)
 //	        {
@@ -264,17 +264,17 @@ namespace Lens.SyntaxTree.Expressions
 //	        }
 //	        else
 //	        {
-	            var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
-	            gen.EmitCall(m_Method.MethodInfo, isVirt);
+				var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
+				gen.EmitCall(m_Method.MethodInfo, isVirt);
 //	        }
-	    }
+		}
 
-	    #endregion
+		#endregion
 
 		#region Equality members
 
-		    protected
-		    bool Equals(InvocationNode other)
+			protected
+			bool Equals(InvocationNode other)
 		{
 			return base.Equals(other)
 				&& Equals(Expression, other.Expression);

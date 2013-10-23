@@ -3,7 +3,7 @@ using Lens.Stdlib;
 
 namespace Lens.Compiler
 {
-	public partial class Context
+	internal partial class Context
 	{
 		public void InitStdlib()
 		{

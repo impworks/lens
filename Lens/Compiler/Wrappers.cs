@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Lens.Compiler
 {
-	public class MethodWrapper
+	internal class MethodWrapper
 	{
 		public MethodWrapper() { }
 
@@ -35,14 +35,14 @@ namespace Lens.Compiler
 		}
 	}
 
-	public class ConstructorWrapper
+	internal class ConstructorWrapper
 	{
 		public ConstructorInfo ConstructorInfo;
 		public Type Type;
 		public Type[] ArgumentTypes;
 	}
 
-	public class FieldWrapper
+	internal class FieldWrapper
 	{
 		public string Name;
 		public FieldInfo FieldInfo;
@@ -52,7 +52,7 @@ namespace Lens.Compiler
 		public Type FieldType;
 	}
 
-	public class PropertyWrapper
+	internal class PropertyWrapper
 	{
 		public string Name;
 		public Type Type;

@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A base class for various forms of method invocation that stores arguments.
 	/// </summary>
-	abstract public class InvocationNodeBase : NodeBase, IStartLocationTrackingEntity
+	abstract internal class InvocationNodeBase : NodeBase, IStartLocationTrackingEntity
 	{
 		protected InvocationNodeBase()
 		{

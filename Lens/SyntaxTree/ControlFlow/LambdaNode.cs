@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node that represents the lambda function.
 	/// </summary>
-	public class LambdaNode : FunctionNodeBase
+	internal class LambdaNode : FunctionNodeBase
 	{
 		/// <summary>
 		/// The pointer to the method entity defined for this lambda.

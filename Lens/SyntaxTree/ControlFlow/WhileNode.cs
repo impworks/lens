@@ -5,7 +5,7 @@ using Lens.SyntaxTree.Literals;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	public class WhileNode : NodeBase, IStartLocationTrackingEntity
+	internal class WhileNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public WhileNode()
 		{

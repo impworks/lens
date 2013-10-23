@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// A base node for all operators.
 	/// </summary>
-	public abstract class OperatorNodeBase : NodeBase
+	internal abstract class OperatorNodeBase : NodeBase
 	{
 		/// <summary>
 		/// A textual operator representation for error reporting.

@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new object creation.
 	/// </summary>
-	public class NewObjectNode : InvocationNodeBase
+	internal class NewObjectNode : InvocationNodeBase
 	{
 		public NewObjectNode(string type = null)
 		{

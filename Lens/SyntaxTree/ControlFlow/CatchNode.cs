@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// The safe block of code.
 	/// </summary>
-	public class CatchNode : NodeBase, IStartLocationTrackingEntity
+	internal class CatchNode : NodeBase, IStartLocationTrackingEntity
 	{
 		public CatchNode()
 		{

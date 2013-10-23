@@ -11,7 +11,7 @@ using Lens.Utils;
 
 namespace Lens.Compiler
 {
-	public partial class Context
+	internal partial class Context
 	{
 		#region Methods
 

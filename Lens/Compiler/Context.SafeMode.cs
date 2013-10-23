@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Lens.Compiler
 {
-	public partial class Context
+	internal partial class Context
 	{
 		#region Fields
 

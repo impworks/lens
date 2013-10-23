@@ -11,7 +11,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// The main context class that stores information about currently compiled Assembly.
 	/// </summary>
-	public partial class Context
+	internal partial class Context
 	{
 		#region Constants
 

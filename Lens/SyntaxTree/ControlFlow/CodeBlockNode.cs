@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A set of consecutive code statements.
 	/// </summary>
-	public class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
+	internal class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
 	{
 		public CodeBlockNode()
 		{

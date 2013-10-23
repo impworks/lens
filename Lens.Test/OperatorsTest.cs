@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class OperatorsTest : TestBase
+	internal class OperatorsTest : TestBase
 	{
 		[Test]
 		public void TypeofTest()

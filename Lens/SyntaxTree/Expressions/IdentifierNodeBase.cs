@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// The base node for identifier access.
 	/// </summary>
-	public abstract class IdentifierNodeBase : NodeBase
+	internal abstract class IdentifierNodeBase : NodeBase
 	{
 		public string Identifier { get; set; }
 

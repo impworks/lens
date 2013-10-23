@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node representing "true" or "false" literals.
 	/// </summary>
-	public class BooleanNode : LiteralNodeBase<bool>
+	internal class BooleanNode : LiteralNodeBase<bool>
 	{
 		public BooleanNode(bool value = false)
 		{

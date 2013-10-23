@@ -1,6 +1,6 @@
 ﻿namespace Lens.Lexer
 {
-	public enum LexemType
+	internal enum LexemType
 	{
 		EOF,
 		NewLine,

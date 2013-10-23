@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing assignment to an index.
 	/// </summary>
-	public class SetIndexNode : IndexNodeBase
+	internal class SetIndexNode : IndexNodeBase
 	{
 		/// <summary>
 		/// Value to be assigned.

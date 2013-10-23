@@ -9,7 +9,7 @@ using Lens.SyntaxTree.Operators;
 
 namespace Lens.SyntaxTree
 {
-	public static class Expr
+	internal static class Expr
 	{
 		#region Constants
 		

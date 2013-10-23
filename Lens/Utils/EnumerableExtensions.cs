@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Lens.Utils
 {
-	public static class EnumerableExtensions
+	internal static class EnumerableExtensions
 	{
 		public static bool IsAnyOf<T>(this T obj, params T[] list)
 		{
