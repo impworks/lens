@@ -35,13 +35,15 @@ namespace Lens.Compiler
 
 			_TypeAliases = new Dictionary<string, Type>
 			{
-				{"object", typeof (Object)},
-				{"bool", typeof (Boolean)},
-				{"int", typeof (Int32)},
-				{"long", typeof (Int64)},
-				{"float", typeof (Single)},
-				{"double", typeof (Double)},
-				{"string", typeof (String)},
+				{"object", typeof (object)},
+				{"bool", typeof (bool)},
+				{"int", typeof (int)},
+				{"long", typeof (long)},
+				{"float", typeof (float)},
+				{"double", typeof (double)},
+				{"string", typeof (string)},
+				{"char", typeof (char)},
+				{"byte", typeof (byte)},
 			};
 
 			loadAssemblies();
