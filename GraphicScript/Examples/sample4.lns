@@ -8,7 +8,7 @@ bound.Height = 500
 bound.Fill = Colors::Yellow
 Screen.Add bound
 
-fun maker of Figure x:int ->
+fun maker:Figure (x:int) ->
     let left = 50
     let right = 500
 
@@ -17,14 +17,13 @@ fun maker of Figure x:int ->
     f.Y = (x+1)*50
     var speed = rand()*5
     f.Update = ->
-        if(f.X < left && speed < 0)
+        if f.X < left && speed < 0 then
             speed = -speed
-        if(f.X > right && speed > 0)
+        if f.X > right && speed > 0 then
             speed = -speed
         f.X = f.X + speed
-
     f
 
 let objs = Enumerable::Range 0 10
-    |> Select ((x:int) -> maker x)
+    |> Select (x:int -> maker x)
 Screen.Add objs
