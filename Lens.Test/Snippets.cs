@@ -231,7 +231,7 @@ var msg = 1
 try
     var zero = 0
     1 / zero
-catch ex:DivisionByZeroException
+catch ex:DivideByZeroException
     msg = 2
 msg
 ";
