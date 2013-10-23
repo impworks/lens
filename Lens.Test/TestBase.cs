@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Lens.Lexer;
+using Lens.Parser;
 using Lens.SyntaxTree;
 using NUnit.Framework;
 
@@ -28,6 +31,18 @@ namespace Lens.Test
 		protected static void Test(IEnumerable<NodeBase> nodes, object value, LensCompilerOptions opts)
 		{
 			Assert.AreEqual(value, Compile(nodes, opts));
+		}
+
+		protected static void Test(string source, params NodeBase[] expected)
+		{
+			Assert.AreEqual(expected, Parse(source).ToArray());
+		}
+
+		protected static IEnumerable<NodeBase> Parse(string source)
+		{
+			var lexer = new LensLexer(source);
+			var parser = new LensParser(lexer.Lexems);
+			return parser.Nodes;
 		}
 
 		protected static object Compile(string src, LensCompilerOptions opts = null)

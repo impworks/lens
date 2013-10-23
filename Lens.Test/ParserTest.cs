@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class ParserTest
+	public class ParserTest : TestBase
 	{
 		[Test]
 		public void Testy()
@@ -1417,18 +1417,6 @@ let y = 2
 			};
 
 			Test(src, result);
-		}
-
-		private static void Test(string source, params NodeBase[] expected)
-		{
-			Assert.AreEqual(expected, Parse(source).ToArray());
-		}
-
-		private static IEnumerable<NodeBase> Parse(string source)
-		{
-			var lexer = new LensLexer(source);
-			var parser = new LensParser(lexer.Lexems);
-			return parser.Nodes;
 		}
 	}
 }
