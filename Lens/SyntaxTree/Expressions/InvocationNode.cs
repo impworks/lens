@@ -204,7 +204,7 @@ namespace Lens.SyntaxTree.Expressions
 
 	        var gen = ctx.CurrentILGenerator;
 
-	        Type constraint = null;
+//	        Type constraint = null;
 
 	        if (m_InvocationSource != null)
 	        {
@@ -212,7 +212,7 @@ namespace Lens.SyntaxTree.Expressions
 
 	            if (type.IsValueType)
 	            {
-	                constraint = type;
+//	                constraint = type;
 	                if (m_InvocationSource is IPointerProvider)
 	                {
 	                    (m_InvocationSource as IPointerProvider).PointerRequired = true;
@@ -258,15 +258,15 @@ namespace Lens.SyntaxTree.Expressions
 	            }
 	        }
 
-	        if (constraint != null)
-	        {
-	            gen.EmitCall(m_Method.MethodInfo, true, constraint);
-	        }
-	        else
-	        {
+//	        if (constraint != null)
+//	        {
+//	            gen.EmitCall(m_Method.MethodInfo, true, constraint);
+//	        }
+//	        else
+//	        {
 	            var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
 	            gen.EmitCall(m_Method.MethodInfo, isVirt);
-	        }
+//	        }
 	    }
 
 	    #endregion

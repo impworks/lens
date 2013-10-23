@@ -23,13 +23,13 @@ namespace Lens.Test
 		[Test]
 		public void Using()
 		{
-			Test("using System", new UsingNode { Namespace = "System" });
+			TestParser("using System", new UsingNode { Namespace = "System" });
 		}
 
 		[Test]
 		public void MultiUsing()
 		{
-			Test("using Lens.Parser", new UsingNode { Namespace = "Lens.Parser" });
+			TestParser("using Lens.Parser", new UsingNode { Namespace = "Lens.Parser" });
 		}
 
 		[Test]
@@ -46,7 +46,7 @@ record Student
 				Expr.Field("Age", "int")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -67,7 +67,7 @@ type Suit
 				Expr.Label("Diamonds")
 			);
 			
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -90,7 +90,7 @@ type Card
 				Expr.Label("ValueCard", "Tuple<Suit,int>")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -105,7 +105,7 @@ type ArrayHolder
 				Expr.Label("Array", "int[][]")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -119,11 +119,11 @@ type ArrayHolder
 				Expr.Negate(Expr.Get("x"))
 			);
 			
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
-		public void InvocationTest()
+		public void InvocationTestParser()
 		{
 			var result = Expr.Invoke(
 				Expr.Get("sqrt"),
@@ -133,7 +133,7 @@ type ArrayHolder
 				)
 			);
 
-			Test("sqrt (sq1 + sq2)", result);
+			TestParser("sqrt (sq1 + sq2)", result);
 		}
 
 		[Test]
@@ -171,7 +171,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -180,7 +180,7 @@ type ArrayHolder
 			var src = @"var v = 1 + 1";
 			var result = Expr.Var("v", Expr.Add(Expr.Int(1), Expr.Int(1)));
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -189,7 +189,7 @@ type ArrayHolder
 			var src = @"let v = 1 + 1";
 			var result = Expr.Let("v", Expr.Add(Expr.Int(1), Expr.Int(1)));
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -202,7 +202,7 @@ type ArrayHolder
 				Expr.Add(Expr.Int(1), Expr.Int(2))
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -216,7 +216,7 @@ type ArrayHolder
 				Expr.True()
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -229,7 +229,7 @@ type ArrayHolder
 				Expr.Double(13.37)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -242,7 +242,7 @@ type ArrayHolder
 				{ Expr.Get("c"), Expr.True()}
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -255,7 +255,7 @@ type ArrayHolder
 				Expr.False()
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -264,7 +264,7 @@ type ArrayHolder
 			var src = "let getFive = -> 5";
 			var result = Expr.Let("getFive", Expr.Lambda(Expr.Int(5)));
 			
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -283,7 +283,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -301,7 +301,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -310,7 +310,7 @@ type ArrayHolder
 			var src = "a = b";
 			var result = Expr.Set("a", Expr.Get("b"));
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -322,7 +322,7 @@ type ArrayHolder
 				"GetHashCode"
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -337,7 +337,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -352,7 +352,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -364,7 +364,7 @@ type ArrayHolder
 				Expr.GetMember("Enumerable<int>", "Empty")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -377,7 +377,7 @@ type ArrayHolder
 				Expr.False()
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -390,7 +390,7 @@ type ArrayHolder
 				Expr.Get("a")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -399,7 +399,7 @@ type ArrayHolder
 			var src = "Singleton::Instance = null";
 			var result = Expr.SetMember("Singleton", "Instance", Expr.Null());
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -417,7 +417,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -435,7 +435,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -460,7 +460,7 @@ type ArrayHolder
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -493,7 +493,7 @@ test
 				Expr.False()
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -511,7 +511,7 @@ if true then
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -524,7 +524,7 @@ if true then
 				Expr.Block(Expr.Get("b"))
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -547,7 +547,7 @@ if true then
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -557,15 +557,20 @@ if true then
 while a > 0 do
     a
 b";
-			var result = Expr.While(
-				Expr.Greater(
-					Expr.Get("a"),
-					Expr.Int(0)
-				),
-				Expr.Block(Expr.Get("a"))
-			);
+			var result = new NodeBase[]
+				{
+					Expr.While(
+						Expr.Greater(
+							Expr.Get("a"),
+							Expr.Int(0)
+							),
+						Expr.Block(Expr.Get("a"))
+						),
+					Expr.Get("b")
+				};
 
-			Test(src, result, Expr.Get("b"));
+
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -591,7 +596,7 @@ catch ex:DivisionByZeroException
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -629,7 +634,7 @@ finally
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -651,7 +656,7 @@ finally
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -659,7 +664,7 @@ finally
 		{
 			var src = "let a = typeof int";
 			var result = Expr.Let("a", Expr.Typeof("int"));
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -667,7 +672,7 @@ finally
 		{
 			var src = "let b = default System.Collections.Generic.List<int>";
 			var result = Expr.Let("b", Expr.Default("System.Collections.Generic.List<int>"));
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -679,7 +684,7 @@ finally
 				Expr.Get("b")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -697,7 +702,7 @@ finally
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -705,7 +710,7 @@ finally
 		{
 			var src = "1 is double";
 			var result = Expr.Is(Expr.Int(1), new TypeSignature("double"));
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -726,7 +731,7 @@ finally
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -742,7 +747,7 @@ finally
 				Expr.Int(10)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -769,7 +774,7 @@ finally
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -777,7 +782,7 @@ finally
 		{
 			var src = "1 ";
 			var result = Expr.Int(1);
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -785,7 +790,7 @@ finally
 		{
 			var src = "()";
 			var result = Expr.Unit();
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -796,7 +801,7 @@ test ()";
 			var definition = Expr.Fun("test", "int", Expr.Int(10));
 			var invocation = Expr.Invoke("test", Expr.Unit());
 
-			Test(src, definition, invocation);
+			TestParser(src, definition, invocation);
 		}
 
 		[Test]
@@ -805,7 +810,7 @@ test ()";
 			var src = "throw new NotImplementedException ()";
 			var result = Expr.Throw("NotImplementedException");
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -828,7 +833,7 @@ catch ex:DivisionByZeroException
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -850,7 +855,7 @@ catch ex:DivisionByZeroException
 					}
 				);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -864,7 +869,7 @@ catch ex:DivisionByZeroException
 				TypeHints = { new TypeSignature("int") }
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -890,7 +895,7 @@ catch ex:DivisionByZeroException
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -902,7 +907,7 @@ catch ex:DivisionByZeroException
 				Expr.Unit()
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -919,7 +924,7 @@ catch ex:DivisionByZeroException
 				Expr.Str("hello")
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -935,7 +940,7 @@ catch ex:DivisionByZeroException
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -951,7 +956,7 @@ catch ex:DivisionByZeroException
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -966,7 +971,7 @@ catch ex:DivisionByZeroException
 				Expr.Set("y", Expr.Get("x"))
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -981,7 +986,7 @@ catch ex:DivisionByZeroException
 				Expr.Ref(Expr.GetMember("Type", "Field"))
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1005,7 +1010,7 @@ type TestType
 				)
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1035,7 +1040,7 @@ a.Tag + b.Tag";
 				)
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1066,7 +1071,7 @@ fun part (x:int) ->
 						)
 					)
 				);
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1120,7 +1125,7 @@ new [ a is TestType; a is Small; a is Large ]";
 				)
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1150,7 +1155,7 @@ a.A * a.B
 					Expr.GetMember(Expr.Get("a"), "B")
 				)
 			};
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1178,7 +1183,7 @@ a.A * b.B
 				)
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1199,7 +1204,7 @@ x";
 				Expr.Get("x")
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1226,7 +1231,7 @@ result
 				Expr.Get("result")
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1239,7 +1244,7 @@ else
     2
 ";
 			var result = Expr.If(Expr.Get("x"), Expr.Block(Expr.Int(1)), Expr.Block(Expr.Int(2)));
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1278,7 +1283,7 @@ else
 		}
 
 		[Test]
-		public void ComplexWhileTest()
+		public void ComplexWhileTestParser()
 		{
 			var src = @"using System.Net
 
@@ -1322,7 +1327,7 @@ a = 1";
 				Expr.Set("a", Expr.Int(1))
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1340,7 +1345,7 @@ a = 1";
 					)
 				};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1361,7 +1366,7 @@ for a in x..y do
 					)
 				};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1380,7 +1385,7 @@ for a in x..y do
 				)
 			);
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 
 		[Test]
@@ -1416,7 +1421,7 @@ let y = 2
 				Expr.Let("y", Expr.Int(2))
 			};
 
-			Test(src, result);
+			TestParser(src, result);
 		}
 	}
 }

@@ -829,11 +829,5 @@ invParse ""37"" ""13""
 
 			Test(src, 1337);
 		}
-
-		[Test]
-		public void sample()
-		{
-			Test(@"int::Parse ""123""", 123);
-		}
 	}
 }

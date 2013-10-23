@@ -75,8 +75,8 @@ namespace Lens.Test
 		[Test]
 		public void Generics2()
 		{
-			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<_>[]"));
-			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<int, Predicate<_>>"));
+			Assert.Throws<LensCompilerException>(() => Resolver.ResolveType("Tuple<_>[]"));
+			Assert.Throws<LensCompilerException>(() => Resolver.ResolveType("Tuple<int, Predicate<_>>"));
 		}
 
 		[Test]

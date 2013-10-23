@@ -33,7 +33,7 @@ namespace Lens.Test
 			Assert.AreEqual(value, Compile(nodes, opts));
 		}
 
-		protected static void Test(string source, params NodeBase[] expected)
+		protected static void TestParser(string source, params NodeBase[] expected)
 		{
 			Assert.AreEqual(expected, Parse(source).ToArray());
 		}

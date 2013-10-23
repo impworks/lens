@@ -52,21 +52,6 @@ r
 		}
 
 		[Test]
-		public void TimesTest3()
-		{
-			var src = @"
-var r = string::Empty
-let fx = x:int ->
-    println ""R = {0}"" r
-    println ""X = {0}"" x
-    r = r + x.ToString ()
-5.times fx
-r
-";
-			Test(src, "01234");
-		}
-
-		[Test]
 		public void RandTest1()
 		{
 			var src = "rand ()";
@@ -134,6 +119,16 @@ r
 			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
 			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
 			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
+		}
+
+		[Test]
+		public void NullRefTest()
+		{
+			var src = @"
+let tos = x:int -> x.ToString()
+tos 5
+";
+			Test(src, "5");
 		}
 	}
 }

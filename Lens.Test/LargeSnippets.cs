@@ -113,7 +113,7 @@ let create = (x:int y:int) -> Screen.Add (maker x y)
 					)
 				};
 
-			Test(src, nodes);
+			TestParser(src, nodes);
 		}
 	}
 }

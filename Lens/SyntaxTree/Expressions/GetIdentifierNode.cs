@@ -174,7 +174,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (name.ArgumentId.HasValue)
 			{
-				gen.EmitLoadArgument(name.ArgumentId.Value);
+				gen.EmitLoadArgument(name.ArgumentId.Value, PointerRequired);
 				if(name.IsRefArgument && !PointerRequired)
 					gen.EmitLoadFromPointer(name.Type);
 			}
