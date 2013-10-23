@@ -24,10 +24,6 @@ namespace Lens.Compiler
 					new List<string> { "System.Text.RegularExpressions" }
 				},
 				{
-					"System.Drawing",
-					new List<string> { "System.Drawing" }
-				},
-				{
 					"System.Core",
 					new List<string> { "System.Linq" }
 				}

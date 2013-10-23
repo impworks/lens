@@ -208,14 +208,14 @@ fx (1.0 / 0)";
 			Test("new float ()", 0.0f);
 			Test("new double ()", 0.0);
 
-			Test("(new Point ()).IsEmpty", true);
+			Test("(new System.Drawing.Point ()).IsEmpty", true);
 		}
 
 		[Test]
 		public void SetField()
 		{
 			var src = @"
-var pt = new Point ()
+var pt = new System.Drawing.Point ()
 pt.X = 10
 pt.Y = 20
 pt.IsEmpty";
@@ -663,9 +663,9 @@ data.Sum (x:Store -> x.Value)
 			var src = @"
 var a : int
 var b : string
-var c : Point
+var c : System.Drawing.Point
 
-new [a == 0; b == null; c == (new Point ())]";
+new [a == 0; b == null; c == (new System.Drawing.Point ())]";
 
 			Test(src, new [] { true, true, true });
 		}

@@ -125,9 +125,10 @@ namespace Lens.Parser
 			if (arg == null)
 				yield break;
 
-			if (peekAny(new [] { LexemType.Comma, LexemType.Greater }))
-				yield return arg;
+			if (!peekAny(new[] {LexemType.Comma, LexemType.Greater}))
+				yield break;
 
+			yield return arg;
 			while (check(LexemType.Comma))
 				yield return ensure(parseType, "Type argument is expected!");
 
