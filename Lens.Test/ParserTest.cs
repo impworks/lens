@@ -778,6 +778,24 @@ finally
 		}
 
 		[Test]
+		public void OperatorPriority3()
+		{
+			var src = "a.x < b && c > d";
+			var result = Expr.And(
+				Expr.Less(
+				Expr.GetMember(Expr.Get("a"), "x"),
+					Expr.Get("b")
+				),
+				Expr.Greater(
+					Expr.Get("c"),
+					Expr.Get("d")
+				)
+			);
+
+			TestParser(src, result);
+		}
+
+		[Test]
 		public void TrailingWhitespace()
 		{
 			var src = "1 ";
