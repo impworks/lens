@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Lens.SyntaxTree;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.Lexer
@@ -69,7 +70,7 @@ namespace Lens.Lexer
 				{
 					var lex = processStaticLexem() ?? processRegexLexem();
 					if (lex == null)
-						Error("Unknown lexem!");
+						Error(LexerMessages.UnknownLexem);
 
 					Lexems.Add(lex);
 				}
@@ -127,7 +128,7 @@ namespace Lens.Lexer
 					if (IndentLookup.Count > 0)
 						IndentLookup.Pop();
 					else
-						Error("Inconsistent identation!");
+						Error(LexerMessages.InconsistentIdentation);
 
 					addLexem(LexemType.Dedent, getPosition());
 
@@ -192,7 +193,7 @@ namespace Lens.Lexer
 				skip();
 			}
 
-			Error("Unclosed string literal!");
+			Error(LexerMessages.UnclosedString);
 		}
 
 		/// <summary>
@@ -308,7 +309,7 @@ namespace Lens.Lexer
 					return t;
 			}
 
-			Error("Unknown escape sequence: \\{0}", t);
+			Error(LexerMessages.UnknownEscape, t);
 			return ' ';
 		}
 

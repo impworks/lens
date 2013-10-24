@@ -9,6 +9,7 @@ using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
+using Lens.Translations;
 
 namespace Lens.Parser
 {
@@ -38,7 +39,7 @@ namespace Lens.Parser
 			while (!check(LexemType.EOF))
 			{
 				if(!isStmtSeparator())
-					error("Statements must be separated by newlines!");
+					error(ParserMessages.NewlineSeparatorExpected);
 
 				yield return parseStmt();
 			}
@@ -53,7 +54,7 @@ namespace Lens.Parser
 			       ?? attempt(parseRecordDef)
 			       ?? attempt(parseTypeDef)
 			       ?? attempt(parseFunDef)
-				   ?? ensure(parseLocalStmt, "Unknown kind of statement!");
+				   ?? ensure(parseLocalStmt, ParserMessages.UnknownStatement);
 		}
 
 		#endregion
@@ -77,7 +78,7 @@ namespace Lens.Parser
 					var sb = new StringBuilder(identifier);
 					while (check(LexemType.Dot))
 					{
-						identifier = ensure(LexemType.Identifier, "An identifier is expected!").Value;
+						identifier = ensure(LexemType.Identifier, ParserMessages.IdentifierExpected).Value;
 						sb.Append(".");
 						sb.Append(identifier);
 					}
@@ -130,9 +131,9 @@ namespace Lens.Parser
 
 			var list = new List<TypeSignature> {arg};
 			while (check(LexemType.Comma))
-				list.Add(ensure(parseType, "Type argument is expected!"));
+				list.Add(ensure(parseType, ParserMessages.TypeArgumentExpected));
 
-			ensure(LexemType.Greater, "Unmatched paren!");
+			ensure(LexemType.Greater, ParserMessages.SymbolExpected, '>');
 			return list;
 		}
 
@@ -148,7 +149,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Using))
 				return null;
 
-			var nsp = ensure(parseNamespace, "A namespace is expected!");
+			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
 			var node = new UsingNode {Namespace = nsp.FullSignature};
 
 			return node;
@@ -164,15 +165,15 @@ namespace Lens.Parser
 
 			var node = new RecordDefinitionNode();
 
-			node.Name = ensure(LexemType.Identifier, "Record name must be an identifier!").Value;
-			ensure(LexemType.Indent, "Record body must be indented block!");
+			node.Name = ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected).Value;
+			ensure(LexemType.Indent, ParserMessages.RecordIndentExpected);
 			
 			var field = bind(parseRecordStmt);
 			node.Entries.Add(field);
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Record fields must be separated by a newline!");
+				ensure(LexemType.NewLine, ParserMessages.RecordSeparatorExpected);
 				field = bind(parseRecordStmt);
 				node.Entries.Add(field);
 			}
@@ -187,9 +188,9 @@ namespace Lens.Parser
 		{
 			var node = new RecordField();
 
-			node.Name = ensure(LexemType.Identifier, "Record field name must be an identifier!").Value;
-			ensure(LexemType.Colon, "Colon is expected!");
-			node.Type = ensure(parseType, "Record field type specified is expected!");
+			node.Name = ensure(LexemType.Identifier, ParserMessages.RecordFieldIdentifierExpected).Value;
+			ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+			node.Type = ensure(parseType, ParserMessages.RecordFieldTypeExpected);
 
 			return node;
 		}
@@ -204,15 +205,15 @@ namespace Lens.Parser
 
 			var node = new TypeDefinitionNode();
 
-			node.Name = ensure(LexemType.Identifier, "Type name must be an identifier!").Value;
-			ensure(LexemType.Indent, "Type body must be indented block!");
+			node.Name = ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
+			ensure(LexemType.Indent, ParserMessages.TypeIndentExpected);
 
 			var field = bind(parseTypeStmt);
 			node.Entries.Add(field);
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Type labels must be separated by a newline!");
+				ensure(LexemType.NewLine, ParserMessages.TypeSeparatorExpected);
 				field = bind(parseTypeStmt);
 				node.Entries.Add(field);
 			}
@@ -227,9 +228,9 @@ namespace Lens.Parser
 		{
 			var node = new TypeLabel();
 
-			node.Name = ensure(LexemType.Identifier, "Type label name must be an identifier!").Value;
+			node.Name = ensure(LexemType.Identifier, ParserMessages.TypeLabelIdentifierExpected).Value;
 			if (check(LexemType.Of))
-				node.TagType = ensure(parseType, "Label type is expected!");
+				node.TagType = ensure(parseType, ParserMessages.TypeLabelTagTypeExpected);
 
 			return node;
 		}
@@ -245,18 +246,18 @@ namespace Lens.Parser
 			if (!check(LexemType.Fun))
 			{
 				if (node.IsPure)
-					error("Function definition is expected!");
+					error(ParserMessages.FunctionDefExpected);
 				else
 					return null;
 			}
 
-			node.Name = ensure(LexemType.Identifier, "Function name must be an identifier!").Value;
+			node.Name = ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
 			if (check(LexemType.Colon))
-				node.ReturnTypeSignature = ensure(parseType, "Function return type is expected!");
+				node.ReturnTypeSignature = ensure(parseType, ParserMessages.FunctionReturnExpected);
 
 			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
-			ensure(LexemType.Arrow, "Arrow is expected!");
-			node.Body = ensure(parseBlock, "Function body is expected!");
+			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
+			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
 
 			return node;
 		}
@@ -285,7 +286,7 @@ namespace Lens.Parser
 			node.Name = getValue();
 			skip();
 			node.IsRefArgument = check(LexemType.Ref);
-			node.TypeSignature = ensure(parseType, "Argument type is expected!");
+			node.TypeSignature = ensure(parseType, ParserMessages.ArgTypeExpected);
 
 			return node;
 		}
@@ -339,13 +340,13 @@ namespace Lens.Parser
 			if (!check(LexemType.Indent))
 				yield break;
 
-			yield return ensure(parseLocalStmt, "An expression is expected!");
+			yield return ensure(parseLocalStmt, ParserMessages.ExpressionExpected);
 
 			while (!check(LexemType.Dedent))
 			{
 				if(!isStmtSeparator())
-					error("Statements must be separated by a newline!");
-				yield return ensure(parseLocalStmt, "An expression is expected!");
+					error(ParserMessages.NewlineSeparatorExpected);
+				yield return ensure(parseLocalStmt, ParserMessages.ExpressionExpected);
 			}
 		}
 
@@ -381,13 +382,13 @@ namespace Lens.Parser
 				return null;
 
 			var node = new VarNode();
-			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
+			node.Name = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
 			if (check(LexemType.Colon))
-				node.Type = ensure(parseType, "Variable type is expected!");
+				node.Type = ensure(parseType, ParserMessages.VarTypeExpected);
 			else if(check(LexemType.Assign))
-				node.Value = ensure(parseExpr, "Initializer expression is expected!");
+				node.Value = ensure(parseExpr, ParserMessages.InitExpressionExpected);
 			else
-				error("Initializer expresion or type signature is expected!");
+				error(ParserMessages.InitExpressionOrTypeExpected);
 
 			return node;
 		}
@@ -401,9 +402,9 @@ namespace Lens.Parser
 				return null;
 
 			var node = new LetNode();
-			node.Name = ensure(LexemType.Identifier, "Variable name must be an identifier!").Value;
-			ensure(LexemType.Assign, "Assignment sign is expected!");
-			node.Value = ensure(parseExpr, "Initializer expression is expected!");
+			node.Name = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+			ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
+			node.Value = ensure(parseExpr, ParserMessages.InitExpressionExpected);
 
 			return node;
 		}
@@ -433,13 +434,13 @@ namespace Lens.Parser
 			var node = new SetIdentifierNode();
 			node.Identifier = getValue();
 			skip();
-			node.Value = ensure(parseExpr, "Expression is expected!");
+			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 
 			return node;
 		}
 
 		/// <summary>
-		/// set_stmbr_stmt <SetMemberNode>              = type "::" identifier "=" expr
+		/// set_stmbr_stmt                              = type "::" identifier "=" expr
 		/// </summary>
 		private SetMemberNode parseSetStmbrStmt()
 		{
@@ -452,12 +453,12 @@ namespace Lens.Parser
 
 			var node = new SetMemberNode();
 			node.StaticType = type;
-			node.MemberName = ensure(LexemType.Identifier, "Member name is expected!").Value;
+			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
 			if (!check(LexemType.Assign))
 				return null;
 
-			node.Value = ensure(parseExpr, "Expression is expected!");
+			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 
 			return node;
 		}
@@ -471,7 +472,7 @@ namespace Lens.Parser
 			if (node == null || !check(LexemType.Assign))
 				return null;
 
-			var expr = ensure(parseExpr, "Assignment expression is expected!");
+			var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
 			return makeSetter(node, expr);
 		}
 
@@ -551,7 +552,7 @@ namespace Lens.Parser
 
 			var node = new GetMemberNode();
 			node.StaticType = type;
-			node.MemberName = ensure(LexemType.Identifier, "Member name is expected!").Value;
+			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 			return node;
 		}
 
@@ -634,8 +635,8 @@ namespace Lens.Parser
 				return null;
 
 			var node = new GetIndexNode();
-			node.Index = ensure(parseLineExpr, "Index expression is expected!");
-			ensure(LexemType.SquareClose, "Unmatched paren!");
+			node.Index = ensure(parseLineExpr, ParserMessages.IndexExpressionExpected);
+			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
 			return node;
 		}
 
@@ -648,7 +649,7 @@ namespace Lens.Parser
 				return null;
 
 			var node = new GetMemberNode();
-			node.MemberName = ensure(LexemType.Identifier, "Identifier is expected!").Value;
+			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
 			var args = attempt(parseTypeArgs);
 			if (args != null)
@@ -698,9 +699,9 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.TrueAction = ensure(parseBlock, "Condition block is expected!");
+			node.TrueAction = ensure(parseBlock, ParserMessages.ConditionBlockExpected);
 			if (check(LexemType.Else))
-				node.FalseAction = ensure(parseBlock, "Code block is expected!");
+				node.FalseAction = ensure(parseBlock, ParserMessages.CodeBlockExpected);
 
 			return node;
 		}
@@ -714,7 +715,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, "Loop body block is expected!");
+			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
 			return node;
 		}
 
@@ -727,7 +728,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, "Loop body block is expected!");
+			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
 			return node;
 		}
 
@@ -740,12 +741,12 @@ namespace Lens.Parser
 				return null;
 
 			var node = new TryNode();
-			node.Code = ensure(parseBlock, "Try block is expected!");
+			node.Code = ensure(parseBlock, ParserMessages.TryBlockExpected);
 			node.CatchClauses = parseCatchStmtList().ToList();
 			node.Finally = attempt(parseFinallyStmt);
 
 			if (node.Finally == null && node.CatchClauses.Count == 0)
-				error("Catch clause is expected!");
+				error(ParserMessages.CatchExpected);
 
 			return node;
 		}
@@ -771,11 +772,11 @@ namespace Lens.Parser
 			if (peek(LexemType.Identifier))
 			{
 				node.ExceptionVariable = getValue();
-				ensure(LexemType.Colon, "Colon is expected!");
-				node.ExceptionType = ensure(parseType, "Exception type is expected!");
+				ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+				node.ExceptionType = ensure(parseType, ParserMessages.ExceptionTypeExpected);
 			}
 
-			node.Code = ensure(parseBlock, "Exception handler code block is expected!");
+			node.Code = ensure(parseBlock, ParserMessages.ExceptionHandlerExpected);
 			return node;
 		}
 
@@ -802,7 +803,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Arrow))
 				return null;
 
-			node.Body = ensure(parseBlock, "Function body is expected!");
+			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
 			return node;
 		}
 
@@ -819,8 +820,8 @@ namespace Lens.Parser
 				return null;
 
 			var node = new IfNode();
-			node.Condition = ensure(parseLineExpr, "Condition is expected!");
-			ensure(LexemType.Then, "Then keyword is expected!");
+			node.Condition = ensure(parseLineExpr, ParserMessages.ConditionExpected);
+			ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
 
 			return node;
 		}
@@ -834,8 +835,8 @@ namespace Lens.Parser
 				return null;
 
 			var node = new WhileNode();
-			node.Condition = ensure(parseLineExpr, "Condition is expected!");
-			ensure(LexemType.Do, "Do keyword is expected!");
+			node.Condition = ensure(parseLineExpr, ParserMessages.ConditionExpected);
+			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
 
 			return node;
 		}
@@ -849,21 +850,21 @@ namespace Lens.Parser
 				return null;
 
 			var node = new ForeachNode();
-			node.VariableName = ensure(LexemType.Identifier, "Variable name is expected!").Value;
-			ensure(LexemType.In, "In keyword is expected!");
+			node.VariableName = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+			ensure(LexemType.In, ParserMessages.SymbolExpected, "in");
 
-			var iter = ensure(parseLineExpr, "Sequence expression is expected!");
+			var iter = ensure(parseLineExpr, ParserMessages.SequenceExpected);
 			if (check(LexemType.DoubleDot))
 			{
 				node.RangeStart = iter;
-				node.RangeEnd = ensure(parseLineExpr, "Range end expression is expected!");
+				node.RangeEnd = ensure(parseLineExpr, ParserMessages.RangeEndExpected);
 			}
 			else
 			{
 				node.IterableExpression = iter;
 			}
 
-			ensure(LexemType.Do, "Do keyword is expected!");
+			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
 			return node;
 		}
 
@@ -899,7 +900,7 @@ namespace Lens.Parser
 			if(node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.ParenClose, "Unmatched brace!");
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 
 			return node;
 		}
@@ -917,7 +918,7 @@ namespace Lens.Parser
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.DoubleSquareClose, "Unmatched brace!");
+			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
 
 			return node;
 		}
@@ -935,7 +936,7 @@ namespace Lens.Parser
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.SquareClose, "Unmatched brace!");
+			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 
 			return node;
 		}
@@ -953,7 +954,7 @@ namespace Lens.Parser
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.CurlyClose, "Unmatched brace!");
+			ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
 
 			return node;
 		}
@@ -966,12 +967,12 @@ namespace Lens.Parser
 			if (!check(LexemType.Indent))
 				yield break;
 
-			yield return ensure(parseLineExpr, "Initializer expression expected!");
+			yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Initializer expressions must be separated by a newline!");
-				yield return ensure(parseLineExpr, "Initializer expression expected!");
+				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
+				yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
 			}
 		}
 
@@ -987,16 +988,16 @@ namespace Lens.Parser
 			if (value != null)
 				yield return value.Value;
 			else
-				error("Initializer expression expected!");
+				error(ParserMessages.InitExpressionExpected);
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Initializer expressions must be separated by a newline!");
+				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
 				value = parseInitDictExpr();
 				if (value != null)
 					yield return value.Value;
 				else
-					error("Initializer expression expected!");
+					error(ParserMessages.InitExpressionExpected);
 			}
 		}
 
@@ -1005,9 +1006,9 @@ namespace Lens.Parser
 		/// </summary>
 		private KeyValuePair<NodeBase, NodeBase>? parseInitDictExpr()
 		{
-			var key = ensure(parseLineExpr, "Dictionary key expression is expected!");
-			ensure(LexemType.FatArrow, "Arrow is expected!");
-			var value = ensure(parseLineExpr, "Dictionary value expression is expected!");
+			var key = ensure(parseLineExpr, ParserMessages.DictionaryKeyExpected);
+			ensure(LexemType.FatArrow, ParserMessages.SymbolExpected, "=>");
+			var value = ensure(parseLineExpr, ParserMessages.DictionaryValueExpected);
 
 			return new KeyValuePair<NodeBase, NodeBase>(key, value);
 		}
@@ -1056,7 +1057,7 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, "Invoke passes must be separated by newlines!");
+				ensure(LexemType.NewLine, ParserMessages.InvokePassSeparatorExpected);
 				pass = attempt(parseInvokePass);
 				if (pass == null)
 					return expr;
@@ -1096,14 +1097,14 @@ namespace Lens.Parser
 			var getter = new GetMemberNode();
 			var invoker = new InvocationNode { Expression = getter };
 
-			getter.MemberName = ensure(LexemType.Identifier, "Method name is expected!").Value;
+			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
 			invoker.Arguments = parseInvokeBlockArgs().ToList();
 			if (invoker.Arguments.Count == 0)
 				invoker.Arguments = parseInvokeLineArgs().ToList();
 
 			if (invoker.Arguments.Count == 0)
-				error("Arguments for method call are expected!");
+				error(ParserMessages.ArgumentsExpected);
 
 			return invoker;
 		}
@@ -1144,7 +1145,7 @@ namespace Lens.Parser
 				return null;
 
 			return attempt(parseRefArg)
-			       ?? ensure(parseExpr, "Expression is expected!");
+			       ?? ensure(parseExpr, ParserMessages.ExpressionExpected);
 		}
 		
 		/// <summary>
@@ -1181,11 +1182,11 @@ namespace Lens.Parser
 			if (!check(LexemType.Ref))
 				return null;
 
-			var node = ensure(parseLvalueExpr, "Lvalue expression is expected!");
+			var node = ensure(parseLvalueExpr, ParserMessages.LvalueExpected);
 			(node as IPointerProvider).PointerRequired = true;
 
 			if (paren)
-				ensure(LexemType.ParenClose, "Unmatched paren!");
+				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 
 			return node;
 		}
@@ -1237,7 +1238,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Default))
 				return null;
 
-			return new DefaultOperatorNode { TypeSignature = ensure(parseType, "Type signature is expected!") };
+			return new DefaultOperatorNode { TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
 		}
 
 		/// <summary>
@@ -1248,7 +1249,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Typeof))
 				return null;
 
-			return new TypeofOperatorNode {TypeSignature = ensure(parseType, "Type signature is expected!") };
+			return new TypeofOperatorNode {TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
 		}
 
 		/// <summary>
@@ -1294,10 +1295,10 @@ namespace Lens.Parser
 		private NodeBase parseTypecheckOpExpr()
 		{
 			if (check(LexemType.Is))
-				return new IsOperatorNode {TypeSignature = ensure(parseType, "Type signature is expected!")};
+				return new IsOperatorNode {TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected)};
 
 			if (check(LexemType.As))
-				return new CastOperatorNode { TypeSignature = ensure(parseType, "Type signature is expected!") };
+				return new CastOperatorNode { TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
 
 			return null;
 		}
@@ -1358,7 +1359,7 @@ namespace Lens.Parser
 				if (peek(LexemType.Colon))
 					return null;
 
-				ensure(LexemType.ParenClose, "Unclosed paren!");
+				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 			}
 
 			return expr;
@@ -1375,7 +1376,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Arrow))
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, "Function body is expected!"));
+			node.Body.Add(ensure(parseLineStmt, ParserMessages.FunctionBodyExpected));
 			return node;
 		}
 
@@ -1392,9 +1393,9 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.TrueAction.Add(ensure(parseLineStmt, "Condition expression is expected!"));
+			node.TrueAction.Add(ensure(parseLineStmt, ParserMessages.ConditionExpressionExpected));
 			if ( check(LexemType.Else))
-				node.FalseAction.Add(ensure(parseLineStmt, "Expression is expected!"));
+				node.FalseAction.Add(ensure(parseLineStmt, ParserMessages.ExpressionExpected));
 
 			return node;
 		}
@@ -1408,7 +1409,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, "Loop body expression is expected!"));
+			node.Body.Add(ensure(parseLineStmt, ParserMessages.LoopExpressionExpected));
 			return node;
 		}
 
@@ -1421,7 +1422,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, "Loop body expression is expected!"));
+			node.Body.Add(ensure(parseLineStmt, ParserMessages.LoopExpressionExpected));
 			return node;
 		}
 
@@ -1477,9 +1478,9 @@ namespace Lens.Parser
 			var node = new NewTupleNode();
 			node.Expressions = parseInitExprLine().ToList();
 			if (node.Expressions.Count == 0)
-				error("A tuple must contain at least one item!");
+				error(ParserMessages.TupleItem);
 
-			ensure(LexemType.ParenClose, "Unmatched brace!");
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
 
 			return node;
 		}
@@ -1495,9 +1496,9 @@ namespace Lens.Parser
 			var node = new NewListNode();
 			node.Expressions = parseInitExprLine().ToList();
 			if (node.Expressions.Count == 0)
-				error("A list must contain at least one item!");
+				error(ParserMessages.ListItem);
 
-			ensure(LexemType.DoubleSquareClose, "Unmatched brace!");
+			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
 
 			return node;
 		}
@@ -1513,9 +1514,9 @@ namespace Lens.Parser
 			var node = new NewArrayNode();
 			node.Expressions = parseInitExprLine().ToList();
 			if (node.Expressions.Count == 0)
-				error("An array must contain at least one item!");
+				error(ParserMessages.ArrayItem);
 
-			ensure(LexemType.SquareClose, "Unmatched brace!");
+			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 
 			return node;
 		}
@@ -1531,9 +1532,9 @@ namespace Lens.Parser
 			var node = new NewDictionaryNode();
 			node.Expressions = parseInitExprDictLine().ToList();
 			if (node.Expressions.Count == 0)
-				error("A dictionary must contain at least one item!");
+				error(ParserMessages.DictionaryItem);
 
-			ensure(LexemType.CurlyClose, "Unmatched brace!");
+			ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
 
 			return node;
 		}
@@ -1549,7 +1550,7 @@ namespace Lens.Parser
 
 			yield return node;
 			while (check(LexemType.Semicolon))
-				yield return ensure(parseLineExpr, "Expression expected!");
+				yield return ensure(parseLineExpr, ParserMessages.ExpressionExpected);
 		}
 
 		/// <summary>
@@ -1567,7 +1568,7 @@ namespace Lens.Parser
 			{
 				node = parseInitDictExpr();
 				if(node == null)
-					error("Expression expected!");
+					error(ParserMessages.ExpressionExpected);
 
 				yield return node.Value;
 			}
@@ -1651,7 +1652,7 @@ namespace Lens.Parser
 			}
 			catch
 			{
-				error("Value '{0}' is not a valid integer!", value);
+				error(ParserMessages.InvalidInteger, value);
 				return null;
 			}
 		}
@@ -1668,7 +1669,7 @@ namespace Lens.Parser
 			}
 			catch
 			{
-				error("Value '{0}' is not a valid double!", value);
+				error(ParserMessages.InvalidDouble, value);
 				return null;
 			}
 		}

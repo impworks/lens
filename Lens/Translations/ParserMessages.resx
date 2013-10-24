@@ -117,71 +117,166 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CompoundErrors" xml:space="preserve">
-    <value>Compound errors: {0}</value>
+  <data name="ArgTypeExpected" xml:space="preserve">
+    <value>Argument type is expected!</value>
   </data>
-  <data name="ErrorCase" xml:space="preserve">
-    <value>Error case: {0}</value>
+  <data name="ArgumentsExpected" xml:space="preserve">
+    <value>Method call arguments are expected!</value>
   </data>
-  <data name="ErrorMessage" xml:space="preserve">
-    <value>Error message: {0}</value>
+  <data name="ArrayItem" xml:space="preserve">
+    <value>An array must contain at least one item!</value>
   </data>
-  <data name="Expected" xml:space="preserve">
-    <value>Expected {0}</value>
+  <data name="AssignExpressionExpected" xml:space="preserve">
+    <value>Assignment expression is expected!</value>
   </data>
-  <data name="ImpossibleHappened" xml:space="preserve">
-    <value>Impossible happened</value>
+  <data name="CatchExpected" xml:space="preserve">
+    <value>Catch clause is expected!</value>
   </data>
-  <data name="IncorrectIndentation" xml:space="preserve">
-    <value>Incorrect indentation</value>
+  <data name="CodeBlockExpected" xml:space="preserve">
+    <value>Code block is expected!</value>
   </data>
-  <data name="LexemExpected" xml:space="preserve">
-    <value>Lexem expected: {0}</value>
+  <data name="ConditionBlockExpected" xml:space="preserve">
+    <value>Condition block is expected!</value>
   </data>
-  <data name="NestedErrors" xml:space="preserve">
-    <value>Nested errors: {0}</value>
+  <data name="ConditionExpected" xml:space="preserve">
+    <value>Condition is expected!</value>
   </data>
-  <data name="Or" xml:space="preserve">
-    <value>
-      or </value>
+  <data name="ConditionExpressionExpected" xml:space="preserve">
+    <value>Condition expression is expected!</value>
   </data>
-  <data name="QuoteString" xml:space="preserve">
-    <value>"{0}"</value>
+  <data name="DictionaryItem" xml:space="preserve">
+    <value>A dictionary must contain at least one item!</value>
   </data>
-  <data name="StringExpected" xml:space="preserve">
-    <value>String expected: "{0}"</value>
+  <data name="DictionaryKeyExpected" xml:space="preserve">
+    <value>Dictionary key expression is expected!</value>
   </data>
-  <data name="StringUnexpected" xml:space="preserve">
-    <value>Unexpected string: "{0}"</value>
+  <data name="DictionaryValueExpected" xml:space="preserve">
+    <value>Dictionary value expression is expected!</value>
   </data>
-  <data name="Unexpected" xml:space="preserve">
-    <value>Unexpected: {0}</value>
+  <data name="ExceptionHandlerExpected" xml:space="preserve">
+    <value>Exception handler code block is expected!</value>
   </data>
-  <data name="UnknownBinaryOperator" xml:space="preserve">
-    <value>Unknown binary operator: {0}</value>
+  <data name="ExceptionTypeExpected" xml:space="preserve">
+    <value>Exception type signature is expected!</value>
   </data>
-  <data name="UnknownBooleanValue" xml:space="preserve">
-    <value>Unknown boolean value: {0}</value>
+  <data name="ExpressionExpected" xml:space="preserve">
+    <value>Expression is expected!</value>
   </data>
-  <data name="UnknownCastOperator" xml:space="preserve">
-    <value>Unknown cast operator: {0}</value>
+  <data name="FunctionBodyExpected" xml:space="preserve">
+    <value>Function body is expected!</value>
   </data>
-  <data name="UnknownComparisonOperator" xml:space="preserve">
-    <value>Unknown comparison operator: {0}</value>
+  <data name="FunctionDefExpected" xml:space="preserve">
+    <value>Function definition is expected!</value>
   </data>
-  <data name="UnknownError" xml:space="preserve">
-    <value>Unknown error: {0}</value>
+  <data name="FunctionIdentifierExpected" xml:space="preserve">
+    <value>Function name must be an identifier!</value>
   </data>
-  <data name="UnknownLogicalOperator" xml:space="preserve">
-    <value>Unknown logical operator: {0}</value>
+  <data name="FunctionReturnExpected" xml:space="preserve">
+    <value>Function return type is expected!</value>
   </data>
-  <data name="UnknownTypeOperator" xml:space="preserve">
-    <value>Unknown type operator: {0}</value>
+  <data name="IdentifierExpected" xml:space="preserve">
+    <value>An identifier is expected!</value>
   </data>
-  <data name="UnknownUnaryOperator" xml:space="preserve">
-    <value>Unknown unary operator: {0}</value>
+  <data name="IndexExpressionExpected" xml:space="preserve">
+    <value>Index expression is expected!</value>
   </data>
-  <data name="UnknownValueBindingType" xml:space="preserve">
-    <value>Unknown value binding type: {0}</value>
+  <data name="InitExpressionExpected" xml:space="preserve">
+    <value>Initializer expression is expected!</value>
+  </data>
+  <data name="InitExpressionOrTypeExpected" xml:space="preserve">
+    <value>Initializer expression or type signature is expected!</value>
+  </data>
+  <data name="InitExpressionSeparatorExpected" xml:space="preserve">
+    <value>Initializer expressions must be separated by a newline!</value>
+  </data>
+  <data name="InvalidDouble" xml:space="preserve">
+    <value>Value '{0}' is not a valid double!</value>
+  </data>
+  <data name="InvalidInteger" xml:space="preserve">
+    <value>Value '{0}' is not a valid integer!</value>
+  </data>
+  <data name="InvokePassSeparatorExpected" xml:space="preserve">
+    <value>Invoke passes must be separated by a newline!</value>
+  </data>
+  <data name="ListItem" xml:space="preserve">
+    <value>A list must contain at least one item!</value>
+  </data>
+  <data name="LoopBodyExpected" xml:space="preserve">
+    <value>Loop body block is expected!</value>
+  </data>
+  <data name="LoopExpressionExpected" xml:space="preserve">
+    <value>Loop body expression is expected!</value>
+  </data>
+  <data name="LvalueExpected" xml:space="preserve">
+    <value>Assignable expression is expected!</value>
+  </data>
+  <data name="MemberNameExpected" xml:space="preserve">
+    <value>Member name is expected!</value>
+  </data>
+  <data name="NamespaceExpected" xml:space="preserve">
+    <value>A namespace is expected!</value>
+  </data>
+  <data name="NewlineSeparatorExpected" xml:space="preserve">
+    <value>Statements must be separated by newlines!</value>
+  </data>
+  <data name="RangeEndExpected" xml:space="preserve">
+    <value>Range end expression is expected!</value>
+  </data>
+  <data name="RecordFieldIdentifierExpected" xml:space="preserve">
+    <value>Record field name must be an identifier!</value>
+  </data>
+  <data name="RecordFieldTypeExpected" xml:space="preserve">
+    <value>Record field type signature is expected!</value>
+  </data>
+  <data name="RecordIdentifierExpected" xml:space="preserve">
+    <value>Record name must be an identifier!</value>
+  </data>
+  <data name="RecordIndentExpected" xml:space="preserve">
+    <value>Record body must be indented block!</value>
+  </data>
+  <data name="RecordSeparatorExpected" xml:space="preserve">
+    <value>Record fields must be separated by a newline!</value>
+  </data>
+  <data name="SequenceExpected" xml:space="preserve">
+    <value>Sequence expression is expected!</value>
+  </data>
+  <data name="SymbolExpected" xml:space="preserve">
+    <value>'{0}' expected!</value>
+  </data>
+  <data name="TryBlockExpected" xml:space="preserve">
+    <value>Try block is expected!</value>
+  </data>
+  <data name="TupleItem" xml:space="preserve">
+    <value>A tuple must contain at least one item!</value>
+  </data>
+  <data name="TypeArgumentExpected" xml:space="preserve">
+    <value>Type argument is expected!</value>
+  </data>
+  <data name="TypeIdentifierExpected" xml:space="preserve">
+    <value>Type name must be an identifier!</value>
+  </data>
+  <data name="TypeIndentExpected" xml:space="preserve">
+    <value>Type body must be indented block!</value>
+  </data>
+  <data name="TypeLabelIdentifierExpected" xml:space="preserve">
+    <value>Type label name must be an identifier!</value>
+  </data>
+  <data name="TypeLabelTagTypeExpected" xml:space="preserve">
+    <value>Tag type signature is expected!</value>
+  </data>
+  <data name="TypeSeparatorExpected" xml:space="preserve">
+    <value>Type labels must be separated by a newline!</value>
+  </data>
+  <data name="TypeSignatureExpected" xml:space="preserve">
+    <value>Type signature is expected!</value>
+  </data>
+  <data name="UnknownStatement" xml:space="preserve">
+    <value>Unknown kind of statement!</value>
+  </data>
+  <data name="VarIdentifierExpected" xml:space="preserve">
+    <value>Variable name must be an identifier!</value>
+  </data>
+  <data name="VarTypeExpected" xml:space="preserve">
+    <value>Variable type is expected!</value>
   </data>
 </root>

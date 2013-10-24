@@ -183,10 +183,10 @@
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
     <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
-    <Compile Include="Translations\ParserLexems.Designer.cs">
+    <Compile Include="Translations\LexerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ParserLexems.resx</DependentUpon>
+      <DependentUpon>LexerMessages.resx</DependentUpon>
     </Compile>
     <Compile Include="Translations\ParserMessages.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -215,18 +215,13 @@
       <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
-    <EmbeddedResource Include="Translations\ParserLexems.ru.resx">
-      <LastGenOutput>ParserLexems.ru.Designer.cs</LastGenOutput>
+    <EmbeddedResource Include="Translations\LexerMessages.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>LexerMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="Translations\ParserMessages.ru.resx">
-      <LastGenOutput>ParserMessages.ru.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Translations\ParserLexems.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>ParserLexems.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Include="Translations\LexerMessages.ru.resx" />
     <EmbeddedResource Include="Translations\ParserMessages.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
+      <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
