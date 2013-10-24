@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using Lens.Compiler;
+using Lens.Lexer;
 using Lens.Parser;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.SyntaxTree;
 
 namespace Lens
 {
@@ -17,12 +18,15 @@ namespace Lens
 		public LensCompiler(LensCompilerOptions opts = null)
 		{
 			m_Context = new Context(opts);
+			Measurements = new Dictionary<string, TimeSpan>();
 		}
 
 		public void Dispose()
 		{
 			GlobalPropertyHelper.UnregisterContext(m_Context.ContextId);
 		}
+
+		public Dictionary<string, TimeSpan> Measurements;
 
 		private Context m_Context;
 
@@ -66,11 +70,12 @@ namespace Lens
 		/// </summary>
 		public Func<object> Compile(string src)
 		{
-			IEnumerable<NodeBase> nodes;
-			var t = DateTime.Now;
 			try
 			{
-				nodes = new TreeBuilder().Parse(src);
+				var lexer = measure(() => new LensLexer(src), "Lexer");
+				var parser = measure(() => new LensParser(lexer.Lexems), "Parser");
+				var λ = measure(() => Compile(parser.Nodes), "Compiler");
+				return λ;
 			}
 			catch (LensCompilerException)
 			{
@@ -80,19 +85,12 @@ namespace Lens
 			{
 				throw new LensCompilerException(ex.Message);
 			}
-			Console.WriteLine("Parsing: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			t = DateTime.Now;
-			var x = Compile(nodes);
-			Console.WriteLine("Compiling: {0:0.00} ms", (DateTime.Now - t).TotalMilliseconds);
-
-			return x;
 		}
 
 		/// <summary>
 		/// Compile the script for many invocations.
 		/// </summary>
-		public Func<object> Compile(IEnumerable<NodeBase> nodes)
+		internal Func<object> Compile(IEnumerable<NodeBase> nodes)
 		{
 			var script = m_Context.Compile(nodes);
 			return script.Run;
@@ -109,9 +107,25 @@ namespace Lens
 		/// <summary>
 		/// Run the script and get a return value.
 		/// </summary>
-		public object Run(IEnumerable<NodeBase> nodes)
+		internal object Run(IEnumerable<NodeBase> nodes)
 		{
 			return Compile(nodes)();
+		}
+
+		/// <summary>
+		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
+		/// </summary>
+		[DebuggerStepThrough]
+		private T measure<T>(Func<T> action, string title)
+		{
+			var start = DateTime.Now;
+			var res = action();
+			var end = DateTime.Now;
+
+			if (m_Context.Options.MeasureTime)
+				Measurements[title] = end - start;
+
+			return res;
 		}
 	}
 }

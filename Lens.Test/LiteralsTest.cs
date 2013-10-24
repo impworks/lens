@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Lens.Test
 {
 	[TestFixture]
-	public class LiteralsTest : TestBase
+	internal class LiteralsTest : TestBase
 	{
 		[Test]
 		public void IntTest()

@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Lens.SyntaxTree.SyntaxTree.Literals;
-using Lens.SyntaxTree.Utils;
+using Lens.SyntaxTree.Literals;
+using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test

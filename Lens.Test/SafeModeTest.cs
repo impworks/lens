@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
-using Lens.SyntaxTree.Translations;
+using Lens.Compiler;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test
 {
 	[TestFixture]
-	public class SafeModeTest : TestBase
+	internal class SafeModeTest : TestBase
 	{
 		[Test]
 		public void BlacklistNamespaces1()
@@ -154,7 +153,7 @@ GC::Collect ()
 		[Test]
 		public void BlacklistIO1()
 		{
-			var src = @"System.IO.Directory::Exists ""C:\A\B""";
+			var src = @"System.IO.Directory::Exists ""C:\\A\\B""";
 			testSubsystem(typeof(System.IO.Directory), SafeModeSubsystem.IO, src);
 		}
 

@@ -1,10 +1,10 @@
-fun maker of Figure x:double y:double s:double ->
+fun maker:Figure (x:double y:double s:double) ->
     let r = new Rect ()
     let half = s / 2
     r.Position = new (x; y)
     r.Size = new(s; s)
     r.Click = ->
-        if(r.Width > 10)
+        if r.Width > 10 then
             Screen.Remove r
             Screen.Add (maker x y half)
             Screen.Add (maker (x+half) y half)

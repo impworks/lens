@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Lens.SyntaxTree;
-using Lens.SyntaxTree.Compiler;
+using Lens.Compiler;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -63,21 +62,20 @@ namespace Lens.Test
 		[Test]
 		public void SelfReference()
 		{
-			Test<Unit>("Lens.SyntaxTree.Unit");
+			Test<Unit>("Lens.Unit");
 		}
 
 		[Test]
 		public void DefaultNamespaces()
 		{
-			Test<System.Drawing.Point>("Point");
 			Assert.AreEqual(Resolver.ResolveType("Enumerable"), typeof(System.Linq.Enumerable));
 		}
 
 		[Test]
 		public void Generics2()
 		{
-			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<_>[]"));
-			Assert.Throws<ArgumentException>(() => Resolver.ResolveType("Tuple<int, Predicate<_>>"));
+			Assert.Throws<LensCompilerException>(() => Resolver.ResolveType("Tuple<_>[]"));
+			Assert.Throws<LensCompilerException>(() => Resolver.ResolveType("Tuple<int, Predicate<_>>"));
 		}
 
 		[Test]

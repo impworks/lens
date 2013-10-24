@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
-using Lens.SyntaxTree;
 using NUnit.Framework;
 
 namespace Lens.Test
 {
 	[TestFixture]
-	public class StdlibTest : TestBase
+	internal class StdlibTest : TestBase
 	{
 		[Test]
 		public void FormatTest()
@@ -46,7 +45,7 @@ r
 		{
 			var src = @"
 var r = string::Empty
-5.times (x:int -> r = r + x.ToString())
+5.times (x:int -> r = r + x.ToString ())
 r
 ";
 			Test(src, "01234");
@@ -120,6 +119,16 @@ r
 			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
 			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
 			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
+		}
+
+		[Test]
+		public void NullRefTest()
+		{
+			var src = @"
+let tos = x:int -> x.ToString()
+tos 5
+";
+			Test(src, "5");
 		}
 	}
 }

@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Windows.Input;
 using GraphicScript.Objects;
 using Lens;
-using Lens.SyntaxTree;
 using Microsoft.Win32;
 using Rect = GraphicScript.Objects.Rect;
 

@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Lens;
-using Lens.SyntaxTree;
 
 namespace ConsoleHost
 {
@@ -25,17 +24,12 @@ namespace ConsoleHost
 				Console.WriteLine();
 				try
 				{
-					var lc = new LensCompiler(new LensCompilerOptions { AllowSave = true });
-
-					Func<object> fx = null;
-					object res = null;
-
-					var compileTime = measureTime(() => fx = lc.Compile(source));
-					var runTime = measureTime(() => res = fx());
-
+					var lc = new LensCompiler(new LensCompilerOptions { AllowSave = true, MeasureTime = timer });
+					var res = lc.Run(source);
 					printObject(res);
 
-					printInfo(timer, compileTime, runTime);
+					if (timer)
+						printMeasurements(lc.Measurements);
 				}
 				catch (LensCompilerException ex)
 				{
@@ -214,27 +208,6 @@ namespace ConsoleHost
 			}
 		}
 
-		static double measureTime(Action act)
-		{
-			var tStart = DateTime.Now;
-			act();
-			var tEnd = DateTime.Now;
-			return (tEnd - tStart).TotalMilliseconds;
-		}
-
-		static void printInfo(bool printTime, double compileTime, double runTime)
-		{
-			if (!printTime)
-				return;
-
-			using (new OutputColor(ConsoleColor.DarkGray))
-			{
-				Console.WriteLine("Compilation: {0} msec.", compileTime);
-				Console.WriteLine("Execution: {0} msec.", runTime);
-				Console.WriteLine();
-			}
-		}
-
 		static void printObject(dynamic obj)
 		{
 			Console.WriteLine();
@@ -244,6 +217,16 @@ namespace ConsoleHost
 					Console.WriteLine("({0})", obj.GetType());
 
 			Console.WriteLine();
+		}
+
+		static void printMeasurements(Dictionary<string, TimeSpan> measures)
+		{
+			using (new OutputColor(ConsoleColor.DarkGray))
+			{
+				foreach(var curr in measures)
+					Console.WriteLine("{0}: {1:0,00} ms.", curr.Key, curr.Value.TotalMilliseconds);
+				Console.WriteLine();
+			}
 		}
 
 		static string getStringRepresentation(dynamic obj)

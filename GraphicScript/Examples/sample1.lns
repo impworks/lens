@@ -1,4 +1,4 @@
-fun maker of Rect x:int y:int ->
+fun maker:Rect (x:int y:int) ->
     let r = new Rect ()
     r.X = (x + 1) * 50
     r.Y = (y + 1) * 50
@@ -10,4 +10,4 @@ fun maker of Rect x:int y:int ->
     r
 
 let create = (x:int y:int) -> Screen.Add (maker x y)
-10.times ((x:int) -> 10.times ((y:int) -> create x y))
+10.times (x:int -> 10.times (y:int -> create x y))
