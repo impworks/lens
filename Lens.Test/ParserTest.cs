@@ -1301,39 +1301,6 @@ else
 		}
 
 		[Test]
-		public void ComplexWhileTestParser()
-		{
-			var src = @"using System.Net
-
-let listener = new HttpListener ()
-listener.Prefixes.Add ""http://127.0.0.1:8080/""
-listener.Prefixes.Add ""http://localhost:8080/""
-
-var count = 1
-
-while true do
-    listener.Start ()
-
-    let ctx = listener.GetContext ()
-    let rq = ctx.Request
-    let resp = ctx.Response
-
-    let respStr = fmt ""Hello from LENS! This page has been viewed {0} times."" count
-    let buf = Encoding::UTF8.GetBytes respStr
-
-    resp.ContentLength64 = buf.Length
-    let output = resp.OutputStream
-    output.Write buf 0 (buf.Length)
-    output.Close ()
-
-    listener.Stop ()
-
-    count = count + 1
-";
-			Parse(src);
-		}
-
-		[Test]
 		public void NonInitializedVariable()
 		{
 			var src = @"

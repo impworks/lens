@@ -1,4 +1,5 @@
 ﻿using Lens.SyntaxTree;
+using Lens.SyntaxTree.ControlFlow;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -112,6 +113,116 @@ let create = (x:int y:int) -> Screen.Add (maker x y)
 						)
 					)
 				};
+
+			TestParser(src, nodes);
+		}
+		
+		[Test]
+		public void ComplexWhileTest()
+		{
+			var src = @"
+using System.Net
+
+let listener = new HttpListener ()
+listener.Prefixes.Add ""http://127.0.0.1:8080/""
+listener.Prefixes.Add ""http://localhost:8080/""
+
+var count = 1
+
+while true do
+    listener.Start ()
+
+    let ctx = listener.GetContext ()
+    let rq = ctx.Request
+    let resp = ctx.Response
+
+    let respStr = fmt ""Hello from LENS! This page has been viewed {0} times."" count
+    let buf = Encoding::UTF8.GetBytes respStr
+
+    resp.ContentLength64 = buf.Length
+    let output = resp.OutputStream
+    output.Write buf 0 (buf.Length)
+    output.Close ()
+
+    listener.Stop ()
+
+    count = count + 1
+";
+			var nodes = new NodeBase[]
+			{
+				new UsingNode {Namespace = "System.Net"},
+				Expr.Let("listener", Expr.New("HttpListener")),
+				Expr.Invoke(
+					Expr.GetMember(
+						Expr.GetMember(Expr.Get("listener"), "Prefixes"),
+						"Add"
+					),
+					Expr.Str("http://127.0.0.1:8080/")
+				),
+				Expr.Invoke(
+					Expr.GetMember(
+						Expr.GetMember(Expr.Get("listener"), "Prefixes"),
+						"Add"
+					),
+					Expr.Str("http://localhost:8080/")
+				),
+				Expr.Var("count", Expr.Int(1)),
+				Expr.While(
+					Expr.True(),
+					Expr.Block(
+						Expr.Invoke(Expr.Get("listener"), "Start"),
+						Expr.Let("ctx", Expr.Invoke(Expr.Get("listener"), "GetContext")),
+						Expr.Let("rq", Expr.GetMember(Expr.Get("ctx"), "Request")),
+						Expr.Let("resp", Expr.GetMember(Expr.Get("ctx"), "Response")),
+
+						Expr.Let(
+							"respStr",
+							Expr.Invoke(
+								Expr.Get("fmt"),
+								Expr.Str("Hello from LENS! This page has been viewed {0} times."),
+								Expr.Get("count")
+							)
+						),
+						Expr.Let(
+							"buf",
+							Expr.Invoke(
+								Expr.GetMember(
+									Expr.GetMember("Encoding", "UTF8"),
+									"GetBytes"
+								),
+								Expr.Get("respStr")
+							)
+						),
+
+						Expr.SetMember(
+							Expr.Get("resp"),
+							"ContentLength64",
+							Expr.GetMember(Expr.Get("buf"), "Length")
+						),
+						Expr.Let("output", Expr.GetMember(Expr.Get("resp"), "OutputStream")),
+
+						Expr.Invoke(
+							Expr.Get("output"),
+							"Write",
+							Expr.Get("buf"),
+							Expr.Int(0),
+							Expr.GetMember(Expr.Get("buf"), "Length")
+						),
+
+						Expr.Invoke(
+							Expr.Get("output"),
+							"Close"
+						),
+
+						Expr.Invoke(
+							Expr.Get("listener"),
+							"Stop"
+						),
+
+						Expr.Inc("count")
+					)
+				)
+			};
 
 			TestParser(src, nodes);
 		}

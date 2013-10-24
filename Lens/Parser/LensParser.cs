@@ -96,9 +96,9 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			var args = parseTypeArgs().ToArray();
-			if(args.Length > 0)
-				node = new TypeSignature(node.Name, args);
+			var args = attempt(parseTypeArgs);
+			if(args != null)
+				node = new TypeSignature(node.Name, args.ToArray());
 
 			while (true)
 			{
@@ -116,23 +116,24 @@ namespace Lens.Parser
 		/// <summary>
 		/// type_args                                   = "<" type { "," type } ">"
 		/// </summary>
-		private IEnumerable<TypeSignature> parseTypeArgs()
+		private List<TypeSignature> parseTypeArgs()
 		{
 			if (!check(LexemType.Less))
-				yield break;
+				return null;
 
 			var arg = attempt(parseType);
 			if (arg == null)
-				yield break;
+				return null;
 
 			if (!peekAny(new[] {LexemType.Comma, LexemType.Greater}))
-				yield break;
+				return null;
 
-			yield return arg;
+			var list = new List<TypeSignature> {arg};
 			while (check(LexemType.Comma))
-				yield return ensure(parseType, "Type argument is expected!");
+				list.Add(ensure(parseType, "Type argument is expected!"));
 
 			ensure(LexemType.Greater, "Unmatched paren!");
+			return list;
 		}
 
 		#endregion
@@ -608,8 +609,8 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			var hints = parseTypeArgs().ToList();
-			if (hints.Count > 0)
+			var hints = attempt(parseTypeArgs);
+			if (hints != null)
 				node.TypeHints = hints;
 
 			return node;
@@ -649,8 +650,8 @@ namespace Lens.Parser
 			var node = new GetMemberNode();
 			node.MemberName = ensure(LexemType.Identifier, "Identifier is expected!").Value;
 
-			var args = parseTypeArgs().ToList();
-			if (args.Count > 0)
+			var args = attempt(parseTypeArgs);
+			if (args != null)
 				node.TypeHints = args;
 
 			return node;

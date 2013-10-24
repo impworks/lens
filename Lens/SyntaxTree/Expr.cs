@@ -357,6 +357,40 @@ namespace Lens.SyntaxTree
 
 		#endregion
 
+		#region Shortcuts
+
+		public static SetIdentifierNode Inc(string var, int value = 1)
+		{
+			return Set(var, Add(Get(var), Int(value)));
+		}
+
+		public static SetMemberNode Inc(NodeBase expr, string mbr, int value = 1)
+		{
+			return SetMember(expr, mbr, Add(GetMember(expr, mbr), Int(value)));
+		}
+
+		public static SetMemberNode Inc(string type, string mbr, int value = 1)
+		{
+			return SetMember(type, mbr, Add(GetMember(type, mbr), Int(value)));
+		}
+
+		public static SetIdentifierNode Dec(string var, int value = 1)
+		{
+			return Set(var, Sub(Get(var), Int(value)));
+		}
+
+		public static SetMemberNode Dec(NodeBase expr, string mbr, int value = 1)
+		{
+			return SetMember(expr, mbr, Sub(GetMember(expr, mbr), Int(value)));
+		}
+
+		public static SetMemberNode Dec(string type, string mbr, int value = 1)
+		{
+			return SetMember(type, mbr, Sub(GetMember(type, mbr), Int(value)));
+		}
+
+		#endregion
+
 		#region Control Structures
 
 		public static CodeBlockNode Block(params NodeBase[] stmts)
