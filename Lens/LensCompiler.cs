@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Lens.Compiler;
 using Lens.Lexer;
@@ -114,6 +115,7 @@ namespace Lens
 		/// <summary>
 		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
 		/// </summary>
+		[DebuggerStepThrough]
 		private T measure<T>(Func<T> action, string title)
 		{
 			var start = DateTime.Now;

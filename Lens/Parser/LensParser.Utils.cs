@@ -141,6 +141,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// Attempts to parse a list of values.
 		/// </summary>
+		[DebuggerStepThrough]
 		private List<T> attempt<T>(Func<List<T>> getter)
 		{
 			var backup = LexemId;
