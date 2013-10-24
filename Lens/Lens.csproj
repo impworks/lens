@@ -206,9 +206,6 @@
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Grammar\Grammar.v1.txt" />
     <Content Include="Grammar\Grammar.v2.txt" />
   </ItemGroup>
