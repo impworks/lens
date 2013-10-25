@@ -315,6 +315,12 @@
   <data name="ListTypeUnknown" xml:space="preserve">
     <value>Тип списка не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
   </data>
+  <data name="Location" xml:space="preserve">
+    <value>Позиция: {0}</value>
+  </data>
+  <data name="LocationSpan" xml:space="preserve">
+    <value>Позиция: {0} ... {1}</value>
+  </data>
   <data name="MethodRedefinition" xml:space="preserve">
     <value>Метод '{0}' типа '{1}' с таким списком аргументов уже был объявлен!</value>
   </data>

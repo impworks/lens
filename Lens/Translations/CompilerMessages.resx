@@ -315,6 +315,12 @@
   <data name="ListTypeUnknown" xml:space="preserve">
     <value>List type cannot be inferred! Use type casting to specify element types.</value>
   </data>
+  <data name="Location" xml:space="preserve">
+    <value>Location: {0}</value>
+  </data>
+  <data name="LocationSpan" xml:space="preserve">
+    <value>Location: {0} ... {1}</value>
+  </data>
   <data name="MethodRedefinition" xml:space="preserve">
     <value>A method named '{0}' in type '{1}' with identical set of arguments has already been defined!</value>
   </data>

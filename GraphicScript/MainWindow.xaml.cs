@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Windows.Input;
 using GraphicScript.Objects;
 using Lens;
+using Lens.SyntaxTree;
 using Microsoft.Win32;
 using Rect = GraphicScript.Objects.Rect;
 
@@ -151,11 +152,14 @@ namespace GraphicScript
 
 		private void MarkErrorLocation(LensCompilerException ex)
 		{
-			if (ex.StartLocation.Line == 0 || ex.EndLocation.Line == 0)
+			if (ex.StartLocation == null)
 				return;
 
-			var start = FlattenLocation(ex.StartLocation.Line, ex.StartLocation.Offset);
-			var end = FlattenLocation(ex.EndLocation.Line, ex.EndLocation.Offset);
+			var stLoc = ex.StartLocation.Value;
+			var endLoc = ex.EndLocation ?? new LexemLocation {Line = stLoc.Line, Offset = stLoc.Offset + 1 };
+
+			var start = FlattenLocation(stLoc.Line, stLoc.Offset);
+			var end = FlattenLocation(endLoc.Line, endLoc.Offset);
 			CodeEditor.Select(start, end - start);
 		}
 

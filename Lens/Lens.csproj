@@ -213,6 +213,7 @@
     <EmbeddedResource Include="Translations\CompilerMessages.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
     <EmbeddedResource Include="Translations\LexerMessages.resx">

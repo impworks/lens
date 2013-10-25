@@ -5,6 +5,7 @@ using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.Parser
@@ -334,7 +335,7 @@ namespace Lens.Parser
 			{
 				foreach (var curr in ops)
 					if (check(curr.Key))
-						node = curr.Value(node, processOperator(getter, priority + 1));
+						node = curr.Value(node, ensure(() => processOperator(getter, priority + 1), ParserMessages.ExpressionExpected));
 			}
 
 			return node;

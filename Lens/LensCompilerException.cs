@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.SyntaxTree;
+using Lens.Translations;
 
 namespace Lens
 {
@@ -19,12 +20,12 @@ namespace Lens
 		/// <summary>
 		/// Start of the erroneous segment.
 		/// </summary>
-		public LexemLocation StartLocation { get; private set; }
+		public LexemLocation? StartLocation { get; private set; }
 
 		/// <summary>
 		/// End of the erroneous segment.
 		/// </summary>
-		public LexemLocation EndLocation { get; private set; }
+		public LexemLocation? EndLocation { get; private set; }
 
 		/// <summary>
 		/// Full message with error positions.
@@ -33,17 +34,12 @@ namespace Lens
 		{
 			get
 			{
-				if (StartLocation.Line == 0 && StartLocation.Offset == 0 && EndLocation.Line == 0 && EndLocation.Offset == 0)
+				if (StartLocation == null && EndLocation == null)
 					return Message;
 
-				return string.Format(
-					"{0}\nLocation: {1}:{2} ... {3}:{4}",
-					Message,
-					StartLocation.Line,
-					StartLocation.Offset,
-					EndLocation.Line,
-					EndLocation.Offset
-				);
+				return EndLocation == null
+					? string.Format(Message + "\n" + CompilerMessages.Location, StartLocation.Value)
+					: string.Format(Message + "\n" + CompilerMessages.LocationSpan, StartLocation.Value, EndLocation.Value);
 			}
 		}
 
@@ -52,13 +48,7 @@ namespace Lens
 		/// </summary>
 		public LensCompilerException BindToLocation(LocationEntity entity)
 		{
-			if (entity != null)
-			{
-				StartLocation = entity.StartLocation;
-				EndLocation = entity.EndLocation;
-			}
-
-			return this;
+			return BindToLocation(entity.StartLocation, entity.EndLocation);
 		}
 
 		/// <summary>
@@ -66,8 +56,11 @@ namespace Lens
 		/// </summary>
 		public LensCompilerException BindToLocation(LexemLocation start, LexemLocation end)
 		{
-			StartLocation = start;
-			EndLocation = end;
+			if(start.Line != 0 || start.Offset != 0)
+				StartLocation = start;
+
+			if(end.Line != 0 || end.Offset != 0)
+				EndLocation = end;
 
 			return this;
 		}

@@ -655,6 +655,24 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Location: {0}.
+        /// </summary>
+        public static string Location {
+            get {
+                return ResourceManager.GetString("Location", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Location: {0} ... {1}.
+        /// </summary>
+        public static string LocationSpan {
+            get {
+                return ResourceManager.GetString("LocationSpan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A method named &apos;{0}&apos; in type &apos;{1}&apos; with identical set of arguments has already been defined!.
         /// </summary>
         public static string MethodRedefinition {
