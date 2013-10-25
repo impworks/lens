@@ -101,15 +101,46 @@ namespace Lens.Lexer
 
 		private void Error(string src, params object[] args)
 		{
-			var loc = new LocationEntity
-			{
-				StartLocation = new LexemLocation
-				{
-					Line = Line,
-					Offset = Offset
-				}
-			};
+			var loc = new LocationEntity { StartLocation = getPosition() };
 			throw new LensCompilerException(string.Format(src, args), loc);
+		}
+
+		/// <summary>
+		/// Checks if the cursor has run outside string bounds.
+		/// </summary>
+		private bool inBounds()
+		{
+			return Position < Source.Length;
+		}
+
+		/// <summary>
+		/// Checks if the cursor is at comment start.
+		/// </summary>
+		/// <returns></returns>
+		private bool isComment()
+		{
+			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
+		}
+
+		/// <summary>
+		/// Skips one or more symbols.
+		/// </summary>
+		private void skip(int count = 1)
+		{
+			Position += count;
+			Offset += count;
+		}
+
+		/// <summary>
+		/// Returns the current position in the string.
+		/// </summary>
+		private LexemLocation getPosition()
+		{
+			return new LexemLocation
+			{
+				Line = Line,
+				Offset = Offset
+			};
 		}
 	}
 }

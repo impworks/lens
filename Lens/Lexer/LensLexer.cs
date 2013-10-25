@@ -152,6 +152,8 @@ namespace Lens.Lexer
 		/// </summary>
 		private void processStringLiteral()
 		{
+			var start = getPosition();
+
 			// skip first quote
 			skip();
 
@@ -193,7 +195,8 @@ namespace Lens.Lexer
 				skip();
 			}
 
-			Error(LexerMessages.UnclosedString);
+			var end = getPosition();
+			throw new LensCompilerException(LexerMessages.UnclosedString).BindToLocation(start, end);
 		}
 
 		/// <summary>
@@ -311,44 +314,6 @@ namespace Lens.Lexer
 
 			Error(LexerMessages.UnknownEscape, t);
 			return ' ';
-		}
-
-		/// <summary>
-		/// Checks if the cursor has run outside string bounds.
-		/// </summary>
-		private bool inBounds()
-		{
-			return Position < Source.Length;
-		}
-
-		/// <summary>
-		/// Checks if the cursor is at comment start.
-		/// </summary>
-		/// <returns></returns>
-		private bool isComment()
-		{
-			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
-		}
-
-		/// <summary>
-		/// Skips one or more symbols.
-		/// </summary>
-		private void skip(int count = 1)
-		{
-			Position += count;
-			Offset += count;
-		}
-
-		/// <summary>
-		/// Returns the current position in the string.
-		/// </summary>
-		private LexemLocation getPosition()
-		{
-			return new LexemLocation
-			{
-				Line = Line,
-				Offset = Offset
-			};
 		}
 
 		/// <summary>

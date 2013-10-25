@@ -50,14 +50,26 @@ namespace Lens
 		/// <summary>
 		/// Bind exception to a location.
 		/// </summary>
-		/// <param name="entity"></param>
-		public void BindToLocation(LocationEntity entity)
+		public LensCompilerException BindToLocation(LocationEntity entity)
 		{
-			if (entity == null)
-				return;
+			if (entity != null)
+			{
+				StartLocation = entity.StartLocation;
+				EndLocation = entity.EndLocation;
+			}
 
-			StartLocation = entity.StartLocation;
-			EndLocation = entity.EndLocation;
+			return this;
+		}
+
+		/// <summary>
+		/// Bind exception to a location.
+		/// </summary>
+		public LensCompilerException BindToLocation(LexemLocation start, LexemLocation end)
+		{
+			StartLocation = start;
+			EndLocation = end;
+
+			return this;
 		}
 	}
 }
