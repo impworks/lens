@@ -78,6 +78,7 @@
     <Compile Include="Compiler\EntityNames.cs" />
     <Compile Include="Compiler\SafeMode.cs" />
     <Compile Include="Compiler\SafeModeSubsystem.cs" />
+    <Compile Include="Compiler\TypeEntityKind.cs" />
     <Compile Include="LensCompiler.cs" />
     <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\ConstructorEntity.cs" />
@@ -110,7 +111,10 @@
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
+    <Compile Include="SyntaxTree\ControlFlow\YieldNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Internal\DynamicNode.cs" />
+    <Compile Include="SyntaxTree\Internal\JumpNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
@@ -143,7 +147,7 @@
     <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />
-    <Compile Include="SyntaxTree\Literals\ThisNode.cs" />
+    <Compile Include="SyntaxTree\Internal\ThisNode.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
@@ -226,6 +230,9 @@
       <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserMessages.ru.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Compiler\TypeEntity.Autogeneration.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

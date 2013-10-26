@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
@@ -19,6 +20,8 @@ namespace Lens.Compiler
 			Scope = new Scope();
 
 			IsImported = isImported;
+
+			YieldStatements = new List<YieldNode>();
 		}
 
 		public bool IsImported;
@@ -44,6 +47,11 @@ namespace Lens.Compiler
 
 		public TryNode CurrentTryBlock { get; set; }
 		public CatchNode CurrentCatchBlock { get; set; }
+
+		/// <summary>
+		/// The cache list of yield statements.
+		/// </summary>
+		public List<YieldNode> YieldStatements { get; protected set; }
 
 		/// <summary>
 		/// Process closures.
@@ -79,7 +87,12 @@ namespace Lens.Compiler
 			CurrentCatchBlock = null;
 
 			emitPrelude(ctx);
+
+			if (YieldStatements.Count > 0 && ContainerType.Kind == TypeEntityKind.Iterator)
+				emitIteratorDispatcher(ctx);
+
 			compileCore(ctx);
+
 			emitTrailer(ctx);
 
 			Generator.EmitReturn();
@@ -151,5 +164,37 @@ namespace Lens.Compiler
 
 		protected virtual void emitTrailer(Context ctx)
 		{ }
+
+		private void emitIteratorDispatcher(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var startLabel = gen.DefineLabel();
+
+			var labels = new List<Label>(YieldStatements.Count);
+			foreach (var curr in YieldStatements)
+			{
+				curr.RegisterLabel(ctx);
+				labels.Add(curr.Label);
+			}
+
+			// sic! less or equal comparison
+			for (var idx = 0; idx <= labels.Count; idx++)
+			{
+				var label = idx == 0 ? startLabel : labels[idx - 1];
+				var check = Expr.If(
+					Expr.Equal(
+						Expr.GetMember(Expr.This(), "_StateId"),
+						Expr.Int(idx)
+					),
+					Expr.Block(
+						Expr.JumpTo(label)
+					)
+				);
+				check.Compile(ctx, false);
+			}
+
+			gen.MarkLabel(startLabel);
+			gen.EmitNop();
+		}
 	}
 }

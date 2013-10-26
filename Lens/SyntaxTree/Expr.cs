@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Internal;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
+using Lens.SyntaxTree.SyntaxTree.Internal;
 
 namespace Lens.SyntaxTree
 {
@@ -443,6 +446,11 @@ namespace Lens.SyntaxTree
 			return new ForeachNode { VariableName = name, RangeStart = from, RangeEnd = to, Body = body };
 		}
 
+		public static ForeachNode For(LocalName name, NodeBase seq, CodeBlockNode body)
+		{
+			return new ForeachNode { Variable = name, IterableExpression = seq, Body = body };
+		}
+
 		public static ThrowNode Throw()
 		{
 			return new ThrowNode();
@@ -481,6 +489,16 @@ namespace Lens.SyntaxTree
 		public static CatchNode CatchAll(params NodeBase[] stmts)
 		{
 			return new CatchNode { Code = Block(stmts) };
+		}
+
+		internal static DynamicNode Dynamic(Action<Context> act)
+		{
+			return new DynamicNode(act);
+		}
+
+		internal static JumpNode JumpTo(Label label)
+		{
+			return new JumpNode(label);
 		}
 
 		#endregion

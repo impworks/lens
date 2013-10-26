@@ -137,11 +137,11 @@ namespace Lens.Compiler
 		/// </summary>
 		public TypeEntity CreateClosureType(Context ctx)
 		{
-			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, ctx.ClosureId);
-			ClosureTypeId = ctx.ClosureId;
+			var id = ctx.GetClosureId();
+			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, id);
+			ClosureTypeId = id;
 			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
-			ClosureType.Kind = TypeEntityKind.Internal;
-			ctx.ClosureId++;
+			ClosureType.Kind = TypeEntityKind.Closure;
 			return ClosureType;
 		}
 

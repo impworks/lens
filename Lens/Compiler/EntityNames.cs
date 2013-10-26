@@ -62,5 +62,10 @@
 		/// The template for a field name which is used to store the flag indicating the pure function's result has been calculated.
 		/// </summary>
 		public const string PureMethodCacheFlagNameTemplate = "<pcf_{0}>";
+
+		/// <summary>
+		/// The template for an iterator type name. Iterators represent methods that have 'yield' statements in them.
+		/// </summary>
+		public const string IteratorTypeName = "<it_{0}>";
 	}
 }

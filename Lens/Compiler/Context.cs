@@ -65,7 +65,7 @@ namespace Lens.Compiler
 			ContextId = GlobalPropertyHelper.RegisterContext();
 
 			MainType = CreateType(EntityNames.MainTypeName);
-			MainType.Kind = TypeEntityKind.Internal;
+			MainType.Kind = TypeEntityKind.Main;
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
@@ -189,11 +189,6 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// An ID for closure types.
-		/// </summary>
-		internal int ClosureId;
-
-		/// <summary>
 		/// The list of namespaces to only look in when resolving a type or an extension method.
 		/// </summary>
 		internal Dictionary<string, bool> Namespaces;
@@ -226,6 +221,11 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+
+		/// <summary>
+		/// The autoincremented ID for closure types.
+		/// </summary>
+		private int _ClosureId;
 
 		#endregion
 	}

@@ -171,17 +171,19 @@ namespace Lens.Utils
 		/// <summary>
 		/// Gets the most common type that all the given types would fit into.
 		/// </summary>
-		public static Type GetMostCommonType(this Type[] types)
+		public static Type GetMostCommonType(this IEnumerable<Type> types)
 		{
-			if (types.Length == 0)
+			var arr = types.ToArray();
+
+			if (arr.Length == 0)
 				return null;
 
-			if (types.Length == 1)
-				return types[0];
+			if (arr.Length == 1)
+				return arr[0];
 
 			// try to get the most wide type
 			Type curr = null;
-			foreach (var type in types)
+			foreach (var type in arr)
 			{
 				if (type.IsInterface)
 				{
@@ -198,7 +200,7 @@ namespace Lens.Utils
 			// for example: new [1; 1.2; null]
 			// int -> double is fine, double -> Nullable<double> is fine as well
 			// but int -> Nullable<double> is currently forbidden
-			foreach (var type in types)
+			foreach (var type in arr)
 			{
 				if (!curr.IsExtendablyAssignableFrom(type))
 				{
@@ -211,10 +213,10 @@ namespace Lens.Utils
 				return curr;
 
 			// try to get common interfaces
-			var ifaces = types[0].GetInterfaces().AsEnumerable();
-			for (var idx = 1; idx < types.Length; idx++)
+			var ifaces = arr[0].GetInterfaces().AsEnumerable();
+			for (var idx = 1; idx < arr.Length; idx++)
 			{
-				ifaces = ifaces.Intersect(types[idx].IsInterface ? new [] { types[idx] } : types[idx].GetInterfaces());
+				ifaces = ifaces.Intersect(arr[idx].IsInterface ? new [] { arr[idx] } : arr[idx].GetInterfaces());
 				if (!ifaces.Any())
 					break;
 			}

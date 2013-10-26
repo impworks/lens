@@ -26,10 +26,11 @@ namespace Lens.Compiler
 			if (_DefinedTypes.ContainsKey(name))
 				Error(CompilerMessages.TypeDefined, name);
 
-			var te = new TypeEntity(this, true)
+			var te = new TypeEntity(this)
 			{
 				Name = name,
-				TypeInfo = type
+				TypeInfo = type,
+				Kind = TypeEntityKind.Imported
 			};
 			_DefinedTypes.Add(name, te);
 		}
@@ -201,6 +202,11 @@ namespace Lens.Compiler
 
 			if(type.IsVoid())
 				Error(node, CompilerMessages.ExpressionVoid);
+		}
+
+		public int GetClosureId()
+		{
+			return ++_ClosureId;
 		}
 
 		#endregion

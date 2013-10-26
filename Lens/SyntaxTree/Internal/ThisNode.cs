@@ -1,6 +1,6 @@
 ﻿using Lens.Compiler;
 
-namespace Lens.SyntaxTree.Literals
+namespace Lens.SyntaxTree.Internal
 {
 	/// <summary>
 	/// A node that represents the `this` pointer.
