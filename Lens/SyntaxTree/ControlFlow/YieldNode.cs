@@ -43,7 +43,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			base.ProcessClosures(ctx);
 
-			ctx.CurrentMethod.YieldStatements.Add(this);
+			var method = ctx.CurrentMethod as MethodEntity;
+			if(method != null)
+				method.YieldStatements.Add(this);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -98,12 +100,12 @@ namespace Lens.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentILGenerator;
 
 			var code = Expr.Block(
-				Expr.SetMember(Expr.This(), "_Current", expr),
+				Expr.SetMember(Expr.This(), EntityNames.IteratorCurrentFieldName, expr),
 				Expr.SetMember(
 					Expr.This(),
-					"_StateId",
+					EntityNames.IteratorStateFieldName,
 					Expr.Add(
-						Expr.GetMember(Expr.This(), "_StateId"),
+						Expr.GetMember(Expr.This(), EntityNames.IteratorStateFieldName),
 						Expr.Int(1)
 					)
 				)

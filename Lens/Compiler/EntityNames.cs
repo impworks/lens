@@ -67,5 +67,15 @@
 		/// The template for an iterator type name. Iterators represent methods that have 'yield' statements in them.
 		/// </summary>
 		public const string IteratorTypeName = "<it_{0}>";
+
+		/// <summary>
+		/// The internal state identifier for an interator.
+		/// </summary>
+		public const string IteratorStateFieldName = "_StateId";
+
+		/// <summary>
+		/// The backing field name for Current property of an iterator.
+		/// </summary>
+		public const string IteratorCurrentFieldName = "_Current";
 	}
 }

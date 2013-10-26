@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -11,7 +14,9 @@ namespace Lens.Compiler
 	internal class MethodEntity : MethodEntityBase
 	{
 		public MethodEntity(bool isImported = false) : base(isImported)
-		{ }
+		{
+			YieldStatements = new List<YieldNode>();
+		}
 
 		#region Fields
 
@@ -40,6 +45,11 @@ namespace Lens.Compiler
 		}
 
 		public bool IsPure;
+
+		/// <summary>
+		/// The cache list of yield statements.
+		/// </summary>
+		public List<YieldNode> YieldStatements { get; protected set; }
 
 		#endregion
 
@@ -94,8 +104,24 @@ namespace Lens.Compiler
 			Body.Compile(ctx, ReturnType.IsNotVoid());
 		}
 
+		protected override void emitPrelude(Context ctx)
+		{
+			base.emitPrelude(ctx);
+
+			if (YieldStatements.Count > 0 && ContainerType.Kind == TypeEntityKind.Iterator)
+				emitIteratorDispatcher(ctx);
+		}
+
 		protected override void emitTrailer(Context ctx)
 		{
+			base.emitTrailer(ctx);
+
+			if (ContainerType.Kind == TypeEntityKind.Iterator)
+			{
+				emitIteratorTrailer(ctx);
+				return;
+			}
+
 			var gen = ctx.CurrentILGenerator;
 			var actualType = Body.GetExpressionType(ctx);
 
@@ -111,6 +137,54 @@ namespace Lens.Compiler
 			// special hack: if the main method's implicit type is Unit, it should still return null
 			if(this == ctx.MainMethod && actualType.IsVoid())
 				gen.EmitNull();
+		}
+
+		private void emitIteratorDispatcher(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var startLabel = gen.DefineLabel();
+
+			var labels = new List<Label>(YieldStatements.Count);
+			foreach (var curr in YieldStatements)
+			{
+				curr.RegisterLabel(ctx);
+				labels.Add(curr.Label);
+			}
+
+			// sic! less or equal comparison
+			for (var idx = 0; idx <= labels.Count; idx++)
+			{
+				var label = idx == 0 ? startLabel : labels[idx - 1];
+				var check = Expr.If(
+					Expr.Equal(
+						Expr.GetMember(Expr.This(), EntityNames.IteratorStateFieldName),
+						Expr.Int(idx)
+					),
+					Expr.Block(
+						Expr.JumpTo(label)
+					)
+				);
+				check.Compile(ctx, false);
+			}
+
+			gen.MarkLabel(startLabel);
+			gen.EmitNop();
+		}
+
+		private void emitIteratorTrailer(Context ctx)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var type = ContainerType.ResolveField(EntityNames.IteratorCurrentFieldName).Type;
+			var setter = Expr.SetMember(
+				Expr.This(),
+				EntityNames.IteratorCurrentFieldName,
+				Expr.Default(type)
+			);
+			setter.Compile(ctx, false);
+
+			gen.EmitConstant(false);
+			gen.EmitReturn();
 		}
 
 		#endregion

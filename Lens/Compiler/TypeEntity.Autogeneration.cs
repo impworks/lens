@@ -296,7 +296,7 @@ namespace Lens.Compiler
 			);
 		}
 
-		private void createIterator(MethodEntityBase method)
+		private void createIterator(MethodEntity method)
 		{
 			var returnType = method.YieldStatements.Select(s => s.GetIteratorType(Context)).GetMostCommonType();
 
@@ -318,10 +318,13 @@ namespace Lens.Compiler
 
 			// todo: Current property
 
+			// _current field
+			type.CreateField(EntityNames.IteratorCurrentFieldName, returnType, false, true);
+
 			// dispose
 			var dispose = type.CreateMethod("Dispose", typeof(void));
 			dispose.Body = Expr.Block(
-				Expr.Dynamic(ct => ct.CurrentILGenerator.EmitNop())
+				Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop())
 			);
 
 			// connect base method to iterator
