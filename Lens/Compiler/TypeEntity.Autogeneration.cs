@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -300,40 +302,86 @@ namespace Lens.Compiler
 		{
 			var returnType = method.YieldStatements.Select(s => s.GetIteratorType(Context)).GetMostCommonType();
 
+			var enumerableType = typeof (IEnumerable<>).MakeGenericType(returnType);
+			var enumeratorType = typeof (IEnumerator<>).MakeGenericType(returnType);
+
 			var typeName = string.Format(EntityNames.IteratorTypeName, Context.GetClosureId());
-			var type = Context.CreateType(typeName, null as string, true, false, true);
+			var type = Context.CreateType(typeName, null as string, true, false);
 			type.Kind = TypeEntityKind.Iterator;
-			type.Interfaces = new[]
-			{
-				typeof(IEnumerable<>).MakeGenericType(returnType),
-				typeof(IEnumerator<>).MakeGenericType(returnType)
-			};
+			type.Interfaces = new[] { enumerableType, enumeratorType };
+
+			type.PrepareSelf();
+
+			// default ctor
+			type.CreateConstructor(null, true);
+
+			// GetEnumerator<T>
+			var enumGen = type.CreateMethod("GetEnumeratorGeneric", typeof (IEnumerator<>).MakeGenericType(returnType), isVirtual: true);
+			enumGen.Body = Expr.Block(Expr.This());
+			enumGen.PrepareSelf();
+			type.SetImplementation(enumerableType.GetMethod("GetEnumerator"), enumGen);
+
+			// GetEnumerator
+			var enumDef = type.CreateMethod("GetEnumeratorDefault", typeof(IEnumerator), isVirtual: true);	
+			enumDef.Body = Expr.Block(Expr.This());
+			enumDef.PrepareSelf();
+			type.SetImplementation(typeof(IEnumerable).GetMethod("GetEnumerator"), enumDef);
 
 			// main method
-			var moveNext = type.CreateMethod("MoveNext", typeof(bool));
+			var moveNext = type.CreateMethod("MoveNext", typeof(bool), isVirtual: true);
+			moveNext.YieldStatements = method.YieldStatements;
 			moveNext.Body = Expr.Block(
 				method.Body,
 				Expr.False()
 			);
+			moveNext.PrepareSelf();
+			type.SetImplementation(typeof(IEnumerator).GetMethod("MoveNext"), moveNext);
 
-			// property & backing field
+			// _Current
 			type.CreateField(EntityNames.IteratorCurrentFieldName, returnType, false, true);
-			var pty = type.CreateProperty("Current", returnType, false);
 
-			pty.Getter.Body = Expr.Block(
+			// Current<T>
+			var currGen = type.CreateProperty("CurrentGeneric", returnType, hasSetter: false, isStatic: false, isVirtual: true, prepare: true);
+			currGen.Getter.Body = Expr.Block(
 				Expr.GetMember(
 					Expr.This(),
 					EntityNames.IteratorCurrentFieldName
 				)
 			);
+			currGen.Getter.PrepareSelf();
+			type.SetImplementation(enumeratorType.GetProperty("Current").GetGetMethod(), currGen.Getter);
+
+			// Current
+			var currDef = type.CreateProperty("CurrentDefault", typeof(object), hasSetter: false, isStatic: false, isVirtual: true, prepare: true);
+			currDef.Getter.Body = Expr.Block(
+				Expr.Cast(
+					Expr.GetMember(
+						Expr.This(),
+						EntityNames.IteratorCurrentFieldName
+					),
+					typeof(object)
+				)
+			);
+			currDef.Getter.PrepareSelf();
+			type.SetImplementation(typeof(IEnumerator).GetProperty("Current").GetGetMethod(), currDef.Getter);
+
+			// stateId
+			type.CreateField(EntityNames.IteratorStateFieldName, typeof (int), false, true);
 
 			// dispose
-			var dispose = type.CreateMethod("Dispose", typeof(void));
-			dispose.Body = Expr.Block(
-				Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop())
-			);
+			var dispose = type.CreateMethod("Dispose", typeof(void), isVirtual: true);
+			dispose.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
+			dispose.PrepareSelf();
+			type.SetImplementation(typeof(IDisposable).GetMethod("Dispose"), dispose);
+
+			// TODO : reset
+			var reset = type.CreateMethod("Reset", typeof(void), isVirtual: true);
+			reset.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
+			reset.PrepareSelf();
+			type.SetImplementation(typeof(IEnumerator).GetMethod("Reset"), reset);
 
 			// connect base method to iterator
+			method.YieldStatements = new List<YieldNode>();
 			method.Body = Expr.Block(
 				Expr.New(typeName)
 			);

@@ -150,7 +150,7 @@ while true do
 ";
 			var nodes = new NodeBase[]
 			{
-				new UsingNode {Namespace = "System.Net"},
+				Expr.Using("System.Net"),
 				Expr.Let("listener", Expr.New("HttpListener")),
 				Expr.Invoke(
 					Expr.GetMember(

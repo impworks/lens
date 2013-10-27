@@ -239,6 +239,9 @@ namespace Lens.Compiler
 			{
 				foreach (var currMethod in currGroup.Value)
 				{
+					if (currMethod.IsImported)
+						continue;
+
 					// pure methods
 					if (currMethod.IsPure && Kind == TypeEntityKind.Main)
 						createPureWrapper(currMethod);
@@ -319,9 +322,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Creates a new property by resolved type.
 		/// </summary>
-		internal PropertyEntity CreateProperty(string name, Type type, bool hasSetter, bool isStatic = false, bool prepare = false)
+		internal PropertyEntity CreateProperty(string name, Type type, bool hasSetter, bool isStatic = false, bool isVirtual = false, bool prepare = false)
 		{
-			var pe = createPropertyCore(name, hasSetter, isStatic);
+			var pe = createPropertyCore(name, hasSetter, isStatic, isVirtual);
 			pe.Type = type;
 
 			if(prepare)
@@ -462,6 +465,14 @@ namespace Lens.Compiler
 			return info.Item1;
 		}
 
+		/// <summary>
+		/// Explicitly implements an interface.
+		/// </summary>
+		public void SetImplementation(MethodInfo def, MethodEntity ent)
+		{
+			TypeBuilder.DefineMethodOverride(ent.MethodInfo, def);
+		}
+
 		#endregion
 
 		#region Helpers
@@ -504,7 +515,7 @@ namespace Lens.Compiler
 			return me;
 		}
 
-		private PropertyEntity createPropertyCore(string name, bool hasSetter, bool isStatic)
+		private PropertyEntity createPropertyCore(string name, bool hasSetter, bool isStatic, bool isVirtual)
 		{
 			if (_Fields.ContainsKey(name))
 				Context.Error(CompilerMessages.TypeFieldExists, Name, name);
@@ -513,6 +524,7 @@ namespace Lens.Compiler
 			{
 				Name = name,
 				IsStatic = isStatic,
+				IsVirtual = isVirtual,
 				ContainerType = this
 			};
 

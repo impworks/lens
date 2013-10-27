@@ -23,13 +23,13 @@ namespace Lens.Test
 		[Test]
 		public void Using()
 		{
-			TestParser("using System", new UsingNode { Namespace = "System" });
+			TestParser("using System", Expr.Using("System") );
 		}
 
 		[Test]
 		public void MultiUsing()
 		{
-			TestParser("using Lens.Parser", new UsingNode { Namespace = "Lens.Parser" });
+			TestParser("using Lens.Parser", Expr.Using("Lens.Parser"));
 		}
 
 		[Test]

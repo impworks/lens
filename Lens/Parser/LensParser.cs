@@ -150,7 +150,7 @@ namespace Lens.Parser
 				return null;
 
 			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
-			var node = new UsingNode {Namespace = nsp.FullSignature};
+			var node = Expr.Using(nsp.FullSignature);
 
 			return node;
 		}

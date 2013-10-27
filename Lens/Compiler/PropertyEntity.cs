@@ -24,6 +24,11 @@ namespace Lens.Compiler
 		public bool IsStatic;
 
 		/// <summary>
+		/// Flag indicating the property fulfills an interface's contract.
+		/// </summary>
+		public bool IsVirtual;
+
+		/// <summary>
 		/// A string representation of the property's type.
 		/// </summary>
 		public TypeSignature TypeSignature;
@@ -60,13 +65,13 @@ namespace Lens.Compiler
 
 			PropertyBuilder = ContainerType.TypeBuilder.DefineProperty(Name, PropertyAttributes.None, Type, null);
 
-			Getter = ContainerType.CreateMethod("get_" + Name, Type, null, IsStatic);
+			Getter = ContainerType.CreateMethod("get_" + Name, Type, null, IsStatic, IsVirtual);
 			Getter.IsSpecial = true;
 			Getter.PrepareSelf();
 
 			if (HasSetter)
 			{
-				Setter = ContainerType.CreateMethod("set_" + Name, typeof (void), new[] {Type}, IsStatic);
+				Setter = ContainerType.CreateMethod("set_" + Name, typeof (void), new[] {Type}, IsStatic, IsVirtual);
 				Setter.IsSpecial = true;
 				Setter.PrepareSelf();
 			}

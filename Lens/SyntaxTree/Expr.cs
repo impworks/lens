@@ -491,14 +491,14 @@ namespace Lens.SyntaxTree
 			return new CatchNode { Code = Block(stmts) };
 		}
 
-		internal static DynamicNode Dynamic(Action<Context> act)
+		public static YieldNode Yield(NodeBase expr)
 		{
-			return new DynamicNode(act);
+			return new YieldNode {Expression = expr};
 		}
 
-		internal static JumpNode JumpTo(Label label)
+		public static YieldNode YieldFrom(NodeBase expr)
 		{
-			return new JumpNode(label);
+			return new YieldNode { Expression = expr, IsSequence = true };
 		}
 
 		#endregion
@@ -586,6 +586,25 @@ namespace Lens.SyntaxTree
 		public static LambdaNode Lambda(params NodeBase[] body)
 		{
 			return new LambdaNode { Body = Block(body) };
+		}
+
+		public static UsingNode Using(string nsp)
+		{
+			return new UsingNode {Namespace = nsp};
+		}
+
+		#endregion
+
+		#region Specials
+
+		internal static DynamicNode Dynamic(Action<Context> act)
+		{
+			return new DynamicNode(act);
+		}
+
+		internal static JumpNode JumpTo(Label label)
+		{
+			return new JumpNode(label);
 		}
 
 		#endregion

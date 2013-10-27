@@ -828,5 +828,40 @@ invParse ""37"" ""13""
 
 			Test(src, 1337);
 		}
+
+		[Test]
+		public void Yield()
+		{
+			var src = new NodeBase[]
+			{
+				Expr.Fun(
+					"testy",
+					"IEnumerable<int>",
+					Expr.Yield(Expr.Int(1)),
+					Expr.Yield(Expr.Int(2)),
+					Expr.Yield(Expr.Int(3))
+				),
+
+				Expr.Var("sum", Expr.Int(0)),
+				Expr.For(
+					"x",
+					Expr.Invoke("testy"),
+					Expr.Block(
+						Expr.Invoke(
+							"println",
+							Expr.Str("value = {0}"),
+							Expr.Get("x")
+						),
+						Expr.Set(
+							"sum",
+							Expr.Add(Expr.Get("sum"), Expr.Get("x"))
+						)
+					)
+				),
+				Expr.Get("sum")
+			};
+
+			Test(src, 6);
+		}
 	}
 }

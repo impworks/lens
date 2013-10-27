@@ -54,7 +54,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The cache list of yield statements.
 		/// </summary>
-		public List<YieldNode> YieldStatements { get; protected set; }
+		public List<YieldNode> YieldStatements;
 
 		#endregion
 
@@ -115,7 +115,7 @@ namespace Lens.Compiler
 		{
 			base.emitPrelude(ctx);
 
-			if (YieldStatements.Count > 0 && ContainerType.Kind == TypeEntityKind.Iterator)
+			if (ContainerType.Kind == TypeEntityKind.Iterator && Name == "MoveNext")
 				emitIteratorDispatcher(ctx);
 		}
 

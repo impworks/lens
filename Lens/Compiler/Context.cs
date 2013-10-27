@@ -81,10 +81,10 @@ namespace Lens.Compiler
 			loadNodes(nodes);
 			prepareEntities();
 
-			createAutoEntities();
+			processClosures();
 			prepareEntities();
 
-			processClosures();
+			createAutoEntities();
 			prepareEntities();
 
 			compileCore();

@@ -186,7 +186,7 @@ namespace Lens.Compiler
 			try
 			{
 				var ctor = ResolveMethodByArgs(
-					type.GetConstructors(), 
+					type.GetConstructors(),
 					c => c.GetParameters().Select(p => p.ParameterType).ToArray(),
 					argTypes
 				);
@@ -225,9 +225,31 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
-			return type is TypeBuilder
-				       ? resolveInternalMethod(type, name, argTypes, hints)
-				       : resolveExternalMethod(type, name, argTypes, hints);
+			if(type is TypeBuilder)
+				return resolveInternalMethod(type, name, argTypes, hints);
+
+			try
+			{
+				return resolveExternalMethod(type, name, argTypes, hints);
+			}
+			catch (KeyNotFoundException)
+			{
+				if (type.IsInterface)
+				{
+					var ifaces = type.GetInterfaces();
+					foreach (var curr in ifaces)
+					{
+						try
+						{
+							return ResolveMethod(curr, name, argTypes, hints);
+						}
+						catch (KeyNotFoundException)
+						{ }
+					}
+				}
+
+				throw;
+			}
 		}
 
 		private MethodWrapper resolveInternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
@@ -278,9 +300,9 @@ namespace Lens.Compiler
 
 		private MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
 		{
-			var mw = new MethodWrapper { Name = name, Type = type };
 			var flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
-
+			var mw = new MethodWrapper { Name = name, Type = type };
+			
 			try
 			{
 				var method = ResolveMethodByArgs(
@@ -320,7 +342,7 @@ namespace Lens.Compiler
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					genType.GetMethods(flags).Where(m => m.Name == name),
+					type.GetMethods(flags).Where(m => m.Name == name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					argTypes
 				);
