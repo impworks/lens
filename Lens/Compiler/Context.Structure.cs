@@ -326,8 +326,13 @@ namespace Lens.Compiler
 		private void finalizeAssembly()
 		{
 			foreach (var curr in _DefinedTypes)
-				if(!curr.Value.IsImported)
+			{
+				if (!curr.Value.IsImported)
+				{
+					curr.Value.DefineImplementations();
 					curr.Value.TypeBuilder.CreateType();
+				}
+			}
 
 			if (Options.AllowSave)
 			{

@@ -18,7 +18,7 @@ namespace Lens.Test
 
 		protected static void Test(IEnumerable<NodeBase> nodes, object value, bool testConstants = false)
 		{
-			Assert.AreEqual(value, Compile(nodes, new LensCompilerOptions {UnrollConstants = true}));
+			Assert.AreEqual(value, Compile(nodes, new LensCompilerOptions {UnrollConstants = true, AllowSave = true}));
 			if (testConstants)
 				Assert.AreEqual(value, Compile(nodes));
 		}

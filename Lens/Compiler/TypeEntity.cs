@@ -23,6 +23,7 @@ namespace Lens.Compiler
 			_Methods = new Dictionary<string, List<MethodEntity>>();
 			_Constructors = new List<ConstructorEntity>();
 			_MethodList = new List<MethodEntity>();
+			_Implementations = new List<Tuple<MethodInfo, MethodEntity>>();
 
 			ClosureMethodId = 1;
 		}
@@ -33,6 +34,8 @@ namespace Lens.Compiler
 		private Dictionary<string, PropertyEntity> _Properties;
 		private Dictionary<string, List<MethodEntity>> _Methods;
 		private List<ConstructorEntity> _Constructors;
+
+		private List<Tuple<MethodInfo, MethodEntity>> _Implementations;
 
 		private List<MethodEntity> _MethodList;
 
@@ -253,6 +256,18 @@ namespace Lens.Compiler
 			}
 		}
 
+		/// <summary>
+		/// Defines interface implementations at assembly level.
+		/// </summary>
+		public void DefineImplementations()
+		{
+			if (IsImported)
+				return;
+
+			foreach(var curr in _Implementations)
+				TypeBuilder.DefineMethodOverride(curr.Item2.MethodInfo, curr.Item1);
+		}
+
 		#endregion
 
 		#region Structure methods
@@ -468,9 +483,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Explicitly implements an interface.
 		/// </summary>
-		public void SetImplementation(MethodInfo def, MethodEntity ent)
+		public void AddImplementation(MethodInfo def, MethodEntity ent)
 		{
-			TypeBuilder.DefineMethodOverride(ent.MethodInfo, def);
+			_Implementations.Add(new Tuple<MethodInfo, MethodEntity>(def, ent));
 		}
 
 		#endregion

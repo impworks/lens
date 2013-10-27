@@ -318,14 +318,12 @@ namespace Lens.Compiler
 			// GetEnumerator<T>
 			var enumGen = type.CreateMethod("GetEnumeratorGeneric", typeof (IEnumerator<>).MakeGenericType(returnType), isVirtual: true);
 			enumGen.Body = Expr.Block(Expr.This());
-			enumGen.PrepareSelf();
-			type.SetImplementation(enumerableType.GetMethod("GetEnumerator"), enumGen);
+			type.AddImplementation(enumerableType.GetMethod("GetEnumerator"), enumGen);
 
 			// GetEnumerator
 			var enumDef = type.CreateMethod("GetEnumeratorDefault", typeof(IEnumerator), isVirtual: true);	
 			enumDef.Body = Expr.Block(Expr.This());
-			enumDef.PrepareSelf();
-			type.SetImplementation(typeof(IEnumerable).GetMethod("GetEnumerator"), enumDef);
+			type.AddImplementation(typeof(IEnumerable).GetMethod("GetEnumerator"), enumDef);
 
 			// main method
 			var moveNext = type.CreateMethod("MoveNext", typeof(bool), isVirtual: true);
@@ -334,8 +332,7 @@ namespace Lens.Compiler
 				method.Body,
 				Expr.False()
 			);
-			moveNext.PrepareSelf();
-			type.SetImplementation(typeof(IEnumerator).GetMethod("MoveNext"), moveNext);
+			type.AddImplementation(typeof(IEnumerator).GetMethod("MoveNext"), moveNext);
 
 			// _Current
 			type.CreateField(EntityNames.IteratorCurrentFieldName, returnType, false, true);
@@ -348,8 +345,7 @@ namespace Lens.Compiler
 					EntityNames.IteratorCurrentFieldName
 				)
 			);
-			currGen.Getter.PrepareSelf();
-			type.SetImplementation(enumeratorType.GetProperty("Current").GetGetMethod(), currGen.Getter);
+			type.AddImplementation(enumeratorType.GetProperty("Current").GetGetMethod(), currGen.Getter);
 
 			// Current
 			var currDef = type.CreateProperty("CurrentDefault", typeof(object), hasSetter: false, isStatic: false, isVirtual: true, prepare: true);
@@ -362,8 +358,7 @@ namespace Lens.Compiler
 					typeof(object)
 				)
 			);
-			currDef.Getter.PrepareSelf();
-			type.SetImplementation(typeof(IEnumerator).GetProperty("Current").GetGetMethod(), currDef.Getter);
+			type.AddImplementation(typeof(IEnumerator).GetProperty("Current").GetGetMethod(), currDef.Getter);
 
 			// stateId
 			type.CreateField(EntityNames.IteratorStateFieldName, typeof (int), false, true);
@@ -371,14 +366,12 @@ namespace Lens.Compiler
 			// dispose
 			var dispose = type.CreateMethod("Dispose", typeof(void), isVirtual: true);
 			dispose.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
-			dispose.PrepareSelf();
-			type.SetImplementation(typeof(IDisposable).GetMethod("Dispose"), dispose);
+			type.AddImplementation(typeof(IDisposable).GetMethod("Dispose"), dispose);
 
 			// TODO : reset
 			var reset = type.CreateMethod("Reset", typeof(void), isVirtual: true);
 			reset.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
-			reset.PrepareSelf();
-			type.SetImplementation(typeof(IEnumerator).GetMethod("Reset"), reset);
+			type.AddImplementation(typeof(IEnumerator).GetMethod("Reset"), reset);
 
 			// connect base method to iterator
 			method.YieldStatements = new List<YieldNode>();
