@@ -405,6 +405,9 @@
   <data name="TypeDefined" xml:space="preserve">
     <value>Type '{0}' has already been defined!</value>
   </data>
+  <data name="TypeFieldExists" xml:space="preserve">
+    <value>Type '{0}' already has a field named '{1}'!</value>
+  </data>
   <data name="TypeIdentifierNotFound" xml:space="preserve">
     <value>Type '{0}' does not have any field, property or method called '{1}'!</value>
   </data>
@@ -435,11 +438,17 @@
   <data name="TypeNotNumeric" xml:space="preserve">
     <value>Type '{0}' is not numeric!</value>
   </data>
+  <data name="TypePropertyExists" xml:space="preserve">
+    <value>Type '{0}' already has a property named '{1}'!</value>
+  </data>
   <data name="TypeSettableIdentifierNotFound" xml:space="preserve">
     <value>Type '{0}' does not contain a field or a property named '{1}'!</value>
   </data>
   <data name="TypesIncomparable" xml:space="preserve">
     <value>Types '{0}' and '{1}' cannot be compared!</value>
+  </data>
+  <data name="TypeUnprepared" xml:space="preserve">
+    <value>Type '{0}' must be prepared before its entities can be resolved!</value>
   </data>
   <data name="VariableDefined" xml:space="preserve">
     <value>A variable named '{0}' is already defined!</value>

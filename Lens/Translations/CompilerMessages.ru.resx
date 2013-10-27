@@ -405,6 +405,9 @@
   <data name="TypeDefined" xml:space="preserve">
     <value>Тип '{0}' уже объявлен!</value>
   </data>
+  <data name="TypeFieldExists" xml:space="preserve">
+    <value>Тип '{0}' уже содержит поле '{1}'!</value>
+  </data>
   <data name="TypeIdentifierNotFound" xml:space="preserve">
     <value>Тип '{0}' не содержит свойства, метода или поля под названием '{1}'!</value>
   </data>
@@ -435,11 +438,17 @@
   <data name="TypeNotNumeric" xml:space="preserve">
     <value>Тип '{0}' не является числовым!</value>
   </data>
+  <data name="TypePropertyExists" xml:space="preserve">
+    <value>Тип '{0}' уже содержит свойство '{1}'!</value>
+  </data>
   <data name="TypeSettableIdentifierNotFound" xml:space="preserve">
     <value>Тип '{0}' не содержит поля или свойства '{1}'!</value>
   </data>
   <data name="TypesIncomparable" xml:space="preserve">
     <value>Невозможно сравнить объекты типов '{0}' и '{1}'!</value>
+  </data>
+  <data name="TypeUnprepared" xml:space="preserve">
+    <value>Тип '{0}' должен быть подготовлен, прежде чем проводить поиск по его элементам!</value>
   </data>
   <data name="VariableDefined" xml:space="preserve">
     <value>Переменная '{0}' уже объявлена!</value>

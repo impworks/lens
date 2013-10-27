@@ -316,10 +316,16 @@ namespace Lens.Compiler
 				Expr.False()
 			);
 
-			// todo: Current property
-
-			// _current field
+			// property & backing field
 			type.CreateField(EntityNames.IteratorCurrentFieldName, returnType, false, true);
+			var pty = type.CreateProperty("Current", returnType, false);
+
+			pty.Getter.Body = Expr.Block(
+				Expr.GetMember(
+					Expr.This(),
+					EntityNames.IteratorCurrentFieldName
+				)
+			);
 
 			// dispose
 			var dispose = type.CreateMethod("Dispose", typeof(void));

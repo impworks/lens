@@ -64,12 +64,13 @@ namespace Lens.Compiler
 		public Type Parent;
 
 		private Type m_TypeInfo;
+
 		public Type TypeInfo
 		{
 			get { return IsImported ? m_TypeInfo : TypeBuilder; }
 			set
 			{
-				if(!IsImported)
+				if (!IsImported)
 					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
 
 				m_TypeInfo = value;
@@ -91,9 +92,15 @@ namespace Lens.Compiler
 		/// </summary>
 		public TypeEntityKind Kind;
 
-		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
+		public bool IsImported
+		{
+			get { return Kind == TypeEntityKind.Imported; }
+		}
 
-		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
+		public bool IsUserDefined
+		{
+			get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; }
+		}
 
 		#endregion
 
@@ -108,7 +115,7 @@ namespace Lens.Compiler
 				return;
 
 			var attrs = TypeAttributes.Public;
-			if(IsSealed)
+			if (IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
 			if (Parent != null || (ParentSignature != null && ParentSignature.FullSignature != null))
@@ -129,8 +136,8 @@ namespace Lens.Compiler
 				TypeBuilder = Context.MainModule.DefineType(Name, attrs);
 			}
 
-			if(Interfaces != null)
-				foreach(var iface in Interfaces)
+			if (Interfaces != null)
+				foreach (var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
 		}
 
@@ -139,7 +146,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public void PrepareMembers()
 		{
-			foreach(var field in _Fields)
+			foreach (var field in _Fields)
 				field.Value.PrepareSelf();
 
 			foreach (var field in _Properties)
@@ -157,17 +164,19 @@ namespace Lens.Compiler
 				{
 					mi = ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
 				}
-				catch (KeyNotFoundException) { }
+				catch (KeyNotFoundException)
+				{
+				}
 
 				if (mi != null)
 				{
-					if(this == Context.MainType)
+					if (this == Context.MainType)
 						Context.Error(CompilerMessages.FunctionRedefinition, method.Name);
 					else
 						Context.Error(CompilerMessages.MethodRedefinition, method.Name, Name);
 				}
 
-				if(!_Methods.ContainsKey(method.Name))
+				if (!_Methods.ContainsKey(method.Name))
 					_Methods.Add(method.Name, new List<MethodEntity>());
 
 				_Methods[method.Name].Add(method);
@@ -193,7 +202,7 @@ namespace Lens.Compiler
 
 			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
-					if(!curr.IsImported)
+					if (!curr.IsImported)
 						curr.Compile();
 
 			Context.CurrentType = backup;
@@ -205,11 +214,11 @@ namespace Lens.Compiler
 		public void ProcessClosures()
 		{
 			foreach (var currGroup in _Methods)
-				foreach(var currMethod in currGroup.Value)
+				foreach (var currMethod in currGroup.Value)
 					if (!currMethod.IsImported)
 						currMethod.ProcessClosures();
 
-			foreach(var currCtor in _Constructors)
+			foreach (var currCtor in _Constructors)
 				if (!currCtor.IsImported)
 					currCtor.ProcessClosures();
 		}
@@ -223,7 +232,7 @@ namespace Lens.Compiler
 			{
 				createSpecificEquals();
 				createGenericEquals();
-				createGetHashCode();	
+				createGetHashCode();
 			}
 
 			foreach (var currGroup in _Methods)
@@ -250,21 +259,21 @@ namespace Lens.Compiler
 		/// </summary>
 		internal void ImportMethod(string name, MethodInfo mi, bool check)
 		{
-			if(!mi.IsStatic || !mi.IsPublic)
+			if (!mi.IsStatic || !mi.IsPublic)
 				Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
-			{
-				Name = name,
-				IsImported = true,
-				IsStatic = true,
-				IsVirtual = false,
-				ContainerType = this,
-				MethodInfo = mi,
-				ReturnType = mi.ReturnType,
-				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
-			};
+				         {
+					         Name = name,
+					         IsImported = true,
+					         IsStatic = true,
+					         IsVirtual = false,
+					         ContainerType = this,
+					         MethodInfo = mi,
+					         ReturnType = mi.ReturnType,
+					         Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
+				         };
 
 			if (check)
 			{
@@ -272,10 +281,10 @@ namespace Lens.Compiler
 			}
 			else
 			{
-				if(_Methods.ContainsKey(name))
+				if (_Methods.ContainsKey(name))
 					_Methods[name].Add(me);
 				else
-					_Methods.Add(name, new List<MethodEntity> { me });
+					_Methods.Add(name, new List<MethodEntity> {me});
 			}
 		}
 
@@ -284,8 +293,12 @@ namespace Lens.Compiler
 		/// </summary>
 		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = false)
 		{
-			var fe = createFieldCore(name, isStatic, prepare);
+			var fe = createFieldCore(name, isStatic);
 			fe.TypeSignature = signature;
+
+			if (prepare)
+				fe.PrepareSelf();
+
 			return fe;
 		}
 
@@ -294,9 +307,27 @@ namespace Lens.Compiler
 		/// </summary>
 		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = false)
 		{
-			var fe = createFieldCore(name, isStatic, prepare);
+			var fe = createFieldCore(name, isStatic);
 			fe.Type = type;
+
+			if(prepare)
+				fe.PrepareSelf();
+
 			return fe;
+		}
+
+		/// <summary>
+		/// Creates a new property by resolved type.
+		/// </summary>
+		internal PropertyEntity CreateProperty(string name, Type type, bool hasSetter, bool isStatic = false, bool prepare = false)
+		{
+			var pe = createPropertyCore(name, hasSetter, isStatic);
+			pe.Type = type;
+
+			if(prepare)
+				pe.PrepareSelf();
+
+			return pe;
 		}
 
 		/// <summary>
@@ -304,9 +335,13 @@ namespace Lens.Compiler
 		/// </summary>
 		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
 		{
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
+			var me = createMethodCore(name, isStatic, isVirtual);
 			me.ArgumentTypes = argTypes;
 			me.ReturnType = returnType;
+
+			if(prepare)
+				me.PrepareSelf();
+
 			return me;
 		}
 
@@ -332,9 +367,13 @@ namespace Lens.Compiler
 				foreach (var curr in args)
 					argHash.Add(curr.Name, curr);
 
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
+			var me = createMethodCore(name, isStatic, isVirtual);
 			me.ReturnTypeSignature = returnType;
 			me.Arguments = argHash;
+
+			if(prepare)
+				me.PrepareSelf();
+
 			return me;
 		}
 
@@ -366,9 +405,24 @@ namespace Lens.Compiler
 				throw new KeyNotFoundException();
 
 			if(fe.FieldBuilder == null)
-				throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
+				throw new InvalidOperationException(string.Format(CompilerMessages.TypeUnprepared, Name));
 
 			return fe;
+		}
+
+		/// <summary>
+		/// Resolves a property assembly entity.
+		/// </summary>
+		internal PropertyEntity ResolveProperty(string name)
+		{
+			PropertyEntity pe;
+			if (!_Properties.TryGetValue(name, out pe))
+				throw new KeyNotFoundException();
+
+			if (pe.PropertyBuilder == null)
+				throw new InvalidOperationException(string.Format(CompilerMessages.TypeUnprepared, Name));
+
+			return pe;
 		}
 
 		/// <summary>
@@ -415,10 +469,10 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Create a field without setting type info.
 		/// </summary>
-		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare)
+		private FieldEntity createFieldCore(string name, bool isStatic)
 		{
 			if (_Fields.ContainsKey(name))
-				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
+				Context.Error(CompilerMessages.TypeFieldExists, Name, name);
 
 			var fe = new FieldEntity
 			{
@@ -429,16 +483,13 @@ namespace Lens.Compiler
 
 			_Fields.Add(name, fe);
 
-			if(prepare)
-				fe.PrepareSelf();
-
 			return fe;
 		}
 
 		/// <summary>
 		/// Creates a method without setting argument type info.
 		/// </summary>
-		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare)
+		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual)
 		{
 			var me = new MethodEntity
 			{
@@ -450,10 +501,24 @@ namespace Lens.Compiler
 
 			_MethodList.Add(me);
 
-			if(prepare)
-				me.PrepareSelf();
-
 			return me;
+		}
+
+		private PropertyEntity createPropertyCore(string name, bool hasSetter, bool isStatic)
+		{
+			if (_Fields.ContainsKey(name))
+				Context.Error(CompilerMessages.TypeFieldExists, Name, name);
+
+			var pe = new PropertyEntity(hasSetter)
+			{
+				Name = name,
+				IsStatic = isStatic,
+				ContainerType = this
+			};
+
+			_Properties.Add(name, pe);
+
+			return pe;
 		}
 
 		#endregion

@@ -46,7 +46,7 @@ namespace Lens.Compiler
 		public void Compile()
 		{
 			Getter.Compile();
-			if (Setter != null)
+			if (HasSetter)
 				Setter.Compile();
 		}
 

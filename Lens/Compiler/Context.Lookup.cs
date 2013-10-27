@@ -105,9 +105,21 @@ namespace Lens.Compiler
 		/// </summary>
 		public PropertyWrapper ResolveProperty(Type type, string name)
 		{
-			// no internal properties
-			if(type is TypeBuilder)
-				throw new KeyNotFoundException();
+			if (type is TypeBuilder)
+			{
+				var typeEntity = _DefinedTypes[type.Name];
+				var pi = typeEntity.ResolveProperty(name);
+				return new PropertyWrapper
+				{
+					Name = name,
+					Type = type,
+
+					IsStatic = pi.IsStatic,
+					PropertyType = pi.PropertyBuilder.PropertyType,
+					Getter = pi.Getter.MethodBuilder,
+					Setter = pi.HasSetter ? null : pi.Setter.MethodBuilder
+				};
+			}
 
 			try
 			{
