@@ -48,13 +48,6 @@ namespace Lens.Compiler
 
 		#endregion
 
-		public void Compile()
-		{
-			Getter.Compile();
-			if (HasSetter)
-				Setter.Compile();
-		}
-
 		public override void PrepareSelf()
 		{
 			if (PropertyBuilder != null)

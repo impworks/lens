@@ -308,7 +308,7 @@ namespace Lens.Compiler
 			var typeName = string.Format(EntityNames.IteratorTypeName, Context.GetClosureId());
 			var type = Context.CreateType(typeName, null as string, true, false);
 			type.Kind = TypeEntityKind.Iterator;
-			type.Interfaces = new[] { enumerableType, enumeratorType };
+			type.Interfaces = new[] { enumerableType, enumeratorType, typeof(IEnumerator) };
 
 			type.PrepareSelf();
 

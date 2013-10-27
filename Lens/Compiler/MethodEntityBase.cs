@@ -138,11 +138,6 @@ namespace Lens.Compiler
 						gen.EmitLoadArgument(idx + skip);
 						gen.EmitSaveField(fi.FieldBuilder);
 					}
-//					else
-//					{
-//						gen.EmitLoadArgument(idx + skip);
-//						gen.EmitSaveLocal(local);
-//					}
 				}
 			}
 		}

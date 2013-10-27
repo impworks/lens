@@ -200,9 +200,6 @@ namespace Lens.Compiler
 				if (!curr.IsImported)
 					curr.Compile();
 
-			foreach (var curr in _Properties)
-				curr.Value.Compile();
-
 			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
 					if (!curr.IsImported)

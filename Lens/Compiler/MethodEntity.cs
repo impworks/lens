@@ -123,7 +123,7 @@ namespace Lens.Compiler
 		{
 			base.emitTrailer(ctx);
 
-			if (ContainerType.Kind == TypeEntityKind.Iterator)
+			if (ContainerType.Kind == TypeEntityKind.Iterator && Name == "MoveNext")
 			{
 				emitIteratorTrailer(ctx);
 				return;
