@@ -1,0 +1,75 @@
+﻿using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+namespace Lens.Compiler
+{
+	internal class PropertyEntity : TypeContentsBase
+	{
+		public PropertyEntity(bool setter)
+		{
+			HasSetter = setter;
+		}
+
+		#region Fields
+
+		/// <summary>
+		/// Checks if the current property has a setter.
+		/// </summary>
+		public readonly bool HasSetter;
+
+		/// <summary>
+		/// Flag indicating the property belongs to the type, not its instances.
+		/// </summary>
+		public bool IsStatic;
+
+		/// <summary>
+		/// A string representation of the property's type.
+		/// </summary>
+		public TypeSignature TypeSignature;
+
+		/// <summary>
+		/// Type of the values that can be saved in the property.
+		/// </summary>
+		public Type Type;
+
+		/// <summary>
+		/// Assembly-level property builder.
+		/// </summary>
+		public PropertyBuilder PropertyBuilder { get; private set; }
+
+		public MethodEntity Getter { get; private set; }
+		public MethodEntity Setter { get; private set; }
+
+		#endregion
+
+		public void Compile()
+		{
+			Getter.Compile();
+			if (Setter != null)
+				Setter.Compile();
+		}
+
+		public override void PrepareSelf()
+		{
+			if (PropertyBuilder != null)
+				return;
+
+			if (Type == null)
+				Type = ContainerType.Context.ResolveType(TypeSignature);
+
+			PropertyBuilder = ContainerType.TypeBuilder.DefineProperty(Name, PropertyAttributes.None, Type, null);
+
+			Getter = ContainerType.CreateMethod("get_" + Name, Type, null, IsStatic);
+			Getter.IsSpecial = true;
+			Getter.PrepareSelf();
+
+			if (HasSetter)
+			{
+				Setter = ContainerType.CreateMethod("set_" + Name, typeof (void), new[] {Type}, IsStatic);
+				Setter.IsSpecial = true;
+				Setter.PrepareSelf();
+			}
+		}
+	}
+}

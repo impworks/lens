@@ -23,6 +23,11 @@ namespace Lens.Compiler
 		public bool IsVirtual;
 
 		/// <summary>
+		/// Checks if the method is a property getter\setter or other special kind of method.
+		/// </summary>
+		public bool IsSpecial;
+
+		/// <summary>
 		/// The signature of method's return type.
 		/// </summary>
 		public TypeSignature ReturnTypeSignature;
@@ -70,6 +75,8 @@ namespace Lens.Compiler
 				attrs |= MethodAttributes.Static;
 			if(IsVirtual)
 				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
+			if (IsSpecial)
+				attrs |= MethodAttributes.SpecialName | MethodAttributes.HideBySig;
 
 			if (ReturnType == null)
 				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)

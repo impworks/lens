@@ -17,7 +17,7 @@ namespace Lens.Compiler
 		public bool IsStatic;
 
 		/// <summary>
-		/// A string representation of the field's 
+		/// A string representation of the field's type.
 		/// </summary>
 		public TypeSignature TypeSignature;
 

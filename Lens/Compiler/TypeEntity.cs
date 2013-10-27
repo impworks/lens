@@ -19,6 +19,7 @@ namespace Lens.Compiler
 			Context = ctx;
 
 			_Fields = new Dictionary<string, FieldEntity>();
+			_Properties = new Dictionary<string, PropertyEntity>();
 			_Methods = new Dictionary<string, List<MethodEntity>>();
 			_Constructors = new List<ConstructorEntity>();
 			_MethodList = new List<MethodEntity>();
@@ -29,6 +30,7 @@ namespace Lens.Compiler
 		public Type[] Interfaces;
 
 		private Dictionary<string, FieldEntity> _Fields;
+		private Dictionary<string, PropertyEntity> _Properties;
 		private Dictionary<string, List<MethodEntity>> _Methods;
 		private List<ConstructorEntity> _Constructors;
 
@@ -140,6 +142,9 @@ namespace Lens.Compiler
 			foreach(var field in _Fields)
 				field.Value.PrepareSelf();
 
+			foreach (var field in _Properties)
+				field.Value.PrepareSelf();
+
 			foreach (var ctor in _Constructors)
 				ctor.PrepareSelf();
 
@@ -182,6 +187,9 @@ namespace Lens.Compiler
 			foreach (var curr in _Constructors)
 				if (!curr.IsImported)
 					curr.Compile();
+
+			foreach (var curr in _Properties)
+				curr.Value.Compile();
 
 			foreach (var currGroup in _Methods)
 				foreach (var curr in currGroup.Value)
