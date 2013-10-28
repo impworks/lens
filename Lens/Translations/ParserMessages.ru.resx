@@ -198,6 +198,9 @@
   <data name="InvokePassSeparatorExpected" xml:space="preserve">
     <value>Выражения передачи значения должны располагаться на отдельных строках!</value>
   </data>
+  <data name="IteratorExpressionExpected" xml:space="preserve">
+    <value>Ожидается выражение итератора!</value>
+  </data>
   <data name="ListItem" xml:space="preserve">
     <value>Список должен содержать по крайней мере один элемент!</value>
   </data>

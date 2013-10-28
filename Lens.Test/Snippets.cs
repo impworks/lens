@@ -830,38 +830,54 @@ invParse ""37"" ""13""
 		}
 
 		[Test]
-		public void Yield()
+		public void Yield1()
 		{
-			var src = new NodeBase[]
-			{
-				Expr.Fun(
-					"testy",
-					"IEnumerable<int>",
-					Expr.Yield(Expr.Int(1)),
-					Expr.Yield(Expr.Int(2)),
-					Expr.Yield(Expr.Int(3))
-				),
+			var src = @"
+fun testy:int~ ->
+    yield 1
+    yield 2
+    yield 3
 
-				Expr.Var("sum", Expr.Int(0)),
-				Expr.For(
-					"x",
-					Expr.Invoke("testy"),
-					Expr.Block(
-						Expr.Invoke(
-							"println",
-							Expr.Str("value = {0}"),
-							Expr.Get("x")
-						),
-						Expr.Set(
-							"sum",
-							Expr.Add(Expr.Get("sum"), Expr.Get("x"))
-						)
-					)
-				),
-				Expr.Get("sum")
-			};
+var sum : int
+for x in testy () do
+    println ""yield = {0}"" x
+    sum = sum + x
+
+sum";
 
 			Test(src, 6);
+		}
+
+		[Test]
+		public void Yield2()
+		{
+			var src = @"
+fun squares:int~ (start:int end:int) ->
+    for x in start..end do
+        yield x ** 2
+
+squares 1 5
+    |> Sum ()
+";
+
+			Test(src, 55);
+		}
+
+		[Test]
+		public void Yield3()
+		{
+			var src = @"
+fun seq:int~ ->
+    let data = new [1; 2]
+    yield 100
+    yield from data
+    yield 200
+    yield from data
+    yield 300
+
+seq ()
+";
+			Test(src, new [] { 100, 1, 2, 200, 1, 2, 300 });
 		}
 	}
 }

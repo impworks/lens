@@ -143,7 +143,7 @@ namespace Lens.SyntaxTree
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		public void Error(LocationEntity entity, string message, params object[] args)
+		public static void Error(LocationEntity entity, string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
 			throw new LensCompilerException(msg, entity);

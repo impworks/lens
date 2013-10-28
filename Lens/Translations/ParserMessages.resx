@@ -198,6 +198,9 @@
   <data name="InvokePassSeparatorExpected" xml:space="preserve">
     <value>Invoke passes must be separated by a newline!</value>
   </data>
+  <data name="IteratorExpressionExpected" xml:space="preserve">
+    <value>Iterator expression is expected!</value>
+  </data>
   <data name="ListItem" xml:space="preserve">
     <value>A list must contain at least one item!</value>
   </data>

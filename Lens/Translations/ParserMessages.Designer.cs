@@ -304,6 +304,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Iterator expression is expected!.
+        /// </summary>
+        internal static string IteratorExpressionExpected {
+            get {
+                return ResourceManager.GetString("IteratorExpressionExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A list must contain at least one item!.
         /// </summary>
         internal static string ListItem {

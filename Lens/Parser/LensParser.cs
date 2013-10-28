@@ -1444,8 +1444,13 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseYieldStmt()
 		{
-			// to be merged from Yield branch
-			return null;
+			if (!check(LexemType.Yield))
+				return null;
+
+			var node = new YieldNode();
+			node.IsSequence = check(LexemType.From);
+			node.Expression = ensure(parseLineExpr, ParserMessages.IteratorExpressionExpected);
+			return node;
 		}
 		
 		#endregion
