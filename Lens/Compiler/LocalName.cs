@@ -23,8 +23,8 @@ namespace Lens.Compiler
 			IsImmutable = other.IsImmutable;
 			IsRefArgument = other.IsRefArgument;
 
-			IsClosured = other.IsClosured;
-			ClosureFieldName = other.ClosureFieldName;
+			Mapping = other.Mapping;
+			BackingFieldName = other.BackingFieldName;
 
 			IsConstant = other.IsConstant;
 			ConstantValue = other.ConstantValue;
@@ -69,9 +69,9 @@ namespace Lens.Compiler
 		public int? ArgumentId;
 
 		/// <summary>
-		/// Is the name referenced in nested scopes?
+		/// The way of handling a local variable that actually represents something else.
 		/// </summary>
-		public bool IsClosured;
+		public LocalNameMapping Mapping;
 
 		/// <summary>
 		/// The distance between the current scope and the scope that owns this variable.
@@ -81,7 +81,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The name of the field in closured class.
 		/// </summary>
-		public string ClosureFieldName;
+		public string BackingFieldName;
 
 		/// <summary>
 		/// The local builder identifier.

@@ -54,12 +54,16 @@ namespace Lens.SyntaxTree.Expressions
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
 					Error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 
-				if (nameInfo.IsClosured)
+				if (nameInfo.Mapping == LocalNameMapping.Closure)
 				{
 					if (nameInfo.ClosureDistance == 0)
 						assignClosuredLocal(ctx, nameInfo);
 					else
 						assignClosuredRemote(ctx, nameInfo);
+				}
+				else if (nameInfo.Mapping == LocalNameMapping.Field)
+				{
+					assignField(ctx, nameInfo);
 				}
 				else
 				{
@@ -125,6 +129,21 @@ namespace Lens.SyntaxTree.Expressions
 		}
 
 		/// <summary>
+		/// Assigns a closured variable that is mapped to a field of current object.
+		/// </summary>
+		private void assignField(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			gen.EmitLoadArgument(0);
+
+			Expr.Cast(Value, name.Type).Compile(ctx, true);
+
+			var clsField = ctx.CurrentType.ResolveField(name.BackingFieldName);
+			gen.EmitSaveField(clsField.FieldBuilder);
+		}
+
+		/// <summary>
 		/// Assigns a closured variable that is declared in current scope.
 		/// </summary>
 		private void assignClosuredLocal(Context ctx, LocalName name)
@@ -136,7 +155,7 @@ namespace Lens.SyntaxTree.Expressions
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
 			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
-			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
+			var clsField = ctx.ResolveField(clsType, name.BackingFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
@@ -162,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			Expr.Cast(Value, name.Type).Compile(ctx, true);
 
-			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
+			var clsField = ctx.ResolveField(type, name.BackingFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
 

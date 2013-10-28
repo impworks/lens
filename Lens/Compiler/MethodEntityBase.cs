@@ -144,9 +144,9 @@ namespace Lens.Compiler
 						continue;
 
 					var local = Scope.FindName(arg.Name);
-					if (local.IsClosured)
+					if (local.Mapping == LocalNameMapping.Closure)
 					{
-						var fi = closureType.ResolveField(local.ClosureFieldName);
+						var fi = closureType.ResolveField(local.BackingFieldName);
 						gen.EmitLoadLocal(closure);
 						gen.EmitLoadArgument(idx + skip);
 						gen.EmitSaveField(fi.FieldBuilder);

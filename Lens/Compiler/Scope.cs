@@ -125,7 +125,8 @@ namespace Lens.Compiler
 							throw new LensCompilerException(CompilerMessages.ClosureRef);
 					}
 
-					loc.IsClosured |= closured;
+					if(loc.Mapping == LocalNameMapping.Default)
+						loc.Mapping = LocalNameMapping.Closure;
 				}
 			);
 
@@ -188,12 +189,20 @@ namespace Lens.Compiler
 				if (curr.IsConstant && curr.IsImmutable && ctx.Options.UnrollConstants)
 					continue;
 
-				if (curr.IsClosured)
+				if (curr.Mapping == LocalNameMapping.Closure)
 				{
 					// create a field in the closured class
 					var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
-					curr.ClosureFieldName = name;
+					curr.BackingFieldName = name;
 					ClosureType.CreateField(name, curr.Type);
+				}
+				else if (curr.Mapping == LocalNameMapping.Field)
+				{
+					var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
+					curr.BackingFieldName = name;
+
+					// todo : ensure this is actually true
+					ctx.CurrentType.CreateField(name, curr.Type);
 				}
 				else
 				{

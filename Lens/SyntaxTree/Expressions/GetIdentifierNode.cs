@@ -79,12 +79,16 @@ namespace Lens.SyntaxTree.Expressions
 				if(local.IsImmutable && PointerRequired)
 					Error(CompilerMessages.ConstantByRef);
 
-				if (local.IsClosured)
+				if (local.Mapping == LocalNameMapping.Closure)
 				{
 					if (local.ClosureDistance == 0)
 						getClosuredLocal(ctx, local);
 					else
 						getClosuredRemote(ctx, local);
+				}
+				else if (local.Mapping == LocalNameMapping.Field)
+				{
+					getField(ctx, local);
 				}
 				else
 				{
@@ -140,7 +144,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
-			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
+			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.BackingFieldName);
 			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired);
 		}
 
@@ -164,8 +168,18 @@ namespace Lens.SyntaxTree.Expressions
 				dist--;
 			}
 
-			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
+			var clsField = ctx.ResolveField(type, name.BackingFieldName);
 			gen.EmitLoadField(clsField.FieldInfo, PointerRequired);
+		}
+
+		private void getField(Context ctx, LocalName name)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			gen.EmitLoadArgument(0);
+
+			var field = ctx.CurrentType.ResolveField(name.BackingFieldName);
+			gen.EmitLoadField(field.FieldBuilder);
 		}
 
 		private void getLocal(Context ctx, LocalName name)

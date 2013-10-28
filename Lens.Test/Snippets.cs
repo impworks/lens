@@ -854,7 +854,7 @@ sum";
 			var src = @"
 fun squares:int~ (start:int end:int) ->
     for x in start..end do
-        yield x * x
+        yield (x ** 2) as int
 
 squares 1 5
     |> Sum ()

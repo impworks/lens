@@ -76,6 +76,7 @@
     <Compile Include="Compiler\Context.SafeMode.cs" />
     <Compile Include="Compiler\Context.Stdlib.cs" />
     <Compile Include="Compiler\EntityNames.cs" />
+    <Compile Include="Compiler\LocalNameMapping.cs" />
     <Compile Include="Compiler\MethodEntityKind.cs" />
     <Compile Include="Compiler\PropertyEntity.cs" />
     <Compile Include="Compiler\SafeMode.cs" />
