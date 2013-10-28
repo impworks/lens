@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -49,8 +50,24 @@ namespace Lens.SyntaxTree.ControlFlow
 			base.Analyze(ctx);
 
 			var method = ctx.CurrentMethod as MethodEntity;
-			if(method != null)
+			if (method != null)
+			{
+				// restrictions
+				if (method.Kind == MethodEntityKind.Main) Error(CompilerMessages.YieldInMain);
+				if (method.Kind == MethodEntityKind.Lambda) Error(CompilerMessages.YieldInLambda);
+				if (method.IsPure) Error(CompilerMessages.YieldFromPure);
+
+				var returnType = method.ReturnType ?? ctx.ResolveType(method.ReturnTypeSignature);
+				if (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(IEnumerable<>))
+					Error(method.ReturnTypeSignature, CompilerMessages.IteratorReturnTypeIncorrect);
+
+				var itemType = returnType.GetGenericArguments()[0];
+				var exprType = GetIteratorType(ctx);
+				if (!itemType.IsAssignableFrom(exprType))
+					Error(CompilerMessages.YieldTypeMismatch, exprType, itemType);
+
 				method.YieldStatements.Add(this);
+			}
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -77,7 +94,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 				return type.GetGenericArguments()[0];
 
-			Error("Type {0} is not iterable!", type);
+			Error(CompilerMessages.YieldFromNotIterable, type);
 			return null;
 		}
 

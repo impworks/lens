@@ -174,6 +174,7 @@ namespace Lens.Compiler
 			ClosureType.ClosureMethodId++;
 
 			var method = creator(closureName);
+			method.Kind = MethodEntityKind.Lambda;
 			method.Scope.OuterScope = this;
 			return method;
 		}

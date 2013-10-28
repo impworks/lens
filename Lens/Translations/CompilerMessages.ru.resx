@@ -459,4 +459,22 @@
   <data name="VoidTypeDefault" xml:space="preserve">
     <value>Невозможно создать экземпляр типа Unit или void!</value>
   </data>
+  <data name="IteratorReturnTypeIncorrect" xml:space="preserve">
+    <value>Возвращаемое значение метода-итератора должно иметь тип IEnumerable&lt;T&gt;!</value>
+  </data>
+  <data name="YieldInLambda" xml:space="preserve">
+    <value>Выражения yield недопустимы в анонимных функцях!</value>
+  </data>
+  <data name="YieldInMain" xml:space="preserve">
+    <value>Выражения yield допустимы только в именованных функциях!</value>
+  </data>
+  <data name="YieldFromNotIterable" xml:space="preserve">
+    <value>Тип '{0}' не является перечислимым!</value>
+  </data>
+  <data name="YieldFromPure" xml:space="preserve">
+    <value>Выражения yield недопустимы в функциях, помеченных модификатором pure!</value>
+  </data>
+  <data name="YieldTypeMismatch" xml:space="preserve">
+    <value>Выражение типа '{0}' невозможно вернуть из итератора типа '{1}'!</value>
+  </data>
 </root>

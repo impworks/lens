@@ -459,4 +459,22 @@
   <data name="VoidTypeDefault" xml:space="preserve">
     <value>Cannot create an instance of Unit or Void types!</value>
   </data>
+  <data name="IteratorReturnTypeIncorrect" xml:space="preserve">
+    <value>Iterator method's return type must be an IEnumerable&lt;T&gt;!</value>
+  </data>
+  <data name="YieldInLambda" xml:space="preserve">
+    <value>Yield statements are not allowed in lambda expressions!</value>
+  </data>
+  <data name="YieldInMain" xml:space="preserve">
+    <value>Yield statements are only allowed within functions!</value>
+  </data>
+  <data name="YieldFromNotIterable" xml:space="preserve">
+    <value>Type '{0}' is not iterable!</value>
+  </data>
+  <data name="YieldFromPure" xml:space="preserve">
+    <value>Yield statements are not allowed in pure functions!</value>
+  </data>
+  <data name="YieldTypeMismatch" xml:space="preserve">
+    <value>Type '{0}' cannot be yielded from an iterator of type '{1}'!</value>
+  </data>
 </root>

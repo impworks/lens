@@ -35,7 +35,9 @@ namespace Lens.Compiler
 		public Type[] ArgumentTypes;
 
 		public CodeBlockNode Body;
-		public Scope Scope { get; private set; }
+		public Scope Scope;
+
+		public MethodEntityKind Kind;
 
 		/// <summary>
 		/// The MSIL Generator stream to which commands are emitted.

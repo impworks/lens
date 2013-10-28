@@ -25,6 +25,8 @@ namespace Lens.Compiler
 			_MethodList = new List<MethodEntity>();
 			_Implementations = new List<Tuple<MethodInfo, MethodEntity>>();
 
+			_UnprocessedEntities = new List<MethodEntityBase>();
+
 			ClosureMethodId = 1;
 		}
 
@@ -35,8 +37,19 @@ namespace Lens.Compiler
 		private Dictionary<string, List<MethodEntity>> _Methods;
 		private List<ConstructorEntity> _Constructors;
 
+		/// <summary>
+		/// Methods that are not yet processed by ProcessClosures pass.
+		/// </summary>
+		private List<MethodEntityBase> _UnprocessedEntities;
+
+		/// <summary>
+		/// Implicit interface implementations.
+		/// </summary>
 		private List<Tuple<MethodInfo, MethodEntity>> _Implementations;
 
+		/// <summary>
+		/// Pre-processed list of methods.
+		/// </summary>
 		private List<MethodEntity> _MethodList;
 
 		#region Properties
@@ -213,14 +226,11 @@ namespace Lens.Compiler
 		/// </summary>
 		public void ProcessClosures()
 		{
-			foreach (var currGroup in _Methods)
-				foreach (var currMethod in currGroup.Value)
-					if (!currMethod.IsImported)
-						currMethod.ProcessClosures();
+			foreach (var entity in _UnprocessedEntities)
+				if(!entity.IsImported)
+					entity.ProcessClosures();
 
-			foreach (var currCtor in _Constructors)
-				if (!currCtor.IsImported)
-					currCtor.ProcessClosures();
+			_UnprocessedEntities.Clear();
 		}
 
 		/// <summary>
@@ -413,8 +423,11 @@ namespace Lens.Compiler
 			{
 				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
 				ContainerType = this,
+				Kind = MethodEntityKind.Constructor
 			};
+
 			_Constructors.Add(ce);
+			_UnprocessedEntities.Add(ce);
 
 			if(prepare)
 				ce.PrepareSelf();
@@ -531,10 +544,12 @@ namespace Lens.Compiler
 				Name = name,
 				IsStatic = isStatic,
 				IsVirtual = isVirtual,
+				Kind = MethodEntityKind.Function,
 				ContainerType = this,
 			};
 
 			_MethodList.Add(me);
+			_UnprocessedEntities.Add(me);
 
 			return me;
 		}
