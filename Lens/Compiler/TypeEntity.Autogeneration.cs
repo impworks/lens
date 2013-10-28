@@ -328,10 +328,7 @@ namespace Lens.Compiler
 			// main method
 			var moveNext = type.CreateMethod("MoveNext", typeof(bool), isVirtual: true);
 			moveNext.YieldStatements = method.YieldStatements;
-			moveNext.Body = Expr.Block(
-				method.Body,
-				Expr.False()
-			);
+			moveNext.Body = method.Body;
 			type.AddImplementation(typeof(IEnumerator).GetMethod("MoveNext"), moveNext);
 
 			// _Current
@@ -368,9 +365,15 @@ namespace Lens.Compiler
 			dispose.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
 			type.AddImplementation(typeof(IDisposable).GetMethod("Dispose"), dispose);
 
-			// TODO : reset
+			// reset
 			var reset = type.CreateMethod("Reset", typeof(void), isVirtual: true);
-			reset.Body = Expr.Block(Expr.Dynamic(ctx => ctx.CurrentILGenerator.EmitNop()));
+			reset.Body = Expr.Block(
+				Expr.SetMember(
+					Expr.This(),
+					EntityNames.IteratorStateFieldName,
+					Expr.Int(0)
+				)
+			);
 			type.AddImplementation(typeof(IEnumerator).GetMethod("Reset"), reset);
 
 			// connect base method to iterator

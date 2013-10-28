@@ -236,7 +236,7 @@ namespace Lens.Compiler
 			{
 				if (type.IsInterface)
 				{
-					var ifaces = type.GetInterfaces();
+					var ifaces = GenericHelper.GetInterfaces(type);
 					foreach (var curr in ifaces)
 					{
 						try
@@ -342,7 +342,7 @@ namespace Lens.Compiler
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					type.GetMethods(flags).Where(m => m.Name == name),
+					genType.GetMethods(flags).Where(m => m.Name == name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					argTypes
 				);

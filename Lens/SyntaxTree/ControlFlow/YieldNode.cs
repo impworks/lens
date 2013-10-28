@@ -29,6 +29,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label Label { get; private set; }
 
+		/// <summary>
+		/// Current state id.
+		/// </summary>
+		public int StateId { get; private set; }
+
 		public override LexemLocation EndLocation
 		{
 			get { return Expression.EndLocation; }
@@ -53,9 +58,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			yield return Expression;
 		}
 
-		public void RegisterLabel(Context ctx)
+		public void RegisterLabel(Context ctx, int stateId)
 		{
 			Label = ctx.CurrentILGenerator.DefineLabel();
+			StateId = stateId;
 		}
 
 		public Type GetIteratorType(Context ctx)
@@ -104,10 +110,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				Expr.SetMember(
 					Expr.This(),
 					EntityNames.IteratorStateFieldName,
-					Expr.Add(
-						Expr.GetMember(Expr.This(), EntityNames.IteratorStateFieldName),
-						Expr.Int(1)
-					)
+					Expr.Int(StateId + 1)
 				)
 			);
 

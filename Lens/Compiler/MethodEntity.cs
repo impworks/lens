@@ -152,10 +152,12 @@ namespace Lens.Compiler
 			var startLabel = gen.DefineLabel();
 
 			var labels = new List<Label>(YieldStatements.Count);
+			var labelId = 0;
 			foreach (var curr in YieldStatements)
 			{
-				curr.RegisterLabel(ctx);
+				curr.RegisterLabel(ctx, labelId);
 				labels.Add(curr.Label);
+				labelId++;
 			}
 
 			// sic! less or equal comparison
@@ -181,15 +183,6 @@ namespace Lens.Compiler
 		private void emitIteratorTrailer(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-
-			var type = ContainerType.ResolveField(EntityNames.IteratorCurrentFieldName).Type;
-			var setter = Expr.SetMember(
-				Expr.This(),
-				EntityNames.IteratorCurrentFieldName,
-				Expr.Default(type)
-			);
-			setter.Compile(ctx, false);
-
 			gen.EmitConstant(false);
 			gen.EmitReturn();
 		}
