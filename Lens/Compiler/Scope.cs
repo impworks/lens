@@ -47,6 +47,7 @@ namespace Lens.Compiler
 		public void InitializeScope(Context ctx)
 		{
 			var method = ctx.CurrentMethod;
+
 			if (method.Arguments == null)
 				return;
 

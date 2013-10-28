@@ -224,6 +224,17 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
+		/// Analyzes the current nodes.
+		/// </summary>
+		public void Analyze()
+		{
+			foreach (var currGroup in _Methods)
+				foreach (var currMethod in currGroup.Value)
+					if (!currMethod.IsImported)
+						currMethod.Analyze();
+		}
+
+		/// <summary>
 		/// Creates auto-generated methods for the type.
 		/// </summary>
 		public void CreateEntities()
@@ -248,6 +259,7 @@ namespace Lens.Compiler
 
 					// iterator methods
 					if (currMethod.YieldStatements.Count > 0 && Kind != TypeEntityKind.Iterator)
+						// no scope init required
 						createIterator(currMethod);
 				}
 			}

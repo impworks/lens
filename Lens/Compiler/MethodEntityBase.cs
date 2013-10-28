@@ -50,20 +50,21 @@ namespace Lens.Compiler
 		/// </summary>
 		public void ProcessClosures()
 		{
-			var ctx = ContainerType.Context;
+			withSelf(ctx =>
+				{
+					Scope.InitializeScope(ctx);
+					Body.ProcessClosures(ctx);
+					Scope.FinalizeScope(ctx);
+				}
+			);
+		}
 
-			var oldMethod = ctx.CurrentMethod;
-
-			ctx.CurrentMethod = this;
-			CurrentTryBlock = null;
-			CurrentCatchBlock = null;
-
-			Scope.InitializeScope(ctx);
-			Body.ProcessClosures(ctx);
-			Scope.FinalizeScope(ctx);
-
-			ctx.CurrentMethod = oldMethod;
-
+		/// <summary>
+		/// Analyzes the current method.
+		/// </summary>
+		public void Analyze()
+		{
+			withSelf(Body.Analyze);
 		}
 
 		/// <summary>
@@ -71,20 +72,16 @@ namespace Lens.Compiler
 		/// </summary>
 		public void Compile()
 		{
-			var ctx = ContainerType.Context;
+			withSelf(
+				ctx =>
+				{
+					emitPrelude(ctx);
+					compileCore(ctx);
+					emitTrailer(ctx);
 
-			var backup = ctx.CurrentMethod;
-			ctx.CurrentMethod = this;
-			CurrentTryBlock = null;
-			CurrentCatchBlock = null;
-
-			emitPrelude(ctx);
-			compileCore(ctx);
-			emitTrailer(ctx);
-
-			Generator.EmitReturn();
-
-			ctx.CurrentMethod = backup;
+					Generator.EmitReturn();
+				}
+			);
 		}
 
 		/// <summary>
@@ -93,6 +90,20 @@ namespace Lens.Compiler
 		public Type[] GetArgumentTypes(Context ctx)
 		{
 			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
+		}
+
+		private void withSelf(Action<Context> act)
+		{
+			var ctx = ContainerType.Context;
+
+			var backup = ctx.CurrentMethod;
+			ctx.CurrentMethod = this;
+			CurrentTryBlock = null;
+			CurrentCatchBlock = null;
+
+			act(ctx);
+
+			ctx.CurrentMethod = backup;
 		}
 
 		/// <summary>

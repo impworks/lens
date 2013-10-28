@@ -81,6 +81,7 @@ namespace Lens.Compiler
 			loadNodes(nodes);
 			prepareEntities();
 
+			analyzeNodes();
 			createAutoEntities();
 			prepareEntities();
 

@@ -44,9 +44,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Methods
 
-		public override void ProcessClosures(Context ctx)
+		public override void Analyze(Context ctx)
 		{
-			base.ProcessClosures(ctx);
+			base.Analyze(ctx);
 
 			var method = ctx.CurrentMethod as MethodEntity;
 			if(method != null)

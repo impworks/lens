@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		public virtual IEnumerable<NodeBase> GetChildNodes()
 		{
-			return new NodeBase[0];
+			return null;
 		}
 
 		/// <summary>
@@ -100,9 +100,28 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		public virtual void ProcessClosures(Context ctx)
 		{
-			foreach(var child in GetChildNodes())
-				if(child != null)
+			var children = GetChildNodes();
+			if (children == null)
+				return;
+
+			foreach (var child in children)
+				if (child != null)
 					child.ProcessClosures(ctx);
+		}
+
+		/// <summary>
+		/// Performs pre-analysis.
+		/// Is required for yield statement detection.
+		/// </summary>
+		public virtual void Analyze(Context ctx)
+		{
+			var children = GetChildNodes();
+			if (children == null)
+				return;
+
+			foreach (var child in children)
+				if(child != null)
+					child.Analyze(ctx);
 		}
 
 		/// <summary>

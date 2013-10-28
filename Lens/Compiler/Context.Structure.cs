@@ -230,9 +230,18 @@ namespace Lens.Compiler
 		{
 			var types = _DefinedTypes.ToArray();
 
-			// ProcessClosures() usually processes new types, hence the caching to array
+			// ProcessClosures() usually creates new types, hence the caching to array
 			foreach (var currType in types)
 				currType.Value.ProcessClosures();
+		}
+
+		/// <summary>
+		/// Traverses the syntactic tree, searching for closures and curried methods.
+		/// </summary>
+		private void analyzeNodes()
+		{
+			foreach (var currType in _DefinedTypes)
+				currType.Value.Analyze();
 		}
 
 		/// <summary>

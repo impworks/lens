@@ -13,7 +13,7 @@ namespace Lens.Compiler
 	{
 		#region Auto-generated entities
 
-		private void createSpecificEquals()
+		private MethodEntity createSpecificEquals()
 		{
 			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
 
@@ -39,9 +39,11 @@ namespace Lens.Compiler
 			}
 
 			eq.Body.Add(Expr.Get("result"));
+
+			return eq;
 		}
 
-		private void createGenericEquals()
+		private MethodEntity createGenericEquals()
 		{
 			var eq = CreateMethod(
 				"Equals",
@@ -78,9 +80,11 @@ namespace Lens.Compiler
 					)
 				)
 			);
+
+			return eq;
 		}
 
-		private void createGetHashCode()
+		private MethodEntity createGetHashCode()
 		{
 			var ghc = CreateMethod(
 				"GetHashCode",
@@ -132,9 +136,11 @@ namespace Lens.Compiler
 			}
 
 			ghc.Body.Add(Expr.Get("result"));
+
+			return ghc;
 		}
 
-		private void createPureWrapper(MethodEntity method)
+		private MethodEntity createPureWrapper(MethodEntity method)
 		{
 			if (method.ReturnType.IsVoid())
 				Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
@@ -155,6 +161,8 @@ namespace Lens.Compiler
 				createPureWrapper1(method, pureName);
 			else
 				createPureWrapperMany(method, pureName);
+
+			return pure;
 		}
 
 		private void createPureWrapper0(MethodEntity wrapper, string originalName)
