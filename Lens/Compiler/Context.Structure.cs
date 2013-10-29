@@ -55,7 +55,7 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// Imports a property registered in GlobalPropertyHelper into the lookup.
+		/// Imports a property into GlobalPropertyHelper and context lookup tables.
 		/// </summary>
 		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
@@ -67,6 +67,22 @@ namespace Lens.Compiler
 
 			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
 			_DefinedProperties.Add(name, ent);
+		}
+
+		/// <summary>
+		/// Registers a property declared inside the script.
+		/// Is used for type syntactic sugar.
+		/// </summary>
+		public void RegisterProperty(string name, Type type, MethodEntity getter, MethodEntity setter = null)
+		{
+			if (Options.AllowSave)
+				Error(CompilerMessages.ImportIntoSaveableAssembly);
+
+			if (_DefinedProperties.ContainsKey(name))
+				Error(CompilerMessages.PropertyImported, name);
+
+			var pty = GlobalPropertyHelper.RegisterProperty(ContextId, type, getter, setter);
+			_DefinedProperties.Add(name, pty);
 		}
 
 		/// <summary>
@@ -102,42 +118,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
-			var mainType = CreateType(node.Name, prepare: true);
-			mainType.Kind = TypeEntityKind.Type;
-
-			foreach (var curr in node.Entries)
-			{
-				var tagName = curr.Name;
-				var labelType = CreateType(tagName, mainType.TypeInfo, isSealed: true, prepare: true, defaultCtor: false);
-				labelType.Kind = TypeEntityKind.TypeLabel;
-
-				var ctor = labelType.CreateConstructor();
-				if (curr.IsTagged)
-				{
-					labelType.CreateField("Tag", curr.TagType);
-
-					var args = new HashList<FunctionArgument> { { "value", new FunctionArgument("value", curr.TagType) } };
-
-					var staticCtor = MainType.CreateMethod(tagName, tagName, new string[0], true);
-					ctor.Arguments = staticCtor.Arguments = args;
-
-					ctor.Body.Add(
-						Expr.SetMember(Expr.This(), "Tag", Expr.Get("value"))
-					);
-
-					staticCtor.Body.Add(
-						Expr.New(tagName, Expr.Get("value"))
-					);
-				}
-				else
-				{
-					var staticCtor = labelType.CreateMethod(tagName, tagName, new string[0], true);
-					staticCtor.Body.Add(Expr.New(tagName));
-
-					var pty = GlobalPropertyHelper.RegisterProperty(ContextId, labelType.TypeInfo, staticCtor, null);
-					_DefinedProperties.Add(tagName, pty);
-				}
-			}
+			var type = CreateType(node.Name, prepare: true);
+			type.Kind = TypeEntityKind.Type;
+			type.CreateTypeMembers(node.Entries);
 		}
 
 		/// <summary>
@@ -145,21 +128,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
-			var recType = CreateType(node.Name, isSealed: true);
-			recType.Kind = TypeEntityKind.Record;
-
-			var recCtor = recType.CreateConstructor();
-
-			foreach (var curr in node.Entries)
-			{
-				var field = recType.CreateField(curr.Name, curr.Type);
-				var argName = "_" + field.Name.ToLowerInvariant();
-
-				recCtor.Arguments.Add(argName, new FunctionArgument(argName, curr.Type));
-				recCtor.Body.Add(
-					Expr.SetMember(Expr.This(), field.Name, Expr.Get(argName))
-				);
-			}
+			var rec = CreateType(node.Name, isSealed: true);
+			rec.Kind = TypeEntityKind.Record;
+			rec.CreateRecordMembers(node.Entries);
 		}
 
 		/// <summary>
