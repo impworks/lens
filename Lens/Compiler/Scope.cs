@@ -123,10 +123,10 @@ namespace Lens.Compiler
 
 						if(loc.IsRefArgument)
 							throw new LensCompilerException(CompilerMessages.ClosureRef);
-					}
 
-					if(loc.Mapping == LocalNameMapping.Default)
-						loc.Mapping = LocalNameMapping.Closure;
+						if (loc.Mapping == LocalNameMapping.Default)
+							loc.Mapping = LocalNameMapping.Closure;
+					}
 				}
 			);
 
