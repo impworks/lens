@@ -163,9 +163,8 @@ namespace Lens.SyntaxTree.Expressions
 					else
 					{
 						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, exprType, false);
-						Expression.Compile(ctx, true);
-						gen.EmitSaveLocal(tmpVar);
-						gen.EmitLoadLocal(tmpVar, true);
+						SaveToTempLocal(ctx, tmpVar, () => Expression.Compile(ctx, true));
+						LoadFromTempLocal(ctx, tmpVar, true);
 					}
 				}
 				else

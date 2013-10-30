@@ -52,10 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			LocalName tmpVar = null;
 			if (saveLast)
-			{
 				tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, loopType, false);
-				Expr.Set(tmpVar, Expr.Default(loopType));
-			}
 
 			gen.MarkLabel(beginLabel);
 
@@ -63,16 +60,16 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.EmitConstant(false);
 			gen.EmitBranchEquals(endLabel);
 
-			Body.Compile(ctx, mustReturn);
-
 			if (saveLast)
-				gen.EmitSaveLocal(tmpVar);
+				SaveToTempLocal(ctx, tmpVar, () => Body.Compile(ctx, mustReturn));
+			else
+				Body.Compile(ctx, mustReturn);
 
 			gen.EmitJump(beginLabel);
 
 			gen.MarkLabel(endLabel);
 			if (saveLast)
-				gen.EmitLoadLocal(tmpVar);
+				LoadFromTempLocal(ctx, tmpVar);
 			else
 				gen.EmitNop();
 		}

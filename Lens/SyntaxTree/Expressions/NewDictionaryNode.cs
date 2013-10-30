@@ -54,9 +54,12 @@ namespace Lens.SyntaxTree.Expressions
 			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { m_KeyType, m_ValueType });
 
 			var count = Expressions.Count;
-			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar);
+			SaveToTempLocal(ctx, tmpVar, () =>
+				{
+					gen.EmitConstant(count);
+					gen.EmitCreateObject(ctor.ConstructorInfo);
+				}
+			);
 
 			foreach (var curr in Expressions)
 			{
@@ -72,7 +75,7 @@ namespace Lens.SyntaxTree.Expressions
 				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
 					Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, m_KeyType, m_ValueType);
 
-				gen.EmitLoadLocal(tmpVar);
+				LoadFromTempLocal(ctx, tmpVar);
 
 				curr.Key.Compile(ctx, true);
 				Expr.Cast(curr.Value, m_ValueType).Compile(ctx, true);
@@ -80,7 +83,7 @@ namespace Lens.SyntaxTree.Expressions
 				gen.EmitCall(addMethod.MethodInfo);
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			LoadFromTempLocal(ctx, tmpVar);
 		}
 
 		#region Equality members

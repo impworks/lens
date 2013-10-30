@@ -166,5 +166,41 @@ namespace Lens.SyntaxTree
 			if(!ctx.IsTypeAllowed(type))
 				Error(CompilerMessages.SafeModeIllegalType, type.FullName);
 		}
+
+		/// <summary>
+		/// Saves the result of arbitrary code block to a local temp variable.
+		/// </summary>
+		protected void SaveToTempLocal(Context ctx, LocalName name, Action act)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			if (name.Mapping == LocalNameMapping.Field)
+				gen.EmitLoadArgument(0);
+
+			act();
+
+			if(name.Mapping == LocalNameMapping.Field)
+				gen.EmitSaveField(ctx.CurrentType.ResolveField(name.BackingFieldName).FieldBuilder);
+			else
+				gen.EmitSaveLocal(name);
+		}
+
+		/// <summary>
+		/// Loads the value of a local temp variable onto a stack.
+		/// </summary>
+		protected void LoadFromTempLocal(Context ctx, LocalName name, bool pointer = false)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			if (name.Mapping == LocalNameMapping.Field)
+			{
+				gen.EmitLoadArgument(0);
+				gen.EmitLoadField(ctx.CurrentType.ResolveField(name.BackingFieldName).FieldBuilder, pointer);
+			}
+			else
+			{
+				gen.EmitLoadLocal(name, pointer);
+			}
+		}
 	}
 }

@@ -38,9 +38,12 @@ namespace Lens.SyntaxTree.Expressions
 			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { m_ItemType });
 
 			var count = Expressions.Count;
-			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar);
+			SaveToTempLocal(ctx, tmpVar, () =>
+				{
+					gen.EmitConstant(count);
+					gen.EmitCreateObject(ctor.ConstructorInfo);
+				}
+			);
 
 			foreach (var curr in Expressions)
 			{
@@ -51,13 +54,13 @@ namespace Lens.SyntaxTree.Expressions
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
 					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
 
-				gen.EmitLoadLocal(tmpVar);
+				LoadFromTempLocal(ctx, tmpVar);
 				
 				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Compile(ctx, true);
 				gen.EmitCall(addMethod.MethodInfo);
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			LoadFromTempLocal(ctx, tmpVar);
 		}
 
 		public override string ToString()

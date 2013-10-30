@@ -96,7 +96,7 @@ namespace Lens.Compiler
 				foreach (var method in methods)
 				{
 					// lambdas are prepared as parts of their parent scope
-					if (method.Kind == MethodEntityKind.Lambda)
+					if (method.Kind == MethodEntityKind.Lambda || method.Kind == MethodEntityKind.Iterator)
 						continue;
 
 					method.ProcessClosures();

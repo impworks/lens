@@ -34,9 +34,13 @@ namespace Lens.SyntaxTree.Expressions
 
 			// create array
 			var count = Expressions.Count;
-			gen.EmitConstant(count);
-			gen.EmitCreateArray(m_ItemType);
-			gen.EmitSaveLocal(tmpVar);
+
+			SaveToTempLocal(ctx, tmpVar, () =>
+				{
+					gen.EmitConstant(count);
+					gen.EmitCreateArray(m_ItemType);
+				}
+			);
 
 			for (var idx = 0; idx < count; idx++)
 			{
@@ -47,7 +51,7 @@ namespace Lens.SyntaxTree.Expressions
 				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
 					Error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, m_ItemType);
 
-				gen.EmitLoadLocal(tmpVar);
+				LoadFromTempLocal(ctx, tmpVar);
 				gen.EmitConstant(idx);
 
 				var cast = Expr.Cast(Expressions[idx], m_ItemType);
@@ -65,7 +69,7 @@ namespace Lens.SyntaxTree.Expressions
 				}
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			LoadFromTempLocal(ctx, tmpVar);
 		}
 
 		public override string ToString()
