@@ -238,12 +238,11 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Creates a deep copy of the scope.
 		/// </summary>
-		public Scope GetArgumentsOnly()
+		public Scope Clone()
 		{
 			var newScope = new Scope();
 			foreach (var curr in Names)
-				if(curr.Value.ArgumentId != null)
-					newScope.Names.Add(curr.Key, curr.Value.GetClosuredCopy(0));
+				newScope.Names.Add(curr.Key, curr.Value.GetClosuredCopy(0));
 
 			return newScope;
 		}

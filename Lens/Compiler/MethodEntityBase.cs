@@ -14,8 +14,8 @@ namespace Lens.Compiler
 	{
 		protected MethodEntityBase(bool isImported = false)
 		{
-			Arguments = new HashList<FunctionArgument>();
 			Scope = new Scope();
+			Arguments = new HashList<FunctionArgument>();
 			Body = new CodeBlockNode();
 
 			IsImported = isImported;
@@ -34,16 +34,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public Type[] ArgumentTypes;
 
-		private CodeBlockNode _Body;
-		public CodeBlockNode Body
-		{
-			get { return _Body; }
-			set
-			{
-				_Body = value;
-				Scope.Reset();
-			}
-		}
+		public CodeBlockNode Body;
 
 		public Scope Scope;
 

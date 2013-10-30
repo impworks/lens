@@ -853,8 +853,9 @@ sum";
 		{
 			var src = @"
 fun squares:int~ (start:int end:int) ->
-    for x in start..end do
-        yield x
+    while start <= end do
+        yield start * start
+        start = start + 1
 
 squares 1 5
     |> Sum ()
@@ -865,6 +866,21 @@ squares 1 5
 
 		[Test]
 		public void Yield3()
+		{
+			var src = @"
+fun squares:int~ (start:int end:int) ->
+    for x in start..end do
+        yield (x ** 2) as int
+
+squares 1 5
+    |> Sum ()
+";
+
+			Test(src, 55);
+		}
+
+		[Test]
+		public void Yield4()
 		{
 			var src = @"
 fun seq:int~ ->
