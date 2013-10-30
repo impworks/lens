@@ -39,6 +39,8 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName ClosureVariable { get; private set; }
 
+		private int _ImplicitVariableIndex;
+
 		#region Methods
 
 		/// <summary>
@@ -57,16 +59,6 @@ namespace Lens.Compiler
 				var name = DeclareName(arg.Name, arg.Type ?? ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
 				name.ArgumentId = method.IsStatic ? idx : idx + 1;
 			}
-		}
-
-		/// <summary>
-		/// Gets information about a local name.
-		/// </summary>
-		public LocalName GetName(string name)
-		{
-			LocalName local;
-			Names.TryGetValue(name, out local);
-			return local;
 		}
 
 		/// <summary>
@@ -98,9 +90,21 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName DeclareImplicitName(Context ctx, Type type, bool isConst)
 		{
-			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
-			var name = string.Format(EntityNames.ImplicitVariableNameTemplate, lb.LocalIndex);
-			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
+			var name = string.Format(EntityNames.ImplicitVariableNameTemplate, _ImplicitVariableIndex++);
+			var ln = new LocalName(name, type, isConst);
+
+			if (ctx.CurrentMethod.Kind == MethodEntityKind.Iterator)
+			{
+				ln.Mapping = LocalNameMapping.Field;
+				ln.BackingFieldName = name;
+
+				ctx.CurrentType.CreateField(name, type, false, true);
+			}
+			else
+			{
+				ln.LocalBuilder = ctx.CurrentILGenerator.DeclareLocal(type);
+			}
+
 			Names[name] = ln;
 			return ln;
 		}

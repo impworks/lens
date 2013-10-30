@@ -218,6 +218,7 @@ namespace Lens.Compiler
 			// main method
 			var moveNext = type.CreateMethod("MoveNext", typeof(bool), isVirtual: true);
 			moveNext.ExtractBodyFrom(method);
+			moveNext.Kind = MethodEntityKind.Iterator;
 			type.AddImplementation(typeof(IEnumerator).GetMethod("MoveNext"), moveNext);
 
 			// _Current and _StateId
@@ -272,16 +273,19 @@ namespace Lens.Compiler
 			var varName = "<iter>";
 			method.Body = Expr.Block(Expr.Let(varName, Expr.New(typeName)));
 
+			foreach (var curr in moveNext.Scope.Names)
+			{
+				var fieldName = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Value.Name);
+				curr.Value.Mapping = LocalNameMapping.Field;
+				curr.Value.BackingFieldName = fieldName;
+				type.CreateField(fieldName, curr.Value.Type);
+			}
+
 			foreach (var arg in method.Arguments)
 			{
 				var fieldName = string.Format(EntityNames.ClosureFieldNameTemplate, arg);
-				type.CreateField(fieldName, method.Arguments[arg].GetArgumentType(this));
 				var getter = Expr.SetMember(Expr.Get(varName), fieldName, Expr.Get(arg));
 				method.Body.Add(getter);
-
-				var mapped = moveNext.Scope.GetName(arg);
-				mapped.Mapping = LocalNameMapping.Field;
-				mapped.BackingFieldName = fieldName;
 			}
 
 			method.Body.Add(Expr.Get(varName));
