@@ -59,6 +59,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				if (method.Kind == MethodEntityKind.Main) Error(CompilerMessages.YieldInMain);
 				if (method.Kind == MethodEntityKind.Lambda) Error(CompilerMessages.YieldInLambda);
 				if (method.IsPure) Error(CompilerMessages.YieldFromPure);
+				if (ctx.CurrentTryBlock != null) Error(CompilerMessages.YieldInTry);
 
 				var returnType = method.ReturnType ?? ctx.ResolveType(method.ReturnTypeSignature);
 				if (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(IEnumerable<>))

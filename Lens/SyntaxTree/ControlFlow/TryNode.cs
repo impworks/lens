@@ -34,6 +34,16 @@ namespace Lens.SyntaxTree.ControlFlow
 			get { return CatchClauses.Last().EndLocation; }
 			set { LocationSetError(); }
 		}
+
+		public override void Analyze(Context ctx)
+		{
+			var backup = ctx.CurrentTryBlock;
+			ctx.CurrentTryBlock = this;
+
+			base.Analyze(ctx);
+
+			ctx.CurrentTryBlock = backup;
+		}
 		
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

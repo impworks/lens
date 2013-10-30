@@ -477,4 +477,7 @@
   <data name="YieldTypeMismatch" xml:space="preserve">
     <value>Выражение типа '{0}' невозможно вернуть из итератора типа '{1}'!</value>
   </data>
+  <data name="YieldInTry" xml:space="preserve">
+    <value>Выражения yield недопустимы в блоке try!</value>
+  </data>
 </root>

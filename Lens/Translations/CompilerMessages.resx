@@ -465,6 +465,9 @@
   <data name="YieldInLambda" xml:space="preserve">
     <value>Yield statements are not allowed in lambda expressions!</value>
   </data>
+  <data name="YieldInTry" xml:space="preserve">
+    <value>Yield statements are not allowed in try blocks!</value>
+  </data>
   <data name="YieldInMain" xml:space="preserve">
     <value>Yield statements are only allowed within functions!</value>
   </data>

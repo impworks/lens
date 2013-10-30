@@ -895,5 +895,22 @@ seq ()
 ";
 			Test(src, new [] { 100, 1, 2, 200, 1, 2, 300 });
 		}
+
+		[Test]
+		public void Yield5()
+		{
+			var src = @"
+fun passes:Func<int, int>~  ->
+    yield (x:int -> x * c)
+    yield (x:int -> x + 1)
+
+var x = 2
+for fx in passes () do
+    x = fx x
+
+x
+";
+			Test(src, 5);
+		}
 	}
 }
