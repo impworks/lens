@@ -81,10 +81,13 @@ namespace Lens
 			{
 				throw;
 			}
+#if DEBUG
 			catch (Exception ex)
 			{
+
 				throw new LensCompilerException(ex.Message);
 			}
+#endif
 		}
 
 		/// <summary>

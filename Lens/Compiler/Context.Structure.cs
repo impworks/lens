@@ -75,8 +75,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public void RegisterProperty(string name, Type type, MethodEntity getter, MethodEntity setter = null)
 		{
-			if (Options.AllowSave)
-				Error(CompilerMessages.ImportIntoSaveableAssembly);
+			// entity is internal: no check required
 
 			if (_DefinedProperties.ContainsKey(name))
 				Error(CompilerMessages.PropertyImported, name);

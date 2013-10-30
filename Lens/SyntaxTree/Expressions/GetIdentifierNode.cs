@@ -177,7 +177,6 @@ namespace Lens.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 
 			gen.EmitLoadArgument(0);
-
 			var field = ctx.CurrentType.ResolveField(name.BackingFieldName);
 			gen.EmitLoadField(field.FieldBuilder);
 		}

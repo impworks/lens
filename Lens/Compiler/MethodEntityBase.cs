@@ -108,14 +108,19 @@ namespace Lens.Compiler
 		{
 			var ctx = ContainerType.Context;
 
-			var backup = ctx.CurrentMethod;
+			var oldMethod = ctx.CurrentMethod;
+			var oldType = ctx.CurrentType;
+
 			ctx.CurrentMethod = this;
+			ctx.CurrentType = ContainerType;
+
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
 
 			act(ctx);
 
-			ctx.CurrentMethod = backup;
+			ctx.CurrentMethod = oldMethod;
+			ctx.CurrentType = oldType;
 		}
 
 		/// <summary>

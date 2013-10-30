@@ -16,7 +16,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Checks if the current property has a setter.
 		/// </summary>
-		public readonly bool HasSetter;
+		public bool HasSetter;
 
 		/// <summary>
 		/// Flag indicating the property belongs to the type, not its instances.
@@ -48,6 +48,21 @@ namespace Lens.Compiler
 
 		#endregion
 
+		/// <summary>
+		/// Creates getter and setter entities when the property fields have been instantiated.
+		/// </summary>
+		public void CreateBackingMethods()
+		{
+			Getter = ContainerType.CreateMethod("get_" + Name, Type, null, IsStatic, IsVirtual);
+			Getter.IsSpecial = true;
+
+			if (HasSetter)
+			{
+				Setter = ContainerType.CreateMethod("set_" + Name, typeof(void), new[] { Type }, IsStatic, IsVirtual);
+				Setter.IsSpecial = true;
+			}
+		}
+
 		public override void PrepareSelf()
 		{
 			if (PropertyBuilder != null)
@@ -57,17 +72,10 @@ namespace Lens.Compiler
 				Type = ContainerType.Context.ResolveType(TypeSignature);
 
 			PropertyBuilder = ContainerType.TypeBuilder.DefineProperty(Name, PropertyAttributes.None, Type, null);
-
-			Getter = ContainerType.CreateMethod("get_" + Name, Type, null, IsStatic, IsVirtual);
-			Getter.IsSpecial = true;
 			Getter.PrepareSelf();
 
 			if (HasSetter)
-			{
-				Setter = ContainerType.CreateMethod("set_" + Name, typeof (void), new[] {Type}, IsStatic, IsVirtual);
-				Setter.IsSpecial = true;
 				Setter.PrepareSelf();
-			}
 		}
 	}
 }

@@ -315,6 +315,8 @@ namespace Lens.Compiler
 			var pe = createPropertyCore(name, hasSetter, isStatic, isVirtual);
 			pe.Type = type;
 
+			pe.CreateBackingMethods();
+
 			if(prepare)
 				pe.PrepareSelf();
 

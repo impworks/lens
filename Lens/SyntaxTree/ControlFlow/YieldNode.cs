@@ -94,6 +94,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (type == typeof(IEnumerable))
 				return typeof(object);
 
+			if (type.IsArray)
+				return type.GetElementType();
+
 			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 				return type.GetGenericArguments()[0];
 

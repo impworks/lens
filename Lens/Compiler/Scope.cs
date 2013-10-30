@@ -62,6 +62,16 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Gets information about a local name.
 		/// </summary>
+		public LocalName GetName(string name)
+		{
+			LocalName local;
+			Names.TryGetValue(name, out local);
+			return local;
+		}
+
+		/// <summary>
+		/// Finds a local name in current or nested scopes.
+		/// </summary>
 		public LocalName FindName(string name)
 		{
 			LocalName local = null;
@@ -200,9 +210,6 @@ namespace Lens.Compiler
 				{
 					var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
 					curr.BackingFieldName = name;
-
-					// todo : ensure this is actually true
-					ctx.CurrentType.CreateField(name, curr.Type);
 				}
 				else
 				{
@@ -226,6 +233,19 @@ namespace Lens.Compiler
 		{
 			if(Names.Count > 0)
 				Names.Clear();
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the scope.
+		/// </summary>
+		public Scope GetArgumentsOnly()
+		{
+			var newScope = new Scope();
+			foreach (var curr in Names)
+				if(curr.Value.ArgumentId != null)
+					newScope.Names.Add(curr.Key, curr.Value.GetClosuredCopy(0));
+
+			return newScope;
 		}
 
 		/// <summary>
