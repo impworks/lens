@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Context.Autogeneration.cs" />
     <Compile Include="Compiler\Context.SafeMode.cs" />
     <Compile Include="Compiler\Context.Stdlib.cs" />
     <Compile Include="Compiler\EntityNames.cs" />

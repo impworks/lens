@@ -25,8 +25,6 @@ namespace Lens.Compiler
 			_MethodList = new List<MethodEntity>();
 			_Implementations = new List<Tuple<MethodInfo, MethodEntity>>();
 
-			_UnprocessedEntities = new List<MethodEntityBase>();
-
 			ClosureMethodId = 1;
 		}
 
@@ -36,11 +34,6 @@ namespace Lens.Compiler
 		private Dictionary<string, PropertyEntity> _Properties;
 		private Dictionary<string, List<MethodEntity>> _Methods;
 		private List<ConstructorEntity> _Constructors;
-
-		/// <summary>
-		/// Methods that are not yet processed by ProcessClosures pass.
-		/// </summary>
-		private List<MethodEntityBase> _UnprocessedEntities;
 
 		/// <summary>
 		/// Implicit interface implementations.
@@ -155,6 +148,8 @@ namespace Lens.Compiler
 			if (Interfaces != null)
 				foreach (var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
+
+			CreateEntities();
 		}
 
 		/// <summary>
@@ -222,57 +217,16 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// Process the closured for the current type.
-		/// </summary>
-		public void ProcessClosures()
-		{
-			foreach (var entity in _UnprocessedEntities)
-				if(!entity.IsImported)
-					entity.ProcessClosures();
-
-			_UnprocessedEntities.Clear();
-		}
-
-		/// <summary>
-		/// Analyzes the current nodes.
-		/// </summary>
-		public void Analyze()
-		{
-			foreach (var currGroup in _Methods)
-				foreach (var currMethod in currGroup.Value)
-					if (!currMethod.IsImported)
-						currMethod.Analyze();
-		}
-
-		/// <summary>
 		/// Creates auto-generated methods for the type.
 		/// </summary>
 		public void CreateEntities()
 		{
-			if (IsUserDefined)
-			{
-				createSpecificEquals();
-				createGenericEquals();
-				createGetHashCode();
-			}
+			if (!IsUserDefined)
+				return;
 
-			foreach (var currGroup in _Methods)
-			{
-				foreach (var currMethod in currGroup.Value)
-				{
-					if (currMethod.IsImported)
-						continue;
-
-					// pure methods
-					if (currMethod.IsPure && Kind == TypeEntityKind.Main)
-						createPureWrapper(currMethod);
-
-					// iterator methods
-					if (currMethod.YieldStatements.Count > 0 && Kind != TypeEntityKind.Iterator)
-						// no scope init required
-						createIterator(currMethod);
-				}
-			}
+			createSpecificEquals();
+			createGenericEquals();
+			createGetHashCode();
 		}
 
 		/// <summary>
@@ -301,16 +255,16 @@ namespace Lens.Compiler
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
 			var me = new MethodEntity
-				         {
-					         Name = name,
-					         IsImported = true,
-					         IsStatic = true,
-					         IsVirtual = false,
-					         ContainerType = this,
-					         MethodInfo = mi,
-					         ReturnType = mi.ReturnType,
-					         Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
-				         };
+			{
+				Name = name,
+				IsImported = true,
+				IsStatic = true,
+				IsVirtual = false,
+				ContainerType = this,
+				MethodInfo = mi,
+				ReturnType = mi.ReturnType,
+				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
+			};
 
 			if (check)
 			{
@@ -427,7 +381,7 @@ namespace Lens.Compiler
 			};
 
 			_Constructors.Add(ce);
-			_UnprocessedEntities.Add(ce);
+			Context.DeclareMethodForProcessing(ce);
 
 			if(prepare)
 				ce.PrepareSelf();
@@ -549,7 +503,7 @@ namespace Lens.Compiler
 			};
 
 			_MethodList.Add(me);
-			_UnprocessedEntities.Add(me);
+			Context.DeclareMethodForProcessing(me);
 
 			return me;
 		}

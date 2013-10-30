@@ -22,7 +22,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The lookup table of names defined in current scope.
 		/// </summary>
-		public Dictionary<string, LocalName> Names;
+		public readonly Dictionary<string, LocalName> Names;
 
 		/// <summary>
 		/// The name of the closure class.
@@ -217,6 +217,15 @@ namespace Lens.Compiler
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)
 				ClosureVariable = DeclareInternalName(string.Format(EntityNames.ClosureInstanceVariableNameTemplate, ClosureTypeId), ctx, ClosureType.TypeBuilder, false);
+		}
+
+		/// <summary>
+		/// Erases the scope data when the method body has been regenerated.
+		/// </summary>
+		public void Reset()
+		{
+			if(Names.Count > 0)
+				Names.Clear();
 		}
 
 		/// <summary>

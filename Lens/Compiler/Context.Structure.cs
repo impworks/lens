@@ -180,6 +180,14 @@ namespace Lens.Compiler
 			return ++_ClosureId;
 		}
 
+		/// <summary>
+		/// Adds a new method for closure processing.
+		/// </summary>
+		public void DeclareMethodForProcessing(MethodEntityBase method)
+		{
+			_UnprocessedMethods.Add(method);
+		}
+
 		#endregion
 
 		#region Helpers
@@ -192,49 +200,6 @@ namespace Lens.Compiler
 			lock (typeof(Context))
 				_AssemblyId++;
 			return "_CompiledAssembly" + _AssemblyId;
-		}
-
-		/// <summary>
-		/// Traverses the syntactic tree, searching for closures and curried methods.
-		/// </summary>
-		private void processClosures()
-		{
-			var types = _DefinedTypes.ToArray();
-
-			// ProcessClosures() usually creates new types, hence the caching to array
-			foreach (var currType in types)
-				currType.Value.ProcessClosures();
-		}
-
-		/// <summary>
-		/// Traverses the syntactic tree, searching for closures and curried methods.
-		/// </summary>
-		private void analyzeNodes()
-		{
-			foreach (var currType in _DefinedTypes)
-				currType.Value.Analyze();
-		}
-
-		/// <summary>
-		/// Creates automatically generated entities.
-		/// </summary>
-		private void createAutoEntities()
-		{
-			var types = _DefinedTypes.ToArray();
-			foreach (var type in types)
-				type.Value.CreateEntities();
-			
-			if (Options.AllowSave && Options.SaveAsExe)
-				createEntryPoint();
-		}
-
-		private void createEntryPoint()
-		{
-			var ep = MainType.CreateMethod(EntityNames.EntryPointMethodName, "Void", args: null, isStatic: true);
-			ep.Body = Expr.Block(
-				Expr.Invoke(Expr.New(EntityNames.MainTypeName), "Run"),
-				Expr.Unit()
-			);
 		}
 
 		/// <summary>
@@ -262,12 +227,24 @@ namespace Lens.Compiler
 		/// </summary>
 		private void prepareEntities()
 		{
-			// prepare types first
+			// prepare types first, so members can reference them
 			foreach (var curr in _DefinedTypes)
 				curr.Value.PrepareSelf();
 
 			foreach (var curr in _DefinedTypes)
 				curr.Value.PrepareMembers();
+		}
+
+		/// <summary>
+		/// Creates iterators and pure wrappers.
+		/// </summary>
+		private void createMethodRelatedEntities(MethodEntity method)
+		{
+			if(method.IsPure)
+				createPureWrapper(method);
+
+			if(method.YieldStatements.Count > 0 && method.ContainerType.Kind != TypeEntityKind.Iterator)
+				createIterator(method);
 		}
 
 		/// <summary>

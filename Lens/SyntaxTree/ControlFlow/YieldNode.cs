@@ -52,6 +52,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			var method = ctx.CurrentMethod as MethodEntity;
 			if (method != null)
 			{
+				if (method.ContainerType.Kind == TypeEntityKind.Iterator)
+					return;
+
 				// restrictions
 				if (method.Kind == MethodEntityKind.Main) Error(CompilerMessages.YieldInMain);
 				if (method.Kind == MethodEntityKind.Lambda) Error(CompilerMessages.YieldInLambda);

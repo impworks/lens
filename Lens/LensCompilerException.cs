@@ -48,7 +48,7 @@ namespace Lens
 		/// </summary>
 		public LensCompilerException BindToLocation(LocationEntity entity)
 		{
-			return BindToLocation(entity.StartLocation, entity.EndLocation);
+			return entity == null ? this : BindToLocation(entity.StartLocation, entity.EndLocation);
 		}
 
 		/// <summary>
