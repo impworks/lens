@@ -901,8 +901,8 @@ seq ()
 		{
 			var src = @"
 fun passes:Func<int, int>~  ->
-    yield (x:int -> x * c)
-    yield (x:int -> x + 1)
+    yield x:int -> x * c
+    yield x:int -> x + 1
 
 var x = 2
 for fx in passes () do

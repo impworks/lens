@@ -1408,5 +1408,41 @@ let y = 2
 
 			TestParser(src, result);
 		}
+
+		[Test]
+		public void SingleLineLambdas()
+		{
+			var src = @"
+let fx1 = x:int -> x + 1
+let fx2 = x:int -> x + 2
+";
+
+			var result = new[]
+			{
+				Expr.Let(
+					"fx1",
+					Expr.Lambda(
+						new [] { Expr.Arg("x", "int") },
+						Expr.Add(
+							Expr.Get("x"),
+							Expr.Int(1)
+						)
+					)
+				),
+
+				Expr.Let(
+					"fx2",
+					Expr.Lambda(
+						new [] { Expr.Arg("x", "int") },
+						Expr.Add(
+							Expr.Get("x"),
+							Expr.Int(2)
+						)
+					)
+				),
+			};
+
+			TestParser(src, result);
+		}
 	}
 }
