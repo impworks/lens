@@ -220,7 +220,7 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, type, true);
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(type, true);
 						gen.EmitLoadLocal(tmpVar, true);
 
 						m_InvocationSource.Compile(ctx, true);

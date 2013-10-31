@@ -480,4 +480,7 @@
   <data name="YieldTypeMismatch" xml:space="preserve">
     <value>Type '{0}' cannot be yielded from an iterator of type '{1}'!</value>
   </data>
+  <data name="ClosureIterator" xml:space="preserve">
+    <value>Variable '{0}' cannot be closured, because the containing method '{1}' is an iterator!</value>
+  </data>
 </root>

@@ -162,7 +162,7 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, exprType, false);
+						var tmpVar = ctx.CurrentScope.DeclareImplicitName(exprType, false);
 						SaveToTempLocal(ctx, tmpVar, () => Expression.Compile(ctx, true));
 						LoadFromTempLocal(ctx, tmpVar, true);
 					}

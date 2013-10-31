@@ -19,14 +19,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			_Method = ctx.CurrentScope.CreateClosureMethod(ctx, Arguments);
+			_Method = ctx.CurrentScope.CreateClosureMethod(Arguments);
 			_Method.Body = Body;
 
 			var methodBackup = ctx.CurrentMethod;
 			ctx.CurrentMethod = _Method;
 
 			var scope = _Method.Scope;
-			scope.InitializeScope(ctx);
+			scope.InitializeScope();
 			base.ProcessClosures(ctx);
 			
 			// get evaluated return type
@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			_Method.ReturnType = retType.IsVoid() ? typeof(void) : retType;
 			_Method.PrepareSelf();
 
-			scope.FinalizeScope(ctx);
+			scope.FinalizeScope();
 
 			ctx.CurrentMethod = methodBackup;
 		}

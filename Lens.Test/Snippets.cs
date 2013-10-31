@@ -900,9 +900,8 @@ seq ()
 		public void Yield5()
 		{
 			var src = @"
-fun passes:Func<int, int>~  ->
-    yield x:int -> x * c
-    yield x:int -> x + 1
+fun passes:Func<int, int>~ ->
+    yield (x:int -> x * 2)
 
 var x = 2
 for fx in passes () do

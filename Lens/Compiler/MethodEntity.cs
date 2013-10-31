@@ -64,11 +64,12 @@ namespace Lens.Compiler
 		{
 			Body = source.Body;
 			Scope = source.Scope;
+			Scope.ContainerMethod = this;
 			YieldStatements = source.YieldStatements;
 
 			// clear source
 			source.Body = new CodeBlockNode();
-			source.Scope = new Scope();
+			source.Scope = new Scope(source);
 			source.YieldStatements = new List<YieldNode>();
 		}
 

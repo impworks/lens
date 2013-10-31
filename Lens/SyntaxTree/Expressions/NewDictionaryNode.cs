@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Expressions
 			var gen = ctx.CurrentILGenerator;
 			var dictType = GetExpressionType(ctx);
 
-			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, dictType, true);
+			var tmpVar = ctx.CurrentScope.DeclareImplicitName(dictType, true);
 
 			var ctor = ctx.ResolveConstructor(dictType, new[] {typeof (int)});
 			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { m_KeyType, m_ValueType });

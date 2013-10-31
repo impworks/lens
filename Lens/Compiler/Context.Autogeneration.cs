@@ -273,12 +273,15 @@ namespace Lens.Compiler
 			var varName = "<iter>";
 			method.Body = Expr.Block(Expr.Let(varName, Expr.New(typeName)));
 
-			foreach (var curr in moveNext.Scope.Names)
+			foreach (var curr in moveNext.Scope.Names.Values)
 			{
-				var fieldName = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Value.Name);
-				curr.Value.Mapping = LocalNameMapping.Field;
-				curr.Value.BackingFieldName = fieldName;
-				type.CreateField(fieldName, curr.Value.Type);
+				if(curr.Mapping == LocalNameMapping.Closure)
+					throw new LensCompilerException(string.Format(CompilerMessages.ClosureIterator, curr.Name, method.Name));
+
+				var fieldName = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
+				curr.Mapping = LocalNameMapping.Field;
+				curr.BackingFieldName = fieldName;
+				type.CreateField(fieldName, curr.Type);
 			}
 
 			foreach (var arg in method.Arguments)

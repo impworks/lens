@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.Expressions
 		protected override void compile(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+			var tmpVar = ctx.CurrentScope.DeclareImplicitName(GetExpressionType(ctx), true);
 
 			// create array
 			var count = Expressions.Count;

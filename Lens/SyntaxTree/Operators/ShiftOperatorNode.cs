@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Operators
 				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
 				var argGetters = argTypes.Select((a, id) => Expr.GetArg(id)).Cast<NodeBase>().ToArray();
 
-				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
+				_Method = ctx.CurrentScope.CreateClosureMethod(argTypes, ctx.WrapDelegate(rightType).ReturnType);
 				_Method.Body = 
 					Expr.Block(
 						Expr.Invoke(
@@ -59,12 +59,12 @@ namespace Lens.SyntaxTree.Operators
 				ctx.CurrentMethod = _Method;
 
 				var scope = _Method.Scope;
-				scope.InitializeScope(ctx);
+				scope.InitializeScope();
 
 				_Method.Body.ProcessClosures(ctx);
 				_Method.PrepareSelf();
 
-				scope.FinalizeScope(ctx);
+				scope.FinalizeScope();
 
 				ctx.CurrentMethod = methodBackup;
 			}

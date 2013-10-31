@@ -14,7 +14,7 @@ namespace Lens.Compiler
 	{
 		protected MethodEntityBase(bool isImported = false)
 		{
-			Scope = new Scope();
+			Scope = new Scope(this);
 			Arguments = new HashList<FunctionArgument>();
 			Body = new CodeBlockNode();
 
@@ -55,9 +55,9 @@ namespace Lens.Compiler
 		{
 			withSelf(ctx =>
 				{
-					Scope.InitializeScope(ctx);
+					Scope.InitializeScope();
 					Body.ProcessClosures(ctx);
-					Scope.FinalizeScope(ctx);
+					Scope.FinalizeScope();
 				}
 			);
 		}

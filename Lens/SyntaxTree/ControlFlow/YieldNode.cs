@@ -113,7 +113,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				return;
 			}
 
-			var varName = ctx.CurrentScope.DeclareImplicitName(ctx, GetIteratorType(ctx), false);
+			var varName = ctx.CurrentScope.DeclareImplicitName(GetIteratorType(ctx), false);
 			var code = Expr.For(
 				varName,
 				Expression,

@@ -101,7 +101,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var returnType = GetExpressionType(ctx);
 			var saveLast = mustReturn && !returnType.IsVoid();
 
-			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_EnumeratorType, false);
+			var tmpVar = ctx.CurrentScope.DeclareImplicitName(m_EnumeratorType, false);
 			Expr.Set(tmpVar, Expr.Invoke(IterableExpression, "GetEnumerator")).Compile(ctx, false);
 
 			LocalName result = null;
@@ -120,7 +120,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			if (saveLast)
 			{
-				result = ctx.CurrentScope.DeclareImplicitName(ctx, returnType, false);
+				result = ctx.CurrentScope.DeclareImplicitName(returnType, false);
 				loopWrapper.Add(Expr.Set(result, loop));
 			}
 			else
@@ -153,9 +153,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			var returnType = GetExpressionType(ctx);
 			var saveLast = mustReturn && !returnType.IsVoid();
 
-			var arrayVar = ctx.CurrentScope.DeclareImplicitName(ctx, IterableExpression.GetExpressionType(ctx), false);
-			var idxVar = ctx.CurrentScope.DeclareImplicitName(ctx, typeof (int), false);
-			var lenVar = ctx.CurrentScope.DeclareImplicitName(ctx, typeof (int), false);
+			var arrayVar = ctx.CurrentScope.DeclareImplicitName(IterableExpression.GetExpressionType(ctx), false);
+			var idxVar = ctx.CurrentScope.DeclareImplicitName(typeof (int), false);
+			var lenVar = ctx.CurrentScope.DeclareImplicitName(typeof (int), false);
 
 			LocalName result = null;
 
@@ -184,7 +184,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			if (saveLast)
 			{
-				result = ctx.CurrentScope.DeclareImplicitName(ctx, returnType, false);
+				result = ctx.CurrentScope.DeclareImplicitName(returnType, false);
 				code.Add(Expr.Set(result, loop));
 			}
 			else
@@ -203,7 +203,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private void compileRange(Context ctx, bool mustReturn)
 		{
-			var signVar = ctx.CurrentScope.DeclareImplicitName(ctx, Variable.Type, false);
+			var signVar = ctx.CurrentScope.DeclareImplicitName(Variable.Type, false);
 			var code = Expr.Block(
 				Expr.Set(Variable, RangeStart),
 				Expr.Set(

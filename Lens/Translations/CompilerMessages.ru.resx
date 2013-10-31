@@ -480,4 +480,7 @@
   <data name="YieldInTry" xml:space="preserve">
     <value>Выражения yield недопустимы в блоке try!</value>
   </data>
+  <data name="ClosureIterator" xml:space="preserve">
+    <value>Переменная '{0}' не может быть замкнута, поскольку содержащий ее метод '{1}' является итератором!</value>
+  </data>
 </root>
