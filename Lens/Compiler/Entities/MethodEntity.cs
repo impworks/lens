@@ -6,7 +6,7 @@ using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
 
-namespace Lens.Compiler
+namespace Lens.Compiler.Entities
 {
 	internal class MethodEntity : MethodEntityBase
 	{

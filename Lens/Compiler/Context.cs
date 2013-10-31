@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
@@ -65,7 +67,7 @@ namespace Lens.Compiler
 			ContextId = GlobalPropertyHelper.RegisterContext();
 
 			MainType = CreateType(EntityNames.MainTypeName);
-			MainType.Kind = TypeEntityKind.Internal;
+			MainType.Kind = TypeEntityKind.Main;
 			MainType.Interfaces = new[] {typeof (IScript)};
 			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true);
 			MainMethod.ReturnType = typeof (object);
@@ -98,6 +100,7 @@ namespace Lens.Compiler
 		/// Throws a new error.
 		/// </summary>
 		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
 		public void Error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args));
@@ -107,9 +110,19 @@ namespace Lens.Compiler
 		/// Throws a new error bound to a location.
 		/// </summary>
 		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
 		public void Error(LocationEntity ent, string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args), ent);
+		}
+
+		/// <summary>
+		/// Returns unique closure id.
+		/// </summary>
+		[DebuggerStepThrough]
+		public int GetClosureId()
+		{
+			return ++_ClosureId;
 		}
 
 		#region Properties
@@ -189,11 +202,6 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// An ID for closure types.
-		/// </summary>
-		internal int ClosureId;
-
-		/// <summary>
 		/// The list of namespaces to only look in when resolving a type or an extension method.
 		/// </summary>
 		internal Dictionary<string, bool> Namespaces;
@@ -226,6 +234,11 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+
+		/// <summary>
+		/// An ID for closure types.
+		/// </summary>
+		private int _ClosureId;
 
 		#endregion
 	}

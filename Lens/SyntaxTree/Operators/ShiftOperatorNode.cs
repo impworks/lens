@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Compiler.Entities;
 using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 

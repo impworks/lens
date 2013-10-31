@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lens.Compiler.Entities;
 using Lens.Translations;
 
 namespace Lens.Compiler
@@ -135,14 +136,13 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Creates a closure type for current closure.
 		/// </summary>
-		public TypeEntity CreateClosureType(Context ctx)
+		public void CreateClosureType(Context ctx)
 		{
-			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, ctx.ClosureId);
-			ClosureTypeId = ctx.ClosureId;
+			var id = ctx.GetClosureId();
+			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, id);
+			ClosureTypeId = id;
 			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
-			ClosureType.Kind = TypeEntityKind.Internal;
-			ctx.ClosureId++;
-			return ClosureType;
+			ClosureType.Kind = TypeEntityKind.Closure;
 		}
 
 		/// <summary>
@@ -167,7 +167,7 @@ namespace Lens.Compiler
 		public MethodEntity createClosureMethodInternal(Context ctx, Func<string, MethodEntity> creator)
 		{
 			if (ClosureType == null)
-				ClosureType = CreateClosureType(ctx);
+				CreateClosureType(ctx);
 
 			var closureName = string.Format(EntityNames.ClosureMethodNameTemplate, ClosureType.ClosureMethodId);
 			ClosureType.ClosureMethodId++;

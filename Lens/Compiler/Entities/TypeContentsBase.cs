@@ -1,4 +1,4 @@
-﻿namespace Lens.Compiler
+﻿namespace Lens.Compiler.Entities
 {
 	/// <summary>
 	/// The base class of a type-contained entity.

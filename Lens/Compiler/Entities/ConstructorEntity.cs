@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Lens.Translations;
 
-namespace Lens.Compiler
+namespace Lens.Compiler.Entities
 {
 	internal class ConstructorEntity : MethodEntityBase
 	{

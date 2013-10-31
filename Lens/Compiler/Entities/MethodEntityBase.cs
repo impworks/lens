@@ -5,7 +5,7 @@ using System.Reflection.Emit;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
-namespace Lens.Compiler
+namespace Lens.Compiler.Entities
 {
 	/// <summary>
 	/// The base entity for a method and a constructor that allows lookup by argument types.

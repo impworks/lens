@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Lens.Compiler
+namespace Lens.Compiler.Entities
 {
 	/// <summary>
 	/// Represents a field defined in the generated assembly.

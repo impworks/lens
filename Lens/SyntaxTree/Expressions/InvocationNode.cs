@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.Compiler.Entities;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;

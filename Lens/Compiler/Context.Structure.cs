@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
@@ -26,10 +27,11 @@ namespace Lens.Compiler
 			if (_DefinedTypes.ContainsKey(name))
 				Error(CompilerMessages.TypeDefined, name);
 
-			var te = new TypeEntity(this, true)
+			var te = new TypeEntity(this)
 			{
 				Name = name,
-				TypeInfo = type
+				TypeInfo = type,
+				Kind = TypeEntityKind.Imported
 			};
 			_DefinedTypes.Add(name, te);
 		}

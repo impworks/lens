@@ -1,4 +1,4 @@
-﻿namespace Lens.Compiler
+﻿namespace Lens.Compiler.Entities
 {
 	internal static class EntityNames
 	{

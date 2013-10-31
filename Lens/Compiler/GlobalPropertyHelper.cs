@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Lens.Compiler.Entities;
 using Lens.Translations;
 
 namespace Lens.Compiler
