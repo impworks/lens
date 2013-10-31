@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.Compiler.Entities
@@ -58,12 +59,13 @@ namespace Lens.Compiler.Entities
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
 
+			checkArguments(ctx);
+
 			Scope.InitializeScope(ctx);
 			Body.ProcessClosures(ctx);
 			Scope.FinalizeScope(ctx);
 
 			ctx.CurrentMethod = oldMethod;
-
 		}
 
 		/// <summary>
@@ -151,5 +153,15 @@ namespace Lens.Compiler.Entities
 
 		protected virtual void emitTrailer(Context ctx)
 		{ }
+
+		private void checkArguments(Context ctx)
+		{
+			if (Arguments == null)
+				return;
+
+			foreach(var arg in Arguments.Values)
+				if(arg.Name == "_")
+					ctx.Error(arg, CompilerMessages.UnderscoreName);
+		}
 	}
 }

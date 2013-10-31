@@ -1033,6 +1033,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The &apos;_&apos; identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!.
+        /// </summary>
+        public static string UnderscoreName {
+            get {
+                return ResourceManager.GetString("UnderscoreName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A variable named &apos;{0}&apos; is already defined!.
         /// </summary>
         public static string VariableDefined {

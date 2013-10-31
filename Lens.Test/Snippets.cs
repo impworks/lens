@@ -828,5 +828,19 @@ invParse ""37"" ""13""
 
 			Test(src, 1337);
 		}
+
+		[Test]
+		public void Wildcards1()
+		{
+			var src = @"
+let fx1 = string::Join <_, string[]> as object
+let fx2 = string::Join <_, _, _, _> as object
+let fx3 = int::Parse <_> as object
+new [fx1; fx2; fx3]
+    |> Where (x:object -> x <> null)
+    |> Count ()
+";
+			Test(src, 3);
+		}
 	}
 }

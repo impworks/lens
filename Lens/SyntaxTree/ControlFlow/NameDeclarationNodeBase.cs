@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -59,6 +60,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			if(LocalName != null)
 				return;
+
+			if(Name == "_")
+				Error(CompilerMessages.UnderscoreName);
 
 			var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
 			if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)

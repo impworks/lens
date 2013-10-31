@@ -441,6 +441,9 @@
   <data name="TypesIncomparable" xml:space="preserve">
     <value>Невозможно сравнить объекты типов '{0}' и '{1}'!</value>
   </data>
+  <data name="UnderscoreName" xml:space="preserve">
+    <value>Идентификатор '_' является зарезервированным и не может быть использован в названиях переменных, аргументов или любых других объявленных пользователем сущностей!</value>
+  </data>
   <data name="VariableDefined" xml:space="preserve">
     <value>Переменная '{0}' уже объявлена!</value>
   </data>

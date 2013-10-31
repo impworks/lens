@@ -103,6 +103,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public void DeclareType(TypeDefinitionNode node)
 		{
+			if (node.Name == "_")
+				Error(CompilerMessages.UnderscoreName);
+
 			var mainType = CreateType(node.Name, prepare: true);
 			mainType.Kind = TypeEntityKind.Type;
 
@@ -146,6 +149,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public void DeclareRecord(RecordDefinitionNode node)
 		{
+			if (node.Name == "_")
+				Error(CompilerMessages.UnderscoreName);
+
 			var recType = CreateType(node.Name, isSealed: true);
 			recType.Kind = TypeEntityKind.Record;
 
@@ -168,6 +174,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public void DeclareFunction(FunctionNode node)
 		{
+			if (node.Name == "_")
+				Error(CompilerMessages.UnderscoreName);
+
 			validateFunction(node);
 			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true);
 			method.IsPure = node.IsPure;

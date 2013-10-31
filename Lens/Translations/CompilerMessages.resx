@@ -441,6 +441,9 @@
   <data name="TypesIncomparable" xml:space="preserve">
     <value>Types '{0}' and '{1}' cannot be compared!</value>
   </data>
+  <data name="UnderscoreName" xml:space="preserve">
+    <value>The '_' identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!</value>
+  </data>
   <data name="VariableDefined" xml:space="preserve">
     <value>A variable named '{0}' is already defined!</value>
   </data>
