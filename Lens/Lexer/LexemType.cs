@@ -31,8 +31,6 @@
 		Typeof,
 		Default,
 		Ref,
-		Yield,
-		From,
 		Throw,
 
 		// Literals
@@ -43,7 +41,6 @@
 		Int,
 		Double,
 		String,
-		Char,
 		Identifier,
 
 		// Braces

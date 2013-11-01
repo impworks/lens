@@ -1213,7 +1213,6 @@ namespace Lens.Parser
 			       ?? attempt(parseWhileLine)
 			       ?? attempt(parseForLine)
 			       ?? attempt(parseThrowStmt)
-			       ?? attempt(parseYieldStmt)
 			       ?? attempt(parseNewLineExpr)
 				   ?? attempt(parseTypeopExpr)
 			       ?? attempt(parseLineTypecheckExpr);
@@ -1438,15 +1437,6 @@ namespace Lens.Parser
 			node.Expression = attempt(parseLineExpr);
 			return node;
 		}
-
-		/// <summary>
-		/// yield_stmt                                  = "yield" [ "from" ] line_expr
-		/// </summary>
-		private NodeBase parseYieldStmt()
-		{
-			// to be merged from Yield branch
-			return null;
-		}
 		
 		#endregion
 
@@ -1598,7 +1588,7 @@ namespace Lens.Parser
 		#region Literals
 
 		/// <summary>
-		/// literal                                     = unit | null | bool | string | int | double | char
+		/// literal                                     = unit | null | bool | string | int | double
 		/// </summary>
 		private NodeBase parseLiteral()
 		{
@@ -1607,8 +1597,7 @@ namespace Lens.Parser
 			       ?? attempt(parseBool)
 			       ?? attempt(parseString)
 			       ?? attempt(parseInt)
-			       ?? attempt(parseDouble)
-			       ?? attempt(parseChar);
+			       ?? attempt(parseDouble) as NodeBase;
 		}
 
 		private UnitNode parseUnit()
@@ -1672,12 +1661,6 @@ namespace Lens.Parser
 				error(ParserMessages.InvalidDouble, value);
 				return null;
 			}
-		}
-
-		private NodeBase parseChar()
-		{
-			// todo
-			return null;
 		}
 
 		#endregion
