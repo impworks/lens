@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 
@@ -19,6 +20,12 @@ namespace Lens.SyntaxTree.Operators
 	
 		public override void ProcessClosures(Context ctx)
 		{
+			if(LeftOperand is LambdaNode)
+				LeftOperand.ProcessClosures(ctx);
+
+			if (RightOperand is LambdaNode)
+				RightOperand.ProcessClosures(ctx);
+
 			var leftType = LeftOperand.GetExpressionType(ctx);
 
 			var rightGetter = RightOperand as GetMemberNode;
@@ -44,6 +51,9 @@ namespace Lens.SyntaxTree.Operators
 				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
 				var argGetters = argTypes.Select((a, id) => Expr.GetArg(id)).Cast<NodeBase>().ToArray();
 
+				if (LeftOperand is GetMemberNode)
+					(LeftOperand as GetMemberNode).TypeHints.Clear();
+
 				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
 				_Method.Body = 
 					Expr.Block(
@@ -68,10 +78,6 @@ namespace Lens.SyntaxTree.Operators
 				scope.FinalizeScope(ctx);
 
 				ctx.CurrentMethod = methodBackup;
-			}
-			else
-			{
-				base.ProcessClosures(ctx);
 			}
 		}
 
