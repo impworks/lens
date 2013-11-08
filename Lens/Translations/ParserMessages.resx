@@ -120,6 +120,9 @@
   <data name="ArgTypeExpected" xml:space="preserve">
     <value>Argument type is expected!</value>
   </data>
+  <data name="ArgumentPassIndentExpected" xml:space="preserve">
+    <value>'&lt;|' statements must be indented!</value>
+  </data>
   <data name="ArgumentsExpected" xml:space="preserve">
     <value>Method call arguments are expected!</value>
   </data>
@@ -212,6 +215,9 @@
   </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Member name is expected!</value>
+  </data>
+  <data name="MethodPassIndentExpected" xml:space="preserve">
+    <value>'|&gt;' statements must be indented!</value>
   </data>
   <data name="NamespaceExpected" xml:space="preserve">
     <value>A namespace is expected!</value>

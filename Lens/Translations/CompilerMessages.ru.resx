@@ -168,6 +168,9 @@
   <data name="ConditionInconsistentTyping" xml:space="preserve">
     <value>Невозможно определить общий тип для ветвей условия! Типы выражений -  '{0}' и '{1}'.</value>
   </data>
+  <data name="ConditionTypeMismatch" xml:space="preserve">
+    <value>Выражение типа '{0}' нельзя использовать в качестве условия, поскольку оно не приводится к типу boolean!</value>
+  </data>
   <data name="ConstantByRef" xml:space="preserve">
     <value>Константы нельзя передавать в функции по ссылке!</value>
   </data>
@@ -421,7 +424,7 @@
     <value>Тип '{0}' не содержит метод '{1}' с подходящим списков аргументов! Соответствующий метод-расширение также не найден.</value>
   </data>
   <data name="TypeNotCallable" xml:space="preserve">
-    <value>Тип '{0}' не является делегатом!</value>
+    <value>Невозможно передать аргументы выражению типа '{0}', поскольку он не является функцией!</value>
   </data>
   <data name="TypeNotFound" xml:space="preserve">
     <value>Тип '{0}' не найден!</value>

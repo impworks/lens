@@ -355,6 +355,12 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseLocalStmt()
 		{
+			if(peek(LexemType.PassLeft))
+				error(ParserMessages.ArgumentPassIndentExpected);
+
+			if (peek(LexemType.PassRight))
+				error(ParserMessages.MethodPassIndentExpected);
+
 			return attempt(parseNameDefStmt)
 			       ?? attempt(parseSetStmt)
 			       ?? attempt(parseExpr);
@@ -1394,7 +1400,7 @@ namespace Lens.Parser
 
 			node.TrueAction.Add(ensure(parseLineStmt, ParserMessages.ConditionExpressionExpected));
 			if ( check(LexemType.Else))
-				node.FalseAction.Add(ensure(parseLineStmt, ParserMessages.ExpressionExpected));
+				node.FalseAction = new CodeBlockNode { ensure(parseLineStmt, ParserMessages.ExpressionExpected) };
 
 			return node;
 		}

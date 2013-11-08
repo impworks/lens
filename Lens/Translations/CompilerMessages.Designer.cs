@@ -214,6 +214,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expression of type &apos;{0}&apos; cannot be used as a condition because it is not castable to a boolean..
+        /// </summary>
+        public static string ConditionTypeMismatch {
+            get {
+                return ResourceManager.GetString("ConditionTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Constant variables cannot be passed by reference!.
         /// </summary>
         public static string ConstantByRef {
@@ -970,7 +979,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type &apos;{0}&apos; is not a delegate!.
+        ///   Looks up a localized string similar to Cannot pass arguments to expression of type &apos;{0}&apos;, because it is not callable!.
         /// </summary>
         public static string TypeNotCallable {
             get {

@@ -70,6 +70,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;&lt;|&apos; statements must be indented!.
+        /// </summary>
+        internal static string ArgumentPassIndentExpected {
+            get {
+                return ResourceManager.GetString("ArgumentPassIndentExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Method call arguments are expected!.
         /// </summary>
         internal static string ArgumentsExpected {
@@ -345,6 +354,15 @@ namespace Lens.Translations {
         internal static string MemberNameExpected {
             get {
                 return ResourceManager.GetString("MemberNameExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;|&gt;&apos; statements must be indented!.
+        /// </summary>
+        internal static string MethodPassIndentExpected {
+            get {
+                return ResourceManager.GetString("MethodPassIndentExpected", resourceCulture);
             }
         }
         

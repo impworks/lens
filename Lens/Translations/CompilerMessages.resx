@@ -168,6 +168,9 @@
   <data name="ConditionInconsistentTyping" xml:space="preserve">
     <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
   </data>
+  <data name="ConditionTypeMismatch" xml:space="preserve">
+    <value>Expression of type '{0}' cannot be used as a condition because it is not castable to a boolean.</value>
+  </data>
   <data name="ConstantByRef" xml:space="preserve">
     <value>Constant variables cannot be passed by reference!</value>
   </data>
@@ -421,7 +424,7 @@
     <value>Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!</value>
   </data>
   <data name="TypeNotCallable" xml:space="preserve">
-    <value>Type '{0}' is not a delegate!</value>
+    <value>Cannot pass arguments to expression of type '{0}', because it is not callable!</value>
   </data>
   <data name="TypeNotFound" xml:space="preserve">
     <value>Type '{0}' could not be resolved!</value>
