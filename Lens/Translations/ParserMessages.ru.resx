@@ -214,7 +214,7 @@
     <value>Ожидается выражение-тело цикла!</value>
   </data>
   <data name="LvalueExpected" xml:space="preserve">
-    <value>Ожидается присваиваемое выражение!</value>
+    <value>Модификатор 'ref' требует указания переменной, поля или индекса массива!</value>
   </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Ожидается имя поля!</value>

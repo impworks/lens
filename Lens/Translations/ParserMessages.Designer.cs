@@ -358,7 +358,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assignable expression is expected!.
+        ///   Looks up a localized string similar to The &apos;ref&apos; modifier can only be applied to a variable, a field or an array index!.
         /// </summary>
         internal static string LvalueExpected {
             get {

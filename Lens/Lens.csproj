@@ -226,6 +226,7 @@
     <EmbeddedResource Include="Translations\ParserMessages.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserMessages.ru.resx" />
   </ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
@@ -57,11 +58,15 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
+			var condType = Condition.GetExpressionType(ctx);
+			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
-				if (FalseAction != null)
+				var node = Condition.ConstantValue ? TrueAction : FalseAction;
+				if (node != null)
 				{
-					var node = Condition.ConstantValue ? TrueAction : FalseAction;
 					node.Compile(ctx, mustReturn);
 					if (!mustReturn && node.GetExpressionType(ctx).IsNotVoid())
 						gen.EmitPop();

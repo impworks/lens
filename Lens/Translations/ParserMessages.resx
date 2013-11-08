@@ -217,7 +217,7 @@
     <value>Loop body expression is expected!</value>
   </data>
   <data name="LvalueExpected" xml:space="preserve">
-    <value>Assignable expression is expected!</value>
+    <value>The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
   </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Member name is expected!</value>
