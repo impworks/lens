@@ -30,8 +30,8 @@ namespace Lens.Compiler
 			var te = new TypeEntity(this)
 			{
 				Name = name,
-				TypeInfo = type,
-				Kind = TypeEntityKind.Imported
+				Kind = TypeEntityKind.Imported,
+				TypeInfo = type
 			};
 			_DefinedTypes.Add(name, te);
 		}
