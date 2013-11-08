@@ -56,16 +56,24 @@ namespace Lens.SyntaxTree.Expressions
 			var exprType = Expression.GetExpressionType(ctx);
 			var idxType = Index.GetExpressionType(ctx);
 
-			var pty = ctx.ResolveIndexer(exprType, idxType, false);
-			var idxDest = pty.ArgumentTypes[0];
-			var valDest = pty.ArgumentTypes[1];
+			try
+			{
+				var pty = ctx.ResolveIndexer(exprType, idxType, false);
+				var idxDest = pty.ArgumentTypes[0];
+				var valDest = pty.ArgumentTypes[1];
 
-			Expression.Compile(ctx, true);
+				Expression.Compile(ctx, true);
 
-			Expr.Cast(Index, idxDest).Compile(ctx, true);
-			Expr.Cast(Value, valDest).Compile(ctx, true);
+				Expr.Cast(Index, idxDest).Compile(ctx, true);
+				Expr.Cast(Value, valDest).Compile(ctx, true);
 
-			gen.EmitCall(pty.MethodInfo);
+				gen.EmitCall(pty.MethodInfo);
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
+			}
 		}
 
 		#region Equality members

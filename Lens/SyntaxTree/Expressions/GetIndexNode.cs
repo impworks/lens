@@ -26,8 +26,16 @@ namespace Lens.SyntaxTree.Expressions
 				return exprType.GetElementType();
 
 			var idxType = Index.GetExpressionType(ctx);
-			m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
-			return m_Getter.ReturnType;
+			try
+			{
+				m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				return m_Getter.ReturnType;
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
+			}
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()

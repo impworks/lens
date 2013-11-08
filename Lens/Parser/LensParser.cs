@@ -970,6 +970,9 @@ namespace Lens.Parser
 		/// </summary>
 		private IEnumerable<NodeBase> parseInitExprBlock()
 		{
+			if(peek(LexemType.NewLine))
+				error(ParserMessages.InitializerIndentExprected);
+
 			if (!check(LexemType.Indent))
 				yield break;
 
@@ -977,6 +980,9 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
+				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose, LexemType.DoubleSquareClose))
+					error(ParserMessages.ClosingBraceNewLine);
+
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
 				yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
 			}

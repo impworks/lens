@@ -8,7 +8,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	internal class ForeachNode : NodeBase
+	internal class ForeachNode : NodeBase, IStartLocationTrackingEntity
 	{
 		/// <summary>
 		/// A variable to assign current item to.
@@ -245,7 +245,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			
 			var ifaces = GenericHelper.GetInterfaces(seqType);
 			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
-				Error(CompilerMessages.TypeNotIterable, seqType);
+				Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
 			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
 			m_EnumeratorType = enumerator.ReturnType;

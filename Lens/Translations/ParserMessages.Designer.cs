@@ -115,6 +115,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Closing brace must be placed on the next line!.
+        /// </summary>
+        internal static string ClosingBraceNewLine {
+            get {
+                return ResourceManager.GetString("ClosingBraceNewLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Code block is expected!.
         /// </summary>
         internal static string CodeBlockExpected {
@@ -282,6 +291,15 @@ namespace Lens.Translations {
         internal static string InitExpressionSeparatorExpected {
             get {
                 return ResourceManager.GetString("InitExpressionSeparatorExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Initializer expressions must be indented!.
+        /// </summary>
+        internal static string InitializerIndentExprected {
+            get {
+                return ResourceManager.GetString("InitializerIndentExprected", resourceCulture);
             }
         }
         

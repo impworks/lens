@@ -64,11 +64,19 @@ namespace Lens.SyntaxTree.ControlFlow
 			if(Name == "_")
 				Error(CompilerMessages.UnderscoreName);
 
-			var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
-			if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+			try
 			{
-				name.IsConstant = true;
-				name.ConstantValue = Value.ConstantValue;
+				var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
+				if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+				{
+					name.IsConstant = true;
+					name.ConstantValue = Value.ConstantValue;
+				}
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
 			}
 		}
 

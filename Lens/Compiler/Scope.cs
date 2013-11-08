@@ -54,8 +54,16 @@ namespace Lens.Compiler
 			for(var idx = 0; idx < method.Arguments.Count; idx++)
 			{
 				var arg = method.Arguments[idx];
-				var name = DeclareName(arg.Name, arg.Type ?? ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
-				name.ArgumentId = method.IsStatic ? idx : idx + 1;
+				try
+				{
+					var name = DeclareName(arg.Name, arg.Type ?? ctx.ResolveType(arg.TypeSignature), false, arg.IsRefArgument);
+					name.ArgumentId = method.IsStatic ? idx : idx + 1;
+				}
+				catch (LensCompilerException ex)
+				{
+					ex.BindToLocation(arg);
+					throw;
+				}
 			}
 		}
 

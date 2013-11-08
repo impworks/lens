@@ -135,6 +135,9 @@
   <data name="CatchExpected" xml:space="preserve">
     <value>Catch clause is expected!</value>
   </data>
+  <data name="ClosingBraceNewLine" xml:space="preserve">
+    <value>Closing brace must be placed on the next line!</value>
+  </data>
   <data name="CodeBlockExpected" xml:space="preserve">
     <value>Code block is expected!</value>
   </data>
@@ -191,6 +194,9 @@
   </data>
   <data name="InitExpressionSeparatorExpected" xml:space="preserve">
     <value>Initializer expressions must be separated by a newline!</value>
+  </data>
+  <data name="InitializerIndentExprected" xml:space="preserve">
+    <value>Initializer expressions must be indented!</value>
   </data>
   <data name="InvalidDouble" xml:space="preserve">
     <value>Value '{0}' is not a valid double!</value>
