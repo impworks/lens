@@ -179,12 +179,14 @@ namespace Lens.Parser
 
 			var result = getter();
 
-			if (result is IStartLocationTrackingEntity)
+			if (result != null)
+			{
 				result.StartLocation = start.StartLocation;
 
-			var endId = LexemId;
-			if (endId > startId && endId > 0 && result is IEndLocationTrackingEntity)
-				result.EndLocation = Lexems[LexemId - 1].EndLocation;
+				var endId = LexemId;
+				if (endId > startId && endId > 0)
+					result.EndLocation = Lexems[LexemId - 1].EndLocation;
+			}
 
 			return result;
 		}
@@ -320,13 +322,13 @@ namespace Lens.Parser
 		private NodeBase processOperator(Func<NodeBase> getter, int priority = 0)
 		{
 			if (priority == _BinaryOperatorPriorities.Count)
-				return getter();
+				return bind(getter);
 
 			var unaryCvt = _UnaryOperatorPriorities.ContainsKey(priority) && check(_UnaryOperatorPriorities[priority].Item1)
 				? _UnaryOperatorPriorities[priority].Item2
 				: null;
 			
-			var node = processOperator(getter, priority + 1);
+			var node = bind(() => processOperator(getter, priority + 1));
 			if (unaryCvt != null)
 				node = unaryCvt(node);
 

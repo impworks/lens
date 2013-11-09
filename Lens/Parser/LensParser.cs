@@ -38,8 +38,13 @@ namespace Lens.Parser
 
 			while (!check(LexemType.EOF))
 			{
-				if(!isStmtSeparator())
-					error(ParserMessages.NewlineSeparatorExpected);
+				if (!isStmtSeparator())
+				{
+					if(peek(LexemType.Assign))
+						error(ParserMessages.AssignLvalueExpected);
+					else
+						error(ParserMessages.NewlineSeparatorExpected);
+				}
 
 				yield return parseStmt();
 			}
@@ -255,7 +260,7 @@ namespace Lens.Parser
 			if (check(LexemType.Colon))
 				node.ReturnTypeSignature = ensure(parseType, ParserMessages.FunctionReturnExpected);
 
-			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
+			node.Arguments = attempt(() => parseFunArgs(true)) ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
 			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
 
@@ -265,26 +270,34 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_args                                    = fun_single_arg | fun_many_args
 		/// </summary>
-		private List<FunctionArgument> parseFunArgs()
+		private List<FunctionArgument> parseFunArgs(bool required = false)
 		{
-			var single = attempt(parseFunSingleArg);
+			var single = attempt(() => parseFunSingleArg(required));
 			if (single != null)
 				return new List<FunctionArgument> {single};
 
-			return parseFunManyArgs();
+			return parseFunManyArgs(required);
 		}
 
 		/// <summary>
 		/// fun_arg                                     = identifier ":" [ "ref" ] type
 		/// </summary>
-		private FunctionArgument parseFunSingleArg()
+		private FunctionArgument parseFunSingleArg(bool required = false)
 		{
-			if (!peek(LexemType.Identifier, LexemType.Colon))
+			if (!peek(LexemType.Identifier))
 				return null;
 
 			var node = new FunctionArgument();
 			node.Name = getValue();
-			skip();
+
+			if (!check(LexemType.Colon))
+			{
+				if (required)
+					error(ParserMessages.SymbolExpected, ":");
+				else
+					return null;
+			}
+
 			node.IsRefArgument = check(LexemType.Ref);
 			node.TypeSignature = ensure(parseType, ParserMessages.ArgTypeExpected);
 
@@ -294,7 +307,7 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_arg_list                                = "(" { fun_single_arg } ")"
 		/// </summary>
-		private List<FunctionArgument> parseFunManyArgs()
+		private List<FunctionArgument> parseFunManyArgs(bool required = false)
 		{
 			if (!check(LexemType.ParenOpen))
 				return null;
@@ -302,7 +315,7 @@ namespace Lens.Parser
 			var args = new List<FunctionArgument>();
 			while (!check(LexemType.ParenClose))
 			{
-				var arg = attempt(parseFunSingleArg);
+				var arg = attempt(() => parseFunSingleArg(required));
 				if (arg == null)
 					return null;
 
@@ -355,6 +368,12 @@ namespace Lens.Parser
 		/// </summary>
 		private NodeBase parseLocalStmt()
 		{
+			if(peek(LexemType.PassLeft))
+				error(ParserMessages.ArgumentPassIndentExpected);
+
+			if (peek(LexemType.PassRight))
+				error(ParserMessages.MethodPassIndentExpected);
+
 			return attempt(parseNameDefStmt)
 			       ?? attempt(parseSetStmt)
 			       ?? attempt(parseExpr);
@@ -798,7 +817,7 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
+			node.Arguments = attempt(() => parseFunArgs()) ?? new List<FunctionArgument>();
 			
 			if (!check(LexemType.Arrow))
 				return null;
@@ -964,6 +983,9 @@ namespace Lens.Parser
 		/// </summary>
 		private IEnumerable<NodeBase> parseInitExprBlock()
 		{
+			if(peek(LexemType.NewLine))
+				error(ParserMessages.InitializerIndentExprected);
+
 			if (!check(LexemType.Indent))
 				yield break;
 
@@ -971,6 +993,9 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
+				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose, LexemType.DoubleSquareClose))
+					error(ParserMessages.ClosingBraceNewLine);
+
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
 				yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
 			}
@@ -1182,8 +1207,8 @@ namespace Lens.Parser
 			if (!check(LexemType.Ref))
 				return null;
 
-			var node = ensure(parseLvalueExpr, ParserMessages.LvalueExpected);
-			(node as IPointerProvider).PointerRequired = true;
+			var node = ensure(parseLvalueExpr, ParserMessages.RefLvalueExpected);
+			(node as IPointerProvider).RefArgumentRequired = true;
 
 			if (paren)
 				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
@@ -1370,7 +1395,7 @@ namespace Lens.Parser
 		private LambdaNode parseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = attempt(parseFunArgs) ?? new List<FunctionArgument>();
+			node.Arguments = attempt(() => parseFunArgs()) ?? new List<FunctionArgument>();
 			
 			if (!check(LexemType.Arrow))
 				return null;
@@ -1394,7 +1419,7 @@ namespace Lens.Parser
 
 			node.TrueAction.Add(ensure(parseLineStmt, ParserMessages.ConditionExpressionExpected));
 			if ( check(LexemType.Else))
-				node.FalseAction.Add(ensure(parseLineStmt, ParserMessages.ExpressionExpected));
+				node.FalseAction = new CodeBlockNode { ensure(parseLineStmt, ParserMessages.ExpressionExpected) };
 
 			return node;
 		}

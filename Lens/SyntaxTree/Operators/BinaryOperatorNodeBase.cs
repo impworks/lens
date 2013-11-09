@@ -21,6 +21,11 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public NodeBase RightOperand { get; set; }
 
+		/// <summary>
+		/// Checks if numeric type casting checks should be applied to operands.
+		/// </summary>
+		protected virtual bool IsNumericOperator { get { return true; }}
+
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			var leftType = LeftOperand.GetExpressionType(ctx);
@@ -30,8 +35,11 @@ namespace Lens.SyntaxTree.Operators
 			if (result != null)
 				return result;
 
-			if (leftType.IsNumericType() && rightType.IsNumericType())
-				return resolveNumericType(ctx);
+			if (IsNumericOperator)
+			{
+				if (leftType.IsNumericType() && rightType.IsNumericType())
+					return resolveNumericType(ctx);
+			}
 
 			if (OverloadedMethodName != null)
 			{
@@ -46,7 +54,7 @@ namespace Lens.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error(CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+			Error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
 			return null;
 		}
 
@@ -119,18 +127,6 @@ namespace Lens.SyntaxTree.Operators
 		#endregion
 
 		#region NodeBase overrides
-
-		public override LexemLocation StartLocation
-		{
-			get { return LeftOperand.StartLocation; }
-			set { LocationSetError(); }
-		}
-
-		public override LexemLocation EndLocation
-		{
-			get { return RightOperand.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
 		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.SyntaxTree.Literals;
+using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	internal class WhileNode : NodeBase, IStartLocationTrackingEntity
+	internal class WhileNode : NodeBase
 	{
 		public WhileNode()
 		{
@@ -15,12 +17,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		public NodeBase Condition { get; set; }
 
 		public CodeBlockNode Body { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -39,7 +35,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			var loopType = GetExpressionType(ctx);
 			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
 
-			if (Condition.IsConstant && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+			var condType = Condition.GetExpressionType(ctx);
+			if(!condType.IsExtendablyAssignableFrom(typeof(bool)))
+				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
+			if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
 			{
 				if(saveLast)
 					Expr.Default(loopType).Compile(ctx, true);

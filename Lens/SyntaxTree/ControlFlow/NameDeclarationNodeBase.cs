@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	internal abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
+	internal abstract class NameDeclarationNodeBase : NodeBase
 	{
 		protected NameDeclarationNodeBase(string name, bool immutable)
 		{
@@ -38,12 +38,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public readonly bool IsImmutable;
 
-		public override LexemLocation EndLocation
-		{
-			get { return Value.EndLocation; }
-			set { LocationSetError(); }
-		}
-
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
 			yield return Value;
@@ -64,11 +58,19 @@ namespace Lens.SyntaxTree.ControlFlow
 			if(Name == "_")
 				Error(CompilerMessages.UnderscoreName);
 
-			var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
-			if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+			try
 			{
-				name.IsConstant = true;
-				name.ConstantValue = Value.ConstantValue;
+				var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
+				if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+				{
+					name.IsConstant = true;
+					name.ConstantValue = Value.ConstantValue;
+				}
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
 			}
 		}
 

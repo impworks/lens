@@ -129,8 +129,14 @@
   <data name="AssignExpressionExpected" xml:space="preserve">
     <value>Ожидается присваиваемое выражение!</value>
   </data>
+  <data name="AssignLvalueExpected" xml:space="preserve">
+    <value>Выражению слева нельзя присвоить новое значение!</value>
+  </data>
   <data name="CatchExpected" xml:space="preserve">
     <value>Ожидается блок catch!</value>
+  </data>
+  <data name="ClosingBraceNewLine" xml:space="preserve">
+    <value>Закрывающая скобка должна располагаться на следующей строке!</value>
   </data>
   <data name="CodeBlockExpected" xml:space="preserve">
     <value>Ожидается блок кода!</value>
@@ -189,6 +195,9 @@
   <data name="InitExpressionSeparatorExpected" xml:space="preserve">
     <value>Инициализирующие выражения должны располагаться на отдельных строках!</value>
   </data>
+  <data name="InitializerIndentExprected" xml:space="preserve">
+    <value>Инициализирующие выражения должны быть выделены отступом!</value>
+  </data>
   <data name="InvalidDouble" xml:space="preserve">
     <value>Значение '{0}' не является дробным числом!</value>
   </data>
@@ -206,9 +215,6 @@
   </data>
   <data name="LoopExpressionExpected" xml:space="preserve">
     <value>Ожидается выражение-тело цикла!</value>
-  </data>
-  <data name="LvalueExpected" xml:space="preserve">
-    <value>Ожидается присваиваемое выражение!</value>
   </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Ожидается имя поля!</value>
@@ -236,6 +242,9 @@
   </data>
   <data name="RecordSeparatorExpected" xml:space="preserve">
     <value>Поля записи должны располагаться на отдельных строках!</value>
+  </data>
+  <data name="RefLvalueExpected" xml:space="preserve">
+    <value>Модификатор 'ref' требует указания переменной, поля или индекса массива!</value>
   </data>
   <data name="SequenceExpected" xml:space="preserve">
     <value>Ожидается перечислимое выражение!</value>

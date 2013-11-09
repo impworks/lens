@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a member of a type, either field or property.
 	/// </summary>
-	internal class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity, IPointerProvider
+	internal class GetMemberNode : MemberNodeBase, IPointerProvider
 	{
 		public GetMemberNode()
 		{
@@ -26,10 +26,8 @@ namespace Lens.SyntaxTree.Expressions
 
 		private bool m_IsStatic;
 
-		/// <summary>
-		/// If the member is a field, its pointer can be returned.
-		/// </summary>
 		public bool PointerRequired { get; set; }
+		public bool RefArgumentRequired { get; set; }
 
 		/// <summary>
 		/// The list of type signatures if the given identifier is a method.
@@ -212,25 +210,36 @@ namespace Lens.SyntaxTree.Expressions
 						gen.EmitConstant((string)value);
 					else
 						throw new NotImplementedException("Unknown literal field type!");
-
-//					if(fieldType.IsEnum)
-//						gen.EmitBox(fieldType);
 				}
 				else
 				{ 
-					gen.EmitLoadField(m_Field.FieldInfo, PointerRequired);
+					gen.EmitLoadField(m_Field.FieldInfo, PointerRequired || RefArgumentRequired);
 				}
 				return;
 			}
 
 			if (m_Property != null)
 			{
+				if (m_Property.PropertyType.IsValueType && RefArgumentRequired)
+					Error(CompilerMessages.PropertyValuetypeRef, m_Property.Type, MemberName, m_Property.PropertyType);
+
 				gen.EmitCall(m_Property.Getter);
+
+				if (PointerRequired)
+				{ 
+					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_Property.PropertyType, false);
+					gen.EmitSaveLocal(tmpVar);
+					gen.EmitLoadLocal(tmpVar, true);
+				}
+
 				return;
 			}
 
 			if (m_Method != null)
 			{
+				if(RefArgumentRequired)
+					Error(CompilerMessages.MethodRef);
+
 				if (m_IsStatic)
 					gen.EmitNull();
 
@@ -257,7 +266,10 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected bool Equals(GetMemberNode other)
 		{
-			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired) && TypeHints.SequenceEqual(other.TypeHints);
+			return base.Equals(other)
+				   && PointerRequired.Equals(other.PointerRequired)
+				   && RefArgumentRequired.Equals(other.RefArgumentRequired)
+				   && TypeHints.SequenceEqual(other.TypeHints);
 		}
 
 		public override bool Equals(object obj)
@@ -274,6 +286,7 @@ namespace Lens.SyntaxTree.Expressions
 			{
 				int hashCode = base.GetHashCode();
 				hashCode = (hashCode * 397) ^ PointerRequired.GetHashCode();
+				hashCode = (hashCode * 397) ^ RefArgumentRequired.GetHashCode();
 				hashCode = (hashCode * 397) ^ (TypeHints != null ? TypeHints.GetHashCode() : 0);
 				return hashCode;
 			}

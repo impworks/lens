@@ -40,12 +40,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		private Type m_EnumeratorType;
 		private PropertyWrapper m_CurrentProperty;
 
-		public override LexemLocation EndLocation
-		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
-		}
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
@@ -245,7 +239,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			
 			var ifaces = GenericHelper.GetInterfaces(seqType);
 			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
-				Error(CompilerMessages.TypeNotIterable, seqType);
+				Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
 			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
 			m_EnumeratorType = enumerator.ReturnType;

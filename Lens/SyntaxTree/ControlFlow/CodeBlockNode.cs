@@ -23,22 +23,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<NodeBase> Statements { get; set; }
 
-		public override LexemLocation StartLocation
-		{
-			get { return Statements.First().StartLocation; }
-			set { LocationSetError(); }
-		}
-
-		public override LexemLocation EndLocation
-		{
-			get { return Statements.Last().EndLocation; }
-			set { LocationSetError(); }
-		}
-
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if (!Statements.Any())
-				Error(CompilerMessages.CodeBlockEmpty);
+				return typeof (Unit);
 
 			var last = Statements.Last();
 			if (last is VarNode || last is LetNode)

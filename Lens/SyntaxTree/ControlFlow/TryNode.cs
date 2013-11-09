@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// The try node.
 	/// </summary>
-	internal class TryNode : NodeBase, IStartLocationTrackingEntity
+	internal class TryNode : NodeBase
 	{
 		public TryNode()
 		{
@@ -29,12 +29,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label EndLabel { get; private set; }
 
-		public override LexemLocation EndLocation
-		{
-			get { return CatchClauses.Last().EndLocation; }
-			set { LocationSetError(); }
-		}
-		
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
 			yield return Code;

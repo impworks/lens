@@ -8,11 +8,11 @@
 		/// <summary>
 		/// Current entity's starting position (for error reporting).
 		/// </summary>
-		public virtual LexemLocation StartLocation { get; set; }
+		public LexemLocation StartLocation { get; set; }
 
 		/// <summary>
 		/// Current entity's ending position (for error reporting).
 		/// </summary>
-		public virtual LexemLocation EndLocation { get; set; }
+		public LexemLocation EndLocation { get; set; }
 	}
 }

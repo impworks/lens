@@ -120,6 +120,9 @@
   <data name="ArgTypeExpected" xml:space="preserve">
     <value>Argument type is expected!</value>
   </data>
+  <data name="ArgumentPassIndentExpected" xml:space="preserve">
+    <value>'&lt;|' statements must be indented!</value>
+  </data>
   <data name="ArgumentsExpected" xml:space="preserve">
     <value>Method call arguments are expected!</value>
   </data>
@@ -129,8 +132,14 @@
   <data name="AssignExpressionExpected" xml:space="preserve">
     <value>Assignment expression is expected!</value>
   </data>
+  <data name="AssignLvalueExpected" xml:space="preserve">
+    <value>The expression at left side cannot be assigned to!</value>
+  </data>
   <data name="CatchExpected" xml:space="preserve">
     <value>Catch clause is expected!</value>
+  </data>
+  <data name="ClosingBraceNewLine" xml:space="preserve">
+    <value>Closing brace must be placed on the next line!</value>
   </data>
   <data name="CodeBlockExpected" xml:space="preserve">
     <value>Code block is expected!</value>
@@ -189,6 +198,9 @@
   <data name="InitExpressionSeparatorExpected" xml:space="preserve">
     <value>Initializer expressions must be separated by a newline!</value>
   </data>
+  <data name="InitializerIndentExprected" xml:space="preserve">
+    <value>Initializer expressions must be indented!</value>
+  </data>
   <data name="InvalidDouble" xml:space="preserve">
     <value>Value '{0}' is not a valid double!</value>
   </data>
@@ -207,11 +219,11 @@
   <data name="LoopExpressionExpected" xml:space="preserve">
     <value>Loop body expression is expected!</value>
   </data>
-  <data name="LvalueExpected" xml:space="preserve">
-    <value>Assignable expression is expected!</value>
-  </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Member name is expected!</value>
+  </data>
+  <data name="MethodPassIndentExpected" xml:space="preserve">
+    <value>'|&gt;' statements must be indented!</value>
   </data>
   <data name="NamespaceExpected" xml:space="preserve">
     <value>A namespace is expected!</value>
@@ -236,6 +248,9 @@
   </data>
   <data name="RecordSeparatorExpected" xml:space="preserve">
     <value>Record fields must be separated by a newline!</value>
+  </data>
+  <data name="RefLvalueExpected" xml:space="preserve">
+    <value>The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
   </data>
   <data name="SequenceExpected" xml:space="preserve">
     <value>Sequence expression is expected!</value>

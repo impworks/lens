@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Operators
 	/// <summary>
 	/// The base for all unary operators.
 	/// </summary>
-	internal abstract class UnaryOperatorNodeBase : OperatorNodeBase, IStartLocationTrackingEntity
+	internal abstract class UnaryOperatorNodeBase : OperatorNodeBase
 	{
 		/// <summary>
 		/// The operand.
@@ -17,12 +17,6 @@ namespace Lens.SyntaxTree.Operators
 
 		public override bool IsConstant { get { return Operand.IsConstant; } }
 		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Operand.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

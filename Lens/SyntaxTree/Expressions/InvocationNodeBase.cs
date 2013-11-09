@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A base class for various forms of method invocation that stores arguments.
 	/// </summary>
-	abstract internal class InvocationNodeBase : NodeBase, IStartLocationTrackingEntity
+	abstract internal class InvocationNodeBase : NodeBase
 	{
 		protected InvocationNodeBase()
 		{
@@ -17,13 +17,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// The arguments of the invocation.
 		/// </summary>
 		public List<NodeBase> Arguments { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Arguments.Any() ? Arguments.Last().EndLocation : StartLocation; }
-			set { LocationSetError(); }
-		}
-		
+	
 		#region Equality members
 
 		protected bool Equals(InvocationNodeBase other)

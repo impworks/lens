@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
@@ -8,7 +9,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A conditional expression.
 	/// </summary>
-	internal class IfNode : NodeBase, IStartLocationTrackingEntity
+	internal class IfNode : NodeBase
 	{
 		public IfNode()
 		{
@@ -29,12 +30,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// The block of code to be executed if the condition is false.
 		/// </summary>
 		public CodeBlockNode FalseAction { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return FalseAction == null ? TrueAction.EndLocation : FalseAction.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -57,11 +52,15 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 
+			var condType = Condition.GetExpressionType(ctx);
+			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
-				if (FalseAction != null)
+				var node = Condition.ConstantValue ? TrueAction : FalseAction;
+				if (node != null)
 				{
-					var node = Condition.ConstantValue ? TrueAction : FalseAction;
 					node.Compile(ctx, mustReturn);
 					if (!mustReturn && node.GetExpressionType(ctx).IsNotVoid())
 						gen.EmitPop();

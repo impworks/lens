@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.Expressions
 {
 	/// <summary>
 	/// A node representing a read-access to an array or list's value.
 	/// </summary>
-	internal class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity, IPointerProvider
+	internal class GetIndexNode : IndexNodeBase, IPointerProvider
 	{
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
 		private MethodWrapper m_Getter;
 
-		/// <summary>
-		/// Array indexer can return a pointer.
-		/// </summary>
 		public bool PointerRequired { get; set; }
+		public bool RefArgumentRequired { get; set; }
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
@@ -26,8 +25,16 @@ namespace Lens.SyntaxTree.Expressions
 				return exprType.GetElementType();
 
 			var idxType = Index.GetExpressionType(ctx);
-			m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
-			return m_Getter.ReturnType;
+			try
+			{
+				m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				return m_Getter.ReturnType;
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
+			}
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -59,18 +66,24 @@ namespace Lens.SyntaxTree.Expressions
 			Expression.Compile(ctx, true);
 			Index.Compile(ctx, true);
 
-			if(PointerRequired)
-				gen.EmitLoadIndex(itemType, true);
-			else
-				gen.EmitLoadIndex(itemType);
+			gen.EmitLoadIndex(itemType, PointerRequired);
 		}
 
 		private void compileCustom(Context ctx)
 		{
+			var retType = m_Getter.ReturnType;
+			if(RefArgumentRequired && retType.IsValueType)
+				Error(CompilerMessages.IndexerValuetypeRef, Expression.GetExpressionType(ctx), retType);
+
 			var gen = ctx.CurrentILGenerator;
 
 			if (Expression is IPointerProvider)
-				(Expression as IPointerProvider).PointerRequired = PointerRequired;
+			{
+				var expr = Expression as IPointerProvider;
+				expr.PointerRequired = PointerRequired;
+				expr.RefArgumentRequired = RefArgumentRequired;
+			}
+
 			Expression.Compile(ctx, true);
 
 			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);
@@ -89,7 +102,9 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected bool Equals(GetIndexNode other)
 		{
-			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired);
+			return base.Equals(other)
+				   && RefArgumentRequired.Equals(other.RefArgumentRequired)
+				   && PointerRequired.Equals(other.PointerRequired);
 		}
 
 		public override bool Equals(object obj)
@@ -104,7 +119,10 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			unchecked
 			{
-				return (base.GetHashCode() * 397) ^ PointerRequired.GetHashCode();
+				var hash = base.GetHashCode();
+				hash = (hash * 397) ^ PointerRequired.GetHashCode();
+				hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
+				return hash;
 			}
 		}
 
