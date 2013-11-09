@@ -300,6 +300,9 @@
   <data name="IndexAmbigious" xml:space="preserve">
     <value>Индексатор не может быть однозначно определен! Подходят как минимум два переопределения:{3}{0}[{1}]{3}{0}[{2}]</value>
   </data>
+  <data name="IndexerValuetypeRef" xml:space="preserve">
+    <value>Нельзя использовать индексатор типа '{0}' в качестве значения для ref-параметра, поскольку возвращаемый им тип '{1}' передается по значению!</value>
+  </data>
   <data name="IndexGetterNotFound" xml:space="preserve">
     <value>Тип '{0}' не содержит индексатора на чтение, который бы принимал индекс типа '{1}'!</value>
   </data>
@@ -326,6 +329,9 @@
   </data>
   <data name="MethodRedefinition" xml:space="preserve">
     <value>Метод '{0}' типа '{1}' с таким списком аргументов уже был объявлен!</value>
+  </data>
+  <data name="MethodRef" xml:space="preserve">
+    <value>Нельзя использовать метод в качестве значения для ref-параметра!</value>
   </data>
   <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
     <value>Невозможно применить оператор '{0}' к аргументам типов '{1}' и '{2}'!</value>
@@ -356,6 +362,9 @@
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
     <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
+  </data>
+  <data name="PropertyValuetypeRef" xml:space="preserve">
+    <value>Нельзя использовать свойство '{0}.{1}' в качестве значения для ref-параметра, поскольку возвращаемый им тип '{2}' передается по значению!</value>
   </data>
   <data name="PureFunctionReturnUnit" xml:space="preserve">
     <value>Функция '{0}' не может быть чистой, поскольку не возвращает значения!</value>

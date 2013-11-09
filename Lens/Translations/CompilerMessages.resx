@@ -300,6 +300,9 @@
   <data name="IndexAmbigious" xml:space="preserve">
     <value>Indexer is ambigious! At least two cases apply:{3}{0}[{1}]{3}{0}[{2}]</value>
   </data>
+  <data name="IndexerValuetypeRef" xml:space="preserve">
+    <value>Cannot use a custom indexer of type '{0}' as a ref parameter, because it returns '{1}' which is valuetype!</value>
+  </data>
   <data name="IndexGetterNotFound" xml:space="preserve">
     <value>Type '{0}' has no index getter that accepts an index of type '{1}'!</value>
   </data>
@@ -326,6 +329,9 @@
   </data>
   <data name="MethodRedefinition" xml:space="preserve">
     <value>A method named '{0}' in type '{1}' with identical set of arguments has already been defined!</value>
+  </data>
+  <data name="MethodRef" xml:space="preserve">
+    <value>Cannot use a method as a ref parameter!</value>
   </data>
   <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
     <value>Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>
@@ -356,6 +362,9 @@
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
     <value>Property '{0}.{1}' does not have a setter!</value>
+  </data>
+  <data name="PropertyValuetypeRef" xml:space="preserve">
+    <value>Cannot use property '{0}.{1}' as a ref parameter, because it returns '{2}' which is valuetype!</value>
   </data>
   <data name="PureFunctionReturnUnit" xml:space="preserve">
     <value>Function '{0}' cannot be marked as pure because it does not return a value!</value>

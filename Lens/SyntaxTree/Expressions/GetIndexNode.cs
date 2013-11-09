@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -75,10 +76,15 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileCustom(Context ctx)
 		{
+			var retType = m_Getter.ReturnType;
+			if(PointerRequired && retType.IsValueType)
+				Error(CompilerMessages.IndexerValuetypeRef, Expression.GetExpressionType(ctx), retType);
+
 			var gen = ctx.CurrentILGenerator;
 
 			if (Expression is IPointerProvider)
 				(Expression as IPointerProvider).PointerRequired = PointerRequired;
+
 			Expression.Compile(ctx, true);
 
 			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);

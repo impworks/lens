@@ -212,9 +212,6 @@ namespace Lens.SyntaxTree.Expressions
 						gen.EmitConstant((string)value);
 					else
 						throw new NotImplementedException("Unknown literal field type!");
-
-//					if(fieldType.IsEnum)
-//						gen.EmitBox(fieldType);
 				}
 				else
 				{ 
@@ -225,12 +222,19 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (m_Property != null)
 			{
+				var propType = m_Property.PropertyType;
+				if(propType.IsValueType && PointerRequired)
+					Error(CompilerMessages.PropertyValuetypeRef, Expression.GetExpressionType(ctx), MemberName, propType);
+
 				gen.EmitCall(m_Property.Getter);
 				return;
 			}
 
 			if (m_Method != null)
 			{
+				if(PointerRequired)
+					Error(CompilerMessages.MethodRef);
+
 				if (m_IsStatic)
 					gen.EmitNull();
 
