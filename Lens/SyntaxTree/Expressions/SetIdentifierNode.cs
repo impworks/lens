@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a local variable or a function.
 	/// </summary>
-	internal class SetIdentifierNode : IdentifierNodeBase, IStartLocationTrackingEntity
+	internal class SetIdentifierNode : IdentifierNodeBase
 	{
 		public SetIdentifierNode(string identifier = null)
 		{
@@ -27,12 +27,6 @@ namespace Lens.SyntaxTree.Expressions
 		/// Value to be assigned.
 		/// </summary>
 		public NodeBase Value { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Value.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

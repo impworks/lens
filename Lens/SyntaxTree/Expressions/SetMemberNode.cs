@@ -19,12 +19,6 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override LexemLocation EndLocation
-		{
-			get { return Value.EndLocation; }
-			set { LocationSetError(); }
-		}
-
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{
 			yield return Expression;

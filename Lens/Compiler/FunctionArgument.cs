@@ -7,7 +7,7 @@ namespace Lens.Compiler
 	/// <summary>
 	/// A node representing a function argument definition.
 	/// </summary>
-	internal class FunctionArgument : LocationEntity, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal class FunctionArgument : LocationEntity
 	{
 		public FunctionArgument()
 		{ }

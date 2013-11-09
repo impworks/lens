@@ -8,7 +8,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	internal class ForeachNode : NodeBase, IStartLocationTrackingEntity
+	internal class ForeachNode : NodeBase
 	{
 		/// <summary>
 		/// A variable to assign current item to.
@@ -39,12 +39,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		private Type m_VariableType;
 		private Type m_EnumeratorType;
 		private PropertyWrapper m_CurrentProperty;
-
-		public override LexemLocation EndLocation
-		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// The safe block of code.
 	/// </summary>
-	internal class CatchNode : NodeBase, IStartLocationTrackingEntity
+	internal class CatchNode : NodeBase
 	{
 		public CatchNode()
 		{
@@ -32,12 +32,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		public CodeBlockNode Code { get; set; }
 
 		private LocalName m_ExceptionVariable;
-
-		public override LexemLocation EndLocation
-		{
-			get { return Code.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

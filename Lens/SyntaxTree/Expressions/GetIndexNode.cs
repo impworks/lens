@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a read-access to an array or list's value.
 	/// </summary>
-	internal class GetIndexNode : IndexNodeBase, IEndLocationTrackingEntity, IPointerProvider
+	internal class GetIndexNode : IndexNodeBase, IPointerProvider
 	{
 		/// <summary>
 		/// Cached property information.

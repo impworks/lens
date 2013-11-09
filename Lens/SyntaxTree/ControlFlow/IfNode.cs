@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A conditional expression.
 	/// </summary>
-	internal class IfNode : NodeBase, IStartLocationTrackingEntity
+	internal class IfNode : NodeBase
 	{
 		public IfNode()
 		{
@@ -30,12 +30,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// The block of code to be executed if the condition is false.
 		/// </summary>
 		public CodeBlockNode FalseAction { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return FalseAction == null ? TrueAction.EndLocation : FalseAction.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

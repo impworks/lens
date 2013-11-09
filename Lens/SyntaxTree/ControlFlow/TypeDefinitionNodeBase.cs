@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 
@@ -7,7 +8,8 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base node for algebraic types and records.
 	/// </summary>
-	internal abstract class TypeDefinitionNodeBase<T> : NodeBase, IStartLocationTrackingEntity where T : LocationEntity
+	internal abstract class TypeDefinitionNodeBase<T> : NodeBase
+		where T : LocationEntity
 	{
 		protected TypeDefinitionNodeBase()
 		{
@@ -24,15 +26,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<T> Entries { get; private set; }
 
-		public override LexemLocation EndLocation
-		{
-			get { return Entries.Last().EndLocation; }
-			set { base.EndLocation = value; }
-		}
-
 		protected override void compile(Context ctx, bool mustReturn)
 		{
-			throw new System.NotImplementedException();
+			// nothing to do here
+			throw new InvalidOperationException();
 		}
 
 		#region Equality members

@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A base class for variable and constant declarations.
 	/// </summary>
-	internal abstract class NameDeclarationNodeBase : NodeBase, IStartLocationTrackingEntity
+	internal abstract class NameDeclarationNodeBase : NodeBase
 	{
 		protected NameDeclarationNodeBase(string name, bool immutable)
 		{
@@ -37,12 +37,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// A flag indicating that the current value is read-only.
 		/// </summary>
 		public readonly bool IsImmutable;
-
-		public override LexemLocation EndLocation
-		{
-			get { return Value.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

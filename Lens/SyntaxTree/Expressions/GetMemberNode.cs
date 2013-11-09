@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing read access to a member of a type, either field or property.
 	/// </summary>
-	internal class GetMemberNode : MemberNodeBase, IEndLocationTrackingEntity, IPointerProvider
+	internal class GetMemberNode : MemberNodeBase, IPointerProvider
 	{
 		public GetMemberNode()
 		{

@@ -7,7 +7,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	internal class WhileNode : NodeBase, IStartLocationTrackingEntity
+	internal class WhileNode : NodeBase
 	{
 		public WhileNode()
 		{
@@ -17,12 +17,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		public NodeBase Condition { get; set; }
 
 		public CodeBlockNode Body { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

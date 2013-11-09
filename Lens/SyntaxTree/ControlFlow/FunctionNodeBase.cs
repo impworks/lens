@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// An anonymous function definition node.
 	/// </summary>
-	internal abstract class FunctionNodeBase : NodeBase, IStartLocationTrackingEntity
+	internal abstract class FunctionNodeBase : NodeBase
 	{
 		protected FunctionNodeBase()
 		{
@@ -25,12 +25,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// Function body.
 		/// </summary>
 		public CodeBlockNode Body { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Body.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{

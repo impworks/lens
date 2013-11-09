@@ -18,6 +18,11 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public LogicalOperatorKind Kind { get; set; }
 
+		protected override bool IsNumericOperator
+		{
+			get { return false; }
+		}
+
 		public override string OperatorRepresentation
 		{
 			get

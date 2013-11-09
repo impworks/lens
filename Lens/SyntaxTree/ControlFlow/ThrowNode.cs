@@ -9,18 +9,12 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// A node representing the exception being thrown or rethrown.
 	/// </summary>
-	internal class ThrowNode : NodeBase, IStartLocationTrackingEntity
+	internal class ThrowNode : NodeBase
 	{
 		/// <summary>
 		/// The exception expression to be thrown.
 		/// </summary>
 		public NodeBase Expression { get; set; }
-
-		public override LexemLocation EndLocation
-		{
-			get { return Expression.EndLocation; }
-			set { LocationSetError(); }
-		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
 		{

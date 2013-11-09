@@ -52,6 +52,8 @@ namespace Lens.SyntaxTree
 		[DebuggerStepThrough]
 		public void Compile(Context ctx, bool mustReturn)
 		{
+			GetExpressionType(ctx, mustReturn);
+
 			if (IsConstant && ctx.Options.UnrollConstants)
 			{
 				if(mustReturn)
@@ -128,16 +130,6 @@ namespace Lens.SyntaxTree
 		{
 			var msg = string.Format(message, args);
 			throw new LensCompilerException(msg, entity);
-		}
-
-		/// <summary>
-		/// Throws a generic error for incorrect location setting.
-		/// </summary>
-		[ContractAnnotation("=> halt")]
-		[DebuggerStepThrough]
-		protected void LocationSetError()
-		{
-			throw new InvalidOperationException(string.Format("Location for entity '{0}' should not be set manually!", GetType().Name));
 		}
 
 		/// <summary>

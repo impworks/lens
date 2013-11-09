@@ -132,6 +132,9 @@
   <data name="AssignExpressionExpected" xml:space="preserve">
     <value>Assignment expression is expected!</value>
   </data>
+  <data name="AssignLvalueExpected" xml:space="preserve">
+    <value>The expression at left side cannot be assigned to!</value>
+  </data>
   <data name="CatchExpected" xml:space="preserve">
     <value>Catch clause is expected!</value>
   </data>
@@ -216,9 +219,6 @@
   <data name="LoopExpressionExpected" xml:space="preserve">
     <value>Loop body expression is expected!</value>
   </data>
-  <data name="LvalueExpected" xml:space="preserve">
-    <value>The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
-  </data>
   <data name="MemberNameExpected" xml:space="preserve">
     <value>Member name is expected!</value>
   </data>
@@ -248,6 +248,9 @@
   </data>
   <data name="RecordSeparatorExpected" xml:space="preserve">
     <value>Record fields must be separated by a newline!</value>
+  </data>
+  <data name="RefLvalueExpected" xml:space="preserve">
+    <value>The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
   </data>
   <data name="SequenceExpected" xml:space="preserve">
     <value>Sequence expression is expected!</value>

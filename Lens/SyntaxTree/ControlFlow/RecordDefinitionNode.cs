@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// <summary>
 	/// Definition of a record entry.
 	/// </summary>
-	internal class RecordField : LocationEntity, IStartLocationTrackingEntity
+	internal class RecordField : LocationEntity
 	{
 		/// <summary>
 		/// The name of the entry.

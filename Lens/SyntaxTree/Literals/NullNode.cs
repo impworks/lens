@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node to represent the null literal.
 	/// </summary>
-	internal class NullNode : NodeBase, IStartLocationTrackingEntity, IEndLocationTrackingEntity
+	internal class NullNode : NodeBase
 	{
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
