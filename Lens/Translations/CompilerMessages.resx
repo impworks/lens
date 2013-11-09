@@ -465,4 +465,7 @@
   <data name="VoidTypeDefault" xml:space="preserve">
     <value>Cannot create an instance of Unit or Void types!</value>
   </data>
+  <data name="TypeStaticMethodNotFound" xml:space="preserve">
+    <value>Type '{0}' has no method named '{1}'!</value>
+  </data>
 </root>

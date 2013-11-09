@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override bool IsNumericOperator
 		{
-			get { return false; }
+			get { return Kind == LogicalOperatorKind.Xor; }
 		}
 
 		public override string OperatorRepresentation

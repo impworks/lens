@@ -16,10 +16,8 @@ namespace Lens.SyntaxTree.Expressions
 		private GlobalPropertyInfo m_Property;
 		private LocalName m_LocalConstant;
 
-		/// <summary>
-		/// Local and closured variables can provide a location pointer.
-		/// </summary>
 		public bool PointerRequired { get; set; }
+		public bool RefArgumentRequired { get; set; }
 
 		public override bool IsConstant { get { return m_LocalConstant != null; } }
 		public override dynamic ConstantValue { get { return m_LocalConstant != null ? m_LocalConstant.ConstantValue : base.ConstantValue; } }
@@ -77,7 +75,7 @@ namespace Lens.SyntaxTree.Expressions
 			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
 			if (local != null)
 			{
-				if(local.IsImmutable && PointerRequired)
+				if(local.IsImmutable && RefArgumentRequired)
 					Error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
@@ -142,7 +140,7 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 
 			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired);
+			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
 		}
 
 		/// <summary>
@@ -166,22 +164,23 @@ namespace Lens.SyntaxTree.Expressions
 			}
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitLoadField(clsField.FieldInfo, PointerRequired);
+			gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
 		}
 
 		private void getLocal(Context ctx, LocalName name)
 		{
 			var gen = ctx.CurrentILGenerator;
+			var ptr = PointerRequired || RefArgumentRequired;
 
 			if (name.ArgumentId.HasValue)
 			{
-				gen.EmitLoadArgument(name.ArgumentId.Value, PointerRequired);
-				if(name.IsRefArgument && !PointerRequired)
+				gen.EmitLoadArgument(name.ArgumentId.Value, ptr);
+				if(name.IsRefArgument && !ptr)
 					gen.EmitLoadFromPointer(name.Type);
 			}
 			else
 			{
-				gen.EmitLoadLocal(name, PointerRequired);
+				gen.EmitLoadLocal(name, ptr);
 			}
 		}
 
@@ -194,7 +193,9 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected bool Equals(GetIdentifierNode other)
 		{
-			return base.Equals(other) && PointerRequired.Equals(other.PointerRequired);
+			return base.Equals(other)
+				   && RefArgumentRequired.Equals(other.RefArgumentRequired)
+				   && PointerRequired.Equals(other.PointerRequired);
 		}
 
 		public override bool Equals(object obj)
@@ -209,7 +210,10 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			unchecked
 			{
-				return (base.GetHashCode() * 397) ^ PointerRequired.GetHashCode();
+				var hash = base.GetHashCode();
+				hash = (hash * 397) ^ PointerRequired.GetHashCode();
+				hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
+				return hash;
 			}
 		}
 

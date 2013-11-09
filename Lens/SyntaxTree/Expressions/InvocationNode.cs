@@ -133,7 +133,11 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.TypeMethodNotFound, type, node.MemberName);
+				var msg = node.StaticType != null
+					? CompilerMessages.TypeStaticMethodNotFound
+					: CompilerMessages.TypeMethodNotFound;
+
+				Error(msg, type, node.MemberName);
 			}
 		}
 
@@ -205,15 +209,12 @@ namespace Lens.SyntaxTree.Expressions
 
 			var gen = ctx.CurrentILGenerator;
 
-//	        Type constraint = null;
-
 			if (m_InvocationSource != null)
 			{
 				var type = m_InvocationSource.GetExpressionType(ctx);
 
 				if (type.IsValueType)
 				{
-//	                constraint = type;
 					if (m_InvocationSource is IPointerProvider)
 					{
 						(m_InvocationSource as IPointerProvider).PointerRequired = true;
@@ -243,7 +244,7 @@ namespace Lens.SyntaxTree.Expressions
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
 					var arg = Arguments[idx];
-					var argRef = arg is IPointerProvider && (arg as IPointerProvider).PointerRequired;
+					var argRef = arg is IPointerProvider && (arg as IPointerProvider).RefArgumentRequired;
 					var targetRef = destTypes[idx].IsByRef;
 
 					if (argRef != targetRef)
@@ -259,15 +260,8 @@ namespace Lens.SyntaxTree.Expressions
 				}
 			}
 
-//	        if (constraint != null)
-//	        {
-//	            gen.EmitCall(m_Method.MethodInfo, true, constraint);
-//	        }
-//	        else
-//	        {
-				var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
-				gen.EmitCall(m_Method.MethodInfo, isVirt);
-//	        }
+			var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
+			gen.EmitCall(m_Method.MethodInfo, isVirt);
 		}
 
 		#endregion

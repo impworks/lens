@@ -1069,6 +1069,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has no method named &apos;{1}&apos;!.
+        /// </summary>
+        public static string TypeStaticMethodNotFound {
+            get {
+                return ResourceManager.GetString("TypeStaticMethodNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The &apos;_&apos; identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!.
         /// </summary>
         public static string UnderscoreName {

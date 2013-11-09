@@ -6,5 +6,6 @@
 	internal interface IPointerProvider
 	{
 		bool PointerRequired { get; set; }
+		bool RefArgumentRequired { get; set; }
 	}
 }

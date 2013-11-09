@@ -351,7 +351,7 @@ namespace Lens.SyntaxTree
 
 		public static T Ref<T>(T expr) where T: NodeBase, IPointerProvider
 		{
-			expr.PointerRequired = true;
+			expr.RefArgumentRequired = true;
 			return expr;
 		}
 

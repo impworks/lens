@@ -1208,7 +1208,7 @@ namespace Lens.Parser
 				return null;
 
 			var node = ensure(parseLvalueExpr, ParserMessages.RefLvalueExpected);
-			(node as IPointerProvider).PointerRequired = true;
+			(node as IPointerProvider).RefArgumentRequired = true;
 
 			if (paren)
 				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');

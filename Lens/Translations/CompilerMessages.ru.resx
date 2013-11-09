@@ -465,4 +465,7 @@
   <data name="VoidTypeDefault" xml:space="preserve">
     <value>Невозможно создать экземпляр типа Unit или void!</value>
   </data>
+  <data name="TypeStaticMethodNotFound" xml:space="preserve">
+    <value>Тип '{0}' не содержит метод '{1}' с подходящим списком аргументов!</value>
+  </data>
 </root>

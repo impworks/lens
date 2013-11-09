@@ -854,5 +854,12 @@ new [fx1; fx2; fx3]
 ";
 			Test(src, 3);
 		}
+
+		[Test]
+		public void FieldOfProperty()
+		{
+			var src = @"DateTime::Now.Year";
+			Test(src, DateTime.Now.Year);
+		}
 	}
 }
