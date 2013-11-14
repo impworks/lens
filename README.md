@@ -3,6 +3,69 @@ LENS: Language for Embeddable .NET Scripting
 
 Welcome to the homepage for LENS embeddable compiler!
 
+### A few examples of the syntax
+
+A basic script:
+
+```csharp
+let a = 1
+let b = 2
+print "the result is: {0}" (a + b)
+```
+    
+A loop:
+
+```csharp
+for x in 10..0 do
+    println "{0}..." x
+    
+println "blastoff!"
+```
+    
+LINQ queries:
+
+```csharp
+let squares = range 1 100
+    |> Where (x:int -> x % 2 == 0)
+    |> Select (x:int -> x ** 2)
+```
+        
+Function declaration:
+
+```csharp
+fun dist:double (p1:Point p2:Point) ->
+    let x = p1.X - p2.X
+    let y = p1.Y - p2.Y
+    Math::Sqrt (x ** 2 + y ** 2)
+    
+let pA = new Point 1 2
+let pB = new Point 10 20
+print "The distance is: {0}" (dist pA pB)
+```
+    
+Custom data structures:
+
+```csharp
+record Store
+    Name : string
+    Stock : int
+    
+let stores = new [new Store "A" 10; new Store "B" 42]
+for s in stores.OrderByDescending (x:Store -> x.Stock) do
+    println "Store {0} contains has {1} products in stock" (s.Name) (s.Stock)
+```
+
+Function composition and closures:
+
+```csharp
+let multiplier = (x:int) -> (y:int) -> x * y
+let doubler = multiplier 2
+let inv = (a:string b:string) -> b + a
+
+let invParse = inv :> int::Parse<string> :> doubler
+
+print (invParse "1" "2") // 42
+```
 
 ### Why another language?
 
@@ -73,48 +136,6 @@ Some cool features are on the way:
 The complete list of expected features (in russian) can be found in the Issues tab.
 
 Contributions are always welcome - especially if you would like to help create a text editor with code suggestions and syntax highlighting!
-
-### A few examples of the syntax
-
-A basic script:
-
-    let a = 1
-    let b = 2
-    print "the result is: {0}" (a + b)
-    
-A loop:
-
-    for x in 10..0 do
-        println "{0}..." x
-        
-    println "blastoff!"
-    
-Some LINQ magic with lambdas & closures:
-
-    let squares = range 1 100
-        |> Where (x:int -> x % 2 == 0)
-        |> Select (x:int -> x ** 2)
-        
-Function declaration:
-
-    fun dist:double (p1:Point p2:Point) ->
-        let x = p1.X - p2.X
-        let y = p1.Y - p2.Y
-        Math::Sqrt (x ** 2 + y ** 2)
-        
-    let pA = new Point 1 2
-    let pB = new Point 10 20
-    print "The distance is: {0}" (dist pA pB)
-    
-Custom data structures:
-
-    record Store
-        Name : string
-        Stock : int
-        
-    let stores = new [new Store "A" 10; new Store "B" 42]
-    for s in stores.OrderByDescending (x:Store -> x.Stock) do
-        println "Store {0} contains has {1} products in stock" (s.Name) (s.Stock)
 
 ### What NOT to expect
 
