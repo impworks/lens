@@ -75,27 +75,29 @@ LENS provides an easy way to compile and execute a script within your applicatio
 
 Why yes indeed! Here's a snippet that shows how to embed the compiler into your application:
 
-    try
-    {
-        var x = 21;
-        var y = 2;
-        var result = 0;
-        
-        var cp = new LensCompiler();
-        cp.RegisterProperty("x", () => x);
-        cp.RegisterProperty("y", () => y);
-        cp.RegisterProperty("res", () => result, r => result = r);
-        
-        var source = "res = x * y";
-        var compiled = cp.Compile(source);
-        compiled.Run();
-        
-        Console.WriteLine("The result is {0}", result);
-    }
-    catch(LensCompilerException e)
-    {
-        Console.WriteLine("An error has occured: {0}", e.FullMessage);
-    }
+```csharp
+try
+{
+    var x = 21;
+    var y = 2;
+    var result = 0;
+    
+    var cp = new LensCompiler();
+    cp.RegisterProperty("x", () => x);
+    cp.RegisterProperty("y", () => y);
+    cp.RegisterProperty("res", () => result, r => result = r);
+    
+    var source = "res = x * y";
+    var compiled = cp.Compile(source);
+    compiled.Run();
+    
+    Console.WriteLine("The result is {0}", result);
+}
+catch(LensCompilerException e)
+{
+    Console.WriteLine("An error has occured: {0}", e.FullMessage);
+}
+```
 
 The code above creates the compiler and registers local variables `x`, `y`, and `result` in the script. The body of the script is compiled into a native .NET object that can be invoked several times without recompilation. Finally, the result of the expression is printed out - and guess what the result is!
 
