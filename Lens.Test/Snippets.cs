@@ -861,5 +861,39 @@ new [fx1; fx2; fx3]
 			var src = @"DateTime::Now.Year";
 			Test(src, DateTime.Now.Year);
 		}
+
+		[Test]
+		public void NestedLoop()
+		{
+			var src = @"
+var data = new [
+    new [1; 2; 3]
+    new [4; 5; 6]
+    new [7; 8; 9]
+]
+
+var result = 0
+for row in data do
+    for x in row do
+        result = result + x
+
+result
+";
+			Test(src, 45);
+		}
+
+		[Test]
+		public void NotNestedLoop()
+		{
+			var src = @"
+var data = new [1; 2; 3; 4; 5]
+var sum = 0
+for x in data do
+    sum = sum + x
+sum
+";
+
+			Test(src, 15);
+		}
 	}
 }

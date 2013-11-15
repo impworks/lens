@@ -47,14 +47,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			base.ProcessClosures(ctx);
-
 			if(IterableExpression != null)
 				detectEnumerableType(ctx);
 			else
 				detectRangeType(ctx);
 
 			m_Variable = ctx.CurrentScope.DeclareName(VariableName, m_VariableType, false);
+
+			base.ProcessClosures(ctx);
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -152,6 +152,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			LocalName result = null;
 
 			var code = Expr.Block(
+				Expr.Set(idxVar, Expr.Int(0)),
 				Expr.Set(arrayVar, IterableExpression),
 				Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length"))
 			);
