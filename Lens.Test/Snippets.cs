@@ -895,5 +895,19 @@ sum
 
 			Test(src, 15);
 		}
+
+		[Test]
+		public void RefArray()
+		{
+			var src = @"
+fun inc (x:ref int) ->
+    x = x + 1
+
+var data = new [1; 2; 2]
+inc (ref data[2])
+data";
+
+			Test(src, new[] {1, 2, 3});
+		}
 	}
 }

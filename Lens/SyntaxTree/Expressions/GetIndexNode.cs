@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.Expressions
 			Expression.Compile(ctx, true);
 			Index.Compile(ctx, true);
 
-			gen.EmitLoadIndex(itemType, PointerRequired);
+			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
 
 		private void compileCustom(Context ctx)
