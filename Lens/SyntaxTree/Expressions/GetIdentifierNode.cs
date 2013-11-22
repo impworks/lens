@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Expressions
 					Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
 				m_Method = methods[0];
-				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.ArgumentTypes);
+				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.GetArgumentTypes(ctx));
 			}
 			catch (KeyNotFoundException) { }
 
