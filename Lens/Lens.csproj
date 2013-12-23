@@ -111,6 +111,7 @@
     <Compile Include="Stdlib\ConsoleWrapper.cs" />
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
+    <Compile Include="SyntaxTree\Attributes\AttributeNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetArgumentNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />

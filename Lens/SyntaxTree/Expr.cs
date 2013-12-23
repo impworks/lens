@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.SyntaxTree.Attributes;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Literals;
@@ -540,6 +541,11 @@ namespace Lens.SyntaxTree
 
 		public static FunctionNode Fun(string name, TypeSignature type, bool isPure, FunctionArgument[] args, params NodeBase[] body)
 		{
+			return Fun(name, type, isPure, args, new AttributeNode[0], body);
+		}
+
+		public static FunctionNode Fun(string name, TypeSignature type, bool isPure, FunctionArgument[] args, AttributeNode[] attributes, params NodeBase[] body)
+		{
 			return new FunctionNode
 			{
 				Name = name,
@@ -568,6 +574,18 @@ namespace Lens.SyntaxTree
 		public static LambdaNode Lambda(params NodeBase[] body)
 		{
 			return new LambdaNode { Body = Block(body) };
+		}
+
+		#endregion
+
+		#region Attributes
+
+		public static AttributeNode Attribute(string name)
+		{
+			return new AttributeNode
+			{
+				Name = name
+			};
 		}
 
 		#endregion

@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AttributeTest.cs" />
     <Compile Include="ExtensionMethodResolverTest.cs" />
     <Compile Include="FunctionalHelperTest.cs" />
     <Compile Include="GenericHelperTest.cs" />
