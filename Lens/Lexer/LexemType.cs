@@ -75,6 +75,7 @@
 
 		// Specials
 		ArrayDef,
+		AtSign,
 		PassLeft,
 		PassRight,
 		Arrow,

@@ -80,6 +80,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("||", LexemType.Or),
 			new StaticLexemDefinition("^^", LexemType.Xor),
 
+			new StaticLexemDefinition("@", LexemType.AtSign),
 			new StaticLexemDefinition("::", LexemType.DoubleСolon),
 			new StaticLexemDefinition(":", LexemType.Colon),
 			new StaticLexemDefinition(",", LexemType.Comma),
