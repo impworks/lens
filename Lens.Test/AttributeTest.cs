@@ -1,5 +1,4 @@
-﻿using Lens.Compiler;
-using Lens.SyntaxTree;
+﻿using Lens.SyntaxTree;
 using NUnit.Framework;
 
 namespace Lens.Test
@@ -11,16 +10,15 @@ namespace Lens.Test
 		{
 			var script = @"
 @AttributeName
-def foo() = 10";
-			var result = Parse(script);
+fun foo (x:int) -> 10";
 			var expected = Expr.Fun(
-				"x",
+				"foo",
 				null,
 				false,
-				new FunctionArgument[0],
+				new[] { Expr.Arg("x", "int") },
 				new [] { Expr.Attribute("AttributeName") },
 				Expr.Int(10));
-			Assert.AreEqual(expected, result);
+			TestParser(script, expected);
 		}
 	}
 }

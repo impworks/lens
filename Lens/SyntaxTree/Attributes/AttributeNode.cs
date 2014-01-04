@@ -13,7 +13,12 @@ namespace Lens.SyntaxTree.Attributes
 		/// Attribute name.
 		/// </summary>
 		public string Name { get; set; }
-		
+
+		public override bool Equals(object obj)
+		{
+			return base.Equals(obj) && Name == ((AttributeNode)obj).Name;
+		}
+
 		protected override void compile(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();

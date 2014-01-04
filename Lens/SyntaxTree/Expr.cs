@@ -548,6 +548,7 @@ namespace Lens.SyntaxTree
 		{
 			return new FunctionNode
 			{
+				Attributes = attributes.ToList(),
 				Name = name,
 				Arguments = args.ToList(),
 				ReturnTypeSignature = type,

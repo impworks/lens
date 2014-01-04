@@ -5,6 +5,7 @@ using System.Text;
 using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.Attributes;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Literals;
@@ -241,16 +242,17 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// fun_def                                     = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
+		/// fun_def                                     = [ attributes ] [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
 		/// </summary>
 		private FunctionNode parseFunDef()
 		{
 			var node = new FunctionNode();
+			node.Attributes = parseFunAttributes();
 			node.IsPure = check(LexemType.Pure);
 
 			if (!check(LexemType.Fun))
 			{
-				if (node.IsPure)
+				if (node.IsPure || node.Attributes.Count > 0)
 					error(ParserMessages.FunctionDefExpected);
 				else
 					return null;
@@ -263,6 +265,42 @@ namespace Lens.Parser
 			node.Arguments = attempt(() => parseFunArgs(true)) ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
 			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
+
+			return node;
+		}
+
+		/// <summary>
+		/// attributes                                  = attribute { NL attribute }
+		/// </summary>
+		private List<AttributeNode> parseFunAttributes()
+		{
+			var result = new List<AttributeNode>();
+
+			AttributeNode node;
+			while ((node = parseFunSingleAttribute()) != null)
+			{
+				result.Add(node);
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// attribute                                   = "@" identifier invoke_line_args
+		/// </summary>
+		private AttributeNode parseFunSingleAttribute()
+		{
+			if (!check(LexemType.AtSign))
+			{
+				return null;
+			}
+
+			var node = new AttributeNode();
+			node.Name = getValue();
+			node.Arguments = parseInvokeLineArgs().ToList();
+
+			if (!check(LexemType.NewLine))
+				error(ParserMessages.NewlineSeparatorExpected);
 
 			return node;
 		}

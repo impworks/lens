@@ -8,8 +8,8 @@ type <TypeSignature>                        = namespace [ type_args ] { "[]" | "
 type_args                                   = "<" type { "," type } ">"
 
 // attributes
-attributes                                  = attribute { NL attribute }
-attribute                                   = "@" identifier { expr }
+attributes <~AttributeNode>                 = attribute { NL attribute }
+attribute <AttributeNode>                   = "@" identifier invoke_line_args
 
 // structures
 using <UsingNode>                           = "using" namespace

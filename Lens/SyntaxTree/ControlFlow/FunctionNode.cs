@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
+using Lens.SyntaxTree.Attributes;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -8,6 +11,11 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class FunctionNode : FunctionNodeBase
 	{
+		/// <summary>
+		/// Function attributes.
+		/// </summary>
+		public List<AttributeNode> Attributes { get; set; }
+
 		/// <summary>
 		/// Function name.
 		/// </summary>
@@ -35,7 +43,8 @@ namespace Lens.SyntaxTree.ControlFlow
 			return base.Equals(other)
 			       && string.Equals(Name, other.Name)
 			       && IsPure.Equals(other.IsPure)
-			       && Equals(ReturnTypeSignature, other.ReturnTypeSignature);
+			       && Equals(ReturnTypeSignature, other.ReturnTypeSignature)
+				   && Attributes.SequenceEqual(other.Attributes);
 		}
 
 		public override bool Equals(object obj)
