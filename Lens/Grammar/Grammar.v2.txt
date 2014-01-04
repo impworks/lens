@@ -14,9 +14,9 @@ record_stmt <RecordField>                   = identifier ":" type
 type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
 type_stmt <TypeLabel>                       = identifier [ "of" type ]
 fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
-fun_args <~FunctionArgument>                = fun_single_arg | fun_many_args
+fun_args <~FunctionArgument>                = fun_arg | fun_arg_list
 fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
-fun_arg_list <~FunctionArgument>            = "(" { fun_single_arg } ")"
+fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"
 
 // blocks
 block <CodeBlockNode>                       = local_stmt_list | local_stmt
