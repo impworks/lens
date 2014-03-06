@@ -16,7 +16,13 @@ namespace Lens.SyntaxTree.ControlFlow
 		public CodeBlockNode()
 		{
 			Statements = new List<NodeBase>();	
+			ScopeFrame = new ScopeFrame();
 		}
+
+		/// <summary>
+		/// The scope frame corresponding to current code block.
+		/// </summary>
+		private ScopeFrame ScopeFrame;
 
 		/// <summary>
 		/// The statements to execute.
@@ -32,7 +38,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (last is VarNode || last is LetNode)
 				Error(last, CompilerMessages.CodeBlockLastVar);
 
-			return Statements[Statements.Count - 1].GetExpressionType(ctx);
+			ctx.CurrentScope.PushFrame(ScopeFrame);
+			var result = Statements[Statements.Count - 1].GetExpressionType(ctx);
+			ctx.CurrentScope.PopFrame();
+
+			return result;
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -42,6 +52,8 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
+			ctx.CurrentScope.PushFrame(ScopeFrame);
+
 			var gen = ctx.CurrentILGenerator;
 
 			for (var idx = 0; idx < Statements.Count; idx++)
@@ -59,6 +71,15 @@ namespace Lens.SyntaxTree.ControlFlow
 				if(!subReturn && retType.IsNotVoid())
 					gen.EmitPop();
 			}
+
+			ctx.CurrentScope.PopFrame();
+		}
+
+		public override void ProcessClosures(Context ctx)
+		{
+			ctx.CurrentScope.PushFrame(ScopeFrame);
+			base.ProcessClosures(ctx);
+			ctx.CurrentScope.PopFrame();
 		}
 
 		#region Equality members

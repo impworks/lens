@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Lens.Compiler.Entities;
 using Lens.Translations;
 
@@ -12,18 +13,14 @@ namespace Lens.Compiler
 	{
 		public Scope()
 		{
-			Names = new Dictionary<string, LocalName>();
+			TotalFrames = new HashSet<ScopeFrame>();
+			CurrentFrames = new Stack<ScopeFrame>();
 		}
 
 		/// <summary>
-		/// A scope that contains current scope;
+		/// A scope that contains current scope.
 		/// </summary>
 		public Scope OuterScope;
-
-		/// <summary>
-		/// The lookup table of names defined in current scope.
-		/// </summary>
-		public Dictionary<string, LocalName> Names;
 
 		/// <summary>
 		/// The name of the closure class.
@@ -40,6 +37,16 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName ClosureVariable { get; private set; }
 
+		/// <summary>
+		/// The currently active frames in stack order.
+		/// </summary>
+		private readonly Stack<ScopeFrame> CurrentFrames;
+
+		/// <summary>
+		/// The total list of frames that are ever existant in current scope.
+		/// </summary>
+		private readonly HashSet<ScopeFrame> TotalFrames;
+
 		#region Methods
 
 		/// <summary>
@@ -50,6 +57,8 @@ namespace Lens.Compiler
 			var method = ctx.CurrentMethod;
 			if (method.Arguments == null)
 				return;
+
+			PushFrame(new ScopeFrame());
 
 			for(var idx = 0; idx < method.Arguments.Count; idx++)
 			{
@@ -86,7 +95,7 @@ namespace Lens.Compiler
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, name));
 
 			var n = new LocalName(name, type, isConst, isRefArg);
-			Names[name] = n;
+			CurrentFrames.Peek().Names[name] = n;
 			return n;
 		}
 
@@ -99,7 +108,7 @@ namespace Lens.Compiler
 			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
 			var name = string.Format(EntityNames.ImplicitVariableNameTemplate, lb.LocalIndex);
 			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
-			Names[name] = ln;
+			CurrentFrames.Peek().Names[name] = ln;
 			return ln;
 		}
 
@@ -110,7 +119,7 @@ namespace Lens.Compiler
 		{
 			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
 			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
-			Names[name] = ln;
+			CurrentFrames.Peek().Names[name] = ln;
 			return ln;
 		}
 
@@ -190,21 +199,24 @@ namespace Lens.Compiler
 		/// </summary>
 		public void FinalizeScope(Context ctx)
 		{
-			foreach (var curr in Names.Values)
+			foreach (var frame in TotalFrames)
 			{
-				if (curr.IsConstant && curr.IsImmutable && ctx.Options.UnrollConstants)
-					continue;
+				foreach (var curr in frame.Names.Values)
+				{
+					if (curr.IsConstant && curr.IsImmutable && ctx.Options.UnrollConstants)
+						continue;
 
-				if (curr.IsClosured)
-				{
-					// create a field in the closured class
-					var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
-					curr.ClosureFieldName = name;
-					ClosureType.CreateField(name, curr.Type);
-				}
-				else
-				{
-					curr.LocalBuilder = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
+					if (curr.IsClosured)
+					{
+						// create a field in the closured class
+						var name = string.Format(EntityNames.ClosureFieldNameTemplate, curr.Name);
+						curr.ClosureFieldName = name;
+						ClosureType.CreateField(name, curr.Type);
+					}
+					else
+					{
+						curr.LocalBuilder = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
+					}
 				}
 			}
 
@@ -217,6 +229,17 @@ namespace Lens.Compiler
 				ClosureVariable = DeclareInternalName(string.Format(EntityNames.ClosureInstanceVariableNameTemplate, ClosureTypeId), ctx, ClosureType.TypeBuilder, false);
 		}
 
+		public void PushFrame(ScopeFrame frame)
+		{
+			CurrentFrames.Push(frame);
+			TotalFrames.Add(frame);
+		}
+
+		public void PopFrame()
+		{
+			CurrentFrames.Pop();
+		}
+
 		/// <summary>
 		/// Finds a local name and invoke a callback.
 		/// </summary>
@@ -226,12 +249,15 @@ namespace Lens.Compiler
 			var scope = this;
 			while (scope != null)
 			{
-				LocalName loc;
-				if (scope.Names.TryGetValue(name, out loc))
+				foreach (var frame in scope.CurrentFrames)
 				{
-					if(action != null)
-						action(loc, idx);
-					return true;
+					LocalName loc;
+					if (frame.Names.TryGetValue(name, out loc))
+					{
+						if (action != null)
+							action(loc, idx);
+						return true;
+					}
 				}
 
 				idx++;
