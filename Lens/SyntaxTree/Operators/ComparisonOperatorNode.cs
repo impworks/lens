@@ -220,9 +220,9 @@ namespace Lens.SyntaxTree.Operators
 			var endLabel = gen.DefineLabel();
 
 			LocalName nullVar, otherVar = null;
-			nullVar = ctx.CurrentScope.DeclareImplicitName(ctx, nullType, true);
+			nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
 			if (otherNull)
-				otherVar = ctx.CurrentScope.DeclareImplicitName(ctx, otherType, true);
+				otherVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, otherType, true);
 //			if (otherNull)
 //			{
 //				otherVar = ctx.CurrentScope.DeclareImplicitName(ctx, otherType, true);
@@ -324,7 +324,7 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 			var nullType = nullValue.GetExpressionType(ctx);
-			var nullVar = ctx.CurrentScope.DeclareImplicitName(ctx, nullType, true);
+			var nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
 			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Compile(ctx, true);

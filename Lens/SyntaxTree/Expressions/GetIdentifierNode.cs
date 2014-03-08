@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (local != null)
 			{
 				// only local constants are cached
@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			// local name is not cached because it can be closured.
 			// if the identifier is actually a local constant, the 'compile' method is not invoked at all
-			var local = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (local != null)
 			{
 				if(local.IsImmutable && RefArgumentRequired)

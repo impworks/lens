@@ -38,11 +38,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (last is VarNode || last is LetNode)
 				Error(last, CompilerMessages.CodeBlockLastVar);
 
-			ctx.CurrentScope.PushFrame(ScopeFrame);
-			var result = Statements[Statements.Count - 1].GetExpressionType(ctx);
-			ctx.CurrentScope.PopFrame();
-
-			return result;
+			return withScopeFrame(ctx, () => Statements[Statements.Count - 1].GetExpressionType(ctx));
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -52,34 +48,52 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
-			ctx.CurrentScope.PushFrame(ScopeFrame);
+			withScopeFrame(ctx,
+				() =>
+			    {
+					var gen = ctx.CurrentILGenerator;
 
-			var gen = ctx.CurrentILGenerator;
+					for (var idx = 0; idx < Statements.Count; idx++)
+					{
+						var subReturn = mustReturn && idx == Statements.Count - 1;
+						var curr = Statements[idx];
 
-			for (var idx = 0; idx < Statements.Count; idx++)
-			{
-				var subReturn = mustReturn && idx == Statements.Count - 1;
-				var curr = Statements[idx];
+						var retType = curr.GetExpressionType(ctx, subReturn);
 
-				var retType = curr.GetExpressionType(ctx, subReturn);
+						if (!subReturn && curr.IsConstant)
+							continue;
 
-				if (!subReturn && curr.IsConstant)
-					continue;
+						curr.Compile(ctx, subReturn);
 
-				curr.Compile(ctx, subReturn);
-
-				if(!subReturn && retType.IsNotVoid())
-					gen.EmitPop();
-			}
-
-			ctx.CurrentScope.PopFrame();
+						if (!subReturn && retType.IsNotVoid())
+							gen.EmitPop();
+					}
+				}
+			);
 		}
 
 		public override void ProcessClosures(Context ctx)
 		{
-			ctx.CurrentScope.PushFrame(ScopeFrame);
-			base.ProcessClosures(ctx);
-			ctx.CurrentScope.PopFrame();
+			withScopeFrame(ctx, () => base.ProcessClosures(ctx));
+		}
+
+		private T withScopeFrame<T>(Context ctx, Func<T> action)
+		{
+			ScopeFrame.InitializeScopeFrame(ctx);
+			var oldFrame = ctx.CurrentScopeFrame;
+			ctx.CurrentScopeFrame = ScopeFrame;
+			var result = action();
+			ctx.CurrentScopeFrame = oldFrame;
+			return result;
+		}
+
+		private void withScopeFrame(Context ctx, Action action)
+		{
+			ScopeFrame.InitializeScopeFrame(ctx);
+			var oldFrame = ctx.CurrentScopeFrame;
+			ctx.CurrentScopeFrame = ScopeFrame;
+			action();
+			ctx.CurrentScopeFrame = oldFrame;
 		}
 
 		#region Equality members

@@ -60,7 +60,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			try
 			{
-				var name = ctx.CurrentScope.DeclareName(Name, type, IsImmutable);
+				var name = ctx.CurrentScopeFrame.DeclareName(Name, type, IsImmutable);
 				if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
 				{
 					name.IsConstant = true;
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
-			var name = LocalName ?? ctx.CurrentScope.FindName(Name);
+			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
 				return;
 

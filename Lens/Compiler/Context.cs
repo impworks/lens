@@ -168,6 +168,15 @@ namespace Lens.Compiler
 		internal MethodEntityBase CurrentMethod { get; set; }
 
 		/// <summary>
+		/// The current scope frame in which all local variables are registered and searched for.
+		/// </summary>
+		internal ScopeFrame CurrentScopeFrame
+		{
+			get { return _currentScopeFrame; }
+			set { _currentScopeFrame = value; }
+		}
+
+		/// <summary>
 		/// The current most nested try block.
 		/// </summary>
 		internal TryNode CurrentTryBlock
@@ -239,6 +248,8 @@ namespace Lens.Compiler
 		/// An ID for closure types.
 		/// </summary>
 		private int _ClosureId;
+
+		private ScopeFrame _currentScopeFrame;
 
 		#endregion
 	}

@@ -723,6 +723,26 @@ for x in new [1; 2; 3; 4; 5] do
 		}
 
 		[Test]
+		public void ForLoop4()
+		{
+			var src = @"
+for x in Enumerable::Range 1 5 do
+    println ""and {0}"" x";
+
+			Test(src, null);
+		}
+
+		[Test]
+		public void ForLoop5()
+		{
+			var src = @"
+for x in new [[1; 2; 3; 4; 5]] do
+    println ""and {0}"" x";
+
+			Test(src, null);
+		}
+
+		[Test]
 		public void PureFunc0()
 		{
 			var src = @"
@@ -908,6 +928,50 @@ inc (ref data[2])
 data";
 
 			Test(src, new[] {1, 2, 3});
+		}
+
+		[Test]
+		public void ScopeNames1()
+		{
+			var src = @"
+var data = new[1; 2; 3; 4; 5]
+var res = new List<int> ()
+for x in data do
+    if x % 2 == 0 then
+        let p = x * 2
+        res.Add p
+    else
+        let p = x * 3
+        res.Add p
+res
+";
+
+			Test(src, new[] { 3, 4, 9, 8, 15 });
+		}
+
+		[Test]
+		public void ScopeNames2()
+		{
+			var src = @"
+var arr = Enumerable::Range 1 5
+    |> ToArray ()
+
+var funcs = new List<Func<int>> ()
+for x in arr do
+    if odd x then
+        let fx = (-> x * 2)
+        funcs.Add fx
+    else
+        let fx = (-> x * 3)
+        funcs.Add fx
+
+var res = new List<int> ()
+for fc in funcs do
+    res.Add (fc ())
+
+res
+";
+			Test(src, new[] { 2, 6, 6, 12, 10 });
 		}
 	}
 }

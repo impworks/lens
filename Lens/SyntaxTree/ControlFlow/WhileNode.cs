@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			LocalName tmpVar = null;
 			if (saveLast)
 			{
-				tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, loopType, false);
+				tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, loopType, false);
 				Expr.Set(tmpVar, Expr.Default(loopType));
 			}
 

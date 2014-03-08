@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			try
 			{
-				ctx.CurrentScope.ReferenceName(Identifier ?? LocalName.Name);
+				ctx.CurrentScopeFrame.ReferenceName(Identifier ?? LocalName.Name);
 			}
 			catch { }
 		}

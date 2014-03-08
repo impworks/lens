@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.Operators
 				if (LeftOperand is GetMemberNode)
 					(LeftOperand as GetMemberNode).TypeHints.Clear();
 
-				_Method = ctx.CurrentScope.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
+				_Method = ctx.CurrentScopeFrame.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
 				_Method.Body = 
 					Expr.Block(
 						Expr.Invoke(
@@ -66,18 +66,21 @@ namespace Lens.SyntaxTree.Operators
 						)
 					);
 
-				var methodBackup = ctx.CurrentMethod;
+				var outerMethod = ctx.CurrentMethod;
+				var outerFrame = ctx.CurrentScopeFrame;
 				ctx.CurrentMethod = _Method;
+				ctx.CurrentScopeFrame = _Method.Scope.RootFrame;
 
 				var scope = _Method.Scope;
-				scope.InitializeScope(ctx);
+				scope.InitializeScope(ctx, outerFrame);
 
 				_Method.Body.ProcessClosures(ctx);
 				_Method.PrepareSelf();
 
 				scope.FinalizeScope(ctx);
 
-				ctx.CurrentMethod = methodBackup;
+				ctx.CurrentMethod = outerMethod;
+				ctx.CurrentScopeFrame = outerFrame;
 			}
 		}
 

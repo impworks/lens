@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Expressions
 			var exprType = Value.GetExpressionType(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
-			var nameInfo = LocalName ?? ctx.CurrentScope.FindName(Identifier);
+			var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
