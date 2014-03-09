@@ -12,6 +12,9 @@ namespace Lens
 		public LensCompilerException(string msg) : base(msg)
 		{ }
 
+		public LensCompilerException(string msg, Exception inner) : base(msg, inner)
+		{ }
+
 		public LensCompilerException(string msg, LocationEntity entity) : base(msg)
 		{
 			BindToLocation(entity);

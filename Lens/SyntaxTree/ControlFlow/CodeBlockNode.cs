@@ -16,7 +16,13 @@ namespace Lens.SyntaxTree.ControlFlow
 		public CodeBlockNode()
 		{
 			Statements = new List<NodeBase>();	
+			ScopeFrame = new ScopeFrame();
 		}
+
+		/// <summary>
+		/// The scope frame corresponding to current code block.
+		/// </summary>
+		private ScopeFrame ScopeFrame;
 
 		/// <summary>
 		/// The statements to execute.
@@ -32,7 +38,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (last is VarNode || last is LetNode)
 				Error(last, CompilerMessages.CodeBlockLastVar);
 
-			return Statements[Statements.Count - 1].GetExpressionType(ctx);
+			return withScopeFrame(ctx, () => Statements[Statements.Count - 1].GetExpressionType(ctx));
 		}
 
 		public override IEnumerable<NodeBase> GetChildNodes()
@@ -42,23 +48,52 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void compile(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			withScopeFrame(ctx,
+				() =>
+			    {
+					var gen = ctx.CurrentILGenerator;
 
-			for (var idx = 0; idx < Statements.Count; idx++)
-			{
-				var subReturn = mustReturn && idx == Statements.Count - 1;
-				var curr = Statements[idx];
+					for (var idx = 0; idx < Statements.Count; idx++)
+					{
+						var subReturn = mustReturn && idx == Statements.Count - 1;
+						var curr = Statements[idx];
 
-				var retType = curr.GetExpressionType(ctx, subReturn);
+						var retType = curr.GetExpressionType(ctx, subReturn);
 
-				if (!subReturn && curr.IsConstant)
-					continue;
+						if (!subReturn && curr.IsConstant)
+							continue;
 
-				curr.Compile(ctx, subReturn);
+						curr.Compile(ctx, subReturn);
 
-				if(!subReturn && retType.IsNotVoid())
-					gen.EmitPop();
-			}
+						if (!subReturn && retType.IsNotVoid())
+							gen.EmitPop();
+					}
+				}
+			);
+		}
+
+		public override void ProcessClosures(Context ctx)
+		{
+			withScopeFrame(ctx, () => base.ProcessClosures(ctx));
+		}
+
+		private T withScopeFrame<T>(Context ctx, Func<T> action)
+		{
+			ScopeFrame.InitializeScopeFrame(ctx);
+			var oldFrame = ctx.CurrentScopeFrame;
+			ctx.CurrentScopeFrame = ScopeFrame;
+			var result = action();
+			ctx.CurrentScopeFrame = oldFrame;
+			return result;
+		}
+
+		private void withScopeFrame(Context ctx, Action action)
+		{
+			ScopeFrame.InitializeScopeFrame(ctx);
+			var oldFrame = ctx.CurrentScopeFrame;
+			ctx.CurrentScopeFrame = ScopeFrame;
+			action();
+			ctx.CurrentScopeFrame = oldFrame;
 		}
 
 		#region Equality members
@@ -98,6 +133,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		public void Add(NodeBase node)
 		{
 			Statements.Add(node);
+		}
+
+		public void Insert(NodeBase node)
+		{
+			Statements.Insert(0, node);
 		}
 
 		#endregion

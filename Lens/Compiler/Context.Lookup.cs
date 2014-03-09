@@ -268,12 +268,11 @@ namespace Lens.Compiler
 		private MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
 		{
 			var mw = new MethodWrapper { Name = name, Type = type };
-			var flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
 			try
 			{
 				var method = ResolveMethodByArgs(
-					type.GetMethods(flags).Where(m => m.Name == name),
+					getMethodsFromType(type, name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
 					argTypes
 				);
@@ -309,7 +308,7 @@ namespace Lens.Compiler
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					genType.GetMethods(flags).Where(m => m.Name == name),
+					getMethodsFromType(genType, name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					argTypes
 				);
@@ -347,6 +346,20 @@ namespace Lens.Compiler
 			}
 
 			return mw;
+		}
+
+		/// <summary>
+		/// Gets all method definitions from a type or interface, working around a strange behaviour of GetMethods() called on an inteface.
+		/// </summary>
+		private static IEnumerable<MethodInfo> getMethodsFromType(Type type, string name)
+		{
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+
+			var result = type.GetMethods(flags).Where(m => m.Name == name);
+			if(type.IsInterface && !result.Any())
+				result = type.GetInterfaces().SelectMany(x => getMethodsFromType(x, name));
+
+			return result;
 		}
 
 		/// <summary>

@@ -44,6 +44,26 @@ namespace Lens.Stdlib
 			return value < min ? min : (value > max ? max : value);
 		}
 
+		public static bool OddInt(int value)
+		{
+			return value%2 != 0;
+		}
+
+		public static bool EvenInt(int value)
+		{
+			return value % 2 == 0;
+		}
+
+		public static bool OddLong(long value)
+		{
+			return value % 2 != 0;
+		}
+
+		public static bool EvenLong(long value)
+		{
+			return value % 2 == 0;
+		}
+
 		#endregion
 
 		#region Range

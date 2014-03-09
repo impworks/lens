@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Operators
 			{
 				if (toType.IsNullableType())
 				{
-					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, toType, true);
+					var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, toType, true);
 					gen.EmitLoadLocal(tmpVar, true);
 					gen.EmitInitObject(toType);
 					gen.EmitLoadLocal(tmpVar);

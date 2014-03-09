@@ -51,21 +51,15 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void ProcessClosures()
 		{
-			var ctx = ContainerType.Context;
+			withContext(ctx =>
+			    {
+				    checkArguments(ctx);
 
-			var oldMethod = ctx.CurrentMethod;
-
-			ctx.CurrentMethod = this;
-			CurrentTryBlock = null;
-			CurrentCatchBlock = null;
-
-			checkArguments(ctx);
-
-			Scope.InitializeScope(ctx);
-			Body.ProcessClosures(ctx);
-			Scope.FinalizeScope(ctx);
-
-			ctx.CurrentMethod = oldMethod;
+				    Scope.InitializeScope(ctx, null);
+				    Body.ProcessClosures(ctx);
+				    Scope.FinalizeScope(ctx);
+			    }
+			);
 		}
 
 		/// <summary>
@@ -73,20 +67,34 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void Compile()
 		{
+			withContext(ctx =>
+			    {
+
+				    emitPrelude(ctx);
+				    compileCore(ctx);
+				    emitTrailer(ctx);
+
+				    Generator.EmitReturn();
+			    }
+			);
+		}
+
+		private void withContext(Action<Context> act)
+		{
 			var ctx = ContainerType.Context;
 
-			var backup = ctx.CurrentMethod;
+			var oldMethod = ctx.CurrentMethod;
+			var oldFrame = ctx.CurrentScopeFrame;
+
 			ctx.CurrentMethod = this;
+			ctx.CurrentScopeFrame = Scope.RootFrame;
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
 
-			emitPrelude(ctx);
-			compileCore(ctx);
-			emitTrailer(ctx);
-
-			Generator.EmitReturn();
-
-			ctx.CurrentMethod = backup;
+			act(ctx);
+			
+			ctx.CurrentMethod = oldMethod;
+			ctx.CurrentScopeFrame = oldFrame;
 		}
 
 		/// <summary>
@@ -132,7 +140,7 @@ namespace Lens.Compiler.Entities
 					if (arg.IsRefArgument)
 						continue;
 
-					var local = Scope.FindName(arg.Name);
+					var local = Scope.RootFrame.FindName(arg.Name);
 					if (local.IsClosured)
 					{
 						var fi = closureType.ResolveField(local.ClosureFieldName);

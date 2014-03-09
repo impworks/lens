@@ -20,14 +20,17 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			_Method = ctx.CurrentScope.CreateClosureMethod(ctx, Arguments);
+			_Method = ctx.CurrentScopeFrame.CreateClosureMethod(ctx, Arguments);
 			_Method.Body = Body;
 
-			var methodBackup = ctx.CurrentMethod;
+			var outerMethod = ctx.CurrentMethod;
+			var outerFrame = ctx.CurrentScopeFrame;
+
 			ctx.CurrentMethod = _Method;
+			ctx.CurrentScopeFrame = _Method.Scope.RootFrame;
 
 			var scope = _Method.Scope;
-			scope.InitializeScope(ctx);
+			scope.InitializeScope(ctx, outerFrame);
 			base.ProcessClosures(ctx);
 			
 			// get evaluated return type
@@ -40,7 +43,8 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			scope.FinalizeScope(ctx);
 
-			ctx.CurrentMethod = methodBackup;
+			ctx.CurrentMethod = outerMethod;
+			ctx.CurrentScopeFrame = outerFrame;
 		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)

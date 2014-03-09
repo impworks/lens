@@ -160,7 +160,7 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, exprType, false);
+						var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, exprType, false);
 						Expression.Compile(ctx, true);
 						gen.EmitSaveLocal(tmpVar);
 						gen.EmitLoadLocal(tmpVar, true);
@@ -226,8 +226,8 @@ namespace Lens.SyntaxTree.Expressions
 				gen.EmitCall(m_Property.Getter);
 
 				if (PointerRequired)
-				{ 
-					var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_Property.PropertyType, false);
+				{
+					var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_Property.PropertyType, false);
 					gen.EmitSaveLocal(tmpVar);
 					gen.EmitLoadLocal(tmpVar, true);
 				}

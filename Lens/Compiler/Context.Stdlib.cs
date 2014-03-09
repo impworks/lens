@@ -66,6 +66,11 @@ namespace Lens.Compiler
 			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeIntStep"));
 			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeString"));
 			ImportFunctionUnchecked("to", typeof(Utilities).GetMethod("RangeStringStep"));
+
+			ImportFunctionUnchecked("odd", typeof(Utilities).GetMethod("OddInt"));
+			ImportFunctionUnchecked("odd", typeof(Utilities).GetMethod("OddLong"));
+			ImportFunctionUnchecked("even", typeof(Utilities).GetMethod("EvenInt"));
+			ImportFunctionUnchecked("even", typeof(Utilities).GetMethod("EvenLong"));
 		}
 	}
 }

@@ -83,7 +83,7 @@ namespace Lens
 			}
 			catch (Exception ex)
 			{
-				throw new LensCompilerException(ex.Message);
+				throw new LensCompilerException(ex.Message, ex);
 			}
 		}
 

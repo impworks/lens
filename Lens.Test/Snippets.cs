@@ -723,6 +723,26 @@ for x in new [1; 2; 3; 4; 5] do
 		}
 
 		[Test]
+		public void ForLoop4()
+		{
+			var src = @"
+for x in Enumerable::Range 1 5 do
+    println ""and {0}"" x";
+
+			Test(src, null);
+		}
+
+		[Test]
+		public void ForLoop5()
+		{
+			var src = @"
+for x in new [[1; 2; 3; 4; 5]] do
+    println ""and {0}"" x";
+
+			Test(src, null);
+		}
+
+		[Test]
 		public void PureFunc0()
 		{
 			var src = @"
@@ -908,6 +928,47 @@ inc (ref data[2])
 data";
 
 			Test(src, new[] {1, 2, 3});
+		}
+
+		[Test]
+		public void ScopeNames1()
+		{
+			var src = @"
+var data = new[1; 2; 3; 4; 5]
+var res = new List<int> ()
+for x in data do
+    if x % 2 == 0 then
+        let p = x * 2
+        res.Add p
+    else
+        let p = x * 3
+        res.Add p
+res
+";
+
+			Test(src, new[] { 3, 4, 9, 8, 15 });
+		}
+
+		[Test]
+		public void ScopeNames2()
+		{
+			// You might expect [2, 4, 6] to be the result of this test -
+			// But as of now, the loop closures ARE modified.
+			// This is a major design flaw and requires rewriting the entire scope & closuring code, therefore for now it cannot be fixed.
+
+			var src = @"
+var arr = Enumerable::Range 1 3
+    |> ToArray ()
+
+var funcs = new List<Func<int>> ()
+for x in arr do
+    funcs.Add (-> x * 2)
+
+
+funcs
+    |> Select (fx:Func<int> -> fx ())
+";
+			Test(src, new[] { 6, 6, 6 });
 		}
 	}
 }

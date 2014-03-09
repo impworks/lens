@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				Error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
-				m_ExceptionVariable = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
+				m_ExceptionVariable = ctx.CurrentScopeFrame.DeclareName(ExceptionVariable, type, false);
 		}
 
 		protected override void compile(Context ctx, bool mustReturn)
