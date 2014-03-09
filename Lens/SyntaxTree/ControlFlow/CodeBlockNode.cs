@@ -135,6 +135,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			Statements.Add(node);
 		}
 
+		public void Insert(NodeBase node)
+		{
+			Statements.Insert(0, node);
+		}
+
 		#endregion
 	}
 }

@@ -52,7 +52,12 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				detectRangeType(ctx);
 
-			m_Variable = ctx.CurrentScopeFrame.DeclareName(VariableName, m_VariableType, false);
+			if (ctx.CurrentScopeFrame.FindName(VariableName) != null)
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
+
+			// inject variable declaration
+			m_Variable = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_VariableType, false);
+			Body.Insert(Expr.Let(VariableName, Expr.Get(m_Variable)));
 
 			base.ProcessClosures(ctx);
 		}
