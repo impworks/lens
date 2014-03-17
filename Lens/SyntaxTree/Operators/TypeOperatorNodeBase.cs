@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -55,9 +56,9 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
+			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
 		#region Equality

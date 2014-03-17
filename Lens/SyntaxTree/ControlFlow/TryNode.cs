@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -29,15 +30,20 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label EndLabel { get; private set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Code;
-			foreach(var curr in CatchClauses)
+			foreach (var curr in Code.GetChildren())
 				yield return curr;
-			yield return Finally;
+
+			foreach(var curr in CatchClauses)
+				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
+
+			if(Finally != null)
+				foreach (var curr in Finally.GetChildren())
+					yield return curr;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
@@ -46,7 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			EndLabel = gen.BeginExceptionBlock();
 
-			Code.Compile(ctx, false);
+			Code.Emit(ctx, false);
 			gen.EmitLeave(EndLabel);
 
 			var catchTypes = new Dictionary<Type, bool>();
@@ -54,23 +60,23 @@ namespace Lens.SyntaxTree.ControlFlow
 			foreach (var curr in CatchClauses)
 			{
 				if(catchAll)
-					Error(curr, CompilerMessages.CatchClauseUnreachable);
+					error(curr, CompilerMessages.CatchClauseUnreachable);
 
 				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof (Exception);
 
 				if(catchTypes.ContainsKey(currType))
-					Error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+					error(curr, CompilerMessages.CatchTypeDuplicate, currType);
 
 				if (currType == typeof (Exception))
 					catchAll = true;
 
-				curr.Compile(ctx, false);
+				curr.Emit(ctx, false);
 			}
 
 			if (Finally != null)
 			{
 				gen.BeginFinallyBlock();
-				Finally.Compile(ctx, false);
+				Finally.Emit(ctx, false);
 			}
 
 			gen.EndExceptionBlock();

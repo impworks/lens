@@ -35,13 +35,13 @@ namespace Lens.SyntaxTree.Operators
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var type = GetExpressionType(ctx);
+			var type = Resolve(ctx);
 
 			if(type.IsVoid())
-				Error(CompilerMessages.VoidTypeDefault);
+				error(CompilerMessages.VoidTypeDefault);
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);
@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.Operators
 
 			else
 			{
-				var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+				var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, Resolve(ctx), true);
 
 				gen.EmitLoadLocal(tmpVar, true);
 				gen.EmitInitObject(type);

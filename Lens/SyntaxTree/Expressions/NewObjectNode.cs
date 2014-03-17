@@ -33,30 +33,30 @@ namespace Lens.SyntaxTree.Expressions
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Arguments;
+			return Arguments.Select((expr, i) => new NodeChild(expr, x => Arguments[i] = x));
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var type = GetExpressionType(ctx);
+			var type = Resolve(ctx);
 			if(type.IsVoid())
-				Error(CompilerMessages.VoidTypeDefault);
+				error(CompilerMessages.VoidTypeDefault);
 
 			if(type.IsAbstract)
-				Error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
+				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
 			if(Arguments.Count == 0)
-				Error(CompilerMessages.ParameterlessConstructorParens);
+				error(CompilerMessages.ParameterlessConstructorParens);
 
-			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
+			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof (Unit);
 
 			var argTypes = isParameterless
 				? Type.EmptyTypes
-				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
+				: Arguments.Select(a => a.Resolve(ctx)).ToArray();
 
 			try
 			{
@@ -66,22 +66,22 @@ namespace Lens.SyntaxTree.Expressions
 				{
 					var destTypes = ctor.ArgumentTypes;
 					for (var idx = 0; idx < Arguments.Count; idx++)
-						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
+						Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
 				}
 
 				gen.EmitCreateObject(ctor.ConstructorInfo);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
 			}
 			catch (KeyNotFoundException)
 			{
 				if (!isParameterless || !type.IsValueType)
-					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
 				var castExpr = Expr.Default(TypeSignature);
-				castExpr.Compile(ctx, true);
+				castExpr.Emit(ctx, true);
 			}
 		}
 

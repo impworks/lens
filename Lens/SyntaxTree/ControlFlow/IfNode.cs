@@ -36,33 +36,38 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (!mustReturn || FalseAction == null)
 				return typeof (Unit);
 
-			var type = TrueAction.GetExpressionType(ctx);
-			var otherType = FalseAction.GetExpressionType(ctx);
+			var type = TrueAction.Resolve(ctx);
+			var otherType = FalseAction.Resolve(ctx);
 			return new[] {type, otherType}.GetMostCommonType();
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Condition;
-			yield return TrueAction;
-			yield return FalseAction;
+			yield return new NodeChild(Condition, x => Condition = x);
+
+			foreach (var curr in TrueAction.GetChildren())
+				yield return curr;
+
+			if(FalseAction != null)
+				foreach (var curr in FalseAction.GetChildren())
+					yield return curr;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var condType = Condition.GetExpressionType(ctx);
+			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
 				var node = Condition.ConstantValue ? TrueAction : FalseAction;
 				if (node != null)
 				{
-					node.Compile(ctx, mustReturn);
-					if (!mustReturn && node.GetExpressionType(ctx).IsNotVoid())
+					node.Emit(ctx, mustReturn);
+					if (!mustReturn && node.Resolve(ctx).IsNotVoid())
 						gen.EmitPop();
 				}
 
@@ -72,12 +77,12 @@ namespace Lens.SyntaxTree.ControlFlow
 			var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
 			
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
 			if (FalseAction == null)
 			{
 				gen.EmitBranchFalse(endLabel);
-				TrueAction.Compile(ctx, mustReturn);
-				if (TrueAction.GetExpressionType(ctx).IsNotVoid())
+				TrueAction.Emit(ctx, mustReturn);
+				if (TrueAction.Resolve(ctx).IsNotVoid())
 					gen.EmitPop();
 
 				gen.MarkLabel(endLabel);
@@ -86,33 +91,33 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 			{
 				var canReturn = mustReturn && FalseAction != null;
-				var resultType = GetExpressionType(ctx);
+				var resultType = Resolve(ctx);
 
 				gen.EmitBranchFalse(falseLabel);
 
-				if (TrueAction.GetExpressionType(ctx).IsNotVoid())
+				if (TrueAction.Resolve(ctx).IsNotVoid())
 				{
-					Expr.Cast(TrueAction, resultType).Compile(ctx, mustReturn);
+					Expr.Cast(TrueAction, resultType).Emit(ctx, mustReturn);
 					if (!canReturn)
 						gen.EmitPop();
 				}
 				else
 				{
-					TrueAction.Compile(ctx, mustReturn);
+					TrueAction.Emit(ctx, mustReturn);
 				}
 
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				if (FalseAction.GetExpressionType(ctx).IsNotVoid())
+				if (FalseAction.Resolve(ctx).IsNotVoid())
 				{
-					Expr.Cast(FalseAction, resultType).Compile(ctx, mustReturn);
+					Expr.Cast(FalseAction, resultType).Emit(ctx, mustReturn);
 					if (!canReturn)
 						gen.EmitPop();
 				}
 				else
 				{
-					FalseAction.Compile(ctx, mustReturn);
+					FalseAction.Emit(ctx, mustReturn);
 				}
 
 				gen.MarkLabel(endLabel);

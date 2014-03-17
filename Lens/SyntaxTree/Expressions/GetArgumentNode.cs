@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Expressions
 			return ctx.CurrentMethod.GetArgumentTypes(ctx)[ArgumentId];
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 

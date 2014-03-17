@@ -16,30 +16,30 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
+			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
 			if (Expression == null)
 			{
 				if(ctx.CurrentCatchBlock == null)
-					Error(CompilerMessages.ThrowArgumentExpected);
+					error(CompilerMessages.ThrowArgumentExpected);
 
 				gen.EmitRethrow();
 			}
 			else
 			{
-				var type = Expression.GetExpressionType(ctx);
+				var type = Expression.Resolve(ctx);
 
 				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					Error(Expression, CompilerMessages.ThrowTypeNotException);
+					error(Expression, CompilerMessages.ThrowTypeNotException);
 
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 				gen.EmitThrow();
 			}
 		}

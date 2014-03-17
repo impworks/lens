@@ -21,7 +21,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override Type resolveOperatorType(Context ctx)
 		{
-			var type = Operand.GetExpressionType(ctx);
+			var type = Operand.Resolve(ctx);
 			return type.IsNumericType() ? type : null;
 		}
 
@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			Operand.Compile(ctx, true);
+			Operand.Emit(ctx, true);
 			gen.EmitNegate();
 		}
 

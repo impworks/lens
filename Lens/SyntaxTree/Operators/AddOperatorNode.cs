@@ -28,12 +28,12 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var type = GetExpressionType(ctx);
+			var type = Resolve(ctx);
 			if (type == typeof (string))
 			{
 				var method = typeof (string).GetMethod("Concat", new[] {typeof (string), typeof (string)});
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 
 				gen.EmitCall(method);
 			}
@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 			catch (OverflowException)
 			{
-				Error(CompilerMessages.ConstantOverflow);
+				error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
 		}

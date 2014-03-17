@@ -11,14 +11,14 @@ namespace Lens.SyntaxTree.Literals
 		protected override System.Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(ctx.CurrentMethod.IsStatic)
-				Error("Cannot access self-reference in static context!");
+				error("Cannot access self-reference in static context!");
 
 			return ctx.CurrentType.TypeBuilder;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			GetExpressionType(ctx);
+			Resolve(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 			gen.EmitLoadArgument(0);

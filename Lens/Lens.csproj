@@ -66,6 +66,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -206,6 +208,7 @@
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
     <Compile Include="Compiler\LocalName.cs" />
+    <Compile Include="Utils\NodeChild.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

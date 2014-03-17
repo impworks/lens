@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -18,14 +19,14 @@ namespace Lens.SyntaxTree.Operators
 		public override bool IsConstant { get { return Operand.IsConstant; } }
 		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Operand;
+			yield return new NodeChild(Operand, x => Operand = x);
 		}
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var type = Operand.GetExpressionType(ctx);
+			var type = Operand.Resolve(ctx);
 
 			var result = resolveOperatorType(ctx);
 			if (result != null)
@@ -44,15 +45,15 @@ namespace Lens.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
+			error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
 			return null;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			GetExpressionType(ctx);
+			Resolve(ctx);
 
 			if (m_OverloadedMethod == null)
 			{
@@ -61,7 +62,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 
 			var ps = m_OverloadedMethod.ArgumentTypes;
-			Expr.Cast(Operand, ps[0]).Compile(ctx, true);
+			Expr.Cast(Operand, ps[0]).Emit(ctx, true);
 			gen.EmitCall(m_OverloadedMethod.MethodInfo);
 		}
 

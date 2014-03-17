@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
+			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
 		}
 
 		public override void ProcessClosures(Context ctx)
@@ -62,26 +62,27 @@ namespace Lens.SyntaxTree.ControlFlow
 			base.ProcessClosures(ctx);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
 			if (IterableExpression != null)
 			{
-				yield return IterableExpression;
+				yield return new NodeChild(IterableExpression, x => IterableExpression = x);
 			}
 			else
 			{
-				yield return RangeStart;
-				yield return RangeEnd;
+				yield return new NodeChild(RangeStart, x => RangeStart = x);
+				yield return new NodeChild(RangeEnd, x => RangeEnd = x);
 			}
 
-			yield return Body;
+			foreach (var curr in Body.GetChildren())
+				yield return curr;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
 			{
-				var type = IterableExpression.GetExpressionType(ctx);
+				var type = IterableExpression.Resolve(ctx);
 				if (type.IsArray)
 					compileArray(ctx, mustReturn);
 				else
@@ -95,11 +96,11 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private void compileEnumerable(Context ctx, bool mustReturn)
 		{
-			var returnType = GetExpressionType(ctx);
+			var returnType = Resolve(ctx);
 			var saveLast = mustReturn && !returnType.IsVoid();
 
 			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_EnumeratorType, false);
-			Expr.Set(tmpVar, Expr.Invoke(IterableExpression, "GetEnumerator")).Compile(ctx, false);
+			Expr.Set(tmpVar, Expr.Invoke(IterableExpression, "GetEnumerator")).Emit(ctx, false);
 
 			LocalName result = null;
 
@@ -131,11 +132,11 @@ namespace Lens.SyntaxTree.ControlFlow
 					loopWrapper,
 					Expr.Block(Expr.Invoke(Expr.Get(tmpVar), "Dispose"))
 				);
-				block.Compile(ctx, mustReturn);
+				block.Emit(ctx, mustReturn);
 			}
 			else
 			{
-				loopWrapper.Compile(ctx, mustReturn);
+				loopWrapper.Emit(ctx, mustReturn);
 			}
 
 			if (saveLast)
@@ -147,10 +148,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private void compileArray(Context ctx, bool mustReturn)
 		{
-			var returnType = GetExpressionType(ctx);
+			var returnType = Resolve(ctx);
 			var saveLast = mustReturn && !returnType.IsVoid();
 
-			var arrayVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, IterableExpression.GetExpressionType(ctx), false);
+			var arrayVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, IterableExpression.Resolve(ctx), false);
 			var idxVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
 			var lenVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
 
@@ -190,7 +191,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				code.Add(loop);
 			}
 
-			code.Compile(ctx, mustReturn);
+			code.Emit(ctx, mustReturn);
 
 			if (saveLast)
 			{
@@ -231,12 +232,12 @@ namespace Lens.SyntaxTree.ControlFlow
 				)
 			);
 
-			code.Compile(ctx, mustReturn);
+			code.Emit(ctx, mustReturn);
 		}
 
 		private void detectEnumerableType(Context ctx)
 		{
-			var seqType = IterableExpression.GetExpressionType(ctx);
+			var seqType = IterableExpression.Resolve(ctx);
 			if (seqType.IsArray)
 			{
 				m_VariableType = seqType.GetElementType();
@@ -245,7 +246,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			
 			var ifaces = GenericHelper.GetInterfaces(seqType);
 			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
-				Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
+				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
 			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
 			m_EnumeratorType = enumerator.ReturnType;
@@ -256,14 +257,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private void detectRangeType(Context ctx)
 		{
-			var t1 = RangeStart.GetExpressionType(ctx);
-			var t2 = RangeEnd.GetExpressionType(ctx);
+			var t1 = RangeStart.Resolve(ctx);
+			var t2 = RangeEnd.Resolve(ctx);
 
 			if(t1 != t2)
-				Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
+				error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
 			if(!t1.IsIntegerType())
-				Error(CompilerMessages.ForeachRangeNotInteger, t1);
+				error(CompilerMessages.ForeachRangeNotInteger, t1);
 
 			m_VariableType = t1;
 		}

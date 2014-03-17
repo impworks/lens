@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -28,12 +29,12 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return Body.GetExpressionType(ctx);
+			return Body.Resolve(ctx);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Body;
+			return Body.GetChildren();
 		}
 
 		#region Equality members

@@ -205,7 +205,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public void CheckTypedExpression(NodeBase node, Type calculatedType = null, bool allowNull = false)
 		{
-			var type = calculatedType ?? node.GetExpressionType(this);
+			var type = calculatedType ?? node.Resolve(this);
 
 			if(!allowNull && type == typeof(NullType))
 				Error(node, CompilerMessages.ExpressionNull);

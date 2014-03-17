@@ -2,6 +2,7 @@
 using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -38,9 +39,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public readonly bool IsImmutable;
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Value;
+			yield return new NodeChild(Value, x => Value = x);
 		}
 
 		public override void ProcessClosures(Context ctx)
@@ -48,7 +49,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			base.ProcessClosures(ctx);
 
 			var type = Value != null
-				? Value.GetExpressionType(ctx)
+				? Value.Resolve(ctx)
 				: ctx.ResolveType(Type);
 			ctx.CheckTypedExpression(Value, type);
 
@@ -56,7 +57,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				return;
 
 			if(Name == "_")
-				Error(CompilerMessages.UnderscoreName);
+				error(CompilerMessages.UnderscoreName);
 
 			try
 			{
@@ -74,7 +75,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
@@ -91,7 +92,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				IsInitialization = true,
 			};
 
-			assignNode.Compile(ctx, mustReturn);
+			assignNode.Emit(ctx, mustReturn);
 		}
 
 		#region Equality members

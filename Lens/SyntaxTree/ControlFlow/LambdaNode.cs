@@ -34,9 +34,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			base.ProcessClosures(ctx);
 			
 			// get evaluated return type
-			var retType = Body.GetExpressionType(ctx);
+			var retType = Body.Resolve(ctx);
 			if(retType == typeof(NullType))
-				Error(CompilerMessages.LambdaReturnTypeUnknown);
+				error(CompilerMessages.LambdaReturnTypeUnknown);
 
 			_Method.ReturnType = retType.IsVoid() ? typeof(void) : retType;
 			_Method.PrepareSelf();
@@ -49,17 +49,17 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var retType = Body.GetExpressionType(ctx);
+			var retType = Body.Resolve(ctx);
 			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
 			return FunctionalHelper.CreateDelegateType(retType, argTypes);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
 			// find constructor
-			var type = FunctionalHelper.CreateDelegateType(Body.GetExpressionType(ctx), _Method.ArgumentTypes);
+			var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.CurrentScope.ClosureVariable;

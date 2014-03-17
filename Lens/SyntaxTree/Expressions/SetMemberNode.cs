@@ -19,36 +19,36 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
-			yield return Value;
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			resolve(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 
 			var destType = m_Field != null ? m_Field.FieldType : m_Property.PropertyType;
-			var valType = Value.GetExpressionType(ctx);
+			var valType = Value.Resolve(ctx);
 
 			ctx.CheckTypedExpression(Value, valType, true);
 
 			if(!destType.IsExtendablyAssignableFrom(valType))
-				Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
+				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 
 			if (!m_IsStatic)
 			{
-				var exprType = Expression.GetExpressionType(ctx);
+				var exprType = Expression.Resolve(ctx);
 				if (Expression is IPointerProvider && exprType.IsStruct())
 					(Expression as IPointerProvider).PointerRequired = true;
 
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 			}
 
-			Expr.Cast(Value, destType).Compile(ctx, true);
+			Expr.Cast(Value, destType).Emit(ctx, true);
 
 			if(m_Field != null)
 				gen.EmitSaveField(m_Field.FieldInfo);
@@ -60,9 +60,9 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var type = StaticType != null
 				? ctx.ResolveType(StaticType)
-				: Expression.GetExpressionType(ctx);
+				: Expression.Resolve(ctx);
 
-			SafeModeCheckType(ctx, type);
+			checkTypeInSafeMode(ctx, type);
 
 			// check for field
 			try
@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions
 				m_Field = ctx.ResolveField(type, MemberName);
 				m_IsStatic = m_Field.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
+					error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 
 				return;
 			}
@@ -80,15 +80,15 @@ namespace Lens.SyntaxTree.Expressions
 			{
 				m_Property = ctx.ResolveProperty(type, MemberName);
 				if(!m_Property.CanSet)
-					Error(CompilerMessages.PropertyNoSetter, MemberName, type);
+					error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
 				m_IsStatic = m_Property.IsStatic;
 				if (Expression == null && !m_IsStatic)
-					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
+					error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
+				error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
 			}
 		}
 

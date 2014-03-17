@@ -36,17 +36,17 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var last = Statements.Last();
 			if (last is VarNode || last is LetNode)
-				Error(last, CompilerMessages.CodeBlockLastVar);
+				error(last, CompilerMessages.CodeBlockLastVar);
 
-			return withScopeFrame(ctx, () => Statements[Statements.Count - 1].GetExpressionType(ctx));
+			return withScopeFrame(ctx, () => Statements[Statements.Count - 1].Resolve(ctx));
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Statements;
+			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			withScopeFrame(ctx,
 				() =>
@@ -58,12 +58,12 @@ namespace Lens.SyntaxTree.ControlFlow
 						var subReturn = mustReturn && idx == Statements.Count - 1;
 						var curr = Statements[idx];
 
-						var retType = curr.GetExpressionType(ctx, subReturn);
+						var retType = curr.Resolve(ctx, subReturn);
 
 						if (!subReturn && curr.IsConstant)
 							continue;
 
-						curr.Compile(ctx, subReturn);
+						curr.Emit(ctx, subReturn);
 
 						if (!subReturn && retType.IsNotVoid())
 							gen.EmitPop();

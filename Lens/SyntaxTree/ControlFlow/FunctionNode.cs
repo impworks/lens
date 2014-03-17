@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public bool IsPure { get; set; }
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			throw new NotImplementedException();
 		}

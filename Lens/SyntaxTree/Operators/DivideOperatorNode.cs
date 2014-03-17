@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			GetExpressionType(ctx);
+			Resolve(ctx);
 			loadAndConvertNumerics(ctx);
 
 			gen.EmitDivide();
@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			if(left is int && right is int && right == 0)
-				Error(CompilerMessages.ConstantDivisionByZero);
+				error(CompilerMessages.ConstantDivisionByZero);
 
 			return left/right;
 		}

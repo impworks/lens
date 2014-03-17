@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Namespace { get; set; }
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			// does nothing
 			// all UsingNodes are processed by Context.CreateFromNodes()

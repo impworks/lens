@@ -20,29 +20,30 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
+			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Condition;
-			yield return Body;
+			yield return new NodeChild(Condition, x => Condition = x);
+			foreach(var curr in Body.GetChildren())
+				yield return curr;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var loopType = GetExpressionType(ctx);
+			var loopType = Resolve(ctx);
 			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
 
-			var condType = Condition.GetExpressionType(ctx);
+			var condType = Condition.Resolve(ctx);
 			if(!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
 			{
 				if(saveLast)
-					Expr.Default(loopType).Compile(ctx, true);
+					Expr.Default(loopType).Emit(ctx, true);
 
 				return;
 			}
@@ -59,11 +60,11 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			gen.MarkLabel(beginLabel);
 
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
 			gen.EmitConstant(false);
 			gen.EmitBranchEquals(endLabel);
 
-			Body.Compile(ctx, mustReturn);
+			Body.Emit(ctx, mustReturn);
 
 			if (saveLast)
 				gen.EmitSaveLocal(tmpVar);

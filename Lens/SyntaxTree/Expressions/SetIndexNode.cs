@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -13,16 +14,16 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
-			yield return Index;
-			yield return Value;
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Index, x => Index = x);
+			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 
 			if (exprType.IsArray)
 				compileArray(ctx);
@@ -34,12 +35,12 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			var itemType = exprType.GetElementType();
 
-			Expression.Compile(ctx, true);
-			Index.Compile(ctx, true);
-			Value.Compile(ctx, true);
+			Expression.Emit(ctx, true);
+			Index.Emit(ctx, true);
+			Value.Emit(ctx, true);
 			gen.EmitSaveIndex(itemType);
 		}
 
@@ -47,8 +48,8 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var exprType = Expression.GetExpressionType(ctx);
-			var idxType = Index.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
+			var idxType = Index.Resolve(ctx);
 
 			try
 			{
@@ -56,10 +57,10 @@ namespace Lens.SyntaxTree.Expressions
 				var idxDest = pty.ArgumentTypes[0];
 				var valDest = pty.ArgumentTypes[1];
 
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 
-				Expr.Cast(Index, idxDest).Compile(ctx, true);
-				Expr.Cast(Value, valDest).Compile(ctx, true);
+				Expr.Cast(Index, idxDest).Emit(ctx, true);
+				Expr.Cast(Value, valDest).Emit(ctx, true);
 
 				gen.EmitCall(pty.MethodInfo);
 			}

@@ -48,22 +48,22 @@ namespace Lens.SyntaxTree.Operators
 			var gen = ctx.CurrentILGenerator;
 
 			// validate nodes
-			GetExpressionType(ctx);
+			Resolve(ctx);
 
 			if (Kind == LogicalOperatorKind.And)
 			{
 				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.False()));
-				cond.Compile(ctx, true);
+				cond.Emit(ctx, true);
 			}
 			else if (Kind == LogicalOperatorKind.Or)
 			{
 				var cond = Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(RightOperand));
-				cond.Compile(ctx, true);
+				cond.Emit(ctx, true);
 			}
 			else if (Kind == LogicalOperatorKind.Xor)
 			{
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 				gen.EmitXor();
 			}
 		}

@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Expressions
 			{
 				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
 				if (methods.Length > 1)
-					Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
+					error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
 				m_Method = methods[0];
 				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.GetArgumentTypes(ctx));
@@ -58,15 +58,15 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.IdentifierNotFound, Identifier);
+				error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (Unit);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var resultType = GetExpressionType(ctx);
+			var resultType = Resolve(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.Expressions
 			if (local != null)
 			{
 				if(local.IsImmutable && RefArgumentRequired)
-					Error(CompilerMessages.ConstantByRef);
+					error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
@@ -110,7 +110,7 @@ namespace Lens.SyntaxTree.Expressions
 			{
 				var id = m_Property.PropertyId;
 				if(!m_Property.HasGetter)
-					Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
+					error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
 				var type = m_Property.PropertyType;
 				if (m_Property.GetterMethod != null)
@@ -127,7 +127,7 @@ namespace Lens.SyntaxTree.Expressions
 				return;
 			}
 
-			Error(CompilerMessages.IdentifierNotFound, Identifier);
+			error(CompilerMessages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>

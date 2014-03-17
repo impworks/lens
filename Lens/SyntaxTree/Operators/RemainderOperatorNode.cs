@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			GetExpressionType(ctx);
+			Resolve(ctx);
 			loadAndConvertNumerics(ctx);
 			gen.EmitRemainder();
 		}

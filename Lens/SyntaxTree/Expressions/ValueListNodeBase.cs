@@ -25,10 +25,10 @@ namespace Lens.SyntaxTree.Expressions
 		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
 		{
 			foreach(var curr in nodes)
-				if(curr.GetExpressionType(ctx).IsVoid())
-					Error(curr, CompilerMessages.ExpressionVoid);
+				if(curr.Resolve(ctx).IsVoid())
+					error(curr, CompilerMessages.ExpressionVoid);
 
-			var types = nodes.Select(n => n.GetExpressionType(ctx)).ToArray();
+			var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
 			return types.GetMostCommonType();
 		}
 

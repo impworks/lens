@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -33,9 +34,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private LocalName m_ExceptionVariable;
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Code;
+			return Code.GetChildren();
 		}
 
 		public override void ProcessClosures(Context ctx)
@@ -44,13 +45,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
-				Error(CompilerMessages.CatchTypeNotException, type);
+				error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
 				m_ExceptionVariable = ctx.CurrentScopeFrame.DeclareName(ExceptionVariable, type, false);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
@@ -65,7 +66,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				gen.EmitSaveLocal(m_ExceptionVariable);
 
-			Code.Compile(ctx, false);
+			Code.Emit(ctx, false);
 
 			gen.EmitLeave(ctx.CurrentTryBlock.EndLabel);
 

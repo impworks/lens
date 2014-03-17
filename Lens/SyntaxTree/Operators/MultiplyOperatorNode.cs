@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			GetExpressionType(ctx);
+			Resolve(ctx);
 			loadAndConvertNumerics(ctx);
 			gen.EmitMultiply();
 		}
@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 			catch (OverflowException)
 			{
-				Error(CompilerMessages.ConstantOverflow);
+				error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
 		}

@@ -15,14 +15,14 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override Type resolveOperatorType(Context ctx)
 		{
-			return CastOperatorNode.IsImplicitlyBoolean(Operand.GetExpressionType(ctx)) ? typeof (bool) : null;
+			return CastOperatorNode.IsImplicitlyBoolean(Operand.Resolve(ctx)) ? typeof (bool) : null;
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			Expr.Cast(Operand, typeof(bool)).Compile(ctx, true);
+			Expr.Cast(Operand, typeof(bool)).Emit(ctx, true);
 
 			gen.EmitConstant(0);
 			gen.EmitCompareEqual();

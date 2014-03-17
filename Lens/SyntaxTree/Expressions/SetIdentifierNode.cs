@@ -28,26 +28,26 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Value;
+			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var exprType = Value.GetExpressionType(ctx);
+			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
 			var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
-					Error(CompilerMessages.IdentifierIsConstant, Identifier);
+					error(CompilerMessages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					Error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
+					error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 
 				if (nameInfo.IsClosured)
 				{
@@ -69,16 +69,16 @@ namespace Lens.SyntaxTree.Expressions
 				var pty = ctx.ResolveGlobalProperty(Identifier);
 
 				if(!pty.HasSetter)
-					Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
+					error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
 
 				var type = pty.PropertyType;
 				if(!type.IsExtendablyAssignableFrom(exprType))
-					Error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
+					error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
 
 				var cast = Expr.Cast(Value, type);
 				if (pty.SetterMethod != null)
 				{
-					cast.Compile(ctx, true);
+					cast.Emit(ctx, true);
 					gen.EmitCall(pty.SetterMethod.MethodInfo);
 				}
 				else
@@ -87,13 +87,13 @@ namespace Lens.SyntaxTree.Expressions
 
 					gen.EmitConstant(ctx.ContextId);
 					gen.EmitConstant(pty.PropertyId);
-					Expr.Cast(Value, type).Compile(ctx, true);
+					Expr.Cast(Value, type).Emit(ctx, true);
 					gen.EmitCall(method);
 				}
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.VariableNotFound, Identifier);
+				error(CompilerMessages.VariableNotFound, Identifier);
 			}
 		}
 
@@ -105,7 +105,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (!name.IsRefArgument)
 			{
-				castNode.Compile(ctx, true);
+				castNode.Emit(ctx, true);
 				if(name.ArgumentId.HasValue)
 					gen.EmitSaveArgument(name.ArgumentId.Value);
 				else
@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.Expressions
 			else
 			{
 				gen.EmitLoadArgument(name.ArgumentId.Value);
-				castNode.Compile(ctx, true);
+				castNode.Emit(ctx, true);
 				gen.EmitSaveObject(name.Type);
 			}
 		}
@@ -128,7 +128,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
 			
-			Expr.Cast(Value, name.Type).Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
 			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
 			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.Expressions
 				dist--;
 			}
 
-			Expr.Cast(Value, name.Type).Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);

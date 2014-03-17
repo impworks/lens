@@ -40,11 +40,11 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void resolve(Context ctx)
 		{
-			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
+			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof (Unit);
 
 			m_ArgTypes = isParameterless
 				? Type.EmptyTypes
-				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
+				: Arguments.Select(a => a.Resolve(ctx)).ToArray();
 
 			if (Expression is GetMemberNode)
 				resolveGetMember(ctx, Expression as GetMemberNode);
@@ -60,10 +60,10 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			m_InvocationSource = node.Expression;
 			var type = m_InvocationSource != null
-				? m_InvocationSource.GetExpressionType(ctx)
+				? m_InvocationSource.Resolve(ctx)
 				: ctx.ResolveType(node.StaticType);
 
-			SafeModeCheckType(ctx, type);
+			checkTypeInSafeMode(ctx, type);
 
 			if (node.TypeHints.Any())
 				m_TypeHints = node.TypeHints.Select(x => x.FullSignature == "_" ? null : ctx.ResolveType(x)).ToArray();
@@ -112,7 +112,7 @@ namespace Lens.SyntaxTree.Expressions
 					Arguments.Insert(0, m_InvocationSource);
 
 				var oldArgTypes = m_ArgTypes;
-				m_ArgTypes = Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
+				m_ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
 				m_InvocationSource = null;
 
 				try
@@ -129,7 +129,7 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
+				error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
 			}
 			catch (KeyNotFoundException)
 			{
@@ -137,7 +137,7 @@ namespace Lens.SyntaxTree.Expressions
 					? CompilerMessages.TypeStaticMethodNotFound
 					: CompilerMessages.TypeMethodNotFound;
 
-				Error(msg, type, node.MemberName);
+				error(msg, type, node.MemberName);
 			}
 		}
 
@@ -157,35 +157,35 @@ namespace Lens.SyntaxTree.Expressions
 					throw new KeyNotFoundException();
 
 				if(m_ArgTypes.Length == 0 && EnumerableExtensions.IsAnyOf(node.Identifier, EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
-					Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
+					error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.FunctionNotFound, node.Identifier);
+				error(CompilerMessages.FunctionNotFound, node.Identifier);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
+				error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
 			}
 		}
 
 		private void resolveExpression(Context ctx, NodeBase node)
 		{
-			var exprType = node.GetExpressionType(ctx);
+			var exprType = node.Resolve(ctx);
 			if (!exprType.IsCallableType())
-				Error(CompilerMessages.TypeNotCallable, exprType);
+				error(CompilerMessages.TypeNotCallable, exprType);
 
 			m_Method = ctx.ResolveMethod(exprType, "Invoke");
 			var argTypes = m_Method.ArgumentTypes;
 			if (argTypes.Length != m_ArgTypes.Length)
-				Error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
+				error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, m_ArgTypes.Length);
 
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var fromType = m_ArgTypes[idx];
 				var toType = argTypes[idx];
 				if (!toType.IsExtendablyAssignableFrom(fromType))
-					Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
+					error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 			}
 
 			m_InvocationSource = node;
@@ -193,16 +193,14 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
-			foreach (var curr in Arguments)
-				yield return curr;
+			return new[] {new NodeChild(Expression, x => Expression = x)}.Union(Arguments.Select((arg, i) => new NodeChild(arg, x => Arguments[i] = x)));
 		}
 
 		#region Compile
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if (!m_IsResolved)
 				resolve(ctx);
@@ -211,21 +209,21 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (m_InvocationSource != null)
 			{
-				var type = m_InvocationSource.GetExpressionType(ctx);
+				var type = m_InvocationSource.Resolve(ctx);
 
 				if (type.IsValueType)
 				{
 					if (m_InvocationSource is IPointerProvider)
 					{
 						(m_InvocationSource as IPointerProvider).PointerRequired = true;
-						m_InvocationSource.Compile(ctx, true);
+						m_InvocationSource.Emit(ctx, true);
 					}
 					else
 					{
 						var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, type, true);
 						gen.EmitLoadLocal(tmpVar, true);
 
-						m_InvocationSource.Compile(ctx, true);
+						m_InvocationSource.Emit(ctx, true);
 						gen.EmitSaveObject(type);
 
 						gen.EmitLoadLocal(tmpVar, true);
@@ -233,7 +231,7 @@ namespace Lens.SyntaxTree.Expressions
 				}
 				else
 				{
-					m_InvocationSource.Compile(ctx, true);
+					m_InvocationSource.Emit(ctx, true);
 				}
 			}
 
@@ -250,17 +248,17 @@ namespace Lens.SyntaxTree.Expressions
 					if (argRef != targetRef)
 					{
 						if (argRef)
-							Error(arg, CompilerMessages.ReferenceArgUnexpected);
+							error(arg, CompilerMessages.ReferenceArgUnexpected);
 						else
-							Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+							error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
 					}
 
 					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
-					expr.Compile(ctx, true);
+					expr.Emit(ctx, true);
 				}
 			}
 
-			var isVirt = m_InvocationSource != null && m_InvocationSource.GetExpressionType(ctx).IsClass;
+			var isVirt = m_InvocationSource != null && m_InvocationSource.Resolve(ctx).IsClass;
 			gen.EmitCall(m_Method.MethodInfo, isVirt);
 		}
 

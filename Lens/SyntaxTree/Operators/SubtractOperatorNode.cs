@@ -26,14 +26,14 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var type = GetExpressionType(ctx);
+			var type = Resolve(ctx);
 
 			if (type == typeof (string))
 			{
 				var replaceMethod = typeof (string).GetMethod("Replace", new[] {typeof (string), typeof (string)});
 
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 				gen.EmitConstant(string.Empty);
 				gen.EmitCall(replaceMethod);
 			}

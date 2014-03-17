@@ -28,8 +28,8 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var leftType = LeftOperand.GetExpressionType(ctx);
-			var rightType = RightOperand.GetExpressionType(ctx);
+			var leftType = LeftOperand.Resolve(ctx);
+			var rightType = RightOperand.Resolve(ctx);
 
 			var result = resolveOperatorType(ctx, leftType, rightType);
 			if (result != null)
@@ -54,15 +54,15 @@ namespace Lens.SyntaxTree.Operators
 				catch { }
 			}
 
-			Error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+			error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
 			return null;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			GetExpressionType(ctx);
+			Resolve(ctx);
 
 			if (m_OverloadedMethod == null)
 			{
@@ -71,8 +71,8 @@ namespace Lens.SyntaxTree.Operators
 			}
 
 			var ps = m_OverloadedMethod.ArgumentTypes;
-			Expr.Cast(LeftOperand, ps[0]).Compile(ctx, true);
-			Expr.Cast(RightOperand, ps[1]).Compile(ctx, true);
+			Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
+			Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
 			gen.EmitCall(m_OverloadedMethod.MethodInfo);
 		}
 
@@ -92,12 +92,12 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private Type resolveNumericType(Context ctx)
 		{
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
+			var left = LeftOperand.Resolve(ctx);
+			var right = RightOperand.Resolve(ctx);
 
 			var type = TypeExtensions.GetNumericOperationType(left, right);
 			if(type == null)
-				Error(CompilerMessages.OperatorTypesSignednessMismatch);
+				error(CompilerMessages.OperatorTypesSignednessMismatch);
 
 			return type;
 		}
@@ -109,17 +109,17 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var left = LeftOperand.GetExpressionType(ctx);
-			var right = RightOperand.GetExpressionType(ctx);
+			var left = LeftOperand.Resolve(ctx);
+			var right = RightOperand.Resolve(ctx);
 
 			if(type == null)
 				type = TypeExtensions.GetNumericOperationType(left, right);
 
-			LeftOperand.Compile(ctx, true);
+			LeftOperand.Emit(ctx, true);
 			if (left != type)
 				gen.EmitConvert(type);
 
-			RightOperand.Compile(ctx, true);
+			RightOperand.Emit(ctx, true);
 			if (right != type)
 				gen.EmitConvert(type);
 		}
@@ -131,10 +131,10 @@ namespace Lens.SyntaxTree.Operators
 		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
 		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return LeftOperand;
-			yield return RightOperand;
+			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
+			yield return new NodeChild(RightOperand, x => RightOperand = x);
 		}
 
 		#endregion

@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Literals
 			Value = value;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
 			gen.EmitConstant(Value);

@@ -66,13 +66,13 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var leftType = LeftOperand.GetExpressionType(ctx);
-			var rightType = RightOperand.GetExpressionType(ctx);
+			var leftType = LeftOperand.Resolve(ctx);
+			var rightType = RightOperand.Resolve(ctx);
 
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
 			if(!canCompare(leftType, rightType, isEquality))
-				Error(CompilerMessages.TypesIncomparable, leftType, rightType);
+				error(CompilerMessages.TypesIncomparable, leftType, rightType);
 
 			if (isEquality)
 				compileEquality(ctx, leftType, rightType);
@@ -128,8 +128,8 @@ namespace Lens.SyntaxTree.Operators
 			// compare two strings
 			if (left == typeof (string) && right == typeof (string))
 			{
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 
 				var method = typeof (string).GetMethod("Equals", new[] {typeof (string), typeof (string)});
 				gen.EmitCall(method);
@@ -176,8 +176,8 @@ namespace Lens.SyntaxTree.Operators
 			// compare a reftype against a null
 			if (left == typeof(NullType) || right == typeof(NullType))
 			{
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 				gen.EmitCompareEqual();
 
 				if (Kind == ComparisonOperatorKind.NotEquals)
@@ -190,8 +190,8 @@ namespace Lens.SyntaxTree.Operators
 			{
 				var equals = ctx.ResolveMethod(left, "Equals", new [] { typeof (object) });
 
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 
 				gen.EmitCall(equals.MethodInfo);
 
@@ -209,8 +209,8 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var nullType = nullValue.GetExpressionType(ctx);
-			var otherType = otherValue.GetExpressionType(ctx);
+			var nullType = nullValue.Resolve(ctx);
+			var otherType = otherValue.Resolve(ctx);
 			var otherNull = otherType.IsNullableType();
 
 			var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
@@ -267,13 +267,13 @@ namespace Lens.SyntaxTree.Operators
 				
 
 			// $tmp = nullValue
-			nullValue.Compile(ctx, true);
+			nullValue.Emit(ctx, true);
 			gen.EmitSaveLocal(nullVar);
 
 			if (otherNull)
 			{
 				// $tmp2 = otherValue
-				otherValue.Compile(ctx, true);
+				otherValue.Emit(ctx, true);
 				gen.EmitSaveLocal(otherVar);
 			}
 
@@ -288,7 +288,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 			else
 			{
-				otherValue.Compile(ctx, true);
+				otherValue.Emit(ctx, true);
 			}
 
 			gen.EmitBranchNotEquals(falseLabel);
@@ -323,11 +323,11 @@ namespace Lens.SyntaxTree.Operators
 		private void compileHasValue(Context ctx, NodeBase nullValue)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var nullType = nullValue.GetExpressionType(ctx);
+			var nullType = nullValue.Resolve(ctx);
 			var nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
 			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
-			nullValue.Compile(ctx, true);
+			nullValue.Emit(ctx, true);
 			gen.EmitSaveLocal(nullVar);
 
 			gen.EmitLoadLocal(nullVar, true);
@@ -357,8 +357,8 @@ namespace Lens.SyntaxTree.Operators
 			// string comparisons
 			if (left == typeof (string))
 			{
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
 
 				var method = typeof (string).GetMethod("Compare", new[] {typeof (string), typeof (string)});
 				gen.EmitCall(method);

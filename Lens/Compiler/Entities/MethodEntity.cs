@@ -91,13 +91,13 @@ namespace Lens.Compiler.Entities
 
 		protected override void compileCore(Context ctx)
 		{
-			Body.Compile(ctx, ReturnType.IsNotVoid());
+			Body.Emit(ctx, ReturnType.IsNotVoid());
 		}
 
 		protected override void emitTrailer(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var actualType = Body.GetExpressionType(ctx);
+			var actualType = Body.Resolve(ctx);
 
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())
 			{

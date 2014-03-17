@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -20,11 +21,11 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			if (exprType.IsArray)
 				return exprType.GetElementType();
 
-			var idxType = Index.GetExpressionType(ctx);
+			var idxType = Index.Resolve(ctx);
 			try
 			{
 				m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
@@ -37,18 +38,18 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
-			yield return Index;
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Index, x => Index = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			// ensure validation
-			GetExpressionType(ctx);
+			Resolve(ctx);
 
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 
 			if (exprType.IsArray)
 				compileArray(ctx);
@@ -60,11 +61,11 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			var itemType = exprType.GetElementType();
 
-			Expression.Compile(ctx, true);
-			Index.Compile(ctx, true);
+			Expression.Emit(ctx, true);
+			Index.Emit(ctx, true);
 
 			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
@@ -73,7 +74,7 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var retType = m_Getter.ReturnType;
 			if(RefArgumentRequired && retType.IsValueType)
-				Error(CompilerMessages.IndexerValuetypeRef, Expression.GetExpressionType(ctx), retType);
+				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
 			var gen = ctx.CurrentILGenerator;
 
@@ -84,10 +85,10 @@ namespace Lens.SyntaxTree.Expressions
 				expr.RefArgumentRequired = RefArgumentRequired;
 			}
 
-			Expression.Compile(ctx, true);
+			Expression.Emit(ctx, true);
 
 			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);
-			cast.Compile(ctx, true);
+			cast.Emit(ctx, true);
 
 			gen.EmitCall(m_Getter.MethodInfo);
 		}

@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Operators
 			if (RightOperand is LambdaNode)
 				RightOperand.ProcessClosures(ctx);
 
-			var leftType = LeftOperand.GetExpressionType(ctx);
+			var leftType = LeftOperand.Resolve(ctx);
 
 			var rightGetter = RightOperand as GetMemberNode;
 			if (!IsLeft && leftType.IsCallableType() && rightGetter != null)
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators
 				}
 			}
 
-			var rightType = RightOperand.GetExpressionType(ctx);
+			var rightType = RightOperand.Resolve(ctx);
 
 			if (rightGetter != null)
 				rightGetter.TypeHints.Clear();
@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Operators
 			if (!IsLeft && leftType.IsCallableType() && rightType.IsCallableType())
 			{
 				if (!ctx.CanCombineDelegates(leftType, rightType))
-					Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
+					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 
 				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
 				var argGetters = argTypes.Select((a, id) => Expr.GetArg(id)).Cast<NodeBase>().ToArray();
@@ -117,8 +117,8 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			LeftOperand.Compile(ctx, true);
-			RightOperand.Compile(ctx, true);
+			LeftOperand.Emit(ctx, true);
+			RightOperand.Emit(ctx, true);
 
 			if (IsLeft)
 				gen.EmitShiftLeft();

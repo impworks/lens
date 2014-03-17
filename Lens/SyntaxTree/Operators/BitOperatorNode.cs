@@ -41,8 +41,8 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			LeftOperand.Compile(ctx, true);
-			RightOperand.Compile(ctx, true);
+			LeftOperand.Emit(ctx, true);
+			RightOperand.Emit(ctx, true);
 
 			if(Kind == LogicalOperatorKind.And)
 				gen.EmitAnd();

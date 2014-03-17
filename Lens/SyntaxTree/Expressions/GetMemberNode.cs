@@ -40,9 +40,9 @@ namespace Lens.SyntaxTree.Expressions
 				resolve(ctx);
 
 			if (m_Type != null)
-				SafeModeCheckType(ctx, m_Type);
+				checkTypeInSafeMode(ctx, m_Type);
 
-			if (Expression != null && Expression.GetExpressionType(ctx).IsArray && MemberName == "Length")
+			if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
 				return typeof (int);
 
 			if (m_Field != null)
@@ -61,17 +61,17 @@ namespace Lens.SyntaxTree.Expressions
 			Action check = () =>
 			{
 				if (Expression == null && !m_IsStatic)
-					Error(CompilerMessages.DynamicMemberFromStaticContext, MemberName);
+					error(CompilerMessages.DynamicMemberFromStaticContext, MemberName);
 
 				if(m_Method == null && TypeHints.Count > 0)
-					Error(CompilerMessages.TypeArgumentsForNonMethod, m_Type, MemberName);
+					error(CompilerMessages.TypeArgumentsForNonMethod, m_Type, MemberName);
 
 				m_IsResolved = true;
 			};
 
 			m_Type = StaticType != null
 				? ctx.ResolveType(StaticType)
-				: Expression.GetExpressionType(ctx);
+				: Expression.Resolve(ctx);
 
 			// special case: array length
 			if (m_Type.IsArray && MemberName == "Length")
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.Expressions
 				m_Property = ctx.ResolveProperty(m_Type, MemberName);
 
 				if(!m_Property.CanGet)
-					Error(CompilerMessages.PropertyNoGetter, m_Type, MemberName);
+					error(CompilerMessages.PropertyNoGetter, m_Type, MemberName);
 
 				m_IsStatic = m_Property.IsStatic;
 
@@ -111,14 +111,14 @@ namespace Lens.SyntaxTree.Expressions
 			var methods = ctx.ResolveMethodGroup(m_Type, MemberName).Where(m => checkMethodArgs(ctx, argTypes, m)).ToArray();
 
 			if (methods.Length == 0)
-				Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, m_Type.Name, MemberName);
+				error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, m_Type.Name, MemberName);
 
 			if (methods.Length > 1)
-				Error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
+				error(CompilerMessages.TypeMethodAmbiguous, m_Type.Name, MemberName);
 
 			m_Method = methods[0];
 			if (m_Method.ArgumentTypes.Length > 16)
-				Error(CompilerMessages.CallableTooManyArguments);
+				error(CompilerMessages.CallableTooManyArguments);
 
 			m_IsStatic = m_Method.IsStatic;
 
@@ -136,12 +136,12 @@ namespace Lens.SyntaxTree.Expressions
 			return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
+			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if(!m_IsResolved)
 				resolve(ctx);
@@ -150,25 +150,25 @@ namespace Lens.SyntaxTree.Expressions
 			
 			if (!m_IsStatic)
 			{
-				var exprType = Expression.GetExpressionType(ctx);
+				var exprType = Expression.Resolve(ctx);
 				if (exprType.IsStruct())
 				{
 					if (Expression is IPointerProvider)
 					{
 						(Expression as IPointerProvider).PointerRequired = true;
-						Expression.Compile(ctx, true);
+						Expression.Emit(ctx, true);
 					}
 					else
 					{
 						var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, exprType, false);
-						Expression.Compile(ctx, true);
+						Expression.Emit(ctx, true);
 						gen.EmitSaveLocal(tmpVar);
 						gen.EmitLoadLocal(tmpVar, true);
 					}
 				}
 				else
 				{
-					Expression.Compile(ctx, true);
+					Expression.Emit(ctx, true);
 				}
 
 				if (exprType.IsArray && MemberName == "Length")
@@ -221,7 +221,7 @@ namespace Lens.SyntaxTree.Expressions
 			if (m_Property != null)
 			{
 				if (m_Property.PropertyType.IsValueType && RefArgumentRequired)
-					Error(CompilerMessages.PropertyValuetypeRef, m_Property.Type, MemberName, m_Property.PropertyType);
+					error(CompilerMessages.PropertyValuetypeRef, m_Property.Type, MemberName, m_Property.PropertyType);
 
 				gen.EmitCall(m_Property.Getter);
 
@@ -238,7 +238,7 @@ namespace Lens.SyntaxTree.Expressions
 			if (m_Method != null)
 			{
 				if(RefArgumentRequired)
-					Error(CompilerMessages.MethodRef);
+					error(CompilerMessages.MethodRef);
 
 				if (m_IsStatic)
 					gen.EmitNull();

@@ -170,11 +170,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal ScopeFrame CurrentScopeFrame
-		{
-			get { return _currentScopeFrame; }
-			set { _currentScopeFrame = value; }
-		}
+        internal ScopeFrame CurrentScopeFrame { get; set; }
 
 		/// <summary>
 		/// The current most nested try block.
@@ -224,6 +220,11 @@ namespace Lens.Compiler
 		/// </summary>
 		private static int _AssemblyId;
 
+        /// <summary>
+        /// The counter for closure object ID generation.
+        /// </summary>
+        private int _ClosureId;
+
 		/// <summary>
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
@@ -243,13 +244,6 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
-
-		/// <summary>
-		/// An ID for closure types.
-		/// </summary>
-		private int _ClosureId;
-
-		private ScopeFrame _currentScopeFrame;
 
 		#endregion
 	}

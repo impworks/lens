@@ -44,7 +44,7 @@ namespace Lens.Compiler.Entities
 
 		protected override void compileCore(Context ctx)
 		{
-			Body.Compile(ctx, false);
+			Body.Emit(ctx, false);
 		}
 
 		// call default constructor

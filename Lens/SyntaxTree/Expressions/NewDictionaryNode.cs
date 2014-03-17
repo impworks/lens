@@ -20,13 +20,13 @@ namespace Lens.SyntaxTree.Expressions
 		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
-				Error(CompilerMessages.DictionaryEmpty);
+				error(CompilerMessages.DictionaryEmpty);
 
-			m_KeyType = Expressions[0].Key.GetExpressionType(ctx);
+			m_KeyType = Expressions[0].Key.Resolve(ctx);
 			m_ValueType = resolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
 			if (m_ValueType == typeof(NullType))
-				Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
+				error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
 			ctx.CheckTypedExpression(Expressions[0].Key, m_KeyType);
 			ctx.CheckTypedExpression(Expressions[0].Value, m_ValueType, true);
@@ -34,19 +34,21 @@ namespace Lens.SyntaxTree.Expressions
 			return typeof(Dictionary<,>).MakeGenericType(m_KeyType, m_ValueType);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			foreach (var curr in Expressions)
+			for (var idx = 0; idx < Expressions.Count; idx++)
 			{
-				yield return curr.Key;
-				yield return curr.Value;
+				var id = idx;
+				var curr = Expressions[idx];
+				yield return new NodeChild(curr.Key, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(x, curr.Value));
+				yield return new NodeChild(curr.Value, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(curr.Key, x));
 			}
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-			var dictType = GetExpressionType(ctx);
+			var dictType = Resolve(ctx);
 
 			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, dictType, true);
 
@@ -60,22 +62,22 @@ namespace Lens.SyntaxTree.Expressions
 
 			foreach (var curr in Expressions)
 			{
-				var currKeyType = curr.Key.GetExpressionType(ctx);
-				var currValType = curr.Value.GetExpressionType(ctx);
+				var currKeyType = curr.Key.Resolve(ctx);
+				var currValType = curr.Value.Resolve(ctx);
 
 				ctx.CheckTypedExpression(curr.Key, currKeyType);
 				ctx.CheckTypedExpression(curr.Value, currValType, true);
 
 				if (currKeyType != m_KeyType)
-					Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, m_KeyType, m_ValueType);
+					error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, m_KeyType, m_ValueType);
 
 				if (!m_ValueType.IsExtendablyAssignableFrom(currValType))
-					Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, m_KeyType, m_ValueType);
+					error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, m_KeyType, m_ValueType);
 
 				gen.EmitLoadLocal(tmpVar);
 
-				curr.Key.Compile(ctx, true);
-				Expr.Cast(curr.Value, m_ValueType).Compile(ctx, true);
+				curr.Key.Emit(ctx, true);
+				Expr.Cast(curr.Value, m_ValueType).Emit(ctx, true);
 
 				gen.EmitCall(addMethod.MethodInfo);
 			}

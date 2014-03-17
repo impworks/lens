@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.Operators
 			return typeof (Type);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
 			var gen = ctx.CurrentILGenerator;
