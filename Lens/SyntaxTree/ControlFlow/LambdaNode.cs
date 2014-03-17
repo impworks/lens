@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.CurrentScopeFrame = outerFrame;
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			var retType = Body.Resolve(ctx);
 			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();

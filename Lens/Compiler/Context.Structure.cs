@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
@@ -15,60 +14,6 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		#region Methods
-
-		/// <summary>
-		/// Imports an existing external type with given name.
-		/// </summary>
-		public void ImportType(string name, Type type)
-		{
-			if(Options.AllowSave)
-				Error(CompilerMessages.ImportIntoSaveableAssembly);
-
-			if (_DefinedTypes.ContainsKey(name))
-				Error(CompilerMessages.TypeDefined, name);
-
-			var te = new TypeEntity(this)
-			{
-				Name = name,
-				Kind = TypeEntityKind.Imported,
-				TypeInfo = type
-			};
-			_DefinedTypes.Add(name, te);
-		}
-
-		/// <summary>
-		/// Imports a method from a standard library.
-		/// </summary>
-		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
-		{
-			_DefinedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
-		}
-
-		/// <summary>
-		/// Imports an existing external method with given name.
-		/// </summary>
-		public void ImportFunction(string name, MethodInfo method)
-		{
-			if (Options.AllowSave)
-				Error(CompilerMessages.ImportIntoSaveableAssembly);
-
-			ImportFunctionUnchecked(name, method, true);
-		}
-
-		/// <summary>
-		/// Imports a property registered in GlobalPropertyHelper into the lookup.
-		/// </summary>
-		public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
-		{
-			if (Options.AllowSave)
-				Error(CompilerMessages.ImportIntoSaveableAssembly);
-
-			if(_DefinedProperties.ContainsKey(name))
-				Error(CompilerMessages.PropertyImported, name);
-
-			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
-			_DefinedProperties.Add(name, ent);
-		}
 
 		/// <summary>
 		/// Creates a new type entity with given name.
@@ -219,16 +164,6 @@ namespace Lens.Compiler
 		#region Helpers
 
 		/// <summary>
-		/// Generates a unique assembly name.
-		/// </summary>
-		private static string getAssemblyName()
-		{
-			lock (typeof(Context))
-				_AssemblyId++;
-			return "_CompiledAssembly" + _AssemblyId;
-		}
-
-		/// <summary>
 		/// Traverses the syntactic tree, searching for closures and curried methods.
 		/// </summary>
 		private void processClosures()
@@ -248,9 +183,6 @@ namespace Lens.Compiler
 			var types = _DefinedTypes.ToArray();
 			foreach (var type in types)
 				type.Value.CreateEntities();
-			
-			if (Options.AllowSave && Options.SaveAsExe)
-				createEntryPoint();
 		}
 
 		private void createEntryPoint()
@@ -265,7 +197,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Initializes the context from a stream of nodes.
 		/// </summary>
-		private void loadNodes(IEnumerable<NodeBase> nodes)
+		private void loadTree(IEnumerable<NodeBase> nodes)
 		{
 			foreach (var currNode in nodes)
 			{
@@ -282,23 +214,44 @@ namespace Lens.Compiler
 			}
 		}
 
-		/// <summary>
-		/// Prepares the assembly entities for the type list.
-		/// </summary>
-		private void prepareEntities()
+		private void transformTree()
 		{
-			// prepare types first
-			foreach (var curr in _DefinedTypes)
-				curr.Value.PrepareSelf();
+			if (Options.AllowSave && Options.SaveAsExe)
+				createEntryPoint();
 
-			foreach (var curr in _DefinedTypes)
-				curr.Value.PrepareMembers();
+			while (_UnpreparedTypes.Count > 0 || _UnpreparedFields.Count > 0 || _UnpreparedMethods.Count > 0)
+			{
+				if (_UnpreparedTypes.Count > 0)
+				{
+					foreach (var curr in _UnpreparedTypes)
+						curr.PrepareSelf();
+
+					_UnpreparedTypes.Clear();
+				}
+
+				if (_UnpreparedFields.Count > 0)
+				{
+					foreach (var curr in _UnpreparedFields)
+						curr.PrepareSelf();
+
+					_UnpreparedFields.Clear();
+				}
+
+				if (_UnpreparedMethods.Count > 0)
+				{
+					var methods = _UnpreparedMethods.ToArray();
+					_UnpreparedMethods.Clear();
+
+					foreach(var curr in methods)
+						curr.PrepareSelf();
+				}
+			}
 		}
 
 		/// <summary>
 		/// Compiles the source code for all the declared classes.
 		/// </summary>
-		private void compileCore()
+		private void emitCode()
 		{
 			foreach (var curr in _DefinedTypes)
 				curr.Value.Compile();

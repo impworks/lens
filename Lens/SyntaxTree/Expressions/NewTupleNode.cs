@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.Expressions
 	{
 		private Type[] m_Types;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if (Expressions.Count == 0)
 				error(CompilerMessages.TupleNoArgs);

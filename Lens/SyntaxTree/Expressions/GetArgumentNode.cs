@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Expressions
 	{
 		public int ArgumentId;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return ctx.CurrentMethod.GetArgumentTypes(ctx)[ArgumentId];
 		}

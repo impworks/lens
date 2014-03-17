@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public CodeBlockNode Body { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
 		}

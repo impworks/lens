@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Expressions
 		private Type m_KeyType;
 		private Type m_ValueType;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if(Expressions.Count == 0)
 				error(CompilerMessages.DictionaryEmpty);

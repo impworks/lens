@@ -39,17 +39,22 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
-			_TypeResolver = new TypeResolver(Namespaces);
-			_TypeResolver.ExternalLookup = name =>
+			_TypeResolver = new TypeResolver(Namespaces)
 			{
-				TypeEntity ent;
-				_DefinedTypes.TryGetValue(name, out ent);
-				return ent == null ? null : ent.TypeBuilder;
+				ExternalLookup = name =>
+				{
+					TypeEntity ent;
+					_DefinedTypes.TryGetValue(name, out ent);
+					return ent == null ? null : ent.TypeBuilder;
+				}
 			};
 
 			_ExtensionResolver = new ExtensionMethodResolver(Namespaces);
 
-			var an = new AssemblyName(getAssemblyName());
+			AssemblyName an;
+			lock(typeof(Context))
+				an = new AssemblyName(string.Format("_CompiledAssembly{0}", ++_AssemblyId));
+
 			if (Options.AllowSave)
 			{
 				if(string.IsNullOrEmpty(Options.FileName))
@@ -80,16 +85,9 @@ namespace Lens.Compiler
 
 		public IScript Compile(IEnumerable<NodeBase> nodes)
 		{
-			loadNodes(nodes);
-			prepareEntities();
-
-			createAutoEntities();
-			prepareEntities();
-
-			processClosures();
-			prepareEntities();
-
-			compileCore();
+			loadTree(nodes);
+			transformTree();
+			emitCode();
 			finalizeAssembly();
 
 			var inst = Activator.CreateInstance(ResolveType(EntityNames.MainTypeName));
@@ -101,7 +99,7 @@ namespace Lens.Compiler
 		/// </summary>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		public void Error(string msg, params object[] args)
+		public static void Error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args));
 		}
@@ -111,7 +109,7 @@ namespace Lens.Compiler
 		/// </summary>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		public void Error(LocationEntity ent, string msg, params object[] args)
+		public static void Error(LocationEntity ent, string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args), ent);
 		}
@@ -170,7 +168,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-        internal ScopeFrame CurrentScopeFrame { get; set; }
+		internal ScopeFrame CurrentScopeFrame { get; set; }
 
 		/// <summary>
 		/// The current most nested try block.
@@ -220,10 +218,10 @@ namespace Lens.Compiler
 		/// </summary>
 		private static int _AssemblyId;
 
-        /// <summary>
-        /// The counter for closure object ID generation.
-        /// </summary>
-        private int _ClosureId;
+		/// <summary>
+		/// The counter for closure object ID generation.
+		/// </summary>
+		private int _ClosureId;
 
 		/// <summary>
 		/// A helper that resolves built-in .NET types by their string signatures.
@@ -244,6 +242,10 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+
+		private readonly List<TypeEntity> _UnpreparedTypes;
+		private readonly List<FieldEntity> _UnpreparedFields;
+		private readonly List<MethodEntityBase> _UnpreparedMethods;
 
 		#endregion
 	}

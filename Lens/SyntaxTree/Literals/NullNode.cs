@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class NullNode : NodeBase
 	{
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (NullType);
 		}

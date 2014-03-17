@@ -75,11 +75,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Context.Import.cs" />
     <Compile Include="Compiler\Context.SafeMode.cs" />
     <Compile Include="Compiler\Context.Stdlib.cs" />
     <Compile Include="Compiler\Entities\EntityNames.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.Autogeneration.cs" />
+    <Compile Include="Compiler\Entities\TypeEntity.Structure.cs" />
     <Compile Include="Compiler\Entities\TypeEntityKind.cs" />
+    <Compile Include="Compiler\IPreparableEntity.cs" />
     <Compile Include="Compiler\SafeMode.cs" />
     <Compile Include="Compiler\SafeModeSubsystem.cs" />
     <Compile Include="Compiler\ScopeFrame.cs" />

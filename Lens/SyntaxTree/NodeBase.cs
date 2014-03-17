@@ -51,14 +51,14 @@ namespace Lens.SyntaxTree
 		{
 			if (_CachedExpressionType == null)
 			{
-				_CachedExpressionType = resolveExpressionType(ctx, mustReturn);
+				_CachedExpressionType = resolve(ctx, mustReturn);
 				checkTypeInSafeMode(ctx, _CachedExpressionType);
 			}
 
 			return _CachedExpressionType;
 		}
 
-		protected virtual Type resolveExpressionType(Context ctx, bool mustReturn)
+		protected virtual Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (Unit);
 		}

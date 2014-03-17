@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<NodeBase> Statements { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if (!Statements.Any())
 				return typeof (Unit);

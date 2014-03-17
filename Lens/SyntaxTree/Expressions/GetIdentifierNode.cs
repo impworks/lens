@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.Expressions
 			Identifier = identifier;
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (local != null)

@@ -169,7 +169,7 @@ namespace Lens.Compiler.Entities
 
 			foreach(var arg in Arguments.Values)
 				if(arg.Name == "_")
-					ctx.Error(arg, CompilerMessages.UnderscoreName);
+					Context.Error(arg, CompilerMessages.UnderscoreName);
 		}
 	}
 }

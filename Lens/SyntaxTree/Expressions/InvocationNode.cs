@@ -30,15 +30,15 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Resolve
 		
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if (!m_IsResolved)
-				resolve(ctx);
+				resolveSelf(ctx);
 
 			return m_Method.ReturnType;
 		}
 
-		private void resolve(Context ctx)
+		private void resolveSelf(Context ctx)
 		{
 			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof (Unit);
 
@@ -203,7 +203,7 @@ namespace Lens.SyntaxTree.Expressions
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if (!m_IsResolved)
-				resolve(ctx);
+				resolveSelf(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 

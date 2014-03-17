@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class ThisNode : NodeBase
 	{
-		protected override System.Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override System.Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if(ctx.CurrentMethod.IsStatic)
 				error("Cannot access self-reference in static context!");

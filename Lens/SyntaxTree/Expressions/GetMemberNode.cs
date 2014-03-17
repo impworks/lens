@@ -34,10 +34,10 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public List<TypeSignature> TypeHints { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			if (!m_IsResolved)
-				resolve(ctx);
+				resolveSelf(ctx);
 
 			if (m_Type != null)
 				checkTypeInSafeMode(ctx, m_Type);
@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.Expressions
 				: FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.ArgumentTypes);
 		}
 
-		private void resolve(Context ctx)
+		private void resolveSelf(Context ctx)
 		{
 			Action check = () =>
 			{
@@ -144,7 +144,7 @@ namespace Lens.SyntaxTree.Expressions
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if(!m_IsResolved)
-				resolve(ctx);
+				resolveSelf(ctx);
 
 			var gen = ctx.CurrentILGenerator;
 			

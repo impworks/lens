@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Operators
 			yield return new NodeChild(Operand, x => Operand = x);
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			var type = Operand.Resolve(ctx);
 
