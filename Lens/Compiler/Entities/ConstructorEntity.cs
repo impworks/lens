@@ -15,6 +15,8 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
 
+		public override bool IsVoid { get { return true; } }
+
 		#endregion
 
 		#region Methods
@@ -40,11 +42,6 @@ namespace Lens.Compiler.Entities
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
-		}
-
-		protected override void compileCore(Context ctx)
-		{
-			Body.Emit(ctx, false);
 		}
 
 		// call default constructor

@@ -47,14 +47,29 @@ namespace Lens.Compiler.Entities
 		public CatchNode CurrentCatchBlock { get; set; }
 
 		/// <summary>
+		/// Checks if the method must return a value.
+		/// </summary>
+		public abstract bool IsVoid { get; }
+
+		public void TransformBody()
+		{
+			withContext(ctx =>
+				{
+					checkArguments(ctx);
+					Body.Transform(ctx, !IsVoid);
+				}
+			);
+		}
+
+
+
+		/// <summary>
 		/// Process closures.
 		/// </summary>
 		public void ProcessClosures()
 		{
 			withContext(ctx =>
 			    {
-				    checkArguments(ctx);
-
 				    Scope.InitializeScope(ctx, null);
 				    Body.ProcessClosures(ctx);
 				    Scope.FinalizeScope(ctx);
@@ -69,9 +84,8 @@ namespace Lens.Compiler.Entities
 		{
 			withContext(ctx =>
 			    {
-
 				    emitPrelude(ctx);
-				    compileCore(ctx);
+				    Body.Emit(ctx, !IsVoid);
 				    emitTrailer(ctx);
 
 				    Generator.EmitReturn();
@@ -156,8 +170,6 @@ namespace Lens.Compiler.Entities
 				}
 			}
 		}
-
-		protected abstract void compileCore(Context ctx);
 
 		protected virtual void emitTrailer(Context ctx)
 		{ }

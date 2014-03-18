@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// Enables recursive children resolution & expansion.
 		/// </summary>
-		public virtual void Preprocess(Context ctx, bool mustReturn)
+		public virtual void Transform(Context ctx, bool mustReturn)
 		{
 			foreach (var child in GetChildren())
 			{
@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree
 				if (sub != null)
 				{
 					child.Setter(sub);
-					sub.Preprocess(ctx, mustReturn);
+					sub.Transform(ctx, mustReturn);
 				}
 			}
 		}

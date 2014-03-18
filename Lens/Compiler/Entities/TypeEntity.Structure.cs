@@ -48,38 +48,36 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a new field by type signature.
 		/// </summary>
-		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = false)
+		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = true)
 		{
-			var fe = createFieldCore(name, isStatic, prepare);
-			fe.TypeSignature = signature;
-			return fe;
+			return createFieldCore(name, isStatic, prepare, fe => fe.TypeSignature = signature);
 		}
 
 		/// <summary>
 		/// Creates a new field by resolved type.
 		/// </summary>
-		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = false)
+		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = true)
 		{
-			var fe = createFieldCore(name, isStatic, prepare);
-			fe.Type = type;
-			return fe;
+			return createFieldCore(name, isStatic, prepare, fe => fe.Type = type);
 		}
 
 		/// <summary>
 		/// Creates a new method by resolved argument types.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
+		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
 		{
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
-			me.ArgumentTypes = argTypes;
-			me.ReturnType = returnType;
-			return me;
+			return createMethodCore(name, isStatic, isVirtual, prepare, me =>
+				{
+					me.ArgumentTypes = argTypes;
+					me.ReturnType = returnType;
+				}
+			);
 		}
 
 		/// <summary>
 		/// Creates a new method with argument types given by signatures.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
 		{
 			var args = argTypes == null
 				? null
@@ -91,18 +89,20 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a new method with argument types given by function arguments.
 		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
+		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
 		{
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
-			me.ReturnTypeSignature = returnType;
-			me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
-			return me;
+			return createMethodCore(name, isStatic, isVirtual, prepare, me =>
+				{
+					me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
+					me.ReturnTypeSignature = returnType;
+				}
+			);
 		}
 
 		/// <summary>
 		/// Creates a new constructor with the given argument types.
 		/// </summary>
-		internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = false)
+		internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = true)
 		{
 			var ce = new ConstructorEntity
 			{
@@ -113,6 +113,8 @@ namespace Lens.Compiler.Entities
 
 			if (prepare)
 				ce.PrepareSelf();
+			else
+				Context.RegisterUnpreparedTypeContents(ce);
 
 			return ce;
 		}
@@ -124,7 +126,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Create a field without setting type info.
 		/// </summary>
-		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare)
+		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare, Action<FieldEntity> extraInit = null)
 		{
 			if (_Fields.ContainsKey(name))
 				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
@@ -138,8 +140,13 @@ namespace Lens.Compiler.Entities
 
 			_Fields.Add(name, fe);
 
+			if (extraInit != null)
+				extraInit(fe);
+
 			if (prepare)
 				fe.PrepareSelf();
+			else
+				Context.RegisterUnpreparedTypeContents(fe);
 
 			return fe;
 		}
@@ -147,7 +154,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a method without setting argument type info.
 		/// </summary>
-		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare)
+		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, Action<MethodEntity> extraInit = null)
 		{
 			var me = new MethodEntity
 			{
@@ -159,8 +166,13 @@ namespace Lens.Compiler.Entities
 
 			_MethodList.Add(me);
 
+			if (extraInit != null)
+				extraInit(me);
+
 			if (prepare)
 				me.PrepareSelf();
+			else
+				Context.RegisterUnpreparedTypeContents(me);
 
 			return me;
 		}

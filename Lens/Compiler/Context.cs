@@ -83,17 +83,6 @@ namespace Lens.Compiler
 			InitSafeMode();
 		}
 
-		public IScript Compile(IEnumerable<NodeBase> nodes)
-		{
-			loadTree(nodes);
-			transformTree();
-			emitCode();
-			finalizeAssembly();
-
-			var inst = Activator.CreateInstance(ResolveType(EntityNames.MainTypeName));
-			return inst as IScript;
-		}
-
 		/// <summary>
 		/// Throws a new error.
 		/// </summary>
@@ -244,8 +233,8 @@ namespace Lens.Compiler
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
 
 		private readonly List<TypeEntity> _UnpreparedTypes;
-		private readonly List<FieldEntity> _UnpreparedFields;
-		private readonly List<MethodEntityBase> _UnpreparedMethods;
+		private readonly List<IPreparableEntity> _UnpreparedTypeContents;
+		private readonly List<MethodEntityBase> _UnprocessedMethods;
 
 		#endregion
 	}

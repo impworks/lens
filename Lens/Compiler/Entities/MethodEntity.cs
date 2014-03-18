@@ -41,6 +41,8 @@ namespace Lens.Compiler.Entities
 
 		public bool IsPure;
 
+		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
+
 		#endregion
 
 		#region Methods
@@ -87,11 +89,6 @@ namespace Lens.Compiler.Entities
 			// an empty script is allowed and it's return is null
 			if (this == ctx.MainMethod && Body.Statements.Count == 0)
 				Body.Statements.Add(new UnitNode());
-		}
-
-		protected override void compileCore(Context ctx)
-		{
-			Body.Emit(ctx, ReturnType.IsNotVoid());
 		}
 
 		protected override void emitTrailer(Context ctx)

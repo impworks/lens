@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
 	/// <summary>
 	/// Represents a type to be defined in the generated assembly.
 	/// </summary>
-	internal partial class TypeEntity
+	internal partial class TypeEntity : IPreparableEntity
 	{
 		public TypeEntity(Context ctx)
 		{
@@ -108,23 +106,10 @@ namespace Lens.Compiler.Entities
 			if(IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
-			if (Parent != null || (ParentSignature != null && ParentSignature.FullSignature != null))
-			{
-				if (Parent == null)
-				{
-					var parentType = Context.FindType(ParentSignature.FullSignature);
-					if (parentType != null)
-						parentType.PrepareSelf();
+			if (Parent == null && ParentSignature != null)
+				Parent = Context.ResolveType(ParentSignature);
 
-					Parent = Context.ResolveType(ParentSignature.FullSignature);
-				}
-
-				TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
-			}
-			else
-			{
-				TypeBuilder = Context.MainModule.DefineType(Name, attrs);
-			}
+			TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
 
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
@@ -136,12 +121,6 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void PrepareMembers()
 		{
-			foreach(var field in _Fields)
-				field.Value.PrepareSelf();
-
-			foreach (var ctor in _Constructors)
-				ctor.PrepareSelf();
-
 			foreach (var method in _MethodList)
 			{
 				method.PrepareSelf();
