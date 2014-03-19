@@ -1,14 +1,13 @@
 ﻿using Lens.Compiler;
 
-namespace Lens.SyntaxTree.Literals
+namespace Lens.SyntaxTree.Internals
 {
 	/// <summary>
 	/// A node that represents the `this` pointer.
-	/// For compiler's internal usage only!
 	/// </summary>
 	internal class ThisNode : NodeBase
 	{
-		protected override System.Type resolve(Context ctx, bool mustReturn = true)
+		protected override System.Type resolve(Context ctx, bool mustReturn)
 		{
 			if(ctx.CurrentMethod.IsStatic)
 				error("Cannot access self-reference in static context!");

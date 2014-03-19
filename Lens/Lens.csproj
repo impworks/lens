@@ -118,7 +118,7 @@
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Internals\GetArgumentNode.cs" />
     <Compile Include="SyntaxTree\Internals\NopNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
@@ -152,7 +152,7 @@
     <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />
-    <Compile Include="SyntaxTree\Literals\ThisNode.cs" />
+    <Compile Include="SyntaxTree\Internals\ThisNode.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
