@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Lens.Compiler;
 using Lens.Utils;
 
@@ -9,7 +10,9 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class PowOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		private static readonly MethodInfo _PowMethod = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
+
+		protected override string OperatorRepresentation
 		{
 			get { return "**"; }
 		}
@@ -21,12 +24,8 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-
 			loadAndConvertNumerics(ctx, typeof(double));
-
-			var method = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
-			gen.EmitCall(method);
+			ctx.CurrentILGenerator.EmitCall(_PowMethod);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

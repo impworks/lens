@@ -13,27 +13,13 @@ namespace Lens.SyntaxTree.Operators
 			Kind = kind;
 		}
 
-		/// <summary>
-		/// The kind of boolean operator.
-		/// </summary>
 		public LogicalOperatorKind Kind { get; set; }
 
-		protected override bool IsNumericOperator
-		{
-			get { return Kind == LogicalOperatorKind.Xor; }
-		}
+		protected override bool IsNumericOperator { get { return false; } }
 
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
-			get
-			{
-				return Kind == LogicalOperatorKind.And ? "&&" : (Kind == LogicalOperatorKind.Or ? "||" : "^^");
-			}
-		}
-
-		public override string OverloadedMethodName
-		{
-			get { return Kind == LogicalOperatorKind.Xor ? "op_ExclusiveOr" : null; }
+			get { return Kind == LogicalOperatorKind.And ? "&&" : "||"; }
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -43,34 +29,26 @@ namespace Lens.SyntaxTree.Operators
 				       : null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			if (!IsConstant)
+			{
+				return Kind == LogicalOperatorKind.And
+					? Expr.If(LeftOperand, Expr.Block(Expr.Cast<bool>(RightOperand)), Expr.Block(Expr.False()))
+					: Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
+			}
 
-			// validate nodes
-			Resolve(ctx);
-
-			if (Kind == LogicalOperatorKind.And)
-			{
-				var cond = Expr.If(LeftOperand, Expr.Block(RightOperand), Expr.Block(Expr.False()));
-				cond.Emit(ctx, true);
-			}
-			else if (Kind == LogicalOperatorKind.Or)
-			{
-				var cond = Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(RightOperand));
-				cond.Emit(ctx, true);
-			}
-			else if (Kind == LogicalOperatorKind.Xor)
-			{
-				LeftOperand.Emit(ctx, true);
-				RightOperand.Emit(ctx, true);
-				gen.EmitXor();
-			}
+			return null;
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
-			return Kind == LogicalOperatorKind.And ? left && right : (Kind == LogicalOperatorKind.Or ? left || right : left ^ right);
+			return Kind == LogicalOperatorKind.And ? left && right : left || right;
+		}
+
+		protected override void compileOperator(Context ctx)
+		{
+			throw new InvalidOperationException("The BooleanOperatorNode has not been expanded!");
 		}
 	}
 
@@ -80,7 +58,6 @@ namespace Lens.SyntaxTree.Operators
 	public enum LogicalOperatorKind
 	{
 		And,
-		Or,
-		Xor
+		Or
 	}
 }

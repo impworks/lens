@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree
 
 		public static ShiftOperatorNode ShiftLeft(NodeBase left, NodeBase right)
 		{
-			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true};
+			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true };
 		}
 
 		public static ShiftOperatorNode ShiftRight(NodeBase left, NodeBase right)
@@ -118,6 +118,11 @@ namespace Lens.SyntaxTree
 			return new DefaultOperatorNode { Type = type };
 		}
 
+		public static DefaultOperatorNode Default<T>()
+		{
+			return new DefaultOperatorNode { Type = typeof(T) };
+		}
+
 		public static TypeofOperatorNode Typeof(TypeSignature type)
 		{
 			return new TypeofOperatorNode {TypeSignature = type};
@@ -126,6 +131,11 @@ namespace Lens.SyntaxTree
 		public static TypeofOperatorNode Typeof(Type type)
 		{
 			return new TypeofOperatorNode { Type = type };
+		}
+
+		public static TypeofOperatorNode Typeof<T>()
+		{
+			return new TypeofOperatorNode { Type = typeof(T) };
 		}
 
 		public static CastOperatorNode Cast(NodeBase node, TypeSignature type)
@@ -138,6 +148,11 @@ namespace Lens.SyntaxTree
 			return new CastOperatorNode { Expression = node, Type = type };
 		}
 
+		public static CastOperatorNode Cast<T>(NodeBase node)
+		{
+			return new CastOperatorNode { Expression = node, Type = typeof(T) };
+		}
+
 		public static IsOperatorNode Is(NodeBase node, TypeSignature type)
 		{
 			return new IsOperatorNode { Expression = node, TypeSignature = type };
@@ -146,6 +161,11 @@ namespace Lens.SyntaxTree
 		public static IsOperatorNode Is(NodeBase node, Type type)
 		{
 			return new IsOperatorNode { Expression = node, Type = type };
+		}
+
+		public static IsOperatorNode Is<T>(NodeBase node)
+		{
+			return new IsOperatorNode { Expression = node, Type = typeof(T) };
 		}
 
 		public static BinaryOperatorNodeBase Binary(LogicalOperatorKind kind, NodeBase left, NodeBase right)
@@ -165,7 +185,7 @@ namespace Lens.SyntaxTree
 
 		public static BinaryOperatorNodeBase Xor(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { Kind = LogicalOperatorKind.Xor, LeftOperand = left, RightOperand = right };
+			return Op<XorOperatorNode>(left, right);
 		}
 
 		public static ComparisonOperatorNode Compare(ComparisonOperatorKind kind, NodeBase left, NodeBase right)
@@ -205,7 +225,7 @@ namespace Lens.SyntaxTree
 
 		private static T Op<T>(NodeBase left, NodeBase right) where T : BinaryOperatorNodeBase, new()
 		{
-			return new T {LeftOperand = left, RightOperand = right};
+			return new T { LeftOperand = left, RightOperand = right };
 		}
 
 		#endregion

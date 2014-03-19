@@ -9,22 +9,20 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class MultiplyOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "*"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Multiply"; }
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-			Resolve(ctx);
 			loadAndConvertNumerics(ctx);
-			gen.EmitMultiply();
+			ctx.CurrentILGenerator.EmitMultiply();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

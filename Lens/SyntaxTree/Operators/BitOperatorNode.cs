@@ -16,7 +16,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public LogicalOperatorKind Kind { get; set; }
 
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get
 			{
@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get
 			{

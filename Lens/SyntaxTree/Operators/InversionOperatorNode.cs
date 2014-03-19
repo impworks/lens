@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class InversionOperatorNode : UnaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "not"; }
 		}
@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentILGenerator;
 
-			Expr.Cast(Operand, typeof(bool)).Emit(ctx, true);
+			Expr.Cast<bool>(Operand).Emit(ctx, true);
 
 			gen.EmitConstant(0);
 			gen.EmitCompareEqual();

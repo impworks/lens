@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
 		/// </summary>
-		private static readonly Type[] I4Types = new[]
+		private static readonly Type[] I4Types =
 		{
 			typeof (bool),
 			typeof (byte),

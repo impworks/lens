@@ -8,12 +8,12 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class SubtractOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "-"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Subtraction"; }
 		}
@@ -23,25 +23,21 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (!IsConstant)
+			{
+				if (Resolve(ctx) == typeof (string))
+					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
+			}
+
+			return null;
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var type = Resolve(ctx);
-
-			if (type == typeof (string))
-			{
-				var replaceMethod = typeof (string).GetMethod("Replace", new[] {typeof (string), typeof (string)});
-
-				LeftOperand.Emit(ctx, true);
-				RightOperand.Emit(ctx, true);
-				gen.EmitConstant(string.Empty);
-				gen.EmitCall(replaceMethod);
-			}
-			else
-			{
-				loadAndConvertNumerics(ctx);
-				gen.EmitSubtract();
-			}
+			loadAndConvertNumerics(ctx);
+			ctx.CurrentILGenerator.EmitSubtract();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

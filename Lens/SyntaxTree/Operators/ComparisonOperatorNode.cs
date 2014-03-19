@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public ComparisonOperatorKind Kind { get; set; }
 
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get
 			{
@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		public override string  OverloadedMethodName
+		protected override string  OverloadedMethodName
 		{
 			get
 			{
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		protected override Type  resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 			return canCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
@@ -68,7 +68,6 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var leftType = LeftOperand.Resolve(ctx);
 			var rightType = RightOperand.Resolve(ctx);
-
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
 			if(!canCompare(leftType, rightType, isEquality))
@@ -223,48 +222,6 @@ namespace Lens.SyntaxTree.Operators
 			nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
 			if (otherNull)
 				otherVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, otherType, true);
-//			if (otherNull)
-//			{
-//				otherVar = ctx.CurrentScope.DeclareImplicitName(ctx, otherType, true);
-//
-//				var code = Expr.Block(
-//					Expr.Let(nullVar, nullValue),
-//					Expr.Let(otherVar, otherValue),
-//					Expr.Binary(
-//						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
-//						Expr.Compare(
-//							Kind,
-//							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
-//							Expr.Invoke(Expr.GetIdentifier(otherVar), "GetValueOrDefault")
-//						),
-//						Expr.Compare(
-//							Kind,
-//							Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue"),
-//							Expr.Invoke(Expr.GetIdentifier(otherVar), "get_HasValue")
-//						)
-//					)
-//				);
-//
-//				code.Compile(ctx, true);
-//			}
-//			else
-//			{
-//				var code = Expr.Block(
-//					Expr.Let(nullVar, nullValue),
-//					Expr.Binary(
-//						Kind == ComparisonOperatorKind.Equals ? BooleanOperatorKind.And : BooleanOperatorKind.Or,
-//						Expr.Compare(
-//							Kind,
-//							Expr.Invoke(Expr.GetIdentifier(nullVar), "GetValueOrDefault"),
-//							Expr.Cast(otherValue, Nullable.GetUnderlyingType(nullType))
-//						),
-//						Expr.Invoke(Expr.GetIdentifier(nullVar), "get_HasValue")
-//					)
-//				);
-//
-//				code.Compile(ctx, true);
-//			}
-				
 
 			// $tmp = nullValue
 			nullValue.Emit(ctx, true);

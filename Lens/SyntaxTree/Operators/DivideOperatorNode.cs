@@ -8,24 +8,20 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class DivideOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "/"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Division"; }
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-
-			Resolve(ctx);
 			loadAndConvertNumerics(ctx);
-
-			gen.EmitDivide();
+			ctx.CurrentILGenerator.EmitDivide();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

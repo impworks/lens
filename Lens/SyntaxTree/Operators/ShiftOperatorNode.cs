@@ -84,12 +84,12 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return IsLeft ? "<:" : ":>"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
 		}

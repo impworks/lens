@@ -9,12 +9,12 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class NegationOperatorNode : UnaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "-"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_UnaryNegation"; }
 		}
@@ -27,10 +27,8 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-
 			Operand.Emit(ctx, true);
-			gen.EmitNegate();
+			ctx.CurrentILGenerator.EmitNegate();
 		}
 
 		protected override dynamic unrollConstant(dynamic value)

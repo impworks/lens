@@ -2,30 +2,28 @@
 
 namespace Lens.SyntaxTree.Operators
 {
-	/// <summary>
-	/// An operator node that divides one value by another value.
-	/// </summary>
-	internal class RemainderOperatorNode : BinaryOperatorNodeBase
+	internal class XorOperatorNode : BinaryOperatorNodeBase
 	{
 		protected override string OperatorRepresentation
 		{
-			get { return "%"; }
+			get { return "^^"; }
 		}
 
 		protected override string OverloadedMethodName
 		{
-			get { return "op_Modulus"; }
+			get { return "op_ExclusiveOr"; }
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
+			var gen = ctx.CurrentILGenerator;
 			loadAndConvertNumerics(ctx);
-			ctx.CurrentILGenerator.EmitRemainder();
+			gen.EmitXor();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
-			return left % right;
+			return left ^ right;
 		}
 	}
 }

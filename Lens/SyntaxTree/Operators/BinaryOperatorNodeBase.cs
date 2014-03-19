@@ -24,9 +24,9 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Checks if numeric type casting checks should be applied to operands.
 		/// </summary>
-		protected virtual bool IsNumericOperator { get { return true; }}
+		protected virtual bool IsNumericOperator { get { return true; } }
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx);
 			var rightType = RightOperand.Resolve(ctx);
@@ -61,9 +61,6 @@ namespace Lens.SyntaxTree.Operators
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
-
-			Resolve(ctx);
-
 			if (m_OverloadedMethod == null)
 			{
 				compileOperator(ctx);
