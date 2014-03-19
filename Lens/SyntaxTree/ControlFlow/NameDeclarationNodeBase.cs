@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
-				return Expr.Nop();
+				return Expr.Unit();
 
 			return new SetIdentifierNode
 			{

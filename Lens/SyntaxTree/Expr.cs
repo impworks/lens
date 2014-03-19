@@ -575,11 +575,6 @@ namespace Lens.SyntaxTree
 			return new ThisNode();
 		}
 
-		public static NopNode Nop()
-		{
-			return new NopNode();
-		}
-
 		#endregion
 	}
 }

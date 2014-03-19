@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
-				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Nop();
+				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Unit();
 
 			return base.Expand(ctx, mustReturn);
 		}
