@@ -119,6 +119,7 @@
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Internals\NopNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">

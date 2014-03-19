@@ -145,7 +145,7 @@
     <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
   <data name="CatchClauseUnreachable" xml:space="preserve">
-    <value>Это выражение catch недостижимо, поскольку предыдущее выражение перехватывает все исключения!</value>
+    <value>Это выражение catch недостижимо, поскольку исключения типа '{0}' будут перехвачены выше как наследники типа '{1}'!</value>
   </data>
   <data name="CatchTypeDuplicate" xml:space="preserve">
     <value>Тип '{0}' уже был использован в выражении catch текущего блока try!</value>

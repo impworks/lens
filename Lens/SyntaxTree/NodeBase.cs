@@ -74,11 +74,15 @@ namespace Lens.SyntaxTree
 					continue;
 
 				child.Node.Resolve(ctx, mustReturn);
-				var sub = child.Node.Expand(ctx);
+				var sub = child.Node.Expand(ctx, mustReturn);
 				if (sub != null)
 				{
 					child.Setter(sub);
 					sub.Transform(ctx, mustReturn);
+				}
+				else
+				{
+					child.Node.Transform(ctx, mustReturn);
 				}
 			}
 		}
@@ -89,7 +93,7 @@ namespace Lens.SyntaxTree
 		/// <returns>
 		/// Null if no expansion is suitable, a NodeBase object instance otherwise.
 		/// </returns>
-		public virtual NodeBase Expand(Context ctx)
+		public virtual NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			return null;
 		}
@@ -116,7 +120,7 @@ namespace Lens.SyntaxTree
 		{
 			if (IsConstant && ctx.Options.UnrollConstants)
 			{
-				if(mustReturn)
+				if (mustReturn)
 					emitConstant(ctx);
 			}
 			else
@@ -125,7 +129,15 @@ namespace Lens.SyntaxTree
 			}
 		}
 
-		protected abstract void emitCode(Context ctx, bool mustReturn);
+		protected virtual void emitCode(Context ctx, bool mustReturn)
+		{
+			throw new InvalidOperationException(
+				string.Format(
+					"Node '{0}' neither has a body nor was expanded!",
+					GetType()
+				)
+			);
+		}
 
 		/// <summary>
 		/// Gets the list of child nodes.

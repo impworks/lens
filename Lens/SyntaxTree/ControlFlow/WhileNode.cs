@@ -23,6 +23,21 @@ namespace Lens.SyntaxTree.ControlFlow
 			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			var loopType = Resolve(ctx);
+			var saveLast = mustReturn && loopType.IsNotVoid();
+
+			var condType = Condition.Resolve(ctx);
+			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
+			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Nop();
+
+			return base.Expand(ctx, mustReturn);
+		}
+
 		public override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
@@ -34,19 +49,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentILGenerator;
 			var loopType = Resolve(ctx);
-			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
-
-			var condType = Condition.Resolve(ctx);
-			if(!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
-
-			if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
-			{
-				if(saveLast)
-					Expr.Default(loopType).Emit(ctx, true);
-
-				return;
-			}
+			var saveLast = mustReturn && loopType.IsNotVoid();
 
 			var beginLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
@@ -55,7 +58,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (saveLast)
 			{
 				tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, loopType, false);
-				Expr.Set(tmpVar, Expr.Default(loopType));
+				Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
 			}
 
 			gen.MarkLabel(beginLabel);

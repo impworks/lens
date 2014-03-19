@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Body { get; set; }
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return Body.Resolve(ctx);
 		}

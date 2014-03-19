@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
 using Lens.Translations;
@@ -22,6 +23,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name { get; set; }
 
+		/// <summary>
+		/// Explicitly specified local variable.
+		/// </summary>
 		public LocalName LocalName { get; set; }
 
 		/// <summary>
@@ -44,55 +48,51 @@ namespace Lens.SyntaxTree.ControlFlow
 			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		public override void ProcessClosures(Context ctx)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			base.ProcessClosures(ctx);
-
 			var type = Value != null
 				? Value.Resolve(ctx)
 				: ctx.ResolveType(Type);
+
 			ctx.CheckTypedExpression(Value, type);
 
-			if(LocalName != null)
-				return;
-
-			if(Name == "_")
-				error(CompilerMessages.UnderscoreName);
-
-			try
+			if (LocalName == null)
 			{
-				var name = ctx.CurrentScopeFrame.DeclareName(Name, type, IsImmutable);
-				if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+				if (Name == "_")
+					error(CompilerMessages.UnderscoreName);
+
+				try
 				{
-					name.IsConstant = true;
-					name.ConstantValue = Value.ConstantValue;
+					var name = ctx.CurrentScopeFrame.DeclareName(Name, type, IsImmutable);
+					if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+					{
+						name.IsConstant = true;
+						name.ConstantValue = Value.ConstantValue;
+					}
+				}
+				catch (LensCompilerException ex)
+				{
+					ex.BindToLocation(this);
+					throw;
 				}
 			}
-			catch (LensCompilerException ex)
-			{
-				ex.BindToLocation(this);
-				throw;
-			}
+
+			return base.resolve(ctx, mustReturn);
 		}
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
-				return;
+				return Expr.Nop();
 
-			if (Value == null)
-				Value = Expr.Default(Type);
-
-			var assignNode = new SetIdentifierNode
+			return new SetIdentifierNode
 			{
 				Identifier = Name,
 				LocalName = LocalName,
-				Value = Value,
+				Value = Value ?? Expr.Default(Type),
 				IsInitialization = true,
 			};
-
-			assignNode.Emit(ctx, mustReturn);
 		}
 
 		#region Equality members

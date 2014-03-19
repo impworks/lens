@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.Compiler;
+﻿using Lens.Compiler;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -22,11 +21,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// Checks whether the function can be memoized.
 		/// </summary>
 		public bool IsPure { get; set; }
-
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			throw new NotImplementedException();
-		}
 
 		#region Equality members
 

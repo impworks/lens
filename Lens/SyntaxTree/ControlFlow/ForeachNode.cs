@@ -35,19 +35,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public CodeBlockNode Body { get; set; }
 
-		private LocalName m_Variable;
-		private Type m_VariableType;
-		private Type m_EnumeratorType;
-		private PropertyWrapper m_CurrentProperty;
+		private Type _VariableType;
+		private Type _EnumeratorType;
+		private PropertyWrapper _CurrentProperty;
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
-		}
-
-		public override void ProcessClosures(Context ctx)
-		{
-			if(IterableExpression != null)
+			if (IterableExpression != null)
 				detectEnumerableType(ctx);
 			else
 				detectRangeType(ctx);
@@ -55,11 +49,21 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (ctx.CurrentScopeFrame.FindName(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
-			// inject variable declaration
-			m_Variable = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_VariableType, false);
-			Body.Insert(Expr.Let(VariableName, Expr.Get(m_Variable)));
+			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
+		}
 
-			base.ProcessClosures(ctx);
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (IterableExpression != null)
+			{
+				var type = IterableExpression.Resolve(ctx);
+				if (type.IsArray)
+					return expandArray(ctx);
+				
+				return expandEnumerable(ctx, mustReturn);
+			}
+
+			return expandRange(ctx);
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -78,161 +82,120 @@ namespace Lens.SyntaxTree.ControlFlow
 				yield return curr;
 		}
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
-			if (IterableExpression != null)
-			{
-				var type = IterableExpression.Resolve(ctx);
-				if (type.IsArray)
-					compileArray(ctx, mustReturn);
-				else
-					compileEnumerable(ctx, mustReturn);
-			}
-			else
-			{
-				compileRange(ctx, mustReturn);
-			}
-		}
+			var iteratorVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _EnumeratorType, false);
 
-		private void compileEnumerable(Context ctx, bool mustReturn)
-		{
-			var returnType = Resolve(ctx);
-			var saveLast = mustReturn && !returnType.IsVoid();
+			var init = Expr.Set(
+				iteratorVar,
+				Expr.Invoke(IterableExpression, "GetEnumerator")
+			);
 
-			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_EnumeratorType, false);
-			Expr.Set(tmpVar, Expr.Invoke(IterableExpression, "GetEnumerator")).Emit(ctx, false);
-
-			LocalName result = null;
-
-			var loopWrapper = Expr.Block();
 			var loop = Expr.While(
-				Expr.Invoke(Expr.Get(tmpVar), "MoveNext"),
+				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
 					Expr.Set(
-						m_Variable,
-						Expr.GetMember(Expr.Get(tmpVar), "Current")
+						VariableName,
+						Expr.GetMember(Expr.Get(iteratorVar), "Current")
 					),
 					Body
 				)
 			);
 
-			if (saveLast)
+			if (_EnumeratorType.Implements(typeof (IDisposable), false))
 			{
-				result = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, returnType, false);
-				loopWrapper.Add(Expr.Set(result, loop));
-			}
-			else
-			{
-				loopWrapper.Add(loop);
-			}
+				var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
+				var returnType = Resolve(ctx);
+				var saveLast = mustReturn && !returnType.IsVoid();
 
-			if (m_EnumeratorType.Implements(typeof (IDisposable), false))
-			{
-				var block = Expr.Try(
-					loopWrapper,
-					Expr.Block(Expr.Invoke(Expr.Get(tmpVar), "Dispose"))
+				if (saveLast)
+				{
+					var resultVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _EnumeratorType, false);
+					return Expr.Block(
+						Expr.Try(
+							Expr.Block(
+								init,
+								Expr.Set(resultVar, loop)
+							),
+							dispose
+						),
+						Expr.Get(resultVar)
+					);
+				}
+
+				return Expr.Try(
+					Expr.Block(init, loop),
+					dispose
 				);
-				block.Emit(ctx, mustReturn);
-			}
-			else
-			{
-				loopWrapper.Emit(ctx, mustReturn);
 			}
 
-			if (saveLast)
-			{
-				var gen = ctx.CurrentILGenerator;
-				gen.EmitLoadLocal(result);
-			}
+			return Expr.Block(
+				init,
+				loop
+			);
 		}
 
-		private void compileArray(Context ctx, bool mustReturn)
+		private NodeBase expandArray(Context ctx)
 		{
-			var returnType = Resolve(ctx);
-			var saveLast = mustReturn && !returnType.IsVoid();
-
 			var arrayVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, IterableExpression.Resolve(ctx), false);
 			var idxVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
 			var lenVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
 
-			LocalName result = null;
-
-			var code = Expr.Block(
+			return Expr.Block(
 				Expr.Set(idxVar, Expr.Int(0)),
 				Expr.Set(arrayVar, IterableExpression),
-				Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length"))
-			);
-
-			var loop = Expr.While(
-				Expr.Less(
-					Expr.Get(idxVar),
-					Expr.Get(lenVar)
-				),
-				Expr.Block(
-					Expr.Set(
-						m_Variable,
-						Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
+				Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length")),
+				Expr.While(
+					Expr.Less(
+						Expr.Get(idxVar),
+						Expr.Get(lenVar)
 					),
-					Expr.Set(
-						idxVar,
-						Expr.Add(Expr.Get(idxVar), Expr.Int(1))
-					),
-					Body
+					Expr.Block(
+						Expr.Set(
+							VariableName,
+							Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
+						),
+						Expr.Set(
+							idxVar,
+							Expr.Add(Expr.Get(idxVar), Expr.Int(1))
+						),
+						Body
+					)
 				)
 			);
-
-			if (saveLast)
-			{
-				result = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, returnType, false);
-				code.Add(Expr.Set(result, loop));
-			}
-			else
-			{
-				code.Add(loop);
-			}
-
-			code.Emit(ctx, mustReturn);
-
-			if (saveLast)
-			{
-				var gen = ctx.CurrentILGenerator;
-				gen.EmitLoadLocal(result);
-			}
 		}
 
-		private void compileRange(Context ctx, bool mustReturn)
+		private NodeBase expandRange(Context ctx)
 		{
-			var signVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, m_Variable.Type, false);
-			var code = Expr.Block(
-				Expr.Set(m_Variable, RangeStart),
+			var signVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _VariableType, false);
+			return Expr.Block(
+				Expr.Set(VariableName, RangeStart),
 				Expr.Set(
 					signVar,
 					Expr.Invoke(
 						"Math",
 						"Sign",
-						Expr.Sub(RangeEnd, Expr.Get(m_Variable))
+						Expr.Sub(RangeEnd, Expr.Get(VariableName))
 					)
 				),
 				Expr.While(
 					Expr.If(
 						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
-						Expr.Block(Expr.LessEqual(Expr.Get(m_Variable), RangeEnd)),
-						Expr.Block(Expr.GreaterEqual(Expr.Get(m_Variable), RangeEnd))
+						Expr.Block(Expr.LessEqual(Expr.Get(VariableName), RangeEnd)),
+						Expr.Block(Expr.GreaterEqual(Expr.Get(VariableName), RangeEnd))
 					),
 					Expr.Block(
 						Body,
 						Expr.Set(
-							m_Variable,
+							VariableName,
 							Expr.Add(
-								Expr.Get(m_Variable),
+								Expr.Get(VariableName),
 								Expr.Get(signVar)
 							)
 						)
 					)
 				)
 			);
-
-			code.Emit(ctx, mustReturn);
 		}
 
 		private void detectEnumerableType(Context ctx)
@@ -240,7 +203,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var seqType = IterableExpression.Resolve(ctx);
 			if (seqType.IsArray)
 			{
-				m_VariableType = seqType.GetElementType();
+				_VariableType = seqType.GetElementType();
 				return;
 			}
 			
@@ -249,10 +212,10 @@ namespace Lens.SyntaxTree.ControlFlow
 				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
 			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
-			m_EnumeratorType = enumerator.ReturnType;
-			m_CurrentProperty = ctx.ResolveProperty(m_EnumeratorType, "Current");
+			_EnumeratorType = enumerator.ReturnType;
+			_CurrentProperty = ctx.ResolveProperty(_EnumeratorType, "Current");
 
-			m_VariableType = m_CurrentProperty.PropertyType;
+			_VariableType = _CurrentProperty.PropertyType;
 		}
 
 		private void detectRangeType(Context ctx)
@@ -266,7 +229,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if(!t1.IsIntegerType())
 				error(CompilerMessages.ForeachRangeNotInteger, t1);
 
-			m_VariableType = t1;
+			_VariableType = t1;
 		}
 
 		#region Equality members

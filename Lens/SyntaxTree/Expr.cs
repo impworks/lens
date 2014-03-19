@@ -4,6 +4,7 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
 
@@ -51,11 +52,6 @@ namespace Lens.SyntaxTree
 		public static UnitNode Unit()
 		{
 			return new UnitNode();
-		}
-
-		public static ThisNode This()
-		{
-			return new ThisNode();
 		}
 
 		#endregion
@@ -568,6 +564,20 @@ namespace Lens.SyntaxTree
 		public static LambdaNode Lambda(params NodeBase[] body)
 		{
 			return new LambdaNode { Body = Block(body) };
+		}
+
+		#endregion
+
+		#region Utilities
+
+		public static ThisNode This()
+		{
+			return new ThisNode();
+		}
+
+		public static NopNode Nop()
+		{
+			return new NopNode();
 		}
 
 		#endregion

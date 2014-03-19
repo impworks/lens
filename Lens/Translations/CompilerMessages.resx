@@ -145,7 +145,7 @@
     <value>Cannot cast object of type '{0}' to type '{1}'!</value>
   </data>
   <data name="CatchClauseUnreachable" xml:space="preserve">
-    <value>This catch clause is unreachable because the previous one catches all exceptions!\</value>
+    <value>This catch clause is unreachable, because all exceptions of type '{0}' will be intercepted by a catch clause for '{1}' defined earlier in code!</value>
   </data>
   <data name="CatchTypeDuplicate" xml:space="preserve">
     <value>Type '{0}' has already been used in a catch clause of current try block!</value>

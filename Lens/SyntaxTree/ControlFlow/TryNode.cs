@@ -43,6 +43,28 @@ namespace Lens.SyntaxTree.ControlFlow
 					yield return curr;
 		}
 
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			var prevTypes = new List<Type>();
+
+			foreach(var curr in CatchClauses)
+			{
+				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof(Exception);
+
+				foreach (var prevType in prevTypes)
+				{
+					if(currType == prevType)
+						error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+					else if(currType.IsExtendablyAssignableFrom(prevType))
+						error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
+				}
+
+				prevTypes.Add(currType);
+			}
+
+			return base.resolve(ctx, mustReturn);
+		}
+
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentILGenerator;
@@ -55,23 +77,8 @@ namespace Lens.SyntaxTree.ControlFlow
 			Code.Emit(ctx, false);
 			gen.EmitLeave(EndLabel);
 
-			var catchTypes = new Dictionary<Type, bool>();
-			var catchAll = false;
 			foreach (var curr in CatchClauses)
-			{
-				if(catchAll)
-					error(curr, CompilerMessages.CatchClauseUnreachable);
-
-				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof (Exception);
-
-				if(catchTypes.ContainsKey(currType))
-					error(curr, CompilerMessages.CatchTypeDuplicate, currType);
-
-				if (currType == typeof (Exception))
-					catchAll = true;
-
 				curr.Emit(ctx, false);
-			}
 
 			if (Finally != null)
 			{
