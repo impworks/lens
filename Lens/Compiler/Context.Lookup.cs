@@ -12,15 +12,6 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		/// <summary>
-		/// Finds a declared type by its name.
-		/// </summary>
-		internal TypeEntity FindType(string name)
-		{
-			TypeEntity type;
-			return _DefinedTypes.TryGetValue(name, out type) ? type : null;
-		}
-
-		/// <summary>
 		/// Resolves a type by its string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
@@ -34,9 +25,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public Type ResolveType(TypeSignature signature)
 		{
-			var local = FindType(signature.FullSignature);
-			return local != null
-				? local.TypeInfo
+			TypeEntity declared;
+			return _DefinedTypes.TryGetValue(signature.FullSignature, out declared)
+				? declared.TypeInfo
 				: _TypeResolver.ResolveType(signature);
 		}
 
@@ -183,8 +174,9 @@ namespace Lens.Compiler
 				return new ConstructorWrapper
 				{
 					Type = type,
-					ConstructorInfo = ctor.Item1,
-					ArgumentTypes = ctor.Item1.GetParameters().Select(p => p.ParameterType).ToArray()
+					ConstructorInfo = ctor.Method,
+					ArgumentTypes = ctor.ArgumentTypes,
+					IsPartiallyApplied = detectPartialApplication(argTypes, ctor.ArgumentTypes)
 				};
 			}
 			catch (NotSupportedException)
@@ -202,8 +194,8 @@ namespace Lens.Compiler
 				return new ConstructorWrapper
 				{
 					Type = type,
-					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Item1),
-					ArgumentTypes = genCtor.Item3
+					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
+					ArgumentTypes = genCtor.ArgumentTypes
 				};
 			}
 		}
@@ -232,7 +224,8 @@ namespace Lens.Compiler
 					Type = type,
 
 					IsStatic = method.IsStatic,
-					IsVirtual = method.IsVirtual
+					IsVirtual = method.IsVirtual,
+					IsPartiallyApplied = detectPartialApplication(argTypes, method.ArgumentTypes)
 				};
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
@@ -265,7 +258,7 @@ namespace Lens.Compiler
 			}
 		}
 
-		private MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
+		private static MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
 		{
 			var mw = new MethodWrapper { Name = name, Type = type };
 
@@ -277,13 +270,12 @@ namespace Lens.Compiler
 					argTypes
 				);
 
-				var mInfo = method.Item1;
-				var expectedTypes = method.Item3;
+				var mInfo = method.Method;
 
 				if (mInfo.IsGenericMethod)
 				{
 					var genericDefs = mInfo.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(method.ArgumentTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 					mw.GenericArguments = genericValues;
@@ -296,8 +288,9 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfo.IsStatic;
 				mw.IsVirtual = mInfo.IsVirtual;
-				mw.ArgumentTypes = expectedTypes;
+				mw.ArgumentTypes = method.ArgumentTypes;
 				mw.ReturnType = mInfo.ReturnType;
+				mw.IsPartiallyApplied = detectPartialApplication(argTypes, method.ArgumentTypes);
 
 				return mw;
 			}
@@ -313,14 +306,13 @@ namespace Lens.Compiler
 					argTypes
 				);
 
-				var mInfoOriginal = genMethod.Item1;
-				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
-				var expectedTypes = genMethod.Item3;
+				var mInfoOriginal = genMethod.Method;
+				var mInfo = TypeBuilder.GetMethod(type, mInfoOriginal);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
 					var genericDefs = mInfoOriginal.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(genMethod.ArgumentTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -343,9 +335,18 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfoOriginal.IsStatic;
 				mw.IsVirtual = mInfoOriginal.IsVirtual;
+				mw.IsPartiallyApplied = detectPartialApplication(argTypes, genMethod.ArgumentTypes);
 			}
 
 			return mw;
+		}
+
+		/// <summary>
+		/// Checks if method has been partially applied.
+		/// </summary>
+		private static bool detectPartialApplication(Type[] passedTypes, Type[] calleeTypes)
+		{
+			return calleeTypes.Length > passedTypes.Length || passedTypes.Contains(null);
 		}
 
 		/// <summary>
@@ -547,21 +548,21 @@ namespace Lens.Compiler
 		/// <param name="list">List of method-like entitites.</param>
 		/// <param name="argsGetter">A function that gets method entity arguments.</param>
 		/// <param name="args">Desired argument types.</param>
-		public static Tuple<T, int, Type[]> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
+		public static MethodLookupResult<T> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
 		{
-			Func<T, Tuple<T, int, Type[]>> methodEvaluator = ent =>
+			Func<T, MethodLookupResult<T>> methodEvaluator = ent =>
 			{
 				var currArgs = argsGetter(ent);
-				var dist = ExtensionMethodResolver.GetArgumentsDistance(args, currArgs);
-				return new Tuple<T, int, Type[]>(ent, dist, currArgs);
+				var dist = TypeExtensions.CompoundDistance(args, currArgs);
+				return new MethodLookupResult<T>(ent, dist, currArgs);
 			};
 
-			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).Take(2).ToArray();
+			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Distance).Take(2).ToArray();
 
-			if (result.Length == 0 || result[0].Item2 == int.MaxValue)
+			if (result.Length == 0 || result[0].Distance == int.MaxValue)
 				throw new KeyNotFoundException();
 
-			if (result.Length == 2 && result[0].Item2 == result[1].Item2)
+			if (result.Length == 2 && result[0].Distance == result[1].Distance)
 				throw new AmbiguousMatchException();
 
 			return result[0];
@@ -604,6 +605,20 @@ namespace Lens.Compiler
 			var rt = WrapDelegate(right).ReturnType;
 
 			return FunctionalHelper.CreateDelegateType(rt, args);
+		}
+
+		internal class MethodLookupResult<T>
+		{
+			public readonly T Method;
+			public readonly int Distance;
+			public readonly Type[] ArgumentTypes;
+
+			public MethodLookupResult(T method, int dist, Type[] args)
+			{
+				Method = method;
+				Distance = dist;
+				ArgumentTypes = args;
+			}
 		}
 	}
 }

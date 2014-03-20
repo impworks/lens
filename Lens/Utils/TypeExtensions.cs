@@ -607,5 +607,35 @@ namespace Lens.Utils
 
 			return type.GetInterfaces().Contains(iface);
 		}
+
+		/// <summary>
+		/// Gets total distance between two sets of argument types.
+		/// </summary>
+		public static int CompoundDistance(IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
+		{
+			var passedIter = passedArgs.GetEnumerator();
+			var calleeIter = calleeArgs.GetEnumerator();
+
+			var totalDist = 0;
+			while (passedIter.MoveNext())
+			{
+				// there's more arguments passed than the method accepts:
+				// the method cannot be applied
+				if (!calleeIter.MoveNext())
+					return int.MaxValue;
+
+				// argument type skipped with underscore: matches any type, therefore distance does not increase
+				if (passedIter.Current == null)
+					continue;
+
+				var dist = calleeIter.Current.DistanceFrom(passedIter.Current);
+				if (dist == int.MaxValue)
+					return int.MaxValue;
+
+				totalDist += dist;
+			}
+
+			return totalDist;
+		}
 	}
 }

@@ -25,11 +25,11 @@ namespace Lens.Compiler.Entities
 
 		public Type[] Interfaces;
 
-		private Dictionary<string, FieldEntity> _Fields;
-		private Dictionary<string, List<MethodEntity>> _Methods;
-		private List<ConstructorEntity> _Constructors;
+		private readonly Dictionary<string, FieldEntity> _Fields;
+		private readonly Dictionary<string, List<MethodEntity>> _Methods;
+		private readonly List<ConstructorEntity> _Constructors;
 
-		private List<MethodEntity> _MethodList;
+		private readonly List<MethodEntity> _MethodList;
 
 		#region Properties
 
@@ -216,10 +216,10 @@ namespace Lens.Compiler.Entities
 				throw new KeyNotFoundException();
 
 			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
-			if(exact && info.Item2 != 0)
+			if(exact && info.Distance != 0)
 				throw new KeyNotFoundException();
 
-			return info.Item1;
+			return info.Method;
 		}
 
 		/// <summary>
@@ -240,7 +240,7 @@ namespace Lens.Compiler.Entities
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
 			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
-			return info.Item1;
+			return info.Method;
 		}
 
 		#endregion

@@ -24,6 +24,7 @@ namespace Lens.Compiler
 		public Type Type;
 		public bool IsVirtual;
 		public bool IsStatic;
+		public bool IsPartiallyApplied;
 		public MethodInfo MethodInfo;
 		public Type ReturnType;
 		public Type[] ArgumentTypes;
@@ -40,6 +41,7 @@ namespace Lens.Compiler
 		public ConstructorInfo ConstructorInfo;
 		public Type Type;
 		public Type[] ArgumentTypes;
+		public bool IsPartiallyApplied;
 	}
 
 	internal class FieldWrapper
