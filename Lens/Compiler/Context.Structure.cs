@@ -69,9 +69,6 @@ namespace Lens.Compiler
 			};
 			_DefinedTypes.Add(name, te);
 
-			if (defaultCtor)
-				te.CreateConstructor();
-
 			if (extraInit != null)
 				extraInit(te);
 
@@ -79,6 +76,9 @@ namespace Lens.Compiler
 				te.PrepareSelf();
 			else
 				_UnpreparedTypes.Add(te);
+
+			if (defaultCtor)
+				te.CreateConstructor(null, prepare);
 
 			return te;
 		}

@@ -26,7 +26,6 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public override void PrepareSelf()
 		{
-			// todo: remove when we support static ctors
 			if(IsStatic)
 				throw new LensCompilerException(CompilerMessages.ConstructorStatic);
 

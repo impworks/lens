@@ -232,9 +232,9 @@ namespace Lens.Compiler
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
 
-		private readonly List<TypeEntity> _UnpreparedTypes;
-		private readonly List<IPreparableEntity> _UnpreparedTypeContents;
-		private readonly List<MethodEntityBase> _UnprocessedMethods;
+		private readonly List<TypeEntity> _UnpreparedTypes = new List<TypeEntity>();
+		private readonly List<IPreparableEntity> _UnpreparedTypeContents = new List<IPreparableEntity>();
+		private readonly List<MethodEntityBase> _UnprocessedMethods = new List<MethodEntityBase>();
 
 		#endregion
 	}
