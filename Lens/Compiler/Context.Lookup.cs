@@ -23,8 +23,11 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Resolves a type by its signature.
 		/// </summary>
-		public Type ResolveType(TypeSignature signature)
+		public Type ResolveType(TypeSignature signature, bool allowUnspecified = false)
 		{
+			if (allowUnspecified && signature.FullSignature == "_")
+				return null;
+
 			TypeEntity declared;
 			return _DefinedTypes.TryGetValue(signature.FullSignature, out declared)
 				? declared.TypeInfo
@@ -176,7 +179,7 @@ namespace Lens.Compiler
 					Type = type,
 					ConstructorInfo = ctor.Method,
 					ArgumentTypes = ctor.ArgumentTypes,
-					IsPartiallyApplied = detectPartialApplication(argTypes, ctor.ArgumentTypes)
+					IsPartiallyApplied = detectPartialApplication(argTypes)
 				};
 			}
 			catch (NotSupportedException)
@@ -225,7 +228,7 @@ namespace Lens.Compiler
 
 					IsStatic = method.IsStatic,
 					IsVirtual = method.IsVirtual,
-					IsPartiallyApplied = detectPartialApplication(argTypes, method.ArgumentTypes)
+					IsPartiallyApplied = detectPartialApplication(argTypes)
 				};
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
@@ -290,7 +293,7 @@ namespace Lens.Compiler
 				mw.IsVirtual = mInfo.IsVirtual;
 				mw.ArgumentTypes = method.ArgumentTypes;
 				mw.ReturnType = mInfo.ReturnType;
-				mw.IsPartiallyApplied = detectPartialApplication(argTypes, method.ArgumentTypes);
+				mw.IsPartiallyApplied = detectPartialApplication(argTypes);
 
 				return mw;
 			}
@@ -335,7 +338,7 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfoOriginal.IsStatic;
 				mw.IsVirtual = mInfoOriginal.IsVirtual;
-				mw.IsPartiallyApplied = detectPartialApplication(argTypes, genMethod.ArgumentTypes);
+				mw.IsPartiallyApplied = detectPartialApplication(argTypes);
 			}
 
 			return mw;
@@ -344,9 +347,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Checks if method has been partially applied.
 		/// </summary>
-		private static bool detectPartialApplication(Type[] passedTypes, Type[] calleeTypes)
+		private static bool detectPartialApplication(Type[] passedTypes)
 		{
-			return calleeTypes.Length > passedTypes.Length || passedTypes.Contains(null);
+			return passedTypes.Contains(null);
 		}
 
 		/// <summary>

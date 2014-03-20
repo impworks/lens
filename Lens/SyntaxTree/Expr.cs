@@ -331,12 +331,16 @@ namespace Lens.SyntaxTree
 
 		public static InvocationNode Invoke(NodeBase expr, params NodeBase[] args)
 		{
-			return invoke(expr, args);
+			return new InvocationNode
+			{
+				Expression = expr,
+				Arguments = args.Length == 0 ? new List<NodeBase> { Unit() } : args.ToList()
+			};
 		}
 
 		public static InvocationNode Invoke(string name, params NodeBase[] args)
 		{
-			return invoke(Get(name), args);
+			return Invoke(Get(name), args);
 		}
 
 		public static ShiftOperatorNode Compose(params NodeBase[] args)
@@ -349,15 +353,6 @@ namespace Lens.SyntaxTree
 				node = ShiftRight(node, args[idx]);
 
 			return node;
-		}
-
-		private static InvocationNode invoke(NodeBase expr, params NodeBase[] args)
-		{
-			return new InvocationNode
-			{
-				Expression = expr,
-				Arguments = args.Length == 0 ? new List<NodeBase> { Unit() } : args.ToList()
-			};
 		}
 
 		public static T Ref<T>(T expr) where T: NodeBase, IPointerProvider
@@ -571,7 +566,7 @@ namespace Lens.SyntaxTree
 			return new FunctionArgument { Name = name, TypeSignature = typeof(T).FullName, IsRefArgument = isRef };
 		}
 
-		public static LambdaNode Lambda(FunctionArgument[] args, params NodeBase[] body)
+		public static LambdaNode Lambda(IEnumerable<FunctionArgument> args, params NodeBase[] body)
 		{
 			return new LambdaNode {Body = Block(body), Arguments = args.ToList()};
 		}

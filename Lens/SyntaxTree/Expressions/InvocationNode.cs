@@ -46,6 +46,35 @@ namespace Lens.SyntaxTree.Expressions
 			return _Method.ReturnType;
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (_Method.IsPartiallyApplied)
+			{
+				// (expr) _ a b _
+				// is transformed into
+				// (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
+				var argDefs = new List<FunctionArgument>();
+				var argExprs = new List<NodeBase>();
+				for (var idx = 0; idx < _ArgTypes.Length; idx++)
+				{
+					if (_ArgTypes[idx] == null)
+					{
+						var argName = string.Format("<pa_{0}>", ctx.AnonymousArgId);
+						argDefs.Add(Expr.Arg(argName, _Method.ArgumentTypes[idx].FullName));
+						argExprs.Add(Expr.Get(argName));
+					}
+					else
+					{
+						argExprs.Add(Arguments[idx]);
+					}
+				}
+
+				return Expr.Lambda(argDefs, Expr.Invoke(Expression, argExprs.ToArray()));
+			}
+
+			return base.Expand(ctx, mustReturn);
+		}
+
 		private void resolveGetMember(Context ctx, GetMemberNode node)
 		{
 			_InvocationSource = node.Expression;
@@ -56,7 +85,7 @@ namespace Lens.SyntaxTree.Expressions
 			checkTypeInSafeMode(ctx, type);
 
 			if (node.TypeHints.Any())
-				_TypeHints = node.TypeHints.Select(x => x.FullSignature == "_" ? null : ctx.ResolveType(x)).ToArray();
+				_TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
 
 			try
 			{
@@ -85,7 +114,7 @@ namespace Lens.SyntaxTree.Expressions
 				}
 				catch (KeyNotFoundException) { }
 
-				// resolve a callable field
+				// resolve a callable property
 				try
 				{
 					ctx.ResolveProperty(type, node.MemberName);
@@ -94,40 +123,44 @@ namespace Lens.SyntaxTree.Expressions
 				}
 				catch (KeyNotFoundException) { }
 
-				// resolve a local function that is implicitly used as an extension method
-				// move invocation source to arguments
-				if (Arguments[0] is UnitNode)
-					Arguments[0] = _InvocationSource;
-				else
-					Arguments.Insert(0, _InvocationSource);
-
-				var oldArgTypes = _ArgTypes;
-				_ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
-				_InvocationSource = null;
-
 				try
 				{
-					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, _ArgTypes);
+					// resolve a local function that is implicitly used as an extension method
+					var movedArgs = new List<NodeBase> { _InvocationSource };
+					if(!(Arguments[0] is UnitNode))
+						movedArgs.AddRange(Arguments);
+
+					var argTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
+
+					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, argTypes);
+
+					// if no exception has occured, move invocation source to argument list permanently
+					_ArgTypes = argTypes;
+					_InvocationSource = null;
+
+					return;
+				}
+				catch (KeyNotFoundException) { }
+
+				// resolve a declared extension method
+				// most time-consuming operation, therefore is last checked
+				try
+				{
+					if(ctx.Options.AllowExtensionMethods)
+						_Method = ctx.ResolveExtensionMethod(type, node.MemberName, _ArgTypes, _TypeHints);
 				}
 				catch (KeyNotFoundException)
 				{
-					// resolve a declared extension method
-					// most time-consuming operation, therefore is last checked
-					if(ctx.Options.AllowExtensionMethods)
-						_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, _TypeHints);
+					var msg = node.StaticType != null
+						? CompilerMessages.TypeStaticMethodNotFound
+						: CompilerMessages.TypeMethodNotFound;
+
+					error(msg, type, node.MemberName);
 				}
 			}
 			catch (AmbiguousMatchException)
 			{
 				error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
-			}
-			catch (KeyNotFoundException)
-			{
-				var msg = node.StaticType != null
-					? CompilerMessages.TypeStaticMethodNotFound
-					: CompilerMessages.TypeMethodNotFound;
-
-				error(msg, type, node.MemberName);
 			}
 		}
 

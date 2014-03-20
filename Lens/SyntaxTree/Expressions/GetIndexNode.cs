@@ -14,12 +14,12 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
-		private MethodWrapper m_Getter;
+		private MethodWrapper _Getter;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var exprType = Expression.Resolve(ctx);
 			if (exprType.IsArray)
@@ -28,8 +28,8 @@ namespace Lens.SyntaxTree.Expressions
 			var idxType = Index.Resolve(ctx);
 			try
 			{
-				m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
-				return m_Getter.ReturnType;
+				_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				return _Getter.ReturnType;
 			}
 			catch (LensCompilerException ex)
 			{
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileCustom(Context ctx)
 		{
-			var retType = m_Getter.ReturnType;
+			var retType = _Getter.ReturnType;
 			if(RefArgumentRequired && retType.IsValueType)
 				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
@@ -84,9 +84,9 @@ namespace Lens.SyntaxTree.Expressions
 
 			Expression.Emit(ctx, true);
 
-			Expr.Cast(Index, m_Getter.ArgumentTypes[0]).Emit(ctx, true);
+			Expr.Cast(Index, _Getter.ArgumentTypes[0]).Emit(ctx, true);
 
-			gen.EmitCall(m_Getter.MethodInfo);
+			gen.EmitCall(_Getter.MethodInfo);
 		}
 
 		public override string ToString()

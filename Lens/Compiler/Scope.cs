@@ -74,10 +74,10 @@ namespace Lens.Compiler
 		/// </summary>
 		public void CreateClosureType(Context ctx)
 		{
-			var id = ctx.GetClosureId();
+			var id = ctx.ClosureId;
 			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, id);
 			ClosureTypeId = id;
-			ClosureType = ctx.CreateType(closureName, isSealed: true, prepare: true);
+			ClosureType = ctx.CreateType(closureName, isSealed: true);
 			ClosureType.Kind = TypeEntityKind.Closure;
 		}
 

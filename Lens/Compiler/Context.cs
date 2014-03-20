@@ -53,7 +53,7 @@ namespace Lens.Compiler
 
 			AssemblyName an;
 			lock(typeof(Context))
-				an = new AssemblyName(string.Format("_CompiledAssembly{0}", ++_AssemblyId));
+				an = new AssemblyName(string.Format("_CompiledAssembly{0}", AssemblyId));
 
 			if (Options.AllowSave)
 			{
@@ -101,15 +101,6 @@ namespace Lens.Compiler
 		public static void Error(LocationEntity ent, string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args), ent);
-		}
-
-		/// <summary>
-		/// Returns unique closure id.
-		/// </summary>
-		[DebuggerStepThrough]
-		public int GetClosureId()
-		{
-			return ++_ClosureId;
 		}
 
 		#region Properties
@@ -203,16 +194,6 @@ namespace Lens.Compiler
 		#region Fields
 
 		/// <summary>
-		/// The counter that allows multiple assemblies.
-		/// </summary>
-		private static int _AssemblyId;
-
-		/// <summary>
-		/// The counter for closure object ID generation.
-		/// </summary>
-		private int _ClosureId;
-
-		/// <summary>
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
 		private readonly TypeResolver _TypeResolver;
@@ -235,6 +216,19 @@ namespace Lens.Compiler
 		private readonly List<TypeEntity> _UnpreparedTypes = new List<TypeEntity>();
 		private readonly List<IPreparableEntity> _UnpreparedTypeContents = new List<IPreparableEntity>();
 		private readonly List<MethodEntityBase> _UnprocessedMethods = new List<MethodEntityBase>();
+
+		#endregion
+
+		#region Counters
+
+		private static int _AssemblyId;
+		private static int AssemblyId { get { return ++_AssemblyId; } }
+
+		private int _ClosureId;
+		public int ClosureId { get { return ++_ClosureId; } }
+
+		private int _AnonymousArgId;
+		public int AnonymousArgId { get { return ++_AnonymousArgId; } }
 
 		#endregion
 	}
