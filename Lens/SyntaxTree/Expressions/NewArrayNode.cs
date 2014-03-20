@@ -12,15 +12,15 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class NewArrayNode : ValueListNodeBase<NodeBase>
 	{
-		private Type m_ItemType;
+		private Type _ItemType;
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Expressions.Count == 0)
 				error(CompilerMessages.ArrayEmpty);
 
-			m_ItemType = resolveItemType(Expressions, ctx);
-			return m_ItemType.MakeArrayType();
+			_ItemType = resolveItemType(Expressions, ctx);
+			return _ItemType.MakeArrayType();
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Expressions
 			// create array
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateArray(m_ItemType);
+			gen.EmitCreateArray(_ItemType);
 			gen.EmitSaveLocal(tmpVar);
 
 			for (var idx = 0; idx < count; idx++)
@@ -45,24 +45,24 @@ namespace Lens.SyntaxTree.Expressions
 
 				ctx.CheckTypedExpression(Expressions[idx], currType, true);
 
-				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, m_ItemType);
+				if (!_ItemType.IsExtendablyAssignableFrom(currType))
+					error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, _ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				gen.EmitConstant(idx);
 
-				var cast = Expr.Cast(Expressions[idx], m_ItemType);
+				var cast = Expr.Cast(Expressions[idx], _ItemType);
 
-				if (m_ItemType.IsValueType)
+				if (_ItemType.IsValueType)
 				{
-					gen.EmitLoadIndex(m_ItemType, true);
+					gen.EmitLoadIndex(_ItemType, true);
 					cast.Emit(ctx, true);
-					gen.EmitSaveObject(m_ItemType);
+					gen.EmitSaveObject(_ItemType);
 				}
 				else
 				{
 					cast.Emit(ctx, true);
-					gen.EmitSaveIndex(m_ItemType);
+					gen.EmitSaveIndex(_ItemType);
 				}
 			}
 

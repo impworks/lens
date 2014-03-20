@@ -12,22 +12,22 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class GetIdentifierNode : IdentifierNodeBase, IPointerProvider
 	{
-		private MethodEntity m_Method;
-		private GlobalPropertyInfo m_Property;
-		private LocalName m_LocalConstant;
+		private MethodEntity _Method;
+		private GlobalPropertyInfo _Property;
+		private LocalName _LocalConstant;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
 
-		public override bool IsConstant { get { return m_LocalConstant != null; } }
-		public override dynamic ConstantValue { get { return m_LocalConstant != null ? m_LocalConstant.ConstantValue : base.ConstantValue; } }
+		public override bool IsConstant { get { return _LocalConstant != null; } }
+		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
 
 		public GetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
 		}
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (local != null)
@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Expressions
 				// only local constants are cached
 				// because mutable variables could be closured later on
 				if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
-					m_LocalConstant = local;
+					_LocalConstant = local;
 
 				return local.Type;
 			}
@@ -46,15 +46,15 @@ namespace Lens.SyntaxTree.Expressions
 				if (methods.Length > 1)
 					error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
-				m_Method = methods[0];
-				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.GetArgumentTypes(ctx));
+				_Method = methods[0];
+				return FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.GetArgumentTypes(ctx));
 			}
 			catch (KeyNotFoundException) { }
 
 			try
 			{
-				m_Property = ctx.ResolveGlobalProperty(Identifier);
-				return m_Property.PropertyType;
+				_Property = ctx.ResolveGlobalProperty(Identifier);
+				return _Property.PropertyType;
 			}
 			catch (KeyNotFoundException)
 			{
@@ -94,28 +94,28 @@ namespace Lens.SyntaxTree.Expressions
 			}
 
 			// load pointer to global function
-			if (m_Method != null)
+			if (_Method != null)
 			{
 				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
+				gen.EmitLoadFunctionPointer(_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 
 				return;
 			}
 
 			// get a property value
-			if (m_Property != null)
+			if (_Property != null)
 			{
-				var id = m_Property.PropertyId;
-				if(!m_Property.HasGetter)
+				var id = _Property.PropertyId;
+				if(!_Property.HasGetter)
 					error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
-				var type = m_Property.PropertyType;
-				if (m_Property.GetterMethod != null)
+				var type = _Property.PropertyType;
+				if (_Property.GetterMethod != null)
 				{
-					gen.EmitCall(m_Property.GetterMethod.MethodInfo);
+					gen.EmitCall(_Property.GetterMethod.MethodInfo);
 				}
 				else
 				{

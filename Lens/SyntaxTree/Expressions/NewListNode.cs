@@ -12,16 +12,16 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		private Type m_ItemType;
+		private Type _ItemType;
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Expressions.Count == 0)
 				error(CompilerMessages.ListEmpty);
 
-			m_ItemType = resolveItemType(Expressions, ctx);
+			_ItemType = resolveItemType(Expressions, ctx);
 
-			return typeof(List<>).MakeGenericType(m_ItemType);
+			return typeof(List<>).MakeGenericType(_ItemType);
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Expressions
 			
 			var listType = Resolve(ctx);
 			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
-			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { m_ItemType });
+			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { _ItemType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
@@ -49,8 +49,8 @@ namespace Lens.SyntaxTree.Expressions
 
 				ctx.CheckTypedExpression(curr, currType, true);
 
-				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
+				if (!_ItemType.IsExtendablyAssignableFrom(currType))
+					error(curr, CompilerMessages.ListElementTypeMismatch, currType, _ItemType);
 
 				gen.EmitLoadLocal(tmpVar);
 				

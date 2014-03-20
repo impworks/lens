@@ -12,9 +12,9 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class NewTupleNode : ValueListNodeBase<NodeBase>
 	{
-		private Type[] m_Types;
+		private Type[] _Types;
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (Expressions.Count == 0)
 				error(CompilerMessages.TupleNoArgs);
@@ -31,8 +31,8 @@ namespace Lens.SyntaxTree.Expressions
 				types.Add(type);
 			}
 
-			m_Types = types.ToArray();
-			return FunctionalHelper.CreateTupleType(m_Types);
+			_Types = types.ToArray();
+			return FunctionalHelper.CreateTupleType(_Types);
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.Expressions
 			foreach(var curr in Expressions)
 				curr.Emit(ctx, true);
 
-			var ctor = ctx.ResolveConstructor(tupleType, m_Types);
+			var ctor = ctx.ResolveConstructor(tupleType, _Types);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 

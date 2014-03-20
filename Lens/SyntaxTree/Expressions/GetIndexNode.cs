@@ -46,9 +46,6 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			// ensure validation
-			Resolve(ctx);
-
 			var exprType = Expression.Resolve(ctx);
 
 			if (exprType.IsArray)
@@ -78,17 +75,16 @@ namespace Lens.SyntaxTree.Expressions
 
 			var gen = ctx.CurrentILGenerator;
 
-			if (Expression is IPointerProvider)
+			var ptrExpr = Expression as IPointerProvider;
+			if (ptrExpr != null)
 			{
-				var expr = Expression as IPointerProvider;
-				expr.PointerRequired = PointerRequired;
-				expr.RefArgumentRequired = RefArgumentRequired;
+				ptrExpr.PointerRequired = PointerRequired;
+				ptrExpr.RefArgumentRequired = RefArgumentRequired;
 			}
 
 			Expression.Emit(ctx, true);
 
-			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);
-			cast.Emit(ctx, true);
+			Expr.Cast(Index, m_Getter.ArgumentTypes[0]).Emit(ctx, true);
 
 			gen.EmitCall(m_Getter.MethodInfo);
 		}

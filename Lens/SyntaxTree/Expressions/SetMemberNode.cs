@@ -10,9 +10,9 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetMemberNode : MemberNodeBase
 	{
-		private bool m_IsStatic;
-		private PropertyWrapper m_Property;
-		private FieldWrapper m_Field;
+		private bool _IsStatic;
+		private PropertyWrapper _Property;
+		private FieldWrapper _Field;
 
 		/// <summary>
 		/// Value to be assigned.
@@ -23,37 +23,6 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Value, x => Value = x);
-		}
-
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			resolve(ctx);
-
-			var gen = ctx.CurrentILGenerator;
-
-			var destType = m_Field != null ? m_Field.FieldType : m_Property.PropertyType;
-			var valType = Value.Resolve(ctx);
-
-			ctx.CheckTypedExpression(Value, valType, true);
-
-			if(!destType.IsExtendablyAssignableFrom(valType))
-				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
-
-			if (!m_IsStatic)
-			{
-				var exprType = Expression.Resolve(ctx);
-				if (Expression is IPointerProvider && exprType.IsStruct())
-					(Expression as IPointerProvider).PointerRequired = true;
-
-				Expression.Emit(ctx, true);
-			}
-
-			Expr.Cast(Value, destType).Emit(ctx, true);
-
-			if(m_Field != null)
-				gen.EmitSaveField(m_Field.FieldInfo);
-			else
-				gen.EmitCall(m_Property.Setter, true);
 		}
 
 		private void resolve(Context ctx)
@@ -67,9 +36,9 @@ namespace Lens.SyntaxTree.Expressions
 			// check for field
 			try
 			{
-				m_Field = ctx.ResolveField(type, MemberName);
-				m_IsStatic = m_Field.IsStatic;
-				if (Expression == null && !m_IsStatic)
+				_Field = ctx.ResolveField(type, MemberName);
+				_IsStatic = _Field.IsStatic;
+				if (Expression == null && !_IsStatic)
 					error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 
 				return;
@@ -78,18 +47,47 @@ namespace Lens.SyntaxTree.Expressions
 
 			try
 			{
-				m_Property = ctx.ResolveProperty(type, MemberName);
-				if(!m_Property.CanSet)
+				_Property = ctx.ResolveProperty(type, MemberName);
+				if(!_Property.CanSet)
 					error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
-				m_IsStatic = m_Property.IsStatic;
-				if (Expression == null && !m_IsStatic)
+				_IsStatic = _Property.IsStatic;
+				if (Expression == null && !_IsStatic)
 					error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
 				error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
 			}
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentILGenerator;
+
+			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
+			var valType = Value.Resolve(ctx);
+
+			ctx.CheckTypedExpression(Value, valType, true);
+
+			if (!destType.IsExtendablyAssignableFrom(valType))
+				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
+
+			if (!_IsStatic)
+			{
+				var exprType = Expression.Resolve(ctx);
+				if (Expression is IPointerProvider && exprType.IsStruct())
+					(Expression as IPointerProvider).PointerRequired = true;
+
+				Expression.Emit(ctx, true);
+			}
+
+			Expr.Cast(Value, destType).Emit(ctx, true);
+
+			if (_Field != null)
+				gen.EmitSaveField(_Field.FieldInfo);
+			else
+				gen.EmitCall(_Property.Setter, true);
 		}
 
 		#region Equality members
