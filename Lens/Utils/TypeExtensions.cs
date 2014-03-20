@@ -617,12 +617,18 @@ namespace Lens.Utils
 			var calleeIter = calleeArgs.GetEnumerator();
 
 			var totalDist = 0;
-			while (passedIter.MoveNext())
+			while (true)
 			{
-				// there's more arguments passed than the method accepts:
-				// the method cannot be applied
-				if (!calleeIter.MoveNext())
+				var passedOk = passedIter.MoveNext();
+				var calleeOk = calleeIter.MoveNext();
+
+				// argument count differs: method cannot be applied
+				if (passedOk != calleeOk)
 					return int.MaxValue;
+
+				// both sequences have finished
+				if (!calleeOk)
+					return totalDist;
 
 				// argument type skipped with underscore: matches any type, therefore distance does not increase
 				if (passedIter.Current == null)
@@ -634,8 +640,6 @@ namespace Lens.Utils
 
 				totalDist += dist;
 			}
-
-			return totalDist;
 		}
 	}
 }
