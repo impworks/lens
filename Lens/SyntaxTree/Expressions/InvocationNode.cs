@@ -130,7 +130,7 @@ namespace Lens.SyntaxTree.Expressions
 					if(!(Arguments[0] is UnitNode))
 						movedArgs.AddRange(Arguments);
 
-					var argTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
+					var argTypes = movedArgs.Select(a => a.Resolve(ctx)).ToArray();
 
 					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, argTypes);
 
@@ -218,7 +218,15 @@ namespace Lens.SyntaxTree.Expressions
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return new[] {new NodeChild(Expression, x => Expression = x)}.Union(Arguments.Select((arg, i) => new NodeChild(arg, x => Arguments[i] = x)));
+			var canExpandExpr = !(Expression is GetIdentifierNode || Expression is GetMemberNode);
+			if(canExpandExpr)
+				yield return new NodeChild(Expression, x => Expression = x);
+
+			for (var idx = 0; idx < Arguments.Count; idx++)
+			{
+				var id = idx;
+				yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
+			}
 		}
 
 		#region Compile

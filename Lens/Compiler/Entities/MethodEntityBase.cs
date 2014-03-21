@@ -99,9 +99,11 @@ namespace Lens.Compiler.Entities
 
 			var oldMethod = ctx.CurrentMethod;
 			var oldFrame = ctx.CurrentScopeFrame;
+			var oldType = ctx.CurrentType;
 
 			ctx.CurrentMethod = this;
 			ctx.CurrentScopeFrame = Scope.RootFrame;
+			ctx.CurrentType = ContainerType;
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
 
@@ -109,6 +111,7 @@ namespace Lens.Compiler.Entities
 			
 			ctx.CurrentMethod = oldMethod;
 			ctx.CurrentScopeFrame = oldFrame;
+			ctx.CurrentType = oldType;
 		}
 
 		/// <summary>
@@ -179,9 +182,13 @@ namespace Lens.Compiler.Entities
 			if (Arguments == null)
 				return;
 
-			foreach(var arg in Arguments.Values)
-				if(arg.Name == "_")
+			foreach (var arg in Arguments.Values)
+			{
+				if (arg.Name == "_")
 					Context.Error(arg, CompilerMessages.UnderscoreName);
+
+				Scope.RootFrame.DeclareName(arg.Name, arg.GetArgumentType(ctx), true, arg.IsRefArgument);
+			}
 		}
 	}
 }

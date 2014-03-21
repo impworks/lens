@@ -13,14 +13,6 @@ namespace Lens.Compiler
 		#region Methods
 
 		/// <summary>
-		/// Marks an type contents entity (field, method, etc.) as waiting for preparation
-		/// </summary>
-		internal void RegisterUnpreparedTypeContents(IPreparableEntity ent)
-		{
-			_UnpreparedTypeContents.Add(ent);
-		}
-
-		/// <summary>
 		/// Creates a new type entity with given name.
 		/// </summary>
 		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false, bool defaultCtor = true, bool prepare = true)
@@ -75,7 +67,7 @@ namespace Lens.Compiler
 			if (prepare)
 				te.PrepareSelf();
 			else
-				_UnpreparedTypes.Add(te);
+				UnpreparedTypes.Add(te);
 
 			if (defaultCtor)
 				te.CreateConstructor(null, prepare);

@@ -15,6 +15,7 @@ namespace Lens.SyntaxTree.Expressions
 		private MethodEntity _Method;
 		private GlobalPropertyInfo _Property;
 		private LocalName _LocalConstant;
+		private TypeEntity _Type;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
@@ -27,8 +28,17 @@ namespace Lens.SyntaxTree.Expressions
 			Identifier = identifier;
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (_Type != null)
+				return Expr.New(_Type.TypeInfo);
+
+			return base.Expand(ctx, mustReturn);
+		}
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
+			// local variable
 			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
 			if (local != null)
 			{
@@ -40,6 +50,7 @@ namespace Lens.SyntaxTree.Expressions
 				return local.Type;
 			}
 
+			// static function declared in the script
 			try
 			{
 				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
@@ -51,6 +62,20 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			catch (KeyNotFoundException) { }
 
+			// algebraic type without a constructor
+			var type = ctx.FindType(Identifier);
+			if (type != null && type.Kind == TypeEntityKind.TypeLabel)
+			{
+				try
+				{
+					type.ResolveConstructor(new Type[0]);
+					_Type = type;
+					return _Type.TypeInfo;
+				}
+				catch (KeyNotFoundException) { }
+			}
+
+			// global property
 			try
 			{
 				_Property = ctx.ResolveGlobalProperty(Identifier);

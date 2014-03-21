@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -68,9 +69,10 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		public virtual void Transform(Context ctx, bool mustReturn)
 		{
-			foreach (var child in GetChildren())
+			var children = GetChildren().ToArray();
+			foreach (var child in children)
 			{
-				if (child == null)
+				if (child == null || child.Node == null)
 					continue;
 
 				child.Node.Resolve(ctx, mustReturn);
@@ -104,7 +106,7 @@ namespace Lens.SyntaxTree
 		public virtual void ProcessClosures(Context ctx)
 		{
 			foreach (var child in GetChildren())
-				if (child != null)
+				if (child != null && child.Node != null)
 					child.Node.ProcessClosures(ctx);
 		}
 

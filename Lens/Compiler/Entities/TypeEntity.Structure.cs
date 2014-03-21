@@ -34,7 +34,7 @@ namespace Lens.Compiler.Entities
 
 			if (check)
 			{
-				_MethodList.Add(me);
+				Context.UnprocessedMethods.Add(me);
 			}
 			else
 			{
@@ -109,14 +109,40 @@ namespace Lens.Compiler.Entities
 				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
 				ContainerType = this,
 			};
+
 			_Constructors.Add(ce);
+			Context.UnprocessedMethods.Add(ce);
 
 			if (prepare)
 				ce.PrepareSelf();
 			else
-				Context.RegisterUnpreparedTypeContents(ce);
+				Context.UnpreparedTypeContents.Add(ce);
 
 			return ce;
+		}
+
+		/// <summary>
+		/// Invokes generation of FieldBuilder, MethodBuilder and ConstructorBuilder objects for type members.
+		/// </summary>
+		public void CheckMethod(MethodEntity method)
+		{
+			try
+			{
+				// exception is good
+				ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
+
+				if (this == Context.MainType)
+					Context.Error(CompilerMessages.FunctionRedefinition, method.Name);
+				else
+					Context.Error(CompilerMessages.MethodRedefinition, method.Name, Name);
+			}
+			catch (KeyNotFoundException)
+			{
+				if (!_Methods.ContainsKey(method.Name))
+					_Methods.Add(method.Name, new List<MethodEntity> { method });
+				else
+					_Methods[method.Name].Add(method);
+			}
 		}
 
 		#endregion
@@ -129,7 +155,7 @@ namespace Lens.Compiler.Entities
 		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare, Action<FieldEntity> extraInit = null)
 		{
 			if (_Fields.ContainsKey(name))
-				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
+				Context.Error(CompilerMessages.FieldRedefinition, Name, name);
 
 			var fe = new FieldEntity
 			{
@@ -146,7 +172,7 @@ namespace Lens.Compiler.Entities
 			if (prepare)
 				fe.PrepareSelf();
 			else
-				Context.RegisterUnpreparedTypeContents(fe);
+				Context.UnpreparedTypeContents.Add(fe);
 
 			return fe;
 		}
@@ -164,7 +190,7 @@ namespace Lens.Compiler.Entities
 				ContainerType = this,
 			};
 
-			_MethodList.Add(me);
+			Context.UnprocessedMethods.Add(me);
 
 			if (extraInit != null)
 				extraInit(me);
@@ -172,7 +198,7 @@ namespace Lens.Compiler.Entities
 			if (prepare)
 				me.PrepareSelf();
 			else
-				Context.RegisterUnpreparedTypeContents(me);
+				Context.UnpreparedTypeContents.Add(me);
 
 			return me;
 		}

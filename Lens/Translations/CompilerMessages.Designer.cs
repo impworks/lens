@@ -358,6 +358,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; already contains field named &apos;{1}&apos;!.
+        /// </summary>
+        public static string FieldRedefinition {
+            get {
+                return ResourceManager.GetString("FieldRedefinition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; cannot be used as range limit because it is not an integer!.
         /// </summary>
         public static string ForeachRangeNotInteger {

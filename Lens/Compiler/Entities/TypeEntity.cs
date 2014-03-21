@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
@@ -18,7 +17,6 @@ namespace Lens.Compiler.Entities
 			_Fields = new Dictionary<string, FieldEntity>();
 			_Methods = new Dictionary<string, List<MethodEntity>>();
 			_Constructors = new List<ConstructorEntity>();
-			_MethodList = new List<MethodEntity>();
 
 			ClosureMethodId = 1;
 		}
@@ -28,8 +26,6 @@ namespace Lens.Compiler.Entities
 		private readonly Dictionary<string, FieldEntity> _Fields;
 		private readonly Dictionary<string, List<MethodEntity>> _Methods;
 		private readonly List<ConstructorEntity> _Constructors;
-
-		private readonly List<MethodEntity> _MethodList;
 
 		#region Properties
 
@@ -114,39 +110,6 @@ namespace Lens.Compiler.Entities
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
-		}
-
-		/// <summary>
-		/// Invokes generation of FieldBuilder, MethodBuilder and ConstructorBuilder objects for type members.
-		/// </summary>
-		public void PrepareMembers()
-		{
-			foreach (var method in _MethodList)
-			{
-				method.PrepareSelf();
-
-				MethodEntity mi = null;
-				try
-				{
-					mi = ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
-				}
-				catch (KeyNotFoundException) { }
-
-				if (mi != null)
-				{
-					if(this == Context.MainType)
-						Context.Error(CompilerMessages.FunctionRedefinition, method.Name);
-					else
-						Context.Error(CompilerMessages.MethodRedefinition, method.Name, Name);
-				}
-
-				if(!_Methods.ContainsKey(method.Name))
-					_Methods.Add(method.Name, new List<MethodEntity>());
-
-				_Methods[method.Name].Add(method);
-			}
-
-			_MethodList.Clear();
 		}
 
 		/// <summary>

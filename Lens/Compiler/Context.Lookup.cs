@@ -12,6 +12,17 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		/// <summary>
+		/// Finds a locally declared type.
+		/// </summary>
+		public TypeEntity FindType(string name)
+		{
+			TypeEntity declared;
+			_DefinedTypes.TryGetValue(name, out declared);
+			return declared;
+		}
+
+
+		/// <summary>
 		/// Resolves a type by its string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>
@@ -28,8 +39,8 @@ namespace Lens.Compiler
 			if (allowUnspecified && signature.FullSignature == "_")
 				return null;
 
-			TypeEntity declared;
-			return _DefinedTypes.TryGetValue(signature.FullSignature, out declared)
+			var declared = FindType(signature.FullSignature);
+			return declared != null
 				? declared.TypeInfo
 				: _TypeResolver.ResolveType(signature);
 		}

@@ -12,6 +12,8 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetIdentifierNode : IdentifierNodeBase
 	{
+		private GlobalPropertyInfo _Property;
+
 		public SetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
@@ -28,15 +30,8 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			yield return new NodeChild(Value, x => Value = x);
-		}
-
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentILGenerator;
-
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
@@ -48,52 +43,73 @@ namespace Lens.SyntaxTree.Expressions
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
 					error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
-
-				if (nameInfo.IsClosured)
+			}
+			else
+			{
+				try
 				{
-					if (nameInfo.ClosureDistance == 0)
-						assignClosuredLocal(ctx, nameInfo);
-					else
-						assignClosuredRemote(ctx, nameInfo);
-				}
-				else
-				{
-					assignLocal(ctx, nameInfo);
-				}
+					_Property = ctx.ResolveGlobalProperty(Identifier);
 
-				return;
+					if (!_Property.HasSetter)
+						error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
+
+					if (!_Property.PropertyType.IsExtendablyAssignableFrom(exprType))
+						error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, _Property.PropertyType);
+				}
+				catch (KeyNotFoundException)
+				{
+					error(CompilerMessages.VariableNotFound, Identifier);
+				}
 			}
 
-			try
+			return base.resolve(ctx, mustReturn);
+		}
+
+		public override IEnumerable<NodeChild> GetChildren()
+		{
+			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentILGenerator;
+			var type = Value.Resolve(ctx);
+
+			if (_Property != null)
 			{
-				var pty = ctx.ResolveGlobalProperty(Identifier);
-
-				if(!pty.HasSetter)
-					error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
-
-				var type = pty.PropertyType;
-				if(!type.IsExtendablyAssignableFrom(exprType))
-					error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
-
 				var cast = Expr.Cast(Value, type);
-				if (pty.SetterMethod != null)
+				if (_Property.SetterMethod != null)
 				{
 					cast.Emit(ctx, true);
-					gen.EmitCall(pty.SetterMethod.MethodInfo);
+					gen.EmitCall(_Property.SetterMethod.MethodInfo);
 				}
 				else
 				{
 					var method = typeof (GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
 
 					gen.EmitConstant(ctx.ContextId);
-					gen.EmitConstant(pty.PropertyId);
+					gen.EmitConstant(_Property.PropertyId);
 					Expr.Cast(Value, type).Emit(ctx, true);
 					gen.EmitCall(method);
 				}
 			}
-			catch (KeyNotFoundException)
+			else
 			{
-				error(CompilerMessages.VariableNotFound, Identifier);
+				var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+				if (nameInfo != null)
+				{
+					if (nameInfo.IsClosured)
+					{
+						if (nameInfo.ClosureDistance == 0)
+							assignClosuredLocal(ctx, nameInfo);
+						else
+							assignClosuredRemote(ctx, nameInfo);
+					}
+					else
+					{
+						assignLocal(ctx, nameInfo);
+					}
+				}
 			}
 		}
 

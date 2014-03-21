@@ -31,7 +31,6 @@ namespace Lens.Compiler
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
-			Namespaces = new Dictionary<string, bool>();
 			if (Options.UseDefaultNamespaces)
 			{
 				Namespaces.Add("System", true);
@@ -71,11 +70,10 @@ namespace Lens.Compiler
 
 			ContextId = GlobalPropertyHelper.RegisterContext();
 
-			MainType = CreateType(EntityNames.MainTypeName);
+			MainType = CreateType(EntityNames.MainTypeName, prepare: false);
 			MainType.Kind = TypeEntityKind.Main;
 			MainType.Interfaces = new[] {typeof (IScript)};
-			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true);
-			MainMethod.ReturnType = typeof (object);
+			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true, false);
 
 			if(Options.LoadStandardLibrary)
 				InitStdlib();
@@ -187,7 +185,11 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The list of namespaces to only look in when resolving a type or an extension method.
 		/// </summary>
-		internal Dictionary<string, bool> Namespaces;
+		internal Dictionary<string, bool> Namespaces = new Dictionary<string, bool>();
+
+		internal readonly List<TypeEntity> UnpreparedTypes = new List<TypeEntity>();
+		internal readonly List<IPreparableEntity> UnpreparedTypeContents = new List<IPreparableEntity>();
+		internal readonly List<MethodEntityBase> UnprocessedMethods = new List<MethodEntityBase>();
 
 		#endregion
 
@@ -212,10 +214,6 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
-
-		private readonly List<TypeEntity> _UnpreparedTypes = new List<TypeEntity>();
-		private readonly List<IPreparableEntity> _UnpreparedTypeContents = new List<IPreparableEntity>();
-		private readonly List<MethodEntityBase> _UnprocessedMethods = new List<MethodEntityBase>();
 
 		#endregion
 

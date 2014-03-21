@@ -86,7 +86,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodEntity CreateClosureMethod(Context ctx, ScopeFrame currFrame, IEnumerable<FunctionArgument> args, TypeSignature returnType = null)
 		{
-			return createClosureMethodInternal(ctx, currFrame, name => ClosureType.CreateMethod(name, returnType ?? "Unit", args));
+			return createClosureMethodInternal(ctx, currFrame, name => ClosureType.CreateMethod(name, returnType, args));
 		}
 
 		/// <summary>

@@ -361,7 +361,7 @@
     <value>Значение свойства '{0}.{1}' не может быть получено!</value>
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
-    <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
+    <value>Значение свойства '{0}.{1}' не может быть задано!</value>
   </data>
   <data name="PropertyValuetypeRef" xml:space="preserve">
     <value>Нельзя использовать свойство '{0}.{1}' в качестве значения для ref-параметра, поскольку возвращаемый им тип '{2}' передается по значению!</value>
@@ -467,5 +467,8 @@
   </data>
   <data name="TypeStaticMethodNotFound" xml:space="preserve">
     <value>Тип '{0}' не содержит метод '{1}' с подходящим списком аргументов!</value>
+  </data>
+  <data name="FieldRedefinition" xml:space="preserve">
+    <value>Тип '{0}' уже содержит поле '{1}'!</value>
   </data>
 </root>
