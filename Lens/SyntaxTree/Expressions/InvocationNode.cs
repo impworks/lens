@@ -135,6 +135,7 @@ namespace Lens.SyntaxTree.Expressions
 					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, argTypes);
 
 					// if no exception has occured, move invocation source to argument list permanently
+					Arguments = movedArgs;
 					_ArgTypes = argTypes;
 					_InvocationSource = null;
 
