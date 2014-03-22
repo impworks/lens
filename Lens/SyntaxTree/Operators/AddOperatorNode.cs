@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.Operators
 					return Expr.Invoke("string", "Concat", LeftOperand, RightOperand);
 			}
 
-			return null;
+			return mathExpand(LeftOperand, RightOperand) ?? mathExpand(RightOperand, LeftOperand);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -52,6 +52,14 @@ namespace Lens.SyntaxTree.Operators
 				error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
+		}
+
+		private static NodeBase mathExpand(NodeBase one, NodeBase other)
+		{
+			if (one.IsConstant && one.ConstantValue == 0)
+				return other;
+
+			return null;
 		}
 	}
 }

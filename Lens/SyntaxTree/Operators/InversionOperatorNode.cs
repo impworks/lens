@@ -18,6 +18,15 @@ namespace Lens.SyntaxTree.Operators
 			return CastOperatorNode.IsImplicitlyBoolean(Operand.Resolve(ctx)) ? typeof (bool) : null;
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			var op = Operand as InversionOperatorNode;
+			if (op != null)
+				return op.Operand;
+
+			return base.Expand(ctx, mustReturn);
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentILGenerator;

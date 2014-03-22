@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -31,7 +32,7 @@ namespace Lens.SyntaxTree.Operators
 					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
 			}
 
-			return null;
+			return mathExpand(LeftOperand, RightOperand, false) ?? mathExpand(RightOperand, LeftOperand, true);
 		}
 
 		protected override void compileOperator(Context ctx)
@@ -46,6 +47,18 @@ namespace Lens.SyntaxTree.Operators
 				return left.Replace(right, "");
 
 			return left - right;
+		}
+
+		private static NodeBase mathExpand(NodeBase one, NodeBase other, bool inv)
+		{
+			if (one.IsConstant)
+			{
+				var value = one.ConstantValue;
+				if (TypeExtensions.IsNumericType(value.GetType()) && value == 0)
+					return inv ? other : Expr.Negate(other);
+			}
+
+			return null;
 		}
 	}
 }

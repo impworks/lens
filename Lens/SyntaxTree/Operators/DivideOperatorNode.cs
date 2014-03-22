@@ -18,6 +18,14 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Division"; }
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
+				return LeftOperand;
+
+			return base.Expand(ctx, mustReturn);
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
