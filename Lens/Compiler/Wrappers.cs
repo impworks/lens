@@ -17,7 +17,10 @@ namespace Lens.Compiler
 			IsVirtual = info.IsVirtual;
 			IsStatic = info.IsStatic;
 			ReturnType = info.ReturnType;
-			ArgumentTypes = info.GetParameters().Select(p => p.ParameterType).ToArray();
+
+			var args = info.GetParameters();
+			ArgumentTypes = args.Select(p => p.ParameterType).ToArray();
+			IsVariadic = args[args.Length - 1].IsDefined(typeof (ParamArrayAttribute), true);
 		}
 
 		public string Name;
@@ -25,6 +28,7 @@ namespace Lens.Compiler
 		public bool IsVirtual;
 		public bool IsStatic;
 		public bool IsPartiallyApplied;
+		public bool IsVariadic;
 		public MethodInfo MethodInfo;
 		public Type ReturnType;
 		public Type[] ArgumentTypes;
