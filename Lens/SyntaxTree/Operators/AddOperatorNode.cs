@@ -1,6 +1,7 @@
 ﻿using System;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -56,8 +57,12 @@ namespace Lens.SyntaxTree.Operators
 
 		private static NodeBase mathExpand(NodeBase one, NodeBase other)
 		{
-			if (one.IsConstant && one.ConstantValue == 0)
-				return other;
+			if (one.IsConstant)
+			{
+				var value = one.ConstantValue;
+				if(TypeExtensions.IsNumericType(value.GetType()) && value == 0)
+					return other;
+			}
 
 			return null;
 		}

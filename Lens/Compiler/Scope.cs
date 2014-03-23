@@ -21,14 +21,14 @@ namespace Lens.Compiler
 		public TypeEntity ClosureType { get; private set; }
 
 		/// <summary>
-		/// The ID for the type closured in current scope.
-		/// </summary>
-		public int? ClosureTypeId { get; private set; }
-
-		/// <summary>
 		/// The local variable ID that stores a pointer to current closure object.
 		/// </summary>
 		public LocalName ClosureVariable { get; private set; }
+
+		/// <summary>
+		/// The name of the closure type.
+		/// </summary>
+		public string ClosureTypeName { get; private set; }
 
 		/// <summary>
 		/// The base frame of current scope, in which arguments are declared.
@@ -74,10 +74,8 @@ namespace Lens.Compiler
 		/// </summary>
 		public void CreateClosureType(Context ctx)
 		{
-			var id = ctx.ClosureId;
-			var closureName = string.Format(EntityNames.ClosureTypeNameTemplate, id);
-			ClosureTypeId = id;
-			ClosureType = ctx.CreateType(closureName, isSealed: true);
+			ClosureTypeName = ctx.Unique.ClosureName;
+			ClosureType = ctx.CreateType(ClosureTypeName, isSealed: true);
 			ClosureType.Kind = TypeEntityKind.Closure;
 		}
 
@@ -145,7 +143,7 @@ namespace Lens.Compiler
 
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)
-				ClosureVariable = RootFrame.DeclareInternalName(string.Format(EntityNames.ClosureInstanceVariableNameTemplate, ClosureTypeId), ctx, ClosureType.TypeBuilder, false);
+				ClosureVariable = RootFrame.DeclareInternalName(string.Format(EntityNames.ClosureInstanceVariableNameTemplate, ClosureTypeName), ctx, ClosureType.TypeBuilder, false);
 		}
 
 		/// <summary>

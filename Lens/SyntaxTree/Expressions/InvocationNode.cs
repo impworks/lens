@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.Expressions
 				{
 					if (_ArgTypes[idx] == null)
 					{
-						var argName = string.Format("<pa_{0}>", ctx.AnonymousArgId);
+						var argName = string.Format("<pa_{0}>", ctx.Unique.AnonymousArgName);
 						argDefs.Add(Expr.Arg(argName, _Method.ArgumentTypes[idx].FullName));
 						argExprs.Add(Expr.Get(argName));
 					}

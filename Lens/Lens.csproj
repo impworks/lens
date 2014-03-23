@@ -75,6 +75,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />
     <Compile Include="Compiler\Context.Import.cs" />
     <Compile Include="Compiler\Context.SafeMode.cs" />

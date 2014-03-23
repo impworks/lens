@@ -31,6 +31,8 @@ namespace Lens.Compiler
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
+			Unique = new UniqueNameGenerator();
+
 			if (Options.UseDefaultNamespaces)
 			{
 				Namespaces.Add("System", true);
@@ -52,7 +54,7 @@ namespace Lens.Compiler
 
 			AssemblyName an;
 			lock(typeof(Context))
-				an = new AssemblyName(string.Format("_CompiledAssembly{0}", AssemblyId));
+				an = new AssemblyName(Unique.AssemblyName);
 
 			if (Options.AllowSave)
 			{
@@ -187,6 +189,8 @@ namespace Lens.Compiler
 		/// </summary>
 		internal Dictionary<string, bool> Namespaces = new Dictionary<string, bool>();
 
+		internal readonly UniqueNameGenerator Unique;
+
 		internal readonly List<TypeEntity> UnpreparedTypes = new List<TypeEntity>();
 		internal readonly List<IPreparableEntity> UnpreparedTypeContents = new List<IPreparableEntity>();
 		internal readonly List<MethodEntityBase> UnprocessedMethods = new List<MethodEntityBase>();
@@ -214,19 +218,6 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
-
-		#endregion
-
-		#region Counters
-
-		private static int _AssemblyId;
-		private static int AssemblyId { get { return ++_AssemblyId; } }
-
-		private int _ClosureId;
-		public int ClosureId { get { return ++_ClosureId; } }
-
-		private int _AnonymousArgId;
-		public int AnonymousArgId { get { return ++_AnonymousArgId; } }
 
 		#endregion
 	}

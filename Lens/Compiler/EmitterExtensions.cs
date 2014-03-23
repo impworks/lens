@@ -237,17 +237,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Shift the value X bits left.
 		/// </summary>
-		public static void EmitShiftLeft(this ILGenerator gen)
+		public static void EmitShift(this ILGenerator gen, bool isLeft)
 		{
-			gen.Emit(OpCodes.Shl);
-		}
-
-		/// <summary>
-		/// Shift the value X bits right.
-		/// </summary>
-		public static void EmitShiftRight(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Shr);
+			gen.Emit(isLeft ? OpCodes.Shl : OpCodes.Shr);
 		}
 
 		/// <summary>

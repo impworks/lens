@@ -47,11 +47,15 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.CurrentScopeFrame = outerFrame;
 		}
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var retType = Body.Resolve(ctx);
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
-			return FunctionalHelper.CreateDelegateType(retType, argTypes);
+			return withScope(ctx, () =>
+			    {
+				    var retType = Body.Resolve(ctx);
+				    var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
+				    return FunctionalHelper.CreateDelegateType(retType, argTypes);
+			    }
+			);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
@@ -66,6 +70,21 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
+		}
+
+		private T withScope<T>(Context ctx, Func<T> act)
+		{
+			var sf = new ScopeFrame {OuterFrame = ctx.CurrentScopeFrame, Scope = ctx.CurrentScope};
+			foreach (var curr in Arguments)
+				sf.DeclareName(curr.Name, curr.GetArgumentType(ctx), true, curr.IsRefArgument);
+
+			var backup = ctx.CurrentScopeFrame;
+			ctx.CurrentScopeFrame = sf;
+
+			var result = act();
+
+			ctx.CurrentScopeFrame = backup;
+			return result;
 		}
 	}
 }
