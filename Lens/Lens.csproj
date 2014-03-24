@@ -213,6 +213,7 @@
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
     <Compile Include="Compiler\LocalName.cs" />
+    <Compile Include="Utils\MethodLookupResult.cs" />
     <Compile Include="Utils\NodeChild.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>

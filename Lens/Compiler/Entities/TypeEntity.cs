@@ -178,7 +178,13 @@ namespace Lens.Compiler.Entities
 			if (!_Methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 
-			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
+			var info = Context.ResolveMethodByArgs(
+				group,
+				m => m.GetArgumentTypes(Context),
+				m => m.IsVariadic,
+				args
+			);
+
 			if(exact && info.Distance != 0)
 				throw new KeyNotFoundException();
 
@@ -202,7 +208,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
-			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
+			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), c => false, args);
 			return info.Method;
 		}
 

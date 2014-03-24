@@ -611,7 +611,22 @@ namespace Lens.Utils
 		/// <summary>
 		/// Gets total distance between two sets of argument types.
 		/// </summary>
-		public static int CompoundDistance(IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
+		public static MethodLookupResult<T> ArgumentDistance<T>(IEnumerable<Type> passedTypes, Func<T, Type[]> getter, T method, bool isVariadic)
+		{
+			var calleeTypes = getter(method);
+			var simpleCount = calleeTypes.Length - 1;
+
+			var distance = isVariadic
+				? TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount)) + variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount])
+				: TypeListDistance(passedTypes, calleeTypes);
+
+			return new MethodLookupResult<T>(method, distance, calleeTypes);
+		}
+
+		/// <summary>
+		/// Gets total distance between two sequence of types.
+		/// </summary>
+		public static int TypeListDistance(IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
 		{
 			var passedIter = passedArgs.GetEnumerator();
 			var calleeIter = calleeArgs.GetEnumerator();
@@ -640,6 +655,16 @@ namespace Lens.Utils
 
 				totalDist += dist;
 			}
+		}
+
+		private static int variadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadic)
+		{
+			var max = 0;
+
+			foreach (var curr in passedArgs)
+				max = Math.Max(curr.DistanceFrom(variadic), max);
+
+			return max;
 		}
 	}
 }

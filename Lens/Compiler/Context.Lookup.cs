@@ -180,11 +180,11 @@ namespace Lens.Compiler
 			try
 			{
 				var ctor = ResolveMethodByArgs(
-					type.GetConstructors(), 
+					type.GetConstructors(),
 					c => c.GetParameters().Select(p => p.ParameterType).ToArray(),
+					IsVariadic,
 					argTypes
 				);
-
 				return new ConstructorWrapper
 				{
 					Type = type,
@@ -202,6 +202,7 @@ namespace Lens.Compiler
 				var genCtor = ResolveMethodByArgs(
 					genType.GetConstructors(),
 					c => c.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					IsVariadic,
 					argTypes
 				);
 
@@ -281,6 +282,7 @@ namespace Lens.Compiler
 				var method = ResolveMethodByArgs(
 					getMethodsFromType(type, name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
+					IsVariadic,
 					argTypes
 				);
 
@@ -317,6 +319,7 @@ namespace Lens.Compiler
 				var genMethod = ResolveMethodByArgs(
 					getMethodsFromType(genType, name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
+					IsVariadic,
 					argTypes
 				);
 
@@ -561,17 +564,13 @@ namespace Lens.Compiler
 		/// <typeparam name="T">Type of method-like entity.</typeparam>
 		/// <param name="list">List of method-like entitites.</param>
 		/// <param name="argsGetter">A function that gets method entity arguments.</param>
-		/// <param name="args">Desired argument types.</param>
-		public static MethodLookupResult<T> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
+		/// <param name="argTypes">Desired argument types.</param>
+		public static MethodLookupResult<T> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Func<T, bool> isVariadicGetter, Type[] argTypes)
 		{
-			Func<T, MethodLookupResult<T>> methodEvaluator = ent =>
-			{
-				var currArgs = argsGetter(ent);
-				var dist = TypeExtensions.CompoundDistance(args, currArgs);
-				return new MethodLookupResult<T>(ent, dist, currArgs);
-			};
-
-			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Distance).Take(2).ToArray();
+			var result = list.Select(x => TypeExtensions.ArgumentDistance(argTypes, argsGetter, x, isVariadicGetter(x)))
+							 .OrderBy(rec => rec.Distance)
+							 .Take(2) // no more than 2 is needed
+							 .ToArray();
 
 			if (result.Length == 0 || result[0].Distance == int.MaxValue)
 				throw new KeyNotFoundException();
@@ -621,18 +620,10 @@ namespace Lens.Compiler
 			return FunctionalHelper.CreateDelegateType(rt, args);
 		}
 
-		internal class MethodLookupResult<T>
+		public static bool IsVariadic(MethodBase method)
 		{
-			public readonly T Method;
-			public readonly int Distance;
-			public readonly Type[] ArgumentTypes;
-
-			public MethodLookupResult(T method, int dist, Type[] args)
-			{
-				Method = method;
-				Distance = dist;
-				ArgumentTypes = args;
-			}
+			var methodArgs = method.GetParameters();
+			return methodArgs.Length > 0 && methodArgs[methodArgs.Length - 1].IsDefined(typeof(ParamArrayAttribute), true);
 		}
 	}
 }

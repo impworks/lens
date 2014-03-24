@@ -16,6 +16,8 @@ namespace Lens.Compiler.Entities
 		#region Fields
 
 		public bool IsVirtual;
+		public bool IsVariadic;
+		public bool IsPure;
 
 		/// <summary>
 		/// The signature of method's return type.
@@ -38,8 +40,6 @@ namespace Lens.Compiler.Entities
 			get { return IsImported ? m_MethodInfo : MethodBuilder; }
 			set { m_MethodInfo = value; }
 		}
-
-		public bool IsPure;
 
 		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
 

@@ -104,7 +104,7 @@ namespace Lens.Compiler
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
 			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = TypeExtensions.CompoundDistance(methodArgs.Skip(1), args);
+			var argsDist = TypeExtensions.TypeListDistance(methodArgs.Skip(1), args);
 
 			try
 			{
