@@ -173,7 +173,10 @@ namespace Lens.Compiler
 				{
 					Type = type,
 					ConstructorInfo = ctor.ConstructorBuilder,
-					ArgumentTypes = ctor.GetArgumentTypes(this)
+					ArgumentTypes = ctor.GetArgumentTypes(this),
+
+					IsPartiallyApplied = false, // built-in ctors cannot do that
+					IsVariadic = false,
 				};
 			}
 
@@ -190,7 +193,8 @@ namespace Lens.Compiler
 					Type = type,
 					ConstructorInfo = ctor.Method,
 					ArgumentTypes = ctor.ArgumentTypes,
-					IsPartiallyApplied = detectPartialApplication(argTypes)
+					IsPartiallyApplied = isPartiallyApplied(argTypes),
+					IsVariadic = isVariadic(ctor.Method.GetParameters())
 				};
 			}
 			catch (NotSupportedException)
@@ -209,7 +213,9 @@ namespace Lens.Compiler
 				{
 					Type = type,
 					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
-					ArgumentTypes = genCtor.ArgumentTypes
+					ArgumentTypes = genCtor.ArgumentTypes,
+					IsPartiallyApplied = isPartiallyApplied(argTypes),
+					IsVariadic = isVariadic(genCtor.Method.GetParameters())
 				};
 			}
 		}
@@ -239,7 +245,8 @@ namespace Lens.Compiler
 
 					IsStatic = method.IsStatic,
 					IsVirtual = method.IsVirtual,
-					IsPartiallyApplied = detectPartialApplication(argTypes)
+					IsPartiallyApplied = isPartiallyApplied(argTypes),
+					IsVariadic = method.IsVariadic
 				};
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
@@ -304,7 +311,8 @@ namespace Lens.Compiler
 				mw.IsVirtual = mInfo.IsVirtual;
 				mw.ArgumentTypes = method.ArgumentTypes;
 				mw.ReturnType = mInfo.ReturnType;
-				mw.IsPartiallyApplied = detectPartialApplication(argTypes);
+				mw.IsPartiallyApplied = isPartiallyApplied(argTypes);
+				mw.IsVariadic = isVariadic(mInfo.GetParameters());
 
 				return mw;
 			}
@@ -349,32 +357,11 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfoOriginal.IsStatic;
 				mw.IsVirtual = mInfoOriginal.IsVirtual;
-				mw.IsPartiallyApplied = detectPartialApplication(argTypes);
+				mw.IsPartiallyApplied = isPartiallyApplied(argTypes);
+				mw.IsVariadic = isVariadic(mInfoOriginal.GetParameters());
 			}
 
 			return mw;
-		}
-
-		/// <summary>
-		/// Checks if method has been partially applied.
-		/// </summary>
-		private static bool detectPartialApplication(Type[] passedTypes)
-		{
-			return passedTypes.Contains(null);
-		}
-
-		/// <summary>
-		/// Gets all method definitions from a type or interface, working around a strange behaviour of GetMethods() called on an inteface.
-		/// </summary>
-		private static IEnumerable<MethodInfo> getMethodsFromType(Type type, string name)
-		{
-			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
-
-			var result = type.GetMethods(flags).Where(m => m.Name == name);
-			if(type.IsInterface && !result.Any())
-				result = type.GetInterfaces().SelectMany(x => getMethodsFromType(x, name));
-
-			return result;
 		}
 
 		/// <summary>
@@ -391,6 +378,7 @@ namespace Lens.Compiler
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
 			var method = _ExtensionResolver.FindExtensionMethod(type, name, argTypes);
+			var args = method.GetParameters();
 			var info = new MethodWrapper
 			{
 				Name = name,
@@ -400,7 +388,9 @@ namespace Lens.Compiler
 				IsStatic = true,
 				IsVirtual = false,
 				ReturnType = method.ReturnType,
-				ArgumentTypes = method.GetParameters().Select(p => p.ParameterType).ToArray()
+				ArgumentTypes = args.Select(p => p.ParameterType).ToArray(),
+				IsPartiallyApplied = isPartiallyApplied(argTypes),
+				IsVariadic = isVariadic(args)
 			};
 
 			if (method.IsGenericMethod)
@@ -620,6 +610,40 @@ namespace Lens.Compiler
 
 			return FunctionalHelper.CreateDelegateType(rt, args);
 		}
+
+		#region Helper methods
+
+		/// <summary>
+		/// Checks if method has been partially applied.
+		/// </summary>
+		private static bool isPartiallyApplied(Type[] passedTypes)
+		{
+			return passedTypes.Contains(null);
+		}
+
+		/// <summary>
+		/// Checks if the method has a variable number of arguments.
+		/// </summary>
+		private static bool isVariadic(ParameterInfo[] args)
+		{
+			return args.Length > 0 && args[args.Length - 1].IsDefined(typeof (ParamArrayAttribute), true);
+		}
+
+		/// <summary>
+		/// Gets all method definitions from a type or interface, working around a strange behaviour of GetMethods() called on an inteface.
+		/// </summary>
+		private static IEnumerable<MethodInfo> getMethodsFromType(Type type, string name)
+		{
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+
+			var result = type.GetMethods(flags).Where(m => m.Name == name);
+			if(type.IsInterface && !result.Any())
+				result = type.GetInterfaces().SelectMany(x => getMethodsFromType(x, name));
+
+			return result;
+		}
+
+		#endregion
 
 		internal class MethodLookupResult<T>
 		{

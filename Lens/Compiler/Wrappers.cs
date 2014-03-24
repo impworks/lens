@@ -4,7 +4,15 @@ using System.Reflection;
 
 namespace Lens.Compiler
 {
-	internal class MethodWrapper
+	internal class WrapperBase
+	{
+		public string Name;
+		public Type Type;
+
+		public bool IsStatic;
+	}
+
+	internal class MethodWrapper : WrapperBase
 	{
 		public MethodWrapper() { }
 
@@ -23,13 +31,12 @@ namespace Lens.Compiler
 			IsVariadic = args[args.Length - 1].IsDefined(typeof (ParamArrayAttribute), true);
 		}
 
-		public string Name;
-		public Type Type;
+		public MethodInfo MethodInfo;
+
 		public bool IsVirtual;
 		public bool IsStatic;
 		public bool IsPartiallyApplied;
 		public bool IsVariadic;
-		public MethodInfo MethodInfo;
 		public Type ReturnType;
 		public Type[] ArgumentTypes;
 		public Type[] GenericArguments;
@@ -40,29 +47,27 @@ namespace Lens.Compiler
 		}
 	}
 
-	internal class ConstructorWrapper
+	internal class ConstructorWrapper : WrapperBase
 	{
 		public ConstructorInfo ConstructorInfo;
-		public Type Type;
-		public Type[] ArgumentTypes;
+
 		public bool IsPartiallyApplied;
+		public bool IsVariadic;
+
+		public Type[] ArgumentTypes;
 	}
 
-	internal class FieldWrapper
+	internal class FieldWrapper : WrapperBase
 	{
-		public string Name;
 		public FieldInfo FieldInfo;
-		public bool IsStatic;
+
 		public bool IsLiteral;
-		public Type Type;
+
 		public Type FieldType;
 	}
 
-	internal class PropertyWrapper
+	internal class PropertyWrapper : WrapperBase
 	{
-		public string Name;
-		public Type Type;
-		public bool IsStatic;
 		public Type PropertyType;
 		public MethodInfo Getter;
 		public MethodInfo Setter;
