@@ -122,7 +122,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileEquality(Context ctx, Type left, Type right)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// compare two strings
 			if (left == typeof (string) && right == typeof (string))
@@ -206,7 +206,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileNullable(Context ctx, NodeBase nullValue, NodeBase otherValue)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var nullType = nullValue.Resolve(ctx);
 			var otherType = otherValue.Resolve(ctx);
@@ -219,9 +219,9 @@ namespace Lens.SyntaxTree.Operators
 			var endLabel = gen.DefineLabel();
 
 			LocalName nullVar, otherVar = null;
-			nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
+			nullVar = ctx.Scope.DeclareImplicitName(ctx, nullType, true);
 			if (otherNull)
-				otherVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, otherType, true);
+				otherVar = ctx.Scope.DeclareImplicitName(ctx, otherType, true);
 
 			// $tmp = nullValue
 			nullValue.Emit(ctx, true);
@@ -279,9 +279,9 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileHasValue(Context ctx, NodeBase nullValue)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var nullType = nullValue.Resolve(ctx);
-			var nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
+			var nullVar = ctx.Scope.DeclareImplicitName(ctx, nullType, true);
 			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Emit(ctx, true);
@@ -309,7 +309,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileRelation(Context ctx, Type left, Type right)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// string comparisons
 			if (left == typeof (string))

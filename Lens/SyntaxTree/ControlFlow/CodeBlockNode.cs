@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			withScopeFrame(ctx,
 				() =>
 			    {
-					var gen = ctx.CurrentILGenerator;
+					var gen = ctx.CurrentMethod.Generator;
 
 					for (var idx = 0; idx < Statements.Count; idx++)
 					{
@@ -80,20 +80,20 @@ namespace Lens.SyntaxTree.ControlFlow
 		private T withScopeFrame<T>(Context ctx, Func<T> action)
 		{
 			ScopeFrame.InitializeScopeFrame(ctx);
-			var oldFrame = ctx.CurrentScopeFrame;
-			ctx.CurrentScopeFrame = ScopeFrame;
+			var oldFrame = ctx.Scope;
+			ctx.Scope = ScopeFrame;
 			var result = action();
-			ctx.CurrentScopeFrame = oldFrame;
+			ctx.Scope = oldFrame;
 			return result;
 		}
 
 		private void withScopeFrame(Context ctx, Action action)
 		{
 			ScopeFrame.InitializeScopeFrame(ctx);
-			var oldFrame = ctx.CurrentScopeFrame;
-			ctx.CurrentScopeFrame = ScopeFrame;
+			var oldFrame = ctx.Scope;
+			ctx.Scope = ScopeFrame;
 			action();
-			ctx.CurrentScopeFrame = oldFrame;
+			ctx.Scope = oldFrame;
 		}
 
 		#region Equality members

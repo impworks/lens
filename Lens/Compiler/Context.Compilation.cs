@@ -118,6 +118,30 @@ namespace Lens.Compiler
 
 		#endregion
 
+		#region Scope manipulation
+
+		/// <summary>
+		/// Add a new scope to the lookup list.
+		/// </summary>
+		public void EnterScope(ScopeFrame scope)
+		{
+			scope.OuterScope = Scope;
+			Scope = scope;
+		}
+
+		/// <summary>
+		/// Remove the topmost scope from the lookup list.
+		/// </summary>
+		public void ExitScope()
+		{
+			if (Scope == null)
+				throw new InvalidOperationException("No scope to exit!");
+
+			Scope = Scope.OuterScope;
+		}
+
+		#endregion
+
 		#region Compilation helpers
 
 		/// <summary>

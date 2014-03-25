@@ -10,10 +10,9 @@ namespace Lens.Compiler
 		#region Identifier fields
 
 		private int _AssemblyId;
-
 		private int _AnonymousArgumentId;
-
 		private int _ClosureId;
+		private int _TempVariableId;
 
 		#endregion
 
@@ -31,5 +30,7 @@ namespace Lens.Compiler
 		{
 			get { return string.Format(EntityNames.AnonymousArgumentTemplate, ++_AnonymousArgumentId); }
 		}
+
+		public string 
 	}
 }

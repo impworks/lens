@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			Expr.Cast<bool>(Operand).Emit(ctx, true);
 

@@ -30,8 +30,8 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, Resolve(ctx), true);
+			var gen = ctx.CurrentMethod.Generator;
+			var tmpVar = ctx.Scope.DeclareImplicitName(ctx, Resolve(ctx), true);
 
 			// create array
 			var count = Expressions.Count;

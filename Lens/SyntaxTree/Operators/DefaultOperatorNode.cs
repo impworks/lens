@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var type = Resolve(ctx);
 
 			if(type.IsVoid())
@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.Operators
 
 			else
 			{
-				var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, Resolve(ctx), true);
+				var tmpVar = ctx.Scope.DeclareImplicitName(ctx, Resolve(ctx), true);
 
 				gen.EmitLoadLocal(tmpVar, true);
 				gen.EmitInitObject(type);

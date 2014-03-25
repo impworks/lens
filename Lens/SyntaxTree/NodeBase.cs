@@ -190,7 +190,7 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		private void emitConstant(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var value = ConstantValue;
 
 			if (value is bool)

@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.Internals
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var id = ArgumentId + (ctx.CurrentMethod.IsStatic ? 0 : 1);
 			gen.EmitLoadArgument(id);

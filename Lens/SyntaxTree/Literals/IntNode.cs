@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.Literals
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitConstant(Value);
 		}
 	}

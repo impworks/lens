@@ -48,12 +48,12 @@ namespace Lens.SyntaxTree.ControlFlow
 				error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
-				_ExceptionVariable = ctx.CurrentScopeFrame.DeclareName(ExceptionVariable, type, false);
+				_ExceptionVariable = ctx.Scope.DeclareName(ExceptionVariable, type, false);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var backup = ctx.CurrentCatchBlock;
 			ctx.CurrentCatchBlock = this;

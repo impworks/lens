@@ -98,11 +98,11 @@ namespace Lens.Compiler.Entities
 			var ctx = ContainerType.Context;
 
 			var oldMethod = ctx.CurrentMethod;
-			var oldFrame = ctx.CurrentScopeFrame;
+			var oldFrame = ctx.Scope;
 			var oldType = ctx.CurrentType;
 
 			ctx.CurrentMethod = this;
-			ctx.CurrentScopeFrame = Scope.RootFrame;
+			ctx.Scope = Scope.RootFrame;
 			ctx.CurrentType = ContainerType;
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
@@ -110,7 +110,7 @@ namespace Lens.Compiler.Entities
 			act(ctx);
 			
 			ctx.CurrentMethod = oldMethod;
-			ctx.CurrentScopeFrame = oldFrame;
+			ctx.Scope = oldFrame;
 			ctx.CurrentType = oldType;
 		}
 
@@ -127,7 +127,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		protected virtual void emitPrelude(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var closure = Scope.ClosureVariable;
 			var closureType = Scope.ClosureType;
 

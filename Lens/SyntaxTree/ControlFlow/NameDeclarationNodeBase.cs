@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 				try
 				{
-					var name = ctx.CurrentScopeFrame.DeclareName(Name, type, IsImmutable);
+					var name = ctx.Scope.DeclareName(Name, type, IsImmutable);
 					if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
 					{
 						name.IsConstant = true;
@@ -82,7 +82,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
+			var name = LocalName ?? ctx.Scope.FindName(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
 				return Expr.Unit();
 

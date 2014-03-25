@@ -46,7 +46,7 @@ namespace Lens.Compiler.Entities
 		// call default constructor
 		protected override void emitPrelude(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var ctor = typeof (object).GetConstructor(Type.EmptyTypes);
 
 			gen.EmitLoadArgument(0);

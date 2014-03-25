@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.Expressions
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			// local variable
-			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var local = LocalName ?? ctx.Scope.FindName(Identifier);
 			if (local != null)
 			{
 				// only local constants are cached
@@ -93,11 +93,11 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var resultType = Resolve(ctx);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// local name is not cached because it can be closured.
 			// if the identifier is actually a local constant, the 'compile' method is not invoked at all
-			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var local = LocalName ?? ctx.Scope.FindName(Identifier);
 			if (local != null)
 			{
 				if(local.IsImmutable && RefArgumentRequired)
@@ -160,11 +160,11 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		private void getClosuredLocal(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ClosureVariable);
 
-			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
+			var clsField = ctx.Scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
 		}
 
@@ -173,7 +173,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		private void getClosuredRemote(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitLoadArgument(0);
 
@@ -194,7 +194,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void getLocal(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var ptr = PointerRequired || RefArgumentRequired;
 
 			if (name.ArgumentId.HasValue)

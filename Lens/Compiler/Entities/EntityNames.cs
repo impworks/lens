@@ -33,11 +33,6 @@
 		public const string ImplicitVariableNameTemplate = "<loc_{0}>";
 
 		/// <summary>
-		/// The template name for a local variable that stores the pointer to current closure instance.
-		/// </summary>
-		public const string ClosureInstanceVariableNameTemplate = "<inst_{0}>";
-
-		/// <summary>
 		/// The template for closure type field names.
 		/// </summary>
 		public const string ClosureFieldNameTemplate = "<cf_{0}>";

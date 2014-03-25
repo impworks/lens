@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var tupleType = Resolve(ctx);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			foreach(var curr in Expressions)
 				curr.Emit(ctx, true);

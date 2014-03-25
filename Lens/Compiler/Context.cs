@@ -148,7 +148,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal ScopeFrame CurrentScopeFrame { get; set; }
+		internal ScopeFrame Scope { get; set; }
 
 		/// <summary>
 		/// The current most nested try block.
@@ -166,22 +166,6 @@ namespace Lens.Compiler
 		{
 			get { return CurrentMethod.CurrentCatchBlock; }
 			set { CurrentMethod.CurrentCatchBlock = value; }
-		}
-
-		/// <summary>
-		/// The lexical scope of the current scope.
-		/// </summary>
-		internal Scope CurrentScope
-		{
-			get { return CurrentMethod == null ? null : CurrentMethod.Scope; }
-		}
-
-		/// <summary>
-		/// Gets an IL Generator for current method.
-		/// </summary>
-		internal ILGenerator CurrentILGenerator
-		{
-			get { return CurrentMethod == null ? null : CurrentMethod.Generator; }
 		}
 
 		/// <summary>

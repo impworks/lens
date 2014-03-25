@@ -47,10 +47,10 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var dictType = Resolve(ctx);
 
-			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, dictType, true);
+			var tmpVar = ctx.Scope.DeclareImplicitName(ctx, dictType, true);
 
 			var ctor = ctx.ResolveConstructor(dictType, new[] {typeof (int)});
 			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { _KeyType, _ValueType });

@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var loopType = Resolve(ctx);
 			var saveLast = mustReturn && loopType.IsNotVoid();
 
@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			LocalName tmpVar = null;
 			if (saveLast)
 			{
-				tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, loopType, false);
+				tmpVar = ctx.Scope.DeclareImplicitName(ctx, loopType, false);
 				Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
 			}
 

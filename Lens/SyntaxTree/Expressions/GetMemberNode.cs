@@ -138,7 +138,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			
 			if (!_IsStatic)
 			{
@@ -152,7 +152,7 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, exprType, false);
+						var tmpVar = ctx.Scope.DeclareImplicitName(ctx, exprType, false);
 						Expression.Emit(ctx, true);
 						gen.EmitSaveLocal(tmpVar);
 						gen.EmitLoadLocal(tmpVar, true);
@@ -231,7 +231,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (PointerRequired)
 			{
-				var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _Property.PropertyType, false);
+				var tmpVar = ctx.Scope.DeclareImplicitName(ctx, _Property.PropertyType, false);
 				gen.EmitSaveLocal(tmpVar);
 				gen.EmitLoadLocal(tmpVar, true);
 			}

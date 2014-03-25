@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Expressions
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
-			var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var nameInfo = LocalName ?? ctx.Scope.FindName(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var type = Value.Resolve(ctx);
 
 			if (_Property != null)
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			else
 			{
-				var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+				var nameInfo = LocalName ?? ctx.Scope.FindName(Identifier);
 				if (nameInfo != null)
 				{
 					if (nameInfo.IsClosured)
@@ -115,7 +115,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void assignLocal(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var castNode = Expr.Cast(Value, name.Type);
 
@@ -140,13 +140,13 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		private void assignClosuredLocal(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ClosureVariable);
 			
 			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
+			var clsType = ctx.Scope.ClosureType.TypeInfo;
 			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
@@ -156,7 +156,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		private void assignClosuredRemote(Context ctx, LocalName name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitLoadArgument(0);
 

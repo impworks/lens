@@ -51,7 +51,7 @@ namespace Lens.Compiler
 			if (method.Arguments == null)
 				return;
 
-			RootFrame.OuterFrame = outerFrame;
+			RootFrame.OuterScope = outerFrame;
 
 			for(var idx = 0; idx < method.Arguments.Count; idx++)
 			{
@@ -107,7 +107,7 @@ namespace Lens.Compiler
 			ClosureType.ClosureMethodId++;
 
 			var method = creator(closureName);
-			method.Scope.RootFrame.OuterFrame = currFrame;
+			method.Scope.RootFrame.OuterScope = currFrame;
 			return method;
 		}
 
@@ -132,14 +132,14 @@ namespace Lens.Compiler
 					}
 					else
 					{
-						curr.LocalBuilder = ctx.CurrentILGenerator.DeclareLocal(curr.Type);
+						curr.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(curr.Type);
 					}
 				}
 			}
 
 			// create a field for base scope in the current type
-			if (RootFrame.OuterFrame != null && ClosureType != null)
-				ClosureType.CreateField(EntityNames.ParentScopeFieldName, RootFrame.OuterFrame.Scope.ClosureType.TypeBuilder);
+			if (RootFrame.OuterScope != null && ClosureType != null)
+				ClosureType.CreateField(EntityNames.ParentScopeFieldName, RootFrame.OuterScope.Scope.ClosureType.TypeBuilder);
 
 			// register a variable for closure instance in the scope
 			if (ClosureType != null)

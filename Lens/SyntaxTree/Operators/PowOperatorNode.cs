@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx, typeof(double));
-			ctx.CurrentILGenerator.EmitCall(_PowMethod);
+			ctx.CurrentMethod.Generator.EmitCall(_PowMethod);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

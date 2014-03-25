@@ -93,7 +93,7 @@ namespace Lens.Compiler.Entities
 
 		protected override void emitTrailer(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var actualType = Body.Resolve(ctx);
 
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())

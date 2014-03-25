@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
 			var valType = Value.Resolve(ctx);

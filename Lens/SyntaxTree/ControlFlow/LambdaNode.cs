@@ -20,14 +20,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			_Method = ctx.CurrentScopeFrame.CreateClosureMethod(ctx, Arguments);
+			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments);
 			_Method.Body = Body;
 
 			var outerMethod = ctx.CurrentMethod;
-			var outerFrame = ctx.CurrentScopeFrame;
+			var outerFrame = ctx.Scope;
 
 			ctx.CurrentMethod = _Method;
-			ctx.CurrentScopeFrame = _Method.Scope.RootFrame;
+			ctx.Scope = _Method.Scope.RootFrame;
 
 			var scope = _Method.Scope;
 			scope.InitializeScope(ctx, outerFrame);
@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			scope.FinalizeScope(ctx);
 
 			ctx.CurrentMethod = outerMethod;
-			ctx.CurrentScopeFrame = outerFrame;
+			ctx.Scope = outerFrame;
 		}
 
 		protected override Type resolve(Context ctx, bool mustReturn)
@@ -60,13 +60,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// find constructor
 			var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
-			var closureInstance = ctx.CurrentScope.ClosureVariable;
+			var closureInstance = ctx.Scope.ClosureVariable;
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
@@ -74,16 +74,16 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private T withScope<T>(Context ctx, Func<T> act)
 		{
-			var sf = new ScopeFrame {OuterFrame = ctx.CurrentScopeFrame, Scope = ctx.CurrentScope};
+			var sf = new ScopeFrame {OuterScope = ctx.Scope, Scope = ctx.Scope};
 			foreach (var curr in Arguments)
 				sf.DeclareName(curr.Name, curr.GetArgumentType(ctx), true, curr.IsRefArgument);
 
-			var backup = ctx.CurrentScopeFrame;
-			ctx.CurrentScopeFrame = sf;
+			var backup = ctx.Scope;
+			ctx.Scope = sf;
 
 			var result = act();
 
-			ctx.CurrentScopeFrame = backup;
+			ctx.Scope = backup;
 			return result;
 		}
 	}

@@ -21,43 +21,23 @@ namespace Lens.Compiler
 		public readonly Dictionary<string, LocalName> Names;
 
 		/// <summary>
-		/// The pointer to containing low-level scope.
-		/// </summary>
-		public Scope Scope;
-
-		/// <summary>
 		/// The pointer to containing frame.
 		/// </summary>
-		public ScopeFrame OuterFrame;
-
-		#region Methods
+		public ScopeFrame OuterScope;
 
 		/// <summary>
-		/// Bind the current frame settings to actual values.
+		/// Checks if this scope must create a closure class of its own instead of using parent class.
+		/// Is true for root scopes and loops.
 		/// </summary>
-		public void InitializeScopeFrame(Context ctx)
-		{
-			if (Scope != null)
-				return;
+		public readonly bool IsClosureSignificant;
 
-			Scope = ctx.CurrentScope;
-			Scope.RegisterFrame(this);
-			OuterFrame = ctx.CurrentScopeFrame;
-		}
-
-		private void checkInit()
-		{
-			if(Scope == null)
-				throw new InvalidOperationException("Scope frame is not initialized!");
-		}
+		#region Methods
 
 		/// <summary>
 		/// Gets information about a local name.
 		/// </summary>
 		public LocalName FindName(string name)
 		{
-			checkInit();
-
 			LocalName local = null;
 			find(name, (loc, idx) => local = loc.GetClosuredCopy(idx));
 			return local;
@@ -68,8 +48,6 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName DeclareName(string name, Type type, bool isConst, bool isRefArg = false)
 		{
-			checkInit();
-
 			if (find(name))
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, name));
 
@@ -84,9 +62,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName DeclareImplicitName(Context ctx, Type type, bool isConst)
 		{
-			checkInit();
-
-			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
+			var lb = ctx.CurrentMethod.Generator.DeclareLocal(type);
 			var name = string.Format(EntityNames.ImplicitVariableNameTemplate, lb.LocalIndex);
 			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
 			Names[name] = ln;
@@ -98,9 +74,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public LocalName DeclareInternalName(string name, Context ctx, Type type, bool isConst)
 		{
-			checkInit();
-
-			var lb = ctx.CurrentILGenerator.DeclareLocal(type);
+			var lb = ctx.CurrentMethod.Generator.DeclareLocal(type);
 			var ln = new LocalName(name, type, isConst) { LocalBuilder = lb };
 			Names[name] = ln;
 			return ln;
@@ -111,8 +85,6 @@ namespace Lens.Compiler
 		/// </summary>
 		public void ReferenceName(string name)
 		{
-			checkInit();
-
 			var found = find(
 				name,
 				(loc, idx) =>
@@ -140,9 +112,6 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, TypeSignature returnType = null)
 		{
-			checkInit();
-
-			return Scope.CreateClosureMethod(ctx, this, args, returnType);
 		}
 
 		/// <summary>
@@ -150,9 +119,6 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodEntity CreateClosureMethod(Context ctx, Type[] args, Type returnType = null)
 		{
-			checkInit();
-
-			return Scope.CreateClosureMethod(ctx, this, args, returnType);
 		}
 
 		/// <summary>
@@ -172,10 +138,10 @@ namespace Lens.Compiler
 					return true;
 				}
 
-				if(frame == frame.Scope.RootFrame)
+				if(frame.IsClosureSignificant)
 					idx++;
 
-				frame = frame.OuterFrame;
+				frame = frame.OuterScope;
 			}
 
 			return false;

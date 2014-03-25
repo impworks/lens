@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var fromType = Expression.Resolve(ctx);
 			var toType = Resolve(ctx);
@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Operators
 			{
 				if (toType.IsNullableType())
 				{
-					var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, toType, true);
+					var tmpVar = ctx.Scope.DeclareImplicitName(ctx, toType, true);
 					gen.EmitLoadLocal(tmpVar, true);
 					gen.EmitInitObject(toType);
 					gen.EmitLoadLocal(tmpVar);
@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Operators
 
 		private void castDelegate(Context ctx, Type from, Type to)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var toCtor = ctx.ResolveConstructor(to, new[] {typeof (object), typeof (IntPtr)});
 			var fromMethod = ctx.ResolveMethod(from, "Invoke");
