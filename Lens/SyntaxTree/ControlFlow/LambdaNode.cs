@@ -13,6 +13,11 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class LambdaNode : FunctionNodeBase
 	{
+		public LambdaNode()
+		{
+			Body = new CodeBlockNode(ScopeKind.LambdaRoot);
+		}
+
 		/// <summary>
 		/// The pointer to the method entity defined for this lambda.
 		/// </summary>
@@ -49,13 +54,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return withScope(ctx, () =>
-			    {
-				    var retType = Body.Resolve(ctx);
-				    var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
-				    return FunctionalHelper.CreateDelegateType(retType, argTypes);
-			    }
-			);
+
+			var retType = Body.Resolve(ctx);
+			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
+			return FunctionalHelper.CreateDelegateType(retType, argTypes);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
@@ -70,21 +72,6 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
-		}
-
-		private T withScope<T>(Context ctx, Func<T> act)
-		{
-			var sf = new ScopeFrame {OuterScope = ctx.Scope, Scope = ctx.Scope};
-			foreach (var curr in Arguments)
-				sf.DeclareName(curr.Name, curr.GetArgumentType(ctx), true, curr.IsRefArgument);
-
-			var backup = ctx.Scope;
-			ctx.Scope = sf;
-
-			var result = act();
-
-			ctx.Scope = backup;
-			return result;
 		}
 	}
 }

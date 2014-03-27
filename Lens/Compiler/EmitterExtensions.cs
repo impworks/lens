@@ -312,9 +312,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Loads the value of a local variable onto the stack.
 		/// </summary>
-		public static void EmitLoadLocal(this ILGenerator gen, LocalName loc, bool getPointer = false)
+		public static void EmitLoadLocal(this ILGenerator gen, LocalBuilder loc, bool getPointer = false)
 		{
-			var varId = loc.LocalId.Value;
+			var varId = loc.LocalIndex;
 
 			if (getPointer)
 			{
@@ -331,7 +331,7 @@ namespace Lens.Compiler
 					case 1: gen.Emit(OpCodes.Ldloc_1); break;
 					case 2: gen.Emit(OpCodes.Ldloc_2); break;
 					case 3: gen.Emit(OpCodes.Ldloc_3); break;
-					default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
+					default: gen.Emit(OpCodes.Ldloc, loc); break;
 				}
 			}
 		}
@@ -339,10 +339,16 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Saves the value from the stack to a local variable.
 		/// </summary>
-		public static void EmitSaveLocal(this ILGenerator gen, LocalName loc)
+		public static void EmitSaveLocal(this ILGenerator gen, LocalBuilder loc)
 		{
-			var varId = loc.LocalId.Value;
-			gen.Emit(OpCodes.Stloc, (short)varId);
+			switch (loc.LocalIndex)
+			{
+				case 0: gen.Emit(OpCodes.Stloc_0); break;
+				case 1: gen.Emit(OpCodes.Stloc_1); break;
+				case 2: gen.Emit(OpCodes.Stloc_2); break;
+				case 3: gen.Emit(OpCodes.Stloc_3); break;
+				default: gen.Emit(OpCodes.Stloc, loc); break;
+			}
 		}
 
 		/// <summary>

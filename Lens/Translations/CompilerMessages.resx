@@ -157,7 +157,7 @@
     <value>Cannot closure an implicit variable!</value>
   </data>
   <data name="ClosureRef" xml:space="preserve">
-    <value>Cannot closure a ref argument!</value>
+    <value>Cannot closure argument '{0}' because it is passed by reference!</value>
   </data>
   <data name="CodeBlockEmpty" xml:space="preserve">
     <value>Code block contains no statements!</value>

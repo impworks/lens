@@ -14,7 +14,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected FunctionNodeBase()
 		{
 			Arguments = new List<FunctionArgument>();
-			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
@@ -25,7 +24,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Function body.
 		/// </summary>
-		public CodeBlockNode Body { get; set; }
+		public CodeBlockNode Body { get; protected set; }
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{

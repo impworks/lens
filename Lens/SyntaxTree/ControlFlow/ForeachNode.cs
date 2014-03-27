@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				detectRangeType(ctx);
 
-			if (ctx.Scope.FindName(VariableName) != null)
+			if (ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
 			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
-			var iteratorVar = ctx.Scope.DeclareImplicitName(ctx, _EnumeratorType, false);
+			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
 
 			var init = Expr.Set(
 				iteratorVar,
@@ -110,7 +110,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 				if (saveLast)
 				{
-					var resultVar = ctx.Scope.DeclareImplicitName(ctx, _EnumeratorType, false);
+					var resultVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
 					return Expr.Block(
 						Expr.Try(
 							Expr.Block(
@@ -137,9 +137,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private NodeBase expandArray(Context ctx)
 		{
-			var arrayVar = ctx.Scope.DeclareImplicitName(ctx, IterableExpression.Resolve(ctx), false);
-			var idxVar = ctx.Scope.DeclareImplicitName(ctx, typeof(int), false);
-			var lenVar = ctx.Scope.DeclareImplicitName(ctx, typeof(int), false);
+			var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+			var lenVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
 
 			return Expr.Block(
 				Expr.Set(idxVar, Expr.Int(0)),
@@ -167,7 +167,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private NodeBase expandRange(Context ctx)
 		{
-			var signVar = ctx.Scope.DeclareImplicitName(ctx, _VariableType, false);
+			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
 			return Expr.Block(
 				Expr.Set(VariableName, RangeStart),
 				Expr.Set(

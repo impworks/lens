@@ -167,7 +167,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void resolveGetIdentifier(Context ctx, GetIdentifierNode node)
 		{
-			var nameInfo = ctx.Scope.FindName(node.Identifier);
+			var nameInfo = ctx.Scope.FindLocal(node.Identifier);
 			if (nameInfo != null)
 			{
 				resolveExpression(ctx, node);
@@ -249,13 +249,13 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.Scope.DeclareImplicitName(ctx, type, true);
-						gen.EmitLoadLocal(tmpVar, true);
+						var tmpVar = ctx.Scope.DeclareImplicit(ctx, type, true);
+						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 
 						_InvocationSource.Emit(ctx, true);
 						gen.EmitSaveObject(type);
 
-						gen.EmitLoadLocal(tmpVar, true);
+						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 					}
 				}
 				else

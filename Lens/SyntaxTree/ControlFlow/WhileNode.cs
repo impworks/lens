@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -11,14 +10,14 @@ namespace Lens.SyntaxTree.ControlFlow
 	{
 		public WhileNode()
 		{
-			Body = new CodeBlockNode();	
+			Body = new CodeBlockNode(ScopeKind.Loop);	
 		}
 
 		public NodeBase Condition { get; set; }
 
-		public CodeBlockNode Body { get; set; }
+		public CodeBlockNode Body { get; protected set; }
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
 		}
@@ -54,10 +53,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			var beginLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
 
-			LocalName tmpVar = null;
+			Local tmpVar = null;
 			if (saveLast)
 			{
-				tmpVar = ctx.Scope.DeclareImplicitName(ctx, loopType, false);
+				tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType, false);
 				Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
 			}
 
@@ -70,13 +69,13 @@ namespace Lens.SyntaxTree.ControlFlow
 			Body.Emit(ctx, mustReturn);
 
 			if (saveLast)
-				gen.EmitSaveLocal(tmpVar);
+				gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			gen.EmitJump(beginLabel);
 
 			gen.MarkLabel(endLabel);
 			if (saveLast)
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 			else
 				gen.EmitNop();
 		}

@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
-		private LocalName _ExceptionVariable;
+		private Local _ExceptionVariable;
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
-				_ExceptionVariable = ctx.Scope.DeclareName(ExceptionVariable, type, false);
+				_ExceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (_ExceptionVariable == null)
 				gen.EmitPop();
 			else
-				gen.EmitSaveLocal(_ExceptionVariable);
+				gen.EmitSaveLocal(_ExceptionVariable.LocalBuilder);
 
 			Code.Emit(ctx, false);
 

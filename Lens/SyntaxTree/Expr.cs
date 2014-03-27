@@ -289,14 +289,14 @@ namespace Lens.SyntaxTree
 			return new SetIdentifierNode { Identifier = name, Value = value };
 		}
 
-		public static GetIdentifierNode Get(LocalName name)
+		public static GetIdentifierNode Get(Local name)
 		{
-			return new GetIdentifierNode { LocalName = name };
+			return new GetIdentifierNode { Local = name };
 		}
 
-		public static SetIdentifierNode Set(LocalName name, NodeBase value)
+		public static SetIdentifierNode Set(Local name, NodeBase value)
 		{
-			return new SetIdentifierNode { LocalName = name, Value = value };
+			return new SetIdentifierNode { Local = name, Value = value };
 		}
 
 		public static GetMemberNode GetMember(NodeBase expr, string name, params TypeSignature[] hints)
@@ -414,9 +414,9 @@ namespace Lens.SyntaxTree
 			return new VarNode(name) { Type = type };
 		}
 
-		public static VarNode Var(LocalName name, NodeBase expr)
+		public static VarNode Var(Local name, NodeBase expr)
 		{
-			return new VarNode { LocalName = name, Value = expr };
+			return new VarNode { Local = name, Value = expr };
 		}
 
 		public static LetNode Let(string name, NodeBase expr)
@@ -424,14 +424,14 @@ namespace Lens.SyntaxTree
 			return new LetNode(name) { Value = expr };
 		}
 
-		public static LetNode Let(LocalName name, NodeBase expr)
+		public static LetNode Let(Local name, NodeBase expr)
 		{
-			return new LetNode { LocalName = name, Value = expr };
+			return new LetNode { Local = name, Value = expr };
 		}
 
 		public static WhileNode While(NodeBase condition, CodeBlockNode body)
 		{
-			return new WhileNode {Condition = condition, Body = body};
+			return new WhileNode {Condition = condition, Body = {Statements = body.Statements}};
 		}
 
 		public static IfNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
@@ -551,7 +551,7 @@ namespace Lens.SyntaxTree
 				Name = name,
 				Arguments = args.ToList(),
 				ReturnTypeSignature = type,
-				Body = Block(body),
+				Body = { Statements = body.ToList() },
 				IsPure = isPure
 			};
 		}
@@ -568,12 +568,12 @@ namespace Lens.SyntaxTree
 
 		public static LambdaNode Lambda(IEnumerable<FunctionArgument> args, params NodeBase[] body)
 		{
-			return new LambdaNode {Body = Block(body), Arguments = args.ToList()};
+			return new LambdaNode { Body = { Statements = body.ToList() }, Arguments = args.ToList() };
 		}
 
 		public static LambdaNode Lambda(params NodeBase[] body)
 		{
-			return new LambdaNode { Body = Block(body) };
+			return new LambdaNode { Body = { Statements = body.ToList() } };
 		}
 
 		#endregion

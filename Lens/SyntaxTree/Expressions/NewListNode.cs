@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.Expressions
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			var tmpVar = ctx.Scope.DeclareImplicitName(ctx, Resolve(ctx), true);
+			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 			
 			var listType = Resolve(ctx);
 			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
@@ -41,7 +41,7 @@ namespace Lens.SyntaxTree.Expressions
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar);
+			gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			foreach (var curr in Expressions)
 			{
@@ -52,13 +52,13 @@ namespace Lens.SyntaxTree.Expressions
 				if (!_ItemType.IsExtendablyAssignableFrom(currType))
 					error(curr, CompilerMessages.ListElementTypeMismatch, currType, _ItemType);
 
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				
 				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
 				gen.EmitCall(addMethod.MethodInfo);
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
 		public override string ToString()

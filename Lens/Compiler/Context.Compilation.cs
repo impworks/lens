@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Emit;
-using System.Text;
 using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
@@ -123,7 +121,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Add a new scope to the lookup list.
 		/// </summary>
-		public void EnterScope(ScopeFrame scope)
+		public void EnterScope(Scope scope)
 		{
 			scope.OuterScope = Scope;
 			Scope = scope;
@@ -132,12 +130,14 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Remove the topmost scope from the lookup list.
 		/// </summary>
-		public void ExitScope()
+		public Scope ExitScope()
 		{
 			if (Scope == null)
 				throw new InvalidOperationException("No scope to exit!");
 
+			var result = Scope;
 			Scope = Scope.OuterScope;
+			return result;
 		}
 
 		#endregion

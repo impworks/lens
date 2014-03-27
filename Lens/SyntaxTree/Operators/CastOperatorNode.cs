@@ -40,10 +40,10 @@ namespace Lens.SyntaxTree.Operators
 			{
 				if (toType.IsNullableType())
 				{
-					var tmpVar = ctx.Scope.DeclareImplicitName(ctx, toType, true);
-					gen.EmitLoadLocal(tmpVar, true);
+					var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType, true);
+					gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 					gen.EmitInitObject(toType);
-					gen.EmitLoadLocal(tmpVar);
+					gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				}
 
 				else if (!toType.IsValueType)

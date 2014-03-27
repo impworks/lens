@@ -262,7 +262,7 @@ namespace Lens.Parser
 
 			node.Arguments = attempt(() => parseFunArgs(true)) ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
-			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
 
 			return node;
 		}
@@ -734,7 +734,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.LoopBodyExpected));
 			return node;
 		}
 
@@ -822,7 +822,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Arrow))
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
 			return node;
 		}
 

@@ -6,9 +6,9 @@ namespace Lens.Compiler
 	/// <summary>
 	/// A class representing info about a local variable.
 	/// </summary>
-	internal class LocalName
+	internal class Local
 	{
-		public LocalName(string name, Type type, bool isConst = false, bool isRefArg = false)
+		public Local(string name, Type type, bool isConst = false, bool isRefArg = false)
 		{
 			Name = name;
 			Type = type;
@@ -16,7 +16,7 @@ namespace Lens.Compiler
 			IsRefArgument = isRefArg;
 		}
 
-		private LocalName(LocalName other, int dist = 0)
+		private Local(Local other, int dist = 0)
 		{
 			Name = other.Name;
 			Type = other.Type;
@@ -54,14 +54,6 @@ namespace Lens.Compiler
 		/// Does the variable represent a function argument that is passed by ref?
 		/// </summary>
 		public readonly bool IsRefArgument;
-
-		/// <summary>
-		/// The ID of the variable if it is local.
-		/// </summary>
-		public int? LocalId
-		{
-			get { return LocalBuilder == null ? (int?)null : LocalBuilder.LocalIndex; }
-		}
 
 		/// <summary>
 		/// The ID of the argument if this name represents one.
@@ -104,9 +96,9 @@ namespace Lens.Compiler
 		/// </summary>
 		/// <param name="distance"></param>
 		/// <returns></returns>
-		public LocalName GetClosuredCopy(int distance)
+		public Local GetClosuredCopy(int distance)
 		{
-			return new LocalName(this, distance);
+			return new Local(this, distance);
 		}
 	}
 }

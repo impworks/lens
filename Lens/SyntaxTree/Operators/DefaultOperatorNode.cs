@@ -66,11 +66,11 @@ namespace Lens.SyntaxTree.Operators
 
 			else
 			{
-				var tmpVar = ctx.Scope.DeclareImplicitName(ctx, Resolve(ctx), true);
+				var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
-				gen.EmitLoadLocal(tmpVar, true);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 				gen.EmitInitObject(type);
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 			}
 		}
 

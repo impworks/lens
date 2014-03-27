@@ -178,7 +178,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot closure a ref argument!.
+        ///   Looks up a localized string similar to Cannot closure argument &apos;{0}&apos; because it is passed by reference!.
         /// </summary>
         public static string ClosureRef {
             get {

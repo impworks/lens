@@ -148,7 +148,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal ScopeFrame Scope { get; set; }
+		internal Scope Scope { get; set; }
 
 		/// <summary>
 		/// The current most nested try block.

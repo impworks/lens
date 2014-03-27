@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Explicitly specified local variable.
 		/// </summary>
-		public LocalName LocalName { get; set; }
+		public Local Local { get; set; }
 
 		/// <summary>
 		/// Type signature for non-initialized variables.
@@ -56,14 +56,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			ctx.CheckTypedExpression(Value, type);
 
-			if (LocalName == null)
+			if (Local == null)
 			{
 				if (Name == "_")
 					error(CompilerMessages.UnderscoreName);
 
 				try
 				{
-					var name = ctx.Scope.DeclareName(Name, type, IsImmutable);
+					var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
 					if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
 					{
 						name.IsConstant = true;
@@ -82,14 +82,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			var name = LocalName ?? ctx.Scope.FindName(Name);
+			var name = Local ?? ctx.Scope.FindLocal(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
 				return Expr.Unit();
 
 			return new SetIdentifierNode
 			{
 				Identifier = Name,
-				LocalName = LocalName,
+				Local = Local,
 				Value = Value ?? Expr.Default(Type),
 				IsInitialization = true,
 			};

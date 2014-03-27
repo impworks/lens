@@ -75,6 +75,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\ClosureInfo.cs" />
+    <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />
     <Compile Include="Compiler\Context.Import.cs" />
@@ -86,7 +88,6 @@
     <Compile Include="Compiler\Entities\TypeEntityKind.cs" />
     <Compile Include="Compiler\SafeMode.cs" />
     <Compile Include="Compiler\SafeModeSubsystem.cs" />
-    <Compile Include="Compiler\ScopeFrame.cs" />
     <Compile Include="LensCompiler.cs" />
     <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\Entities\ConstructorEntity.cs" />
@@ -100,7 +101,6 @@
     <Compile Include="Compiler\GenericHelper.cs" />
     <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
     <Compile Include="Compiler\Entities\MethodEntity.cs" />
-    <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.cs" />
     <Compile Include="Compiler\TypeResolver.cs" />
@@ -212,7 +212,7 @@
     <Compile Include="Utils\FunctionalHelper.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
-    <Compile Include="Compiler\LocalName.cs" />
+    <Compile Include="Compiler\Local.cs" />
     <Compile Include="Utils\NodeChild.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>

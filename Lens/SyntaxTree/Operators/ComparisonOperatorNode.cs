@@ -218,29 +218,29 @@ namespace Lens.SyntaxTree.Operators
 			var falseLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
 
-			LocalName nullVar, otherVar = null;
-			nullVar = ctx.Scope.DeclareImplicitName(ctx, nullType, true);
+			Local nullVar, otherVar = null;
+			nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
 			if (otherNull)
-				otherVar = ctx.Scope.DeclareImplicitName(ctx, otherType, true);
+				otherVar = ctx.Scope.DeclareImplicit(ctx, otherType, true);
 
 			// $tmp = nullValue
 			nullValue.Emit(ctx, true);
-			gen.EmitSaveLocal(nullVar);
+			gen.EmitSaveLocal(nullVar.LocalBuilder);
 
 			if (otherNull)
 			{
 				// $tmp2 = otherValue
 				otherValue.Emit(ctx, true);
-				gen.EmitSaveLocal(otherVar);
+				gen.EmitSaveLocal(otherVar.LocalBuilder);
 			}
 
 			// $tmp == $tmp2
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(getValOrDefault);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocal(otherVar, true);
+				gen.EmitLoadLocal(otherVar.LocalBuilder, true);
 				gen.EmitCall(getValOrDefault);
 			}
 			else
@@ -251,12 +251,12 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitBranchNotEquals(falseLabel);
 
 			// otherwise, compare HasValues
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(hasValueGetter);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocal(otherVar, true);
+				gen.EmitLoadLocal(otherVar.LocalBuilder, true);
 				gen.EmitCall(hasValueGetter);
 
 				gen.EmitCompareEqual();
@@ -281,13 +281,13 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var nullType = nullValue.Resolve(ctx);
-			var nullVar = ctx.Scope.DeclareImplicitName(ctx, nullType, true);
+			var nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
 			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Emit(ctx, true);
-			gen.EmitSaveLocal(nullVar);
+			gen.EmitSaveLocal(nullVar.LocalBuilder);
 
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(hasValueGetter);
 
 			// sic! get_HasValue == true when value != null

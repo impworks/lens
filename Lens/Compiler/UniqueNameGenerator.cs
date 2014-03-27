@@ -12,6 +12,7 @@ namespace Lens.Compiler
 		private int _AssemblyId;
 		private int _AnonymousArgumentId;
 		private int _ClosureId;
+		private int _ClosureFieldId;
 		private int _TempVariableId;
 
 		#endregion
@@ -26,11 +27,19 @@ namespace Lens.Compiler
 			get { return string.Format(EntityNames.ClosureTypeNameTemplate, ++_ClosureId); }
 		}
 
+		public string ClosureFieldName
+		{
+			get { return string.Format(EntityNames.ClosureFieldNameTemplate, ++_ClosureFieldId); }
+		}
+
 		public string AnonymousArgName
 		{
 			get { return string.Format(EntityNames.AnonymousArgumentTemplate, ++_AnonymousArgumentId); }
 		}
 
-		public string 
+		public string TempVariableName
+		{
+			get { return string.Format(EntityNames.ImplicitVariableNameTemplate, ++_TempVariableId); }
+		}
 	}
 }
