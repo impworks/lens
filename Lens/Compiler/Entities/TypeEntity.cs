@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -143,7 +144,8 @@ namespace Lens.Compiler.Entities
 
 			if (this == Context.MainType)
 			{
-				foreach (var currGroup in _Methods)
+				var groups = _Methods.ToArray();
+				foreach (var currGroup in groups)
 					foreach (var currMethod in currGroup.Value)
 						if (currMethod.IsPure)
 							createPureWrapper(currMethod);		

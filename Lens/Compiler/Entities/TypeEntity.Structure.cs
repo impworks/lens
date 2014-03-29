@@ -192,9 +192,14 @@ namespace Lens.Compiler.Entities
 				extraInit(me);
 
 			if (prepare)
+			{
 				me.PrepareSelf();
+				CheckMethod(me);
+			}
 			else
+			{
 				Context.UnpreparedTypeContents.Add(me);
+			}
 
 			return me;
 		}

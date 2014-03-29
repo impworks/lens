@@ -143,7 +143,7 @@ namespace Lens.Compiler
 				scope.ClosureReferencesOuter = true;
 				scope = scope.OuterScope;
 
-				if(scope.Kind != ScopeKind.Unclosured)
+				if(scope != null && scope.Kind != ScopeKind.Unclosured)
 					isClosured = true;
 			}
 

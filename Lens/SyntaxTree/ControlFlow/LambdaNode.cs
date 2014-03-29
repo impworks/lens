@@ -13,6 +13,8 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class LambdaNode : FunctionNodeBase
 	{
+		private Scope _InterimScope;
+
 		public LambdaNode()
 		{
 			Body = new CodeBlockNode(ScopeKind.LambdaRoot);
@@ -34,20 +36,26 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
 			_Method.Body.LoadFrom(Body);
+			// _Method.Body.Scope.RegisterArguments(ctx, false, Arguments);
 
 			var outerMethod = ctx.CurrentMethod;
 			ctx.CurrentMethod = _Method;
 
-			base.ProcessClosures(ctx);
+			_Method.Body.ProcessClosures(ctx);
 
 			ctx.CurrentMethod = outerMethod;
 		}
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var retType = Body.Resolve(ctx);
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
-			return FunctionalHelper.CreateDelegateType(retType, argTypes);
+			_InterimScope = new Scope(ScopeKind.Unclosured);
+			_InterimScope.RegisterArguments(ctx, false, Arguments);
+			using (new ScopeContainer(ctx, _InterimScope))
+			{ 
+				var retType = Body.Resolve(ctx);
+				var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
+				return FunctionalHelper.CreateDelegateType(retType, argTypes);
+			}
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

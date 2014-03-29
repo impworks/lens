@@ -158,7 +158,7 @@ namespace Lens.Compiler
 			foreach (var curr in node.Entries)
 			{
 				var tagName = curr.Name;
-				var labelType = CreateType(tagName, mainType.TypeInfo, isSealed: true, defaultCtor: false, prepare: false);
+				var labelType = CreateType(tagName, node.Name, isSealed: true, defaultCtor: false, prepare: false);
 				labelType.Kind = TypeEntityKind.TypeLabel;
 
 				var ctor = labelType.CreateConstructor(prepare: false);
