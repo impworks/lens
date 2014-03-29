@@ -5,6 +5,11 @@
 	/// </summary>
 	internal abstract class TypeContentsBase : IPreparableEntity
 	{
+		protected TypeContentsBase(TypeEntity type)
+		{
+			ContainerType = type;
+		}
+
 		/// <summary>
 		/// The name of the current entity.
 		/// </summary>
@@ -13,7 +18,7 @@
 		/// <summary>
 		/// The type that contains current entity.
 		/// </summary>
-		public TypeEntity ContainerType { get; set; }
+		public readonly TypeEntity ContainerType;
 
 		/// <summary>
 		/// Creates the assembly instances for the current entity.

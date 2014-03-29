@@ -25,36 +25,26 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override void ProcessClosures(Context ctx)
 		{
-			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments);
-			_Method.Body = Body;
-
-			var outerMethod = ctx.CurrentMethod;
-			var outerFrame = ctx.Scope;
-
-			ctx.CurrentMethod = _Method;
-			ctx.Scope = _Method.Scope.RootFrame;
-
-			var scope = _Method.Scope;
-			scope.InitializeScope(ctx, outerFrame);
-			base.ProcessClosures(ctx);
-			
 			// get evaluated return type
 			var retType = Body.Resolve(ctx);
-			if(retType == typeof(NullType))
+			if (retType == typeof(NullType))
 				error(CompilerMessages.LambdaReturnTypeUnknown);
+			if (retType.IsVoid())
+				retType = typeof (void);
 
-			_Method.ReturnType = retType.IsVoid() ? typeof(void) : retType;
-			_Method.PrepareSelf();
+			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
+			_Method.Body.LoadFrom(Body);
 
-			scope.FinalizeScope(ctx);
+			var outerMethod = ctx.CurrentMethod;
+			ctx.CurrentMethod = _Method;
+
+			base.ProcessClosures(ctx);
 
 			ctx.CurrentMethod = outerMethod;
-			ctx.Scope = outerFrame;
 		}
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-
 			var retType = Body.Resolve(ctx);
 			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
 			return FunctionalHelper.CreateDelegateType(retType, argTypes);

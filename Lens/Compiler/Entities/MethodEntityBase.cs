@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.ControlFlow;
-using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.Compiler.Entities
@@ -13,9 +11,8 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	abstract internal class MethodEntityBase : TypeContentsBase
 	{
-		protected MethodEntityBase(bool isImported = false)
+		protected MethodEntityBase(TypeEntity type, bool isImported = false) : base(type)
 		{
-			Body = new CodeBlockNode();
 			Arguments = new HashList<FunctionArgument>();
 
 			IsImported = isImported;
@@ -53,8 +50,11 @@ namespace Lens.Compiler.Entities
 		{
 			withContext(ctx =>
 				{
-					checkArguments(ctx);
+					Body.Scope.RegisterArguments(ctx, IsStatic, Arguments.Values);
+
+					ctx.EnterScope(Body.Scope);
 					Body.Transform(ctx, !IsVoid);
+					ctx.ExitScope();
 				}
 			);
 		}
@@ -67,7 +67,6 @@ namespace Lens.Compiler.Entities
 		public void ProcessClosures()
 		{
 			withContext(ctx => Body.ProcessClosures(ctx));
-			Body.Scope.FinalizeSelf(ContainerType.Context);
 		}
 
 		/// <summary>
@@ -98,11 +97,7 @@ namespace Lens.Compiler.Entities
 			CurrentTryBlock = null;
 			CurrentCatchBlock = null;
 
-			ctx.EnterScope(Body.Scope);
-
 			act(ctx);
-
-			ctx.ExitScope();
 			
 			ctx.CurrentMethod = oldMethod;
 			ctx.CurrentType = oldType;
@@ -124,23 +119,5 @@ namespace Lens.Compiler.Entities
 
 		protected virtual void emitTrailer(Context ctx)
 		{ }
-
-		private void checkArguments(Context ctx)
-		{
-			if (Arguments == null)
-				return;
-
-			var idx = IsStatic ? 0 : 1;
-			foreach (var arg in Arguments.Values)
-			{
-				if (arg.Name == "_")
-					Context.Error(arg, CompilerMessages.UnderscoreName);
-
-				var local = new Local(arg.Name, arg.GetArgumentType(ctx), true, arg.IsRefArgument) {ArgumentId = idx};
-				Body.Scope.DeclareLocal(local);
-
-				idx++;
-			}
-		}
 	}
 }

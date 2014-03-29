@@ -12,6 +12,7 @@ namespace Lens.Compiler
 		private int _AssemblyId;
 		private int _AnonymousArgumentId;
 		private int _ClosureId;
+		private int _ClosureMethodId;
 		private int _ClosureFieldId;
 		private int _TempVariableId;
 
@@ -25,6 +26,11 @@ namespace Lens.Compiler
 		public string ClosureName
 		{
 			get { return string.Format(EntityNames.ClosureTypeNameTemplate, ++_ClosureId); }
+		}
+
+		public string ClosureMethodName
+		{
+			get { return string.Format(EntityNames.ClosureMethodNameTemplate, ++_ClosureMethodId); }
 		}
 
 		public string ClosureFieldName

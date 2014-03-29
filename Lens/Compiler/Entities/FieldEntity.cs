@@ -9,6 +9,11 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	internal class FieldEntity : TypeContentsBase
 	{
+		public FieldEntity(TypeEntity type) : base(type)
+		{
+			
+		}
+
 		#region Fields
 
 		/// <summary>

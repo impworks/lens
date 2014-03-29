@@ -51,6 +51,27 @@ namespace Lens.Compiler
 		#region Methods
 
 		/// <summary>
+		/// Imports all arguments into the scope.
+		/// </summary>
+		public void RegisterArguments(Context ctx, bool isStatic, IEnumerable<FunctionArgument> args)
+		{
+			if (args == null)
+				return;
+
+			var idx = isStatic ? 0 : 1;
+			foreach (var arg in args)
+			{
+				if (arg.Name == "_")
+					Context.Error(arg, CompilerMessages.UnderscoreName);
+
+				var local = new Local(arg.Name, arg.GetArgumentType(ctx), true, arg.IsRefArgument) { ArgumentId = idx };
+				DeclareLocal(local);
+
+				idx++;
+			}
+		}
+
+		/// <summary>
 		/// Adds a new local name to current scope.
 		/// </summary>
 		public Local DeclareLocal(string name, Type type, bool isConst, bool isRefArg = false)
@@ -76,7 +97,9 @@ namespace Lens.Compiler
 		/// </summary>
 		public Local DeclareImplicit(Context ctx, Type type, bool isConst)
 		{
-			return DeclareLocal(ctx.Unique.TempVariableName, type, isConst);
+			var local = DeclareLocal(ctx.Unique.TempVariableName, type, isConst);
+			local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type);
+			return local;
 		}
 
 		/// <summary>
@@ -97,7 +120,7 @@ namespace Lens.Compiler
 				scope = scope.OuterScope;
 			}
 
-			throw new LensCompilerException(string.Format(CompilerMessages.VariableNotFound, name));
+			return null;
 		}
 
 		/// <summary>
@@ -112,11 +135,7 @@ namespace Lens.Compiler
 				if (scope.Locals.ContainsKey(name))
 				{
 					if (isClosured)
-					{
-						var closurable = findScope(s => s.Kind != ScopeKind.Unclosured, scope);
-						closurable.ClosureType = ctx.CreateType(ctx.Unique.ClosureName);
-						closurable.ClosureType.Kind = TypeEntityKind.Closure;
-					}
+						createClosureType(ctx, scope);
 
 					return;
 				}
@@ -137,7 +156,7 @@ namespace Lens.Compiler
 		public void FinalizeSelf(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			var closure = findScope(s => s.ClosureType != null).ClosureType;
+			var closure = findScope(s => s.ClosureType != null);
 
 			// create entities for variables to be excluded
 			foreach (var curr in Locals.Values)
@@ -148,7 +167,7 @@ namespace Lens.Compiler
 				if (curr.IsClosured)
 				{
 					curr.ClosureFieldName = ctx.Unique.ClosureFieldName;
-					closure.CreateField(curr.ClosureFieldName, curr.Type);
+					closure.ClosureType.CreateField(curr.ClosureFieldName, curr.Type);
 				}
 				else
 				{
@@ -169,6 +188,15 @@ namespace Lens.Compiler
 			}
 		}
 
+		/// <summary>
+		/// Declares a new anonymous method in the current closure class.
+		/// </summary>
+		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
+		{
+			var closure = createClosureType(ctx);
+			return closure.CreateMethod(ctx.Unique.ClosureMethodName, returnType.FullName, args);
+		}
+
 		#endregion
 
 		#region Helpers
@@ -187,7 +215,21 @@ namespace Lens.Compiler
 				curr = curr.OuterScope;
 			}
 
-			throw new InvalidOperationException("No closure declared! WTF?");
+			return null;
+		}
+
+		/// <summary>
+		/// Creates a closure type in the closest appropriate scope.
+		/// </summary>
+		private TypeEntity createClosureType(Context ctx, Scope scope = null)
+		{
+			var cscope = findScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
+			if (cscope.ClosureType == null)
+			{
+				cscope.ClosureType = ctx.CreateType(ctx.Unique.ClosureName);
+				cscope.ClosureType.Kind = TypeEntityKind.Closure;
+			}
+			return cscope.ClosureType;
 		}
 
 		#endregion

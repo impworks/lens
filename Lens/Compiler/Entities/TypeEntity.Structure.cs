@@ -20,13 +20,12 @@ namespace Lens.Compiler.Entities
 				Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
 			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
-			var me = new MethodEntity
+			var me = new MethodEntity(this)
 			{
 				Name = name,
 				IsImported = true,
 				IsStatic = true,
 				IsVirtual = false,
-				ContainerType = this,
 				MethodInfo = mi,
 				ReturnType = mi.ReturnType,
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
@@ -104,10 +103,9 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = true)
 		{
-			var ce = new ConstructorEntity
+			var ce = new ConstructorEntity(this)
 			{
 				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
-				ContainerType = this,
 			};
 
 			_Constructors.Add(ce);
@@ -157,11 +155,10 @@ namespace Lens.Compiler.Entities
 			if (_Fields.ContainsKey(name))
 				Context.Error(CompilerMessages.FieldRedefinition, Name, name);
 
-			var fe = new FieldEntity
+			var fe = new FieldEntity(this)
 			{
 				Name = name,
 				IsStatic = isStatic,
-				ContainerType = this,
 			};
 
 			_Fields.Add(name, fe);
@@ -182,12 +179,11 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, Action<MethodEntity> extraInit = null)
 		{
-			var me = new MethodEntity
+			var me = new MethodEntity(this)
 			{
 				Name = name,
 				IsStatic = isStatic,
 				IsVirtual = isVirtual,
-				ContainerType = this,
 			};
 
 			Context.UnprocessedMethods.Add(me);

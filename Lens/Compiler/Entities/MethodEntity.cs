@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -10,8 +11,11 @@ namespace Lens.Compiler.Entities
 {
 	internal class MethodEntity : MethodEntityBase
 	{
-		public MethodEntity(bool isImported = false) : base(isImported)
-		{ }
+		public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
+		{
+			var scopeKind = type.Kind == TypeEntityKind.Closure ? ScopeKind.LambdaRoot : ScopeKind.FunctionRoot;
+			Body = new CodeBlockNode(scopeKind);
+		}
 
 		#region Fields
 

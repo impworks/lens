@@ -763,13 +763,7 @@ pure fun Test:int (x:int) ->
     println ""calculated""
     x * 2
 
-new [
-    Test 1
-    Test 2
-    Test 2
-    Test 3
-    Test 1
-]
+Test 1
 ";
 
 			Test(src, new[] { 2, 4, 4, 6, 2 });
