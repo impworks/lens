@@ -207,5 +207,10 @@ namespace Lens.Compiler.Entities
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 }

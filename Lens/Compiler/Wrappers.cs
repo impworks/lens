@@ -28,7 +28,7 @@ namespace Lens.Compiler
 
 			var args = info.GetParameters();
 			ArgumentTypes = args.Select(p => p.ParameterType).ToArray();
-			IsVariadic = args[args.Length - 1].IsDefined(typeof (ParamArrayAttribute), true);
+			IsVariadic = args.Length > 0 && args[args.Length - 1].IsDefined(typeof (ParamArrayAttribute), true);
 		}
 
 		public MethodInfo MethodInfo;

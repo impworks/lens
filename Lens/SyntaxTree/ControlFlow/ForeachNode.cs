@@ -49,7 +49,14 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
-			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
+			if (!mustReturn)
+				return typeof (Unit);
+
+			// the node is expanded, therefore we use a temporary scope to just resolve the body type.
+			var tmpScope = new Scope(ScopeKind.Unclosured);
+			tmpScope.DeclareLocal(VariableName, _VariableType, false);
+			using(new ScopeContainer(ctx, tmpScope))
+				return Body.Resolve(ctx);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
@@ -94,7 +101,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var loop = Expr.While(
 				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
-					Expr.Set(
+					Expr.Let(
 						VariableName,
 						Expr.GetMember(Expr.Get(iteratorVar), "Current")
 					),
@@ -151,7 +158,7 @@ namespace Lens.SyntaxTree.ControlFlow
 						Expr.Get(lenVar)
 					),
 					Expr.Block(
-						Expr.Set(
+						Expr.Let(
 							VariableName,
 							Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
 						),
@@ -168,28 +175,30 @@ namespace Lens.SyntaxTree.ControlFlow
 		private NodeBase expandRange(Context ctx)
 		{
 			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
 			return Expr.Block(
-				Expr.Set(VariableName, RangeStart),
+				Expr.Set(idxVar, RangeStart),
 				Expr.Set(
 					signVar,
 					Expr.Invoke(
 						"Math",
 						"Sign",
-						Expr.Sub(RangeEnd, Expr.Get(VariableName))
+						Expr.Sub(RangeEnd, Expr.Get(idxVar))
 					)
 				),
 				Expr.While(
 					Expr.If(
 						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
-						Expr.Block(Expr.LessEqual(Expr.Get(VariableName), RangeEnd)),
-						Expr.Block(Expr.GreaterEqual(Expr.Get(VariableName), RangeEnd))
+						Expr.Block(Expr.LessEqual(Expr.Get(idxVar), RangeEnd)),
+						Expr.Block(Expr.GreaterEqual(Expr.Get(idxVar), RangeEnd))
 					),
 					Expr.Block(
+						Expr.Let(VariableName, Expr.Get(idxVar)),
 						Body,
 						Expr.Set(
-							VariableName,
+							idxVar,
 							Expr.Add(
-								Expr.Get(VariableName),
+								Expr.Get(idxVar),
 								Expr.Get(signVar)
 							)
 						)

@@ -58,6 +58,11 @@ namespace Lens.Compiler.Entities
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
 		}
 
+		public override string ToString()
+		{
+			return string.Format("{2} {0}.{1}", ContainerType.Name, Name, Type != null ? Type.ToString() : TypeSignature);
+		}
+
 		#endregion
 	}
 }

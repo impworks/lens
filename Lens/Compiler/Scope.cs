@@ -64,7 +64,7 @@ namespace Lens.Compiler
 				if (arg.Name == "_")
 					Context.Error(arg, CompilerMessages.UnderscoreName);
 
-				var local = new Local(arg.Name, arg.GetArgumentType(ctx), true, arg.IsRefArgument) { ArgumentId = idx };
+				var local = new Local(arg.Name, arg.GetArgumentType(ctx), false, arg.IsRefArgument) { ArgumentId = idx };
 				DeclareLocal(local);
 
 				idx++;
@@ -262,5 +262,21 @@ namespace Lens.Compiler
 		/// Closure parent is loaded from 'this' pointer.
 		/// </summary>
 		LambdaRoot
+	}
+
+	internal class ScopeContainer : IDisposable
+	{
+		private readonly Context _Context;
+
+		public ScopeContainer(Context ctx, Scope scope)
+		{
+			_Context = ctx;
+			_Context.EnterScope(scope);
+		}
+
+		public void Dispose()
+		{
+			_Context.ExitScope();
+		}
 	}
 }

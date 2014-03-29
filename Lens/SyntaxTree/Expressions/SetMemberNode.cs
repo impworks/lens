@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -23,6 +24,12 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			resolve(ctx);
+			return base.resolve(ctx, mustReturn);
 		}
 
 		private void resolve(Context ctx)

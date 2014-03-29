@@ -119,5 +119,10 @@ namespace Lens.Compiler.Entities
 
 		protected virtual void emitTrailer(Context ctx)
 		{ }
+
+		public override string ToString()
+		{
+			return string.Format("{0}.{1}({2})", ContainerType.Name, Name, Arguments.Count);
+		}
 	}
 }
