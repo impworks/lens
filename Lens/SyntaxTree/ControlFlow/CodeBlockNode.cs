@@ -45,6 +45,15 @@ namespace Lens.SyntaxTree.ControlFlow
 			return result;
 		}
 
+		public override void Transform(Context ctx, bool mustReturn)
+		{
+			ctx.EnterScope(Scope);
+
+			base.Transform(ctx, mustReturn);
+
+			ctx.ExitScope();
+		}
+
 		public override IEnumerable<NodeChild> GetChildren()
 		{
 			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));

@@ -117,7 +117,6 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		/// <param name="ctx">Pointer to current context.</param>
 		/// <param name="mustReturn">Flag indicating the node should return a value.</param>
-		[DebuggerStepThrough]
 		public void Emit(Context ctx, bool mustReturn)
 		{
 			if (IsConstant && ctx.Options.UnrollConstants)

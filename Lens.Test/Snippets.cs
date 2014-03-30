@@ -952,10 +952,6 @@ res
 		[Test]
 		public void ScopeNames2()
 		{
-			// You might expect [2, 4, 6] to be the result of this test -
-			// But as of now, the loop closures ARE modified.
-			// This is a major design flaw and requires rewriting the entire scope & closuring code, therefore for now it cannot be fixed.
-
 			var src = @"
 var arr = Enumerable::Range 1 3
     |> ToArray ()
@@ -963,7 +959,6 @@ var arr = Enumerable::Range 1 3
 var funcs = new List<Func<int>> ()
 for x in arr do
     funcs.Add (-> x * 2)
-
 
 funcs
     |> Select (fx:Func<int> -> fx ())

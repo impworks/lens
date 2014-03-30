@@ -142,7 +142,7 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.Scope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 			
 			Expr.Cast(Value, name.Type).Emit(ctx, true);
 

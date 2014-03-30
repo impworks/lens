@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.ControlFlow;
@@ -51,15 +52,10 @@ namespace Lens.Compiler.Entities
 			withContext(ctx =>
 				{
 					Body.Scope.RegisterArguments(ctx, IsStatic, Arguments.Values);
-
-					ctx.EnterScope(Body.Scope);
 					Body.Transform(ctx, !IsVoid);
-					ctx.ExitScope();
 				}
 			);
 		}
-
-
 
 		/// <summary>
 		/// Process closures.
@@ -85,6 +81,7 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		[DebuggerStepThrough]
 		private void withContext(Action<Context> act)
 		{
 			var ctx = ContainerType.Context;

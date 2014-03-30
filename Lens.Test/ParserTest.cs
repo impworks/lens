@@ -862,7 +862,7 @@ catch ex:DivisionByZeroException
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
 				Expr.Lambda(
-					new [] { Expr.Arg<int>("x") },
+					new [] { Expr.Arg("x", "int") },
 					Expr.Greater(
 						Expr.Get("x"),
 						Expr.Int(1)

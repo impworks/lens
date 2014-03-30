@@ -46,6 +46,14 @@ namespace Lens.Compiler
 		/// </summary>
 		public bool ClosureReferencesOuter { get; private set; }
 
+		/// <summary>
+		/// Returns the nearest scope which contains a closure.
+		/// </summary>
+		public Scope ActiveClosure
+		{
+			get { return findScope(x => x.ClosureType != null); }
+		}
+
 		#endregion
 
 		#region Methods
@@ -126,28 +134,36 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Registers a name being referenced during closure detection.
 		/// </summary>
-		public void ReferenceLocal(Context ctx, string name)
+		public bool ReferenceLocal(Context ctx, string name)
 		{
 			var scope = this;
 			var isClosured = false;
 			while (scope != null)
 			{
-				if (scope.Locals.ContainsKey(name))
+				Local local;
+				if (scope.Locals.TryGetValue(name, out local))
 				{
 					if (isClosured)
+					{
 						createClosureType(ctx, scope);
+						local.IsClosured = true;
+					}
 
-					return;
+					return true;
 				}
 
-				scope.ClosureReferencesOuter = true;
-				scope = scope.OuterScope;
+				if (scope.Kind == ScopeKind.LambdaRoot)
+				{
+					if(!isClosured)
+						isClosured = true;
+					else
+						scope.ClosureReferencesOuter = true;
+				}
 
-				if(scope != null && scope.Kind != ScopeKind.Unclosured)
-					isClosured = true;
+				scope = scope.OuterScope;
 			}
 
-			throw new LensCompilerException(string.Format(CompilerMessages.VariableNotFound, name));
+			return false;
 		}
 
 		/// <summary>

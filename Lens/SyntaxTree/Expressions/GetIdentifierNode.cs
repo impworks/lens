@@ -162,7 +162,7 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.Scope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 
 			var clsField = ctx.Scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);

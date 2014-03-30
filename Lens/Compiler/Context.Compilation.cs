@@ -123,8 +123,19 @@ namespace Lens.Compiler
 		/// </summary>
 		public void EnterScope(Scope scope)
 		{
-			scope.OuterScope = Scope;
-			Scope = scope;
+			// Debug.WriteLine("Scope: {0} => {1} ({2}.{3})", describeScope(Scope), describeScope(scope), CurrentType.Name, CurrentMethod.Name ?? "ctor");
+
+			if (Scope == null)
+			{
+				if (scope.OuterScope == null && scope.Kind != ScopeKind.FunctionRoot)
+					throw new InvalidOperationException(string.Format("Scope of kind '{0}' must have a parent!", scope.Kind));
+			}
+			else
+			{
+				scope.OuterScope = Scope;
+			}
+
+			_ScopeStack.Push(scope);
 		}
 
 		/// <summary>
@@ -135,9 +146,7 @@ namespace Lens.Compiler
 			if (Scope == null)
 				throw new InvalidOperationException("No scope to exit!");
 
-			var result = Scope;
-			Scope = Scope.OuterScope;
-			return result;
+			return _ScopeStack.Pop();
 		}
 
 		#endregion

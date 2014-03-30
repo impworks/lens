@@ -148,7 +148,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal Scope Scope { get; set; }
+		internal Scope Scope { get { return _ScopeStack.Count > 0 ? _ScopeStack.Peek() : null; } }
 
 		/// <summary>
 		/// The current most nested try block.
@@ -202,6 +202,11 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+
+		/// <summary>
+		/// The stack of currently processed scopes.
+		/// </summary>
+		private readonly Stack<Scope> _ScopeStack = new Stack<Scope>();
 
 		#endregion
 	}

@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
-			var closureInstance = ctx.Scope.ClosureVariable;
+			var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
