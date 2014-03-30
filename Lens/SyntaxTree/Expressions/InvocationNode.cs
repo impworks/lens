@@ -123,22 +123,18 @@ namespace Lens.SyntaxTree.Expressions
 				}
 				catch (KeyNotFoundException) { }
 
+				Arguments = (Arguments[0] is UnitNode)
+					? new List<NodeBase> {_InvocationSource}
+					: new[] {_InvocationSource}.Union(Arguments).ToList();
+
+				var oldArgTypes = _ArgTypes;
+				_ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
+				_InvocationSource = null;
+
 				try
 				{
 					// resolve a local function that is implicitly used as an extension method
-					var movedArgs = new List<NodeBase> { _InvocationSource };
-					if(!(Arguments[0] is UnitNode))
-						movedArgs.AddRange(Arguments);
-
-					var argTypes = movedArgs.Select(a => a.Resolve(ctx)).ToArray();
-
-					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, argTypes);
-
-					// if no exception has occured, move invocation source to argument list permanently
-					Arguments = movedArgs;
-					_ArgTypes = argTypes;
-					_InvocationSource = null;
-
+					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, _ArgTypes);
 					return;
 				}
 				catch (KeyNotFoundException) { }
@@ -147,8 +143,10 @@ namespace Lens.SyntaxTree.Expressions
 				// most time-consuming operation, therefore is last checked
 				try
 				{
-					if(ctx.Options.AllowExtensionMethods)
-						_Method = ctx.ResolveExtensionMethod(type, node.MemberName, _ArgTypes, _TypeHints);
+					if(!ctx.Options.AllowExtensionMethods)
+						throw new KeyNotFoundException();
+
+					_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, _TypeHints);
 				}
 				catch (KeyNotFoundException)
 				{
@@ -228,6 +226,14 @@ namespace Lens.SyntaxTree.Expressions
 				var id = idx;
 				yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
 			}
+		}
+
+		public override void ProcessClosures(Context ctx)
+		{
+			if(Expression is GetIdentifierNode || Expression is GetMemberNode)
+				Expression.ProcessClosures(ctx);
+
+			base.ProcessClosures(ctx);
 		}
 
 		#region Compile

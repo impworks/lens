@@ -399,6 +399,11 @@ namespace Lens.SyntaxTree
 
 		#region Control Structures
 
+		public static CodeBlockNode Block(ScopeKind scopeKind, params NodeBase[] stmts)
+		{
+			return new CodeBlockNode(scopeKind) { Statements = stmts.ToList() };
+		}
+
 		public static CodeBlockNode Block(params NodeBase[] stmts)
 		{
 			return new CodeBlockNode {Statements = stmts.ToList()};

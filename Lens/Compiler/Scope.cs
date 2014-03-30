@@ -72,7 +72,11 @@ namespace Lens.Compiler
 				if (arg.Name == "_")
 					Context.Error(arg, CompilerMessages.UnderscoreName);
 
-				var local = new Local(arg.Name, arg.GetArgumentType(ctx), false, arg.IsRefArgument) { ArgumentId = idx };
+				var argType = arg.GetArgumentType(ctx);
+				if (argType.IsByRef)
+					argType = argType.GetElementType();
+
+				var local = new Local(arg.Name, argType, false, arg.IsRefArgument) { ArgumentId = idx };
 				DeclareLocal(local);
 
 				idx++;

@@ -140,7 +140,6 @@ namespace Lens.Compiler.Entities
 			var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
 			var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
 			pure.Body = method.Body;
-			method.Body = null;
 
 			var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
 
@@ -155,7 +154,7 @@ namespace Lens.Compiler.Entities
 				createPureWrapperMany(method, pureName);
 		}
 
-		private void createPureWrapper0(MethodEntity wrapper, string originalName)
+		private void createPureWrapper0(MethodEntity wrapper, string pureName)
 		{
 			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
 			var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
@@ -163,7 +162,8 @@ namespace Lens.Compiler.Entities
 			CreateField(fieldName, wrapper.ReturnTypeSignature, true);
 			CreateField(flagName, typeof(bool), true);
 
-			wrapper.Body = Expr.Block(
+			wrapper.Body =  Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// if (not $flag) $cache = $internal (); $flag = true
 				Expr.If(
@@ -172,7 +172,7 @@ namespace Lens.Compiler.Entities
 						Expr.SetMember(
 							EntityNames.MainTypeName,
 							fieldName,
-							Expr.Invoke(EntityNames.MainTypeName, originalName)
+							Expr.Invoke(EntityNames.MainTypeName, pureName)
 						),
 						Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
 					)
@@ -183,7 +183,7 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
-		private void createPureWrapper1(MethodEntity wrapper, string originalName)
+		private void createPureWrapper1(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 			var argName = wrapper.Arguments[0].Name;
@@ -194,6 +194,7 @@ namespace Lens.Compiler.Entities
 			CreateField(fieldName, fieldType, true);
 
 			wrapper.Body = Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
 				Expr.If(
@@ -223,7 +224,7 @@ namespace Lens.Compiler.Entities
 							Expr.GetMember(EntityNames.MainTypeName, fieldName),
 							"Add",
 							Expr.Get(argName),
-							Expr.Invoke(EntityNames.MainTypeName, originalName, Expr.Get(argName))
+							Expr.Invoke(EntityNames.MainTypeName, pureName, Expr.Get(argName))
 						)
 					)
 				),
@@ -236,7 +237,7 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
-		private void createPureWrapperMany(MethodEntity wrapper, string originalName)
+		private void createPureWrapperMany(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 
@@ -250,6 +251,7 @@ namespace Lens.Compiler.Entities
 			var tupleName = "<args>";
 
 			wrapper.Body = Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// $tmp = new Tuple<...> $arg1 $arg2 ...
 				Expr.Let(tupleName, Expr.New(tupleType, argGetters)),
@@ -282,7 +284,7 @@ namespace Lens.Compiler.Entities
 							Expr.GetMember(EntityNames.MainTypeName, fieldName),
 							"Add",
 							Expr.Get(tupleName),
-							Expr.Invoke(EntityNames.MainTypeName, originalName, argGetters)
+							Expr.Invoke(EntityNames.MainTypeName, pureName, argGetters)
 						)
 					)
 				),
