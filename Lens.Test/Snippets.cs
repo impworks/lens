@@ -953,17 +953,13 @@ res
 		public void ScopeNames2()
 		{
 			var src = @"
-var arr = Enumerable::Range 1 3
-    |> ToArray ()
-
 var funcs = new List<Func<int>> ()
-for x in arr do
+for x in Enumerable::Range 1 3 do
     funcs.Add (-> x * 2)
 
-funcs
-    |> Select (fx:Func<int> -> fx ())
+funcs.Select (fx:Func<int> -> fx ())
 ";
-			Test(src, new[] { 6, 6, 6 });
+			Test(src, new[] { 2, 4, 6 });
 		}
 	}
 }

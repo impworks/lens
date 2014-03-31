@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Operators
 
 				var leftMethod = ctx.WrapDelegate(leftType);
 				return Expr.Lambda(
-					leftMethod.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName, x.FullName)),
+					leftMethod.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)),
 					body
 				);
 			}

@@ -54,7 +54,7 @@ namespace Lens.Compiler
 
 			AssemblyName an;
 			lock(typeof(Context))
-				an = new AssemblyName(Unique.AssemblyName);
+				an = new AssemblyName(Unique.AssemblyName());
 
 			if (Options.AllowSave)
 			{
@@ -176,7 +176,7 @@ namespace Lens.Compiler
 		internal readonly UniqueNameGenerator Unique;
 
 		internal readonly List<TypeEntity> UnpreparedTypes = new List<TypeEntity>();
-		internal readonly List<IPreparableEntity> UnpreparedTypeContents = new List<IPreparableEntity>();
+		internal readonly List<TypeContentsBase> UnpreparedTypeContents = new List<TypeContentsBase>();
 		internal readonly List<MethodEntityBase> UnprocessedMethods = new List<MethodEntityBase>();
 
 		#endregion

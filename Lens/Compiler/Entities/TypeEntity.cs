@@ -9,7 +9,7 @@ namespace Lens.Compiler.Entities
 	/// <summary>
 	/// Represents a type to be defined in the generated assembly.
 	/// </summary>
-	internal partial class TypeEntity : IPreparableEntity
+	internal partial class TypeEntity
 	{
 		public TypeEntity(Context ctx)
 		{

@@ -18,34 +18,34 @@ namespace Lens.Compiler
 
 		#endregion
 
-		public string AssemblyName
+		public string AssemblyName()
 		{
-			get { return string.Format(EntityNames.AssemblyNameTemplate, ++_AssemblyId); }
+			return string.Format(EntityNames.AssemblyNameTemplate, ++_AssemblyId);
 		}
 
-		public string ClosureName
+		public string ClosureName()
 		{
-			get { return string.Format(EntityNames.ClosureTypeNameTemplate, ++_ClosureId); }
+			return string.Format(EntityNames.ClosureTypeNameTemplate, ++_ClosureId);
 		}
 
-		public string ClosureMethodName
+		public string ClosureMethodName(string methodName)
 		{
-			get { return string.Format(EntityNames.ClosureMethodNameTemplate, ++_ClosureMethodId); }
+			return string.Format(EntityNames.ClosureMethodNameTemplate, methodName, ++_ClosureMethodId);
 		}
 
-		public string ClosureFieldName
+		public string ClosureFieldName(string fieldName)
 		{
-			get { return string.Format(EntityNames.ClosureFieldNameTemplate, ++_ClosureFieldId); }
+			return string.Format(EntityNames.ClosureFieldNameTemplate, fieldName, ++_ClosureFieldId);
 		}
 
-		public string AnonymousArgName
+		public string AnonymousArgName()
 		{
-			get { return string.Format(EntityNames.AnonymousArgumentTemplate, ++_AnonymousArgumentId); }
+			return string.Format(EntityNames.AnonymousArgumentTemplate, ++_AnonymousArgumentId);
 		}
 
-		public string TempVariableName
+		public string TempVariableName()
 		{
-			get { return string.Format(EntityNames.ImplicitVariableNameTemplate, ++_TempVariableId); }
+			return string.Format(EntityNames.ImplicitVariableNameTemplate, ++_TempVariableId);
 		}
 	}
 }

@@ -35,7 +35,7 @@
 		/// <summary>
 		/// The template for closure type field names.
 		/// </summary>
-		public const string ClosureFieldNameTemplate = "<cf_{0}>";
+		public const string ClosureFieldNameTemplate = "<cf_{0}_{1}>";
 
 		/// <summary>
 		/// The template for closure type names.
@@ -45,7 +45,7 @@
 		/// <summary>
 		/// The template for closure method names.
 		/// </summary>
-		public const string ClosureMethodNameTemplate = "<cm_{0}>";
+		public const string ClosureMethodNameTemplate = "<cm_{0}_{1}>";
 
 		/// <summary>
 		/// The template for pure methods.

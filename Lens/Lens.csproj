@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\ClosureInfo.cs" />
+    <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />

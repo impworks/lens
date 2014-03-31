@@ -110,7 +110,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public Local DeclareImplicit(Context ctx, Type type, bool isConst)
 		{
-			var local = DeclareLocal(ctx.Unique.TempVariableName, type, isConst);
+			var local = DeclareLocal(ctx.Unique.TempVariableName(), type, isConst);
 			local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type);
 			return local;
 		}
@@ -129,7 +129,9 @@ namespace Lens.Compiler
 				if (scope.Locals.TryGetValue(name, out local))
 					return local.GetClosuredCopy(dist);
 
-				dist++;
+				if(scope.Kind == ScopeKind.LambdaRoot)
+					dist++;
+
 				scope = scope.OuterScope;
 			}
 
@@ -187,8 +189,9 @@ namespace Lens.Compiler
 
 				if (curr.IsClosured)
 				{
-					curr.ClosureFieldName = ctx.Unique.ClosureFieldName;
-					closure.ClosureType.CreateField(curr.ClosureFieldName, curr.Type);
+					curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
+					var field = closure.ClosureType.CreateField(curr.ClosureFieldName, curr.Type);
+					field.Kind = TypeContentsKind.Closure;
 				}
 				else
 				{
@@ -215,7 +218,9 @@ namespace Lens.Compiler
 		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
 		{
 			var closure = createClosureType(ctx);
-			return closure.CreateMethod(ctx.Unique.ClosureMethodName, returnType.FullName, args);
+			var method = closure.CreateMethod(ctx.Unique.ClosureMethodName(ctx.CurrentMethod.Name), returnType.FullName, args);
+			method.Kind = TypeContentsKind.Closure;
+			return method;
 		}
 
 		#endregion
@@ -247,7 +252,7 @@ namespace Lens.Compiler
 			var cscope = findScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
 			if (cscope.ClosureType == null)
 			{
-				cscope.ClosureType = ctx.CreateType(ctx.Unique.ClosureName);
+				cscope.ClosureType = ctx.CreateType(ctx.Unique.ClosureName());
 				cscope.ClosureType.Kind = TypeEntityKind.Closure;
 			}
 			return cscope.ClosureType;
