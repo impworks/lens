@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
+    <Compile Include="Utils\ReflectionHelper.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />
@@ -94,11 +95,11 @@
     <Compile Include="Compiler\Context.cs" />
     <Compile Include="Compiler\Context.Lookup.cs" />
     <Compile Include="Compiler\Context.Structure.cs" />
-    <Compile Include="Compiler\GlobalPropertyHelper.cs" />
+    <Compile Include="Utils\GlobalPropertyHelper.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
     <Compile Include="Compiler\ExtensionMethodResolver.cs" />
     <Compile Include="Compiler\Entities\FieldEntity.cs" />
-    <Compile Include="Compiler\GenericHelper.cs" />
+    <Compile Include="Utils\GenericHelper.cs" />
     <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
     <Compile Include="Compiler\Entities\MethodEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
