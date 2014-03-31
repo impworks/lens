@@ -961,5 +961,17 @@ funcs.Select (fx:Func<int> -> fx ())
 ";
 			Test(src, new[] { 2, 4, 6 });
 		}
+
+		[Test]
+		public void PartialApplication1()
+		{
+			var src = @"
+fun add:int (x:int y:int) -> x + y
+let add2 = add 2 _
+let add3 = add _ 3
+(add2 1) + (add3 4)
+";
+			Test(src, 10);
+		}
 	}
 }
