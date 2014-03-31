@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Lens.Compiler.Entities;
 using Lens.Translations;
@@ -28,11 +29,17 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// Imports a method from a standard library.
+		/// Imports all overrides of a method specified by name.
 		/// </summary>
-		public void ImportFunctionUnchecked(string name, MethodInfo method, bool check = false)
+		/// <param name="type">Type to search in</param>
+		/// <param name="name">Name of the method in type</param>
+		/// <param name="newName">New name for overloaded functions</param>
+		public void ImportFunctionOverloads(Type type, string name, string newName)
 		{
-			_DefinedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
+			if (Options.AllowSave)
+				Error(CompilerMessages.ImportIntoSaveableAssembly);
+
+			importOverloads(type, name, newName, true);
 		}
 
 		/// <summary>
@@ -43,7 +50,7 @@ namespace Lens.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			ImportFunctionUnchecked(name, method, true);
+			importFunction(name, method, true);
 		}
 
 		/// <summary>
@@ -60,5 +67,27 @@ namespace Lens.Compiler
 			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
 			_DefinedProperties.Add(name, ent);
 		}
+
+		#region Helpers
+
+		/// <summary>
+		/// Imports a method from a standard library.
+		/// </summary>
+		private void importFunction(string name, MethodInfo method, bool check = false)
+		{
+			_DefinedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
+		}
+
+		/// <summary>
+		/// Imports all overrides of a method into standard library.
+		/// </summary>
+		private void importOverloads(Type type, string name, string newName, bool check = false)
+		{
+			var overloads = type.GetMethods().Where(m => m.Name == name);
+			foreach (var curr in overloads)
+				importFunction(newName, curr, check);
+		}
+
+		#endregion
 	}
 }

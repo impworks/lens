@@ -78,7 +78,7 @@ namespace Lens.Compiler
 			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true, false);
 
 			if(Options.LoadStandardLibrary)
-				InitStdlib();
+				initStdlib();
 
 			InitSafeMode();
 		}

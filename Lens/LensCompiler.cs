@@ -17,18 +17,23 @@ namespace Lens
 	{
 		public LensCompiler(LensCompilerOptions opts = null)
 		{
-			m_Context = new Context(opts);
+			_Context = new Context(opts);
 			Measurements = new Dictionary<string, TimeSpan>();
 		}
 
+		#region Fields
+
+		public readonly Dictionary<string, TimeSpan> Measurements;
+		private readonly Context _Context;
+
+		#endregion
+
+		#region Methods
+		
 		public void Dispose()
 		{
-			GlobalPropertyHelper.UnregisterContext(m_Context.ContextId);
+			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
 		}
-
-		public Dictionary<string, TimeSpan> Measurements;
-
-		private Context m_Context;
 
 		/// <summary>
 		/// Register a type to be used by LENS script.
@@ -46,7 +51,7 @@ namespace Lens
 			if (type == null)
 				throw new ArgumentNullException("type");
 
-			m_Context.ImportType(alias, type);
+			_Context.ImportType(alias, type);
 		}
 
 		/// <summary>
@@ -54,7 +59,15 @@ namespace Lens
 		/// </summary>
 		public void RegisterFunction(string name, MethodInfo method)
 		{
-			m_Context.ImportFunction(name, method);
+			_Context.ImportFunction(name, method);
+		}
+
+		/// <summary>
+		/// Registers a list of overloaded methods to be used by LENS script.
+		/// </summary>
+		public void RegisterFunctionOverloads(Type type, string name, string newName)
+		{
+			_Context.ImportFunctionOverloads(type, name, newName);
 		}
 
 		/// <summary>
@@ -62,7 +75,7 @@ namespace Lens
 		/// </summary>
 		public void RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
-			m_Context.ImportProperty(name, getter, setter);
+			_Context.ImportProperty(name, getter, setter);
 		}
 
 		/// <summary>
@@ -92,7 +105,7 @@ namespace Lens
 		/// </summary>
 		internal Func<object> Compile(IEnumerable<NodeBase> nodes)
 		{
-			var script = m_Context.Compile(nodes);
+			var script = _Context.Compile(nodes);
 			return script.Run;
 		}
 
@@ -112,6 +125,10 @@ namespace Lens
 			return Compile(nodes)();
 		}
 
+		#endregion
+
+		#region Helpers
+		
 		/// <summary>
 		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
 		/// </summary>
@@ -122,10 +139,12 @@ namespace Lens
 			var res = action();
 			var end = DateTime.Now;
 
-			if (m_Context.Options.MeasureTime)
+			if (_Context.Options.MeasureTime)
 				Measurements[title] = end - start;
 
 			return res;
 		}
+
+		#endregion
 	}
 }

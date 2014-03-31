@@ -116,9 +116,9 @@ r
 		public void RangeStringTest()
 		{
 			Test(@"""A"".to ""F""", new[] { "A", "B", "C", "D", "E", "F" });
-//			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
-//			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
-//			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
+			Test(@"""F"".to ""A""", new[] { "F", "E", "D", "C", "B", "A" });
+			Test(@"""A"".to ""F"" 2", new[] { "A", "C", "E" });
+			Test(@"""F"".to ""A"" 2", new[] { "F", "D", "B" });
 		}
 
 		[Test]
