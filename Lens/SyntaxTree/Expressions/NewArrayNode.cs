@@ -30,14 +30,14 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, Resolve(ctx), true);
+			var gen = ctx.CurrentMethod.Generator;
+			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
 			// create array
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateArray(_ItemType);
-			gen.EmitSaveLocal(tmpVar);
+			gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			for (var idx = 0; idx < count; idx++)
 			{
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Expressions
 				if (!_ItemType.IsExtendablyAssignableFrom(currType))
 					error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, _ItemType);
 
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				gen.EmitConstant(idx);
 
 				var cast = Expr.Cast(Expressions[idx], _ItemType);
@@ -66,7 +66,7 @@ namespace Lens.SyntaxTree.Expressions
 				}
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
 		public override string ToString()

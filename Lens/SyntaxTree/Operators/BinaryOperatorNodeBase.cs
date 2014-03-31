@@ -60,7 +60,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			if (m_OverloadedMethod == null)
 			{
 				compileOperator(ctx);
@@ -104,7 +104,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		protected void loadAndConvertNumerics(Context ctx, Type type = null)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var left = LeftOperand.Resolve(ctx);
 			var right = RightOperand.Resolve(ctx);

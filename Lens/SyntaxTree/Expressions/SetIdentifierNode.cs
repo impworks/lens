@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Expressions
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
-			var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var type = Value.Resolve(ctx);
 
 			if (_Property != null)
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			else
 			{
-				var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+				var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
 				if (nameInfo != null)
 				{
 					if (nameInfo.IsClosured)
@@ -113,9 +113,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		private void assignLocal(Context ctx, LocalName name)
+		private void assignLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var castNode = Expr.Cast(Value, name.Type);
 
@@ -125,7 +125,7 @@ namespace Lens.SyntaxTree.Expressions
 				if(name.ArgumentId.HasValue)
 					gen.EmitSaveArgument(name.ArgumentId.Value);
 				else
-					gen.EmitSaveLocal(name);
+					gen.EmitSaveLocal(name.LocalBuilder);
 			}
 			else
 			{
@@ -138,15 +138,15 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that is declared in current scope.
 		/// </summary>
-		private void assignClosuredLocal(Context ctx, LocalName name)
+		private void assignClosuredLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 			
 			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
+			var clsType = ctx.Scope.ClosureType.TypeInfo;
 			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
@@ -154,9 +154,9 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void assignClosuredRemote(Context ctx, LocalName name)
+		private void assignClosuredRemote(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitLoadArgument(0);
 

@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
-			ctx.CurrentILGenerator.EmitRemainder();
+			ctx.CurrentMethod.Generator.EmitRemainder();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

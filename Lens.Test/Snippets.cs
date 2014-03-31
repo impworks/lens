@@ -324,7 +324,7 @@ a";
 		}
 
 		[Test]
-		public void Closure2()
+		public void Closure3()
 		{
 			var src = @"
 var result = 0
@@ -952,23 +952,14 @@ res
 		[Test]
 		public void ScopeNames2()
 		{
-			// You might expect [2, 4, 6] to be the result of this test -
-			// But as of now, the loop closures ARE modified.
-			// This is a major design flaw and requires rewriting the entire scope & closuring code, therefore for now it cannot be fixed.
-
 			var src = @"
-var arr = Enumerable::Range 1 3
-    |> ToArray ()
-
 var funcs = new List<Func<int>> ()
-for x in arr do
+for x in Enumerable::Range 1 3 do
     funcs.Add (-> x * 2)
 
-
-funcs
-    |> Select (fx:Func<int> -> fx ())
+funcs.Select (fx:Func<int> -> fx ())
 ";
-			Test(src, new[] { 6, 6, 6 });
+			Test(src, new[] { 2, 4, 6 });
 		}
 	}
 }

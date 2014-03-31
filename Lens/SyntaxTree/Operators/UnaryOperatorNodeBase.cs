@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			Resolve(ctx);
 

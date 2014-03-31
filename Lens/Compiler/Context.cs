@@ -54,7 +54,7 @@ namespace Lens.Compiler
 
 			AssemblyName an;
 			lock(typeof(Context))
-				an = new AssemblyName(Unique.AssemblyName);
+				an = new AssemblyName(Unique.AssemblyName());
 
 			if (Options.AllowSave)
 			{
@@ -148,7 +148,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal ScopeFrame CurrentScopeFrame { get; set; }
+		internal Scope Scope { get { return _ScopeStack.Count > 0 ? _ScopeStack.Peek() : null; } }
 
 		/// <summary>
 		/// The current most nested try block.
@@ -169,22 +169,6 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// The lexical scope of the current scope.
-		/// </summary>
-		internal Scope CurrentScope
-		{
-			get { return CurrentMethod == null ? null : CurrentMethod.Scope; }
-		}
-
-		/// <summary>
-		/// Gets an IL Generator for current method.
-		/// </summary>
-		internal ILGenerator CurrentILGenerator
-		{
-			get { return CurrentMethod == null ? null : CurrentMethod.Generator; }
-		}
-
-		/// <summary>
 		/// The list of namespaces to only look in when resolving a type or an extension method.
 		/// </summary>
 		internal Dictionary<string, bool> Namespaces = new Dictionary<string, bool>();
@@ -192,7 +176,7 @@ namespace Lens.Compiler
 		internal readonly UniqueNameGenerator Unique;
 
 		internal readonly List<TypeEntity> UnpreparedTypes = new List<TypeEntity>();
-		internal readonly List<IPreparableEntity> UnpreparedTypeContents = new List<IPreparableEntity>();
+		internal readonly List<TypeContentsBase> UnpreparedTypeContents = new List<TypeContentsBase>();
 		internal readonly List<MethodEntityBase> UnprocessedMethods = new List<MethodEntityBase>();
 
 		#endregion
@@ -218,6 +202,11 @@ namespace Lens.Compiler
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+
+		/// <summary>
+		/// The stack of currently processed scopes.
+		/// </summary>
+		private readonly Stack<Scope> _ScopeStack = new Stack<Scope>();
 
 		#endregion
 	}

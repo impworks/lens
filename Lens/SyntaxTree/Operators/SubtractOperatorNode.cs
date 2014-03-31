@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
-			ctx.CurrentILGenerator.EmitSubtract();
+			ctx.CurrentMethod.Generator.EmitSubtract();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
-			ctx.CurrentILGenerator.EmitMultiply();
+			ctx.CurrentMethod.Generator.EmitMultiply();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

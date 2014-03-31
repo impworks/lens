@@ -2,12 +2,18 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
 	internal class ConstructorEntity : MethodEntityBase
 	{
+		public ConstructorEntity(TypeEntity type) : base(type)
+		{
+			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
+		}
+
 		#region Fields
 
 		/// <summary>
@@ -46,7 +52,7 @@ namespace Lens.Compiler.Entities
 		// call default constructor
 		protected override void emitPrelude(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var ctor = typeof (object).GetConstructor(Type.EmptyTypes);
 
 			gen.EmitLoadArgument(0);

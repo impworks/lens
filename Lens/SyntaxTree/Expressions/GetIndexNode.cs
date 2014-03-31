@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileArray(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var exprType = Expression.Resolve(ctx);
 			var itemType = exprType.GetElementType();
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions
 			if(RefArgumentRequired && retType.IsValueType)
 				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var ptrExpr = Expression as IPointerProvider;
 			if (ptrExpr != null)

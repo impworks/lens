@@ -122,7 +122,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileEquality(Context ctx, Type left, Type right)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// compare two strings
 			if (left == typeof (string) && right == typeof (string))
@@ -206,7 +206,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileNullable(Context ctx, NodeBase nullValue, NodeBase otherValue)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var nullType = nullValue.Resolve(ctx);
 			var otherType = otherValue.Resolve(ctx);
@@ -218,29 +218,29 @@ namespace Lens.SyntaxTree.Operators
 			var falseLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
 
-			LocalName nullVar, otherVar = null;
-			nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
+			Local nullVar, otherVar = null;
+			nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
 			if (otherNull)
-				otherVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, otherType, true);
+				otherVar = ctx.Scope.DeclareImplicit(ctx, otherType, true);
 
 			// $tmp = nullValue
 			nullValue.Emit(ctx, true);
-			gen.EmitSaveLocal(nullVar);
+			gen.EmitSaveLocal(nullVar.LocalBuilder);
 
 			if (otherNull)
 			{
 				// $tmp2 = otherValue
 				otherValue.Emit(ctx, true);
-				gen.EmitSaveLocal(otherVar);
+				gen.EmitSaveLocal(otherVar.LocalBuilder);
 			}
 
 			// $tmp == $tmp2
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(getValOrDefault);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocal(otherVar, true);
+				gen.EmitLoadLocal(otherVar.LocalBuilder, true);
 				gen.EmitCall(getValOrDefault);
 			}
 			else
@@ -251,12 +251,12 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitBranchNotEquals(falseLabel);
 
 			// otherwise, compare HasValues
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(hasValueGetter);
 
 			if (otherNull)
 			{
-				gen.EmitLoadLocal(otherVar, true);
+				gen.EmitLoadLocal(otherVar.LocalBuilder, true);
 				gen.EmitCall(hasValueGetter);
 
 				gen.EmitCompareEqual();
@@ -279,15 +279,15 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileHasValue(Context ctx, NodeBase nullValue)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var nullType = nullValue.Resolve(ctx);
-			var nullVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, nullType, true);
+			var nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
 			var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
 
 			nullValue.Emit(ctx, true);
-			gen.EmitSaveLocal(nullVar);
+			gen.EmitSaveLocal(nullVar.LocalBuilder);
 
-			gen.EmitLoadLocal(nullVar, true);
+			gen.EmitLoadLocal(nullVar.LocalBuilder, true);
 			gen.EmitCall(hasValueGetter);
 
 			// sic! get_HasValue == true when value != null
@@ -309,7 +309,7 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		private void compileRelation(Context ctx, Type left, Type right)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// string comparisons
 			if (left == typeof (string))

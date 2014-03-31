@@ -7,6 +7,11 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class FunctionNode : FunctionNodeBase
 	{
+		public FunctionNode()
+		{
+			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
+		}
+
 		/// <summary>
 		/// Function name.
 		/// </summary>

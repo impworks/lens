@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Internals
 		{
 			Resolve(ctx);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitLoadArgument(0);
 		}
 	}

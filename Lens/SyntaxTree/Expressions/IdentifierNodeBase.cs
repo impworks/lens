@@ -9,17 +9,13 @@ namespace Lens.SyntaxTree.Expressions
 	{
 		public string Identifier { get; set; }
 
-		public LocalName LocalName { get; set; }
+		public Local Local { get; set; }
 
 		public override void ProcessClosures(Context ctx)
 		{
 			base.ProcessClosures(ctx);
 
-			try
-			{
-				ctx.CurrentScopeFrame.ReferenceName(Identifier ?? LocalName.Name);
-			}
-			catch { }
+			ctx.Scope.ReferenceLocal(ctx, Identifier ?? Local.Name);
 		}
 
 		#region Equality members

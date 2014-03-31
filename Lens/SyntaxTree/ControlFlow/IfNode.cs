@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -44,18 +45,14 @@ namespace Lens.SyntaxTree.ControlFlow
 		public override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
-
-			foreach (var curr in TrueAction.GetChildren())
-				yield return curr;
-
+			yield return new NodeChild(TrueAction, null);
 			if(FalseAction != null)
-				foreach (var curr in FalseAction.GetChildren())
-					yield return curr;
+				yield return new NodeChild(FalseAction, null);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
@@ -91,38 +88,28 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 			{
 				var canReturn = mustReturn && FalseAction != null;
-				var resultType = Resolve(ctx);
 
 				gen.EmitBranchFalse(falseLabel);
-
-				if (TrueAction.Resolve(ctx).IsNotVoid())
-				{
-					Expr.Cast(TrueAction, resultType).Emit(ctx, mustReturn);
-					if (!canReturn)
-						gen.EmitPop();
-				}
-				else
-				{
-					TrueAction.Emit(ctx, mustReturn);
-				}
-
+				emitBranch(ctx, TrueAction, canReturn);
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				if (FalseAction.Resolve(ctx).IsNotVoid())
-				{
-					Expr.Cast(FalseAction, resultType).Emit(ctx, mustReturn);
-					if (!canReturn)
-						gen.EmitPop();
-				}
-				else
-				{
-					FalseAction.Emit(ctx, mustReturn);
-				}
+				emitBranch(ctx, FalseAction, canReturn);
 
 				gen.MarkLabel(endLabel);
 				gen.EmitNop();
 			}
+		}
+
+		private void emitBranch(Context ctx, NodeBase branch, bool canReturn)
+		{
+			var desiredType = Resolve(ctx);
+			var branchType = branch.Resolve(ctx, canReturn);
+
+			if (branchType.IsNotVoid() && desiredType.IsNotVoid())
+				branch = Expr.Cast(branch, desiredType);
+			
+			branch.Emit(ctx, canReturn);
 		}
 
 		#region Equality members

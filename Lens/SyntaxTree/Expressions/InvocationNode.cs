@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.Expressions
 				{
 					if (_ArgTypes[idx] == null)
 					{
-						var argName = string.Format("<pa_{0}>", ctx.Unique.AnonymousArgName);
+						var argName = ctx.Unique.AnonymousArgName();
 						argDefs.Add(Expr.Arg(argName, _Method.ArgumentTypes[idx].FullName));
 						argExprs.Add(Expr.Get(argName));
 					}
@@ -123,22 +123,18 @@ namespace Lens.SyntaxTree.Expressions
 				}
 				catch (KeyNotFoundException) { }
 
+				Arguments = (Arguments[0] is UnitNode)
+					? new List<NodeBase> {_InvocationSource}
+					: new[] {_InvocationSource}.Union(Arguments).ToList();
+
+				var oldArgTypes = _ArgTypes;
+				_ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
+				_InvocationSource = null;
+
 				try
 				{
 					// resolve a local function that is implicitly used as an extension method
-					var movedArgs = new List<NodeBase> { _InvocationSource };
-					if(!(Arguments[0] is UnitNode))
-						movedArgs.AddRange(Arguments);
-
-					var argTypes = movedArgs.Select(a => a.Resolve(ctx)).ToArray();
-
-					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, argTypes);
-
-					// if no exception has occured, move invocation source to argument list permanently
-					Arguments = movedArgs;
-					_ArgTypes = argTypes;
-					_InvocationSource = null;
-
+					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, _ArgTypes);
 					return;
 				}
 				catch (KeyNotFoundException) { }
@@ -147,8 +143,10 @@ namespace Lens.SyntaxTree.Expressions
 				// most time-consuming operation, therefore is last checked
 				try
 				{
-					if(ctx.Options.AllowExtensionMethods)
-						_Method = ctx.ResolveExtensionMethod(type, node.MemberName, _ArgTypes, _TypeHints);
+					if(!ctx.Options.AllowExtensionMethods)
+						throw new KeyNotFoundException();
+
+					_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, _TypeHints);
 				}
 				catch (KeyNotFoundException)
 				{
@@ -167,7 +165,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void resolveGetIdentifier(Context ctx, GetIdentifierNode node)
 		{
-			var nameInfo = ctx.CurrentScopeFrame.FindName(node.Identifier);
+			var nameInfo = ctx.Scope.FindLocal(node.Identifier);
 			if (nameInfo != null)
 			{
 				resolveExpression(ctx, node);
@@ -230,11 +228,19 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		public override void ProcessClosures(Context ctx)
+		{
+			if(Expression is GetIdentifierNode || Expression is GetMemberNode)
+				Expression.ProcessClosures(ctx);
+
+			base.ProcessClosures(ctx);
+		}
+
 		#region Compile
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			if (_InvocationSource != null)
 			{
@@ -249,13 +255,13 @@ namespace Lens.SyntaxTree.Expressions
 					}
 					else
 					{
-						var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, type, true);
-						gen.EmitLoadLocal(tmpVar, true);
+						var tmpVar = ctx.Scope.DeclareImplicit(ctx, type, true);
+						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 
 						_InvocationSource.Emit(ctx, true);
 						gen.EmitSaveObject(type);
 
-						gen.EmitLoadLocal(tmpVar, true);
+						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 					}
 				}
 				else

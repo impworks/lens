@@ -14,7 +14,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected FunctionNodeBase()
 		{
 			Arguments = new List<FunctionArgument>();
-			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
@@ -25,7 +24,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Function body.
 		/// </summary>
-		public CodeBlockNode Body { get; set; }
+		public CodeBlockNode Body { get; protected set; }
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -34,7 +33,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Body.GetChildren();
+			yield return new NodeChild(Body, null);
 		}
 
 		#region Equality members

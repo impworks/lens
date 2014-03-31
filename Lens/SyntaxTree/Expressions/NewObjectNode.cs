@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var type = Resolve(ctx);
 			if(type.IsVoid())

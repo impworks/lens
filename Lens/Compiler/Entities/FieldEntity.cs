@@ -9,6 +9,11 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	internal class FieldEntity : TypeContentsBase
 	{
+		public FieldEntity(TypeEntity type) : base(type)
+		{
+			
+		}
+
 		#region Fields
 
 		/// <summary>
@@ -51,6 +56,11 @@ namespace Lens.Compiler.Entities
 				Type = ContainerType.Context.ResolveType(TypeSignature);
 
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
+		}
+
+		public override string ToString()
+		{
+			return string.Format("{2} {0}.{1}", ContainerType.Name, Name, Type != null ? Type.ToString() : TypeSignature);
 		}
 
 		#endregion

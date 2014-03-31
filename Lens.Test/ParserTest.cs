@@ -861,17 +861,14 @@ catch ex:DivisionByZeroException
 			var result = Expr.Invoke(
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
-				new LambdaNode
-					{
-						Arguments = new List<FunctionArgument> { new FunctionArgument("x", "int") },
-						Body = Expr.Block(
-							Expr.Greater(
-								Expr.Get("x"),
-								Expr.Int(1)
-							)
-						)
-					}
-				);
+				Expr.Lambda(
+					new [] { Expr.Arg("x", "int") },
+					Expr.Greater(
+						Expr.Get("x"),
+						Expr.Int(1)
+					)
+				)
+			);
 
 			TestParser(src, result);
 		}

@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileArray(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var exprType = Expression.Resolve(ctx);
 			var itemType = exprType.GetElementType();
@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileCustom(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var exprType = Expression.Resolve(ctx);
 			var idxType = Index.Resolve(ctx);

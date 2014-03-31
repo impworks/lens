@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -8,7 +9,7 @@ namespace Lens.Compiler.Entities
 	/// <summary>
 	/// Represents a type to be defined in the generated assembly.
 	/// </summary>
-	internal partial class TypeEntity : IPreparableEntity
+	internal partial class TypeEntity
 	{
 		public TypeEntity(Context ctx)
 		{
@@ -143,7 +144,8 @@ namespace Lens.Compiler.Entities
 
 			if (this == Context.MainType)
 			{
-				foreach (var currGroup in _Methods)
+				var groups = _Methods.ToArray();
+				foreach (var currGroup in groups)
 					foreach (var currMethod in currGroup.Value)
 						if (currMethod.IsPure)
 							createPureWrapper(currMethod);		
@@ -213,5 +215,10 @@ namespace Lens.Compiler.Entities
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 }

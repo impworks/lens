@@ -56,14 +56,14 @@ namespace Lens.Compiler
 		/// </summary>
 		public Type GetArgumentType(Context ctx)
 		{
-			if (Type != null)
-				return Type;
+			if (Type == null)
+			{
+				Type = ctx.ResolveType(TypeSignature);
+				if (IsRefArgument)
+					Type = Type.MakeByRefType();
+			}
 
-			var type = ctx.ResolveType(TypeSignature);
-			if (IsRefArgument)
-				type = type.MakeByRefType();
-
-			return type;
+			return Type;
 		}
 
 		#region Equality members

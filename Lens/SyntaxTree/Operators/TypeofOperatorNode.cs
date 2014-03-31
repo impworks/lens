@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitConstant(type);
 			gen.EmitCall(_HandleMethod);

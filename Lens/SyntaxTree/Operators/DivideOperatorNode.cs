@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Operators
 		protected override void compileOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
-			ctx.CurrentILGenerator.EmitDivide();
+			ctx.CurrentMethod.Generator.EmitDivide();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

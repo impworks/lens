@@ -13,5 +13,10 @@ namespace Lens.Utils
 
 		public readonly NodeBase Node;
 		public readonly Action<NodeBase> Setter;
+
+		public override string ToString()
+		{
+			return Node.ToString();
+		}
 	}
 }

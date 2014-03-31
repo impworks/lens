@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -10,14 +11,17 @@ namespace Lens.Compiler.Entities
 {
 	internal class MethodEntity : MethodEntityBase
 	{
-		public MethodEntity(bool isImported = false) : base(isImported)
-		{ }
+		public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
+		{
+			var scopeKind = type.Kind == TypeEntityKind.Closure ? ScopeKind.LambdaRoot : ScopeKind.FunctionRoot;
+			Body = new CodeBlockNode(scopeKind);
+		}
 
 		#region Fields
 
 		public bool IsVirtual;
-		public bool IsVariadic;
 		public bool IsPure;
+		public bool IsVariadic;
 
 		/// <summary>
 		/// The signature of method's return type.
@@ -93,7 +97,7 @@ namespace Lens.Compiler.Entities
 
 		protected override void emitTrailer(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var actualType = Body.Resolve(ctx);
 
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())

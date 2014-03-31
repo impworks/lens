@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -23,6 +24,12 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			resolve(ctx);
+			return base.resolve(ctx, mustReturn);
 		}
 
 		private void resolve(Context ctx)
@@ -63,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
 			var valType = Value.Resolve(ctx);

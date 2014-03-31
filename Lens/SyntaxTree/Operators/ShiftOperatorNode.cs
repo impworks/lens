@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Operators
 
 				var leftMethod = ctx.WrapDelegate(leftType);
 				return Expr.Lambda(
-					leftMethod.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName, x.FullName)),
+					leftMethod.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)),
 					body
 				);
 			}
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			LeftOperand.Emit(ctx, true);
 			RightOperand.Emit(ctx, true);

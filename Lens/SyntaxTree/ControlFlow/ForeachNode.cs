@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms.VisualStyles;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -46,10 +47,17 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				detectRangeType(ctx);
 
-			if (ctx.CurrentScopeFrame.FindName(VariableName) != null)
+			if (ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
-			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
+			if (!mustReturn)
+				return typeof (Unit);
+
+			// the node is expanded, therefore we use a temporary scope to just resolve the body type.
+			var tmpScope = new Scope(ScopeKind.Unclosured);
+			tmpScope.DeclareLocal(VariableName, _VariableType, false);
+			using(new ScopeContainer(ctx, tmpScope))
+				return Body.Resolve(ctx);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
@@ -78,13 +86,12 @@ namespace Lens.SyntaxTree.ControlFlow
 				yield return new NodeChild(RangeEnd, x => RangeEnd = x);
 			}
 
-			foreach (var curr in Body.GetChildren())
-				yield return curr;
+			yield return new NodeChild(Body, null);
 		}
 
 		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
-			var iteratorVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _EnumeratorType, false);
+			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
 
 			var init = Expr.Set(
 				iteratorVar,
@@ -94,7 +101,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var loop = Expr.While(
 				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
-					Expr.Set(
+					Expr.Let(
 						VariableName,
 						Expr.GetMember(Expr.Get(iteratorVar), "Current")
 					),
@@ -110,7 +117,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 				if (saveLast)
 				{
-					var resultVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _EnumeratorType, false);
+					var resultVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
 					return Expr.Block(
 						Expr.Try(
 							Expr.Block(
@@ -137,9 +144,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private NodeBase expandArray(Context ctx)
 		{
-			var arrayVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, IterableExpression.Resolve(ctx), false);
-			var idxVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
-			var lenVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, typeof(int), false);
+			var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+			var lenVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
 
 			return Expr.Block(
 				Expr.Set(idxVar, Expr.Int(0)),
@@ -151,7 +158,7 @@ namespace Lens.SyntaxTree.ControlFlow
 						Expr.Get(lenVar)
 					),
 					Expr.Block(
-						Expr.Set(
+						Expr.Let(
 							VariableName,
 							Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
 						),
@@ -167,29 +174,31 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private NodeBase expandRange(Context ctx)
 		{
-			var signVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, _VariableType, false);
+			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
 			return Expr.Block(
-				Expr.Set(VariableName, RangeStart),
+				Expr.Set(idxVar, RangeStart),
 				Expr.Set(
 					signVar,
 					Expr.Invoke(
 						"Math",
 						"Sign",
-						Expr.Sub(RangeEnd, Expr.Get(VariableName))
+						Expr.Sub(RangeEnd, Expr.Get(idxVar))
 					)
 				),
 				Expr.While(
 					Expr.If(
 						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
-						Expr.Block(Expr.LessEqual(Expr.Get(VariableName), RangeEnd)),
-						Expr.Block(Expr.GreaterEqual(Expr.Get(VariableName), RangeEnd))
+						Expr.Block(Expr.LessEqual(Expr.Get(idxVar), RangeEnd)),
+						Expr.Block(Expr.GreaterEqual(Expr.Get(idxVar), RangeEnd))
 					),
 					Expr.Block(
+						Expr.Let(VariableName, Expr.Get(idxVar)),
 						Body,
 						Expr.Set(
-							VariableName,
+							idxVar,
 							Expr.Add(
-								Expr.Get(VariableName),
+								Expr.Get(idxVar),
 								Expr.Get(signVar)
 							)
 						)
