@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.Translations;
@@ -250,6 +251,11 @@ namespace Lens.Compiler
 				cscope.ClosureType.Kind = TypeEntityKind.Closure;
 			}
 			return cscope.ClosureType;
+		}
+
+		public override string ToString()
+		{
+			return string.Format("{0}({1})", Kind, Locals.Count > 0 ? string.Join(", ", Locals.Keys) : "none");
 		}
 
 		#endregion

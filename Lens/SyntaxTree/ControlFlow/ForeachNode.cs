@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms.VisualStyles;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -85,8 +86,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				yield return new NodeChild(RangeEnd, x => RangeEnd = x);
 			}
 
-			foreach (var curr in Body.GetChildren())
-				yield return curr;
+			yield return new NodeChild(Body, null);
 		}
 
 		private NodeBase expandEnumerable(Context ctx, bool mustReturn)

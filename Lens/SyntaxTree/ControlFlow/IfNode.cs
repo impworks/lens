@@ -45,13 +45,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		public override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
-
-			foreach (var curr in TrueAction.GetChildren())
-				yield return curr;
-
+			yield return new NodeChild(TrueAction, null);
 			if(FalseAction != null)
-				foreach (var curr in FalseAction.GetChildren())
-					yield return curr;
+				yield return new NodeChild(FalseAction, null);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

@@ -32,15 +32,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
-			foreach (var curr in Code.GetChildren())
-				yield return curr;
+			yield return new NodeChild(Code, null);
 
 			foreach(var curr in CatchClauses)
 				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
 
 			if(Finally != null)
-				foreach (var curr in Finally.GetChildren())
-					yield return curr;
+				yield return new NodeChild(Finally, null);
 		}
 
 		protected override Type resolve(Context ctx, bool mustReturn)

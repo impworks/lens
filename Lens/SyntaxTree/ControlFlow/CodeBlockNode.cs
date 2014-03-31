@@ -32,16 +32,18 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			if (!Statements.Any())
-				return typeof (Unit);
-
-			var last = Statements.Last();
+			var last = Statements.LastOrDefault();
 			if (last is VarNode || last is LetNode)
 				error(last, CompilerMessages.CodeBlockLastVar);
 
 			ctx.EnterScope(Scope);
-			var result = Statements[Statements.Count - 1].Resolve(ctx);
+
+			var result = typeof(Unit);
+			foreach(var curr in Statements)
+				result = curr.Resolve(ctx);
+
 			ctx.ExitScope();
+
 			return result;
 		}
 

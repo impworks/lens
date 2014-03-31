@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Code.GetChildren();
+			yield return new NodeChild(Code, null);
 		}
 
 		public override void ProcessClosures(Context ctx)

@@ -36,7 +36,6 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
 			_Method.Body.LoadFrom(Body);
-			// _Method.Body.Scope.RegisterArguments(ctx, false, Arguments);
 
 			var outerMethod = ctx.CurrentMethod;
 			ctx.CurrentMethod = _Method;
@@ -49,9 +48,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			_InterimScope = new Scope(ScopeKind.Unclosured);
-			_InterimScope.RegisterArguments(ctx, false, Arguments);
 			using (new ScopeContainer(ctx, _InterimScope))
-			{ 
+			{
+				_InterimScope.RegisterArguments(ctx, false, Arguments);
+
 				var retType = Body.Resolve(ctx);
 				var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
 				return FunctionalHelper.CreateDelegateType(retType, argTypes);
@@ -70,6 +70,14 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.EmitLoadLocal(closureInstance);
 			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
+		}
+
+		public override string ToString()
+		{
+			var arglist = Arguments.Select(
+				x => string.Format("{0}:{1}", x.Name, x.Type != null ? x.Type.Name : x.TypeSignature)
+			);
+			return string.Format("lambda({0})", string.Join(", ", arglist));
 		}
 	}
 }

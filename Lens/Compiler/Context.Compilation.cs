@@ -123,8 +123,6 @@ namespace Lens.Compiler
 		/// </summary>
 		public void EnterScope(Scope scope)
 		{
-			// Debug.WriteLine("Scope: {0} => {1} ({2}.{3})", describeScope(Scope), describeScope(scope), CurrentType.Name, CurrentMethod.Name ?? "ctor");
-
 			if (Scope == null)
 			{
 				if (scope.OuterScope == null && scope.Kind != ScopeKind.FunctionRoot)

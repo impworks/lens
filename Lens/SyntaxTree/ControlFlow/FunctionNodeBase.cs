@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Body.GetChildren();
+			yield return new NodeChild(Body, null);
 		}
 
 		#region Equality members

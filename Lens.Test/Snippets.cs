@@ -324,7 +324,7 @@ a";
 		}
 
 		[Test]
-		public void Closure2()
+		public void Closure3()
 		{
 			var src = @"
 var result = 0

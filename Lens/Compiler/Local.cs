@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace Lens.Compiler
@@ -94,11 +95,20 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.
 		/// </summary>
-		/// <param name="distance"></param>
-		/// <returns></returns>
 		public Local GetClosuredCopy(int distance)
 		{
 			return new Local(this, distance);
+		}
+
+		public override string ToString()
+		{
+			var entities = new List<string>();
+			if(IsClosured) entities.Add("closured");
+			if(IsRefArgument) entities.Add("ref");
+			if(IsImmutable) entities.Add("immutable");
+			if(IsConstant) entities.Add("const");
+			if(ArgumentId != null) entities.Add(string.Format("arg({0})", ArgumentId));
+			return string.Format("{0}:{1} ({2})", Name, Type.Name, string.Join(", ", entities));
 		}
 	}
 }
