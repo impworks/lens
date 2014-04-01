@@ -616,9 +616,21 @@ namespace Lens.Utils
 			var calleeTypes = getter(method);
 			var simpleCount = calleeTypes.Length - 1;
 
-			var distance = isVariadic
-				? TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount)) + variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount])
-				: TypeListDistance(passedTypes, calleeTypes);
+			int distance;
+			try
+			{
+				checked
+				{
+					distance = isVariadic
+						? TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount)) + variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount])
+						: TypeListDistance(passedTypes, calleeTypes);
+				}
+
+			}
+			catch (OverflowException)
+			{
+				distance = int.MaxValue;
+			}
 
 			return new MethodLookupResult<T>(method, distance, calleeTypes);
 		}
@@ -664,7 +676,9 @@ namespace Lens.Utils
 			foreach (var curr in passedArgs)
 				max = Math.Max(curr.DistanceFrom(variadic), max);
 
-			return max;
+			// 1 extra distance point for packing arguments into the array:
+			// otherwise fun(int) and fun(int, object[]) will have equal distance for `fun 1` and cause an ambiguity error
+			return max == int.MaxValue ? max : max + 1;
 		}
 	}
 }

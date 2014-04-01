@@ -72,6 +72,26 @@ namespace Lens.SyntaxTree.Expressions
 				return Expr.Lambda(argDefs, Expr.Invoke(Expression, argExprs.ToArray()));
 			}
 
+			if (_Method.IsVariadic)
+			{
+				var dstTypes = _Method.ArgumentTypes;
+				var srcTypes = _ArgTypes;
+				var lastDst = dstTypes[dstTypes.Length - 1];
+				var lastSrc = srcTypes[srcTypes.Length - 1];
+
+				// compress items into an array:
+				//     fx a b c d
+				// becomes
+				//     fx a b (new[ c as X; d as X ])
+				if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
+				{
+					var elemType = lastDst.GetElementType();
+					var simpleArgs = Arguments.Take(dstTypes.Length - 1);
+					var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
+					return Expr.Invoke(Expression, simpleArgs.Union(new [] { combined }).ToArray());
+				}
+			}
+
 			return base.Expand(ctx, mustReturn);
 		}
 
@@ -273,7 +293,6 @@ namespace Lens.SyntaxTree.Expressions
 			if (_ArgTypes.Length > 0)
 			{
 				var destTypes = _Method.ArgumentTypes;
-
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
 					var arg = Arguments[idx];
@@ -301,8 +320,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Equality members
 
-			protected
-			bool Equals(InvocationNode other)
+		protected bool Equals(InvocationNode other)
 		{
 			return base.Equals(other)
 				&& Equals(Expression, other.Expression);
