@@ -614,24 +614,14 @@ namespace Lens.Utils
 		public static MethodLookupResult<T> ArgumentDistance<T>(IEnumerable<Type> passedTypes, Func<T, Type[]> getter, T method, bool isVariadic)
 		{
 			var calleeTypes = getter(method);
+			if(!isVariadic)
+				return new MethodLookupResult<T>(method, TypeListDistance(passedTypes, calleeTypes), calleeTypes);
+
 			var simpleCount = calleeTypes.Length - 1;
 
-			int distance;
-			try
-			{
-				checked
-				{
-					distance = isVariadic
-						? TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount)) + variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount])
-						: TypeListDistance(passedTypes, calleeTypes);
-				}
-
-			}
-			catch (OverflowException)
-			{
-				distance = int.MaxValue;
-			}
-
+			var simpleDistance = TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount));
+			var variadicDistance = variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount]);
+			var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
 			return new MethodLookupResult<T>(method, distance, calleeTypes);
 		}
 
@@ -669,16 +659,29 @@ namespace Lens.Utils
 			}
 		}
 
-		private static int variadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadic)
+		private static int variadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadicArg)
 		{
-			var max = 0;
+			var args = passedArgs.ToArray();
 
-			foreach (var curr in passedArgs)
-				max = Math.Max(curr.DistanceFrom(variadic), max);
+			// variadic function invoked with an array: no conversion
+			if (args.Length == 1 && args[0] == variadicArg)
+				return 0;
+
+			var sum = 0;
+			var elemType = variadicArg.GetElementType();
+
+			foreach (var curr in args)
+			{
+				var currDist = elemType.DistanceFrom(curr);
+				if (currDist == int.MaxValue)
+					return int.MaxValue;
+
+				sum += currDist;
+			}
 
 			// 1 extra distance point for packing arguments into the array:
 			// otherwise fun(int) and fun(int, object[]) will have equal distance for `fun 1` and cause an ambiguity error
-			return max == int.MaxValue ? max : max + 1;
+			return sum + 1;
 		}
 	}
 }
