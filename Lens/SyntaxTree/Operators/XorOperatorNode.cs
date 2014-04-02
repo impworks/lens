@@ -1,4 +1,6 @@
-﻿using Lens.Compiler;
+﻿using System;
+using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -14,10 +16,25 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_ExclusiveOr"; }
 		}
 
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			return leftType == typeof(bool) && rightType == typeof(bool) ? typeof(bool) : null;
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			loadAndConvertNumerics(ctx);
+
+			if (LeftOperand.Resolve(ctx).IsNumericType())
+			{
+				loadAndConvertNumerics(ctx);
+			}
+			else
+			{
+				LeftOperand.Emit(ctx, true);
+				RightOperand.Emit(ctx, true);
+			}
+
 			gen.EmitXor();
 		}
 
