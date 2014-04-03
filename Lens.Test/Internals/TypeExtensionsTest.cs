@@ -6,7 +6,7 @@ using Lens.SyntaxTree.Literals;
 using Lens.Utils;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Internals
 {
 	[TestFixture]
 	public class TypeExtensionsTest

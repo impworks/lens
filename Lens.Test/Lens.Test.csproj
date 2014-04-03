@@ -73,23 +73,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ExtensionMethodResolverTest.cs" />
-    <Compile Include="FunctionalHelperTest.cs" />
-    <Compile Include="GenericHelperTest.cs" />
-    <Compile Include="GlobalProperties.cs" />
+    <Compile Include="Features\ControlStructuresTest.cs" />
+    <Compile Include="Features\FunctionalTest.cs" />
+    <Compile Include="Features\UserDeclarationsTest.cs" />
+    <Compile Include="Internals\ExtensionMethodResolverTest.cs" />
+    <Compile Include="Internals\FunctionalHelperTest.cs" />
+    <Compile Include="Internals\GenericHelperTest.cs" />
+    <Compile Include="Features\GlobalProperties.cs" />
     <Compile Include="LargeSnippets.cs" />
-    <Compile Include="LexerTest.cs" />
-    <Compile Include="LiteralsTest.cs" />
-    <Compile Include="OperatorsTest.cs" />
-    <Compile Include="ParserTest.cs" />
+    <Compile Include="Parsers\LexerTest.cs" />
+    <Compile Include="Features\LiteralsTest.cs" />
+    <Compile Include="Features\OperatorsTest.cs" />
+    <Compile Include="Parsers\ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SafeModeTest.cs" />
+    <Compile Include="Features\SafeModeTest.cs" />
     <Compile Include="Snippets.cs" />
-    <Compile Include="StdlibTest.cs" />
-    <Compile Include="TestClassHierarchy.cs" />
+    <Compile Include="Features\StdlibTest.cs" />
+    <Compile Include="Internals\TestClassHierarchy.cs" />
     <Compile Include="TestBase.cs" />
-    <Compile Include="TypeExtensionsTest.cs" />
-    <Compile Include="TypeResolverTest.cs" />
+    <Compile Include="Internals\TypeExtensionsTest.cs" />
+    <Compile Include="Internals\TypeResolverTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

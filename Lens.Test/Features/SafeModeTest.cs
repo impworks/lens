@@ -5,7 +5,7 @@ using Lens.Compiler;
 using Lens.Translations;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Features
 {
 	[TestFixture]
 	internal class SafeModeTest : TestBase

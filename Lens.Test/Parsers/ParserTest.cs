@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Lens.Compiler;
-using Lens.Lexer;
-using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Operators;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Parsers
 {
 	[TestFixture]
 	internal class ParserTest : TestBase

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Features
 {
 	[TestFixture]
 	internal class OperatorsTest : TestBase

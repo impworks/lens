@@ -4,7 +4,7 @@ using Lens.SyntaxTree;
 using Lens.Translations;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Parsers
 {
 	[TestFixture]
 	class LexerTest
