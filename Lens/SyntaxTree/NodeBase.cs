@@ -80,6 +80,7 @@ namespace Lens.SyntaxTree
 				if (sub != null)
 				{
 					child.Setter(sub);
+					sub.Resolve(ctx, mustReturn);
 					sub.Transform(ctx, mustReturn);
 				}
 				else

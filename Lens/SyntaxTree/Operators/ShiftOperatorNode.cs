@@ -30,21 +30,23 @@ namespace Lens.SyntaxTree.Operators
 				if (!ctx.CanCombineDelegates(leftType, rightType))
 					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 
-				NodeBase body;
-				if (RightOperand is InvocationNode)
-				{
-					(RightOperand as InvocationNode).Arguments.Add(LeftOperand);
-					body = RightOperand;
-				}
-				else
-				{
-					body = Expr.Invoke(RightOperand, LeftOperand);
-				}
+				var leftVar = ctx.Unique.TempVariableName();
+				var rightVar = ctx.Unique.TempVariableName();
+				var argDefs = ctx.WrapDelegate(leftType).ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
-				var leftMethod = ctx.WrapDelegate(leftType);
 				return Expr.Lambda(
-					leftMethod.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)),
-					body
+					argDefs,
+					Expr.Block(
+						Expr.Let(leftVar, LeftOperand),
+						Expr.Let(rightVar, RightOperand),
+						Expr.Invoke(
+							Expr.Get(rightVar),
+							Expr.Invoke(
+								Expr.Get(leftVar),
+								argDefs.Select(x => Expr.Get(x.Name)).ToArray()
+							)
+						)
+					)
 				);
 			}
 
