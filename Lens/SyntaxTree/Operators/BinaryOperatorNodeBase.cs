@@ -73,13 +73,22 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitCall(m_OverloadedMethod.MethodInfo);
 		}
 
+		/// <summary>
+		/// Resolves operator return type, in case it's not an overloaded method call.
+		/// </summary>
 		protected virtual Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return null;
 		}
 
+		/// <summary>
+		/// Emits operator code, in case it's not an overloaded method call.
+		/// </summary>
 		protected abstract void compileOperator(Context ctx);
 
+		/// <summary>
+		/// Calculates the constant value in compile time.
+		/// </summary>
 		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
 
 		#region Helper methods

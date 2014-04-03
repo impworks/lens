@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
@@ -20,6 +21,29 @@ namespace Lens.SyntaxTree.Operators
 			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
 		}
 
+		/// <summary>
+		/// Extra hint for function composition.
+		/// </summary>
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			var leftType = LeftOperand.Resolve(ctx);
+			if (leftType.IsCallableType())
+			{
+				var mbr = RightOperand as GetMemberNode;
+				if (mbr != null)
+				{
+					// function created from method name: add a type hint
+					if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
+					{
+						var delegateType = ctx.WrapDelegate(leftType);
+						mbr.TypeHints = new List<TypeSignature> {delegateType.ReturnType.FullName};
+					}
+				}
+			}
+
+			return base.resolve(ctx, mustReturn);
+		}
+
 		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx, mustReturn);
@@ -32,7 +56,8 @@ namespace Lens.SyntaxTree.Operators
 
 				var leftVar = ctx.Unique.TempVariableName();
 				var rightVar = ctx.Unique.TempVariableName();
-				var argDefs = ctx.WrapDelegate(leftType).ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
+				var delegateType = ctx.WrapDelegate(leftType);
+				var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
 				return Expr.Lambda(
 					argDefs,
