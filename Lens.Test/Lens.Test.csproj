@@ -80,14 +80,14 @@
     <Compile Include="Internals\FunctionalHelperTest.cs" />
     <Compile Include="Internals\GenericHelperTest.cs" />
     <Compile Include="Features\GlobalProperties.cs" />
-    <Compile Include="LargeSnippets.cs" />
+    <Compile Include="Parsers\ParserLargeTest.cs" />
     <Compile Include="Parsers\LexerTest.cs" />
     <Compile Include="Features\LiteralsTest.cs" />
     <Compile Include="Features\OperatorsTest.cs" />
     <Compile Include="Parsers\ParserTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Features\SafeModeTest.cs" />
-    <Compile Include="Snippets.cs" />
+    <Compile Include="Features\Snippets.cs" />
     <Compile Include="Features\StdlibTest.cs" />
     <Compile Include="Internals\TestClassHierarchy.cs" />
     <Compile Include="TestBase.cs" />

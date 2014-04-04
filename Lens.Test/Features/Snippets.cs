@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Linq;
-using Lens.SyntaxTree;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Features
 {
 	[TestFixture]
 	internal class Snippets : TestBase
@@ -33,9 +32,16 @@ b";
 		}
 
 		[Test]
-		public void InvokeDynamic()
+		public void InvokeDynamic1()
 		{
 			Test(@"1.GetHashCode ()", 1);
+		}
+
+
+		[Test]
+		public void InvokeDynamic2()
+		{
+			Test(@"(1+2).GetHashCode ()", 3);
 		}
 
 		[Test]
@@ -236,11 +242,10 @@ x == y
 		[Test]
 		public void DelegateTypeHints()
 		{
-			var src = new NodeBase[]
-			{
-				Expr.Var("test", Expr.GetMember("string", "Concat", "string", "string")),
-				Expr.Invoke(Expr.Get("test"), Expr.Str("a"), Expr.Str("b"))
-			};
+			var src = @"
+var test = string::Concat<string, string>
+test ""a"" ""b""
+";
 
 			Test(src, "ab");
 		}

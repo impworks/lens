@@ -2,7 +2,7 @@
 using Lens.SyntaxTree.ControlFlow;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Parsers
 {
 	[TestFixture]
 	class LargeSnippets : TestBase
