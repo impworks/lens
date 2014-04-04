@@ -132,7 +132,7 @@ new [fx1; fx2; fx3]
 
 
 		[Test]
-		public void PartialApplication()
+		public void PartialApplication1()
 		{
 			var src = @"
 fun add:int (x:int y:int) -> x + y
@@ -141,6 +141,53 @@ let add3 = add _ 3
 (add2 1) + (add3 4)
 ";
 			Test(src, 10);
+		}
+
+		[Test]
+		public void PartialApplication2()
+		{
+			var src = @"
+let prepend = string::Concat ""test:"" _
+prepend ""hello""
+";
+			Test(src, "test:hello");
+		}
+
+		[Test]
+		public void PartialApplication3()
+		{
+			var src = @"
+fun add:int (x:int y:int z:int) -> x + y + z
+let fx1 = add 1 _ _
+let fx2 = fx1 2 _
+fx2 3
+";
+			Test(src, 6);
+		}
+
+		[Test]
+		public void ConstructorApplication1()
+		{
+			var src = @"
+let repeater = new string (""a""[0]) _
+new [repeater 2; repeater 3]
+";
+			Test(src, new [] { "aa", "aaa"});
+		}
+
+		[Test]
+		public void ConstructorApplication2()
+		{
+			var src = @"
+record Data
+    Value : int
+    Coeff : int
+
+let dataFx = new Data _ 2
+new [dataFx 1; dataFx 2; dataFx 3]
+    |> Sum (x:Data -> x.Value * x.Coeff)
+";
+			Test(src, 12);
 		}
 	}
 }
