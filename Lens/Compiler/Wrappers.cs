@@ -12,7 +12,14 @@ namespace Lens.Compiler
 		public bool IsStatic;
 	}
 
-	internal class MethodWrapper : WrapperBase
+	internal class CallableWrapperBase : WrapperBase
+	{
+		public bool IsPartiallyApplied;
+		public bool IsVariadic;
+		public Type[] ArgumentTypes;
+	}
+
+	internal class MethodWrapper : CallableWrapperBase
 	{
 		public MethodWrapper() { }
 
@@ -35,10 +42,8 @@ namespace Lens.Compiler
 
 		public bool IsVirtual;
 		public bool IsStatic;
-		public bool IsPartiallyApplied;
-		public bool IsVariadic;
+
 		public Type ReturnType;
-		public Type[] ArgumentTypes;
 		public Type[] GenericArguments;
 
 		public bool IsGeneric
@@ -47,14 +52,9 @@ namespace Lens.Compiler
 		}
 	}
 
-	internal class ConstructorWrapper : WrapperBase
+	internal class ConstructorWrapper : CallableWrapperBase
 	{
 		public ConstructorInfo ConstructorInfo;
-
-		public bool IsPartiallyApplied;
-		public bool IsVariadic;
-
-		public Type[] ArgumentTypes;
 	}
 
 	internal class FieldWrapper : WrapperBase

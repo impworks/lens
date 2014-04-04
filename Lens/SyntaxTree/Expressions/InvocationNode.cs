@@ -22,19 +22,16 @@ namespace Lens.SyntaxTree.Expressions
 
 		private NodeBase _InvocationSource;
 		private MethodWrapper _Method;
+		protected override CallableWrapperBase _Wrapper { get { return _Method; } }
 
-		private Type[] _ArgTypes;
 		private Type[] _TypeHints;
 
 		#region Resolve
 		
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof(Unit);
-
-			_ArgTypes = isParameterless
-				? Type.EmptyTypes
-				: Arguments.Select(a => a.Resolve(ctx)).ToArray();
+			// resolve _ArgTypes
+			base.resolve(ctx, mustReturn);
 
 			if (Expression is GetMemberNode)
 				resolveGetMember(ctx, Expression as GetMemberNode);
@@ -44,55 +41,6 @@ namespace Lens.SyntaxTree.Expressions
 				resolveExpression(ctx, Expression);
 
 			return _Method.ReturnType;
-		}
-
-		public override NodeBase Expand(Context ctx, bool mustReturn)
-		{
-			if (_Method.IsPartiallyApplied)
-			{
-				// (expr) _ a b _
-				// is transformed into
-				// (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
-				var argDefs = new List<FunctionArgument>();
-				var argExprs = new List<NodeBase>();
-				for (var idx = 0; idx < _ArgTypes.Length; idx++)
-				{
-					if (_ArgTypes[idx] == null)
-					{
-						var argName = ctx.Unique.AnonymousArgName();
-						argDefs.Add(Expr.Arg(argName, _Method.ArgumentTypes[idx].FullName));
-						argExprs.Add(Expr.Get(argName));
-					}
-					else
-					{
-						argExprs.Add(Arguments[idx]);
-					}
-				}
-
-				return Expr.Lambda(argDefs, Expr.Invoke(Expression, argExprs.ToArray()));
-			}
-
-			if (_Method.IsVariadic)
-			{
-				var dstTypes = _Method.ArgumentTypes;
-				var srcTypes = _ArgTypes;
-				var lastDst = dstTypes[dstTypes.Length - 1];
-				var lastSrc = srcTypes[srcTypes.Length - 1];
-
-				// compress items into an array:
-				//     fx a b c d
-				// becomes
-				//     fx a b (new[ c as X; d as X ])
-				if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
-				{
-					var elemType = lastDst.GetElementType();
-					var simpleArgs = Arguments.Take(dstTypes.Length - 1);
-					var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
-					return Expr.Invoke(Expression, simpleArgs.Union(new [] { combined }).ToArray());
-				}
-			}
-
-			return base.Expand(ctx, mustReturn);
 		}
 
 		private void resolveGetMember(Context ctx, GetMemberNode node)
@@ -345,6 +293,11 @@ namespace Lens.SyntaxTree.Expressions
 		}
 
 		#endregion
+
+		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		{
+			return new InvocationNode { Expression = Expression, Arguments = newArgs.ToList() };
+		}
 
 		public override string ToString()
 		{

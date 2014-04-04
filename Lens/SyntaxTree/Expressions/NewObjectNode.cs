@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.SyntaxTree.Operators;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -28,9 +29,54 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public TypeSignature TypeSignature;
 
+		/// <summary>
+		/// Checks if constructor call may be replaced with 'default' initialization.
+		/// </summary>
+		private bool _IsDefault;
+
+		private ConstructorWrapper _Constructor;
+		protected override CallableWrapperBase _Wrapper { get { return _Constructor; } }
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return Type ?? ctx.ResolveType(TypeSignature);
+			base.resolve(ctx, true);
+
+			var type = Type ?? ctx.ResolveType(TypeSignature);
+
+			if (type.IsVoid())
+				error(CompilerMessages.VoidTypeDefault);
+
+			if (type.IsAbstract)
+				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
+
+			if (Arguments.Count == 0)
+				error(CompilerMessages.ParameterlessConstructorParens);
+
+			try
+			{
+				_Constructor = ctx.ResolveConstructor(type, _ArgTypes);
+			}
+			catch (AmbiguousMatchException)
+			{
+				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+			}
+			catch (KeyNotFoundException)
+			{
+				if (_ArgTypes.Length > 0 || !type.IsValueType)
+					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+
+				_IsDefault = true;
+			}
+
+			return type;
+		}
+
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (_IsDefault)
+				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
+
+			return base.Expand(ctx, mustReturn);
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -42,47 +88,26 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			var type = Resolve(ctx);
-			if(type.IsVoid())
-				error(CompilerMessages.VoidTypeDefault);
-
-			if(type.IsAbstract)
-				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
-
-			if(Arguments.Count == 0)
-				error(CompilerMessages.ParameterlessConstructorParens);
-
-			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof (Unit);
-
-			var argTypes = isParameterless
-				? Type.EmptyTypes
-				: Arguments.Select(a => a.Resolve(ctx)).ToArray();
-
-			try
+			if(_Constructor != null)
 			{
-				var ctor = ctx.ResolveConstructor(type, argTypes);
-
-				if (!isParameterless)
+				if (_ArgTypes.Length > 0)
 				{
-					var destTypes = ctor.ArgumentTypes;
+					var destTypes = _Constructor.ArgumentTypes;
 					for (var idx = 0; idx < Arguments.Count; idx++)
 						Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
 				}
 
-				gen.EmitCreateObject(ctor.ConstructorInfo);
+				gen.EmitCreateObject(_Constructor.ConstructorInfo);
 			}
-			catch (AmbiguousMatchException)
+			else
 			{
-				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+				Expr.Default(TypeSignature).Emit(ctx, true);
 			}
-			catch (KeyNotFoundException)
-			{
-				if (!isParameterless || !type.IsValueType)
-					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+		}
 
-				var castExpr = Expr.Default(TypeSignature);
-				castExpr.Emit(ctx, true);
-			}
+		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		{
+			return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList() };
 		}
 
 		#region Equality members
