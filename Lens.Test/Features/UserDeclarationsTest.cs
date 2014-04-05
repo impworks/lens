@@ -302,7 +302,7 @@ new [
 		}
 
 		[Test]
-		public void VariadicFunction()
+		public void VariadicFunction1()
 		{
 			var src = @"
 fun mySum:int (data:int...) ->
@@ -314,6 +314,20 @@ fun mySum:int (data:int...) ->
 new [mySum 1; mySum 1 2; mySum 1 2 3 4 5; mySum (new [1; 2; 3])]
 ";
 			Test(src, new[] { 1, 3, 15, 6 });
+		}
+
+		[Test]
+		public void VariadicFunction2()
+		{
+			var src = @"
+fun cat:string (data:object...) ->
+    string::Join
+        <| "";""
+        <| data.Select (x:object -> x.ToString())
+
+cat 1 2 true ""test""
+";
+			Test(src, "1;2;True;test");
 		}
 
 		[Test]
