@@ -12,24 +12,24 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class CastOperatorNode : TypeCheckOperatorNodeBase
 	{
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			var fromType = Expression.GetExpressionType(ctx);
-			var toType = GetExpressionType(ctx);
+			var fromType = Expression.Resolve(ctx);
+			var toType = Resolve(ctx);
 
 			if (toType.IsExtendablyAssignableFrom(fromType, true))
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 
 			else if (fromType.IsNumericType() && toType.IsNumericType())
 			{
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 				gen.EmitConvert(toType);
 			}
 
@@ -40,25 +40,25 @@ namespace Lens.SyntaxTree.Operators
 			{
 				if (toType.IsNullableType())
 				{
-					var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, toType, true);
-					gen.EmitLoadLocal(tmpVar, true);
+					var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType, true);
+					gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 					gen.EmitInitObject(toType);
-					gen.EmitLoadLocal(tmpVar);
+					gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				}
 
 				else if (!toType.IsValueType)
 				{
-					Expression.Compile(ctx, true);
+					Expression.Emit(ctx, true);
 					gen.EmitCast(toType);
 				}
 
 				else
-					Error(CompilerMessages.CastNullValueType, toType);
+					error(CompilerMessages.CastNullValueType, toType);
 			}
 
 			else if (toType.IsExtendablyAssignableFrom(fromType))
 			{
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 
 				// box
 				if (fromType.IsValueType && toType == typeof (object))
@@ -86,7 +86,7 @@ namespace Lens.SyntaxTree.Operators
 
 			else if (fromType.IsExtendablyAssignableFrom(toType))
 			{
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 
 				// unbox
 				if (fromType == typeof (object) && toType.IsValueType)
@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Operators
 
 		private void castDelegate(Context ctx, Type from, Type to)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var toCtor = ctx.ResolveConstructor(to, new[] {typeof (object), typeof (IntPtr)});
 			var fromMethod = ctx.ResolveMethod(from, "Invoke");
@@ -116,15 +116,15 @@ namespace Lens.SyntaxTree.Operators
 			var toArgs = toMethod.ArgumentTypes;
 
 			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
-				Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
+				error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				Error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
+				error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();
 			else
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 
 			if (from.IsGenericType && to.IsGenericType && from.GetGenericTypeDefinition() == to.GetGenericTypeDefinition())
 				return;
@@ -135,7 +135,7 @@ namespace Lens.SyntaxTree.Operators
 
 		private void castError(Type from, Type to)
 		{
-			Error(CompilerMessages.CastTypesMismatch, from, to);
+			error(CompilerMessages.CastTypesMismatch, from, to);
 		}
 
 		public static bool IsImplicitlyBoolean(Type type)

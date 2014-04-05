@@ -8,19 +8,19 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class IsOperatorNode : TypeCheckOperatorNodeBase
 	{
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (bool);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			var desiredType = ctx.ResolveType(TypeSignature);
 
-			SafeModeCheckType(ctx, desiredType);
+			checkTypeInSafeMode(ctx, desiredType);
 
 			// types are identical
 			if (exprType == desiredType)
@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Operators
 				return;
 			}
 
-			Expression.Compile(ctx, true);
+			Expression.Emit(ctx, true);
 
 			// check if not null
 			if (desiredType == typeof (object))

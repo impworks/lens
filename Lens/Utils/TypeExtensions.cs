@@ -325,6 +325,10 @@ namespace Lens.Utils
 			if (varType == exprType)
 				return 0;
 
+			// partial application
+			if (exprType == null)
+				return 0;
+
 			if (varType.IsByRef)
 				return varType.GetElementType() == exprType ? 0 : int.MaxValue;
 
@@ -606,6 +610,78 @@ namespace Lens.Utils
 			}
 
 			return type.GetInterfaces().Contains(iface);
+		}
+
+		/// <summary>
+		/// Gets total distance between two sets of argument types.
+		/// </summary>
+		public static MethodLookupResult<T> ArgumentDistance<T>(IEnumerable<Type> passedTypes, Func<T, Type[]> getter, T method, bool isVariadic)
+		{
+			var calleeTypes = getter(method);
+			if(!isVariadic)
+				return new MethodLookupResult<T>(method, TypeListDistance(passedTypes, calleeTypes), calleeTypes);
+
+			var simpleCount = calleeTypes.Length - 1;
+
+			var simpleDistance = TypeListDistance(passedTypes.Take(simpleCount), calleeTypes.Take(simpleCount));
+			var variadicDistance = variadicArgumentDistance(passedTypes.Skip(simpleCount), calleeTypes[simpleCount]);
+			var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
+			return new MethodLookupResult<T>(method, distance, calleeTypes);
+		}
+
+		/// <summary>
+		/// Gets total distance between two sequence of types.
+		/// </summary>
+		public static int TypeListDistance(IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
+		{
+			var passedIter = passedArgs.GetEnumerator();
+			var calleeIter = calleeArgs.GetEnumerator();
+
+			var totalDist = 0;
+			while (true)
+			{
+				var passedOk = passedIter.MoveNext();
+				var calleeOk = calleeIter.MoveNext();
+
+				// argument count differs: method cannot be applied
+				if (passedOk != calleeOk)
+					return int.MaxValue;
+
+				// both sequences have finished
+				if (!calleeOk)
+					return totalDist;
+
+				var dist = calleeIter.Current.DistanceFrom(passedIter.Current);
+				if (dist == int.MaxValue)
+					return int.MaxValue;
+
+				totalDist += dist;
+			}
+		}
+
+		private static int variadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadicArg)
+		{
+			var args = passedArgs.ToArray();
+
+			// variadic function invoked with an array: no conversion
+			if (args.Length == 1 && args[0] == variadicArg)
+				return 0;
+
+			var sum = 0;
+			var elemType = variadicArg.GetElementType();
+
+			foreach (var curr in args)
+			{
+				var currDist = elemType.DistanceFrom(curr);
+				if (currDist == int.MaxValue)
+					return int.MaxValue;
+
+				sum += currDist;
+			}
+
+			// 1 extra distance point for packing arguments into the array:
+			// otherwise fun(int) and fun(int, object[]) will have equal distance for `fun 1` and cause an ambiguity error
+			return sum + 1;
 		}
 	}
 }

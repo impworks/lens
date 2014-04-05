@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -31,38 +32,39 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode FalseAction { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (!mustReturn || FalseAction == null)
 				return typeof (Unit);
 
-			var type = TrueAction.GetExpressionType(ctx);
-			var otherType = FalseAction.GetExpressionType(ctx);
+			var type = TrueAction.Resolve(ctx);
+			var otherType = FalseAction.Resolve(ctx);
 			return new[] {type, otherType}.GetMostCommonType();
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Condition;
-			yield return TrueAction;
-			yield return FalseAction;
+			yield return new NodeChild(Condition, x => Condition = x);
+			yield return new NodeChild(TrueAction, null);
+			if(FalseAction != null)
+				yield return new NodeChild(FalseAction, null);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			var condType = Condition.GetExpressionType(ctx);
+			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
 				var node = Condition.ConstantValue ? TrueAction : FalseAction;
 				if (node != null)
 				{
-					node.Compile(ctx, mustReturn);
-					if (!mustReturn && node.GetExpressionType(ctx).IsNotVoid())
+					node.Emit(ctx, mustReturn);
+					if (!mustReturn && node.Resolve(ctx).IsNotVoid())
 						gen.EmitPop();
 				}
 
@@ -72,12 +74,12 @@ namespace Lens.SyntaxTree.ControlFlow
 			var endLabel = gen.DefineLabel();
 			var falseLabel = gen.DefineLabel();
 			
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
 			if (FalseAction == null)
 			{
 				gen.EmitBranchFalse(endLabel);
-				TrueAction.Compile(ctx, mustReturn);
-				if (TrueAction.GetExpressionType(ctx).IsNotVoid())
+				TrueAction.Emit(ctx, mustReturn);
+				if (TrueAction.Resolve(ctx).IsNotVoid())
 					gen.EmitPop();
 
 				gen.MarkLabel(endLabel);
@@ -86,38 +88,28 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 			{
 				var canReturn = mustReturn && FalseAction != null;
-				var resultType = GetExpressionType(ctx);
 
 				gen.EmitBranchFalse(falseLabel);
-
-				if (TrueAction.GetExpressionType(ctx).IsNotVoid())
-				{
-					Expr.Cast(TrueAction, resultType).Compile(ctx, mustReturn);
-					if (!canReturn)
-						gen.EmitPop();
-				}
-				else
-				{
-					TrueAction.Compile(ctx, mustReturn);
-				}
-
+				emitBranch(ctx, TrueAction, canReturn);
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				if (FalseAction.GetExpressionType(ctx).IsNotVoid())
-				{
-					Expr.Cast(FalseAction, resultType).Compile(ctx, mustReturn);
-					if (!canReturn)
-						gen.EmitPop();
-				}
-				else
-				{
-					FalseAction.Compile(ctx, mustReturn);
-				}
+				emitBranch(ctx, FalseAction, canReturn);
 
 				gen.MarkLabel(endLabel);
 				gen.EmitNop();
 			}
+		}
+
+		private void emitBranch(Context ctx, NodeBase branch, bool canReturn)
+		{
+			var desiredType = Resolve(ctx);
+			var branchType = branch.Resolve(ctx, canReturn);
+
+			if (branchType.IsNotVoid() && desiredType.IsNotVoid())
+				branch = Expr.Cast(branch, desiredType);
+			
+			branch.Emit(ctx, canReturn);
 		}
 
 		#region Equality members

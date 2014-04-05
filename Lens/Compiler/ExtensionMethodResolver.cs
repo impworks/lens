@@ -24,12 +24,12 @@ namespace Lens.Compiler
 		}
 
 		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
-		private Dictionary<string, bool> _Namespaces;
+		private readonly Dictionary<string, bool> _Namespaces;
 
 		/// <summary>
 		/// Gets an extension method by given arguments.
 		/// </summary>
-		public MethodInfo FindExtensionMethod(Type type, string name, Type[] args )
+		public MethodInfo FindExtensionMethod(Type type, string name, Type[] args)
 		{
 			if (!_Cache.ContainsKey(type))
 				findMethodsForType(type);
@@ -39,7 +39,7 @@ namespace Lens.Compiler
 
 			var methods = _Cache[type][name];
 			var result = methods.Where(m => m.Name == name)
-								.Select(mi => new { Method = mi, Distance = GetExtensionDistance(mi, type, args) })
+								.Select(mi => new { Method = mi, Distance = getExtensionDistance(mi, type, args) })
 								.OrderBy(p => p.Distance)
 								.Take(2)
 								.ToArray();
@@ -100,11 +100,11 @@ namespace Lens.Compiler
 			_Cache[forType] = dict;
 		}
 
-		public static int GetExtensionDistance(MethodInfo method, Type type, Type[] args)
+		private static int getExtensionDistance(MethodInfo method, Type type, Type[] args)
 		{
-			var methodArgs = method.GetParameters().Select(p => p.ParameterType);
+			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
 			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = GetArgumentsDistance(methodArgs.Skip(1), args);
+			var argsDist = TypeExtensions.TypeListDistance(methodArgs.Skip(1), args);
 
 			try
 			{
@@ -113,34 +113,6 @@ namespace Lens.Compiler
 			catch (OverflowException)
 			{
 				return int.MaxValue;
-			}
-		}
-
-		/// <summary>
-		/// Gets total distance between two sets of argument types.
-		/// </summary>
-		public static int GetArgumentsDistance(IEnumerable<Type> src, IEnumerable<Type> dst)
-		{
-			var srcIt = src.GetEnumerator();
-			var dstIt = dst.GetEnumerator();
-
-			var totalDist = 0;
-			while (true)
-			{
-				var srcOk = srcIt.MoveNext();
-				var dstOk = dstIt.MoveNext();
-
-				if (srcOk != dstOk)
-					return int.MaxValue;
-
-				if (srcOk == false)
-					return totalDist;
-
-				var dist = dstIt.Current.DistanceFrom(srcIt.Current);
-				if (dist == int.MaxValue)
-					return int.MaxValue;
-
-				totalDist += dist;
 			}
 		}
 	}

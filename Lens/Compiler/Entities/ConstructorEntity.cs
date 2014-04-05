@@ -2,18 +2,26 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
 	internal class ConstructorEntity : MethodEntityBase
 	{
+		public ConstructorEntity(TypeEntity type) : base(type)
+		{
+			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
+		}
+
 		#region Fields
 
 		/// <summary>
 		/// Assembly-level constructor builder.
 		/// </summary>
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
+
+		public override bool IsVoid { get { return true; } }
 
 		#endregion
 
@@ -24,7 +32,6 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public override void PrepareSelf()
 		{
-			// todo: remove when we support static ctors
 			if(IsStatic)
 				throw new LensCompilerException(CompilerMessages.ConstructorStatic);
 
@@ -42,15 +49,10 @@ namespace Lens.Compiler.Entities
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
 		}
 
-		protected override void compileCore(Context ctx)
-		{
-			Body.Compile(ctx, false);
-		}
-
 		// call default constructor
 		protected override void emitPrelude(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var ctor = typeof (object).GetConstructor(Type.EmptyTypes);
 
 			gen.EmitLoadArgument(0);

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -10,12 +11,17 @@ namespace Lens.Compiler.Entities
 {
 	internal class MethodEntity : MethodEntityBase
 	{
-		public MethodEntity(bool isImported = false) : base(isImported)
-		{ }
+		public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
+		{
+			var scopeKind = type.Kind == TypeEntityKind.Closure ? ScopeKind.LambdaRoot : ScopeKind.FunctionRoot;
+			Body = new CodeBlockNode(scopeKind);
+		}
 
 		#region Fields
 
 		public bool IsVirtual;
+		public bool IsPure;
+		public bool IsVariadic;
 
 		/// <summary>
 		/// The signature of method's return type.
@@ -39,7 +45,7 @@ namespace Lens.Compiler.Entities
 			set { m_MethodInfo = value; }
 		}
 
-		public bool IsPure;
+		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
 
 		#endregion
 
@@ -89,20 +95,15 @@ namespace Lens.Compiler.Entities
 				Body.Statements.Add(new UnitNode());
 		}
 
-		protected override void compileCore(Context ctx)
-		{
-			Body.Compile(ctx, ReturnType.IsNotVoid());
-		}
-
 		protected override void emitTrailer(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var actualType = Body.GetExpressionType(ctx);
+			var gen = ctx.CurrentMethod.Generator;
+			var actualType = Body.Resolve(ctx);
 
 			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())
 			{
 				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
-					ctx.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
+					Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
 			}
 
 			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())

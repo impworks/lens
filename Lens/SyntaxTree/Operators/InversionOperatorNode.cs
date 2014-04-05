@@ -8,21 +8,30 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class InversionOperatorNode : UnaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "not"; }
 		}
 
 		protected override Type resolveOperatorType(Context ctx)
 		{
-			return CastOperatorNode.IsImplicitlyBoolean(Operand.GetExpressionType(ctx)) ? typeof (bool) : null;
+			return CastOperatorNode.IsImplicitlyBoolean(Operand.Resolve(ctx)) ? typeof (bool) : null;
+		}
+
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			var op = Operand as InversionOperatorNode;
+			if (op != null)
+				return op.Operand;
+
+			return base.Expand(ctx, mustReturn);
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			Expr.Cast(Operand, typeof(bool)).Compile(ctx, true);
+			Expr.Cast<bool>(Operand).Emit(ctx, true);
 
 			gen.EmitConstant(0);
 			gen.EmitCompareEqual();

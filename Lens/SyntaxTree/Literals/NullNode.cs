@@ -8,14 +8,14 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class NullNode : NodeBase
 	{
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (NullType);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitNull();
 		}
 

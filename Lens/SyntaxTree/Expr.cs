@@ -4,6 +4,7 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
 
@@ -53,11 +54,6 @@ namespace Lens.SyntaxTree
 			return new UnitNode();
 		}
 
-		public static ThisNode This()
-		{
-			return new ThisNode();
-		}
-
 		#endregion
 
 		#region Operators
@@ -94,7 +90,7 @@ namespace Lens.SyntaxTree
 
 		public static ShiftOperatorNode ShiftLeft(NodeBase left, NodeBase right)
 		{
-			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true};
+			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true };
 		}
 
 		public static ShiftOperatorNode ShiftRight(NodeBase left, NodeBase right)
@@ -122,6 +118,11 @@ namespace Lens.SyntaxTree
 			return new DefaultOperatorNode { Type = type };
 		}
 
+		public static DefaultOperatorNode Default<T>()
+		{
+			return new DefaultOperatorNode { Type = typeof(T) };
+		}
+
 		public static TypeofOperatorNode Typeof(TypeSignature type)
 		{
 			return new TypeofOperatorNode {TypeSignature = type};
@@ -130,6 +131,11 @@ namespace Lens.SyntaxTree
 		public static TypeofOperatorNode Typeof(Type type)
 		{
 			return new TypeofOperatorNode { Type = type };
+		}
+
+		public static TypeofOperatorNode Typeof<T>()
+		{
+			return new TypeofOperatorNode { Type = typeof(T) };
 		}
 
 		public static CastOperatorNode Cast(NodeBase node, TypeSignature type)
@@ -142,6 +148,11 @@ namespace Lens.SyntaxTree
 			return new CastOperatorNode { Expression = node, Type = type };
 		}
 
+		public static CastOperatorNode Cast<T>(NodeBase node)
+		{
+			return new CastOperatorNode { Expression = node, Type = typeof(T) };
+		}
+
 		public static IsOperatorNode Is(NodeBase node, TypeSignature type)
 		{
 			return new IsOperatorNode { Expression = node, TypeSignature = type };
@@ -150,6 +161,11 @@ namespace Lens.SyntaxTree
 		public static IsOperatorNode Is(NodeBase node, Type type)
 		{
 			return new IsOperatorNode { Expression = node, Type = type };
+		}
+
+		public static IsOperatorNode Is<T>(NodeBase node)
+		{
+			return new IsOperatorNode { Expression = node, Type = typeof(T) };
 		}
 
 		public static BinaryOperatorNodeBase Binary(LogicalOperatorKind kind, NodeBase left, NodeBase right)
@@ -169,7 +185,7 @@ namespace Lens.SyntaxTree
 
 		public static BinaryOperatorNodeBase Xor(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { Kind = LogicalOperatorKind.Xor, LeftOperand = left, RightOperand = right };
+			return Op<XorOperatorNode>(left, right);
 		}
 
 		public static ComparisonOperatorNode Compare(ComparisonOperatorKind kind, NodeBase left, NodeBase right)
@@ -209,7 +225,7 @@ namespace Lens.SyntaxTree
 
 		private static T Op<T>(NodeBase left, NodeBase right) where T : BinaryOperatorNodeBase, new()
 		{
-			return new T {LeftOperand = left, RightOperand = right};
+			return new T { LeftOperand = left, RightOperand = right };
 		}
 
 		#endregion
@@ -273,14 +289,14 @@ namespace Lens.SyntaxTree
 			return new SetIdentifierNode { Identifier = name, Value = value };
 		}
 
-		public static GetIdentifierNode Get(LocalName name)
+		public static GetIdentifierNode Get(Local name)
 		{
-			return new GetIdentifierNode { LocalName = name };
+			return new GetIdentifierNode { Local = name };
 		}
 
-		public static SetIdentifierNode Set(LocalName name, NodeBase value)
+		public static SetIdentifierNode Set(Local name, NodeBase value)
 		{
-			return new SetIdentifierNode { LocalName = name, Value = value };
+			return new SetIdentifierNode { Local = name, Value = value };
 		}
 
 		public static GetMemberNode GetMember(NodeBase expr, string name, params TypeSignature[] hints)
@@ -303,11 +319,6 @@ namespace Lens.SyntaxTree
 			return new SetMemberNode { StaticType = type, MemberName = name, Value = value };
 		}
 
-		public static GetArgumentNode GetArg(int id)
-		{
-			return new GetArgumentNode {ArgumentId = id};
-		}
-
 		public static InvocationNode Invoke(TypeSignature type, string name, params NodeBase[] args)
 		{
 			return Invoke(GetMember(type, name), args);
@@ -320,12 +331,16 @@ namespace Lens.SyntaxTree
 
 		public static InvocationNode Invoke(NodeBase expr, params NodeBase[] args)
 		{
-			return invoke(expr, args);
+			return new InvocationNode
+			{
+				Expression = expr,
+				Arguments = args.Length == 0 ? new List<NodeBase> { Unit() } : args.ToList()
+			};
 		}
 
 		public static InvocationNode Invoke(string name, params NodeBase[] args)
 		{
-			return invoke(Get(name), args);
+			return Invoke(Get(name), args);
 		}
 
 		public static ShiftOperatorNode Compose(params NodeBase[] args)
@@ -338,15 +353,6 @@ namespace Lens.SyntaxTree
 				node = ShiftRight(node, args[idx]);
 
 			return node;
-		}
-
-		private static InvocationNode invoke(NodeBase expr, params NodeBase[] args)
-		{
-			return new InvocationNode
-			{
-				Expression = expr,
-				Arguments = args.Length == 0 ? new List<NodeBase> { Unit() } : args.ToList()
-			};
 		}
 
 		public static T Ref<T>(T expr) where T: NodeBase, IPointerProvider
@@ -393,6 +399,11 @@ namespace Lens.SyntaxTree
 
 		#region Control Structures
 
+		public static CodeBlockNode Block(ScopeKind scopeKind, params NodeBase[] stmts)
+		{
+			return new CodeBlockNode(scopeKind) { Statements = stmts.ToList() };
+		}
+
 		public static CodeBlockNode Block(params NodeBase[] stmts)
 		{
 			return new CodeBlockNode {Statements = stmts.ToList()};
@@ -408,9 +419,9 @@ namespace Lens.SyntaxTree
 			return new VarNode(name) { Type = type };
 		}
 
-		public static VarNode Var(LocalName name, NodeBase expr)
+		public static VarNode Var(Local name, NodeBase expr)
 		{
-			return new VarNode { LocalName = name, Value = expr };
+			return new VarNode { Local = name, Value = expr };
 		}
 
 		public static LetNode Let(string name, NodeBase expr)
@@ -418,14 +429,14 @@ namespace Lens.SyntaxTree
 			return new LetNode(name) { Value = expr };
 		}
 
-		public static LetNode Let(LocalName name, NodeBase expr)
+		public static LetNode Let(Local name, NodeBase expr)
 		{
-			return new LetNode { LocalName = name, Value = expr };
+			return new LetNode { Local = name, Value = expr };
 		}
 
 		public static WhileNode While(NodeBase condition, CodeBlockNode body)
 		{
-			return new WhileNode {Condition = condition, Body = body};
+			return new WhileNode {Condition = condition, Body = {Statements = body.Statements}};
 		}
 
 		public static IfNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
@@ -545,7 +556,7 @@ namespace Lens.SyntaxTree
 				Name = name,
 				Arguments = args.ToList(),
 				ReturnTypeSignature = type,
-				Body = Block(body),
+				Body = { Statements = body.ToList() },
 				IsPure = isPure
 			};
 		}
@@ -560,14 +571,28 @@ namespace Lens.SyntaxTree
 			return new FunctionArgument { Name = name, TypeSignature = typeof(T).FullName, IsRefArgument = isRef };
 		}
 
-		public static LambdaNode Lambda(FunctionArgument[] args, params NodeBase[] body)
+		public static LambdaNode Lambda(IEnumerable<FunctionArgument> args, params NodeBase[] body)
 		{
-			return new LambdaNode {Body = Block(body), Arguments = args.ToList()};
+			return new LambdaNode { Body = { Statements = body.ToList() }, Arguments = args.ToList() };
 		}
 
 		public static LambdaNode Lambda(params NodeBase[] body)
 		{
-			return new LambdaNode { Body = Block(body) };
+			return new LambdaNode { Body = { Statements = body.ToList() } };
+		}
+
+		#endregion
+
+		#region Utilities
+
+		public static GetArgumentNode GetArg(int id)
+		{
+			return new GetArgumentNode { ArgumentId = id };
+		}
+
+		public static ThisNode This()
+		{
+			return new ThisNode();
 		}
 
 		#endregion

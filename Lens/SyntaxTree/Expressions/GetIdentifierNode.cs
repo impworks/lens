@@ -12,71 +12,99 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class GetIdentifierNode : IdentifierNodeBase, IPointerProvider
 	{
-		private MethodEntity m_Method;
-		private GlobalPropertyInfo m_Property;
-		private LocalName m_LocalConstant;
+		private MethodEntity _Method;
+		private GlobalPropertyInfo _Property;
+		private Local _LocalConstant;
+		private TypeEntity _Type;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
 
-		public override bool IsConstant { get { return m_LocalConstant != null; } }
-		public override dynamic ConstantValue { get { return m_LocalConstant != null ? m_LocalConstant.ConstantValue : base.ConstantValue; } }
+		public override bool IsConstant { get { return _LocalConstant != null; } }
+		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
 
 		public GetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			if (_Type != null)
+				return Expr.New(_Type.TypeInfo);
+
+			return base.Expand(ctx, mustReturn);
+		}
+
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			if(Identifier == "_")
+				error(CompilerMessages.UnderscoreNameUsed);
+
+			// local variable
+			var local = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (local != null)
 			{
 				// only local constants are cached
 				// because mutable variables could be closured later on
 				if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
-					m_LocalConstant = local;
+					_LocalConstant = local;
 
 				return local.Type;
 			}
 
+			// static function declared in the script
 			try
 			{
 				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
 				if (methods.Length > 1)
-					Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
+					error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
-				m_Method = methods[0];
-				return FunctionalHelper.CreateFuncType(m_Method.ReturnType, m_Method.GetArgumentTypes(ctx));
+				_Method = methods[0];
+				return FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.GetArgumentTypes(ctx));
 			}
 			catch (KeyNotFoundException) { }
 
+			// algebraic type without a constructor
+			var type = ctx.FindType(Identifier);
+			if (type != null && type.Kind == TypeEntityKind.TypeLabel)
+			{
+				try
+				{
+					type.ResolveConstructor(new Type[0]);
+					_Type = type;
+					return _Type.TypeInfo;
+				}
+				catch (KeyNotFoundException) { }
+			}
+
+			// global property
 			try
 			{
-				m_Property = ctx.ResolveGlobalProperty(Identifier);
-				return m_Property.PropertyType;
+				_Property = ctx.ResolveGlobalProperty(Identifier);
+				return _Property.PropertyType;
 			}
 			catch (KeyNotFoundException)
 			{
-				Error(CompilerMessages.IdentifierNotFound, Identifier);
+				error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (Unit);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var resultType = GetExpressionType(ctx);
+			var resultType = Resolve(ctx);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			// local name is not cached because it can be closured.
 			// if the identifier is actually a local constant, the 'compile' method is not invoked at all
-			var local = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var local = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (local != null)
 			{
 				if(local.IsImmutable && RefArgumentRequired)
-					Error(CompilerMessages.ConstantByRef);
+					error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
@@ -94,28 +122,28 @@ namespace Lens.SyntaxTree.Expressions
 			}
 
 			// load pointer to global function
-			if (m_Method != null)
+			if (_Method != null)
 			{
 				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(m_Method.MethodInfo);
+				gen.EmitLoadFunctionPointer(_Method.MethodInfo);
 				gen.EmitCreateObject(ctor);
 
 				return;
 			}
 
 			// get a property value
-			if (m_Property != null)
+			if (_Property != null)
 			{
-				var id = m_Property.PropertyId;
-				if(!m_Property.HasGetter)
-					Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
+				var id = _Property.PropertyId;
+				if(!_Property.HasGetter)
+					error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
-				var type = m_Property.PropertyType;
-				if (m_Property.GetterMethod != null)
+				var type = _Property.PropertyType;
+				if (_Property.GetterMethod != null)
 				{
-					gen.EmitCall(m_Property.GetterMethod.MethodInfo);
+					gen.EmitCall(_Property.GetterMethod.MethodInfo);
 				}
 				else
 				{
@@ -127,28 +155,28 @@ namespace Lens.SyntaxTree.Expressions
 				return;
 			}
 
-			Error(CompilerMessages.IdentifierNotFound, Identifier);
+			error(CompilerMessages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>
 		/// Gets a closured variable that has been declared in the current scope.
 		/// </summary>
-		private void getClosuredLocal(Context ctx, LocalName name)
+		private void getClosuredLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 
-			var clsField = ctx.CurrentScope.ClosureType.ResolveField(name.ClosureFieldName);
+			var clsField = ctx.Scope.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
 		}
 
 		/// <summary>
 		/// Gets a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void getClosuredRemote(Context ctx, LocalName name)
+		private void getClosuredRemote(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitLoadArgument(0);
 
@@ -167,9 +195,9 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
 		}
 
-		private void getLocal(Context ctx, LocalName name)
+		private void getLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var ptr = PointerRequired || RefArgumentRequired;
 
 			if (name.ArgumentId.HasValue)
@@ -180,7 +208,7 @@ namespace Lens.SyntaxTree.Expressions
 			}
 			else
 			{
-				gen.EmitLoadLocal(name, ptr);
+				gen.EmitLoadLocal(name.LocalBuilder, ptr);
 			}
 		}
 

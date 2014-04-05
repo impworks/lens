@@ -1,4 +1,4 @@
-﻿namespace Lens.Test
+﻿namespace Lens.Test.Internals
 {
 	internal class ParentClass { }
 

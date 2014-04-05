@@ -145,7 +145,7 @@
     <value>Невозможно привести объект типа '{0}' к типу '{1}'!</value>
   </data>
   <data name="CatchClauseUnreachable" xml:space="preserve">
-    <value>Это выражение catch недостижимо, поскольку предыдущее выражение перехватывает все исключения!</value>
+    <value>Это выражение catch недостижимо, поскольку исключения типа '{0}' будут перехвачены выше как наследники типа '{1}'!</value>
   </data>
   <data name="CatchTypeDuplicate" xml:space="preserve">
     <value>Тип '{0}' уже был использован в выражении catch текущего блока try!</value>
@@ -157,7 +157,7 @@
     <value>Невозможно использовать неявную переменную в замыкании!</value>
   </data>
   <data name="ClosureRef" xml:space="preserve">
-    <value>Невозможно использовать аргумент, передаваемый по ссылке, в замыкании!</value>
+    <value>Невозможно использовать в замыкании аргумент '{0}', поскольку он передается по ссылке!</value>
   </data>
   <data name="CodeBlockEmpty" xml:space="preserve">
     <value>Блок кода должен содержать хотя бы одно выражение!</value>
@@ -361,7 +361,7 @@
     <value>Значение свойства '{0}.{1}' не может быть получено!</value>
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
-    <value>Значение свойства '{0}.{1}' не может быть pflfyj!</value>
+    <value>Значение свойства '{0}.{1}' не может быть задано!</value>
   </data>
   <data name="PropertyValuetypeRef" xml:space="preserve">
     <value>Нельзя использовать свойство '{0}.{1}' в качестве значения для ref-параметра, поскольку возвращаемый им тип '{2}' передается по значению!</value>
@@ -467,5 +467,17 @@
   </data>
   <data name="TypeStaticMethodNotFound" xml:space="preserve">
     <value>Тип '{0}' не содержит метод '{1}' с подходящим списком аргументов!</value>
+  </data>
+  <data name="FieldRedefinition" xml:space="preserve">
+    <value>Тип '{0}' уже содержит поле '{1}'!</value>
+  </data>
+  <data name="UnderscoreNameUsed" xml:space="preserve">
+    <value>Идентификатор '_' не может быть использовать в данном контексте!</value>
+  </data>
+  <data name="VariadicArgumentLambda" xml:space="preserve">
+    <value>Невозможно использовать модификатор '...' в анонимной функции!</value>
+  </data>
+  <data name="VariadicArgumentNotLast" xml:space="preserve">
+    <value>Аргумент c модификатором '...' должен быть последним в списке!</value>
   </data>
 </root>

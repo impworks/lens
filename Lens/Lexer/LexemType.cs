@@ -87,6 +87,7 @@
 		Comma,
 		Tilde,
 		QuestionMark,
+		Ellipsis,
 		Indent,
 		Dedent
 	}

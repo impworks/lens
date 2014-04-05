@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace Lens.Compiler
@@ -6,9 +7,9 @@ namespace Lens.Compiler
 	/// <summary>
 	/// A class representing info about a local variable.
 	/// </summary>
-	internal class LocalName
+	internal class Local
 	{
-		public LocalName(string name, Type type, bool isConst = false, bool isRefArg = false)
+		public Local(string name, Type type, bool isConst = false, bool isRefArg = false)
 		{
 			Name = name;
 			Type = type;
@@ -16,7 +17,7 @@ namespace Lens.Compiler
 			IsRefArgument = isRefArg;
 		}
 
-		private LocalName(LocalName other, int dist = 0)
+		private Local(Local other, int dist = 0)
 		{
 			Name = other.Name;
 			Type = other.Type;
@@ -54,14 +55,6 @@ namespace Lens.Compiler
 		/// Does the variable represent a function argument that is passed by ref?
 		/// </summary>
 		public readonly bool IsRefArgument;
-
-		/// <summary>
-		/// The ID of the variable if it is local.
-		/// </summary>
-		public int? LocalId
-		{
-			get { return LocalBuilder == null ? (int?)null : LocalBuilder.LocalIndex; }
-		}
 
 		/// <summary>
 		/// The ID of the argument if this name represents one.
@@ -102,11 +95,20 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.
 		/// </summary>
-		/// <param name="distance"></param>
-		/// <returns></returns>
-		public LocalName GetClosuredCopy(int distance)
+		public Local GetClosuredCopy(int distance)
 		{
-			return new LocalName(this, distance);
+			return new Local(this, distance);
+		}
+
+		public override string ToString()
+		{
+			var entities = new List<string>();
+			if(IsClosured) entities.Add("closured");
+			if(IsRefArgument) entities.Add("ref");
+			if(IsImmutable) entities.Add("immutable");
+			if(IsConstant) entities.Add("const");
+			if(ArgumentId != null) entities.Add(string.Format("arg({0})", ArgumentId));
+			return string.Format("{0}:{1} ({2})", Name, Type.Name, string.Join(", ", entities));
 		}
 	}
 }

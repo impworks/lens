@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -11,53 +12,53 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class NewListNode : ValueListNodeBase<NodeBase>
 	{
-		private Type m_ItemType;
+		private Type _ItemType;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Expressions.Count == 0)
-				Error(CompilerMessages.ListEmpty);
+				error(CompilerMessages.ListEmpty);
 
-			m_ItemType = resolveItemType(Expressions, ctx);
+			_ItemType = resolveItemType(Expressions, ctx);
 
-			return typeof(List<>).MakeGenericType(m_ItemType);
+			return typeof(List<>).MakeGenericType(_ItemType);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			return Expressions;
+			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+			var gen = ctx.CurrentMethod.Generator;
+			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 			
-			var listType = GetExpressionType(ctx);
+			var listType = Resolve(ctx);
 			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
-			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { m_ItemType });
+			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { _ItemType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar);
+			gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			foreach (var curr in Expressions)
 			{
-				var currType = curr.GetExpressionType(ctx);
+				var currType = curr.Resolve(ctx);
 
 				ctx.CheckTypedExpression(curr, currType, true);
 
-				if (!m_ItemType.IsExtendablyAssignableFrom(currType))
-					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, m_ItemType);
+				if (!_ItemType.IsExtendablyAssignableFrom(currType))
+					error(curr, CompilerMessages.ListElementTypeMismatch, currType, _ItemType);
 
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				
-				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Compile(ctx, true);
+				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
 				gen.EmitCall(addMethod.MethodInfo);
 			}
 
-			gen.EmitLoadLocal(tmpVar);
+			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
 		public override string ToString()

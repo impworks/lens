@@ -2,7 +2,7 @@
 using System.Linq;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Features
 {
 	[TestFixture]
 	internal class StdlibTest : TestBase

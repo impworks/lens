@@ -14,7 +14,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
 		/// </summary>
-		private static readonly Type[] I4Types = new[]
+		private static readonly Type[] I4Types =
 		{
 			typeof (bool),
 			typeof (byte),
@@ -30,18 +30,18 @@ namespace Lens.SyntaxTree.Operators
 			TypeSignature = type;
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var type = GetExpressionType(ctx);
+			var gen = ctx.CurrentMethod.Generator;
+			var type = Resolve(ctx);
 
 			if(type.IsVoid())
-				Error(CompilerMessages.VoidTypeDefault);
+				error(CompilerMessages.VoidTypeDefault);
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);
@@ -66,11 +66,11 @@ namespace Lens.SyntaxTree.Operators
 
 			else
 			{
-				var tmpVar = ctx.CurrentScopeFrame.DeclareImplicitName(ctx, GetExpressionType(ctx), true);
+				var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
-				gen.EmitLoadLocal(tmpVar, true);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 				gen.EmitInitObject(type);
-				gen.EmitLoadLocal(tmpVar);
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 			}
 		}
 

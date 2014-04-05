@@ -4,7 +4,7 @@ using System.Linq;
 using Lens.Compiler;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Internals
 {
 	[TestFixture]
 	public class ExtensionMethodResolverTest

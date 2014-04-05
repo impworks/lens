@@ -282,6 +282,9 @@
   <data name="UnknownStatement" xml:space="preserve">
     <value>Неизвестный тип выражения!</value>
   </data>
+  <data name="VariadicByRef" xml:space="preserve">
+    <value>Нельзя пометить аргумент, передающийся по ссылке, модификатором '...'!</value>
+  </data>
   <data name="VarIdentifierExpected" xml:space="preserve">
     <value>Имя переменной должно быть идентификатором!</value>
   </data>

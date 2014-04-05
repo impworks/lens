@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -21,7 +23,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public string Name { get; set; }
 
-		public LocalName LocalName { get; set; }
+		/// <summary>
+		/// Explicitly specified local variable.
+		/// </summary>
+		public Local Local { get; set; }
 
 		/// <summary>
 		/// Type signature for non-initialized variables.
@@ -38,60 +43,56 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public readonly bool IsImmutable;
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Value;
+			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		public override void ProcessClosures(Context ctx)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			base.ProcessClosures(ctx);
-
 			var type = Value != null
-				? Value.GetExpressionType(ctx)
+				? Value.Resolve(ctx)
 				: ctx.ResolveType(Type);
+
 			ctx.CheckTypedExpression(Value, type);
 
-			if(LocalName != null)
-				return;
-
-			if(Name == "_")
-				Error(CompilerMessages.UnderscoreName);
-
-			try
+			if (Local == null)
 			{
-				var name = ctx.CurrentScopeFrame.DeclareName(Name, type, IsImmutable);
-				if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+				if (Name == "_")
+					error(CompilerMessages.UnderscoreName);
+
+				try
 				{
-					name.IsConstant = true;
-					name.ConstantValue = Value.ConstantValue;
+					var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
+					if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+					{
+						name.IsConstant = true;
+						name.ConstantValue = Value.ConstantValue;
+					}
+				}
+				catch (LensCompilerException ex)
+				{
+					ex.BindToLocation(this);
+					throw;
 				}
 			}
-			catch (LensCompilerException ex)
-			{
-				ex.BindToLocation(this);
-				throw;
-			}
+
+			return base.resolve(ctx, mustReturn);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			var name = LocalName ?? ctx.CurrentScopeFrame.FindName(Name);
+			var name = Local ?? ctx.Scope.FindLocal(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
-				return;
+				return Expr.Unit();
 
-			if (Value == null)
-				Value = Expr.Default(Type);
-
-			var assignNode = new SetIdentifierNode
+			return new SetIdentifierNode
 			{
 				Identifier = Name,
-				LocalName = LocalName,
-				Value = Value,
+				Local = Local,
+				Value = Value ?? Expr.Default(Type),
 				IsInitialization = true,
 			};
-
-			assignNode.Compile(ctx, mustReturn);
 		}
 
 		#region Equality members

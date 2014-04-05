@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Lens.Lexer;
 using Lens.Parser;
 using Lens.SyntaxTree;
@@ -21,6 +22,21 @@ namespace Lens.Test
 			Assert.AreEqual(value, Compile(nodes, new LensCompilerOptions {UnrollConstants = true}));
 			if (testConstants)
 				Assert.AreEqual(value, Compile(nodes));
+		}
+
+		protected static void TestError(string src, string bareMsg)
+		{
+			var ex = Assert.Throws<LensCompilerException>(() => Compile(src));
+
+			if (!bareMsg.Contains('{'))
+			{
+				Assert.AreEqual(bareMsg, ex.Message);
+			}
+			else
+			{
+				var regex = new Regex(regexFromMsg(bareMsg));
+				Assert.IsTrue(regex.IsMatch(ex.Message));
+			}
 		}
 
 		protected static void Test(string src, object value, LensCompilerOptions opts)
@@ -55,6 +71,16 @@ namespace Lens.Test
 		{
 			opts = opts ?? new LensCompilerOptions { AllowSave = true };
 			return new LensCompiler(opts).Run(nodes);
+		}
+
+		private static Regex _MessageWildcardRegex = new Regex(@"\{[0-9]\}", RegexOptions.Compiled);
+		private static Regex _MessageSymbolRegex = new Regex(@"[\-\[\]\/\(\)\*\+\?\.\\\^\$\|]", RegexOptions.Compiled);
+
+		private static string regexFromMsg(string msg)
+		{
+			msg = _MessageSymbolRegex.Replace(msg, @"\$1");
+			msg = _MessageWildcardRegex.Replace(msg, "(.+)");
+			return "$" + msg + "^";
 		}
 	}
 }

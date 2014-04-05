@@ -1,10 +1,11 @@
-﻿using Lens.SyntaxTree;
+﻿using System.Diagnostics;
+using Lens.SyntaxTree;
 
 namespace Lens.Lexer
 {
 	internal partial class LensLexer
 	{
-		private StaticLexemDefinition[] Keywords = new[]
+		private readonly static StaticLexemDefinition[] Keywords = 
 		{
 			new StaticLexemDefinition("typeof", LexemType.Typeof),
 			new StaticLexemDefinition("default", LexemType.Default),
@@ -40,7 +41,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("null", LexemType.Null),
 		};
 
-		private readonly static StaticLexemDefinition[] Operators = new []
+		private readonly static StaticLexemDefinition[] Operators = 
 		{
 			new StaticLexemDefinition("()", LexemType.Unit),
 			new StaticLexemDefinition("[]", LexemType.ArrayDef),
@@ -83,6 +84,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("::", LexemType.DoubleСolon),
 			new StaticLexemDefinition(":", LexemType.Colon),
 			new StaticLexemDefinition(",", LexemType.Comma),
+			new StaticLexemDefinition("...", LexemType.Ellipsis),
 			new StaticLexemDefinition("..", LexemType.DoubleDot),
 			new StaticLexemDefinition(".", LexemType.Dot),
 			new StaticLexemDefinition(";", LexemType.Semicolon),
@@ -90,13 +92,14 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("~", LexemType.Tilde),
 		};
 
-		private RegexLexemDefinition[] RegexLexems = new[]
+		private readonly static RegexLexemDefinition[] RegexLexems =
 		{
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", LexemType.Double),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
 			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier)
 		};
 
+		[DebuggerStepThrough]
 		private void Error(string src, params object[] args)
 		{
 			var loc = new LocationEntity { StartLocation = getPosition() };
@@ -106,6 +109,7 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Checks if the cursor has run outside string bounds.
 		/// </summary>
+		[DebuggerStepThrough]
 		private bool inBounds()
 		{
 			return Position < Source.Length;
@@ -115,6 +119,7 @@ namespace Lens.Lexer
 		/// Checks if the cursor is at comment start.
 		/// </summary>
 		/// <returns></returns>
+		[DebuggerStepThrough]
 		private bool isComment()
 		{
 			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
@@ -123,6 +128,7 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Skips one or more symbols.
 		/// </summary>
+		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
 			Position += count;
@@ -132,6 +138,7 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Returns the current position in the string.
 		/// </summary>
+		[DebuggerStepThrough]
 		private LexemLocation getPosition()
 		{
 			return new LexemLocation

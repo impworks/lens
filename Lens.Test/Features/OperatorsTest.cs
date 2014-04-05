@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Features
 {
 	[TestFixture]
 	internal class OperatorsTest : TestBase
@@ -117,11 +117,17 @@ let a = 1
 			Test("true && false", false, true);
 			Test("false && true", false, true);
 			Test("false && false", false, true);
+		}
 
+		[Test]
+		public void XorTest()
+		{
 			Test("true ^^ true", false, true);
 			Test("true ^^ false", true, true);
 			Test("false ^^ true", true, true);
 			Test("false ^^ false", false, true);
+
+			Test("42 ^^ 1337", 1299, true);
 		}
 
 		[Test]

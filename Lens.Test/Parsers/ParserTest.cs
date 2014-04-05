@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Lens.Compiler;
-using Lens.Lexer;
-using Lens.Parser;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Operators;
 using NUnit.Framework;
 
-namespace Lens.Test
+namespace Lens.Test.Parsers
 {
 	[TestFixture]
 	internal class ParserTest : TestBase
@@ -861,17 +858,14 @@ catch ex:DivisionByZeroException
 			var result = Expr.Invoke(
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
-				new LambdaNode
-					{
-						Arguments = new List<FunctionArgument> { new FunctionArgument("x", "int") },
-						Body = Expr.Block(
-							Expr.Greater(
-								Expr.Get("x"),
-								Expr.Int(1)
-							)
-						)
-					}
-				);
+				Expr.Lambda(
+					new [] { Expr.Arg("x", "int") },
+					Expr.Greater(
+						Expr.Get("x"),
+						Expr.Int(1)
+					)
+				)
+			);
 
 			TestParser(src, result);
 		}

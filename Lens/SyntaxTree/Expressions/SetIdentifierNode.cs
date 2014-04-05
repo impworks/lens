@@ -12,6 +12,8 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetIdentifierNode : IdentifierNodeBase
 	{
+		private GlobalPropertyInfo _Property;
+
 		public SetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
@@ -28,93 +30,110 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			yield return Value;
-		}
+			if (Identifier == "_")
+				error(CompilerMessages.UnderscoreNameUsed);
 
-		protected override void compile(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentILGenerator;
-
-			var exprType = Value.GetExpressionType(ctx);
+			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
-			var nameInfo = LocalName ?? ctx.CurrentScopeFrame.FindName(Identifier);
+			var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
-					Error(CompilerMessages.IdentifierIsConstant, Identifier);
+					error(CompilerMessages.IdentifierIsConstant, Identifier);
 
 				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					Error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
-
-				if (nameInfo.IsClosured)
+					error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
+			}
+			else
+			{
+				try
 				{
-					if (nameInfo.ClosureDistance == 0)
-						assignClosuredLocal(ctx, nameInfo);
-					else
-						assignClosuredRemote(ctx, nameInfo);
-				}
-				else
-				{
-					assignLocal(ctx, nameInfo);
-				}
+					_Property = ctx.ResolveGlobalProperty(Identifier);
 
-				return;
+					if (!_Property.HasSetter)
+						error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
+
+					if (!_Property.PropertyType.IsExtendablyAssignableFrom(exprType))
+						error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, _Property.PropertyType);
+				}
+				catch (KeyNotFoundException)
+				{
+					error(CompilerMessages.VariableNotFound, Identifier);
+				}
 			}
 
-			try
+			return base.resolve(ctx, mustReturn);
+		}
+
+		public override IEnumerable<NodeChild> GetChildren()
+		{
+			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+			var type = Value.Resolve(ctx);
+
+			if (_Property != null)
 			{
-				var pty = ctx.ResolveGlobalProperty(Identifier);
-
-				if(!pty.HasSetter)
-					Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
-
-				var type = pty.PropertyType;
-				if(!type.IsExtendablyAssignableFrom(exprType))
-					Error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, type);
-
 				var cast = Expr.Cast(Value, type);
-				if (pty.SetterMethod != null)
+				if (_Property.SetterMethod != null)
 				{
-					cast.Compile(ctx, true);
-					gen.EmitCall(pty.SetterMethod.MethodInfo);
+					cast.Emit(ctx, true);
+					gen.EmitCall(_Property.SetterMethod.MethodInfo);
 				}
 				else
 				{
 					var method = typeof (GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
 
 					gen.EmitConstant(ctx.ContextId);
-					gen.EmitConstant(pty.PropertyId);
-					Expr.Cast(Value, type).Compile(ctx, true);
+					gen.EmitConstant(_Property.PropertyId);
+					Expr.Cast(Value, type).Emit(ctx, true);
 					gen.EmitCall(method);
 				}
 			}
-			catch (KeyNotFoundException)
+			else
 			{
-				Error(CompilerMessages.VariableNotFound, Identifier);
+				var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
+				if (nameInfo != null)
+				{
+					if (nameInfo.IsClosured)
+					{
+						if (nameInfo.ClosureDistance == 0)
+							assignClosuredLocal(ctx, nameInfo);
+						else
+							assignClosuredRemote(ctx, nameInfo);
+					}
+					else
+					{
+						assignLocal(ctx, nameInfo);
+					}
+				}
 			}
 		}
 
-		private void assignLocal(Context ctx, LocalName name)
+		private void assignLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var castNode = Expr.Cast(Value, name.Type);
 
 			if (!name.IsRefArgument)
 			{
-				castNode.Compile(ctx, true);
+				castNode.Emit(ctx, true);
 				if(name.ArgumentId.HasValue)
 					gen.EmitSaveArgument(name.ArgumentId.Value);
 				else
-					gen.EmitSaveLocal(name);
+					gen.EmitSaveLocal(name.LocalBuilder);
 			}
 			else
 			{
 				gen.EmitLoadArgument(name.ArgumentId.Value);
-				castNode.Compile(ctx, true);
+				castNode.Emit(ctx, true);
 				gen.EmitSaveObject(name.Type);
 			}
 		}
@@ -122,15 +141,15 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that is declared in current scope.
 		/// </summary>
-		private void assignClosuredLocal(Context ctx, LocalName name)
+		private void assignClosuredLocal(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitLoadLocal(ctx.CurrentScope.ClosureVariable);
+			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 			
-			Expr.Cast(Value, name.Type).Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-			var clsType = ctx.CurrentScope.ClosureType.TypeInfo;
+			var clsType = ctx.Scope.ClosureType.TypeInfo;
 			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
@@ -138,9 +157,9 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void assignClosuredRemote(Context ctx, LocalName name)
+		private void assignClosuredRemote(Context ctx, Local name)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitLoadArgument(0);
 
@@ -155,7 +174,7 @@ namespace Lens.SyntaxTree.Expressions
 				dist--;
 			}
 
-			Expr.Cast(Value, name.Type).Compile(ctx, true);
+			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
 			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);

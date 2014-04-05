@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Operators
@@ -8,24 +9,24 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class TypeofOperatorNode : TypeOperatorNodeBase
 	{
+		private static readonly MethodInfo _HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
 		public TypeofOperatorNode(string type = null)
 		{
 			TypeSignature = type;
 		}
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (Type);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
-			var gen = ctx.CurrentILGenerator;
-			var method = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
+			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitConstant(type);
-			gen.EmitCall(method);
+			gen.EmitCall(_HandleMethod);
 		}
 
 		public override string ToString()

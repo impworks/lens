@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -8,12 +9,12 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class SubtractOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "-"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Subtraction"; }
 		}
@@ -23,25 +24,21 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
 
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (!IsConstant)
+			{
+				if (Resolve(ctx) == typeof (string))
+					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
+			}
+
+			return mathExpand(LeftOperand, RightOperand, false) ?? mathExpand(RightOperand, LeftOperand, true);
+		}
+
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var type = GetExpressionType(ctx);
-
-			if (type == typeof (string))
-			{
-				var replaceMethod = typeof (string).GetMethod("Replace", new[] {typeof (string), typeof (string)});
-
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
-				gen.EmitConstant(string.Empty);
-				gen.EmitCall(replaceMethod);
-			}
-			else
-			{
-				loadAndConvertNumerics(ctx);
-				gen.EmitSubtract();
-			}
+			loadAndConvertNumerics(ctx);
+			ctx.CurrentMethod.Generator.EmitSubtract();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
@@ -50,6 +47,18 @@ namespace Lens.SyntaxTree.Operators
 				return left.Replace(right, "");
 
 			return left - right;
+		}
+
+		private static NodeBase mathExpand(NodeBase one, NodeBase other, bool inv)
+		{
+			if (one.IsConstant)
+			{
+				var value = one.ConstantValue;
+				if (TypeExtensions.IsNumericType(value.GetType()) && value == 0)
+					return inv ? other : Expr.Negate(other);
+			}
+
+			return null;
 		}
 	}
 }

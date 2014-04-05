@@ -12,13 +12,15 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		/// <summary>
-		/// Finds a declared type by its name.
+		/// Finds a locally declared type.
 		/// </summary>
-		internal TypeEntity FindType(string name)
+		public TypeEntity FindType(string name)
 		{
-			TypeEntity type;
-			return _DefinedTypes.TryGetValue(name, out type) ? type : null;
+			TypeEntity declared;
+			_DefinedTypes.TryGetValue(name, out declared);
+			return declared;
 		}
+
 
 		/// <summary>
 		/// Resolves a type by its string signature.
@@ -32,11 +34,14 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Resolves a type by its signature.
 		/// </summary>
-		public Type ResolveType(TypeSignature signature)
+		public Type ResolveType(TypeSignature signature, bool allowUnspecified = false)
 		{
-			var local = FindType(signature.FullSignature);
-			return local != null
-				? local.TypeInfo
+			if (allowUnspecified && signature.FullSignature == "_")
+				return null;
+
+			var declared = FindType(signature.FullSignature);
+			return declared != null
+				? declared.TypeInfo
 				: _TypeResolver.ResolveType(signature);
 		}
 
@@ -168,23 +173,29 @@ namespace Lens.Compiler
 				{
 					Type = type,
 					ConstructorInfo = ctor.ConstructorBuilder,
-					ArgumentTypes = ctor.GetArgumentTypes(this)
+					ArgumentTypes = ctor.GetArgumentTypes(this),
+
+					IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+					IsVariadic = false // built-in ctors can't do that
 				};
 			}
 
 			try
 			{
 				var ctor = ResolveMethodByArgs(
-					type.GetConstructors(), 
+					type.GetConstructors(),
 					c => c.GetParameters().Select(p => p.ParameterType).ToArray(),
+					ReflectionHelper.IsVariadic,
 					argTypes
 				);
 
 				return new ConstructorWrapper
 				{
 					Type = type,
-					ConstructorInfo = ctor.Item1,
-					ArgumentTypes = ctor.Item1.GetParameters().Select(p => p.ParameterType).ToArray()
+					ConstructorInfo = ctor.Method,
+					ArgumentTypes = ctor.ArgumentTypes,
+					IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+					IsVariadic = ReflectionHelper.IsVariadic(ctor.Method)
 				};
 			}
 			catch (NotSupportedException)
@@ -196,14 +207,17 @@ namespace Lens.Compiler
 				var genCtor = ResolveMethodByArgs(
 					genType.GetConstructors(),
 					c => c.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
+					ReflectionHelper.IsVariadic,
 					argTypes
 				);
 
 				return new ConstructorWrapper
 				{
 					Type = type,
-					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Item1),
-					ArgumentTypes = genCtor.Item3
+					ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
+					ArgumentTypes = genCtor.ArgumentTypes,
+					IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+					IsVariadic = ReflectionHelper.IsVariadic(genCtor.Method)
 				};
 			}
 		}
@@ -232,7 +246,9 @@ namespace Lens.Compiler
 					Type = type,
 
 					IsStatic = method.IsStatic,
-					IsVirtual = method.IsVirtual
+					IsVirtual = method.IsVirtual,
+					IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+					IsVariadic = method.IsVariadic
 				};
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
@@ -265,25 +281,25 @@ namespace Lens.Compiler
 			}
 		}
 
-		private MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
+		private static MethodWrapper resolveExternalMethod(Type type, string name, Type[] argTypes, Type[] hints)
 		{
 			var mw = new MethodWrapper { Name = name, Type = type };
 
 			try
 			{
 				var method = ResolveMethodByArgs(
-					getMethodsFromType(type, name),
+					ReflectionHelper.GetMethodsByName(type, name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
+					ReflectionHelper.IsVariadic,
 					argTypes
 				);
 
-				var mInfo = method.Item1;
-				var expectedTypes = method.Item3;
+				var mInfo = method.Method;
 
 				if (mInfo.IsGenericMethod)
 				{
 					var genericDefs = mInfo.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(method.ArgumentTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 					mw.GenericArguments = genericValues;
@@ -296,8 +312,10 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfo.IsStatic;
 				mw.IsVirtual = mInfo.IsVirtual;
-				mw.ArgumentTypes = expectedTypes;
+				mw.ArgumentTypes = method.ArgumentTypes;
 				mw.ReturnType = mInfo.ReturnType;
+				mw.IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes);
+				mw.IsVariadic = ReflectionHelper.IsVariadic(mInfo);
 
 				return mw;
 			}
@@ -308,19 +326,19 @@ namespace Lens.Compiler
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					getMethodsFromType(genType, name),
+					ReflectionHelper.GetMethodsByName(genType, name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
+					ReflectionHelper.IsVariadic,
 					argTypes
 				);
 
-				var mInfoOriginal = genMethod.Item1;
-				var mInfo = TypeBuilder.GetMethod(type, genMethod.Item1);
-				var expectedTypes = genMethod.Item3;
+				var mInfoOriginal = genMethod.Method;
+				var mInfo = TypeBuilder.GetMethod(type, mInfoOriginal);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
 					var genericDefs = mInfoOriginal.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(expectedTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(genMethod.ArgumentTypes, argTypes, genericDefs, hints);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -343,23 +361,11 @@ namespace Lens.Compiler
 				mw.MethodInfo = mInfo;
 				mw.IsStatic = mInfoOriginal.IsStatic;
 				mw.IsVirtual = mInfoOriginal.IsVirtual;
+				mw.IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes);
+				mw.IsVariadic = ReflectionHelper.IsVariadic(mInfoOriginal);
 			}
 
 			return mw;
-		}
-
-		/// <summary>
-		/// Gets all method definitions from a type or interface, working around a strange behaviour of GetMethods() called on an inteface.
-		/// </summary>
-		private static IEnumerable<MethodInfo> getMethodsFromType(Type type, string name)
-		{
-			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
-
-			var result = type.GetMethods(flags).Where(m => m.Name == name);
-			if(type.IsInterface && !result.Any())
-				result = type.GetInterfaces().SelectMany(x => getMethodsFromType(x, name));
-
-			return result;
 		}
 
 		/// <summary>
@@ -376,6 +382,7 @@ namespace Lens.Compiler
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
 			var method = _ExtensionResolver.FindExtensionMethod(type, name, argTypes);
+			var args = method.GetParameters();
 			var info = new MethodWrapper
 			{
 				Name = name,
@@ -385,7 +392,9 @@ namespace Lens.Compiler
 				IsStatic = true,
 				IsVirtual = false,
 				ReturnType = method.ReturnType,
-				ArgumentTypes = method.GetParameters().Select(p => p.ParameterType).ToArray()
+				ArgumentTypes = args.Select(p => p.ParameterType).ToArray(),
+				IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+				IsVariadic = ReflectionHelper.IsVariadic(method)
 			};
 
 			if (method.IsGenericMethod)
@@ -546,22 +555,18 @@ namespace Lens.Compiler
 		/// <typeparam name="T">Type of method-like entity.</typeparam>
 		/// <param name="list">List of method-like entitites.</param>
 		/// <param name="argsGetter">A function that gets method entity arguments.</param>
-		/// <param name="args">Desired argument types.</param>
-		public static Tuple<T, int, Type[]> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Type[] args)
+		/// <param name="argTypes">Desired argument types.</param>
+		public static MethodLookupResult<T> ResolveMethodByArgs<T>(IEnumerable<T> list, Func<T, Type[]> argsGetter, Func<T, bool> isVariadicGetter, Type[] argTypes)
 		{
-			Func<T, Tuple<T, int, Type[]>> methodEvaluator = ent =>
-			{
-				var currArgs = argsGetter(ent);
-				var dist = ExtensionMethodResolver.GetArgumentsDistance(args, currArgs);
-				return new Tuple<T, int, Type[]>(ent, dist, currArgs);
-			};
+			var result = list.Select(x => TypeExtensions.ArgumentDistance(argTypes, argsGetter, x, isVariadicGetter(x)))
+							 .OrderBy(rec => rec.Distance)
+							 .Take(2) // no more than 2 is needed
+							 .ToArray();
 
-			var result = list.Select(methodEvaluator).OrderBy(rec => rec.Item2).Take(2).ToArray();
-
-			if (result.Length == 0 || result[0].Item2 == int.MaxValue)
+			if (result.Length == 0 || result[0].Distance == int.MaxValue)
 				throw new KeyNotFoundException();
 
-			if (result.Length == 2 && result[0].Item2 == result[1].Item2)
+			if (result.Length == 2 && result[0].Distance == result[1].Distance)
 				throw new AmbiguousMatchException();
 
 			return result[0];

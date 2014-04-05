@@ -66,6 +66,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -73,28 +75,33 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
+    <Compile Include="Utils\ReflectionHelper.cs" />
+    <Compile Include="Compiler\Scope.cs" />
+    <Compile Include="Compiler\UniqueNameGenerator.cs" />
+    <Compile Include="Compiler\Context.Compilation.cs" />
+    <Compile Include="Compiler\Context.Import.cs" />
     <Compile Include="Compiler\Context.SafeMode.cs" />
     <Compile Include="Compiler\Context.Stdlib.cs" />
     <Compile Include="Compiler\Entities\EntityNames.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.Autogeneration.cs" />
+    <Compile Include="Compiler\Entities\TypeEntity.Structure.cs" />
     <Compile Include="Compiler\Entities\TypeEntityKind.cs" />
     <Compile Include="Compiler\SafeMode.cs" />
     <Compile Include="Compiler\SafeModeSubsystem.cs" />
-    <Compile Include="Compiler\ScopeFrame.cs" />
     <Compile Include="LensCompiler.cs" />
     <Compile Include="LensCompilerOptions.cs" />
     <Compile Include="Compiler\Entities\ConstructorEntity.cs" />
     <Compile Include="Compiler\Context.cs" />
     <Compile Include="Compiler\Context.Lookup.cs" />
     <Compile Include="Compiler\Context.Structure.cs" />
-    <Compile Include="Compiler\GlobalPropertyHelper.cs" />
+    <Compile Include="Utils\GlobalPropertyHelper.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
     <Compile Include="Compiler\ExtensionMethodResolver.cs" />
     <Compile Include="Compiler\Entities\FieldEntity.cs" />
-    <Compile Include="Compiler\GenericHelper.cs" />
+    <Compile Include="Utils\GenericHelper.cs" />
     <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
     <Compile Include="Compiler\Entities\MethodEntity.cs" />
-    <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.cs" />
     <Compile Include="Compiler\TypeResolver.cs" />
@@ -113,9 +120,10 @@
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Internals\GetArgumentNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\XorOperatorNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -146,7 +154,7 @@
     <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />
-    <Compile Include="SyntaxTree\Literals\ThisNode.cs" />
+    <Compile Include="SyntaxTree\Internals\ThisNode.cs" />
     <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
@@ -205,7 +213,9 @@
     <Compile Include="Utils\FunctionalHelper.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
-    <Compile Include="Compiler\LocalName.cs" />
+    <Compile Include="Utils\MethodLookupResult.cs" />
+    <Compile Include="Compiler\Local.cs" />
+    <Compile Include="Utils\NodeChild.cs" />
     <Compile Include="Utils\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

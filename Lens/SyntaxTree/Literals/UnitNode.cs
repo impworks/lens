@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class UnitNode : NodeBase
 	{
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			// does nothing
 		}

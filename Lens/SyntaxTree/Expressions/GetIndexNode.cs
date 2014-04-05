@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -13,22 +14,22 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
-		private MethodWrapper m_Getter;
+		private MethodWrapper _Getter;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			if (exprType.IsArray)
 				return exprType.GetElementType();
 
-			var idxType = Index.GetExpressionType(ctx);
+			var idxType = Index.Resolve(ctx);
 			try
 			{
-				m_Getter = ctx.ResolveIndexer(exprType, idxType, true);
-				return m_Getter.ReturnType;
+				_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				return _Getter.ReturnType;
 			}
 			catch (LensCompilerException ex)
 			{
@@ -37,18 +38,15 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Expression;
-			yield return Index;
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Index, x => Index = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			// ensure validation
-			GetExpressionType(ctx);
-
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 
 			if (exprType.IsArray)
 				compileArray(ctx);
@@ -58,38 +56,37 @@ namespace Lens.SyntaxTree.Expressions
 
 		private void compileArray(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			var exprType = Expression.GetExpressionType(ctx);
+			var exprType = Expression.Resolve(ctx);
 			var itemType = exprType.GetElementType();
 
-			Expression.Compile(ctx, true);
-			Index.Compile(ctx, true);
+			Expression.Emit(ctx, true);
+			Index.Emit(ctx, true);
 
 			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
 
 		private void compileCustom(Context ctx)
 		{
-			var retType = m_Getter.ReturnType;
+			var retType = _Getter.ReturnType;
 			if(RefArgumentRequired && retType.IsValueType)
-				Error(CompilerMessages.IndexerValuetypeRef, Expression.GetExpressionType(ctx), retType);
+				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
-			if (Expression is IPointerProvider)
+			var ptrExpr = Expression as IPointerProvider;
+			if (ptrExpr != null)
 			{
-				var expr = Expression as IPointerProvider;
-				expr.PointerRequired = PointerRequired;
-				expr.RefArgumentRequired = RefArgumentRequired;
+				ptrExpr.PointerRequired = PointerRequired;
+				ptrExpr.RefArgumentRequired = RefArgumentRequired;
 			}
 
-			Expression.Compile(ctx, true);
+			Expression.Emit(ctx, true);
 
-			var cast = Expr.Cast(Index, m_Getter.ArgumentTypes[0]);
-			cast.Compile(ctx, true);
+			Expr.Cast(Index, _Getter.ArgumentTypes[0]).Emit(ctx, true);
 
-			gen.EmitCall(m_Getter.MethodInfo);
+			gen.EmitCall(_Getter.MethodInfo);
 		}
 
 		public override string ToString()

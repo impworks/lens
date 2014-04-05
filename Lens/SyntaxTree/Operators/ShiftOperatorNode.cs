@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
-using Lens.Compiler.Entities;
-using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 
@@ -13,85 +11,71 @@ namespace Lens.SyntaxTree.Operators
 	{
 		public bool IsLeft { get; set; }
 
-		/// <summary>
-		/// The resulting method if the shift operation is used in function composition semantics.
-		/// </summary>
-		private MethodEntity _Method;
-	
-		public override void ProcessClosures(Context ctx)
-		{
-			if(LeftOperand is LambdaNode)
-				LeftOperand.ProcessClosures(ctx);
-
-			if (RightOperand is LambdaNode)
-				RightOperand.ProcessClosures(ctx);
-
-			var leftType = LeftOperand.GetExpressionType(ctx);
-
-			var rightGetter = RightOperand as GetMemberNode;
-			if (!IsLeft && leftType.IsCallableType() && rightGetter != null)
-			{
-				if (rightGetter.TypeHints.IsEmpty())
-				{
-					var returnType = ctx.ResolveMethod(leftType, "Invoke").ReturnType;
-					rightGetter.TypeHints = new List<TypeSignature> {TypeSignature.Parse(returnType.FullName)};
-				}
-			}
-
-			var rightType = RightOperand.GetExpressionType(ctx);
-
-			if (rightGetter != null)
-				rightGetter.TypeHints.Clear();
-
-			if (!IsLeft && leftType.IsCallableType() && rightType.IsCallableType())
-			{
-				if (!ctx.CanCombineDelegates(leftType, rightType))
-					Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
-
-				var argTypes = ctx.WrapDelegate(leftType).ArgumentTypes;
-				var argGetters = argTypes.Select((a, id) => Expr.GetArg(id)).Cast<NodeBase>().ToArray();
-
-				if (LeftOperand is GetMemberNode)
-					(LeftOperand as GetMemberNode).TypeHints.Clear();
-
-				_Method = ctx.CurrentScopeFrame.CreateClosureMethod(ctx, argTypes, ctx.WrapDelegate(rightType).ReturnType);
-				_Method.Body = 
-					Expr.Block(
-						Expr.Invoke(
-							RightOperand,
-							Expr.Invoke(
-								LeftOperand,
-								argGetters
-							)
-						)
-					);
-
-				var outerMethod = ctx.CurrentMethod;
-				var outerFrame = ctx.CurrentScopeFrame;
-				ctx.CurrentMethod = _Method;
-				ctx.CurrentScopeFrame = _Method.Scope.RootFrame;
-
-				var scope = _Method.Scope;
-				scope.InitializeScope(ctx, outerFrame);
-
-				_Method.Body.ProcessClosures(ctx);
-				_Method.PrepareSelf();
-
-				scope.FinalizeScope(ctx);
-
-				ctx.CurrentMethod = outerMethod;
-				ctx.CurrentScopeFrame = outerFrame;
-			}
-		}
-
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return IsLeft ? "<:" : ":>"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
+		}
+
+		/// <summary>
+		/// Extra hint for function composition.
+		/// </summary>
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			var leftType = LeftOperand.Resolve(ctx);
+			if (leftType.IsCallableType())
+			{
+				var mbr = RightOperand as GetMemberNode;
+				if (mbr != null)
+				{
+					// function created from method name: add a type hint
+					if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
+					{
+						var delegateType = ctx.WrapDelegate(leftType);
+						mbr.TypeHints = new List<TypeSignature> {delegateType.ReturnType.FullName};
+					}
+				}
+			}
+
+			return base.resolve(ctx, mustReturn);
+		}
+
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			var leftType = LeftOperand.Resolve(ctx, mustReturn);
+			var rightType = RightOperand.Resolve(ctx, mustReturn);
+
+			if (leftType.IsCallableType() && rightType.IsCallableType())
+			{
+				if (!ctx.CanCombineDelegates(leftType, rightType))
+					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
+
+				var leftVar = ctx.Unique.TempVariableName();
+				var rightVar = ctx.Unique.TempVariableName();
+				var delegateType = ctx.WrapDelegate(leftType);
+				var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
+
+				return Expr.Lambda(
+					argDefs,
+					Expr.Block(
+						Expr.Let(leftVar, LeftOperand),
+						Expr.Let(rightVar, RightOperand),
+						Expr.Invoke(
+							Expr.Get(rightVar),
+							Expr.Invoke(
+								Expr.Get(leftVar),
+								argDefs.Select(x => Expr.Get(x.Name)).ToArray()
+							)
+						)
+					)
+				);
+			}
+
+			return base.Expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -107,37 +91,12 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			if(_Method == null)
-				compileShift(ctx);
-			else
-				compileComposition(ctx);
-		}
+			var gen = ctx.CurrentMethod.Generator;
 
-		private void compileShift(Context ctx)
-		{
-			var gen = ctx.CurrentILGenerator;
+			LeftOperand.Emit(ctx, true);
+			RightOperand.Emit(ctx, true);
 
-			LeftOperand.Compile(ctx, true);
-			RightOperand.Compile(ctx, true);
-
-			if (IsLeft)
-				gen.EmitShiftLeft();
-			else
-				gen.EmitShiftRight();
-		}
-
-		private void compileComposition(Context ctx)
-		{
-			var gen = ctx.CurrentILGenerator;
-
-			// find constructor
-			var type = FunctionalHelper.CreateDelegateType(_Method.ReturnType, _Method.ArgumentTypes);
-			var ctor = ctx.ResolveConstructor(type, new[] { typeof(object), typeof(IntPtr) });
-
-			var closureInstance = ctx.CurrentScope.ClosureVariable;
-			gen.EmitLoadLocal(closureInstance);
-			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
+			gen.EmitShift(IsLeft);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

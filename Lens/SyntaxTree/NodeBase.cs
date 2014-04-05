@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -12,67 +13,184 @@ namespace Lens.SyntaxTree
 	/// </summary>
 	internal abstract class NodeBase : LocationEntity
 	{
-		/// <summary>
-		/// Checks if the current node is a constant.
-		/// </summary>
-		public virtual bool IsConstant { get { return false; } }
-
-		public virtual dynamic ConstantValue { get { throw new InvalidOperationException("Not a constant!"); } }
+		#region Fields
 
 		/// <summary>
 		/// The cached expression type.
 		/// </summary>
-		private Type m_ExpressionType;
+		private Type _CachedExpressionType;
+
+		#endregion
+
+		#region Properties
+
+		/// <summary>
+		/// Checks if the current node is a constant.
+		/// </summary>
+		public virtual bool IsConstant
+		{
+			get { return false; }
+		}
+
+		/// <summary>
+		/// Returns a constant value corresponding to the current node.
+		/// </summary>
+		public virtual dynamic ConstantValue
+		{
+			get { throw new InvalidOperationException("Not a constant!"); }
+		}
+
+		#endregion
+
+		#region Main pass stages
 
 		/// <summary>
 		/// Calculates the type of expression represented by current node.
 		/// </summary>
 		[DebuggerStepThrough]
-		public Type GetExpressionType(Context ctx, bool mustReturn = true)
+		public Type Resolve(Context ctx, bool mustReturn = true)
 		{
-			if (m_ExpressionType == null)
+			if (_CachedExpressionType == null)
 			{
-				m_ExpressionType = resolveExpressionType(ctx, mustReturn);
-				SafeModeCheckType(ctx, m_ExpressionType);
+				_CachedExpressionType = resolve(ctx, mustReturn);
+				checkTypeInSafeMode(ctx, _CachedExpressionType);
 			}
 
-			return m_ExpressionType;
+			return _CachedExpressionType;
 		}
 
-		protected virtual Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected virtual Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (Unit);
 		}
+
+		/// <summary>
+		/// Enables recursive children resolution & expansion.
+		/// </summary>
+		public virtual void Transform(Context ctx, bool mustReturn)
+		{
+			var children = GetChildren().ToArray();
+			foreach (var child in children)
+			{
+				if (child == null || child.Node == null)
+					continue;
+
+				child.Node.Resolve(ctx, mustReturn);
+				var sub = child.Node.Expand(ctx, mustReturn);
+				if (sub != null)
+				{
+					child.Setter(sub);
+					sub.Resolve(ctx, mustReturn);
+					sub.Transform(ctx, mustReturn);
+				}
+				else
+				{
+					child.Node.Transform(ctx, mustReturn);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Checks if current node can be expanded into another node or a set of nodes.
+		/// </summary>
+		/// <returns>
+		/// Null if no expansion is suitable, a NodeBase object instance otherwise.
+		/// </returns>
+		public virtual NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			return null;
+		}
+
+		/// <summary>
+		/// Processes closures.
+		/// </summary>
+		public virtual void ProcessClosures(Context ctx)
+		{
+			foreach (var child in GetChildren())
+				if (child != null && child.Node != null)
+					child.Node.ProcessClosures(ctx);
+		}
+
+		#endregion
 
 		/// <summary>
 		/// Generates the IL for this node.
 		/// </summary>
 		/// <param name="ctx">Pointer to current context.</param>
 		/// <param name="mustReturn">Flag indicating the node should return a value.</param>
-		[DebuggerStepThrough]
-		public void Compile(Context ctx, bool mustReturn)
+		public void Emit(Context ctx, bool mustReturn)
 		{
-			GetExpressionType(ctx, mustReturn);
-
 			if (IsConstant && ctx.Options.UnrollConstants)
 			{
-				if(mustReturn)
+				if (mustReturn)
 					emitConstant(ctx);
 			}
 			else
 			{
-				compile(ctx, mustReturn);
+				emitCode(ctx, mustReturn);
 			}
 		}
 
-		protected abstract void compile(Context ctx, bool mustReturn);
+		protected virtual void emitCode(Context ctx, bool mustReturn)
+		{
+			throw new InvalidOperationException(
+				string.Format(
+					"Node '{0}' neither has a body nor was expanded!",
+					GetType()
+				)
+			);
+		}
+
+		/// <summary>
+		/// Gets the list of child nodes.
+		/// </summary>
+		public virtual IEnumerable<NodeChild> GetChildren()
+		{
+			yield break;
+		}
+
+		#region Private helpers
+
+		/// <summary>
+		/// Reports an error to the compiler.
+		/// </summary>
+		/// <param name="message">Error message.</param>
+		/// <param name="args">Optional error arguments.</param>
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		protected void error(string message, params object[] args)
+		{
+			error(this, message, args);
+		}
+
+		/// <summary>
+		/// Reports an error to the compiler.
+		/// </summary>
+		/// <param name="message">Error message.</param>
+		/// <param name="args">Optional error arguments.</param>
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		protected void error(LocationEntity entity, string message, params object[] args)
+		{
+			var msg = string.Format(message, args);
+			throw new LensCompilerException(msg, entity);
+		}
+
+		/// <summary>
+		/// Throws an error that the current type is not alowed in safe mode.
+		/// </summary>
+		protected void checkTypeInSafeMode(Context ctx, Type type)
+		{
+			if (!ctx.IsTypeAllowed(type))
+				error(CompilerMessages.SafeModeIllegalType, type.FullName);
+		}
 
 		/// <summary>
 		/// Emit the value of current node as a constant.
 		/// </summary>
 		private void emitConstant(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			var value = ConstantValue;
 
 			if (value is bool)
@@ -86,59 +204,9 @@ namespace Lens.SyntaxTree
 			else if (value is string)
 				gen.EmitConstant((string)value);
 			else
-				compile(ctx, true);
+				emitCode(ctx, true);
 		}
 
-		/// <summary>
-		/// Gets the list of child nodes.
-		/// </summary>
-		public virtual IEnumerable<NodeBase> GetChildNodes()
-		{
-			return new NodeBase[0];
-		}
-
-		/// <summary>
-		/// Processes closures.
-		/// </summary>
-		public virtual void ProcessClosures(Context ctx)
-		{
-			foreach(var child in GetChildNodes())
-				if(child != null)
-					child.ProcessClosures(ctx);
-		}
-
-		/// <summary>
-		/// Reports an error to the compiler.
-		/// </summary>
-		/// <param name="message">Error message.</param>
-		/// <param name="args">Optional error arguments.</param>
-		[ContractAnnotation("=> halt")]
-		[DebuggerStepThrough]
-		public void Error(string message, params object[] args)
-		{
-			Error(this, message, args);
-		}
-
-		/// <summary>
-		/// Reports an error to the compiler.
-		/// </summary>
-		/// <param name="message">Error message.</param>
-		/// <param name="args">Optional error arguments.</param>
-		[ContractAnnotation("=> halt")]
-		[DebuggerStepThrough]
-		public void Error(LocationEntity entity, string message, params object[] args)
-		{
-			var msg = string.Format(message, args);
-			throw new LensCompilerException(msg, entity);
-		}
-
-		/// <summary>
-		/// Throws an error that the current type is not alowed in safe mode.
-		/// </summary>
-		protected void SafeModeCheckType(Context ctx, Type type)
-		{
-			if(!ctx.IsTypeAllowed(type))
-				Error(CompilerMessages.SafeModeIllegalType, type.FullName);
-		}
+		#endregion
 	}
 }

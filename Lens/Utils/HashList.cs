@@ -22,8 +22,9 @@ namespace Lens.Utils
 
 		public HashList(IEnumerable<T> src, Func<T, string> nameGetter) : this()
 		{
-			foreach (var curr in src)
-				Add(nameGetter(curr), curr);
+			if(src != null)
+				foreach (var curr in src)
+					Add(nameGetter(curr), curr);
 		}
 
 		/// <summary>

@@ -226,7 +226,7 @@ namespace Lens.Parser
 			return new SetIdentifierNode
 			{
 				Identifier = node.Identifier,
-				LocalName = node.LocalName
+				Local = node.Local
 			};
 		}
 

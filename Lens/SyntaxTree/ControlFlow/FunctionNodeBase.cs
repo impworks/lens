@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -13,7 +14,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected FunctionNodeBase()
 		{
 			Arguments = new List<FunctionArgument>();
-			Body = new CodeBlockNode();
 		}
 
 		/// <summary>
@@ -24,16 +24,16 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Function body.
 		/// </summary>
-		public CodeBlockNode Body { get; set; }
+		public CodeBlockNode Body { get; protected set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return Body.GetExpressionType(ctx);
+			return Body.Resolve(ctx);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return Body;
+			yield return new NodeChild(Body, null);
 		}
 
 		#region Equality members

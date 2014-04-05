@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<T> Entries { get; private set; }
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			// nothing to do here
 			throw new InvalidOperationException();

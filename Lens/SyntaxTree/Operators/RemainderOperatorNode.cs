@@ -7,22 +7,20 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class RemainderOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "%"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Modulus"; }
 		}
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-			GetExpressionType(ctx);
 			loadAndConvertNumerics(ctx);
-			gen.EmitRemainder();
+			ctx.CurrentMethod.Generator.EmitRemainder();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

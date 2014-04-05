@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Compiler.Entities;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -13,87 +14,130 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
 	{
-		public CodeBlockNode()
+		public CodeBlockNode(ScopeKind scopeKind = ScopeKind.Unclosured)
 		{
 			Statements = new List<NodeBase>();	
-			ScopeFrame = new ScopeFrame();
+			Scope = new Scope(scopeKind);
 		}
 
 		/// <summary>
 		/// The scope frame corresponding to current code block.
 		/// </summary>
-		private ScopeFrame ScopeFrame;
+		public Scope Scope { get; private set; }
 
 		/// <summary>
 		/// The statements to execute.
 		/// </summary>
 		public List<NodeBase> Statements { get; set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			if (!Statements.Any())
-				return typeof (Unit);
-
-			var last = Statements.Last();
+			var last = Statements.LastOrDefault();
 			if (last is VarNode || last is LetNode)
-				Error(last, CompilerMessages.CodeBlockLastVar);
+				error(last, CompilerMessages.CodeBlockLastVar);
 
-			return withScopeFrame(ctx, () => Statements[Statements.Count - 1].GetExpressionType(ctx));
+			ctx.EnterScope(Scope);
+
+			var result = typeof(Unit);
+			foreach(var curr in Statements)
+				result = curr.Resolve(ctx);
+
+			ctx.ExitScope();
+
+			return result;
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		public override void Transform(Context ctx, bool mustReturn)
 		{
-			return Statements;
+			ctx.EnterScope(Scope);
+
+			base.Transform(ctx, mustReturn);
+
+			ctx.ExitScope();
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		public override IEnumerable<NodeChild> GetChildren()
 		{
-			withScopeFrame(ctx,
-				() =>
-			    {
-					var gen = ctx.CurrentILGenerator;
+			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
+		}
 
-					for (var idx = 0; idx < Statements.Count; idx++)
-					{
-						var subReturn = mustReturn && idx == Statements.Count - 1;
-						var curr = Statements[idx];
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			ctx.EnterScope(Scope);
 
-						var retType = curr.GetExpressionType(ctx, subReturn);
+			if(Scope.ClosureType != null)
+				emitClosureSetup(ctx);
 
-						if (!subReturn && curr.IsConstant)
-							continue;
+			emitStatements(ctx, mustReturn);
 
-						curr.Compile(ctx, subReturn);
+			ctx.ExitScope();
+		}
 
-						if (!subReturn && retType.IsNotVoid())
-							gen.EmitPop();
-					}
-				}
-			);
+		private void emitClosureSetup(Context ctx)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+
+			var type = Scope.ClosureType;
+			var loc = Scope.ClosureVariable;
+
+			// create closure instance
+			var closureCtor = type.ResolveConstructor(new Type[0]).ConstructorBuilder;
+			gen.EmitCreateObject(closureCtor);
+			gen.EmitSaveLocal(loc);
+
+			// affix to parent
+			if (Scope.ClosureReferencesOuter)
+			{
+				gen.EmitLoadLocal(loc);
+
+				if (Scope.Kind == ScopeKind.Loop)
+					gen.EmitLoadLocal(Scope.OuterScope.ClosureVariable);
+				else if (Scope.Kind == ScopeKind.LambdaRoot)
+					gen.EmitLoadArgument(0);
+				else
+					throw new InvalidOperationException("Incorrect scope parent!");
+
+				gen.EmitSaveField(type.ResolveField(EntityNames.ParentScopeFieldName).FieldBuilder);
+			}
+
+			// save arguments into closure
+			foreach (var curr in Scope.Locals.Values)
+			{
+				if (!curr.IsClosured || curr.ArgumentId == null)
+					continue;
+
+				gen.EmitLoadLocal(loc);
+				gen.EmitLoadArgument(curr.ArgumentId.Value);
+				gen.EmitSaveField(type.ResolveField(curr.ClosureFieldName).FieldBuilder);
+			}
+		}
+
+		private void emitStatements(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+
+			for (var idx = 0; idx < Statements.Count; idx++)
+			{
+				var subReturn = mustReturn && idx == Statements.Count - 1;
+				var curr = Statements[idx];
+
+				var retType = curr.Resolve(ctx, subReturn);
+
+				if (!subReturn && curr.IsConstant)
+					continue;
+
+				curr.Emit(ctx, subReturn);
+
+				if (!subReturn && retType.IsNotVoid())
+					gen.EmitPop();
+			}
 		}
 
 		public override void ProcessClosures(Context ctx)
 		{
-			withScopeFrame(ctx, () => base.ProcessClosures(ctx));
-		}
-
-		private T withScopeFrame<T>(Context ctx, Func<T> action)
-		{
-			ScopeFrame.InitializeScopeFrame(ctx);
-			var oldFrame = ctx.CurrentScopeFrame;
-			ctx.CurrentScopeFrame = ScopeFrame;
-			var result = action();
-			ctx.CurrentScopeFrame = oldFrame;
-			return result;
-		}
-
-		private void withScopeFrame(Context ctx, Action action)
-		{
-			ScopeFrame.InitializeScopeFrame(ctx);
-			var oldFrame = ctx.CurrentScopeFrame;
-			ctx.CurrentScopeFrame = ScopeFrame;
-			action();
-			ctx.CurrentScopeFrame = oldFrame;
+			ctx.EnterScope(Scope);
+			base.ProcessClosures(ctx);
+			ctx.ExitScope().FinalizeSelf(ctx);
 		}
 
 		#region Equality members
@@ -138,6 +182,18 @@ namespace Lens.SyntaxTree.ControlFlow
 		public void Insert(NodeBase node)
 		{
 			Statements.Insert(0, node);
+		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Loads nodes from other block.
+		/// </summary>
+		public void LoadFrom(CodeBlockNode other)
+		{
+			Statements = other.Statements;
 		}
 
 		#endregion

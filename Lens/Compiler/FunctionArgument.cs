@@ -52,18 +52,26 @@ namespace Lens.Compiler
 		public ParameterBuilder ParameterBuilder { get; set; }
 
 		/// <summary>
+		/// Checks if the argument implicitly accepts an array of values.
+		/// </summary>
+		public bool IsVariadic { get; set; }
+
+		/// <summary>
 		/// Calculates argument type.
 		/// </summary>
 		public Type GetArgumentType(Context ctx)
 		{
-			if (Type != null)
-				return Type;
+			if (Type == null)
+			{
+				Type = ctx.ResolveType(TypeSignature);
 
-			var type = ctx.ResolveType(TypeSignature);
-			if (IsRefArgument)
-				type = type.MakeByRefType();
+				if (IsRefArgument)
+					Type = Type.MakeByRefType();
+				else if (IsVariadic)
+					Type = Type.MakeArrayType();
+			}
 
-			return type;
+			return Type;
 		}
 
 		#region Equality members

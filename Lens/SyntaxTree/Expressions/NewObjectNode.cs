@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.SyntaxTree.Operators;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -28,61 +29,81 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public TypeSignature TypeSignature;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		/// <summary>
+		/// Checks if constructor call may be replaced with 'default' initialization.
+		/// </summary>
+		private bool _IsDefault;
+
+		private ConstructorWrapper _Constructor;
+		protected override CallableWrapperBase _Wrapper { get { return _Constructor; } }
+
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return Type ?? ctx.ResolveType(TypeSignature);
-		}
+			base.resolve(ctx, true);
 
-		public override IEnumerable<NodeBase> GetChildNodes()
-		{
-			return Arguments;
-		}
+			var type = Type ?? ctx.ResolveType(TypeSignature);
 
-		protected override void compile(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentILGenerator;
+			if (type.IsVoid())
+				error(CompilerMessages.VoidTypeDefault);
 
-			var type = GetExpressionType(ctx);
-			if(type.IsVoid())
-				Error(CompilerMessages.VoidTypeDefault);
+			if (type.IsAbstract)
+				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
-			if(type.IsAbstract)
-				Error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
-
-			if(Arguments.Count == 0)
-				Error(CompilerMessages.ParameterlessConstructorParens);
-
-			var isParameterless = Arguments.Count == 1 && Arguments[0].GetExpressionType(ctx) == typeof (Unit);
-
-			var argTypes = isParameterless
-				? Type.EmptyTypes
-				: Arguments.Select(a => a.GetExpressionType(ctx)).ToArray();
+			if (Arguments.Count == 0)
+				error(CompilerMessages.ParameterlessConstructorParens);
 
 			try
 			{
-				var ctor = ctx.ResolveConstructor(type, argTypes);
-
-				if (!isParameterless)
-				{
-					var destTypes = ctor.ArgumentTypes;
-					for (var idx = 0; idx < Arguments.Count; idx++)
-						Expr.Cast(Arguments[idx], destTypes[idx]).Compile(ctx, true);
-				}
-
-				gen.EmitCreateObject(ctor.ConstructorInfo);
+				_Constructor = ctx.ResolveConstructor(type, _ArgTypes);
 			}
 			catch (AmbiguousMatchException)
 			{
-				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
 			}
 			catch (KeyNotFoundException)
 			{
-				if (!isParameterless || !type.IsValueType)
-					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+				if (_ArgTypes.Length > 0 || !type.IsValueType)
+					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
-				var castExpr = Expr.Default(TypeSignature);
-				castExpr.Compile(ctx, true);
+				_IsDefault = true;
+				return type;
 			}
+
+			return resolvePartial(_Constructor, type, _ArgTypes);
+		}
+
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (_IsDefault)
+				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
+
+			return base.Expand(ctx, mustReturn);
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+
+			if(_Constructor != null)
+			{
+				if (_ArgTypes.Length > 0)
+				{
+					var destTypes = _Constructor.ArgumentTypes;
+					for (var idx = 0; idx < Arguments.Count; idx++)
+						Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
+				}
+
+				gen.EmitCreateObject(_Constructor.ConstructorInfo);
+			}
+			else
+			{
+				Expr.Default(TypeSignature).Emit(ctx, true);
+			}
+		}
+
+		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		{
+			return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList() };
 		}
 
 		#region Equality members

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.Compiler;
+﻿using Lens.Compiler;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -8,6 +7,11 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class FunctionNode : FunctionNodeBase
 	{
+		public FunctionNode()
+		{
+			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
+		}
+
 		/// <summary>
 		/// Function name.
 		/// </summary>
@@ -22,11 +26,6 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// Checks whether the function can be memoized.
 		/// </summary>
 		public bool IsPure { get; set; }
-
-		protected override void compile(Context ctx, bool mustReturn)
-		{
-			throw new NotImplementedException();
-		}
 
 		#region Equality members
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -9,14 +10,25 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class AddOperatorNode : BinaryOperatorNodeBase
 	{
-		public override string OperatorRepresentation
+		protected override string OperatorRepresentation
 		{
 			get { return "+"; }
 		}
 
-		public override string OverloadedMethodName
+		protected override string OverloadedMethodName
 		{
 			get { return "op_Addition"; }
+		}
+
+		public override NodeBase Expand(Context ctx, bool mustReturn)
+		{
+			if (!IsConstant)
+			{
+				if(Resolve(ctx) == typeof(string))
+					return Expr.Invoke("string", "Concat", LeftOperand, RightOperand);
+			}
+
+			return mathExpand(LeftOperand, RightOperand) ?? mathExpand(RightOperand, LeftOperand);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -26,22 +38,8 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override void compileOperator(Context ctx)
 		{
-			var gen = ctx.CurrentILGenerator;
-
-			var type = GetExpressionType(ctx);
-			if (type == typeof (string))
-			{
-				var method = typeof (string).GetMethod("Concat", new[] {typeof (string), typeof (string)});
-				LeftOperand.Compile(ctx, true);
-				RightOperand.Compile(ctx, true);
-
-				gen.EmitCall(method);
-			}
-			else
-			{
-				loadAndConvertNumerics(ctx);
-				gen.EmitAdd();
-			}
+			loadAndConvertNumerics(ctx);
+			ctx.CurrentMethod.Generator.EmitAdd();
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
@@ -52,9 +50,21 @@ namespace Lens.SyntaxTree.Operators
 			}
 			catch (OverflowException)
 			{
-				Error(CompilerMessages.ConstantOverflow);
+				error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
+		}
+
+		private static NodeBase mathExpand(NodeBase one, NodeBase other)
+		{
+			if (one.IsConstant)
+			{
+				var value = one.ConstantValue;
+				if(TypeExtensions.IsNumericType(value.GetType()) && value == 0)
+					return other;
+			}
+
+			return null;
 		}
 	}
 }
