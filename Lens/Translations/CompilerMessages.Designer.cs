@@ -1123,6 +1123,24 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;...&apos; argument modified in a lambda!.
+        /// </summary>
+        public static string VariadicArgumentLambda {
+            get {
+                return ResourceManager.GetString("VariadicArgumentLambda", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An argument with &apos;...&apos; modifier must be the last one!.
+        /// </summary>
+        public static string VariadicArgumentNotLast {
+            get {
+                return ResourceManager.GetString("VariadicArgumentNotLast", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot create an instance of Unit or Void types!.
         /// </summary>
         public static string VoidTypeDefault {

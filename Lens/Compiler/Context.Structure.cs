@@ -75,18 +75,6 @@ namespace Lens.Compiler
 			return te;
 		}
 
-		/// <summary>
-		/// Checks if the function does not collide with internal functions.
-		/// </summary>
-		private static void validateFunction(FunctionNode node)
-		{
-			if (node.Arguments.Count > 0)
-				return;
-
-			if (node.Name == EntityNames.RunMethodName || node.Name == EntityNames.EntryPointMethodName)
-				Error(CompilerMessages.ReservedFunctionRedefinition, node.Name);
-		}
-
 		#endregion
 	}
 }

@@ -120,6 +120,9 @@
   <data name="InconsistentIdentation" xml:space="preserve">
     <value>Inconsistent identation!</value>
   </data>
+  <data name="TabChar" xml:space="preserve">
+    <value>Tabulation is not allowed in source code! Use spaces to indent code blocks.</value>
+  </data>
   <data name="UnclosedString" xml:space="preserve">
     <value>Unclosed string literal!</value>
   </data>

@@ -232,10 +232,34 @@ namespace Lens.Compiler
 			if (node.Name == "_")
 				Error(CompilerMessages.UnderscoreName);
 
-			validateFunction(node);
+			var isVariadic = false;
+
+			// validation
+			if (node.Arguments.Count > 0)
+			{
+				for (var idx = 0; idx < node.Arguments.Count; idx++)
+				{
+					var curr = node.Arguments[idx];
+					if (curr.IsVariadic)
+					{
+						if (idx < node.Arguments.Count - 1)
+							Error(CompilerMessages.VariadicArgumentNotLast);
+
+						isVariadic = true;
+					}
+				}
+			}
+			else
+			{
+				if (node.Name == EntityNames.RunMethodName || node.Name == EntityNames.EntryPointMethodName)
+					Error(CompilerMessages.ReservedFunctionRedefinition, node.Name);
+			}
+
+
 			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true, prepare: false);
 			method.Kind = TypeContentsKind.UserDefined;
 			method.IsPure = node.IsPure;
+			method.IsVariadic = isVariadic;
 			method.Body = node.Body;
 		}
 

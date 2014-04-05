@@ -280,7 +280,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// fun_arg                                     = identifier ":" [ "ref" ] type
+		/// fun_arg                                     = identifier ":" [ "ref" ] type [ "... " ]
 		/// </summary>
 		private FunctionArgument parseFunSingleArg(bool required = false)
 		{
@@ -300,6 +300,14 @@ namespace Lens.Parser
 
 			node.IsRefArgument = check(LexemType.Ref);
 			node.TypeSignature = ensure(parseType, ParserMessages.ArgTypeExpected);
+
+			if (check(LexemType.Ellipsis))
+			{
+				if(node.IsRefArgument)
+					error(ParserMessages.VariadicByRef);
+
+				node.IsVariadic = true;
+			}
 
 			return node;
 		}

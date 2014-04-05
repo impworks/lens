@@ -66,6 +66,10 @@ namespace Lens.Lexer
 					while (inBounds() && Source[Position] != '\r' && Source[Position] != '\n')
 						Position++;
 				}
+				else if (Source[Position] == '\t')
+				{
+					Error(LexerMessages.TabChar);
+				}
 				else
 				{
 					var lex = processStaticLexem() ?? processRegexLexem();

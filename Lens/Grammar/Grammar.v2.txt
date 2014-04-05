@@ -15,7 +15,7 @@ type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt
 type_stmt <TypeLabel>                       = identifier [ "of" type ]
 fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
 fun_args <~FunctionArgument>                = fun_arg | fun_arg_list
-fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
+fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type [ "..." ]
 fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"
 
 // blocks

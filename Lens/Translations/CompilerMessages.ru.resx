@@ -474,4 +474,10 @@
   <data name="UnderscoreNameUsed" xml:space="preserve">
     <value>Идентификатор '_' не может быть использовать в данном контексте!</value>
   </data>
+  <data name="VariadicArgumentLambda" xml:space="preserve">
+    <value>Невозможно использовать модификатор '...' в анонимной функции!</value>
+  </data>
+  <data name="VariadicArgumentNotLast" xml:space="preserve">
+    <value>Аргумент c модификатором '...' должен быть последним в списке!</value>
+  </data>
 </root>

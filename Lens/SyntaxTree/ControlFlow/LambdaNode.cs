@@ -23,6 +23,19 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		private MethodEntity _Method;
 
+		protected override Type resolve(Context ctx, bool mustReturn)
+		{
+			foreach (var curr in Arguments)
+				if(curr.IsVariadic)
+					error(CompilerMessages.VariadicArgumentLambda);
+
+			Body.Scope.RegisterArguments(ctx, false, Arguments);
+
+			var retType = Body.Resolve(ctx);
+			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
+			return FunctionalHelper.CreateDelegateType(retType, argTypes);
+		}
+
 		public override void ProcessClosures(Context ctx)
 		{
 			// get evaluated return type
@@ -41,15 +54,6 @@ namespace Lens.SyntaxTree.ControlFlow
 			_Method.Body.ProcessClosures(ctx);
 
 			ctx.CurrentMethod = outerMethod;
-		}
-
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			Body.Scope.RegisterArguments(ctx, false, Arguments);
-
-			var retType = Body.Resolve(ctx);
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
-			return FunctionalHelper.CreateDelegateType(retType, argTypes);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

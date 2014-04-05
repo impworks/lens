@@ -120,6 +120,9 @@
   <data name="InconsistentIdentation" xml:space="preserve">
     <value>Неожиданный уровень блока!</value>
   </data>
+  <data name="TabChar" xml:space="preserve">
+    <value>Символы табуляции недопустимы в исходном коде! Используйте пробелы для выделения блоков кода.</value>
+  </data>
   <data name="UnclosedString" xml:space="preserve">
     <value>Строка не закрыта!</value>
   </data>

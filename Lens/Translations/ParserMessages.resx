@@ -288,6 +288,9 @@
   <data name="UnknownStatement" xml:space="preserve">
     <value>Unknown kind of statement!</value>
   </data>
+  <data name="VariadicByRef" xml:space="preserve">
+    <value>A by-ref argument cannot be marked with '...' modifier!</value>
+  </data>
   <data name="VarIdentifierExpected" xml:space="preserve">
     <value>Variable name must be an identifier!</value>
   </data>

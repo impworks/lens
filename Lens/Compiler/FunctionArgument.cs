@@ -52,6 +52,11 @@ namespace Lens.Compiler
 		public ParameterBuilder ParameterBuilder { get; set; }
 
 		/// <summary>
+		/// Checks if the argument implicitly accepts an array of values.
+		/// </summary>
+		public bool IsVariadic { get; set; }
+
+		/// <summary>
 		/// Calculates argument type.
 		/// </summary>
 		public Type GetArgumentType(Context ctx)
@@ -59,8 +64,11 @@ namespace Lens.Compiler
 			if (Type == null)
 			{
 				Type = ctx.ResolveType(TypeSignature);
+
 				if (IsRefArgument)
 					Type = Type.MakeByRefType();
+				else if (IsVariadic)
+					Type = Type.MakeArrayType();
 			}
 
 			return Type;

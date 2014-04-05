@@ -299,5 +299,20 @@ new [
 
 			Test(src, new[] { 2, 3, 5, 2, 5 });
 		}
+
+		[Test]
+		public void VariadicFunction()
+		{
+			var src = @"
+fun mySum:int (data:int...) ->
+    var sum = 0
+    for curr in data do
+        sum = sum + curr
+    sum
+
+new [mySum 1; mySum 1 2; mySum 1 2 3 4 5; mySum (new [1; 2; 3])]
+";
+			Test(src, new[] { 1, 3, 15, 6 });
+		}
 	}
 }

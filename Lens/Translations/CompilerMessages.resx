@@ -474,4 +474,10 @@
   <data name="UnderscoreNameUsed" xml:space="preserve">
     <value>The '_' identifier is not allowed in this context!</value>
   </data>
+  <data name="VariadicArgumentLambda" xml:space="preserve">
+    <value>Cannot use '...' argument modified in a lambda!</value>
+  </data>
+  <data name="VariadicArgumentNotLast" xml:space="preserve">
+    <value>An argument with '...' modifier must be the last one!</value>
+  </data>
 </root>
