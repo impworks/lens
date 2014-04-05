@@ -32,6 +32,9 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
+			if (Identifier == "_")
+				error(CompilerMessages.UnderscoreNameUsed);
+
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 

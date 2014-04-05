@@ -38,6 +38,9 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
+			if(Identifier == "_")
+				error(CompilerMessages.UnderscoreNameUsed);
+
 			// local variable
 			var local = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (local != null)

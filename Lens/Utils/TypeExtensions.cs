@@ -325,6 +325,10 @@ namespace Lens.Utils
 			if (varType == exprType)
 				return 0;
 
+			// partial application
+			if (exprType == null)
+				return 0;
+
 			if (varType.IsByRef)
 				return varType.GetElementType() == exprType ? 0 : int.MaxValue;
 
@@ -646,10 +650,6 @@ namespace Lens.Utils
 				// both sequences have finished
 				if (!calleeOk)
 					return totalDist;
-
-				// argument type skipped with underscore: matches any type, therefore distance does not increase
-				if (passedIter.Current == null)
-					continue;
 
 				var dist = calleeIter.Current.DistanceFrom(passedIter.Current);
 				if (dist == int.MaxValue)

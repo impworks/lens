@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.Expressions
 			else
 				resolveExpression(ctx, Expression);
 
-			return _Method.ReturnType;
+			return resolvePartial(_Method, _Method.ReturnType, _ArgTypes);
 		}
 
 		private void resolveGetMember(Context ctx, GetMemberNode node)
@@ -165,7 +165,7 @@ namespace Lens.SyntaxTree.Expressions
 			if (!exprType.IsCallableType())
 				error(CompilerMessages.TypeNotCallable, exprType);
 
-			_Method = ctx.ResolveMethod(exprType, "Invoke");
+			_Method = ctx.ResolveMethod(exprType, "Invoke", _ArgTypes);
 			var argTypes = _Method.ArgumentTypes;
 			if (argTypes.Length != _ArgTypes.Length)
 				error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, _ArgTypes.Length);
@@ -189,11 +189,8 @@ namespace Lens.SyntaxTree.Expressions
 			if(canExpandExpr)
 				yield return new NodeChild(Expression, x => Expression = x);
 
-			for (var idx = 0; idx < Arguments.Count; idx++)
-			{
-				var id = idx;
-				yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
-			}
+			foreach (var curr in base.GetChildren())
+				yield return curr;
 		}
 
 		public override void ProcessClosures(Context ctx)

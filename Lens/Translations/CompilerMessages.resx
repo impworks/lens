@@ -471,4 +471,7 @@
   <data name="FieldRedefinition" xml:space="preserve">
     <value>Type '{0}' already contains field named '{1}'!</value>
   </data>
+  <data name="UnderscoreNameUsed" xml:space="preserve">
+    <value>The '_' identifier is not allowed in this context!</value>
+  </data>
 </root>

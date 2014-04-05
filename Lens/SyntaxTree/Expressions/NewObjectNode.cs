@@ -66,9 +66,10 @@ namespace Lens.SyntaxTree.Expressions
 					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
 				_IsDefault = true;
+				return type;
 			}
 
-			return type;
+			return resolvePartial(_Constructor, type, _ArgTypes);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
@@ -77,11 +78,6 @@ namespace Lens.SyntaxTree.Expressions
 				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
 			return base.Expand(ctx, mustReturn);
-		}
-
-		public override IEnumerable<NodeChild> GetChildren()
-		{
-			return Arguments.Select((expr, i) => new NodeChild(expr, x => Arguments[i] = x));
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

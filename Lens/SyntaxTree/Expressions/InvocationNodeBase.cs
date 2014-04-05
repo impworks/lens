@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -22,13 +23,34 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Methods
 
+		public override IEnumerable<NodeChild> GetChildren()
+		{
+			for (var idx = 0; idx < Arguments.Count; idx++)
+			{
+				var id = idx;
+				var identifier = Arguments[id] as GetIdentifierNode;
+				var isPartialArg = identifier != null && identifier.Identifier == "_";
+				if (!isPartialArg)
+					yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
+			}
+		}
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof(Unit);
 
+			Func<NodeBase, Type> typeGetter = arg =>
+			{
+				var gin = arg as GetIdentifierNode;
+				if (gin != null && gin.Identifier == "_")
+					return null;
+
+				return arg.Resolve(ctx);
+			};
+				
 			_ArgTypes = isParameterless
 				? Type.EmptyTypes
-				: Arguments.Select(a => a.Resolve(ctx)).ToArray();
+				: Arguments.Select(typeGetter).ToArray();
 
 			// prepares arguments only
 			return null;
@@ -87,6 +109,24 @@ namespace Lens.SyntaxTree.Expressions
 		/// Creates a similar instance of invocation node descendant with replaced arguments list.
 		/// </summary>
 		protected abstract InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
+
+		/// <summary>
+		/// Resolves the expression type in case of partial application.
+		/// </summary>
+		protected static Type resolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
+		{
+			if (!wrapper.IsPartiallyApplied)
+				return returnType;
+
+			var lambdaArgTypes = new List<Type>();
+			for (var idx = 0; idx < argTypes.Length; idx++)
+			{
+				if(argTypes[idx] == null)
+					lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
+			}
+
+			return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
+		}
 
 		#endregion
 

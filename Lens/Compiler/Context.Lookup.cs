@@ -175,8 +175,8 @@ namespace Lens.Compiler
 					ConstructorInfo = ctor.ConstructorBuilder,
 					ArgumentTypes = ctor.GetArgumentTypes(this),
 
-					IsPartiallyApplied = false, // built-in ctors cannot do that
-					IsVariadic = false,
+					IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+					IsVariadic = false // built-in ctors can't do that
 				};
 			}
 
