@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Lens.Translations;
+using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
@@ -313,6 +314,42 @@ fun mySum:int (data:int...) ->
 new [mySum 1; mySum 1 2; mySum 1 2 3 4 5; mySum (new [1; 2; 3])]
 ";
 			Test(src, new[] { 1, 3, 15, 6 });
+		}
+
+		[Test]
+		public void VariadicFunctionFail1()
+		{
+			var src = @"
+fun mySum:int (data:ref int...) ->
+    var sum = 0
+    for curr in data do
+        sum = sum + curr
+    sum
+";
+			TestError(src, ParserMessages.VariadicByRef);
+		}
+
+		[Test]
+		public void VariadicFunctionFail2()
+		{
+			var src = @"
+fun mySum:int (x:string... data:int...) ->
+    var sum = 0
+    for curr in data do
+        sum = sum + curr
+    sum
+";
+			TestError(src, CompilerMessages.VariadicArgumentNotLast);
+		}
+
+		[Test]
+		public void VariadicFunctionFail3()
+		{
+			var src = @"
+let s = (x:int...) -> x.Sum ()
+s 1 2 3
+";
+			TestError(src, CompilerMessages.VariadicArgumentLambda);
 		}
 	}
 }
