@@ -480,4 +480,7 @@
   <data name="VariadicArgumentNotLast" xml:space="preserve">
     <value>Аргумент c модификатором '...' должен быть последним в списке!</value>
   </data>
+  <data name="LambdaArgTypeUnknown" xml:space="preserve">
+    <value>Тип аргумента '{0}' не может быть выведен автоматически! Пожалуйста, укажите тип явно!</value>
+  </data>
 </root>

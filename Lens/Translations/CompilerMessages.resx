@@ -169,7 +169,7 @@
     <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
   </data>
   <data name="ConditionTypeMismatch" xml:space="preserve">
-    <value>Expression of type '{0}' cannot be used as a condition because it is not castable to a boolean.</value>
+    <value>Expression of type '{0}' cannot be used as a condition because it is not castable to a boolean!</value>
   </data>
   <data name="ConstantByRef" xml:space="preserve">
     <value>Constant variables cannot be passed by reference!</value>
@@ -409,7 +409,7 @@
     <value>Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
   </data>
   <data name="TypeConstructorAmbiguos" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable constructor! Please specify type casting to specify the exact override.</value>
+    <value>Type '{0}' has more than one suitable constructor! Please use type casting to specify the exact override.</value>
   </data>
   <data name="TypeConstructorNotFound" xml:space="preserve">
     <value>Type '{0}' does not have a constructor accepting given arguments!</value>
@@ -479,5 +479,8 @@
   </data>
   <data name="VariadicArgumentNotLast" xml:space="preserve">
     <value>An argument with '...' modifier must be the last one!</value>
+  </data>
+  <data name="LambdaArgTypeUnknown" xml:space="preserve">
+    <value>Type of argument '{0}' could not be inferred from usage! Please specify the type explicitly.</value>
   </data>
 </root>

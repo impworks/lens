@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Expressions
 			{
 				var gin = arg as GetIdentifierNode;
 				if (gin != null && gin.Identifier == "_")
-					return null;
+					return typeof (UnspecifiedType);
 
 				return arg.Resolve(ctx);
 			};

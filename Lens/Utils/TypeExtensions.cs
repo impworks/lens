@@ -326,7 +326,7 @@ namespace Lens.Utils
 				return 0;
 
 			// partial application
-			if (exprType == null)
+			if (exprType == typeof(UnspecifiedType))
 				return 0;
 
 			if (varType.IsByRef)

@@ -28,12 +28,12 @@
 	}
 
 	/// <summary>
-	/// A pseudotype for expressions which type is to be resolved later: partial application placeholders and lambda arguments
-	/// </summary>
-	internal class UnspecifiedType { }
-
-	/// <summary>
 	/// A pseudotype to represent the null variable.
 	/// </summary>
 	public class NullType { }
+
+	/// <summary>
+	/// A pseudotype for expressions which type is to be resolved later: partial application placeholders and lambda arguments
+	/// </summary>
+	internal class UnspecifiedType { }
 }
