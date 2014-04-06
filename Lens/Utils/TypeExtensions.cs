@@ -100,7 +100,7 @@ namespace Lens.Utils
 		/// </summary>
 		public static bool IsNotVoid(this Type type)
 		{
-			return type != typeof (void) && type != typeof (Unit);
+			return type != typeof (void) && type != typeof (UnitType);
 		}
 
 		/// <summary>
@@ -108,7 +108,7 @@ namespace Lens.Utils
 		/// </summary>
 		public static bool IsVoid(this Type type)
 		{
-			return type == typeof(void) || type == typeof(Unit);
+			return type == typeof(void) || type == typeof(UnitType);
 		}
 
 		/// <summary>

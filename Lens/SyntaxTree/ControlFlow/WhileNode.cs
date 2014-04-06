@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return mustReturn ? Body.Resolve(ctx) : typeof(Unit);
+			return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)

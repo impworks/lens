@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
 			if (!mustReturn)
-				return typeof (Unit);
+				return typeof (UnitType);
 
 			// the node is expanded, therefore we use a temporary scope to just resolve the body type.
 			var tmpScope = new Scope(ScopeKind.Unclosured);

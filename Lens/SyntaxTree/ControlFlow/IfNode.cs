@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (!mustReturn || FalseAction == null)
-				return typeof (Unit);
+				return typeof (UnitType);
 
 			var type = TrueAction.Resolve(ctx);
 			var otherType = FalseAction.Resolve(ctx);

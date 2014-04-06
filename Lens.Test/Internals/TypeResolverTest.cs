@@ -63,7 +63,7 @@ namespace Lens.Test.Internals
 		[Test]
 		public void SelfReference()
 		{
-			Test<Unit>("Lens.Unit");
+			Test<UnitType>("Lens.Compiler.UnitType");
 		}
 
 		[Test]

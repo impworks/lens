@@ -8,7 +8,7 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class NullNode : NodeBase
 	{
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (NullType);
 		}
@@ -40,9 +40,4 @@ namespace Lens.SyntaxTree.Literals
 			return "(null)";
 		}
 	}
-
-	/// <summary>
-	/// A pseudotype to represent the null variable.
-	/// </summary>
-	public class NullType { }
 }

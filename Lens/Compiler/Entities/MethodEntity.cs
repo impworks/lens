@@ -69,7 +69,7 @@ namespace Lens.Compiler.Entities
 
 			if (ReturnType == null)
 				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-					? typeof(Unit)
+					? typeof(UnitType)
 					: ctx.ResolveType(ReturnTypeSignature);
 
 			if (ArgumentTypes == null)

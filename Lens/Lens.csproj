@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
+    <Compile Include="Compiler\SpecialTypes.cs" />
     <Compile Include="Utils\ReflectionHelper.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
@@ -208,7 +209,6 @@
     <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="SyntaxTree\LocationEntity.cs" />
     <Compile Include="Compiler\TypeSignature.cs" />
-    <Compile Include="Unit.cs" />
     <Compile Include="Utils\EnumerableExtensions.cs" />
     <Compile Include="Utils\FunctionalHelper.cs" />
     <Compile Include="Utils\HashList.cs" />

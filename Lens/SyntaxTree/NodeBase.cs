@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree
 
 		protected virtual Type resolve(Context ctx, bool mustReturn)
 		{
-			return typeof (Unit);
+			return typeof (UnitType);
 		}
 
 		/// <summary>

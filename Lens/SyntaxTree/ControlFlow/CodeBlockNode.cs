@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			ctx.EnterScope(Scope);
 
-			var result = typeof(Unit);
+			var result = typeof(UnitType);
 			foreach(var curr in Statements)
 				result = curr.Resolve(ctx);
 

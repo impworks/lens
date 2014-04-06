@@ -89,7 +89,7 @@ namespace Lens.SyntaxTree.Expressions
 				error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
-			return typeof (Unit);
+			return typeof (UnitType);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)
