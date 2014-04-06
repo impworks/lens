@@ -1,7 +1,8 @@
-LENS: Language for Embeddable .NET Scripting
-====
+LENS: Embeddable scripting for .NET
+===
 
 Welcome to the homepage for LENS embeddable compiler!
+LENS stands for "<b>L</b>anguage for <b>E</b>mbeddable .<b>N</b>ET <b>S</b>cripting.
 
 ### A few examples of the syntax
 
