@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -28,7 +29,7 @@ namespace Lens.SyntaxTree.Expressions
 			var idxType = Index.Resolve(ctx);
 			try
 			{
-				_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				_Getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
 				return _Getter.ReturnType;
 			}
 			catch (LensCompilerException ex)
@@ -93,7 +94,6 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			return string.Format("getidx({0} of {1})", Index, Expression);
 		}
-
 
 		#region Equality
 

@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// The cached expression type.
 		/// </summary>
-		private Type _CachedExpressionType;
+		protected Type _CachedExpressionType;
 
 		#endregion
 

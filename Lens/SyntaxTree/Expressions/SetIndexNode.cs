@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
@@ -53,7 +54,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			try
 			{
-				var pty = ctx.ResolveIndexer(exprType, idxType, false);
+				var pty = ReflectionHelper.ResolveIndexer(exprType, idxType, false);
 				var idxDest = pty.ArgumentTypes[0];
 				var valDest = pty.ArgumentTypes[1];
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 

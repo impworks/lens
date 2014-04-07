@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using NUnit.Framework;
 
 namespace Lens.Test.Internals

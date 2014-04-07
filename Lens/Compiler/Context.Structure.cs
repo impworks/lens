@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;

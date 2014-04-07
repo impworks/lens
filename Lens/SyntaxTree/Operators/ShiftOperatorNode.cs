@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 
@@ -35,7 +36,7 @@ namespace Lens.SyntaxTree.Operators
 					// function created from method name: add a type hint
 					if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
 					{
-						var delegateType = ctx.WrapDelegate(leftType);
+						var delegateType = ReflectionHelper.WrapDelegate(leftType);
 						mbr.TypeHints = new List<TypeSignature> {delegateType.ReturnType.FullName};
 					}
 				}
@@ -51,12 +52,12 @@ namespace Lens.SyntaxTree.Operators
 
 			if (leftType.IsCallableType() && rightType.IsCallableType())
 			{
-				if (!ctx.CanCombineDelegates(leftType, rightType))
+				if (!ReflectionHelper.CanCombineDelegates(leftType, rightType))
 					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 
 				var leftVar = ctx.Unique.TempVariableName();
 				var rightVar = ctx.Unique.TempVariableName();
-				var delegateType = ctx.WrapDelegate(leftType);
+				var delegateType = ReflectionHelper.WrapDelegate(leftType);
 				var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
 				return Expr.Lambda(
@@ -83,8 +84,8 @@ namespace Lens.SyntaxTree.Operators
 			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
 				return leftType;
 
-			if (!IsLeft && ctx.CanCombineDelegates(leftType, rightType))
-				return ctx.CombineDelegates(leftType, rightType);
+			if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
+				return ReflectionHelper.CombineDelegates(leftType, rightType);
 
 			return null;
 		}

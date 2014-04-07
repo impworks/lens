@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Lens.Translations;
 
-namespace Lens.Utils
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// Resolves generic arguments for types and methods.
@@ -60,6 +60,9 @@ namespace Lens.Utils
 
 				if (expected.IsGenericType)
 				{
+					if (actual.IsLambdaType())
+						continue;
+
 					var closest = findImplementation(expected, actual);
 					resolveMethodGenericsByArgs(
 						expected.GetGenericArguments(),
@@ -128,7 +131,7 @@ namespace Lens.Utils
 		{
 			if (type.IsArray || type.IsByRef)
 			{
-				var t = ApplyGenericArguments(type.GetElementType(), generics, values);
+				var t = ApplyGenericArguments(type.GetElementType(), generics, values, throwNotFound);
 				return type.IsArray ? t.MakeArrayType() : t.MakeByRefType();
 			}
 
@@ -147,7 +150,7 @@ namespace Lens.Utils
 			if (type.IsGenericType)
 			{
 				var def = type.GetGenericTypeDefinition();
-				var processed = type.GetGenericArguments().Select(a => ApplyGenericArguments(a, generics, values)).ToArray();
+				var processed = type.GetGenericArguments().Select(a => ApplyGenericArguments(a, generics, values, throwNotFound)).ToArray();
 				return def.MakeGenericType(processed);
 			}
 

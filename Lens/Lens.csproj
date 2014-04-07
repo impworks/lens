@@ -77,7 +77,7 @@
   <ItemGroup>
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
-    <Compile Include="Utils\ReflectionHelper.cs" />
+    <Compile Include="Resolver\ReflectionHelper.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />
@@ -96,17 +96,17 @@
     <Compile Include="Compiler\Context.cs" />
     <Compile Include="Compiler\Context.Lookup.cs" />
     <Compile Include="Compiler\Context.Structure.cs" />
-    <Compile Include="Utils\GlobalPropertyHelper.cs" />
+    <Compile Include="Resolver\GlobalPropertyHelper.cs" />
     <Compile Include="Compiler\EmitterExtensions.cs" />
-    <Compile Include="Compiler\ExtensionMethodResolver.cs" />
+    <Compile Include="Resolver\ExtensionMethodResolver.cs" />
     <Compile Include="Compiler\Entities\FieldEntity.cs" />
-    <Compile Include="Utils\GenericHelper.cs" />
+    <Compile Include="Resolver\GenericHelper.cs" />
     <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
     <Compile Include="Compiler\Entities\MethodEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.cs" />
-    <Compile Include="Compiler\TypeResolver.cs" />
-    <Compile Include="Compiler\Wrappers.cs" />
+    <Compile Include="Resolver\TypeResolver.cs" />
+    <Compile Include="Resolver\Wrappers.cs" />
     <Compile Include="IScript.cs" />
     <Compile Include="LensCompilerException.cs" />
     <Compile Include="Lexer\LensLexer.cs" />
@@ -210,13 +210,13 @@
     <Compile Include="SyntaxTree\LocationEntity.cs" />
     <Compile Include="Compiler\TypeSignature.cs" />
     <Compile Include="Utils\EnumerableExtensions.cs" />
-    <Compile Include="Utils\FunctionalHelper.cs" />
+    <Compile Include="Resolver\FunctionalHelper.cs" />
     <Compile Include="Utils\HashList.cs" />
     <Compile Include="SyntaxTree\LexemLocation.cs" />
-    <Compile Include="Utils\MethodLookupResult.cs" />
+    <Compile Include="Resolver\MethodLookupResult.cs" />
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Utils\NodeChild.cs" />
-    <Compile Include="Utils\TypeExtensions.cs" />
+    <Compile Include="Resolver\TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Grammar\Grammar.v1.txt" />

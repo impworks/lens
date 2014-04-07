@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
-using Lens.SyntaxTree.Literals;
+using Lens.Resolver;
+using Lens.SyntaxTree.Operators;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -20,6 +20,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		}
 
 		private MethodEntity _Method;
+
+		private Type _InferredReturnType;
+		private Type _InferredDelegateType;
+
 		public bool MustInferArgTypes { get; private set; }
 
 		#region Overrides
@@ -40,11 +44,20 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 
 			if (MustInferArgTypes)
-				return FunctionalHelper.CreateActionType(argTypes.ToArray());
+				return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
 
 			Body.Scope.RegisterArguments(ctx, false, Arguments);
 
 			var retType = Body.Resolve(ctx);
+
+			if (_InferredDelegateType != null)
+			{
+				if(_InferredReturnType.IsExtendablyAssignableFrom(retType))
+					error(CompilerMessages.LambdaReturnTypeMismatch, _InferredDelegateType.Name, retType.Name, _InferredReturnType.Name);
+
+				return _InferredDelegateType;
+			}
+
 			return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
 		}
 
@@ -57,7 +70,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 
 			// get evaluated return type
-			var retType = Body.Resolve(ctx);
+			var retType = _InferredReturnType ?? Body.Resolve(ctx);
 			if (retType == typeof(NullType))
 				error(CompilerMessages.LambdaReturnTypeUnknown);
 			if (retType.IsVoid())
@@ -95,20 +108,16 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
 		/// </summary>
-		public void SetInferredArgumentTypes(Type[] types)
+		public void SetInferredDelegateType(Type type)
 		{
-			for (var idx = 0; idx < types.Length; idx++)
+			var wrapper = ReflectionHelper.WrapDelegate(type);
+			for (var idx = 0; idx < wrapper.ArgumentTypes.Length; idx++)
 			{
-				var inferred = types[idx];
+				var inferred = wrapper.ArgumentTypes[idx];
 				var specified = Arguments[idx].Type;
 
-				if (inferred == null)
-				{
-					if(specified == typeof(UnspecifiedType))
-						error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
-					else
-						continue;
-				}
+				if(inferred == typeof(UnspecifiedType))
+					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
 				if (specified != typeof(UnspecifiedType) && specified != inferred)
@@ -119,6 +128,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 
 			MustInferArgTypes = false;
+			_CachedExpressionType = null;
+
+			_InferredReturnType = wrapper.ReturnType;
+			_InferredDelegateType = type;
 		}
 
 		#endregion

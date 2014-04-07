@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 using NUnit.Framework;
 

@@ -1,4 +1,5 @@
 ﻿using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {

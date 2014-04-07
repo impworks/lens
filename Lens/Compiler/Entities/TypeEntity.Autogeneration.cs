@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.Translations;
 using Lens.Utils;

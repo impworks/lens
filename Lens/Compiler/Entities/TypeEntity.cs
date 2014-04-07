@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Resolver;
+using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
@@ -180,7 +182,7 @@ namespace Lens.Compiler.Entities
 			if (!_Methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 
-			var info = Context.ResolveMethodByArgs(
+			var info = ReflectionHelper.ResolveMethodByArgs(
 				group,
 				m => m.GetArgumentTypes(Context),
 				m => m.IsVariadic,
@@ -210,7 +212,13 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
-			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), c => false, args);
+			var info = ReflectionHelper.ResolveMethodByArgs(
+				_Constructors,
+				c => c.GetArgumentTypes(Context),
+				c => false,
+				args
+			);
+
 			return info.Method;
 		}
 

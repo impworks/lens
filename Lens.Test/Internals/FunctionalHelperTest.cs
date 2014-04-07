@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 using NUnit.Framework;
 

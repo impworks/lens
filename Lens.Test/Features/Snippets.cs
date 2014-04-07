@@ -382,5 +382,17 @@ funcs.Select (fx:Func<int> -> fx ())
 ";
 			Test(src, new[] { 2, 4, 6 });
 		}
+
+		[Test]
+		public void LambdaImplicitType()
+		{
+			var src = @"
+using Lens.Compiler
+
+new [1; 2; 3; 4; 5]
+  |> Select (x:UnspecifiedType -> x + 1)
+";
+			Test(src, new [] { 2, 3, 4, 5, 6 } );
+		}
 	}
 }

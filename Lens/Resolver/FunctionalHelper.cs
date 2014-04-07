@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 
-namespace Lens.Utils
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// A type that provides helpers for manipulating Func and Action types.
@@ -108,6 +108,14 @@ namespace Lens.Utils
 				return true;
 
 			return type.IsGenericType && _ActionBaseTypes.Contains(type.GetGenericTypeDefinition());
+		}
+
+		/// <summary>
+		/// Checks if a type is a function type.
+		/// </summary>
+		public static bool IsLambdaType(this Type type)
+		{
+			return type.IsGenericType && _LambdaBaseTypes.Contains(type.GetGenericTypeDefinition());
 		}
 
 		/// <summary>

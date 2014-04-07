@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -39,6 +40,8 @@ namespace Lens.SyntaxTree.Expressions
 				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
 			else
 				resolveExpression(ctx, Expression);
+
+			applyInferredDelegateType(ctx);
 
 			return resolvePartial(_Method, _Method.ReturnType, _ArgTypes);
 		}
