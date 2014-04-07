@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Lens.Compiler;
 
 namespace Lens.Utils
 {
@@ -38,7 +39,7 @@ namespace Lens.Utils
 		/// </summary>
 		public static bool IsPartiallyApplied(Type[] argTypes)
 		{
-			return argTypes.Contains(null);
+			return argTypes.Contains(typeof(UnspecifiedType));
 		}
 	}
 }

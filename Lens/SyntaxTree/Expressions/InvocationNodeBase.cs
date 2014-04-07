@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions
 				var argExprs = new List<NodeBase>();
 				for (var idx = 0; idx < _ArgTypes.Length; idx++)
 				{
-					if (_ArgTypes[idx] == null)
+					if (_ArgTypes[idx] == typeof(UnspecifiedType))
 					{
 						var argName = ctx.Unique.AnonymousArgName();
 						argDefs.Add(Expr.Arg(argName, _Wrapper.ArgumentTypes[idx].FullName));
@@ -121,7 +121,7 @@ namespace Lens.SyntaxTree.Expressions
 			var lambdaArgTypes = new List<Type>();
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
-				if(argTypes[idx] == null)
+				if (argTypes[idx] == typeof(UnspecifiedType))
 					lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
 			}
 
