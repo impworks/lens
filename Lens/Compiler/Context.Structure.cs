@@ -2,10 +2,7 @@
 using Lens.Compiler.Entities;
 using Lens.Resolver;
 using Lens.SyntaxTree;
-using Lens.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler
 {

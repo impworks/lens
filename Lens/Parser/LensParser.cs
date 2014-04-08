@@ -280,7 +280,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// fun_arg                                     = identifier ":" [ "ref" ] type [ "... " ]
+		/// fun_arg                                     = identifier [ ":" [ "ref" ] type [ "... " ] ]
 		/// </summary>
 		private FunctionArgument parseFunSingleArg(bool required = false)
 		{
@@ -294,8 +294,9 @@ namespace Lens.Parser
 			{
 				if (required)
 					error(ParserMessages.SymbolExpected, ":");
-				else
-					return null;
+
+				node.Type = typeof (UnspecifiedType);
+				return node;
 			}
 
 			node.IsRefArgument = check(LexemType.Ref);

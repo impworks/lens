@@ -240,6 +240,10 @@ namespace Lens.Compiler
 				for (var idx = 0; idx < node.Arguments.Count; idx++)
 				{
 					var curr = node.Arguments[idx];
+
+					if(curr.Type == typeof(UnspecifiedType))
+						Error(CompilerMessages.LambdaArgTypeUnknown);
+
 					if (curr.IsVariadic)
 					{
 						if (idx < node.Arguments.Count - 1)
@@ -254,7 +258,6 @@ namespace Lens.Compiler
 				if (node.Name == EntityNames.RunMethodName || node.Name == EntityNames.EntryPointMethodName)
 					Error(CompilerMessages.ReservedFunctionRedefinition, node.Name);
 			}
-
 
 			var method = MainType.CreateMethod(node.Name, node.ReturnTypeSignature, node.Arguments, true, prepare: false);
 			method.Kind = TypeContentsKind.UserDefined;
