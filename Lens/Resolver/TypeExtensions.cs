@@ -188,10 +188,10 @@ namespace Lens.Resolver
 			if (varType.IsInterface)
 			{
 				if (exprType.IsInterface)
-					return interfaceDistance(varType, new[] { exprType }.Union(GenericHelper.GetInterfaces(exprType)));
+					return interfaceDistance(varType, new[] { exprType }.Union(exprType.ResolveInterfaces()));
 
 				// casting expression to interface takes 1 step
-				var dist = interfaceDistance(varType, GenericHelper.GetInterfaces(exprType));
+				var dist = interfaceDistance(varType, exprType.ResolveInterfaces());
 				if (dist < int.MaxValue)
 					return dist + 1;
 			}

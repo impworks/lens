@@ -28,7 +28,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Gets an extension method by given arguments.
 		/// </summary>
-		public MethodInfo FindExtensionMethod(Type type, string name, Type[] args)
+		public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
 		{
 			if (!_Cache.ContainsKey(type))
 				findMethodsForType(type);

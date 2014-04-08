@@ -255,7 +255,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static MethodWrapper ResolveExtensionMethod(ExtensionMethodResolver resolver, Type type, string name, Type[] argTypes, Type[] hints = null)
 		{
-			var method = resolver.FindExtensionMethod(type, name, argTypes);
+			var method = resolver.ResolveExtensionMethod(type, name, argTypes);
 			var args = method.GetParameters();
 			var info = new MethodWrapper
 			{
@@ -454,6 +454,62 @@ namespace Lens.Resolver
 
 		#endregion
 
+		#region Interface resolver
+
+		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
+
+		/// <summary>
+		/// Get interfaces of a possibly generic type.
+		/// </summary>
+		public static Type[] ResolveInterfaces(this Type type)
+		{
+			if (m_InterfaceCache.ContainsKey(type))
+				return m_InterfaceCache[type];
+
+			Type[] ifaces;
+			try
+			{
+				ifaces = type.GetInterfaces();
+			}
+			catch (NotSupportedException)
+			{
+				if (type.IsGenericType)
+				{
+					ifaces = type.GetGenericTypeDefinition().GetInterfaces();
+					for (var idx = 0; idx < ifaces.Length; idx++)
+					{
+						var curr = ifaces[idx];
+						if (curr.IsGenericType)
+							ifaces[idx] = GenericHelper.ApplyGenericArguments(curr, type);
+					}
+				}
+
+				else if (type.IsArray)
+				{
+					// replace interfaces of any array with element type
+					var elem = type.GetElementType();
+					ifaces = typeof (int[]).GetInterfaces();
+					for (var idx = 0; idx < ifaces.Length; idx++)
+					{
+						var curr = ifaces[idx];
+						if (curr.IsGenericType)
+							ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
+					}
+				}
+
+				// just a built-in type : no interfaces
+				else
+				{
+					ifaces = Type.EmptyTypes;
+				}
+			}
+
+			m_InterfaceCache.Add(type, ifaces);
+			return ifaces;
+		}
+
+		#endregion
+
 		#region Delegate handling
 
 		/// <summary>
@@ -526,6 +582,32 @@ namespace Lens.Resolver
 					return true;
 
 			return false;
+		}
+
+		/// <summary>
+		/// Checks if the possibly generic type has a default constructor.
+		/// </summary>
+		public static bool HasDefaultConstructor(this Type type)
+		{
+			if (type.IsValueType)
+				return true;
+
+			try
+			{
+				return type.GetConstructor(Type.EmptyTypes) != null;
+			}
+			catch (NotSupportedException)
+			{
+				if (type.IsGenericType)
+					return type.GetGenericTypeDefinition().HasDefaultConstructor();
+
+				// arrays do not have constructors
+				if (type.IsArray)
+					return false;
+
+				// type labels and records have constructors
+				return true;
+			}
 		}
 
 		#endregion

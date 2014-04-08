@@ -180,7 +180,7 @@ string::Compare
 		[Test]
 		public void Linq1()
 		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where (a:int -> a > 2)";
+			var src = @"(new [1; 2; 3; 4; 5]).Where (a -> a > 2)";
 			Test(src, new [] {3, 4, 5});
 		}
 
@@ -189,8 +189,8 @@ string::Compare
 		{
 			var src = @"
 Enumerable::Range 1 10
-    |> Where (x:int -> x % 2 == 0)
-    |> Select (x:int -> x * 2)";
+    |> Where (x -> x % 2 == 0)
+    |> Select (x -> x * 2)";
 
 			var result = new[] { 4, 8, 12, 16, 20};
 			Test(src, result);
@@ -378,21 +378,44 @@ var funcs = new List<Func<int>> ()
 for x in Enumerable::Range 1 3 do
     funcs.Add (-> x * 2)
 
-funcs.Select (fx:Func<int> -> fx ())
+funcs.Select (fx -> fx ())
 ";
 			Test(src, new[] { 2, 4, 6 });
 		}
 
 		[Test]
-		public void LambdaImplicitType()
+		public void LambdaImplicitType1()
 		{
 			var src = @"
-using Lens.Compiler
+fun process:int (data:int[] check:Predicate<int>) ->
+    var count = 0
+    for x in data do
+        if check x then count = count + 1
+    count
 
-new [1; 2; 3; 4; 5]
-  |> Select (x:UnspecifiedType -> x + 1)
+process
+    <| new [1; 2; 3; 4; 5]
+    <| x -> x.odd()
 ";
-			Test(src, new [] { 2, 3, 4, 5, 6 } );
+			Test(src, 3);
+		}
+
+		[Test]
+		public void LambdaImplicitType2()
+		{
+			var src = @"
+fun collect:string[] (act:Func<string, int, string~>) ->
+    let data = act ""test"" 5
+    data
+        |> Reverse ()
+        |> ToArray ()
+
+collect
+    <| (str count) ->
+        Enumerable::Repeat str count
+            |> Select ((x:string i:int) -> x + (i+1).ToString())
+";
+			Test(src, new [] { "test5", "test4", "test3", "test2", "test1" });
 		}
 	}
 }

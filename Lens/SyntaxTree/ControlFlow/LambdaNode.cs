@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			if (_InferredDelegateType != null)
 			{
-				if(_InferredReturnType.IsExtendablyAssignableFrom(retType))
+				if(!_InferredReturnType.IsExtendablyAssignableFrom(retType))
 					error(CompilerMessages.LambdaReturnTypeMismatch, _InferredDelegateType.Name, retType.Name, _InferredReturnType.Name);
 
 				return _InferredDelegateType;

@@ -109,7 +109,7 @@ invParse ""37"" ""13""
 		{
 			var src = @"
 let coeff = 2
-let fx = int::Parse<string> :> (x:int -> x + coeff)
+let fx = int::Parse<string> :> (x -> x + coeff)
 fx ""5""
 ";
 
@@ -124,7 +124,7 @@ let fx1 = string::Join <_, string[]> as object
 let fx2 = string::Join <_, _, _, _> as object
 let fx3 = int::Parse <_> as object
 new [fx1; fx2; fx3]
-    |> Where (x:object -> x <> null)
+    |> Where (x -> x <> null)
     |> Count ()
 ";
 			Test(src, 3);
@@ -185,7 +185,7 @@ record Data
 
 let dataFx = new Data _ 2
 new [dataFx 1; dataFx 2; dataFx 3]
-    |> Sum (x:Data -> x.Value * x.Coeff)
+    |> Sum (x -> x.Value * x.Coeff)
 ";
 			Test(src, 12);
 		}

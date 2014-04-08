@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Translations;
@@ -11,13 +10,11 @@ namespace Lens.Resolver
 	/// </summary>
 	internal static class GenericHelper
 	{
-		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
-
 		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
 		{
 			var genericValues = new Type[genericDefs.Length];
 
-			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, ref genericValues);
+			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, genericValues);
 
 			for (var idx = 0; idx < genericDefs.Length; idx++)
 			{
@@ -45,7 +42,7 @@ namespace Lens.Resolver
 		/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
 		/// <param name="genericDefs">Generic parameters.</param>
 		/// <param name="genericValues">Result array where values for generic parameters will be put.</param>
-		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, ref Type[] genericValues)
+		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] genericValues)
 		{
 			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
@@ -68,7 +65,7 @@ namespace Lens.Resolver
 						expected.GetGenericArguments(),
 						closest.GetGenericArguments(),
 						genericDefs,
-						ref genericValues
+						genericValues
 					);
 				}
 
@@ -158,81 +155,6 @@ namespace Lens.Resolver
 		}
 
 		/// <summary>
-		/// Get interfaces of a possibly generic type.
-		/// </summary>
-		public static Type[] GetInterfaces(Type type)
-		{
-			if (m_InterfaceCache.ContainsKey(type))
-				return m_InterfaceCache[type];
-
-			Type[] ifaces;
-			try
-			{
-				ifaces = type.GetInterfaces();
-			}
-			catch (NotSupportedException)
-			{
-				if (type.IsGenericType)
-				{
-					ifaces = type.GetGenericTypeDefinition().GetInterfaces();
-					for (var idx = 0; idx < ifaces.Length; idx++)
-					{
-						var curr = ifaces[idx];
-						if (curr.IsGenericType)
-							ifaces[idx] = ApplyGenericArguments(curr, type);
-					}
-					
-				}
-				
-				else if (type.IsArray)
-				{
-					// replace interfaces of any array with element type
-					var elem = type.GetElementType();
-					ifaces = typeof (int[]).GetInterfaces();
-					for (var idx = 0; idx < ifaces.Length; idx++)
-					{
-						var curr = ifaces[idx];
-						if (curr.IsGenericType)
-							ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
-					}
-				}
-				
-				// just a built-in type : no interfaces
-				else
-					ifaces = Type.EmptyTypes;
-			}
-
-			m_InterfaceCache.Add(type, ifaces);
-			return ifaces;
-		}
-
-		/// <summary>
-		/// Checks if the possibly generic type has a default constructor.
-		/// </summary>
-		public static bool HasDefaultConstructor(this Type type)
-		{
-			if (type.IsValueType)
-				return true;
-
-			try
-			{
-				return type.GetConstructor(Type.EmptyTypes) != null;
-			}
-			catch (NotSupportedException)
-			{
-				if (type.IsGenericType)
-					return type.GetGenericTypeDefinition().HasDefaultConstructor();
-
-				// arrays do not have constructors
-				if (type.IsArray)
-					return false;
-
-				// type labels and records have constructors
-				return true;
-			}
-		}
-
-		/// <summary>
 		/// Ensures that actual arguments can be applied to corresponding placeholders.
 		/// </summary>
 		public static Type MakeGenericTypeChecked(Type type, params Type[] values)
@@ -281,7 +203,7 @@ namespace Lens.Resolver
 			// is interface
 			if (desired.IsInterface)
 			{
-				var matching = GetInterfaces(actual).Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
+				var matching = actual.ResolveInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
 				if (matching.Length == 0)
 					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
 				if (matching.Length > 1)

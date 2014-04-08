@@ -217,7 +217,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				return;
 			}
 			
-			var ifaces = GenericHelper.GetInterfaces(seqType);
+			var ifaces = seqType.ResolveInterfaces();
 			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
 				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
