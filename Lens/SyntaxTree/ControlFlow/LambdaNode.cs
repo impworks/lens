@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentMethod.Generator;
 
 			// find constructor
-			var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
+			var type = _InferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
@@ -108,15 +108,14 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
 		/// </summary>
-		public void SetInferredDelegateType(Type type)
+		public void SetInferredArgumentTypes(Type[] argTypes)
 		{
-			var wrapper = ReflectionHelper.WrapDelegate(type);
-			for (var idx = 0; idx < wrapper.ArgumentTypes.Length; idx++)
+			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
-				var inferred = wrapper.ArgumentTypes[idx];
+				var inferred = argTypes[idx];
 				var specified = Arguments[idx].Type;
 
-				if(inferred == typeof(UnspecifiedType))
+				if (inferred == typeof(UnspecifiedType))
 					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
@@ -129,9 +128,22 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			MustInferArgTypes = false;
 			_CachedExpressionType = null;
+		}
+
+		/// <summary>
+		/// Interprets the lambda as a particular delegate with given arg & return types.
+		/// </summary>
+		public void SetInferredDelegateType(Type type, bool argsAlreadyApplied = false)
+		{
+			var wrapper = ReflectionHelper.WrapDelegate(type);
+
+			// for cases where delegate's return type is generic, but it neither Action nor Func
+			if(!argsAlreadyApplied)
+				SetInferredArgumentTypes(wrapper.ArgumentTypes);
 
 			_InferredReturnType = wrapper.ReturnType;
 			_InferredDelegateType = type;
+			_CachedExpressionType = null;
 		}
 
 		#endregion

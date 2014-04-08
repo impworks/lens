@@ -10,27 +10,35 @@ namespace Lens.Resolver
 	/// </summary>
 	internal static class GenericHelper
 	{
-		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null)
+		/// <summary>
+		/// Resolves the generic values for a specified type.
+		/// </summary>
+		/// <param name="expectedTypes">Parameter types from method definition.</param>
+		/// <param name="actualTypes">Argument types from method invocation site. </param>
+		/// <param name="genericDefs">Generic parameters from method definition.</param>
+		/// <param name="hints">Extra hints that are specified explicitly.</param>
+		/// <param name="lambdaResolver">
+		/// Callback for Lambda`T resolution.
+		/// Passed arguments are:
+		/// 1. Lambda's position in the argument list (to find a corresponding NodeBase)
+		/// 2. Already resolved list of types
+		/// Return value is the inferred type of lambda return.
+		/// </param>
+		/// <returns></returns>
+		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, Func<int, Type[], Type> lambdaResolver = null)
 		{
-			var genericValues = new Type[genericDefs.Length];
+			if(hints != null && hints.Length != genericDefs.Length)
+				throw new ArgumentException("hints");
 
-			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, genericValues);
+			// pre-populate with hints
+			var genericValues = hints ?? new Type[genericDefs.Length];
 
+			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, genericValues, lambdaResolver);
+
+			// check if all generics have been resolved
 			for (var idx = 0; idx < genericDefs.Length; idx++)
-			{
-				var hint = hints != null ? hints[idx] : null;
-				var def = genericDefs[idx];
-				var value = genericValues[idx];
-
-				if (value == null && hint == null)
-					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, def));
-
-				if (hint != null && value != null && hint != value)
-					throw new TypeMatchException(string.Format(CompilerMessages.GenericHintMismatch, def, hint, value));
-
-				if (value == null)
-					genericValues[idx] = hint;
-			}
+				if (genericValues[idx] == null)
+					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, genericDefs[idx]));
 
 			return genericValues;
 		}
@@ -42,7 +50,8 @@ namespace Lens.Resolver
 		/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
 		/// <param name="genericDefs">Generic parameters.</param>
 		/// <param name="genericValues">Result array where values for generic parameters will be put.</param>
-		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] genericValues)
+		/// <param name="lambdaResolver">Lambda resolver callback.</param>
+		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] genericValues, Func<int, Type[], Type> lambdaResolver)
 		{
 			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
 			var actLen = actualTypes != null ? actualTypes.Length : 0;
@@ -57,6 +66,7 @@ namespace Lens.Resolver
 
 				if (expected.IsGenericType)
 				{
+					// todo
 					if (actual.IsLambdaType())
 						continue;
 
@@ -65,7 +75,8 @@ namespace Lens.Resolver
 						expected.GetGenericArguments(),
 						closest.GetGenericArguments(),
 						genericDefs,
-						genericValues
+						genericValues,
+						lambdaResolver
 					);
 				}
 
