@@ -30,73 +30,8 @@ namespace Lens.Resolver
 			if(hints != null && hints.Length != genericDefs.Length)
 				throw new ArgumentException("hints");
 
-			// pre-populate with hints
-			var genericValues = hints ?? new Type[genericDefs.Length];
-
-			resolveMethodGenericsByArgs(expectedTypes, actualTypes, genericDefs, genericValues, lambdaResolver);
-
-			// check if all generics have been resolved
-			for (var idx = 0; idx < genericDefs.Length; idx++)
-				if (genericValues[idx] == null)
-					throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, genericDefs[idx]));
-
-			return genericValues;
-		}
-
-		/// <summary>
-		/// Resolves generic argument values for a method by its argument types.
-		/// </summary>
-		/// <param name="expectedTypes">Parameter types from method definition.</param>
-		/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
-		/// <param name="genericDefs">Generic parameters.</param>
-		/// <param name="genericValues">Result array where values for generic parameters will be put.</param>
-		/// <param name="lambdaResolver">Lambda resolver callback.</param>
-		private static void resolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] genericValues, Func<int, Type[], Type> lambdaResolver)
-		{
-			var exLen = expectedTypes != null ? expectedTypes.Length : 0;
-			var actLen = actualTypes != null ? actualTypes.Length : 0;
-
-			if(exLen != actLen)
-				throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);
-
-			for (var idx = 0; idx < exLen; idx++)
-			{
-				var expected = expectedTypes[idx];
-				var actual = actualTypes[idx];
-
-				if (expected.IsGenericType)
-				{
-					// todo
-					if (actual.IsLambdaType())
-						continue;
-
-					var closest = findImplementation(expected, actual);
-					resolveMethodGenericsByArgs(
-						expected.GetGenericArguments(),
-						closest.GetGenericArguments(),
-						genericDefs,
-						genericValues,
-						lambdaResolver
-					);
-				}
-
-				else
-				{
-					for (var defIdx = 0; defIdx < genericDefs.Length; defIdx++)
-					{
-						var def = genericDefs[defIdx];
-						var value = genericValues[defIdx];
-
-						if (expected != def)
-							continue;
-
-						if (value != null && value != actual)
-							throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
-
-						genericValues[defIdx] = actual;
-					}
-				}
-			}
+			var resolver = new GenericResolver(genericDefs, hints, lambdaResolver);
+			return resolver.Resolve(expectedTypes, actualTypes);
 		}
 
 		/// <summary>
@@ -202,41 +137,118 @@ namespace Lens.Resolver
 			return type.MakeGenericType(values);
 		}
 
-		#region Helpers
-
-		private static Type findImplementation(Type desired, Type actual)
+		private class GenericResolver
 		{
-			var generic = desired.GetGenericTypeDefinition();
-
-			if (actual.IsGenericType && actual.GetGenericTypeDefinition() == generic)
-				return actual;
-
-			// is interface
-			if (desired.IsInterface)
+			public GenericResolver(Type[] genericDefs, Type[] hints, Func<int, Type[], Type> lambdaResolver)
 			{
-				var matching = actual.ResolveInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
-				if (matching.Length == 0)
-					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
-				if (matching.Length > 1)
-					throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
+				_GenericDefs = genericDefs;
+				_GenericValues = hints ?? new Type[_GenericDefs.Length];
 
-				return matching[0];
+				_LambdaResolver = lambdaResolver;
 			}
 
-			// is inherited
-			var currType = actual;
-			while (currType != null)
-			{
-				if (currType.IsGenericType && currType.GetGenericTypeDefinition() == generic)
-					return currType;
+			private readonly Type[] _GenericDefs;
+			private Type[] _GenericValues;
+			private readonly Func<int, Type[], Type> _LambdaResolver;
 
-				currType = currType.BaseType;
+			public Type[] Resolve(Type[] expected, Type[] actual)
+			{
+				resolveRecursive(expected, actual, 0);
+				// check if all generics have been resolved
+
+				for (var idx = 0; idx < _GenericDefs.Length; idx++)
+					if (_GenericValues[idx] == null)
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, _GenericDefs[idx]));
+
+				return _GenericValues;
 			}
 
-			throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
+			/// <summary>
+			/// Resolves generic argument values for a method by its argument types.
+			/// </summary>
+			/// <param name="expectedTypes">Parameter types from method definition.</param>
+			/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
+			private void resolveRecursive(Type[] expectedTypes, Type[] actualTypes, int depth)
+			{
+				var exLen = expectedTypes != null ? expectedTypes.Length : 0;
+				var actLen = actualTypes != null ? actualTypes.Length : 0;
+
+				if (exLen != actLen)
+					throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);
+
+				for (var idx = 0; idx < exLen; idx++)
+				{
+					var expected = expectedTypes[idx];
+					var actual = actualTypes[idx];
+
+					if (expected.IsGenericType)
+					{
+						// todo
+						if (actual.IsLambdaType())
+							continue;
+
+						var closest = findImplementation(expected, actual);
+						resolveRecursive(
+							expected.GetGenericArguments(),
+							closest.GetGenericArguments(),
+							depth + 1
+						);
+					}
+
+					else
+					{
+						for (var defIdx = 0; defIdx < _GenericDefs.Length; defIdx++)
+						{
+							var def = _GenericDefs[defIdx];
+							var value = _GenericValues[defIdx];
+
+							if (expected != def)
+								continue;
+
+							if (value != null && value != actual)
+								throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
+
+							_GenericValues[defIdx] = actual;
+						}
+					}
+				}
+			}
+
+			/// <summary>
+			/// Finds the appropriate generic type in the inheritance of the actual type.
+			/// </summary>
+			private static Type findImplementation(Type desired, Type actual)
+			{
+				var generic = desired.GetGenericTypeDefinition();
+
+				if (actual.IsGenericType && actual.GetGenericTypeDefinition() == generic)
+					return actual;
+
+				// is interface
+				if (desired.IsInterface)
+				{
+					var matching = actual.ResolveInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
+					if (matching.Length == 0)
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
+					if (matching.Length > 1)
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
+
+					return matching[0];
+				}
+
+				// is inherited
+				var currType = actual;
+				while (currType != null)
+				{
+					if (currType.IsGenericType && currType.GetGenericTypeDefinition() == generic)
+						return currType;
+
+					currType = currType.BaseType;
+				}
+
+				throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
+			}
 		}
-
-		#endregion
 	}
 
 	public class TypeMatchException: Exception
