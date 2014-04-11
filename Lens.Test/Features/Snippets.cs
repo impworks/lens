@@ -413,9 +413,23 @@ fun collect:string[] (act:Func<string, int, string~>) ->
 collect
     <| (str count) ->
         Enumerable::Repeat str count
-            |> Select ((x:string i:int) -> x + (i+1).ToString())
+            |> Select ((x i) -> x + (i+1).ToString())
 ";
 			Test(src, new [] { "test5", "test4", "test3", "test2", "test1" });
+		}
+
+		[Test]
+		public void LambdaError()
+		{
+			var src = @"
+using Lens.Compiler
+
+fun invoker:string (act:Func<int,int,int>) ->
+    fmt ""result = {0}"" (act ""1"" 2)
+
+invoker ((x:UnspecifiedType y:UnspecifiedType) -> x + y)
+";
+			Test(src, "result = 3");
 		}
 	}
 }

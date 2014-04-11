@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lens.Compiler;
 
 namespace Lens.Resolver
@@ -84,6 +83,11 @@ namespace Lens.Resolver
 				typeof(Tuple<,,,,,,>),
 				typeof(Tuple<,,,,,,,>),
 			};
+
+			_ActionTypesLookup = new HashSet<Type>(_ActionBaseTypes);
+			_FuncTypesLookup = new HashSet<Type>(_FuncBaseTypes);
+			_LambdaTypesLookup = new HashSet<Type>(_LambdaBaseTypes);
+			_TupleTypesLookup = new HashSet<Type>(_TupleBaseTypes);
 		}
 
 		private static readonly Type[] _ActionBaseTypes;
@@ -91,12 +95,17 @@ namespace Lens.Resolver
 		private static readonly Type[] _LambdaBaseTypes;
 		private static readonly Type[] _TupleBaseTypes;
 
+		private static readonly HashSet<Type> _ActionTypesLookup;
+		private static readonly HashSet<Type> _FuncTypesLookup;
+		private static readonly HashSet<Type> _LambdaTypesLookup;
+		private static readonly HashSet<Type> _TupleTypesLookup;
+
 		/// <summary>
 		/// Checks if a type is a function type.
 		/// </summary>
 		public static bool IsFuncType(this Type type)
 		{
-			return type.IsGenericType && _FuncBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return isKnownType(_FuncTypesLookup, type);
 		}
 
 		/// <summary>
@@ -104,10 +113,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsActionType(this Type type)
 		{
-			if (type == typeof (Action))
-				return true;
-
-			return type.IsGenericType && _ActionBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return type == typeof(Action) || isKnownType(_ActionTypesLookup, type);
 		}
 
 		/// <summary>
@@ -115,7 +121,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsLambdaType(this Type type)
 		{
-			return type.IsGenericType && _LambdaBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return isKnownType(_LambdaTypesLookup, type);
 		}
 
 		/// <summary>
@@ -123,7 +129,15 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsTupleType(this Type type)
 		{
-			return type.IsGenericType && _TupleBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return isKnownType(_TupleTypesLookup, type);
+		}
+
+		/// <summary>
+		/// Checks if a type is generic and is contained in the lookup table.
+		/// </summary>
+		private static bool isKnownType(HashSet<Type> typesLookup, Type type)
+		{
+			return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
 		}
 
 		/// <summary>
