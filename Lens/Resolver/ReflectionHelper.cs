@@ -163,7 +163,7 @@ namespace Lens.Resolver
 		/// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
 		/// Generic arguments whose values can be inferred from argument types can be skipped.
 		/// </summary>
-		public static MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints)
+		public static MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
 		{
 			var mw = new MethodWrapper { Name = name, Type = type };
 
@@ -220,7 +220,7 @@ namespace Lens.Resolver
 				if (mInfoOriginal.IsGenericMethod)
 				{
 					var genericDefs = mInfoOriginal.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(genMethod.ArgumentTypes, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(genMethod.ArgumentTypes, argTypes, genericDefs, hints, lambdaResolver);
 
 					mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -253,7 +253,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Resolves an extension method by arguments.
 		/// </summary>
-		public static MethodWrapper ResolveExtensionMethod(ExtensionMethodResolver resolver, Type type, string name, Type[] argTypes, Type[] hints = null)
+		public static MethodWrapper ResolveExtensionMethod(ExtensionMethodResolver resolver, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
 		{
 			var method = resolver.ResolveExtensionMethod(type, name, argTypes);
 			var args = method.GetParameters();
@@ -283,7 +283,8 @@ namespace Lens.Resolver
 					expectedTypes,
 					extMethodArgs.ToArray(),
 					genericDefs,
-					hints
+					hints,
+					lambdaResolver
 				);
 
 				info.GenericArguments = genericValues;

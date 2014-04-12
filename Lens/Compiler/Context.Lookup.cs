@@ -102,10 +102,10 @@ namespace Lens.Compiler
 		/// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
 		/// Generic arguments whose values can be inferred from argument types can be skipped.
 		/// </summary>
-		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
+		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver resolver = null)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveMethod(type, name, argTypes, hints);
+				return ReflectionHelper.ResolveMethod(type, name, argTypes, hints, resolver);
 
 			var typeEntity = _DefinedTypes[type.Name];
 			try
@@ -150,9 +150,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Finds an extension method for current type.
 		/// </summary>
-		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null)
+		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver lambdaResolver = null)
 		{
-			return ReflectionHelper.ResolveExtensionMethod(_ExtensionResolver, type, name, argTypes, hints);
+			return ReflectionHelper.ResolveExtensionMethod(_ExtensionResolver, type, name, argTypes, hints, lambdaResolver);
 		}
 
 		/// <summary>

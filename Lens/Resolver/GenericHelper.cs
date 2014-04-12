@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using Lens.Compiler;
 using Lens.Translations;
 
 namespace Lens.Resolver
@@ -25,7 +26,7 @@ namespace Lens.Resolver
 		/// Return value is the inferred type of lambda return.
 		/// </param>
 		/// <returns></returns>
-		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, Func<int, Type[], Type> lambdaResolver = null)
+		public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, LambdaResolver lambdaResolver = null)
 		{
 			if(hints != null && hints.Length != genericDefs.Length)
 				throw new ArgumentException("hints");
@@ -81,8 +82,16 @@ namespace Lens.Resolver
 			if (type.IsGenericParameter)
 			{
 				for (var idx = 0; idx < generics.Length; idx++)
+				{
 					if (generics[idx] == type)
+					{
+						var result = values[idx];
+						if(result == null || result == typeof(UnspecifiedType))
+							throw new InvalidOperationException();
+
 						return values[idx];
+					}
+				}
 
 				if (throwNotFound)
 					throw new ArgumentOutOfRangeException(string.Format(CompilerMessages.GenericParameterNotFound, type));
@@ -139,7 +148,7 @@ namespace Lens.Resolver
 
 		private class GenericResolver
 		{
-			public GenericResolver(Type[] genericDefs, Type[] hints, Func<int, Type[], Type> lambdaResolver)
+			public GenericResolver(Type[] genericDefs, Type[] hints, LambdaResolver lambdaResolver)
 			{
 				_GenericDefs = genericDefs;
 				_GenericValues = hints ?? new Type[_GenericDefs.Length];
@@ -149,13 +158,13 @@ namespace Lens.Resolver
 
 			private readonly Type[] _GenericDefs;
 			private Type[] _GenericValues;
-			private readonly Func<int, Type[], Type> _LambdaResolver;
+			private readonly LambdaResolver _LambdaResolver;
 
 			public Type[] Resolve(Type[] expected, Type[] actual)
 			{
 				resolveRecursive(expected, actual, 0);
-				// check if all generics have been resolved
 
+				// check if all generics have been resolved
 				for (var idx = 0; idx < _GenericDefs.Length; idx++)
 					if (_GenericValues[idx] == null)
 						throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, _GenericDefs[idx]));
@@ -168,6 +177,7 @@ namespace Lens.Resolver
 			/// </summary>
 			/// <param name="expectedTypes">Parameter types from method definition.</param>
 			/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
+			/// <param name="depth">Recursion depth for condition checks.</param>
 			private void resolveRecursive(Type[] expectedTypes, Type[] actualTypes, int depth)
 			{
 				var exLen = expectedTypes != null ? expectedTypes.Length : 0;
@@ -183,16 +193,22 @@ namespace Lens.Resolver
 
 					if (expected.IsGenericType)
 					{
-						// todo
 						if (actual.IsLambdaType())
-							continue;
+						{
+							if (depth > 0)
+								throw new InvalidOperationException("Lambda expressions cannot be nested!");
 
-						var closest = findImplementation(expected, actual);
-						resolveRecursive(
-							expected.GetGenericArguments(),
-							closest.GetGenericArguments(),
-							depth + 1
-						);
+							resolveLambda(expected, actual, idx, depth);
+						}
+						else
+						{
+							var closest = findImplementation(expected, actual);
+							resolveRecursive(
+								expected.GetGenericArguments(),
+								closest.GetGenericArguments(),
+								depth + 1
+							);
+						}
 					}
 
 					else
@@ -210,6 +226,63 @@ namespace Lens.Resolver
 
 							_GenericValues[defIdx] = actual;
 						}
+					}
+				}
+			}
+
+			/// <summary>
+			/// Resolves the lambda's input types if they are not specified.
+			/// </summary>
+			private void resolveLambda(Type expected, Type actual, int lambdaPosition, int depth)
+			{
+				var expectedInfo = ReflectionHelper.WrapDelegate(expected);
+				var actualInfo = ReflectionHelper.WrapDelegate(actual);
+
+				var argTypes = new Type[actualInfo.ArgumentTypes.Length];
+
+				// we assume that method has been resolved as matching correctly,
+				// therefore no need to double-check argument count & stuff
+				for (var idx = 0; idx < expectedInfo.ArgumentTypes.Length; idx++)
+				{
+					var expArg = expectedInfo.ArgumentTypes[idx];
+					var actualArg = actualInfo.ArgumentTypes[idx];
+
+					if (actualArg == typeof (UnspecifiedType))
+					{
+						// type is unspecified: try to infer it
+						try
+						{
+							argTypes[idx] = ApplyGenericArguments(expArg, _GenericDefs, _GenericValues);
+							
+						}
+						catch (InvalidOperationException)
+						{
+							// todo: report error
+						}
+					}
+					else
+					{
+						// type is specified: use it
+						argTypes[idx] = actualArg;
+						resolveRecursive(
+							new [] { expArg },
+							new [] { actualArg },
+							depth + 1
+						);
+					}
+				}
+
+				if (containsGenericParameter(expectedInfo.ReturnType))
+				{
+					// return type is significant for generic resolution
+					if (_LambdaResolver != null)
+					{
+						var lambdaReturnType = _LambdaResolver(lambdaPosition, argTypes);
+						resolveRecursive(
+							new[] {expectedInfo.ReturnType},
+							new[] {lambdaReturnType},
+							depth + 1
+						);
 					}
 				}
 			}
@@ -248,6 +321,24 @@ namespace Lens.Resolver
 
 				throw new TypeMatchException(string.Format(CompilerMessages.GenericImplementationWrongType, generic, actual));
 			}
+
+			/// <summary>
+			/// Recursively checks if the type has a reference to any of the generic argument types.
+			/// </summary>
+			private static bool containsGenericParameter(Type type)
+			{
+				if (type.IsGenericParameter)
+					return true;
+
+				if (type.IsGenericType && !type.IsGenericTypeDefinition)
+				{
+					foreach(var curr in type.GetGenericArguments())
+						if (containsGenericParameter(curr))
+							return true;
+				}
+
+				return false;
+			}
 		}
 	}
 
@@ -256,4 +347,9 @@ namespace Lens.Resolver
 		public TypeMatchException() { }
 		public TypeMatchException(string msg) : base(msg) { }
 	}
+
+	/// <summary>
+	/// Callback type for lambda resolution.
+	/// </summary>
+	internal delegate Type LambdaResolver(int lambdaPosition, Type[] argTypes);
 }
