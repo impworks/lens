@@ -486,4 +486,7 @@
   <data name="LambdaReturnTypeMismatch" xml:space="preserve">
     <value>Анонимная функция используется в качестве делегата типа '{0}', но ее возвращаемый тип '{1}' несовместим с требуемым возвращаемым типом '{2}'!</value>
   </data>
+  <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
+    <value>Невозможно вычислить значения обобщенных параметров для типа аргумента '{0}'! Укажите тип аргумента явно.</value>
+  </data>
 </root>

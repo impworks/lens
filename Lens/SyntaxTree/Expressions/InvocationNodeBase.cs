@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
@@ -130,15 +131,20 @@ namespace Lens.SyntaxTree.Expressions
 			return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
 		}
 
-		protected void applyInferredDelegateType(Context ctx)
+		protected void applyLambdaArgTypes(Context ctx)
 		{
 			for (var idx = 0; idx < _ArgTypes.Length; idx++)
 			{
 				if (!_ArgTypes[idx].IsLambdaType())
 					continue;
 
-				(Arguments[idx] as LambdaNode).SetInferredDelegateType(_Wrapper.ArgumentTypes[idx]);
-				Arguments[idx].Resolve(ctx);
+				var lambda = (LambdaNode) Arguments[idx];
+				if (lambda.MustInferArgTypes)
+				{
+					var actualWrapper = ReflectionHelper.WrapDelegate(_Wrapper.ArgumentTypes[idx]);
+					lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
+					lambda.Resolve(ctx);
+				}
 			}
 		}
 

@@ -253,11 +253,10 @@ namespace Lens.Resolver
 						try
 						{
 							argTypes[idx] = ApplyGenericArguments(expArg, _GenericDefs, _GenericValues);
-							
 						}
 						catch (InvalidOperationException)
 						{
-							// todo: report error
+							throw new LensCompilerException(string.Format(CompilerMessages.LambdaArgGenericsUnresolved, expArg));
 						}
 					}
 					else
@@ -272,12 +271,13 @@ namespace Lens.Resolver
 					}
 				}
 
-				if (containsGenericParameter(expectedInfo.ReturnType))
+				if (_LambdaResolver != null)
 				{
+					var lambdaReturnType = _LambdaResolver(lambdaPosition, argTypes);
+
 					// return type is significant for generic resolution
-					if (_LambdaResolver != null)
+					if (containsGenericParameter(expectedInfo.ReturnType))
 					{
-						var lambdaReturnType = _LambdaResolver(lambdaPosition, argTypes);
 						resolveRecursive(
 							new[] {expectedInfo.ReturnType},
 							new[] {lambdaReturnType},

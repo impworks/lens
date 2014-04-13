@@ -486,4 +486,7 @@
   <data name="LambdaReturnTypeMismatch" xml:space="preserve">
     <value>Lambda is used as delegate '{0}', but its return type '{1}' cannot be casted to desired return type '{2}'!</value>
   </data>
+  <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
+    <value>Lambda argument of type '{0}' contains unresolved generic references! Please specify the argument type explicitly.</value>
+  </data>
 </root>

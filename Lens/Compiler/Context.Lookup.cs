@@ -4,6 +4,8 @@ using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
+using Lens.SyntaxTree;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 
 namespace Lens.Compiler
@@ -181,6 +183,16 @@ namespace Lens.Compiler
 		}
 
 		#region Helpers
+
+		/// <summary>
+		/// Resolves a lambda return type when its argument types have been inferred from usage.
+		/// </summary>
+		public Type ResolveLambda(LambdaNode lambda, Type[] argTypes)
+		{
+			lambda.SetInferredArgumentTypes(argTypes);
+			var delegateType = lambda.Resolve(this);
+			return ReflectionHelper.WrapDelegate(delegateType).ReturnType;
+		}
 
 		/// <summary>
 		/// Creates a wrapper from a method entity.

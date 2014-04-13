@@ -4,7 +4,6 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
-using Lens.SyntaxTree.Operators;
 using Lens.Translations;
 
 namespace Lens.SyntaxTree.ControlFlow
@@ -133,17 +132,12 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Interprets the lambda as a particular delegate with given arg & return types.
 		/// </summary>
-		public void SetInferredDelegateType(Type type, bool argsAlreadyApplied = false)
+		public void SetInferredDelegateType(Type type)
 		{
 			var wrapper = ReflectionHelper.WrapDelegate(type);
 
-			// for cases where delegate's return type is generic, but it neither Action nor Func
-			if(!argsAlreadyApplied)
-				SetInferredArgumentTypes(wrapper.ArgumentTypes);
-
 			_InferredReturnType = wrapper.ReturnType;
-			_InferredDelegateType = type;
-			_CachedExpressionType = null;
+			_InferredDelegateType = _CachedExpressionType = type;
 		}
 
 		#endregion

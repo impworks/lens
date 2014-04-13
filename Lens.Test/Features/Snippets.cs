@@ -422,12 +422,10 @@ collect
 		public void LambdaError()
 		{
 			var src = @"
-using Lens.Compiler
-
 fun invoker:string (act:Func<int,int,int>) ->
     fmt ""result = {0}"" (act ""1"" 2)
 
-invoker ((x:UnspecifiedType y:UnspecifiedType) -> x + y)
+invoker ((x y) -> x + y)
 ";
 			Test(src, "result = 3");
 		}

@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions
 				return type;
 			}
 
-			applyInferredDelegateType(ctx);
+			applyLambdaArgTypes(ctx);
 
 			return resolvePartial(_Constructor, type, _ArgTypes);
 		}

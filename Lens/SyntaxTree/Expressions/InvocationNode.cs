@@ -5,6 +5,7 @@ using System.Reflection;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
@@ -41,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions
 			else
 				resolveExpression(ctx, Expression);
 
-			applyInferredDelegateType(ctx);
+			applyLambdaArgTypes(ctx);
 
 			return resolvePartial(_Method, _Method.ReturnType, _ArgTypes);
 		}
@@ -63,7 +64,13 @@ namespace Lens.SyntaxTree.Expressions
 				// resolve a normal method
 				try
 				{
-					_Method = ctx.ResolveMethod(type, node.MemberName, _ArgTypes, _TypeHints);
+					_Method = ctx.ResolveMethod(
+						type,
+						node.MemberName,
+						_ArgTypes,
+						_TypeHints,
+						(idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
+					);
 
 					if (_Method.IsStatic)
 						_InvocationSource = null;
@@ -105,7 +112,13 @@ namespace Lens.SyntaxTree.Expressions
 				try
 				{
 					// resolve a local function that is implicitly used as an extension method
-					_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.MemberName, _ArgTypes);
+					_Method = ctx.ResolveMethod(
+						ctx.MainType.TypeInfo,
+						node.MemberName,
+						_ArgTypes,
+						resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
+					);
+
 					return;
 				}
 				catch (KeyNotFoundException) { }
@@ -117,7 +130,13 @@ namespace Lens.SyntaxTree.Expressions
 					if(!ctx.Options.AllowExtensionMethods)
 						throw new KeyNotFoundException();
 
-					_Method = ctx.ResolveExtensionMethod(type, node.MemberName, oldArgTypes, _TypeHints);
+					_Method = ctx.ResolveExtensionMethod(
+						type,
+						node.MemberName,
+						oldArgTypes,
+						_TypeHints,
+						(idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
+					);
 				}
 				catch (KeyNotFoundException)
 				{
@@ -145,7 +164,13 @@ namespace Lens.SyntaxTree.Expressions
 
 			try
 			{
-				_Method = ctx.ResolveMethod(ctx.MainType.TypeInfo, node.Identifier, _ArgTypes);
+				_Method = ctx.ResolveMethod(
+					ctx.MainType.TypeInfo,
+					node.Identifier,
+					_ArgTypes,
+					resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
+				);
+
 				if (_Method == null)
 					throw new KeyNotFoundException();
 
