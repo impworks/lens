@@ -185,7 +185,7 @@ record Data
 
 let dataFx = new Data _ 2
 new [dataFx 1; dataFx 2; dataFx 3]
-    |> Sum (x -> x.Value * x.Coeff)
+    |> Sum (x:Data -> x.Value * x.Coeff)
 ";
 			Test(src, 12);
 		}

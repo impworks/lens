@@ -1121,7 +1121,7 @@ namespace Lens.Parser
 		}
 		
 		/// <summary>
-		/// invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
+		/// invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
 		/// </summary>
 		private InvocationNode parseInvokePass()
 		{
@@ -1132,6 +1132,7 @@ namespace Lens.Parser
 			var invoker = new InvocationNode { Expression = getter };
 
 			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+			getter.TypeHints = attempt(parseTypeArgs);
 
 			invoker.Arguments = parseInvokeBlockArgs().ToList();
 			if (invoker.Arguments.Count == 0)

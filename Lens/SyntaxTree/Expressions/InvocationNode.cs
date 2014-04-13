@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			checkTypeInSafeMode(ctx, type);
 
-			if (node.TypeHints.Any())
+			if (node.TypeHints != null && node.TypeHints.Count > 0)
 				_TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
 
 			try
