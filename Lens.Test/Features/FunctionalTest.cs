@@ -177,5 +177,35 @@ new [dataFx 1; dataFx 2; dataFx 3]
 ";
 			Test(src, 12);
 		}
+
+		[Test]
+		public void FunctionUnneededArgs()
+		{
+			var src = @"
+fun sum:int (a:int b:int) -> a + b
+fun sum:int (a:int b:int _:int) -> a + b
+fun sum:int (a:int b:int _:int _:int) -> a + b
+
+new [
+    sum 1 2
+    sum 1 2 3
+    sum 1 2 3 4
+]
+";
+			Test(src, new[] { 3, 3, 3});
+		}
+
+		[Test]
+		public void LambdaExtraArgs()
+		{
+			var src = @"
+var x : Func<int, int, int>
+var y : Func<int, int, int>
+x = (a _) -> a
+y = (_ b) -> b + 1
+new [x 1 2; y 1 2]
+";
+			Test(src, new [] { 1, 3 });
+		}
 	}
 }

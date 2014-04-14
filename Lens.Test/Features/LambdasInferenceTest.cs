@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Lens.Test.Features
 {
 	[TestFixture]
-	internal class LambdasTest : TestBase
+	internal class LambdasInferenceTest : TestBase
 	{
 		[Test]
 		public void Linq1()
