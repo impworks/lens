@@ -105,18 +105,6 @@ invParse ""37"" ""13""
 		}
 
 		[Test]
-		public void FunctionComposition4()
-		{
-			var src = @"
-let coeff = 2
-let fx = int::Parse<string> :> (x -> x + coeff)
-fx ""5""
-";
-
-			Test(src, 7);
-		}
-
-		[Test]
 		public void Wildcards1()
 		{
 			var src = @"

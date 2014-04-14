@@ -35,7 +35,12 @@ namespace Lens.Test
 			else
 			{
 				var regex = new Regex(regexFromMsg(bareMsg));
-				Assert.IsTrue(regex.IsMatch(ex.Message));
+				Assert.IsTrue(
+					regex.IsMatch(ex.Message),
+					"Message does not match!\n\n  Expected: {0}\n  Actual: {1}\n",
+					bareMsg.Substring(0, 70) + "...",
+					ex.Message.Substring(0, 70) + "..."
+				);
 			}
 		}
 

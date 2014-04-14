@@ -1187,17 +1187,10 @@ namespace Lens.Parser
 		}
 		
 		/// <summary>
-		/// invoke_line_args                            = lambda_line_expr | { invoke_line_arg }
+		/// invoke_line_args                            = { invoke_line_arg }
 		/// </summary>
 		private IEnumerable<NodeBase> parseInvokeLineArgs()
 		{
-			var lambda = attempt(parseLambdaLineExpr);
-			if (lambda != null)
-			{
-				yield return lambda;
-				yield break;
-			}
-
 			while (true)
 			{
 				var curr = attempt(parseInvokeLineArg);

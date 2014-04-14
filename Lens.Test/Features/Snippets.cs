@@ -178,25 +178,6 @@ string::Compare
 		}
 
 		[Test]
-		public void Linq1()
-		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where (a -> a > 2)";
-			Test(src, new [] {3, 4, 5});
-		}
-
-		[Test]
-		public void Linq2()
-		{
-			var src = @"
-Enumerable::Range 1 10
-    |> Where (x -> x % 2 == 0)
-    |> Select (x -> x * 2)";
-
-			var result = new[] { 4, 8, 12, 16, 20};
-			Test(src, result);
-		}
-
-		[Test]
 		public void ExtensionMethods()
 		{
 			var src = @"
@@ -380,54 +361,7 @@ for x in Enumerable::Range 1 3 do
 
 funcs.Select (fx -> fx ())
 ";
-			Test(src, new[] { 2, 4, 6 });
-		}
-
-		[Test]
-		public void LambdaImplicitType1()
-		{
-			var src = @"
-fun process:int (data:int[] check:Predicate<int>) ->
-    var count = 0
-    for x in data do
-        if check x then count = count + 1
-    count
-
-process
-    <| new [1; 2; 3; 4; 5]
-    <| x -> x.odd()
-";
-			Test(src, 3);
-		}
-
-		[Test]
-		public void LambdaImplicitType2()
-		{
-			var src = @"
-fun collect:string[] (act:Func<string, int, string~>) ->
-    let data = act ""test"" 5
-    data
-        |> Reverse ()
-        |> ToArray ()
-
-collect
-    <| (str count) ->
-        Enumerable::Repeat str count
-            |> Select ((x i) -> x + (i+1).ToString())
-";
-			Test(src, new [] { "test5", "test4", "test3", "test2", "test1" });
-		}
-
-		[Test]
-		public void LambdaError()
-		{
-			var src = @"
-fun invoker:string (act:Func<int,int,int>) ->
-    fmt ""result = {0}"" (act ""1"" 2)
-
-invoker ((x y) -> x + y)
-";
-			Test(src, "result = 3");
+			Test(src, new[] {2, 4, 6});
 		}
 	}
 }
