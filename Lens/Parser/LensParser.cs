@@ -1132,7 +1132,10 @@ namespace Lens.Parser
 			var invoker = new InvocationNode { Expression = getter };
 
 			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
-			getter.TypeHints = attempt(parseTypeArgs);
+
+			var hints = attempt(parseTypeArgs);
+			if(hints != null)
+				getter.TypeHints = hints;
 
 			invoker.Arguments = parseInvokeBlockArgs().ToList();
 			if (invoker.Arguments.Count == 0)
@@ -1184,10 +1187,17 @@ namespace Lens.Parser
 		}
 		
 		/// <summary>
-		/// invoke_line_args                            = { invoke_line_arg }
+		/// invoke_line_args                            = lambda_line_expr | { invoke_line_arg }
 		/// </summary>
 		private IEnumerable<NodeBase> parseInvokeLineArgs()
 		{
+			var lambda = attempt(parseLambdaLineExpr);
+			if (lambda != null)
+			{
+				yield return lambda;
+				yield break;
+			}
+
 			while (true)
 			{
 				var curr = attempt(parseInvokeLineArg);
