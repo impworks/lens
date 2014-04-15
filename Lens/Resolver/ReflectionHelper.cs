@@ -308,7 +308,7 @@ namespace Lens.Resolver
 		{
 			try
 			{
-				return type.GetMethods().Where(m => !m.IsGenericMethod && m.Name == name).Select(m => new MethodWrapper(m));
+				return GetMethodsByName(type, name).Where(m => !m.IsGenericMethod).Select(m => new MethodWrapper(m));
 			}
 			catch (NotSupportedException)
 			{
@@ -316,7 +316,7 @@ namespace Lens.Resolver
 					throw;
 
 				var genType = type.GetGenericTypeDefinition();
-				var genericMethods = genType.GetMethods().Where(m => !m.IsGenericMethod && m.Name == name);
+				var genericMethods = GetMethodsByName(genType, name).Where(m => !m.IsGenericMethod).ToArray();
 
 				return genericMethods.Select(
 					m => new MethodWrapper
@@ -425,7 +425,7 @@ namespace Lens.Resolver
 
 			var result = type.GetMethods(flags).Where(m => m.Name == name);
 			if (type.IsInterface && !result.Any())
-				result = type.GetInterfaces().SelectMany(x => GetMethodsByName(x, name));
+				result = ResolveInterfaces(type).SelectMany(x => GetMethodsByName(x, name));
 
 			return result;
 		}
