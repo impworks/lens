@@ -363,5 +363,33 @@ funcs.Select (fx -> fx ())
 ";
 			Test(src, new[] {2, 4, 6});
 		}
+
+		[Test]
+		public void ComplexEnumerables()
+		{
+			// todo:
+			// IOrderedEnumerable<T> extends IEnumerable<T>, therefore inherits GetEnumerator () method
+			// howerver, GetMethods() doesn't work on interfaces
+			// and TypeBuilder.GetMethod(type, method) doesn't work if `type` = IOrderedEnumerable and `method.DeclaringType` = IEnumerable
+
+			var src = @"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [
+    new Store ""A"" 10
+    new Store ""B"" 42
+    new Store ""C"" 5
+]
+
+let order = stores.OrderByDescending (x -> x.Stock)
+
+var names = new List<string> ()
+for s in order do
+    names.Add (s.Name + "":"" + s.Stock)
+";
+			Test(src, new [] { "B:42", "A:10", "C:5" });
+		}
 	}
 }
