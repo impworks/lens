@@ -196,12 +196,12 @@ new [
 		}
 
 		[Test]
-		public void LambdaExtraArgs()
+		public void LambdaUnneededArgs()
 		{
 			var src = @"
 var x : Func<int, int, int>
 var y : Func<int, int, int>
-x = (a _) -> a
+x = (_ _) -> 1
 y = (_ b) -> b + 1
 new [x 1 2; y 1 2]
 ";

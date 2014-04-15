@@ -240,6 +240,8 @@ namespace Lens.Compiler
 				for (var idx = 0; idx < node.Arguments.Count; idx++)
 				{
 					var curr = node.Arguments[idx];
+					if (curr.Name == "_")
+						curr.Name = Unique.AnonymousArgName();
 
 					if(curr.Type == typeof(UnspecifiedType))
 						Error(CompilerMessages.LambdaArgTypeUnknown);
