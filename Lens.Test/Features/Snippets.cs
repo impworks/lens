@@ -198,8 +198,8 @@ a.Max ()";
 		public void HasValue()
 		{
 			var src = @"
-var a = null as Nullable<int>
-var b = 1 as Nullable<int>
+var a = null as int?
+var b = 1 as int?
 new [ a.HasValue; b.HasValue ]
 ";
 

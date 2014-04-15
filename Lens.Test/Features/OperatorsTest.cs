@@ -28,7 +28,7 @@ namespace Lens.Test.Features
 
 			Test("default string", null);
 
-			Test("default Nullable<int>", default(int?));
+			Test("default int?", default(int?));
 		}
 
 		[Test]
@@ -37,9 +37,9 @@ namespace Lens.Test.Features
 			Test("0 as float", 0.0f);
 			Test("0.0 as int", 0);
 			Test("1.23 as long", 1L);
-			Test("1 as Nullable<int>", 1);
+			Test("1 as int?", 1);
 			Test("null as string", null);
-			Test("null as Nullable<int>", new int?());
+			Test("null as int?", new int?());
 		}
 		
 		[Test]
@@ -155,13 +155,13 @@ let a = 1
 			Test("1.0 == 1.0", true, true);
 			Test("1.0 <> 1.0", false, true);
 
-			Test("1 == (1 as Nullable<int>)", true);
-			Test("1 <> (1 as Nullable<int>)", false);
-			Test("(1 as Nullable<int>) == (1 as Nullable<int>)", true);
-			Test("(1 as Nullable<int>) <> (1 as Nullable<int>)", false);
+			Test("1 == (1 as int?)", true);
+			Test("1 <> (1 as int?)", false);
+			Test("(1 as int?) == (1 as int?)", true);
+			Test("(1 as int?) <> (1 as int?)", false);
 
-			Test("(1 as Nullable<int>) == null", false);
-			Test("(1 as Nullable<int>) <> null", true);
+			Test("(1 as int?) == null", false);
+			Test("(1 as int?) <> null", true);
 
 			Test("null == null", true, true);
 			Test("null == (new object ())", false);
