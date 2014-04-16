@@ -101,6 +101,17 @@ holder.Fx 21
 		}
 
 		[Test]
+		public void LambdaIndexAssignment()
+		{
+			var src = @"
+var fxs = new [ ((x:int y:int) -> x + y) ]
+fxs[0] = (x y) -> x * y
+fxs[0] 2 3
+";
+			Test(src, 6);
+		}
+
+		[Test]
 		public void LambdaConstructor()
 		{
 			var src = @"

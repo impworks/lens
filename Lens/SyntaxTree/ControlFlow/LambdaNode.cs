@@ -112,12 +112,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var inferred = argTypes[idx];
-				var specified = Arguments[idx].Type;
-
 				if (inferred == typeof(UnspecifiedType))
 					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
+				var specified = Arguments[idx].Type;
 				if (specified != typeof(UnspecifiedType) && specified != inferred)
 					throw new InvalidOperationException(string.Format("Argument type differs: specified '{0}', inferred '{1}'!", specified, inferred));
 #endif
@@ -136,8 +135,8 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var wrapper = ReflectionHelper.WrapDelegate(type);
 
+			SetInferredArgumentTypes(wrapper.ArgumentTypes);
 			_InferredReturnType = wrapper.ReturnType;
-			_InferredDelegateType = _CachedExpressionType = type;
 		}
 
 		#endregion

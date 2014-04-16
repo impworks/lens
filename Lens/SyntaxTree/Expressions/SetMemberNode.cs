@@ -68,8 +68,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 
 			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
-			var valType = Value.Resolve(ctx);
+			ensureLambdaInferred(ctx, Value, destType);
 
+			var valType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, valType, true);
 
 			if (!destType.IsExtendablyAssignableFrom(valType))

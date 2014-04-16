@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -36,17 +37,11 @@ namespace Lens.SyntaxTree.Expressions
 			if (Identifier == "_")
 				error(CompilerMessages.UnderscoreNameUsed);
 
-			var exprType = Value.Resolve(ctx);
-			ctx.CheckTypedExpression(Value, exprType, true);
-
 			var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
 					error(CompilerMessages.IdentifierIsConstant, Identifier);
-
-				if (!nameInfo.Type.IsExtendablyAssignableFrom(exprType))
-					error(CompilerMessages.IdentifierTypeMismatch, exprType, nameInfo.Type);
 			}
 			else
 			{
@@ -56,14 +51,26 @@ namespace Lens.SyntaxTree.Expressions
 
 					if (!_Property.HasSetter)
 						error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
-
-					if (!_Property.PropertyType.IsExtendablyAssignableFrom(exprType))
-						error(CompilerMessages.GlobalPropertyTypeMismatch, exprType, _Property.PropertyType);
 				}
 				catch (KeyNotFoundException)
 				{
 					error(CompilerMessages.VariableNotFound, Identifier);
 				}
+			}
+
+			var destType = nameInfo != null ? nameInfo.Type : _Property.PropertyType;
+			ensureLambdaInferred(ctx, Value, destType);
+
+			var exprType = Value.Resolve(ctx);
+			ctx.CheckTypedExpression(Value, exprType, true);
+
+			if (!destType.IsExtendablyAssignableFrom(exprType))
+			{
+				error(
+					nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,
+					exprType,
+					destType
+				);	
 			}
 
 			return base.resolve(ctx, mustReturn);

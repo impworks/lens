@@ -47,9 +47,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var exprType = Expression.Resolve(ctx);
-
-			if (exprType.IsArray)
+			if (_Getter == null)
 				compileArray(ctx);
 			else
 				compileCustom(ctx);
@@ -63,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions
 			var itemType = exprType.GetElementType();
 
 			Expression.Emit(ctx, true);
-			Index.Emit(ctx, true);
+			Expr.Cast(Index, typeof(int)).Emit(ctx, true);
 
 			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
@@ -71,6 +69,7 @@ namespace Lens.SyntaxTree.Expressions
 		private void compileCustom(Context ctx)
 		{
 			var retType = _Getter.ReturnType;
+
 			if(RefArgumentRequired && retType.IsValueType)
 				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
