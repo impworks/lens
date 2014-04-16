@@ -48,30 +48,24 @@ namespace Lens.SyntaxTree.Expressions
 				_IsStatic = _Field.IsStatic;
 				if (Expression == null && !_IsStatic)
 					error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
-
-				return;
-			}
-			catch (KeyNotFoundException) { }
-
-			try
-			{
-				_Property = ctx.ResolveProperty(type, MemberName);
-				if(!_Property.CanSet)
-					error(CompilerMessages.PropertyNoSetter, MemberName, type);
-
-				_IsStatic = _Property.IsStatic;
-				if (Expression == null && !_IsStatic)
-					error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
 			}
 			catch (KeyNotFoundException)
 			{
-				error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
-			}
-		}
+				try
+				{
+					_Property = ctx.ResolveProperty(type, MemberName);
+					if (!_Property.CanSet)
+						error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+					_IsStatic = _Property.IsStatic;
+					if (Expression == null && !_IsStatic)
+						error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
+				}
+				catch (KeyNotFoundException)
+				{
+					error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
+				}
+			}
 
 			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
 			var valType = Value.Resolve(ctx);
@@ -80,6 +74,13 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (!destType.IsExtendablyAssignableFrom(valType))
 				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+
+			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
 
 			if (!_IsStatic)
 			{
