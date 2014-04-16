@@ -144,9 +144,12 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Resolves a method within the type, assuming it's the only one with such name.
 		/// </summary>
-		public MethodWrapper ResolveMethod(Type type, string name)
+		public MethodWrapper ResolveMethod(Type type, string name, Func<IEnumerable<MethodWrapper>, MethodWrapper> filter = null)
 		{
-			return ResolveMethodGroup(type, name).Single();
+			var group = ResolveMethodGroup(type, name);
+			return filter == null
+				? group.Single()
+				: filter(group);
 		}
 
 		/// <summary>

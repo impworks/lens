@@ -387,7 +387,8 @@ let order = stores.OrderByDescending (x -> x.Stock)
 
 var names = new List<string> ()
 for s in order do
-    names.Add (s.Name + "":"" + s.Stock)
+    names.Add (fmt ""{0}:{1}"" s.Name s.Stock)
+names
 ";
 			Test(src, new [] { "B:42", "A:10", "C:5" });
 		}

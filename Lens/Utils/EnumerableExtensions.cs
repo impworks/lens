@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Lens.Utils
@@ -12,6 +13,11 @@ namespace Lens.Utils
 					return true;
 
 			return false;
+		}
+
+		public static IEnumerable<T> Prefer<T>(this IEnumerable<T> seq, Func<T, bool> flag)
+		{
+			return seq.OrderByDescending(x => flag(x) ? 1 : 0);
 		}
 
 		public static bool IsEmpty<T>(this IEnumerable<T> seq)

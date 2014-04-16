@@ -93,10 +93,16 @@ namespace Lens.SyntaxTree.ControlFlow
 		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
 			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
+			var enumerableType = _EnumeratorType.IsGenericType
+				? typeof (IEnumerable<>).MakeGenericType(_EnumeratorType.GetGenericArguments()[0])
+				: typeof (IEnumerable);
 
 			var init = Expr.Set(
 				iteratorVar,
-				Expr.Invoke(IterableExpression, "GetEnumerator")
+				Expr.Invoke(
+					Expr.Cast(IterableExpression, enumerableType),
+					"GetEnumerator"
+				)
 			);
 
 			var loop = Expr.While(
@@ -218,13 +224,20 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 			
 			var ifaces = seqType.ResolveInterfaces();
-			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
+			if (seqType.IsInterface)
+				ifaces = ifaces.Union(new[] {seqType}).ToArray();
+
+			var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IEnumerable<>));
+			if (generic != null)
+				_EnumeratorType = typeof (IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
+
+			else if (ifaces.Contains(typeof (IEnumerable)))
+				_EnumeratorType = typeof (IEnumerator);
+
+			else
 				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
-			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
-			_EnumeratorType = enumerator.ReturnType;
 			_CurrentProperty = ctx.ResolveProperty(_EnumeratorType, "Current");
-
 			_VariableType = _CurrentProperty.PropertyType;
 		}
 

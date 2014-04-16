@@ -99,13 +99,15 @@ namespace Lens.Resolver
 				var getter = genPty.GetGetMethod();
 				var setter = genPty.GetSetMethod();
 
+				var declType = resolveActualDeclaringType(type, genPty.DeclaringType);
+
 				return new PropertyWrapper
 				{
 					Name = name,
 					Type = type,
 
-					Getter = getter == null ? null : TypeBuilder.GetMethod(type, getter),
-					Setter = setter == null ? null : TypeBuilder.GetMethod(type, setter),
+					Getter = getMethodVersionForType(declType, getter),
+					Setter = getMethodVersionForType(declType, setter),
 					IsStatic = (getter ?? setter).IsStatic,
 					PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
 				};
@@ -170,7 +172,7 @@ namespace Lens.Resolver
 			try
 			{
 				var method = ResolveMethodByArgs(
-					GetMethodsByName(type, name),
+					getMethodsByName(type, name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
 					IsVariadic,
 					argTypes
@@ -208,14 +210,15 @@ namespace Lens.Resolver
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					GetMethodsByName(genType, name),
+					getMethodsByName(genType, name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					IsVariadic,
 					argTypes
 				);
 
 				var mInfoOriginal = genMethod.Method;
-				var mInfo = TypeBuilder.GetMethod(type, mInfoOriginal);
+				var declType = resolveActualDeclaringType(type, mInfoOriginal.DeclaringType);
+				var mInfo = getMethodVersionForType(declType, mInfoOriginal);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
@@ -308,7 +311,7 @@ namespace Lens.Resolver
 		{
 			try
 			{
-				return GetMethodsByName(type, name).Where(m => !m.IsGenericMethod).Select(m => new MethodWrapper(m));
+				return getMethodsByName(type, name).Where(m => !m.IsGenericMethod).Select(m => new MethodWrapper(m));
 			}
 			catch (NotSupportedException)
 			{
@@ -316,19 +319,23 @@ namespace Lens.Resolver
 					throw;
 
 				var genType = type.GetGenericTypeDefinition();
-				var genericMethods = GetMethodsByName(genType, name).Where(m => !m.IsGenericMethod).ToArray();
+				var genericMethods = getMethodsByName(genType, name).Where(m => !m.IsGenericMethod).ToArray();
 
 				return genericMethods.Select(
-					m => new MethodWrapper
+					m =>
 					{
-						Name = name,
-						Type = type,
+						var declType = resolveActualDeclaringType(type, m.DeclaringType);
+						return new MethodWrapper
+						{
+							Name = name,
+							Type = type,
 
-						MethodInfo = TypeBuilder.GetMethod(type, m),
-						IsStatic = m.IsStatic,
-						IsVirtual = m.IsVirtual,
-						ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
-						ReturnType = GenericHelper.ApplyGenericArguments(m.ReturnType, type)
+							MethodInfo = getMethodVersionForType(declType, m),
+							IsStatic = m.IsStatic,
+							IsVirtual = m.IsVirtual,
+							ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, declType)).ToArray(),
+							ReturnType = GenericHelper.ApplyGenericArguments(m.ReturnType, declType)
+						};
 					}
 				);
 			}
@@ -355,11 +362,13 @@ namespace Lens.Resolver
 
 				var genType = type.GetGenericTypeDefinition();
 				var indexer = resolveIndexerProperty(genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
+				var declType = resolveActualDeclaringType(type, indexer.DeclaringType);
+
 				return new MethodWrapper
 				{
 					Type = type,
 
-					MethodInfo = TypeBuilder.GetMethod(type, indexer),
+					MethodInfo = getMethodVersionForType(declType, indexer),
 					IsStatic = false,
 					IsVirtual = indexer.IsVirtual,
 					ArgumentTypes = indexer.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
@@ -417,20 +426,6 @@ namespace Lens.Resolver
 		}
 
 		/// <summary>
-		/// Returns the list of methods by name, flattening interface hierarchy.
-		/// </summary>
-		public static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
-		{
-			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
-
-			var result = type.GetMethods(flags).Where(m => m.Name == name);
-			if (type.IsInterface && !result.Any())
-				result = ResolveInterfaces(type).SelectMany(x => GetMethodsByName(x, name));
-
-			return result;
-		}
-
-		/// <summary>
 		/// Resolves the best-matching method-like entity within a generic list.
 		/// </summary>
 		/// <typeparam name="T">Type of method-like entity.</typeparam>
@@ -457,7 +452,7 @@ namespace Lens.Resolver
 
 		#region Interface resolver
 
-		private static Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
+		private static readonly Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
 
 		/// <summary>
 		/// Get interfaces of a possibly generic type.
@@ -614,6 +609,54 @@ namespace Lens.Resolver
 		#endregion
 
 		#region Helpers
+
+		/// <summary>
+		/// Returns the list of methods by name, flattening interface hierarchy.
+		/// </summary>
+		public static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
+		{
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+
+			var result = type.GetMethods(flags).Where(m => m.Name == name).ToArray();
+			if (type.IsInterface && !result.Any())
+				result = type.GetInterfaces()
+							 .Select(x => x.IsGenericType ? x.GetGenericTypeDefinition() : x)
+							 .SelectMany(x => getMethodsByName(x, name))
+							 .ToArray();
+
+			return result;
+		}
+
+		/// <summary>
+		/// Resolves an "actual" declaring type if generic workaround has been applied to an interface.
+		/// </summary>
+		/// <param name="type">Actual type</param>
+		/// <param name="decl">Declaring generic type of method or property</param>
+		private static Type resolveActualDeclaringType(Type type, Type decl)
+		{
+			if (type.IsInterface && type != decl)
+			{
+				var ifaces = ResolveInterfaces(type);
+				foreach (var curr in ifaces)
+				{
+					if (curr == decl || (curr.IsGenericType && decl.IsGenericType && curr.GetGenericTypeDefinition() == decl.GetGenericTypeDefinition()))
+						return curr;
+				}
+			}
+
+			return type;
+		}
+
+		/// <summary>
+		/// Creates a generic method version for a specific type.
+		/// </summary>
+		private static MethodInfo getMethodVersionForType(Type type, MethodInfo method)
+		{
+			if (method != null && type.IsGenericType)
+				return TypeBuilder.GetMethod(type, method);
+
+			return method;
+		}
 
 		/// <summary>
 		/// Throws a new error.

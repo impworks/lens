@@ -735,7 +735,7 @@ namespace Lens.Resolver
 				iface = iface.GetGenericTypeDefinition();
 			}
 
-			return type.GetInterfaces().Contains(iface);
+			return type.ResolveInterfaces().Contains(iface);
 		}
 	}
 }
