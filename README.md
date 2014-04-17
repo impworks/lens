@@ -2,7 +2,8 @@ LENS: Embeddable scripting for .NET
 ===
 
 Welcome to the homepage for LENS embeddable compiler!
-LENS stands for "<b>L</b>anguage for <b>E</b>mbeddable .<b>N</b>ET <b>S</b>cripting.
+
+LENS stands for "<b>L</b>anguage for <b>E</b>mbeddable .<b>N</b>ET <b>S</b>cripting".
 
 ### A few examples of the syntax
 
@@ -26,15 +27,18 @@ println "blastoff!"
 LINQ queries:
 
 ```csharp
-let squares = range 1 100
-    |> Where (x:int -> x % 2 == 0)
-    |> Select (x:int -> x ** 2)
+let squareSum = range 1 100
+    |> Where (x -> x.even())
+    |> Select (x -> x ** 2)
+    |> Sum ()
 ```
         
 Function declaration:
 
 ```csharp
-fun dist:double (p1:Point p2:Point) ->
+using System.Drawing
+
+pure fun dist:double (p1:Point p2:Point) ->
     let x = p1.X - p2.X
     let y = p1.Y - p2.Y
     Math::Sqrt (x ** 2 + y ** 2)
@@ -51,21 +55,29 @@ record Store
     Name : string
     Stock : int
     
-let stores = new [new Store "A" 10; new Store "B" 42]
-for s in stores.OrderByDescending (x:Store -> x.Stock) do
-    println "Store {0} contains has {1} products in stock" (s.Name) (s.Stock)
+let stores = new [
+    new Store "A" 10
+    new Store "B" 42
+    new Store "C" 5
+]
+
+for s in stores.OrderByDescending (x-> x.Stock) do
+    println "Store {0} contains has {1} products in stock" s.Name s.Stock
 ```
 
-Function composition and closures:
+Partial application and function composition:
 
 ```csharp
-let multiplier = (x:int) -> (y:int) -> x * y
-let doubler = multiplier 2
+let multiplier = (x:int y:int) -> x * y
 let inv = (a:string b:string) -> b + a
 
-let invParse = inv :> int::Parse<string> :> doubler
+// partially apply multiplier
+let doubler = multiplier 2 _
 
-print (invParse "1" "2") // 42
+// compose functions together
+let invParse = inv :> int::Parse :> doubler :> (x -> println x)
+
+invParse "1" "2" // 42
 ```
 
 ### Why another language?
