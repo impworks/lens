@@ -73,6 +73,24 @@ fx ""5""
 		}
 
 		[Test]
+		public void LambdaCompositionInsanity()
+		{
+			var src = @"
+let multiplier = (x:int y:int) -> x * y
+let inv = (a:string b:string) -> b + a
+
+// partially apply multiplier
+let doubler = multiplier 2 _
+
+// compose functions together
+let invParse = inv :> int::Parse :> doubler :> (x -> println x)
+
+invParse ""1"" ""2""
+";
+			Test(src, null);
+		}
+
+		[Test]
 		public void LambdaVarAssignment()
 		{
 			var src = @"

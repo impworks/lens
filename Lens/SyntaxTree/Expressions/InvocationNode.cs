@@ -193,18 +193,28 @@ namespace Lens.SyntaxTree.Expressions
 			if (!exprType.IsCallableType())
 				error(CompilerMessages.TypeNotCallable, exprType);
 
-			_Method = ctx.ResolveMethod(exprType, "Invoke");
-
-			var argTypes = _Method.ArgumentTypes;
-			if (argTypes.Length != _ArgTypes.Length)
-				error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, _ArgTypes.Length);
-
-			for (var idx = 0; idx < argTypes.Length; idx++)
+			try
 			{
-				var fromType = _ArgTypes[idx];
-				var toType = argTypes[idx];
-				if (!toType.IsExtendablyAssignableFrom(fromType))
-					error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
+				// argtypes are required for partial application
+				_Method = ctx.ResolveMethod(exprType, "Invoke", _ArgTypes);
+			}
+			catch (KeyNotFoundException)
+			{
+				// delegate argument types are mismatched:
+				// infer whatever method there is and detect actual error
+				_Method = ctx.ResolveMethod(exprType, "Invoke");
+
+				var argTypes = _Method.ArgumentTypes;
+				if (argTypes.Length != _ArgTypes.Length)
+					error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, _ArgTypes.Length);
+
+				for (var idx = 0; idx < argTypes.Length; idx++)
+				{
+					var fromType = _ArgTypes[idx];
+					var toType = argTypes[idx];
+					if (!toType.IsExtendablyAssignableFrom(fromType))
+						error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
+				}
 			}
 
 			_InvocationSource = node;
