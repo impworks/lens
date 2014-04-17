@@ -2,9 +2,7 @@
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -13,9 +11,11 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class CastOperatorNode : TypeCheckOperatorNodeBase
 	{
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return Type ?? ctx.ResolveType(TypeSignature);
+			var type = Type ?? ctx.ResolveType(TypeSignature);
+			ensureLambdaInferred(ctx, Expression, type);
+			return type;
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

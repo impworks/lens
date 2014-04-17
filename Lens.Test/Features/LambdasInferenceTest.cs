@@ -125,6 +125,27 @@ holder.Fx 21
 		}
 
 		[Test]
+		public void LambdaCast1()
+		{
+			var src = @"
+var test = ((a b) -> a + b) as Func<int, int, int>
+test 1 2
+";
+			Test(src, 3);
+		}
+
+		[Test]
+		public void LambdaCast2()
+		{
+			var src = @"
+var fx = (x -> x % 3 <> 0) as Predicate<int>
+var data = new [1; 2; 3; 4; 5; 6]
+Array::FindAll data fx
+";
+			Test(src, new [] { 1, 2, 4, 5 });
+		}
+
+		[Test]
 		public void LambdaUninferred()
 		{
 			var src = @"
