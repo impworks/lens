@@ -71,7 +71,7 @@ namespace Lens.Compiler
 			foreach (var arg in args)
 			{
 				if (arg.Name == "_")
-					Context.Error(arg, CompilerMessages.UnderscoreName);
+					arg.Name = ctx.Unique.AnonymousArgName();
 
 				var argType = arg.GetArgumentType(ctx);
 				if (argType.IsByRef)

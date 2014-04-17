@@ -561,6 +561,11 @@ namespace Lens.SyntaxTree
 			};
 		}
 
+		public static FunctionArgument Arg(string name, bool isRef = false)
+		{
+			return new FunctionArgument { Name = name, Type = typeof(UnspecifiedType), IsRefArgument = isRef };
+		}
+
 		public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
 		{
 			return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};

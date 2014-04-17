@@ -105,18 +105,6 @@ invParse ""37"" ""13""
 		}
 
 		[Test]
-		public void FunctionComposition4()
-		{
-			var src = @"
-let coeff = 2
-let fx = int::Parse<string> :> (x:int -> x + coeff)
-fx ""5""
-";
-
-			Test(src, 7);
-		}
-
-		[Test]
 		public void Wildcards1()
 		{
 			var src = @"
@@ -124,7 +112,7 @@ let fx1 = string::Join <_, string[]> as object
 let fx2 = string::Join <_, _, _, _> as object
 let fx3 = int::Parse <_> as object
 new [fx1; fx2; fx3]
-    |> Where (x:object -> x <> null)
+    |> Where (x -> x <> null)
     |> Count ()
 ";
 			Test(src, 3);
@@ -188,6 +176,36 @@ new [dataFx 1; dataFx 2; dataFx 3]
     |> Sum (x:Data -> x.Value * x.Coeff)
 ";
 			Test(src, 12);
+		}
+
+		[Test]
+		public void FunctionUnneededArgs()
+		{
+			var src = @"
+fun sum:int (a:int b:int) -> a + b
+fun sum:int (a:int b:int _:int) -> a + b
+fun sum:int (a:int b:int _:int _:int) -> a + b
+
+new [
+    sum 1 2
+    sum 1 2 3
+    sum 1 2 3 4
+]
+";
+			Test(src, new[] { 3, 3, 3});
+		}
+
+		[Test]
+		public void LambdaUnneededArgs()
+		{
+			var src = @"
+var x : Func<int, int, int>
+var y : Func<int, int, int>
+x = (_ _) -> 1
+y = (_ b) -> b + 1
+new [x 1 2; y 1 2]
+";
+			Test(src, new [] { 1, 3 });
 		}
 	}
 }

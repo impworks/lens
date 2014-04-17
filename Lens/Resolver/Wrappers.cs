@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Reflection;
 
-namespace Lens.Compiler
+namespace Lens.Resolver
 {
 	internal class WrapperBase
 	{
@@ -15,6 +15,7 @@ namespace Lens.Compiler
 	internal class CallableWrapperBase : WrapperBase
 	{
 		public bool IsPartiallyApplied;
+		public bool IsPartiallyResolved;
 		public bool IsVariadic;
 		public Type[] ArgumentTypes;
 	}

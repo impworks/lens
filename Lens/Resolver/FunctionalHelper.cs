@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using Lens.Compiler;
 
-namespace Lens.Utils
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// A type that provides helpers for manipulating Func and Action types.
@@ -52,6 +52,26 @@ namespace Lens.Utils
 				typeof(Func<,,,,,,,,,,,,,,,,>),
 			};
 
+			_LambdaBaseTypes = new[]
+			{
+				typeof(Lambda<>),
+				typeof(Lambda<,>),
+				typeof(Lambda<,,>),
+				typeof(Lambda<,,,>),
+				typeof(Lambda<,,,,>),
+				typeof(Lambda<,,,,,>),
+				typeof(Lambda<,,,,,,>),
+				typeof(Lambda<,,,,,,,>),
+				typeof(Lambda<,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,,,,,>),
+				typeof(Lambda<,,,,,,,,,,,,,,,>)
+			};
+
 			_TupleBaseTypes = new[]
 			{
 				typeof(Tuple<>),
@@ -63,18 +83,29 @@ namespace Lens.Utils
 				typeof(Tuple<,,,,,,>),
 				typeof(Tuple<,,,,,,,>),
 			};
+
+			_ActionTypesLookup = new HashSet<Type>(_ActionBaseTypes);
+			_FuncTypesLookup = new HashSet<Type>(_FuncBaseTypes);
+			_LambdaTypesLookup = new HashSet<Type>(_LambdaBaseTypes);
+			_TupleTypesLookup = new HashSet<Type>(_TupleBaseTypes);
 		}
 
 		private static readonly Type[] _ActionBaseTypes;
 		private static readonly Type[] _FuncBaseTypes;
+		private static readonly Type[] _LambdaBaseTypes;
 		private static readonly Type[] _TupleBaseTypes;
+
+		private static readonly HashSet<Type> _ActionTypesLookup;
+		private static readonly HashSet<Type> _FuncTypesLookup;
+		private static readonly HashSet<Type> _LambdaTypesLookup;
+		private static readonly HashSet<Type> _TupleTypesLookup;
 
 		/// <summary>
 		/// Checks if a type is a function type.
 		/// </summary>
 		public static bool IsFuncType(this Type type)
 		{
-			return type.IsGenericType && _FuncBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return isKnownType(_FuncTypesLookup, type);
 		}
 
 		/// <summary>
@@ -82,10 +113,15 @@ namespace Lens.Utils
 		/// </summary>
 		public static bool IsActionType(this Type type)
 		{
-			if (type == typeof (Action))
-				return true;
+			return type == typeof(Action) || isKnownType(_ActionTypesLookup, type);
+		}
 
-			return type.IsGenericType && _ActionBaseTypes.Contains(type.GetGenericTypeDefinition());
+		/// <summary>
+		/// Checks if a type is a function type.
+		/// </summary>
+		public static bool IsLambdaType(this Type type)
+		{
+			return isKnownType(_LambdaTypesLookup, type);
 		}
 
 		/// <summary>
@@ -93,7 +129,15 @@ namespace Lens.Utils
 		/// </summary>
 		public static bool IsTupleType(this Type type)
 		{
-			return type.IsGenericType && _TupleBaseTypes.Contains(type.GetGenericTypeDefinition());
+			return isKnownType(_TupleTypesLookup, type);
+		}
+
+		/// <summary>
+		/// Checks if a type is generic and is contained in the lookup table.
+		/// </summary>
+		private static bool isKnownType(HashSet<Type> typesLookup, Type type)
+		{
+			return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
 		}
 
 		/// <summary>
@@ -150,93 +194,32 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
+		///	Creates a new function type with argument types applied.
+		/// </summary>
+		public static Type CreateLambdaType(params Type[] args)
+		{
+			if (args.Length > 16)
+				throw new LensCompilerException("Lambda<> can have up to 16 arguments!");
+
+			// sic!
+			// no need for a special parameterless lambda
+			if (args.Length == 0)
+				return typeof(Func<UnspecifiedType>);
+
+			var baseType = _LambdaBaseTypes[args.Length - 1];
+			return baseType.MakeGenericType(args);
+		}
+
+		/// <summary>
 		/// Creates a new tuple type with given argument types.
 		/// </summary>
 		public static Type CreateTupleType(params Type[] args)
 		{
-			// todo: infinitive tuples using TRest
 			if(args.Length > 8)
 				throw new LensCompilerException("Tuple<> can have up to 8 type arguments!");
 
 			var baseType = _TupleBaseTypes[args.Length - 1];
 			return baseType.MakeGenericType(args);
-		}
-
-		/// <summary>
-		/// Creates a curry-friendly version of the function.
-		/// </summary>
-		public static Type DiscardParameters(this Type type, int count)
-		{
-			if (type.IsActionType())
-			{
-				var argCount = type == typeof (Action) ? 0 : Array.IndexOf(_ActionBaseTypes, type.GetGenericTypeDefinition()) + 1;
-				var newCount = argCount - count;
-
-				if(newCount < 0)
-					throw new LensCompilerException(string.Format("Cannot discard more than {0} parameters from type '{1}'!", argCount, type));
-
-				if(newCount == 0)
-					return typeof (Action);
-
-				var newTypes = type.GetGenericArguments().Skip(count).ToArray();
-				return _ActionBaseTypes[newCount - 1].MakeGenericType(newTypes);
-			}
-
-			if (type.IsFuncType())
-			{
-				var argCount = Array.IndexOf(_FuncBaseTypes, type.GetGenericTypeDefinition());
-				var newCount = argCount - count;
-
-				if(newCount < 0)
-					throw new LensCompilerException(string.Format("Cannot discard more than {0} parameters from type '{1}'!", argCount, type));
-
-				var newTypes = type.GetGenericArguments().Skip(count).ToArray();
-				return _FuncBaseTypes[newCount].MakeGenericType(newTypes);
-			}
-
-			throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
-		}
-
-		/// <summary>
-		/// Creates a more generalized version of current Func or Action with prepended parameters.
-		/// </summary>
-		public static Type AddParameters(this Type type, params Type[] ps)
-		{
-			if (type.IsActionType())
-			{
-				var argCount = type == typeof(Action) ? 0 : Array.IndexOf(_ActionBaseTypes, type.GetGenericTypeDefinition()) + 1;
-				var newCount = argCount + ps.Length;
-
-				if (ps.Length == 0)
-					return type;
-
-				if(newCount > 16)
-					throw new LensCompilerException("An Action cannot have more than 16 arguments!");
-
-				var newTypes = new List<Type>(newCount);
-				newTypes.AddRange(ps);
-				newTypes.AddRange(type.GetGenericArguments());
-				return _ActionBaseTypes[newCount - 1].MakeGenericType(newTypes.ToArray());
-			}
-
-			if (type.IsFuncType())
-			{
-				var argCount = Array.IndexOf(_FuncBaseTypes, type.GetGenericTypeDefinition());
-				var newCount = argCount + ps.Length;
-
-				if (ps.Length == 0)
-					return type;
-
-				if (newCount > 16)
-					throw new LensCompilerException("A Func cannot have more than 16 arguments!");
-
-				var newTypes = new List<Type>(newCount);
-				newTypes.AddRange(ps);
-				newTypes.AddRange(type.GetGenericArguments());
-				return _FuncBaseTypes[newCount].MakeGenericType(newTypes.ToArray());
-			}
-
-			throw new LensCompilerException(string.Format("Type '{0}' is not callable!", type.Name));
 		}
 	}
 }

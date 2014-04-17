@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using Lens.Compiler;
+using Lens.Resolver;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -18,7 +21,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// The cached expression type.
 		/// </summary>
-		private Type _CachedExpressionType;
+		protected Type _CachedExpressionType;
 
 		#endregion
 
@@ -61,7 +64,7 @@ namespace Lens.SyntaxTree
 
 		protected virtual Type resolve(Context ctx, bool mustReturn)
 		{
-			return typeof (Unit);
+			return typeof (UnitType);
 		}
 
 		/// <summary>
@@ -183,6 +186,23 @@ namespace Lens.SyntaxTree
 		{
 			if (!ctx.IsTypeAllowed(type))
 				error(CompilerMessages.SafeModeIllegalType, type.FullName);
+		}
+
+		/// <summary>
+		/// Re-infers the lambda if argument types were not specified before.
+		/// </summary>
+		protected static void ensureLambdaInferred(Context ctx, NodeBase canBeLambda, Type delegateType)
+		{
+			var lambda = canBeLambda as LambdaNode;
+			if (lambda == null)
+				return;
+
+			lambda.Resolve(ctx);
+			if (!lambda.MustInferArgTypes)
+				return;
+
+			var wrapper = ReflectionHelper.WrapDelegate(delegateType);
+			lambda.SetInferredArgumentTypes(wrapper.ArgumentTypes);
 		}
 
 		/// <summary>

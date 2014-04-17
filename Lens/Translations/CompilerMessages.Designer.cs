@@ -214,7 +214,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Expression of type &apos;{0}&apos; cannot be used as a condition because it is not castable to a boolean..
+        ///   Looks up a localized string similar to Expression of type &apos;{0}&apos; cannot be used as a condition because it is not castable to a boolean!.
         /// </summary>
         public static string ConditionTypeMismatch {
             get {
@@ -646,6 +646,33 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Lambda argument of type &apos;{0}&apos; contains unresolved generic references! Please specify the argument type explicitly..
+        /// </summary>
+        public static string LambdaArgGenericsUnresolved {
+            get {
+                return ResourceManager.GetString("LambdaArgGenericsUnresolved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type of argument &apos;{0}&apos; could not be inferred from usage! Please specify the type explicitly..
+        /// </summary>
+        public static string LambdaArgTypeUnknown {
+            get {
+                return ResourceManager.GetString("LambdaArgTypeUnknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Lambda is used as delegate &apos;{0}&apos;, but its return type &apos;{1}&apos; cannot be casted to desired return type &apos;{2}&apos;!.
+        /// </summary>
+        public static string LambdaReturnTypeMismatch {
+            get {
+                return ResourceManager.GetString("LambdaReturnTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Lambda return type cannot be inferred! Please use type casting to specify type..
         /// </summary>
         public static string LambdaReturnTypeUnknown {
@@ -943,7 +970,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type &apos;{0}&apos; has more than one suitable constructor! Please specify type casting to specify the exact override..
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; has more than one suitable constructor! Please use type casting to specify the exact override..
         /// </summary>
         public static string TypeConstructorAmbiguos {
             get {

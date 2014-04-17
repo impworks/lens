@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Lens.Compiler.Entities;
 using Lens.Translations;
 
-namespace Lens.Utils
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// A class that lets LENS code invoke delegates from 

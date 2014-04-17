@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -38,7 +39,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			ctx.EnterScope(Scope);
 
-			var result = typeof(Unit);
+			var result = typeof(UnitType);
 			foreach(var curr in Statements)
 				result = curr.Resolve(ctx);
 

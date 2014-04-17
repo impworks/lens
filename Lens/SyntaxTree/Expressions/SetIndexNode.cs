@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
@@ -9,6 +12,8 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetIndexNode : IndexNodeBase
 	{
+		private MethodWrapper _Indexer;
+
 		/// <summary>
 		/// Value to be assigned.
 		/// </summary>
@@ -21,11 +26,41 @@ namespace Lens.SyntaxTree.Expressions
 			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var exprType = Expression.Resolve(ctx);
+			var idxType = Index.Resolve(ctx);
 
-			if (exprType.IsArray)
+			if (!exprType.IsArray)
+			{
+				try
+				{
+					_Indexer = ReflectionHelper.ResolveIndexer(exprType, idxType, false);
+				}
+				catch (LensCompilerException ex)
+				{
+					ex.BindToLocation(this);
+					throw;
+				}
+			}
+
+			var idxDestType = exprType.IsArray ? typeof (int) : _Indexer.ArgumentTypes[0];
+			var valDestType = exprType.IsArray ? exprType.GetElementType() : _Indexer.ArgumentTypes[1];
+
+			if(!idxDestType.IsExtendablyAssignableFrom(idxType))
+				error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
+
+			ensureLambdaInferred(ctx, Value, valDestType);
+			var valType = Value.Resolve(ctx);
+			if (!valDestType.IsExtendablyAssignableFrom(valType))
+				error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
+
+			return base.resolve(ctx, mustReturn);
+		}
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			if (_Indexer == null)
 				compileArray(ctx);
 			else
 				compileCustom(ctx);
@@ -39,8 +74,8 @@ namespace Lens.SyntaxTree.Expressions
 			var itemType = exprType.GetElementType();
 
 			Expression.Emit(ctx, true);
-			Index.Emit(ctx, true);
-			Value.Emit(ctx, true);
+			Expr.Cast(Index, typeof (int)).Emit(ctx, true);
+			Expr.Cast(Value, itemType).Emit(ctx, true);
 			gen.EmitSaveIndex(itemType);
 		}
 
@@ -48,21 +83,17 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			var exprType = Expression.Resolve(ctx);
-			var idxType = Index.Resolve(ctx);
-
 			try
 			{
-				var pty = ctx.ResolveIndexer(exprType, idxType, false);
-				var idxDest = pty.ArgumentTypes[0];
-				var valDest = pty.ArgumentTypes[1];
+				var idxDest = _Indexer.ArgumentTypes[0];
+				var valDest = _Indexer.ArgumentTypes[1];
 
 				Expression.Emit(ctx, true);
 
 				Expr.Cast(Index, idxDest).Emit(ctx, true);
 				Expr.Cast(Value, valDest).Emit(ctx, true);
 
-				gen.EmitCall(pty.MethodInfo);
+				gen.EmitCall(_Indexer.MethodInfo);
 			}
 			catch (LensCompilerException ex)
 			{

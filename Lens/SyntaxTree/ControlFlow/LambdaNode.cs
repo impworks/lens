@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
-using Lens.SyntaxTree.Literals;
+using Lens.Resolver;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -18,28 +18,58 @@ namespace Lens.SyntaxTree.ControlFlow
 			Body = new CodeBlockNode(ScopeKind.LambdaRoot);
 		}
 
-		/// <summary>
-		/// The pointer to the method entity defined for this lambda.
-		/// </summary>
 		private MethodEntity _Method;
+
+		private Type _InferredReturnType;
+		private Type _InferredDelegateType;
+
+		public bool MustInferArgTypes { get; private set; }
+
+		#region Overrides
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
+			var argTypes = new List<Type>();
 			foreach (var curr in Arguments)
-				if(curr.IsVariadic)
+			{
+				if (curr.IsVariadic)
 					error(CompilerMessages.VariadicArgumentLambda);
+
+				var type = curr.GetArgumentType(ctx);
+				argTypes.Add(type);
+
+				if (type == typeof (UnspecifiedType))
+					MustInferArgTypes = true;
+			}
+
+			if (MustInferArgTypes)
+				return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
 
 			Body.Scope.RegisterArguments(ctx, false, Arguments);
 
 			var retType = Body.Resolve(ctx);
-			var argTypes = Arguments.Select(a => a.Type ?? ctx.ResolveType(a.TypeSignature)).ToArray();
-			return FunctionalHelper.CreateDelegateType(retType, argTypes);
+
+			if (_InferredDelegateType != null)
+			{
+				if(!_InferredReturnType.IsExtendablyAssignableFrom(retType))
+					error(CompilerMessages.LambdaReturnTypeMismatch, _InferredDelegateType.Name, retType.Name, _InferredReturnType.Name);
+
+				return _InferredDelegateType;
+			}
+
+			return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
 		}
 
 		public override void ProcessClosures(Context ctx)
 		{
+			if (MustInferArgTypes)
+			{
+				var name = Arguments.First(a => a.Type == typeof (UnspecifiedType)).Name;
+				error(CompilerMessages.LambdaArgTypeUnknown, name);
+			}
+
 			// get evaluated return type
-			var retType = Body.Resolve(ctx);
+			var retType = _InferredReturnType ?? Body.Resolve(ctx);
 			if (retType == typeof(NullType))
 				error(CompilerMessages.LambdaReturnTypeUnknown);
 			if (retType.IsVoid())
@@ -61,7 +91,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentMethod.Generator;
 
 			// find constructor
-			var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
+			var type = _InferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
@@ -70,11 +100,50 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
+		#endregion
+
+		#region Argument type detection
+
+		/// <summary>
+		/// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
+		/// </summary>
+		public void SetInferredArgumentTypes(Type[] argTypes)
+		{
+			for (var idx = 0; idx < argTypes.Length; idx++)
+			{
+				var inferred = argTypes[idx];
+				if (inferred == typeof(UnspecifiedType))
+					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
+
+#if DEBUG
+				var specified = Arguments[idx].Type;
+				if (specified != typeof(UnspecifiedType) && specified != inferred)
+					throw new InvalidOperationException(string.Format("Argument type differs: specified '{0}', inferred '{1}'!", specified, inferred));
+#endif
+
+				Arguments[idx].Type = inferred;
+			}
+
+			MustInferArgTypes = false;
+			_CachedExpressionType = null;
+		}
+
+		/// <summary>
+		/// Interprets the lambda as a particular delegate with given arg & return types.
+		/// </summary>
+		public void SetInferredDelegateType(Type type)
+		{
+			var wrapper = ReflectionHelper.WrapDelegate(type);
+
+			SetInferredArgumentTypes(wrapper.ArgumentTypes);
+			_InferredReturnType = wrapper.ReturnType;
+		}
+
+		#endregion
+
 		public override string ToString()
 		{
-			var arglist = Arguments.Select(
-				x => string.Format("{0}:{1}", x.Name, x.Type != null ? x.Type.Name : x.TypeSignature)
-			);
+			var arglist = Arguments.Select(x => string.Format("{0}:{1}", x.Name, x.Type != null ? x.Type.Name : x.TypeSignature));
 			return string.Format("lambda({0})", string.Join(", ", arglist));
 		}
 	}

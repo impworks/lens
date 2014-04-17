@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Linq;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler
 {
@@ -40,6 +40,12 @@ namespace Lens.Compiler
 
 			if(type.IsVoid())
 				Error(node, CompilerMessages.ExpressionVoid);
+
+			if (type.IsLambdaType())
+			{
+				var argUnknown = (node as LambdaNode).Arguments.First(x => x.Type == typeof (UnspecifiedType));
+				Error(node, CompilerMessages.LambdaArgTypeUnknown, argUnknown.Name);
+			}
 		}
 
 		#endregion

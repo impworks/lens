@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
 using Lens.Utils;
 
@@ -27,18 +29,29 @@ namespace Lens.SyntaxTree.Operators
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx);
+
 			if (leftType.IsCallableType())
 			{
-				var mbr = RightOperand as GetMemberNode;
-				if (mbr != null)
+				// add left operand's return type as hint to right operand
+				var leftDelegate = ReflectionHelper.WrapDelegate(leftType);
+				if (RightOperand is GetMemberNode)
 				{
-					// function created from method name: add a type hint
+					var mbr = RightOperand as GetMemberNode;
 					if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
-					{
-						var delegateType = ctx.WrapDelegate(leftType);
-						mbr.TypeHints = new List<TypeSignature> {delegateType.ReturnType.FullName};
-					}
+						mbr.TypeHints = new List<TypeSignature> {leftDelegate.ReturnType.FullName};
 				}
+				else if(RightOperand is LambdaNode)
+				{
+					var lambda = RightOperand as LambdaNode;
+					lambda.Resolve(ctx);
+					if (lambda.MustInferArgTypes)
+						lambda.SetInferredArgumentTypes(new[] {leftDelegate.ReturnType});
+				}
+
+				var rightType = RightOperand.Resolve(ctx);
+
+				if (!ReflectionHelper.CanCombineDelegates(leftType, rightType))
+					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 			}
 
 			return base.resolve(ctx, mustReturn);
@@ -51,12 +64,9 @@ namespace Lens.SyntaxTree.Operators
 
 			if (leftType.IsCallableType() && rightType.IsCallableType())
 			{
-				if (!ctx.CanCombineDelegates(leftType, rightType))
-					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
-
 				var leftVar = ctx.Unique.TempVariableName();
 				var rightVar = ctx.Unique.TempVariableName();
-				var delegateType = ctx.WrapDelegate(leftType);
+				var delegateType = ReflectionHelper.WrapDelegate(leftType);
 				var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
 				return Expr.Lambda(
@@ -83,8 +93,8 @@ namespace Lens.SyntaxTree.Operators
 			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
 				return leftType;
 
-			if (!IsLeft && ctx.CanCombineDelegates(leftType, rightType))
-				return ctx.CombineDelegates(leftType, rightType);
+			if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
+				return ReflectionHelper.CombineDelegates(leftType, rightType);
 
 			return null;
 		}

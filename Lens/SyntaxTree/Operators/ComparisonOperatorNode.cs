@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;

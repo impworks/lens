@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -28,7 +29,7 @@ namespace Lens.SyntaxTree.Expressions
 			var idxType = Index.Resolve(ctx);
 			try
 			{
-				_Getter = ctx.ResolveIndexer(exprType, idxType, true);
+				_Getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
 				return _Getter.ReturnType;
 			}
 			catch (LensCompilerException ex)
@@ -46,9 +47,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var exprType = Expression.Resolve(ctx);
-
-			if (exprType.IsArray)
+			if (_Getter == null)
 				compileArray(ctx);
 			else
 				compileCustom(ctx);
@@ -62,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions
 			var itemType = exprType.GetElementType();
 
 			Expression.Emit(ctx, true);
-			Index.Emit(ctx, true);
+			Expr.Cast(Index, typeof(int)).Emit(ctx, true);
 
 			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
@@ -70,6 +69,7 @@ namespace Lens.SyntaxTree.Expressions
 		private void compileCustom(Context ctx)
 		{
 			var retType = _Getter.ReturnType;
+
 			if(RefArgumentRequired && retType.IsValueType)
 				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
@@ -93,7 +93,6 @@ namespace Lens.SyntaxTree.Expressions
 		{
 			return string.Format("getidx({0} of {1})", Index, Expression);
 		}
-
 
 		#region Equality
 

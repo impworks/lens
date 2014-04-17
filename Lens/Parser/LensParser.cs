@@ -280,7 +280,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// fun_arg                                     = identifier ":" [ "ref" ] type [ "... " ]
+		/// fun_arg                                     = identifier [ ":" [ "ref" ] type [ "... " ] ]
 		/// </summary>
 		private FunctionArgument parseFunSingleArg(bool required = false)
 		{
@@ -294,8 +294,9 @@ namespace Lens.Parser
 			{
 				if (required)
 					error(ParserMessages.SymbolExpected, ":");
-				else
-					return null;
+
+				node.Type = typeof (UnspecifiedType);
+				return node;
 			}
 
 			node.IsRefArgument = check(LexemType.Ref);
@@ -1120,7 +1121,7 @@ namespace Lens.Parser
 		}
 		
 		/// <summary>
-		/// invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
+		/// invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
 		/// </summary>
 		private InvocationNode parseInvokePass()
 		{
@@ -1131,6 +1132,10 @@ namespace Lens.Parser
 			var invoker = new InvocationNode { Expression = getter };
 
 			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+
+			var hints = attempt(parseTypeArgs);
+			if(hints != null)
+				getter.TypeHints = hints;
 
 			invoker.Arguments = parseInvokeBlockArgs().ToList();
 			if (invoker.Arguments.Count == 0)

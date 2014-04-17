@@ -34,8 +34,14 @@ namespace Lens.Test
 			}
 			else
 			{
-				var regex = new Regex(regexFromMsg(bareMsg));
-				Assert.IsTrue(regex.IsMatch(ex.Message));
+				var pattern = regexFromMsg(bareMsg);
+				var regex = new Regex(pattern);
+				Assert.IsTrue(
+					regex.IsMatch(ex.Message),
+					"Message does not match!\n\n  Expected: {0}\n  Actual: {1}\n",
+					bareMsg.Substring(0, 70) + "...",
+					ex.Message.Substring(0, 70) + "..."
+				);
 			}
 		}
 
@@ -74,13 +80,13 @@ namespace Lens.Test
 		}
 
 		private static Regex _MessageWildcardRegex = new Regex(@"\{[0-9]\}", RegexOptions.Compiled);
-		private static Regex _MessageSymbolRegex = new Regex(@"[\-\[\]\/\(\)\*\+\?\.\\\^\$\|]", RegexOptions.Compiled);
+		private static Regex _MessageSymbolRegex = new Regex(@"(?<s>[\-\[\]\/\(\)\*\+\?\.\\\^\$\|])", RegexOptions.Compiled);
 
 		private static string regexFromMsg(string msg)
 		{
-			msg = _MessageSymbolRegex.Replace(msg, @"\$1");
+			msg = _MessageSymbolRegex.Replace(msg, @"\${s}");
 			msg = _MessageWildcardRegex.Replace(msg, "(.+)");
-			return "$" + msg + "^";
+			return "^" + msg + "$";
 		}
 	}
 }

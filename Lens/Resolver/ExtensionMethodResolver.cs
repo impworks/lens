@@ -4,9 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Lens.Utils;
 
-namespace Lens.Compiler
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// Finds a list of possible extension methods for a given type.
@@ -29,7 +28,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Gets an extension method by given arguments.
 		/// </summary>
-		public MethodInfo FindExtensionMethod(Type type, string name, Type[] args)
+		public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
 		{
 			if (!_Cache.ContainsKey(type))
 				findMethodsForType(type);
@@ -104,16 +103,12 @@ namespace Lens.Compiler
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
 			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = TypeExtensions.TypeListDistance(methodArgs.Skip(1), args);
+			var argsDist = TypeExtensions.TypeListDistance(args, methodArgs.Skip(1));
 
-			try
-			{
-				return checked(baseDist + argsDist);
-			}
-			catch (OverflowException)
-			{
+			if(baseDist == int.MaxValue || argsDist == int.MaxValue)
 				return int.MaxValue;
-			}
+
+			return baseDist + argsDist;
 		}
 	}
 }

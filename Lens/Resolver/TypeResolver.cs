@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Lens.Compiler;
 using Lens.Translations;
-using Lens.Utils;
 
-namespace Lens.Compiler
+namespace Lens.Resolver
 {
 	/// <summary>
 	/// A class to resolve types by their string signatures.

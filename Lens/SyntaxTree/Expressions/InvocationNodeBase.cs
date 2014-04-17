@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Lens.Compiler;
+using Lens.Resolver;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
@@ -37,13 +40,13 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof(Unit);
+			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof(UnitType);
 
 			Func<NodeBase, Type> typeGetter = arg =>
 			{
 				var gin = arg as GetIdentifierNode;
 				if (gin != null && gin.Identifier == "_")
-					return null;
+					return typeof (UnspecifiedType);
 
 				return arg.Resolve(ctx);
 			};
@@ -67,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions
 				var argExprs = new List<NodeBase>();
 				for (var idx = 0; idx < _ArgTypes.Length; idx++)
 				{
-					if (_ArgTypes[idx] == null)
+					if (_ArgTypes[idx] == typeof(UnspecifiedType))
 					{
 						var argName = ctx.Unique.AnonymousArgName();
 						argDefs.Add(Expr.Arg(argName, _Wrapper.ArgumentTypes[idx].FullName));
@@ -121,11 +124,28 @@ namespace Lens.SyntaxTree.Expressions
 			var lambdaArgTypes = new List<Type>();
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
-				if(argTypes[idx] == null)
+				if (argTypes[idx] == typeof(UnspecifiedType))
 					lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
 			}
 
 			return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
+		}
+
+		protected void applyLambdaArgTypes(Context ctx)
+		{
+			for (var idx = 0; idx < _ArgTypes.Length; idx++)
+			{
+				if (!_ArgTypes[idx].IsLambdaType())
+					continue;
+
+				var lambda = (LambdaNode) Arguments[idx];
+				if (lambda.MustInferArgTypes)
+				{
+					var actualWrapper = ReflectionHelper.WrapDelegate(_Wrapper.ArgumentTypes[idx]);
+					lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
+					lambda.Resolve(ctx);
+				}
+			}
 		}
 
 		#endregion

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
@@ -69,7 +70,7 @@ namespace Lens.Compiler.Entities
 
 			if (ReturnType == null)
 				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-					? typeof(Unit)
+					? typeof(UnitType)
 					: ctx.ResolveType(ReturnTypeSignature);
 
 			if (ArgumentTypes == null)

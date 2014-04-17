@@ -480,4 +480,13 @@
   <data name="VariadicArgumentNotLast" xml:space="preserve">
     <value>Аргумент c модификатором '...' должен быть последним в списке!</value>
   </data>
+  <data name="LambdaArgTypeUnknown" xml:space="preserve">
+    <value>Тип аргумента '{0}' не может быть выведен автоматически! Пожалуйста, укажите тип явно!</value>
+  </data>
+  <data name="LambdaReturnTypeMismatch" xml:space="preserve">
+    <value>Анонимная функция используется в качестве делегата типа '{0}', но ее возвращаемый тип '{1}' несовместим с требуемым возвращаемым типом '{2}'!</value>
+  </data>
+  <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
+    <value>Невозможно вычислить значения обобщенных параметров для типа аргумента '{0}'! Укажите тип аргумента явно.</value>
+  </data>
 </root>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lens.Utils
+namespace Lens.Resolver
 {
 	internal class MethodLookupResult<T>
 	{

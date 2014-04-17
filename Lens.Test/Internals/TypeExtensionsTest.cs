@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Literals;
 using Lens.Utils;
 using NUnit.Framework;

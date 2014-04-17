@@ -136,7 +136,8 @@ type ArrayHolder
 		[Test]
 		public void ComplexFunction()
 		{
-			var src = @"fun hypo:double (a:int b:int) ->
+			var src = @"
+fun hypo:double (a:int b:int) ->
     let sq1 = a * a
     let sq2 = b * b
     sqrt (sq1 + sq2)";
@@ -811,7 +812,8 @@ finally
 		[Test]
 		public void DefinitionAndInvocation()
 		{
-			var src = @"fun test:int -> 10
+			var src = @"
+fun test:int -> 10
 test ()";
 			var definition = Expr.Fun("test", "int", Expr.Int(10));
 			var invocation = Expr.Invoke("test", Expr.Unit());
@@ -887,13 +889,14 @@ catch ex:DivisionByZeroException
 		[Test]
 		public void FluentCall()
 		{
-			var src = @"Enumerable::Range 1 100
+			var src = @"
+Enumerable::Range 1 100
     |> Where (i:int -> i % 2 == 0)
     |> Select (i:int -> i * 2)";
 
 			var result = Expr.Invoke(
 				Expr.Invoke(
-					Expr.Invoke(Expr.GetMember(new TypeSignature("Enumerable"), "Range"), Expr.Int(1), Expr.Int(100)),
+					Expr.Invoke(Expr.GetMember("Enumerable", "Range"), Expr.Int(1), Expr.Int(100)),
 					"Where",
 					Expr.Lambda(
 						new [] { Expr.Arg("i", "int") },
@@ -903,6 +906,33 @@ catch ex:DivisionByZeroException
 				"Select",
 				Expr.Lambda(
 					new [] {Expr.Arg("i", "int") },
+					Expr.Mult(Expr.Get("i"), Expr.Int(2))
+				)
+			);
+
+			TestParser(src, result);
+		}
+
+		[Test]
+		public void FluentCall2()
+		{
+			var src = @"
+Enumerable::Range 1 100
+    |> Where (i -> i % 2 == 0)
+    |> Select (i -> i * 2)";
+
+			var result = Expr.Invoke(
+				Expr.Invoke(
+					Expr.Invoke(Expr.GetMember("Enumerable", "Range"), Expr.Int(1), Expr.Int(100)),
+					"Where",
+					Expr.Lambda(
+						new[] { Expr.Arg("i") },
+						Expr.Equal(Expr.Mod(Expr.Get("i"), Expr.Int(2)), Expr.Int())
+					)
+				),
+				"Select",
+				Expr.Lambda(
+					new[] { Expr.Arg("i") },
 					Expr.Mult(Expr.Get("i"), Expr.Int(2))
 				)
 			);
@@ -1064,6 +1094,7 @@ fun part (x:int) ->
         (new Large x) as TestType
     else
         new Small x";
+
 			var result = Expr.Fun(
 				"part",
 				new[]
@@ -1370,11 +1401,12 @@ for a in x..y do
 		[Test]
 		public void AssignmentLocation()
 		{
-			var script = @"let x = 10
+			var script = @"
+let x = 10
 x = 20";
 			var result = Parse(script);
 			var node2 = result.Skip(1).Single();
-			Assert.AreEqual(2, node2.StartLocation.Line);
+			Assert.AreEqual(3, node2.StartLocation.Line);
 		}
 
 		[Test]

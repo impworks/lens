@@ -227,8 +227,8 @@ record Store
     Value : int
 
 var found = new [new Store ""a"" 1; new Store ""b"" 2; new Store ""c"" 3]
-    |> Where (x:Store -> x.Value < 3)
-    |> OrderByDescending (x:Store -> x.Value)
+    |> Where (x -> x.Value < 3)
+    |> OrderByDescending (x -> x.Value)
     |> First ()
 
 found.Name
@@ -323,7 +323,7 @@ new [mySum 1; mySum 1 2; mySum 1 2 3 4 5; mySum (new [1; 2; 3])]
 fun cat:string (data:object...) ->
     string::Join
         <| "";""
-        <| data.Select (x:object -> x.ToString())
+        <| data.Select (x -> x.ToString())
 
 cat 1 2 true ""test""
 ";

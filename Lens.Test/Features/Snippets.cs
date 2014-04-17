@@ -178,25 +178,6 @@ string::Compare
 		}
 
 		[Test]
-		public void Linq1()
-		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where (a:int -> a > 2)";
-			Test(src, new [] {3, 4, 5});
-		}
-
-		[Test]
-		public void Linq2()
-		{
-			var src = @"
-Enumerable::Range 1 10
-    |> Where (x:int -> x % 2 == 0)
-    |> Select (x:int -> x * 2)";
-
-			var result = new[] { 4, 8, 12, 16, 20};
-			Test(src, result);
-		}
-
-		[Test]
 		public void ExtensionMethods()
 		{
 			var src = @"
@@ -217,8 +198,8 @@ a.Max ()";
 		public void HasValue()
 		{
 			var src = @"
-var a = null as Nullable<int>
-var b = 1 as Nullable<int>
+var a = null as int?
+var b = 1 as int?
 new [ a.HasValue; b.HasValue ]
 ";
 
@@ -378,9 +359,38 @@ var funcs = new List<Func<int>> ()
 for x in Enumerable::Range 1 3 do
     funcs.Add (-> x * 2)
 
-funcs.Select (fx:Func<int> -> fx ())
+funcs.Select (fx -> fx ())
 ";
-			Test(src, new[] { 2, 4, 6 });
+			Test(src, new[] {2, 4, 6});
+		}
+
+		[Test]
+		public void ComplexEnumerables()
+		{
+			// todo:
+			// IOrderedEnumerable<T> extends IEnumerable<T>, therefore inherits GetEnumerator () method
+			// howerver, GetMethods() doesn't work on interfaces
+			// and TypeBuilder.GetMethod(type, method) doesn't work if `type` = IOrderedEnumerable and `method.DeclaringType` = IEnumerable
+
+			var src = @"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [
+    new Store ""A"" 10
+    new Store ""B"" 42
+    new Store ""C"" 5
+]
+
+let order = stores.OrderByDescending (x -> x.Stock)
+
+var names = new List<string> ()
+for s in order do
+    names.Add (fmt ""{0}:{1}"" s.Name s.Stock)
+names
+";
+			Test(src, new [] { "B:42", "A:10", "C:5" });
 		}
 	}
 }

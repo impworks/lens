@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 using NUnit.Framework;
 
@@ -63,7 +64,7 @@ namespace Lens.Test.Internals
 		[Test]
 		public void SelfReference()
 		{
-			Test<Unit>("Lens.Unit");
+			Test<UnitType>("Lens.Compiler.UnitType");
 		}
 
 		[Test]

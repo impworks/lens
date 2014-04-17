@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Operators;
 using Lens.Translations;
 using Lens.Utils;
@@ -68,6 +69,8 @@ namespace Lens.SyntaxTree.Expressions
 				_IsDefault = true;
 				return type;
 			}
+
+			applyLambdaArgTypes(ctx);
 
 			return resolvePartial(_Constructor, type, _ArgTypes);
 		}
