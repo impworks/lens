@@ -135,7 +135,7 @@ test 1 2
 		}
 
 		[Test]
-		public void LambdaError()
+		public void LambdaArgsTypeMismatch()
 		{
 			var src = @"
 fun invoker:string (act:Func<int,int,int>) ->
@@ -143,7 +143,19 @@ fun invoker:string (act:Func<int,int,int>) ->
 
 invoker ((x y) -> x + y)
 ";
-			Test(src, "result = 3");
+			TestError(src, CompilerMessages.ArgumentTypeMismatch);
+		}
+
+		[Test]
+		public void LambdaArgsCountMismatch()
+		{
+			var src = @"
+fun invoker:string (act:Func<int,int>) ->
+    fmt ""result = {0}"" (act 1 2)
+
+invoker (x -> x + 1)
+";
+			TestError(src, CompilerMessages.DelegateArgumentsCountMismatch);
 		}
 	}
 }

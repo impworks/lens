@@ -193,7 +193,8 @@ namespace Lens.SyntaxTree.Expressions
 			if (!exprType.IsCallableType())
 				error(CompilerMessages.TypeNotCallable, exprType);
 
-			_Method = ctx.ResolveMethod(exprType, "Invoke", _ArgTypes);
+			_Method = ctx.ResolveMethod(exprType, "Invoke");
+
 			var argTypes = _Method.ArgumentTypes;
 			if (argTypes.Length != _ArgTypes.Length)
 				error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, _ArgTypes.Length);
