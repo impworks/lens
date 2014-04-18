@@ -88,6 +88,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use an expression of type &apos;{0}&apos; as array size specifier because it is not assignable to System.Int32!.
+        /// </summary>
+        public static string ArraySizeNotInt {
+            get {
+                return ResourceManager.GetString("ArraySizeNotInt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Array type cannot be inferred! Use type casting to specify element types..
         /// </summary>
         public static string ArrayTypeUnknown {

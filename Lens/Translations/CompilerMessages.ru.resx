@@ -489,4 +489,7 @@
   <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
     <value>Невозможно вычислить значения обобщенных параметров для типа аргумента '{0}'! Укажите тип аргумента явно.</value>
   </data>
+  <data name="ArraySizeNotInt" xml:space="preserve">
+    <value>Невозможно использовать выражение типа '{0}' в качестве размера массива, поскольку оно не приводится к System.Int32!</value>
+  </data>
 </root>

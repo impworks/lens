@@ -489,4 +489,7 @@
   <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
     <value>Lambda argument of type '{0}' contains unresolved generic references! Please specify the argument type explicitly.</value>
   </data>
+  <data name="ArraySizeNotInt" xml:space="preserve">
+    <value>Cannot use an expression of type '{0}' as array size specifier because it is not assignable to System.Int32!</value>
+  </data>
 </root>

@@ -901,7 +901,7 @@ namespace Lens.Parser
 		#region Block initializers
 
 		/// <summary>
-		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_objarray_block | new_object_block
 		/// </summary>
 		private NodeBase parseNewBlockExpr()
 		{
@@ -912,6 +912,7 @@ namespace Lens.Parser
 			       ?? attempt(parseNewListBlock)
 			       ?? attempt(parseNewArrayBlock)
 			       ?? attempt(parseNewDictBlock)
+                   ?? attempt(parseNewObjArrayBlock)
 			       ?? attempt(parseNewObjectBlock) as NodeBase;
 		}
 
@@ -1046,6 +1047,27 @@ namespace Lens.Parser
 
 			return new KeyValuePair<NodeBase, NodeBase>(key, value);
 		}
+
+        /// <summary>
+        /// new_objarray_block                          = type "[" line_expr "]"
+        /// </summary>
+        private NewObjectArrayNode parseNewObjArrayBlock()
+        {
+            var type = attempt(parseType);
+            if (type == null)
+                return null;
+
+            if (!check(LexemType.SquareOpen))
+                return null;
+
+            var node = new NewObjectArrayNode();
+            node.TypeSignature = type;
+            node.Size = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+
+            ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+
+            return node;
+        }
 
 		/// <summary>
 		/// new_object_block                            = type invoke_block_args
