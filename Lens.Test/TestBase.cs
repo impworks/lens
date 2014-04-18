@@ -39,8 +39,8 @@ namespace Lens.Test
 				Assert.IsTrue(
 					regex.IsMatch(ex.Message),
 					"Message does not match!\n\n  Expected: {0}\n  Actual: {1}\n",
-					bareMsg.Substring(0, 70) + "...",
-					ex.Message.Substring(0, 70) + "..."
+                    TrimToLength(bareMsg),
+                    TrimToLength(ex.Message)
 				);
 			}
 		}
@@ -88,5 +88,10 @@ namespace Lens.Test
 			msg = _MessageWildcardRegex.Replace(msg, "(.+)");
 			return "^" + msg + "$";
 		}
+
+	    private static string TrimToLength(string str, int len = 70)
+	    {
+	        return str.Length < len ? str : str.Substring(0, len) + "...";
+	    }
 	}
 }

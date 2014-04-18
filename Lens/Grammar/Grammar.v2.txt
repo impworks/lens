@@ -70,7 +70,7 @@ while_header <WhileNode>                    = "while" line_expr "do"
 for_block <ForNode>                         = "for" identifier "in" line_expr [ ".." line_expr ] "do"
 
 // block initializers
-new_block_expr <NodeBase>                   = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+new_block_expr <NodeBase>                   = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_objarray_block | new_object_block
 new_tuple_block <NewTupleNode>              = "(" init_expr_block ")"
 new_list_block <NewListNode>                = "[[" init_expr_block "]]"
 new_array_block <NewArrayNode>              = "[" init_expr_block "]"
@@ -78,6 +78,7 @@ new_dict_block <NewDictionaryNode>          = "{" init_dict_expr_block "}"
 init_expr_block <~NodeBase>                 = INDENT line_expr { NL line_expr } DEDENT
 init_expr_dict_block                        = INDENT init_dict_expr { NL init_dict_expr } DEDENT
 init_dict_expr                              = line_expr "=>" line_expr
+new_objarray_block <NewObjectArrayNode>     = type "[" line_expr "]"
 new_object_block <NewObjectNode>            = type invoke_block_args
 
 // block invocations

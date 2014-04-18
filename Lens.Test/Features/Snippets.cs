@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -367,11 +368,6 @@ funcs.Select (fx -> fx ())
 		[Test]
 		public void ComplexEnumerables()
 		{
-			// todo:
-			// IOrderedEnumerable<T> extends IEnumerable<T>, therefore inherits GetEnumerator () method
-			// howerver, GetMethods() doesn't work on interfaces
-			// and TypeBuilder.GetMethod(type, method) doesn't work if `type` = IOrderedEnumerable and `method.DeclaringType` = IEnumerable
-
 			var src = @"
 record Store
     Name : string
@@ -392,5 +388,49 @@ names
 ";
 			Test(src, new [] { "B:42", "A:10", "C:5" });
 		}
+
+	    [Test]
+	    public void SizedArray1()
+	    {
+	        var src = @"
+var x = new int[3 + 2]
+x.Length
+";
+            Test(src, 5);
+	    }
+
+        [Test]
+        public void SizedArray2()
+        {
+            var src = @"
+var x = new string[3]
+x[1] = ""test""
+x
+";
+            Test(src, new [] { null, "test", null});
+        }
+
+        [Test]
+        public void SizedArray3()
+        {
+            var src = @"
+var data = new List<int>[2]
+data[0] = new [[1; 2; 3]]
+data[1] = new [[4; 5; 6]]
+data
+  |> SelectMany (x -> x)
+  |> Sum ()
+";
+            Test(src, 21);
+        }
+
+        [Test]
+        public void SizedArrayError()
+        {
+            var src = @"
+new int[true]
+";
+            TestError(src, CompilerMessages.ArraySizeNotInt);
+        }
 	}
 }
