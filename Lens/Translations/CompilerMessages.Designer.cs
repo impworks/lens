@@ -349,6 +349,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expression of type &apos;{0}&apos; cannot be used in &apos;using&apos; block because it does not implement the &apos;IDisposable&apos; interface!.
+        /// </summary>
+        public static string ExpressionNotIDisposable {
+            get {
+                return ResourceManager.GetString("ExpressionNotIDisposable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expression type cannot be inferred! Please use type casting to specify actual type..
         /// </summary>
         public static string ExpressionNull {

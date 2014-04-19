@@ -492,4 +492,7 @@
   <data name="ArraySizeNotInt" xml:space="preserve">
     <value>Cannot use an expression of type '{0}' as array size specifier because it is not assignable to System.Int32!</value>
   </data>
+  <data name="ExpressionNotIDisposable" xml:space="preserve">
+    <value>Expression of type '{0}' cannot be used in 'using' block because it does not implement the 'IDisposable' interface!</value>
+  </data>
 </root>

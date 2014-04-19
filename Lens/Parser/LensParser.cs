@@ -149,13 +149,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// using                                       = "using" namespace NL
 		/// </summary>
-		private UsingNode parseUsing()
+		private UseNode parseUsing()
 		{
 			if (!check(LexemType.Using))
 				return null;
 
 			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
-			var node = new UsingNode {Namespace = nsp.FullSignature};
+			var node = new UseNode {Namespace = nsp.FullSignature};
 
 			return node;
 		}

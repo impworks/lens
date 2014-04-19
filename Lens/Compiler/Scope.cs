@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
+using Lens.SyntaxTree;
 using Lens.Translations;
 
 namespace Lens.Compiler
@@ -223,6 +224,22 @@ namespace Lens.Compiler
 			return method;
 		}
 
+        /// <summary>
+        /// Applies local names to a temporary scope. Is useful for expanding nodes that introduce a variable.
+        /// </summary>
+	    public static T WithTempLocals<T>(Context ctx, Func<T> action, params Local[] vars)
+        {
+            var scope = new Scope(ScopeKind.Unclosured);
+            foreach (var curr in vars)
+                scope.DeclareLocal(curr);
+
+            ctx.EnterScope(scope);
+            var result = action();
+            ctx.ExitScope();
+
+            return result;
+        }
+
 		#endregion
 
 		#region Helpers
@@ -293,21 +310,5 @@ namespace Lens.Compiler
 		/// Closure parent is loaded from 'this' pointer.
 		/// </summary>
 		LambdaRoot
-	}
-
-	internal class ScopeContainer : IDisposable
-	{
-		private readonly Context _Context;
-
-		public ScopeContainer(Context ctx, Scope scope)
-		{
-			_Context = ctx;
-			_Context.EnterScope(scope);
-		}
-
-		public void Dispose()
-		{
-			_Context.ExitScope();
-		}
 	}
 }

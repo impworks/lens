@@ -54,11 +54,8 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (!mustReturn)
 				return typeof (UnitType);
 
-			// the node is expanded, therefore we use a temporary scope to just resolve the body type.
-			var tmpScope = new Scope(ScopeKind.Unclosured);
-			tmpScope.DeclareLocal(VariableName, _VariableType, false);
-			using(new ScopeContainer(ctx, tmpScope))
-				return Body.Resolve(ctx);
+			var tmpVar = new Local(VariableName, _VariableType);
+		    return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), tmpVar);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)

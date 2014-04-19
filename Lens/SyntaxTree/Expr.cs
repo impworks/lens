@@ -494,6 +494,16 @@ namespace Lens.SyntaxTree
 			return new CatchNode { Code = Block(stmts) };
 		}
 
+		public static UsingNode Using(NodeBase expr, params NodeBase[] stmts)
+		{
+			return new UsingNode {Expression = expr, Body = Block(stmts)};
+		}
+
+		public static UsingNode Using(string name, NodeBase expr, params NodeBase[] stmts)
+		{
+			return new UsingNode { VariableName = name, Expression = expr, Body = Block(stmts) };
+		}
+
 		#endregion
 
 		#region Entities
