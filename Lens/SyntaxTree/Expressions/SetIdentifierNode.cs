@@ -157,7 +157,7 @@ namespace Lens.SyntaxTree.Expressions
 			
 			Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-			var clsType = ctx.Scope.ClosureType.TypeInfo;
+			var clsType = ctx.Scope.ActiveClosure.ClosureType.TypeInfo;
 			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
 			gen.EmitSaveField(clsField.FieldInfo);
 		}

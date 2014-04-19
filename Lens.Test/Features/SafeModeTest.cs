@@ -44,7 +44,7 @@ namespace Lens.Test.Features
 			};
 
 			var src = @"
-using System.Text.RegularExpressions
+use System.Text.RegularExpressions
 new List<Regex> ()
 ";
 			try
@@ -71,7 +71,7 @@ new List<Regex> ()
 			};
 
 			var src = @"
-using System.Collections
+use System.Collections
 var s = new Stack ()
 s.Push 1
 ";

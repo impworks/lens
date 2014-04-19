@@ -38,8 +38,8 @@ namespace Lens.Compiler
 					declareRecord(currNode as RecordDefinitionNode);
 				else if (currNode is FunctionNode)
 					declareFunction(currNode as FunctionNode);
-				else if (currNode is UsingNode)
-					declareOpenNamespace(currNode as UsingNode);
+				else if (currNode is UseNode)
+					declareOpenNamespace(currNode as UseNode);
 				else
 					declareScriptNode(currNode);
 			}
@@ -271,7 +271,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Opens a new namespace for current script.
 		/// </summary>
-		private void declareOpenNamespace(UsingNode node)
+		private void declareOpenNamespace(UseNode node)
 		{
 			if (!Namespaces.ContainsKey(node.Namespace))
 				Namespaces.Add(node.Namespace, true);

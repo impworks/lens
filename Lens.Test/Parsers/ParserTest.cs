@@ -18,15 +18,15 @@ namespace Lens.Test.Parsers
 		}
 
 		[Test]
-		public void Using()
+		public void Use()
 		{
-			TestParser("using System", new UsingNode { Namespace = "System" });
+			TestParser("use System", new UseNode { Namespace = "System" });
 		}
 
 		[Test]
-		public void MultiUsing()
+		public void MultiUse()
 		{
-			TestParser("using Lens.Parser", new UsingNode { Namespace = "Lens.Parser" });
+			TestParser("use Lens.Parser", new UseNode { Namespace = "Lens.Parser" });
 		}
 
 		[Test]
@@ -1396,6 +1396,34 @@ for a in x..y do
 			);
 
 			TestParser(src, result);
+		}
+
+		[Test]
+		public void Using()
+		{
+			var src = "using new X () do someStuff ()";
+			var result = Expr.Using(
+				Expr.New("X"),
+				Expr.Invoke("someStuff")
+			);
+
+			TestParser(src, result);
+		}
+
+		[Test]
+		public void UsingWithVariable()
+		{
+			var src = @"
+using x = new FileStream ""C:/file.txt"" do
+    x.Write 1
+    x.Write 2
+";
+			var result = Expr.Using(
+				"x",
+				Expr.New("FileStream", Expr.Str("C:/file.txt")),
+				Expr.Invoke(Expr.Get("x"), "Write", Expr.Int(1)),
+				Expr.Invoke(Expr.Get("x"), "Write", Expr.Int(2))
+			);
 		}
 
 		[Test]

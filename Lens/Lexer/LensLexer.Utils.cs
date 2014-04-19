@@ -10,6 +10,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("typeof", LexemType.Typeof),
 			new StaticLexemDefinition("default", LexemType.Default),
 
+			new StaticLexemDefinition("use", LexemType.Use),
 			new StaticLexemDefinition("using", LexemType.Using),
 			new StaticLexemDefinition("type", LexemType.Type),
 			new StaticLexemDefinition("record", LexemType.Record),

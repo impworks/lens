@@ -1,25 +1,76 @@
-﻿using Lens.Compiler;
+﻿using System;
+using System.Collections.Generic;
+using Lens.Compiler;
+using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	internal class UsingNode : NodeBase
-	{
-		/// <summary>
-		/// Namespace to be resolved.
-		/// </summary>
-		public string Namespace { get; set; }
+    /// <summary>
+    /// A block that releases a resource.
+    /// </summary>
+    internal class UsingNode : NodeBase
+    {
+	    /// <summary>
+        /// A variable to assign the resource to.
+        /// </summary>
+        public string VariableName { get; set; }
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			// does nothing
-			// all UsingNodes are processed by Context.CreateFromNodes()
+        /// <summary>
+        /// An expression of IDisposable type.
+        /// </summary>
+        public NodeBase Expression { get; set; }
+
+        public CodeBlockNode Body { get; set; }
+
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            var exprType = Expression.Resolve(ctx, mustReturn);
+            if(!typeof(IDisposable).IsAssignableFrom(exprType))
+                error(Expression, CompilerMessages.ExpressionNotIDisposable, exprType);
+
+			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
+
+	        if (!mustReturn)
+		        return typeof (UnitType);
+
+	        return string.IsNullOrEmpty(VariableName)
+		        ? Body.Resolve(ctx)
+		        : Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), new Local(VariableName, exprType));
+        }
+
+	    public override NodeBase Expand(Context ctx, bool mustReturn)
+	    {
+			var exprType = Expression.Resolve(ctx, mustReturn);
+		    var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
+
+		    var newBody = Expr.Block(Expr.Set(tmpVar, Expression));
+
+			if(!string.IsNullOrEmpty(VariableName))
+				newBody.Add(Expr.Let(VariableName, Expr.Get(tmpVar)));
+
+			newBody.Add(Body);
+
+		    return Expr.Try(
+				newBody,
+			    Expr.Block(
+					Expr.Invoke(Expr.Get(tmpVar), "Dispose")
+				)
+			);
+	    }
+
+	    public override IEnumerable<NodeChild> GetChildren()
+	    {
+		    yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Body, null);
 		}
 
 		#region Equality members
 
 		protected bool Equals(UsingNode other)
 		{
-			return string.Equals(Namespace, other.Namespace);
+			return string.Equals(VariableName, other.VariableName) && Equals(Expression, other.Expression) && Equals(Body, other.Body);
 		}
 
 		public override bool Equals(object obj)
@@ -32,14 +83,15 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public override int GetHashCode()
 		{
-			return (Namespace != null ? Namespace.GetHashCode() : 0);
+			unchecked
+			{
+				int hashCode = (VariableName != null ? VariableName.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Expression != null ? Expression.GetHashCode() : 0);
+				hashCode = (hashCode * 397) ^ (Body != null ? Body.GetHashCode() : 0);
+				return hashCode;
+			}
 		}
 
 		#endregion
-
-		public override string ToString()
-		{
-			return string.Format("using({0})", Namespace);
-		}
 	}
 }

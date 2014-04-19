@@ -6,6 +6,7 @@
 		NewLine,
 
 		// Keywords
+		Use,
 		Using,
 		Type,
 		Record,

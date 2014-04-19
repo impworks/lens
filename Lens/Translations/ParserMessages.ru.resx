@@ -291,4 +291,10 @@
   <data name="VarTypeExpected" xml:space="preserve">
     <value>Ожидается подпись типа переменной!</value>
   </data>
+  <data name="UsingBodyExpected" xml:space="preserve">
+    <value>Ожидается тело блока управления ресурсом!</value>
+  </data>
+  <data name="UsingExpressionExpected" xml:space="preserve">
+    <value>Ожидается выражение-тело блока управления ресурсом!</value>
+  </data>
 </root>

@@ -121,7 +121,7 @@ let create = (x:int y:int) -> Screen.Add (maker x y)
 		public void ComplexWhileTest()
 		{
 			var src = @"
-using System.Net
+use System.Net
 
 let listener = new HttpListener ()
 listener.Prefixes.Add ""http://127.0.0.1:8080/""
@@ -150,7 +150,7 @@ while true do
 ";
 			var nodes = new NodeBase[]
 			{
-				new UsingNode {Namespace = "System.Net"},
+				new UseNode {Namespace = "System.Net"},
 				Expr.Let("listener", Expr.New("HttpListener")),
 				Expr.Invoke(
 					Expr.GetMember(

@@ -297,4 +297,10 @@
   <data name="VarTypeExpected" xml:space="preserve">
     <value>Variable type is expected!</value>
   </data>
+  <data name="UsingBodyExpected" xml:space="preserve">
+    <value>Resource block body is expected!</value>
+  </data>
+  <data name="UsingExpressionExpected" xml:space="preserve">
+    <value>Resource block expression is expected!</value>
+  </data>
 </root>

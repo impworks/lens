@@ -574,6 +574,24 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Resource block body is expected!.
+        /// </summary>
+        internal static string UsingBodyExpected {
+            get {
+                return ResourceManager.GetString("UsingBodyExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resource block expression is expected!.
+        /// </summary>
+        internal static string UsingExpressionExpected {
+            get {
+                return ResourceManager.GetString("UsingExpressionExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A by-ref argument cannot be marked with &apos;...&apos; modifier!.
         /// </summary>
         internal static string VariadicByRef {

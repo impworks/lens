@@ -170,5 +170,46 @@ sum
 
 			Test(src, 15);
 		}
+
+		[Test]
+		public void Using()
+		{
+			var src = @"
+var x = 1
+let disp = new Lens.Test.Features.SampleDisposable (-> x = 2)
+using disp do
+    x = 3
+x
+";
+			Test(src, 2);
+		}
+
+		[Test]
+		public void Using2()
+		{
+			var src = @"
+var x = 1
+let disp = new Lens.Test.Features.SampleDisposable (-> x = 2)
+using disp2 = disp do
+    disp2 = null
+x
+";
+			Test(src, 2);
+		}
+	}
+
+	public class SampleDisposable : IDisposable
+	{
+		public SampleDisposable(Action act)
+		{
+			_Action = act;
+		}
+
+		private readonly Action _Action;
+
+		public void Dispose()
+		{
+			_Action();
+		}
 	}
 }
