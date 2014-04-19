@@ -18,15 +18,15 @@ namespace Lens.Test.Parsers
 		}
 
 		[Test]
-		public void Using()
+		public void Use()
 		{
-			TestParser("using System", new UseNode { Namespace = "System" });
+			TestParser("use System", new UseNode { Namespace = "System" });
 		}
 
 		[Test]
-		public void MultiUsing()
+		public void MultiUse()
 		{
-			TestParser("using Lens.Parser", new UseNode { Namespace = "Lens.Parser" });
+			TestParser("use Lens.Parser", new UseNode { Namespace = "Lens.Parser" });
 		}
 
 		[Test]
