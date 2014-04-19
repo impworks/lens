@@ -495,4 +495,7 @@
   <data name="ExpressionNotIDisposable" xml:space="preserve">
     <value>Expression of type '{0}' cannot be used in 'using' block because it does not implement the 'IDisposable' interface!</value>
   </data>
+  <data name="TypeInterface" xml:space="preserve">
+    <value>Cannot create an instance of interface '{0}'!</value>
+  </data>
 </root>

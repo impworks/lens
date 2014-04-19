@@ -237,6 +237,16 @@ namespace Lens.SyntaxTree
 			return new NewArrayNode {Expressions = items.ToList()};
 		}
 
+		public static NewObjectArrayNode Array(TypeSignature type, NodeBase size)
+		{
+			return new NewObjectArrayNode { TypeSignature = type, Size = size };
+		}
+
+		public static NewObjectArrayNode Array(Type type, NodeBase size)
+		{
+			return new NewObjectArrayNode { Type = type, Size = size };
+		}
+
 		public static NewTupleNode Tuple(params NodeBase[] items)
 		{
 			return new NewTupleNode { Expressions = items.ToList() };

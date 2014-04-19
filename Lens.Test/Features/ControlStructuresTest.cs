@@ -1,4 +1,5 @@
 ﻿using System;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -195,6 +196,28 @@ using disp2 = disp do
 x
 ";
 			Test(src, 2);
+		}
+
+		[Test]
+		public void UsingError1()
+		{
+			var src = @"
+var x = 1
+using a = 2 do
+    x = 2
+";
+			TestError(src, CompilerMessages.ExpressionNotIDisposable);
+		}
+
+		[Test]
+		public void UsingError2()
+		{
+			var src = @"
+var x = 1
+using x = new Lens.Test.Features.SampleDisposable (-> x = 2) do
+    x = 2
+";
+			TestError(src, CompilerMessages.VariableDefined);
 		}
 	}
 

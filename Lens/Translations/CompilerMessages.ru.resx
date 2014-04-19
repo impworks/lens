@@ -492,4 +492,7 @@
   <data name="ArraySizeNotInt" xml:space="preserve">
     <value>Невозможно использовать выражение типа '{0}' в качестве размера массива, поскольку оно не приводится к System.Int32!</value>
   </data>
+  <data name="TypeInterface" xml:space="preserve">
+    <value>Невозможно создать экземпляр интерфейса '{0}'!</value>
+  </data>
 </root>

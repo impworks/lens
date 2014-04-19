@@ -1024,6 +1024,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot create an instance of interface &apos;{0}&apos;!.
+        /// </summary>
+        public static string TypeInterface {
+            get {
+                return ResourceManager.GetString("TypeInterface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ambigious type reference: type &apos;{0}&apos; is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}.
         /// </summary>
         public static string TypeIsAmbiguous {

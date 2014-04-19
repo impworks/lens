@@ -1424,6 +1424,30 @@ using x = new FileStream ""C:/file.txt"" do
 				Expr.Invoke(Expr.Get("x"), "Write", Expr.Int(1)),
 				Expr.Invoke(Expr.Get("x"), "Write", Expr.Int(2))
 			);
+
+			TestParser(src, result);
+		}
+
+		[Test]
+		public void SizedArray()
+		{
+			var src = @"
+let x = new Tuple<string~,System.Uri>[5]
+let y = new string[1 + 3]";
+
+			var result = new[]
+			{
+				Expr.Let(
+					"x",
+					Expr.Array("Tuple<string~,System.Uri>", Expr.Int(5))
+				),
+				Expr.Let(
+					"y",
+					Expr.Array("string", Expr.Add(Expr.Int(1), Expr.Int(3)))
+				),
+			};
+
+			TestParser(src, result);
 		}
 
 		[Test]

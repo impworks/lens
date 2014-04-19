@@ -50,6 +50,9 @@ namespace Lens.SyntaxTree.Expressions
 			if (type.IsAbstract)
 				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
+			if (type.IsInterface)
+				error(CompilerMessages.TypeInterface, TypeSignature.FullSignature);
+
 			if (Arguments.Count == 0)
 				error(CompilerMessages.ParameterlessConstructorParens);
 
