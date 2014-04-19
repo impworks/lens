@@ -151,7 +151,7 @@ namespace Lens.Parser
 		/// </summary>
 		private UseNode parseUsing()
 		{
-			if (!check(LexemType.Using))
+			if (!check(LexemType.Use))
 				return null;
 
 			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
@@ -704,13 +704,14 @@ namespace Lens.Parser
 		#region Block control structures
 
 		/// <summary>
-		/// block_expr                                  = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
+		/// block_expr                                  = if_block | while_block | for_block | using_block | try_stmt | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
 		/// </summary>
 		private NodeBase parseBlockExpr()
 		{
 			return attempt(parseIfBlock)
 			       ?? attempt(parseWhileBlock)
 			       ?? attempt(parseForBlock)
+				   ?? attempt(parseUsingBlock)
 			       ?? attempt(parseTryStmt)
 			       ?? attempt(parseNewBlockExpr)
 			       ?? attempt(parseInvokeBlockExpr)
@@ -757,6 +758,19 @@ namespace Lens.Parser
 				return null;
 
 			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
+			return node;
+		}
+
+		/// <summary>
+		/// using_block                                 = using_header block
+		/// </summary>
+		private UsingNode parseUsingBlock()
+		{
+			var node = attempt(parseUsingHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, ParserMessages.UsingBodyExpected);
 			return node;
 		}
 
@@ -893,6 +907,27 @@ namespace Lens.Parser
 			}
 
 			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+			return node;
+		}
+
+		/// <summary>
+		/// using_header                                = "using" [ identifier "=" ] line_expr "do"
+		/// </summary>
+		private UsingNode parseUsingHeader()
+		{
+			if (!check(LexemType.Using))
+				return null;
+
+			var node = new UsingNode();
+			if (peek(LexemType.Identifier, LexemType.Assign))
+			{
+				node.VariableName = getValue();
+				skip();
+			}
+
+			node.Expression = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+
 			return node;
 		}
 
@@ -1265,13 +1300,14 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
+		/// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
 		/// </summary>
 		private NodeBase parseLineExpr()
 		{
 			return attempt(parseIfLine)
 			       ?? attempt(parseWhileLine)
 			       ?? attempt(parseForLine)
+				   ?? attempt(parseUsingLine)
 			       ?? attempt(parseThrowStmt)
 			       ?? attempt(parseNewLineExpr)
 				   ?? attempt(parseTypeopExpr)
@@ -1482,6 +1518,19 @@ namespace Lens.Parser
 				return null;
 
 			node.Body.Add(ensure(parseLineStmt, ParserMessages.LoopExpressionExpected));
+			return node;
+		}
+
+		/// <summary>
+		/// using_line                                  = using_header line_stmt
+		/// </summary>
+		private UsingNode parseUsingLine()
+		{
+			var node = attempt(parseUsingHeader);
+			if (node == null)
+				return null;
+
+			node.Body.Add(ensure(parseLineStmt, ParserMessages.UsingExpressionExpected));
 			return node;
 		}
 
