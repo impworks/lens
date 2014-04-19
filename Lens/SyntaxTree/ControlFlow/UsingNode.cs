@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if(!typeof(IDisposable).IsAssignableFrom(exprType))
                 error(Expression, CompilerMessages.ExpressionNotIDisposable, exprType);
 
-			if (ctx.Scope.FindLocal(VariableName) != null)
+			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
 	        if (!mustReturn)
