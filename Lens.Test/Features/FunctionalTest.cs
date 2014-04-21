@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System.Net.NetworkInformation;
+using Lens.Translations;
+using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
@@ -206,6 +208,20 @@ y = (_ b) -> b + 1
 new [x 1 2; y 1 2]
 ";
 			Test(src, new [] { 1, 3 });
+		}
+
+		[Test]
+		public void OverloadPartialApplicationByContext()
+		{
+			var src = "5.times (println _)";
+			Test(src, null);
+		}
+
+		[Test]
+		public void OverloadPartialApplicationError()
+		{
+			var src = "println _";
+			TestError(src, CompilerMessages.FunctionInvocationAmbiguous);
 		}
 	}
 }

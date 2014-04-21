@@ -40,8 +40,6 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var isParameterless = Arguments.Count == 1 && Arguments[0].Resolve(ctx) == typeof(UnitType);
-
 			Func<NodeBase, Type> typeGetter = arg =>
 			{
 				var gin = arg as GetIdentifierNode;
@@ -51,9 +49,11 @@ namespace Lens.SyntaxTree.Expressions
 				return arg.Resolve(ctx);
 			};
 				
-			_ArgTypes = isParameterless
-				? Type.EmptyTypes
-				: Arguments.Select(typeGetter).ToArray();
+			_ArgTypes = Arguments.Select(typeGetter).ToArray();
+
+			// discard 'unit' pseudoargument
+			if (_ArgTypes.Length == 1 && _ArgTypes[0] == typeof (UnitType))
+				_ArgTypes = Type.EmptyTypes;
 
 			// prepares arguments only
 			return null;
