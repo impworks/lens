@@ -12,17 +12,41 @@ namespace Lens.Stdlib
 			throw new Exception(msg);
 		}
 
-		public static void TimesIndex(int t, Action<int> action)
+        public static void Times(int t, Action action)
+        {
+            for (var idx = 0; idx < t; idx++)
+                action();
+        }
+
+		public static void Times(int t, Action<int> action)
 		{
 			for (var idx = 0; idx < t; idx++)
 				action(idx);
 		}
 
-		public static void Times(int t, Action action)
-		{
-			for (var idx = 0; idx < t; idx++)
-				action();
-		}
+        public static void Times(Tuple<int,int> ts, Action<int,int> action)
+        {
+            for (var idx = 0; idx < ts.Item1; idx++)
+                for (var idx2 = 0; idx2 < ts.Item2; idx2++)
+                    action(idx, idx2);
+        }
+
+        public static void Times(Tuple<int, int, int> ts, Action<int, int, int> action)
+        {
+            for (var idx = 0; idx < ts.Item1; idx++)
+                for (var idx2 = 0; idx2 < ts.Item2; idx2++)
+                    for (var idx3 = 0; idx3 < ts.Item3; idx3++)
+                        action(idx, idx2, idx3);
+        }
+
+        public static void Times(Tuple<int, int, int, int> ts, Action<int, int, int, int> action)
+        {
+            for (var idx = 0; idx < ts.Item1; idx++)
+                for (var idx2 = 0; idx2 < ts.Item2; idx2++)
+                    for (var idx3 = 0; idx3 < ts.Item3; idx3++)
+                        for (var idx4 = 0; idx4 < ts.Item4; idx4++)
+                            action(idx, idx2, idx3, idx4);
+        }
 
 		public static int ClampInt(int value, int min, int max)
 		{

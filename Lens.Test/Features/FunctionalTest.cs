@@ -211,13 +211,6 @@ new [x 1 2; y 1 2]
 		}
 
 		[Test]
-		public void OverloadPartialApplicationByContext()
-		{
-			var src = "5.times (println _)";
-			Test(src, null);
-		}
-
-		[Test]
 		public void OverloadPartialApplicationError()
 		{
 			var src = "println _";

@@ -7,8 +7,7 @@ namespace Lens.Compiler
 	{
 		private void initStdlib()
 		{
-			importFunction("times", typeof(Utilities).GetMethod("TimesIndex"));
-			importFunction("times", typeof(Utilities).GetMethod("Times"));
+			importOverloads(typeof(Utilities), "Times", "times");
 			importFunction("fail", typeof(Utilities).GetMethod("FailWith"));
 
 			importOverloads(typeof(string), "Format", "fmt");

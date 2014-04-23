@@ -51,6 +51,18 @@ r
 			Test(src, "01234");
 		}
 
+        [Test]
+        public void TimesTest3()
+        {
+            var src = @"
+var r = new List<string> ()
+new (2;2)
+    |> times ((x y) -> r.Add (fmt ""{0}.{1}"" x y))
+string::Join ""-"" r
+";
+            Test(src, "0.0-0.1-1.0-1.1");
+        }
+
 		[Test]
 		public void RandTest1()
 		{
