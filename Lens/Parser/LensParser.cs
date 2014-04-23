@@ -1172,14 +1172,22 @@ namespace Lens.Parser
 			if(hints != null)
 				getter.TypeHints = hints;
 
-			invoker.Arguments = parseInvokeBlockArgs().ToList();
-			if (invoker.Arguments.Count == 0)
-				invoker.Arguments = parseInvokeLineArgs().ToList();
+		    var lambda = attempt(parseLambdaLineExpr);
+		    if (lambda != null)
+		    {
+                invoker.Arguments = new List<NodeBase> { lambda };
+		    }
+		    else
+		    {
+                invoker.Arguments = parseInvokeBlockArgs().ToList();
+                if (invoker.Arguments.Count == 0)
+                    invoker.Arguments = parseInvokeLineArgs().ToList();
 
-			if (invoker.Arguments.Count == 0)
-				error(ParserMessages.ArgumentsExpected);
+                if (invoker.Arguments.Count == 0)
+                    error(ParserMessages.ArgumentsExpected);
+		    }
 
-			return invoker;
+		    return invoker;
 		}
 
 		/// <summary>

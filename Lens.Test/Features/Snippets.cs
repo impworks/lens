@@ -79,7 +79,7 @@ dict[""a""] + dict[""b""]
 		[Test]
 		public void GetProperty()
 		{
-			var src = @"(new (1; 2)).Item1";
+			var src = @"new (1; 2).Item1";
 			Test(src, 1);
 		}
 
@@ -93,7 +93,7 @@ dict[""a""] + dict[""b""]
 		[Test]
 		public void GetArrayLength()
 		{
-			var src = @"(new [13; 37]).Length";
+			var src = @"new [13; 37].Length";
 			Test(src, 2);
 		}
 
@@ -418,7 +418,7 @@ var data = new List<int>[2]
 data[0] = new [[1; 2; 3]]
 data[1] = new [[4; 5; 6]]
 data
-  |> SelectMany (x -> x)
+  |> SelectMany x -> x
   |> Sum ()
 ";
             Test(src, 21);
