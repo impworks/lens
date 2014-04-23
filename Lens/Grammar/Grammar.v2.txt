@@ -72,7 +72,7 @@ for_block <ForNode>                         = "for" identifier "in" line_expr [ 
 using_header <UsingNode>                    = "using" [ identifier "=" ] line_expr "do"
 
 // block initializers
-new_block_expr <NodeBase>                   = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_objarray_block | new_object_block
+new_block_expr <NodeBase>                   = "new" ( new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block )
 new_tuple_block <NewTupleNode>              = "(" init_expr_block ")"
 new_list_block <NewListNode>                = "[[" init_expr_block "]]"
 new_array_block <NewArrayNode>              = "[" init_expr_block "]"
@@ -80,12 +80,11 @@ new_dict_block <NewDictionaryNode>          = "{" init_dict_expr_block "}"
 init_expr_block <~NodeBase>                 = INDENT line_expr { NL line_expr } DEDENT
 init_expr_dict_block                        = INDENT init_dict_expr { NL init_dict_expr } DEDENT
 init_dict_expr                              = line_expr "=>" line_expr
-new_objarray_block <NewObjectArrayNode>     = type "[" line_expr "]"
 new_object_block <NewObjectNode>            = type invoke_block_args
 
 // block invocations
 invoke_block_expr                           = line_expr { invoke_pass }
-invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
+invoke_pass                                 = "|>" identifier [ type_args ] ( lambda_line_expr | invoke_block_args | invoke_line_args )
 invoke_block_args <~NodeBase>               = INDENT { invoke_block_arg } DEDENT
 invoke_block_arg <NodeBase>                 = "<|" ( ref_arg | expr )
 invoke_line_args <~NodeBase>                = { invoke_line_arg }
@@ -94,7 +93,7 @@ ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lval
 
 // line expressions
 line_stmt <NodeBase>                        = set_stmt | line_expr
-line_expr <NodeBase>                        = if_line | while_line | for_line | using_line | throw_stmt | yield_stmt | new_line_expr | typeop_expr | line_typecheck_expr
+line_expr <NodeBase>                        = if_line | while_line | for_line | using_line | throw_stmt | new_object_expr | typeop_expr | line_typecheck_expr
 typeop_expr <NodeBase>                      = default_expr | typeof_expr
 default_expr <DefaultOperatorNode>          = "default" type
 typeof_expr <TypeofOperatorNode>            = "typeof" type
@@ -103,7 +102,7 @@ line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { bina
 typecheck_op_expr <NodeBase>                = "as" type | "is" type
 line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
 line_invoke_base_expr <NodeBase>            = get_expr [ invoke_line_args ]
-atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | paren_expr
+atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | new_collection_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_stmt
 
@@ -113,14 +112,15 @@ while_line <IfNode>                         = while_header line_stmt
 for_line <IfNode>                           = for_header line_stmt
 using_line <UsingNode>                      = using_header line_stmt
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
-yield_stmt <YieldNode>                      = "yield" [ "from" ] line_expr
 
 // line initializers
-new_line_expr <NodeBase>                    = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line | new_object_line )
+new_object_expr <NodeBase>                  = "new" ( new_objarray_line | new_object_line )
+new_collection_expr <NodeBase>              = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
 new_tuple_line <NewTupleNode>               = "(" init_expr_line ")"
 new_list_line <NewListNode>                 = "[[" init_expr_line "]]"
 new_array_line <NewArrayNode>               = "[" init_expr_line "]"
 new_dict_line <NewDictionaryNode>           = "{" init_dict_expr_line "}"
+new_objarray_line <NewObjectArrayNode>      = type "[" line_expr "]"
 new_object_line <NewObjectNode>             = type [ invoke_line_args ]
 init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }

@@ -9,7 +9,7 @@ namespace Lens.Test.Features
 		[Test]
 		public void Linq1()
 		{
-			var src = @"(new [1; 2; 3; 4; 5]).Where (a -> a > 2)";
+			var src = @"new [1; 2; 3; 4; 5].Where (a -> a > 2)";
 			Test(src, new[] { 3, 4, 5 });
 		}
 
@@ -18,8 +18,8 @@ namespace Lens.Test.Features
 		{
 			var src = @"
 Enumerable::Range 1 10
-    |> Where (x -> x % 2 == 0)
-    |> Select (x -> x * 2)";
+    |> Where x -> x % 2 == 0
+    |> Select x -> x * 2";
 
 			var result = new[] { 4, 8, 12, 16, 20 };
 			Test(src, result);
@@ -55,7 +55,7 @@ fun collect:string[] (act:Func<string, int, string~>) ->
 collect
     <| (str count) ->
         Enumerable::Repeat str count
-            |> Select ((x i) -> x + (i+1).ToString())
+            |> Select (x i) -> x + (i+1).ToString()
 ";
 			Test(src, new[] { "test5", "test4", "test3", "test2", "test1" });
 		}

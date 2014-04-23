@@ -936,7 +936,7 @@ namespace Lens.Parser
 		#region Block initializers
 
 		/// <summary>
-		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_objarray_block | new_object_block
+		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
 		/// </summary>
 		private NodeBase parseNewBlockExpr()
 		{
@@ -947,7 +947,6 @@ namespace Lens.Parser
 			       ?? attempt(parseNewListBlock)
 			       ?? attempt(parseNewArrayBlock)
 			       ?? attempt(parseNewDictBlock)
-                   ?? attempt(parseNewObjArrayBlock)
 			       ?? attempt(parseNewObjectBlock) as NodeBase;
 		}
 
@@ -1083,27 +1082,6 @@ namespace Lens.Parser
 			return new KeyValuePair<NodeBase, NodeBase>(key, value);
 		}
 
-        /// <summary>
-        /// new_objarray_block                          = type "[" line_expr "]"
-        /// </summary>
-        private NewObjectArrayNode parseNewObjArrayBlock()
-        {
-            var type = attempt(parseType);
-            if (type == null)
-                return null;
-
-            if (!check(LexemType.SquareOpen))
-                return null;
-
-            var node = new NewObjectArrayNode();
-            node.TypeSignature = type;
-            node.Size = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
-
-            ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
-
-            return node;
-        }
-
 		/// <summary>
 		/// new_object_block                            = type invoke_block_args
 		/// </summary>
@@ -1194,14 +1172,22 @@ namespace Lens.Parser
 			if(hints != null)
 				getter.TypeHints = hints;
 
-			invoker.Arguments = parseInvokeBlockArgs().ToList();
-			if (invoker.Arguments.Count == 0)
-				invoker.Arguments = parseInvokeLineArgs().ToList();
+		    var lambda = attempt(parseLambdaLineExpr);
+		    if (lambda != null)
+		    {
+                invoker.Arguments = new List<NodeBase> { lambda };
+		    }
+		    else
+		    {
+                invoker.Arguments = parseInvokeBlockArgs().ToList();
+                if (invoker.Arguments.Count == 0)
+                    invoker.Arguments = parseInvokeLineArgs().ToList();
 
-			if (invoker.Arguments.Count == 0)
-				error(ParserMessages.ArgumentsExpected);
+                if (invoker.Arguments.Count == 0)
+                    error(ParserMessages.ArgumentsExpected);
+		    }
 
-			return invoker;
+		    return invoker;
 		}
 
 		/// <summary>
@@ -1300,7 +1286,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
+		/// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
 		/// </summary>
 		private NodeBase parseLineExpr()
 		{
@@ -1309,11 +1295,9 @@ namespace Lens.Parser
 			       ?? attempt(parseForLine)
 				   ?? attempt(parseUsingLine)
 			       ?? attempt(parseThrowStmt)
-			       ?? attempt(parseNewLineExpr)
+			       ?? attempt(parseNewObjectExpr)
 				   ?? attempt(parseTypeopExpr)
 			       ?? attempt(parseLineTypecheckExpr);
-
-			// todo: invoke_line_xtra
 		}
 
 		/// <summary>
@@ -1428,13 +1412,14 @@ namespace Lens.Parser
 
 
 		/// <summary>
-		/// atom                                        = literal | get_id_expr | get_stmbr_expr | paren_expr
+		/// atom                                        = literal | get_id_expr | get_stmbr_expr | new_collection_expr | paren_expr
 		/// </summary>
 		private NodeBase parseAtom()
 		{
 			return attempt(parseLiteral)
 				   ?? attempt(parseGetStmbrExpr)
 			       ?? attempt(parseGetIdExpr)
+                   ?? attempt(parseNewCollectionExpr)
 			       ?? attempt(parseParenExpr);
 		}
 
@@ -1552,22 +1537,33 @@ namespace Lens.Parser
 		#region Line initializers
 
 		/// <summary>
-		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+		/// new_line_expr                               = "new" ( new_objarray_line | new_object_block )
 		/// </summary>
-		private NodeBase parseNewLineExpr()
+		private NodeBase parseNewObjectExpr()
 		{
 			if (!check(LexemType.New))
 				return null;
 
-			return attempt(parseNewTupleLine)
-				   ?? attempt(parseNewListLine)
-				   ?? attempt(parseNewArrayLine)
-				   ?? attempt(parseNewDictLine)
+			return attempt(parseNewObjArrayLine)
 				   ?? attempt(parseNewObjectLine) as NodeBase;
 		}
 
+        /// <summary>
+        /// new_collection_expr                        = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
+        /// </summary>
+	    private NodeBase parseNewCollectionExpr()
+	    {
+            if (!check(LexemType.New))
+				return null;
+
+	        return attempt(parseNewTupleLine)
+	               ?? attempt(parseNewListLine)
+	               ?? attempt(parseNewArrayLine)
+	               ?? attempt(parseNewDictLine) as NodeBase;
+	    }
+
 		/// <summary>
-		/// new_tuple_line                              = "(" init_expr_line ")"
+		/// new_tuple_line                             = "(" init_expr_line ")"
 		/// </summary>
 		private NewTupleNode parseNewTupleLine()
 		{
@@ -1672,6 +1668,27 @@ namespace Lens.Parser
 				yield return node.Value;
 			}
 		}
+
+        /// <summary>
+        /// new_objarray_line                          = type "[" line_expr "]"
+        /// </summary>
+        private NewObjectArrayNode parseNewObjArrayLine()
+        {
+            var type = attempt(parseType);
+            if (type == null)
+                return null;
+
+            if (!check(LexemType.SquareOpen))
+                return null;
+
+            var node = new NewObjectArrayNode();
+            node.TypeSignature = type;
+            node.Size = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+
+            ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+
+            return node;
+        }
 
 		/// <summary>
 		/// new_object_line                             = type invoke_line_args
