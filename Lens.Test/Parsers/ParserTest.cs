@@ -856,7 +856,7 @@ catch ex:DivisionByZeroException
 		[Test]
 		public void LinqCall()
 		{
-			var src = @"(new [1; 2]).Where (x:int -> x > 1)";
+			var src = @"new [1; 2].Where (x:int -> x > 1)";
 			var result = Expr.Invoke(
 				Expr.Array(Expr.Int(1), Expr.Int(2)),
 				"Where",
