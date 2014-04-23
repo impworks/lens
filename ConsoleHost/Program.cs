@@ -276,12 +276,14 @@ namespace ConsoleHost
 			return idx;
 		}
 
-		private static readonly Regex[] LineFeeds = new[]
+		private static readonly Regex[] LineFeeds =
 		{
-			new Regex(@"^(type|record)\s*[_a-z][_a-z0-9]*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-			new Regex(@"^(if|while)\s*\(.+\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-			new Regex(@"^(try|else)$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-			new Regex(@"^catch(\([_a-][_a-z0-9]*(\s+[_a-][_a-z0-9]*)?\))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled)
+			new Regex(@"^\s*(type|record)\s*[_a-z][_a-z0-9]*\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+			new Regex(@"if.+then\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex(@"(while|for|using).+do\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new Regex(@"^\s*(try|finally|else)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+			new Regex(@"new\s*(\(|\[\[?|\{)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+			new Regex(@"^\s*catch(\([_a-][_a-z0-9]*(\s+[_a-][_a-z0-9]*)?\))?\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled)
 		};
 
 		static bool shouldIdent(string line)
