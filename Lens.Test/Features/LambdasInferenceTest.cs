@@ -164,6 +164,19 @@ Array::FindAll data fx
 		}
 
 		[Test]
+		public void LambdaReturnValue1()
+		{
+			var src = @"
+fun test:string (x:Func<int, object>) ->
+    var res = x 1
+    ""result="" + (res.ToString ())
+
+test (x -> 1)
+";
+			Test(src, "result=1");
+		}
+
+		[Test]
 		public void LambdaUninferred()
 		{
 			var src = @"
