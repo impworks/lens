@@ -164,7 +164,7 @@ Array::FindAll data fx
 		}
 
 		[Test]
-		public void LambdaReturnValue1()
+		public void LambdaReturnValueCast()
 		{
 			var src = @"
 fun test:string (x:Func<int, object>) ->
@@ -175,6 +175,19 @@ test (x -> 1)
 ";
 			Test(src, "result=1");
 		}
+
+        [Test]
+        public void LambdaReturnValueCastError()
+        {
+            var src = @"
+fun test:string (x:Func<int, int>) ->
+    var res = x 1
+    ""result="" + (res.ToString ())
+
+test (x -> true)
+";
+            TestError(src, CompilerMessages.ReturnTypeMismatch);
+        }
 
 		[Test]
 		public void LambdaUninferred()
