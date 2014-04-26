@@ -167,11 +167,10 @@ Array::FindAll data fx
 		public void LambdaReturnValueCast()
 		{
 			var src = @"
-fun test:string (x:Func<int, object>) ->
-    var res = x 1
-    ""result="" + (res.ToString ())
+fun test:string (x:Func<object>) ->
+    ""result="" + ((x ()).ToString ())
 
-test (x -> 1)
+test (-> 1)
 ";
 			Test(src, "result=1");
 		}
@@ -186,7 +185,7 @@ fun test:string (x:Func<int, int>) ->
 
 test (x -> true)
 ";
-            TestError(src, CompilerMessages.ReturnTypeMismatch);
+            TestError(src, CompilerMessages.CastDelegateReturnTypesMismatch);
         }
 
 		[Test]

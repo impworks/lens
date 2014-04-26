@@ -197,12 +197,14 @@ namespace Lens.SyntaxTree
 			if (lambda == null)
 				return;
 
-			lambda.Resolve(ctx);
-			if (!lambda.MustInferArgTypes)
-				return;
-
 			var wrapper = ReflectionHelper.WrapDelegate(delegateType);
-			lambda.SetInferredArgumentTypes(wrapper.ArgumentTypes);
+			if(!wrapper.ReturnType.IsGenericParameter)
+				lambda.SetInferredReturnType(wrapper.ReturnType);
+
+			lambda.Resolve(ctx);
+
+			if (lambda.MustInferArgTypes)
+				lambda.SetInferredArgumentTypes(wrapper.ArgumentTypes);
 		}
 
 		/// <summary>

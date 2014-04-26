@@ -131,12 +131,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Interprets the lambda as a particular delegate with given arg & return types.
 		/// </summary>
-		public void SetInferredDelegateType(Type type)
+		public void SetInferredReturnType(Type type)
 		{
-			var wrapper = ReflectionHelper.WrapDelegate(type);
-
-			SetInferredArgumentTypes(wrapper.ArgumentTypes);
-			_InferredReturnType = wrapper.ReturnType;
+			_InferredReturnType = type;
 		}
 
 		#endregion
