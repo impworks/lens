@@ -1,4 +1,4 @@
-using System.Windows.Media
+use System.Windows.Media
 
 fun color:Color (frac:double) ->
     let thr = 0.9
@@ -28,5 +28,5 @@ fun maker:Figure (x:int y:int) ->
             c.Fill = color (c.Radius / size)
     c
 
-let create = (x:int y:int) -> Screen.Add (maker x y)
-5.times (x:int -> 5.times (y:int -> create x y))
+new (5; 5)
+    |> times (x y) -> Screen.Add (maker x y)

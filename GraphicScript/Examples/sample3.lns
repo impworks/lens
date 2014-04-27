@@ -12,5 +12,4 @@ fun maker:Figure (x:double y:double s:double) ->
             Screen.Add (maker (x+half) (y+half) half)
     r
 
-let first = maker 50 50 400
-Screen.Add first
+Screen.Add (maker 50 50 400)

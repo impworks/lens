@@ -9,5 +9,5 @@ fun maker:Rect (x:int y:int) ->
             <| (rand 100 255) as byte
     r
 
-let create = (x:int y:int) -> Screen.Add (maker x y)
-10.times (x:int -> 10.times (y:int -> create x y))
+new (10; 10)
+    |> times (x y) -> Screen.Add (maker x y)
