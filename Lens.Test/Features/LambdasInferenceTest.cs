@@ -166,13 +166,18 @@ Array::FindAll data fx
 		[Test]
 		public void LambdaReturnValueCast()
 		{
+			// Currently lambda objects are strictly typed.
+			// Additional code is not emitted to convert an in-place instance of Func<int> to Func<object>
+			// This behaviour might be subject to change in later versions to match that of C#
+
 			var src = @"
 fun test:string (x:Func<object>) ->
-    ""result="" + ((x ()).ToString ())
+    var res = x ()
+    ""result="" + (res.ToString ())
 
 test (-> 1)
 ";
-			Test(src, "result=1");
+			TestError(src, CompilerMessages.FunctionNotFound);
 		}
 
         [Test]
