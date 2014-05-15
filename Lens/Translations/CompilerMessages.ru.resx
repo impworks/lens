@@ -495,4 +495,7 @@
   <data name="TypeInterface" xml:space="preserve">
     <value>Невозможно создать экземпляр интерфейса '{0}'!</value>
   </data>
+  <data name="ExpressionNotIDisposable" xml:space="preserve">
+    <value>Выражение типа '{0}' не может быть использовано в блоке 'using', поскольку не приводится к интерфейсу 'IDisposable'!</value>
+  </data>
 </root>

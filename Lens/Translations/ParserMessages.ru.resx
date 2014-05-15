@@ -297,4 +297,10 @@
   <data name="UsingExpressionExpected" xml:space="preserve">
     <value>Ожидается выражение-тело блока управления ресурсом!</value>
   </data>
+  <data name="ArgumentPassIndentExpected" xml:space="preserve">
+    <value>Перед выражением '&lt;|' требуется отступ!</value>
+  </data>
+  <data name="MethodPassIndentExpected" xml:space="preserve">
+    <value>Перед выражением '|&gt;' требуется отступ!</value>
+  </data>
 </root>
