@@ -81,6 +81,7 @@
     <Compile Include="Internals\FunctionalHelperTest.cs" />
     <Compile Include="Internals\GenericHelperTest.cs" />
     <Compile Include="Features\GlobalProperties.cs" />
+    <Compile Include="Internals\TranslationsTest.cs" />
     <Compile Include="Parsers\ParserLargeTest.cs" />
     <Compile Include="Parsers\LexerTest.cs" />
     <Compile Include="Features\LiteralsTest.cs" />

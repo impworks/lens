@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Lens.Lexer;
 using Lens.Parser;
 using Lens.SyntaxTree;
@@ -24,25 +23,18 @@ namespace Lens.Test
 				Assert.AreEqual(value, Compile(nodes));
 		}
 
-		protected static void TestError(string src, string bareMsg)
+		protected static void TestError(string src, string msg)
 		{
-			var ex = Assert.Throws<LensCompilerException>(() => Compile(src));
+			var exception = Assert.Throws<LensCompilerException>(() => Compile(src));
+			var srcId = exception.Message.Substring(0, 6);
+			var msgId = msg.Substring(0, 6);
 
-			if (!bareMsg.Contains('{'))
-			{
-				Assert.AreEqual(bareMsg, ex.Message);
-			}
-			else
-			{
-				var pattern = regexFromMsg(bareMsg);
-				var regex = new Regex(pattern);
-				Assert.IsTrue(
-					regex.IsMatch(ex.Message),
-					"Message does not match!\n\n  Expected: {0}\n  Actual: {1}\n",
-                    TrimToLength(bareMsg),
-                    TrimToLength(ex.Message)
-				);
-			}
+			Assert.IsTrue(
+				srcId == msgId,
+				"Message does not match! Expected: {0}, but was: {1}!",
+				msgId,
+				srcId
+			);
 		}
 
 		protected static void Test(string src, object value, LensCompilerOptions opts)
@@ -78,20 +70,5 @@ namespace Lens.Test
 			opts = opts ?? new LensCompilerOptions { AllowSave = true };
 			return new LensCompiler(opts).Run(nodes);
 		}
-
-		private static Regex _MessageWildcardRegex = new Regex(@"\{[0-9]\}", RegexOptions.Compiled);
-		private static Regex _MessageSymbolRegex = new Regex(@"(?<s>[\-\[\]\/\(\)\*\+\?\.\\\^\$\|])", RegexOptions.Compiled);
-
-		private static string regexFromMsg(string msg)
-		{
-			msg = _MessageSymbolRegex.Replace(msg, @"\${s}");
-			msg = _MessageWildcardRegex.Replace(msg, "(.+)");
-			return "^" + msg + "$";
-		}
-
-	    private static string TrimToLength(string str, int len = 70)
-	    {
-	        return str.Length < len ? str : str.Substring(0, len) + "...";
-	    }
 	}
 }
