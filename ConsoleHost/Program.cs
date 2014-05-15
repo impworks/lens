@@ -33,11 +33,11 @@ namespace ConsoleHost
 				}
 				catch (LensCompilerException ex)
 				{
-					printError("Error compiling the script!", ex.FullMessage);
+					printError(source, ex);
 				}
 				catch (Exception ex)
 				{
-					printError("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace, ConsoleColor.Yellow);
+					printException("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace);
 				}
 			}
 		}
@@ -148,8 +148,10 @@ namespace ConsoleHost
 		static string buildString(ICollection<string> lines)
 		{
 			var sb = new StringBuilder(lines.Count);
+
 			foreach (var curr in lines)
 				sb.AppendLine(curr);
+
 			return sb.ToString();
 		}
 
@@ -165,16 +167,46 @@ namespace ConsoleHost
 			}
 		}
 
-		static void printError(string msg, string details, ConsoleColor clr = ConsoleColor.Red)
+		static void printException(string msg, string details)
 		{
-			using (new OutputColor(clr))
+			using (new OutputColor(ConsoleColor.Yellow))
 			{
 				Console.WriteLine(msg);
 				Console.WriteLine();
 				Console.WriteLine(details);
 				Console.WriteLine();
-				Console.ResetColor();
 			}
+		}
+
+		static void printError(string src, LensCompilerException ex)
+		{
+			using (new OutputColor(ConsoleColor.Red))
+			{
+				Console.WriteLine("Error {0}", ex.Message);
+				Console.WriteLine();
+			}
+
+			if (ex.StartLocation == null)
+				return;
+
+			var loc = ex.StartLocation.Value;
+			var line = src.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[loc.Line - 1].TrimEnd();
+			var len = ex.EndLocation != null && ex.EndLocation.Value.Line == loc.Line
+				? ex.EndLocation.Value.Offset - loc.Offset
+				: line.Length - loc.Offset;
+
+			using (new OutputColor(ConsoleColor.DarkGray))
+				Console.Write("> {0}", line.Substring(0, loc.Offset - 1));
+
+			using (new OutputColor(ConsoleColor.White, ConsoleColor.Red))
+				Console.Write("{0}", line.Substring(loc.Offset - 1, len));
+
+			if(len < line.Length - 1)
+				using (new OutputColor(ConsoleColor.DarkGray))
+					Console.Write("{0}", line.Substring(loc.Offset + len - 1));
+
+			Console.WriteLine();
+			Console.WriteLine();
 		}
 
 		static void printHint(string hint)
@@ -212,6 +244,7 @@ namespace ConsoleHost
 		{
 			Console.WriteLine();
 			Console.WriteLine(getStringRepresentation(obj));
+
 			if ((object) obj != null)
 				using(new OutputColor(ConsoleColor.DarkGray))
 					Console.WriteLine("({0})", obj.GetType());
@@ -225,6 +258,7 @@ namespace ConsoleHost
 			{
 				foreach(var curr in measures)
 					Console.WriteLine("{0}: {1:0,00} ms.", curr.Key, curr.Value.TotalMilliseconds);
+
 				Console.WriteLine();
 			}
 		}
@@ -243,20 +277,28 @@ namespace ConsoleHost
 			if (obj is IDictionary)
 			{
 				var list = new List<string>();
+
 				foreach (var currKey in obj.Keys)
-					list.Add(string.Format(
-						"{0} => {1}",
-						getStringRepresentation(currKey),
-						getStringRepresentation(obj[currKey])
-					));
+				{
+					list.Add(
+						string.Format(
+							"{0} => {1}",
+							getStringRepresentation(currKey),
+							getStringRepresentation(obj[currKey])
+						)
+					);
+				}
+
 				return string.Format("{{ {0} }}", string.Join("; ", list));
 			}
 
 			if (obj is IEnumerable)
 			{
 				var list = new List<string>();
+
 				foreach(var curr in obj)
 					list.Add(getStringRepresentation(curr));
+
 				return string.Format("[ {0} ]", string.Join("; ", list));
 			}
 
@@ -268,11 +310,13 @@ namespace ConsoleHost
 		static int getIdent(string line)
 		{
 			var idx = 0;
+
 			while (idx < line.Length && line[idx] == ' ')
 				idx++;
 
 			if (shouldIdent(line))
 				idx += 4;
+
 			return idx;
 		}
 
