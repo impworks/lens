@@ -118,384 +118,384 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ArgumentTypeMismatch" xml:space="preserve">
-    <value>Cannot use object of type '{0}' as a value for parameter of type '{1}'!</value>
+    <value>LE3001: Cannot use object of type '{0}' as a value for parameter of type '{1}'!</value>
   </data>
   <data name="ArrayElementTypeMismatch" xml:space="preserve">
-    <value>Cannot add object of type '{0}' to array of type '{1}'!</value>
+    <value>LE3002: Cannot add object of type '{0}' to array of type '{1}'!</value>
   </data>
   <data name="ArrayEmpty" xml:space="preserve">
-    <value>Array initializer must contain at least one object! Use explicit constructor to create an empty array.</value>
+    <value>LE3003: Array initializer must contain at least one object! Use explicit constructor to create an empty array.</value>
   </data>
   <data name="ArrayTypeUnknown" xml:space="preserve">
-    <value>Array type cannot be inferred! Use type casting to specify element types.</value>
+    <value>LE3005: Array type cannot be inferred! Use type casting to specify element types.</value>
   </data>
   <data name="CallableTooManyArguments" xml:space="preserve">
-    <value>Cannot create a callable object from a method with more than 16 arguments!</value>
+    <value>LE3006: Cannot create a callable object from a method with more than 16 arguments!</value>
   </data>
   <data name="CastDelegateArgTypesMismatch" xml:space="preserve">
-    <value>Delegate types '{0}' and '{1}' do not have matching argument types!</value>
+    <value>LE3007: Delegate types '{0}' and '{1}' do not have matching argument types!</value>
   </data>
   <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
-    <value>Delegate types '{0}' and '{1}' do not have matching return types!</value>
+    <value>LE3008: Delegate types '{0}' and '{1}' do not have matching return types!</value>
   </data>
   <data name="CastNullValueType" xml:space="preserve">
-    <value>Cannot cast a null to type '{0}' because it is a value type!</value>
+    <value>LE3009: Cannot cast a null to type '{0}' because it is a value type!</value>
   </data>
   <data name="CastTypesMismatch" xml:space="preserve">
-    <value>Cannot cast object of type '{0}' to type '{1}'!</value>
+    <value>LE3010: Cannot cast object of type '{0}' to type '{1}'!</value>
   </data>
   <data name="CatchClauseUnreachable" xml:space="preserve">
-    <value>This catch clause is unreachable, because all exceptions of type '{0}' will be intercepted by a catch clause for '{1}' defined earlier in code!</value>
+    <value>LE3011: This catch clause is unreachable, because all exceptions of type '{0}' will be intercepted by a catch clause for '{1}' defined earlier in code!</value>
   </data>
   <data name="CatchTypeDuplicate" xml:space="preserve">
-    <value>Type '{0}' has already been used in a catch clause of current try block!</value>
+    <value>LE3012: Type '{0}' has already been used in a catch clause of current try block!</value>
   </data>
   <data name="CatchTypeNotException" xml:space="preserve">
-    <value>Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
+    <value>LE3013: Type '{0}' cannot be used in catch clause because it does not derive from System.Exception!</value>
   </data>
   <data name="ClosureImplicit" xml:space="preserve">
-    <value>Cannot closure an implicit variable!</value>
+    <value>LE3014: Cannot closure an implicit variable!</value>
   </data>
   <data name="ClosureRef" xml:space="preserve">
-    <value>Cannot closure argument '{0}' because it is passed by reference!</value>
+    <value>LE3015: Cannot closure argument '{0}' because it is passed by reference!</value>
   </data>
   <data name="CodeBlockEmpty" xml:space="preserve">
-    <value>Code block contains no statements!</value>
+    <value>LE3016: Code block contains no statements!</value>
   </data>
   <data name="CodeBlockLastVar" xml:space="preserve">
-    <value>A declaration of a variable or a constant cannot be the last statement in a code block!</value>
+    <value>LE3017: A declaration of a variable or a constant cannot be the last statement in a code block!</value>
   </data>
   <data name="ConditionInconsistentTyping" xml:space="preserve">
-    <value>No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
+    <value>LE3018: No best common type found for return types of condition branches: '{0}' and '{1}' respectively.</value>
   </data>
   <data name="ConditionTypeMismatch" xml:space="preserve">
-    <value>Expression of type '{0}' cannot be used as a condition because it is not castable to a boolean!</value>
+    <value>LE3019: Expression of type '{0}' cannot be used as a condition because it is not castable to a boolean!</value>
   </data>
   <data name="ConstantByRef" xml:space="preserve">
-    <value>Constant variables cannot be passed by reference!</value>
+    <value>LE3020: Constant variables cannot be passed by reference!</value>
   </data>
   <data name="ConstantDivisionByZero" xml:space="preserve">
-    <value>Constant division by zero!</value>
+    <value>LE3021: Constant division by zero!</value>
   </data>
   <data name="ConstantOverflow" xml:space="preserve">
-    <value>Result of the constant expression overflows its type!</value>
+    <value>LE3022: Result of the constant expression overflows its type!</value>
   </data>
   <data name="ConstructorStatic" xml:space="preserve">
-    <value>A constructor must not be marked as static!</value>
+    <value>LE3023: A constructor must not be marked as static!</value>
   </data>
   <data name="ContextNotFound" xml:space="preserve">
-    <value>Context #{0} does not exist!</value>
+    <value>LE3024: Context #{0} does not exist!</value>
   </data>
   <data name="ContextUnregistered" xml:space="preserve">
-    <value>Context #{0} has been unregistered!</value>
+    <value>LE3025: Context #{0} has been unregistered!</value>
   </data>
   <data name="DelegateArgumentsCountMismatch" xml:space="preserve">
-    <value>Invoking a delegate of type '{0}' requires {1} arguments, {2} given instead!</value>
+    <value>LE3026: Invoking a delegate of type '{0}' requires {1} arguments, {2} given instead!</value>
   </data>
   <data name="DelegatesNotCombinable" xml:space="preserve">
-    <value>Delegates of types '{0}' and '{1}' cannot be combined because their signatures are incompatible!</value>
+    <value>LE3027: Delegates of types '{0}' and '{1}' cannot be combined because their signatures are incompatible!</value>
   </data>
   <data name="DictionaryEmpty" xml:space="preserve">
-    <value>Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary.</value>
+    <value>LE3028: Dictionary initializer must contain at least one key-value pair! Use explicit constructor to create an empty dictionary.</value>
   </data>
   <data name="DictionaryKeyTypeMismatch" xml:space="preserve">
-    <value>Cannot add a key of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+    <value>LE3029: Cannot add a key of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DictionaryTypeUnknown" xml:space="preserve">
-    <value>Dictionary type cannot be inferred! Use type casting to specify element types.</value>
+    <value>LE3030: Dictionary type cannot be inferred! Use type casting to specify element types.</value>
   </data>
   <data name="DictionaryValueTypeMismatch" xml:space="preserve">
-    <value>Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
+    <value>LE3031: Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DynamicMemberFromStaticContext" xml:space="preserve">
-    <value>'{0}' cannot be accessed from static context!</value>
+    <value>LE3032: '{0}' cannot be accessed from static context!</value>
   </data>
   <data name="ExpressionNull" xml:space="preserve">
-    <value>Expression type cannot be inferred! Please use type casting to specify actual type.</value>
+    <value>LE3034: Expression type cannot be inferred! Please use type casting to specify actual type.</value>
   </data>
   <data name="ExpressionVoid" xml:space="preserve">
-    <value>Expression that returns a value is expected!</value>
+    <value>LE3035: Expression that returns a value is expected!</value>
   </data>
   <data name="ForeachRangeNotInteger" xml:space="preserve">
-    <value>Type '{0}' cannot be used as range limit because it is not an integer!</value>
+    <value>LE3037: Type '{0}' cannot be used as range limit because it is not an integer!</value>
   </data>
   <data name="ForeachRangeTypeMismatch" xml:space="preserve">
-    <value>Cannot create a range from expressions of types '{0}' and '{1}'!</value>
+    <value>LE3038: Cannot create a range from expressions of types '{0}' and '{1}'!</value>
   </data>
   <data name="FunctionInvocationAmbiguous" xml:space="preserve">
-    <value>There is more than one suitable override of function '{0}'! Please use type casting to specify the exact override.</value>
+    <value>LE3039: There is more than one suitable override of function '{0}'! Please use type casting to specify the exact override.</value>
   </data>
   <data name="FunctionNotFound" xml:space="preserve">
-    <value>No function named '{0}' with suitable arguments is declared!</value>
+    <value>LE3040: No function named '{0}' with suitable arguments is declared!</value>
   </data>
   <data name="FunctionRedefinition" xml:space="preserve">
-    <value>A function named '{0}' with identical set of arguments has already been defined!</value>
+    <value>LE3041: A function named '{0}' with identical set of arguments has already been defined!</value>
   </data>
   <data name="GenericArgCountMismatch" xml:space="preserve">
-    <value>Number of generic arguments does not match!</value>
+    <value>LE3042: Number of generic arguments does not match!</value>
   </data>
   <data name="GenericArgMismatch" xml:space="preserve">
-    <value>Generic argument '{0}' has mismatched values: '{1}' and '{2}'!</value>
+    <value>LE3043: Generic argument '{0}' has mismatched values: '{1}' and '{2}'!</value>
   </data>
   <data name="GenericArgsToNonGenericMethod" xml:space="preserve">
-    <value>Cannot apply generic arguments to non-generic method '{0}'!</value>
+    <value>LE3044: Cannot apply generic arguments to non-generic method '{0}'!</value>
   </data>
   <data name="GenericArgumentNotResolved" xml:space="preserve">
-    <value>Generic argument '{0}' could not be resolved!</value>
+    <value>LE3045: Generic argument '{0}' could not be resolved!</value>
   </data>
   <data name="GenericClassConstraintViolated" xml:space="preserve">
-    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a reference type!</value>
+    <value>LE3046: Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a reference type!</value>
   </data>
   <data name="GenericConstructorConstraintViolated" xml:space="preserve">
-    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not have a default constructor!</value>
+    <value>LE3047: Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not have a default constructor!</value>
   </data>
   <data name="GenericHintMismatch" xml:space="preserve">
-    <value>Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!</value>
+    <value>LE3048: Generic argument '{0}' was has hint type '{1}', but inferred type was '{2}'!</value>
   </data>
   <data name="GenericImplementationWrongType" xml:space="preserve">
-    <value>Cannot resolve arguments of '{0}' using type '{1}'!</value>
+    <value>LE3049: Cannot resolve arguments of '{0}' using type '{1}'!</value>
   </data>
   <data name="GenericInheritanceConstraintViolated" xml:space="preserve">
-    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not implement class or interface '{3}'!</value>
+    <value>LE3050: Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not implement class or interface '{3}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
-    <value>Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
+    <value>LE3051: Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
   </data>
   <data name="GenericInterfaceNotImplemented" xml:space="preserve">
-    <value>Type '{0}' does not implement any kind of interface '{1}'!</value>
+    <value>LE3052: Type '{0}' does not implement any kind of interface '{1}'!</value>
   </data>
   <data name="GenericParameterNotFound" xml:space="preserve">
-    <value>Generic parameter '{0}' was not found!</value>
+    <value>LE3053: Generic parameter '{0}' was not found!</value>
   </data>
   <data name="GenericStructConstraintViolated" xml:space="preserve">
-    <value>Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a value type!</value>
+    <value>LE3054: Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it is not a value type!</value>
   </data>
   <data name="GlobalPropertyNoGetter" xml:space="preserve">
-    <value>Global property '{0}' has no getter!</value>
+    <value>LE3055: Global property '{0}' has no getter!</value>
   </data>
   <data name="GlobalPropertyNoSetter" xml:space="preserve">
-    <value>Global property '{0}' has no setter!</value>
+    <value>LE3056: Global property '{0}' has no setter!</value>
   </data>
   <data name="GlobalPropertyTypeMismatch" xml:space="preserve">
-    <value>Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.</value>
+    <value>LE3057: Cannot assign a value of type '{0}' to a global property of type '{1}'! An explicit cast might be required.</value>
   </data>
   <data name="IdentifierIsConstant" xml:space="preserve">
-    <value>'{0}' is a constant and cannot be assigned after definition!</value>
+    <value>LE3058: '{0}' is a constant and cannot be assigned after definition!</value>
   </data>
   <data name="IdentifierNotFound" xml:space="preserve">
-    <value>No local variable or global parameterless function named '{0}' was found!</value>
+    <value>LE3059: No local variable or global parameterless function named '{0}' was found!</value>
   </data>
   <data name="IdentifierTypeMismatch" xml:space="preserve">
-    <value>Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.</value>
+    <value>LE3060: Cannot assign a value of type '{0}' to a variable of type '{1}'! An explicit cast might be required.</value>
   </data>
   <data name="ImplicitCastImpossible" xml:space="preserve">
-    <value>Cannot implicitly convert an object of type '{0}' to required type '{1}'!</value>
+    <value>LE3061: Cannot implicitly convert an object of type '{0}' to required type '{1}'!</value>
   </data>
   <data name="ImportIntoSaveableAssembly" xml:space="preserve">
-    <value>Entities cannot be imported into a saveable assembly!</value>
+    <value>LE3062: Entities cannot be imported into a saveable assembly!</value>
   </data>
   <data name="ImportUnsupportedMethod" xml:space="preserve">
-    <value>Only public, static, non-generic methods can be imported!</value>
+    <value>LE3063: Only public, static, non-generic methods can be imported!</value>
   </data>
   <data name="IndexAmbigious" xml:space="preserve">
-    <value>Indexer is ambigious! At least two cases apply:{3}{0}[{1}]{3}{0}[{2}]</value>
+    <value>LE3064: Indexer is ambigious! At least two cases apply:{3}{0}[{1}]{3}{0}[{2}]</value>
   </data>
   <data name="IndexerValuetypeRef" xml:space="preserve">
-    <value>Cannot use a custom indexer of type '{0}' as a ref parameter, because it returns '{1}' which is valuetype!</value>
+    <value>LE3065: Cannot use a custom indexer of type '{0}' as a ref parameter, because it returns '{1}' which is valuetype!</value>
   </data>
   <data name="IndexGetterNotFound" xml:space="preserve">
-    <value>Type '{0}' has no index getter that accepts an index of type '{1}'!</value>
+    <value>LE3066: Type '{0}' has no index getter that accepts an index of type '{1}'!</value>
   </data>
   <data name="IndexSetterNotFound" xml:space="preserve">
-    <value>Type '{0}' has no index setter that accepts an index of type '{1}'!</value>
+    <value>LE3067: Type '{0}' has no index setter that accepts an index of type '{1}'!</value>
   </data>
   <data name="LambdaReturnTypeUnknown" xml:space="preserve">
-    <value>Lambda return type cannot be inferred! Please use type casting to specify type.</value>
+    <value>LE3071: Lambda return type cannot be inferred! Please use type casting to specify type.</value>
   </data>
   <data name="ListElementTypeMismatch" xml:space="preserve">
-    <value>Cannot add object of type '{0}' to List&lt;{1}&gt;!</value>
+    <value>LE3072: Cannot add object of type '{0}' to List&lt;{1}&gt;!</value>
   </data>
   <data name="ListEmpty" xml:space="preserve">
-    <value>List initializer must contain at least one object! Use explicit constructor to create an empty list.</value>
+    <value>LE3073: List initializer must contain at least one object! Use explicit constructor to create an empty list.</value>
   </data>
   <data name="ListTypeUnknown" xml:space="preserve">
-    <value>List type cannot be inferred! Use type casting to specify element types.</value>
+    <value>LE3074: List type cannot be inferred! Use type casting to specify element types.</value>
   </data>
   <data name="Location" xml:space="preserve">
-    <value>Location: {0}</value>
+    <value>LE3075: Location: {0}</value>
   </data>
   <data name="LocationSpan" xml:space="preserve">
-    <value>Location: {0} ... {1}</value>
+    <value>LE3076: Location: {0} ... {1}</value>
   </data>
   <data name="MethodRedefinition" xml:space="preserve">
-    <value>A method named '{0}' in type '{1}' with identical set of arguments has already been defined!</value>
+    <value>LE3077: A method named '{0}' in type '{1}' with identical set of arguments has already been defined!</value>
   </data>
   <data name="MethodRef" xml:space="preserve">
-    <value>Cannot use a method as a ref parameter!</value>
+    <value>LE3078: Cannot use a method as a ref parameter!</value>
   </data>
   <data name="OperatorBinaryTypesMismatch" xml:space="preserve">
-    <value>Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>
+    <value>LE3079: Cannot apply operator '{0}' to arguments of types '{1}' and '{2}'!</value>
   </data>
   <data name="OperatorTypesSignednessMismatch" xml:space="preserve">
-    <value>Cannot apply apply math operations to arguments of different signedness!</value>
+    <value>LE3080: Cannot apply apply math operations to arguments of different signedness!</value>
   </data>
   <data name="OperatorUnaryTypeMismatch" xml:space="preserve">
-    <value>Cannot apply operator '{0}' to argument of type '{1}'!</value>
+    <value>LE3081: Cannot apply operator '{0}' to argument of type '{1}'!</value>
   </data>
   <data name="ParameterlessConstructorParens" xml:space="preserve">
-    <value>A parameterless constructor must be invoked by applying a () to it!</value>
+    <value>LE3082: A parameterless constructor must be invoked by applying a () to it!</value>
   </data>
   <data name="PropertyIdNoGetter" xml:space="preserve">
-    <value>Property #{0} has no getter!</value>
+    <value>LE3083: Property #{0} has no getter!</value>
   </data>
   <data name="PropertyIdNoSetter" xml:space="preserve">
-    <value>Property #{0} has no setter!</value>
+    <value>LE3084: Property #{0} has no setter!</value>
   </data>
   <data name="PropertyIdNotFound" xml:space="preserve">
-    <value>Property #{0} does not exist!</value>
+    <value>LE3085: Property #{0} does not exist!</value>
   </data>
   <data name="PropertyImported" xml:space="preserve">
-    <value>Property '{0}' has already been imported!</value>
+    <value>LE3086: Property '{0}' has already been imported!</value>
   </data>
   <data name="PropertyNoGetter" xml:space="preserve">
-    <value>Property '{0}.{1}' does not have a getter!</value>
+    <value>LE3087: Property '{0}.{1}' does not have a getter!</value>
   </data>
   <data name="PropertyNoSetter" xml:space="preserve">
-    <value>Property '{0}.{1}' does not have a setter!</value>
+    <value>LE3088: Property '{0}.{1}' does not have a setter!</value>
   </data>
   <data name="PropertyValuetypeRef" xml:space="preserve">
-    <value>Cannot use property '{0}.{1}' as a ref parameter, because it returns '{2}' which is valuetype!</value>
+    <value>LE3089: Cannot use property '{0}.{1}' as a ref parameter, because it returns '{2}' which is valuetype!</value>
   </data>
   <data name="PureFunctionReturnUnit" xml:space="preserve">
-    <value>Function '{0}' cannot be marked as pure because it does not return a value!</value>
+    <value>LE3090: Function '{0}' cannot be marked as pure because it does not return a value!</value>
   </data>
   <data name="PureFunctionTooManyArgs" xml:space="preserve">
-    <value>Function '{0}' cannot be marked as pure because it contains more than 7 arguments!</value>
+    <value>LE3091: Function '{0}' cannot be marked as pure because it contains more than 7 arguments!</value>
   </data>
   <data name="ReferenceArgExpected" xml:space="preserve">
-    <value>Argument {0} requires a reference of type '{1}'!</value>
+    <value>LE3092: Argument {0} requires a reference of type '{1}'!</value>
   </data>
   <data name="ReferenceArgUnexpected" xml:space="preserve">
-    <value>Cannot use reference as a value for non-reference argument!</value>
+    <value>LE3093: Cannot use reference as a value for non-reference argument!</value>
   </data>
   <data name="ReservedFunctionInvocation" xml:space="preserve">
-    <value>Cannot invoke function '{0}' because it is reserved for internal purposes.</value>
+    <value>LE3094: Cannot invoke function '{0}' because it is reserved for internal purposes.</value>
   </data>
   <data name="ReservedFunctionRedefinition" xml:space="preserve">
-    <value>Cannot define a function named '{0}' because it is reserved for internal purposes.</value>
+    <value>LE3095: Cannot define a function named '{0}' because it is reserved for internal purposes.</value>
   </data>
   <data name="ReturnTypeMismatch" xml:space="preserve">
-    <value>Function of type '{0}' cannot return an expression of type '{1}'!</value>
+    <value>LE3096: Function of type '{0}' cannot return an expression of type '{1}'!</value>
   </data>
   <data name="SafeModeIllegalType" xml:space="preserve">
-    <value>Type '{0}' cannot be used in the script due to safe mode settings!</value>
+    <value>LE3097: Type '{0}' cannot be used in the script due to safe mode settings!</value>
   </data>
   <data name="ThrowArgumentExpected" xml:space="preserve">
-    <value>Expression is expected! An exception can only be rethrown from a catch clause.</value>
+    <value>LE3098: Expression is expected! An exception can only be rethrown from a catch clause.</value>
   </data>
   <data name="ThrowTypeNotException" xml:space="preserve">
-    <value>Type '{0}' cannot be used in throw statement because it does not derive from System.Exception!</value>
+    <value>LE3099: Type '{0}' cannot be used in throw statement because it does not derive from System.Exception!</value>
   </data>
   <data name="TupleNoArgs" xml:space="preserve">
-    <value>Tuple must contain at least one object!</value>
+    <value>LE3100: Tuple must contain at least one object!</value>
   </data>
   <data name="TupleTooManyArgs" xml:space="preserve">
-    <value>Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead.</value>
+    <value>LE3101: Tuples cannot contain more than 8 objects! Use a structure or a nested tuple instead.</value>
   </data>
   <data name="TypeAbstract" xml:space="preserve">
-    <value>Cannot create an instance of type '{0}' because it is abstract!</value>
+    <value>LE3102: Cannot create an instance of type '{0}' because it is abstract!</value>
   </data>
   <data name="TypeArgumentsForNonMethod" xml:space="preserve">
-    <value>Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
+    <value>LE3103: Type arguments cannot be applied to '{0}.{1}' because it is not a method!</value>
   </data>
   <data name="TypeConstructorAmbiguos" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable constructor! Please use type casting to specify the exact override.</value>
+    <value>LE3104: Type '{0}' has more than one suitable constructor! Please use type casting to specify the exact override.</value>
   </data>
   <data name="TypeConstructorNotFound" xml:space="preserve">
-    <value>Type '{0}' does not have a constructor accepting given arguments!</value>
+    <value>LE3105: Type '{0}' does not have a constructor accepting given arguments!</value>
   </data>
   <data name="TypeDefined" xml:space="preserve">
-    <value>Type '{0}' has already been defined!</value>
+    <value>LE3106: Type '{0}' has already been defined!</value>
   </data>
   <data name="TypeIdentifierNotFound" xml:space="preserve">
-    <value>Type '{0}' does not have any field, property or method called '{1}'!</value>
+    <value>LE3107: Type '{0}' does not have any field, property or method called '{1}'!</value>
   </data>
   <data name="TypeIsAmbiguous" xml:space="preserve">
-    <value>Ambigious type reference: type '{0}' is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}</value>
+    <value>LE3109: Ambigious type reference: type '{0}' is found in the following namespaces:{5}{1} in assembly {2}{5}{3} in assembly {4}</value>
   </data>
   <data name="TypeMethodAmbiguous" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.</value>
+    <value>LE3110: Type '{0}' has more than one suitable override of '{1}'! Please specify type arguments.</value>
   </data>
   <data name="TypeMethodInvocationAmbiguous" xml:space="preserve">
-    <value>Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.</value>
+    <value>LE3111: Type '{0}' has more than one suitable override of '{1}'! Please use type casting to specify the exact override.</value>
   </data>
   <data name="TypeMethodNotFound" xml:space="preserve">
-    <value>Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!</value>
+    <value>LE3112: Type '{0}' has no method named '{1}' and no extension method accepting given arguments was found!</value>
   </data>
   <data name="TypeNotCallable" xml:space="preserve">
-    <value>Cannot pass arguments to expression of type '{0}', because it is not callable!</value>
+    <value>LE3113: Cannot pass arguments to expression of type '{0}', because it is not callable!</value>
   </data>
   <data name="TypeNotFound" xml:space="preserve">
-    <value>Type '{0}' could not be resolved!</value>
+    <value>LE3114: Type '{0}' could not be resolved!</value>
   </data>
   <data name="TypeNotImplicitlyBoolean" xml:space="preserve">
-    <value>Type '{0}' cannot be used in a boolean context!</value>
+    <value>LE3115: Type '{0}' cannot be used in a boolean context!</value>
   </data>
   <data name="TypeNotIterable" xml:space="preserve">
-    <value>Type '{0}' is not iterable!</value>
+    <value>LE3116: Type '{0}' is not iterable!</value>
   </data>
   <data name="TypeNotNumeric" xml:space="preserve">
-    <value>Type '{0}' is not numeric!</value>
+    <value>LE3117: Type '{0}' is not numeric!</value>
   </data>
   <data name="TypeSettableIdentifierNotFound" xml:space="preserve">
-    <value>Type '{0}' does not contain a field or a property named '{1}'!</value>
+    <value>LE3118: Type '{0}' does not contain a field or a property named '{1}'!</value>
   </data>
   <data name="TypesIncomparable" xml:space="preserve">
-    <value>Types '{0}' and '{1}' cannot be compared!</value>
+    <value>LE3119: Types '{0}' and '{1}' cannot be compared!</value>
   </data>
   <data name="UnderscoreName" xml:space="preserve">
-    <value>The '_' identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!</value>
+    <value>LE3121: The '_' identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!</value>
   </data>
   <data name="VariableDefined" xml:space="preserve">
-    <value>A variable named '{0}' is already defined!</value>
+    <value>LE3123: A variable named '{0}' is already defined!</value>
   </data>
   <data name="VariableNotFound" xml:space="preserve">
-    <value>A variable named '{0}' does not exist in the scope!</value>
+    <value>LE3124: A variable named '{0}' does not exist in the scope!</value>
   </data>
   <data name="VoidTypeDefault" xml:space="preserve">
-    <value>Cannot create an instance of Unit or Void types!</value>
+    <value>LE3127: Cannot create an instance of Unit or Void types!</value>
   </data>
   <data name="TypeStaticMethodNotFound" xml:space="preserve">
-    <value>Type '{0}' has no method named '{1}'!</value>
+    <value>LE3120: Type '{0}' has no method named '{1}'!</value>
   </data>
   <data name="FieldRedefinition" xml:space="preserve">
-    <value>Type '{0}' already contains field named '{1}'!</value>
+    <value>LE3036: Type '{0}' already contains field named '{1}'!</value>
   </data>
   <data name="UnderscoreNameUsed" xml:space="preserve">
-    <value>The '_' identifier is not allowed in this context!</value>
+    <value>LE3122: The '_' identifier is not allowed in this context!</value>
   </data>
   <data name="VariadicArgumentLambda" xml:space="preserve">
-    <value>Cannot use '...' argument modified in a lambda!</value>
+    <value>LE3125: Cannot use '...' argument modified in a lambda!</value>
   </data>
   <data name="VariadicArgumentNotLast" xml:space="preserve">
-    <value>An argument with '...' modifier must be the last one!</value>
+    <value>LE3126: An argument with '...' modifier must be the last one!</value>
   </data>
   <data name="LambdaArgTypeUnknown" xml:space="preserve">
-    <value>Type of argument '{0}' could not be inferred from usage! Please specify the type explicitly.</value>
+    <value>LE3069: Type of argument '{0}' could not be inferred from usage! Please specify the type explicitly.</value>
   </data>
   <data name="LambdaReturnTypeMismatch" xml:space="preserve">
-    <value>Lambda is used as delegate '{0}', but its return type '{1}' cannot be casted to desired return type '{2}'!</value>
+    <value>LE3070: Lambda is used as delegate '{0}', but its return type '{1}' cannot be casted to desired return type '{2}'!</value>
   </data>
   <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
-    <value>Lambda argument of type '{0}' contains unresolved generic references! Please specify the argument type explicitly.</value>
+    <value>LE3068: Lambda argument of type '{0}' contains unresolved generic references! Please specify the argument type explicitly.</value>
   </data>
   <data name="ArraySizeNotInt" xml:space="preserve">
-    <value>Cannot use an expression of type '{0}' as array size specifier because it is not assignable to System.Int32!</value>
+    <value>LE3004: Cannot use an expression of type '{0}' as array size specifier because it is not assignable to System.Int32!</value>
   </data>
   <data name="ExpressionNotIDisposable" xml:space="preserve">
-    <value>Expression of type '{0}' cannot be used in 'using' block because it does not implement the 'IDisposable' interface!</value>
+    <value>LE3033: Expression of type '{0}' cannot be used in 'using' block because it does not implement the 'IDisposable' interface!</value>
   </data>
   <data name="TypeInterface" xml:space="preserve">
-    <value>Cannot create an instance of interface '{0}'!</value>
+    <value>LE3108: Cannot create an instance of interface '{0}'!</value>
   </data>
 </root>

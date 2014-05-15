@@ -118,189 +118,189 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ArgTypeExpected" xml:space="preserve">
-    <value>Argument type is expected!</value>
+    <value>LE2001: Argument type is expected!</value>
   </data>
   <data name="ArgumentPassIndentExpected" xml:space="preserve">
-    <value>'&lt;|' statements must be indented!</value>
+    <value>LE2002: '&lt;|' statements must be indented!</value>
   </data>
   <data name="ArgumentsExpected" xml:space="preserve">
-    <value>Method call arguments are expected!</value>
+    <value>LE2003: Method call arguments are expected!</value>
   </data>
   <data name="ArrayItem" xml:space="preserve">
-    <value>An array must contain at least one item!</value>
+    <value>LE2004: An array must contain at least one item!</value>
   </data>
   <data name="AssignExpressionExpected" xml:space="preserve">
-    <value>Assignment expression is expected!</value>
+    <value>LE2005: Assignment expression is expected!</value>
   </data>
   <data name="AssignLvalueExpected" xml:space="preserve">
-    <value>The expression at left side cannot be assigned to!</value>
+    <value>LE2006: The expression at left side cannot be assigned to!</value>
   </data>
   <data name="CatchExpected" xml:space="preserve">
-    <value>Catch clause is expected!</value>
+    <value>LE2007: Catch clause is expected!</value>
   </data>
   <data name="ClosingBraceNewLine" xml:space="preserve">
-    <value>Closing brace must be placed on the next line!</value>
+    <value>LE2008: Closing brace must be placed on the next line!</value>
   </data>
   <data name="CodeBlockExpected" xml:space="preserve">
-    <value>Code block is expected!</value>
+    <value>LE2009: Code block is expected!</value>
   </data>
   <data name="ConditionBlockExpected" xml:space="preserve">
-    <value>Condition block is expected!</value>
+    <value>LE2010: Condition block is expected!</value>
   </data>
   <data name="ConditionExpected" xml:space="preserve">
-    <value>Condition is expected!</value>
+    <value>LE2011: Condition is expected!</value>
   </data>
   <data name="ConditionExpressionExpected" xml:space="preserve">
-    <value>Condition expression is expected!</value>
+    <value>LE2012: Condition expression is expected!</value>
   </data>
   <data name="DictionaryItem" xml:space="preserve">
-    <value>A dictionary must contain at least one item!</value>
+    <value>LE2013: A dictionary must contain at least one item!</value>
   </data>
   <data name="DictionaryKeyExpected" xml:space="preserve">
-    <value>Dictionary key expression is expected!</value>
+    <value>LE2014: Dictionary key expression is expected!</value>
   </data>
   <data name="DictionaryValueExpected" xml:space="preserve">
-    <value>Dictionary value expression is expected!</value>
+    <value>LE2015: Dictionary value expression is expected!</value>
   </data>
   <data name="ExceptionHandlerExpected" xml:space="preserve">
-    <value>Exception handler code block is expected!</value>
+    <value>LE2016: Exception handler code block is expected!</value>
   </data>
   <data name="ExceptionTypeExpected" xml:space="preserve">
-    <value>Exception type signature is expected!</value>
+    <value>LE2017: Exception type signature is expected!</value>
   </data>
   <data name="ExpressionExpected" xml:space="preserve">
-    <value>Expression is expected!</value>
+    <value>LE2018: Expression is expected!</value>
   </data>
   <data name="FunctionBodyExpected" xml:space="preserve">
-    <value>Function body is expected!</value>
+    <value>LE2019: Function body is expected!</value>
   </data>
   <data name="FunctionDefExpected" xml:space="preserve">
-    <value>Function definition is expected!</value>
+    <value>LE2020: Function definition is expected!</value>
   </data>
   <data name="FunctionIdentifierExpected" xml:space="preserve">
-    <value>Function name must be an identifier!</value>
+    <value>LE2021: Function name must be an identifier!</value>
   </data>
   <data name="FunctionReturnExpected" xml:space="preserve">
-    <value>Function return type is expected!</value>
+    <value>LE2022: Function return type is expected!</value>
   </data>
   <data name="IdentifierExpected" xml:space="preserve">
-    <value>An identifier is expected!</value>
+    <value>LE2023: An identifier is expected!</value>
   </data>
   <data name="IndexExpressionExpected" xml:space="preserve">
-    <value>Index expression is expected!</value>
+    <value>LE2024: Index expression is expected!</value>
   </data>
   <data name="InitExpressionExpected" xml:space="preserve">
-    <value>Initializer expression is expected!</value>
+    <value>LE2025: Initializer expression is expected!</value>
   </data>
   <data name="InitExpressionOrTypeExpected" xml:space="preserve">
-    <value>Initializer expression or type signature is expected!</value>
+    <value>LE2026: Initializer expression or type signature is expected!</value>
   </data>
   <data name="InitExpressionSeparatorExpected" xml:space="preserve">
-    <value>Initializer expressions must be separated by a newline!</value>
+    <value>LE2027: Initializer expressions must be separated by a newline!</value>
   </data>
   <data name="InitializerIndentExprected" xml:space="preserve">
-    <value>Initializer expressions must be indented!</value>
+    <value>LE2028: Initializer expressions must be indented!</value>
   </data>
   <data name="InvalidDouble" xml:space="preserve">
-    <value>Value '{0}' is not a valid double!</value>
+    <value>LE2029: Value '{0}' is not a valid double!</value>
   </data>
   <data name="InvalidInteger" xml:space="preserve">
-    <value>Value '{0}' is not a valid integer!</value>
+    <value>LE2030: Value '{0}' is not a valid integer!</value>
   </data>
   <data name="InvokePassSeparatorExpected" xml:space="preserve">
-    <value>Invoke passes must be separated by a newline!</value>
+    <value>LE2031: Invoke passes must be separated by a newline!</value>
   </data>
   <data name="ListItem" xml:space="preserve">
-    <value>A list must contain at least one item!</value>
+    <value>LE2032: A list must contain at least one item!</value>
   </data>
   <data name="LoopBodyExpected" xml:space="preserve">
-    <value>Loop body block is expected!</value>
+    <value>LE2033: Loop body block is expected!</value>
   </data>
   <data name="LoopExpressionExpected" xml:space="preserve">
-    <value>Loop body expression is expected!</value>
+    <value>LE2034: Loop body expression is expected!</value>
   </data>
   <data name="MemberNameExpected" xml:space="preserve">
-    <value>Member name is expected!</value>
+    <value>LE2035: Member name is expected!</value>
   </data>
   <data name="MethodPassIndentExpected" xml:space="preserve">
-    <value>'|&gt;' statements must be indented!</value>
+    <value>LE2036: '|&gt;' statements must be indented!</value>
   </data>
   <data name="NamespaceExpected" xml:space="preserve">
-    <value>A namespace is expected!</value>
+    <value>LE2037: A namespace is expected!</value>
   </data>
   <data name="NewlineSeparatorExpected" xml:space="preserve">
-    <value>Statements must be separated by newlines!</value>
+    <value>LE2038: Statements must be separated by newlines!</value>
   </data>
   <data name="RangeEndExpected" xml:space="preserve">
-    <value>Range end expression is expected!</value>
+    <value>LE2039: Range end expression is expected!</value>
   </data>
   <data name="RecordFieldIdentifierExpected" xml:space="preserve">
-    <value>Record field name must be an identifier!</value>
+    <value>LE2040: Record field name must be an identifier!</value>
   </data>
   <data name="RecordFieldTypeExpected" xml:space="preserve">
-    <value>Record field type signature is expected!</value>
+    <value>LE2041: Record field type signature is expected!</value>
   </data>
   <data name="RecordIdentifierExpected" xml:space="preserve">
-    <value>Record name must be an identifier!</value>
+    <value>LE2042: Record name must be an identifier!</value>
   </data>
   <data name="RecordIndentExpected" xml:space="preserve">
-    <value>Record body must be indented block!</value>
+    <value>LE2043: Record body must be indented block!</value>
   </data>
   <data name="RecordSeparatorExpected" xml:space="preserve">
-    <value>Record fields must be separated by a newline!</value>
+    <value>LE2044: Record fields must be separated by a newline!</value>
   </data>
   <data name="RefLvalueExpected" xml:space="preserve">
-    <value>The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
+    <value>LE2045: The 'ref' modifier can only be applied to a variable, a field or an array index!</value>
   </data>
   <data name="SequenceExpected" xml:space="preserve">
-    <value>Sequence expression is expected!</value>
+    <value>LE2046: Sequence expression is expected!</value>
   </data>
   <data name="SymbolExpected" xml:space="preserve">
-    <value>'{0}' expected!</value>
+    <value>LE2047: '{0}' expected!</value>
   </data>
   <data name="TryBlockExpected" xml:space="preserve">
-    <value>Try block is expected!</value>
+    <value>LE2048: Try block is expected!</value>
   </data>
   <data name="TupleItem" xml:space="preserve">
-    <value>A tuple must contain at least one item!</value>
+    <value>LE2049: A tuple must contain at least one item!</value>
   </data>
   <data name="TypeArgumentExpected" xml:space="preserve">
-    <value>Type argument is expected!</value>
+    <value>LE2050: Type argument is expected!</value>
   </data>
   <data name="TypeIdentifierExpected" xml:space="preserve">
-    <value>Type name must be an identifier!</value>
+    <value>LE2051: Type name must be an identifier!</value>
   </data>
   <data name="TypeIndentExpected" xml:space="preserve">
-    <value>Type body must be indented block!</value>
+    <value>LE2052: Type body must be indented block!</value>
   </data>
   <data name="TypeLabelIdentifierExpected" xml:space="preserve">
-    <value>Type label name must be an identifier!</value>
+    <value>LE2053: Type label name must be an identifier!</value>
   </data>
   <data name="TypeLabelTagTypeExpected" xml:space="preserve">
-    <value>Tag type signature is expected!</value>
+    <value>LE2054: Tag type signature is expected!</value>
   </data>
   <data name="TypeSeparatorExpected" xml:space="preserve">
-    <value>Type labels must be separated by a newline!</value>
+    <value>LE2055: Type labels must be separated by a newline!</value>
   </data>
   <data name="TypeSignatureExpected" xml:space="preserve">
-    <value>Type signature is expected!</value>
+    <value>LE2056: Type signature is expected!</value>
   </data>
   <data name="UnknownStatement" xml:space="preserve">
-    <value>Unknown kind of statement!</value>
+    <value>LE2057: Unknown kind of statement!</value>
   </data>
   <data name="VariadicByRef" xml:space="preserve">
-    <value>A by-ref argument cannot be marked with '...' modifier!</value>
+    <value>LE2060: A by-ref argument cannot be marked with '...' modifier!</value>
   </data>
   <data name="VarIdentifierExpected" xml:space="preserve">
-    <value>Variable name must be an identifier!</value>
+    <value>LE2061: Variable name must be an identifier!</value>
   </data>
   <data name="VarTypeExpected" xml:space="preserve">
-    <value>Variable type is expected!</value>
+    <value>LE2062: Variable type is expected!</value>
   </data>
   <data name="UsingBodyExpected" xml:space="preserve">
-    <value>Resource block body is expected!</value>
+    <value>LE2058: Resource block body is expected!</value>
   </data>
   <data name="UsingExpressionExpected" xml:space="preserve">
-    <value>Resource block expression is expected!</value>
+    <value>LE2059: Resource block expression is expected!</value>
   </data>
 </root>

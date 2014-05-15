@@ -35,6 +35,32 @@ namespace Lens.Test.Internals
 			}
 		}
 
+		[Test]
+		[TestCaseSource("TranslationComponents")]
+		public void MessagePrefixCorrectness(string component, string localeFrom, string localeTo)
+		{
+			var query = from locale in new[] { localeFrom, localeTo }
+			            let path = string.Format("{0}{1}{2}.resx", TranslationsFolder, component, locale == null ? null : "." + locale)
+			            let doc = XDocument.Load(path)
+			            let dataEntries = doc.Element("root").Elements("data")
+			            select dataEntries.ToDictionary(
+				            x => (string) x.Attribute("name"),
+							x => x.Element("value").Value
+				        );
+
+			var lookups = query.ToArray();
+			var unmatched = lookups[0].Keys.Where(k => lookups[0][k].Substring(0, 6) != lookups[1][k].Substring(0, 6)).ToArray();
+			if (unmatched.Any())
+			{
+				Assert.Fail(
+					"The following have different IDs in translations '{0}' and '{1}':\n{2}",
+					localeFrom ?? "en",
+					localeTo ?? "en",
+					string.Join(", ", unmatched)
+				);
+			}
+		}
+
 		public static IEnumerable<string[]> TranslationComponents
 		{
 			get
