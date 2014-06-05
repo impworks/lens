@@ -31,9 +31,9 @@ namespace Lens.Test
 
 			Assert.IsTrue(
 				srcId == msgId,
-				"Message does not match! Expected: {0}, but was: {1}!",
-				msgId,
-				srcId
+				"Message does not match!\nExpected: {0}\nActual: {1}!",
+				msg,
+				exception.Message
 			);
 		}
 
