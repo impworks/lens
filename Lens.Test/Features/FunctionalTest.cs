@@ -1,5 +1,4 @@
-﻿using System.Net.NetworkInformation;
-using Lens.Translations;
+﻿using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -38,6 +37,26 @@ Array::FindAll arr filter";
 		}
 
 		[Test]
+		public void DelegateCastingError1()
+		{
+			var src = @"
+let fx = x:int -> x
+fx as Func<string, int>
+";
+			TestError(src, CompilerMessages.CastDelegateArgTypesMismatch);
+		}
+
+		[Test]
+		public void DelegateCastingError2()
+		{
+			var src = @"
+let fx = x:int -> x
+fx as Func<int, string>
+";
+			TestError(src, CompilerMessages.CastDelegateReturnTypesMismatch);
+		}
+
+		[Test]
 		public void Closure1()
 		{
 			var src = @"
@@ -65,6 +84,55 @@ var fx1 = a:int ->
 fx1 10
 result";
 			Test(src, 14);
+		}
+
+		[Test]
+		public void ClosureError1()
+		{
+			var src = @"
+fun doStuff:Func<int, int> (x:ref int) ->
+    (y:int -> x + y)
+";
+			TestError(src, CompilerMessages.ClosureRef);
+		}
+
+		[Test]
+		public void RefValueError1()
+		{
+			var src = @"
+fun inc (x:ref int) ->
+    x = x + 1
+
+let value = 1
+inc (ref value)
+";
+			TestError(src, CompilerMessages.ConstantByRef);
+		}
+
+		[Test]
+		public void RefValueError2()
+		{
+			var src = @"
+fun inc (x:ref int) ->
+    x = x + 1
+
+var value = 1
+inc value
+";
+			TestError(src, CompilerMessages.ReferenceArgExpected);
+		}
+
+		[Test]
+		public void RefValueError3()
+		{
+			var src = @"
+fun doStuff (x:int) ->
+    print x
+
+var value = 1
+doStuff (ref value)
+";
+			TestError(src, CompilerMessages.ReferenceArgUnexpected);
 		}
 
 		[Test]
@@ -107,6 +175,18 @@ invParse ""37"" ""13""
 		}
 
 		[Test]
+		public void FunctionCompositionError1()
+		{
+			var src = @"
+let fx1 = (x:string) -> x
+let fx2 = (x:int) -> x
+fx1 :> fx2
+";
+
+			TestError(src, CompilerMessages.DelegatesNotCombinable);
+		}
+
+		[Test]
 		public void Wildcards1()
 		{
 			var src = @"
@@ -120,6 +200,19 @@ new [fx1; fx2; fx3]
 			Test(src, 3);
 		}
 
+		[Test]
+		public void WildcardsError1()
+		{
+			var src = @"int::Parse <_, _>";
+			TestError(src, CompilerMessages.TypeMethodAmbiguous);
+		}
+
+		[Test]
+		public void WildcardsError2()
+		{
+			var src = @"int::Parse <string, string>";
+			TestError(src, CompilerMessages.TypeMethodNotFound);
+		}
 
 		[Test]
 		public void PartialApplication1()
@@ -156,6 +249,26 @@ fx2 3
 		}
 
 		[Test]
+		public void PartialApplicationError1()
+		{
+			var src = @"
+fun add:int (x:int y:int) -> x + y
+add _
+";
+			TestError(src, CompilerMessages.FunctionNotFound);
+		}
+
+		[Test]
+		public void PartialApplicationError2()
+		{
+			var src = @"
+fun add:int (x:int y:int) -> x + y
+add _ _ _
+";
+			TestError(src, CompilerMessages.FunctionNotFound);
+		}
+
+		[Test]
 		public void ConstructorApplication1()
 		{
 			var src = @"
@@ -178,6 +291,32 @@ new [dataFx 1; dataFx 2; dataFx 3]
     |> Sum x:Data -> x.Value * x.Coeff
 ";
 			Test(src, 12);
+		}
+
+		[Test]
+		public void ConstructorApplicationError1()
+		{
+			var src = @"
+record Data
+    Value : int
+    Coeff : int
+
+new Data _";
+
+			TestError(src, CompilerMessages.TypeConstructorNotFound);
+		}
+
+		[Test]
+		public void ConstructorApplicationError2()
+		{
+			var src = @"
+record Data
+    Value : int
+    Coeff : int
+
+new Data _ _ _";
+
+			TestError(src, CompilerMessages.TypeConstructorNotFound);
 		}
 
 		[Test]

@@ -153,6 +153,9 @@ namespace Lens.Compiler
 				{
 					if (isClosured)
 					{
+						if (local.IsRefArgument)
+							Context.Error(CompilerMessages.ClosureRef, local.Name);
+
 						createClosureType(ctx, scope);
 						local.IsClosured = true;
 					}

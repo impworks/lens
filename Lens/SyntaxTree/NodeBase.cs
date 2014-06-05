@@ -125,13 +125,18 @@ namespace Lens.SyntaxTree
 		{
 			if (IsConstant && ctx.Options.UnrollConstants)
 			{
-				if (mustReturn)
-					emitConstant(ctx);
+				// cannot unroll constant pointers
+				var pp = this as IPointerProvider;
+				if (pp == null || (!pp.PointerRequired && !pp.RefArgumentRequired))
+				{
+					if (mustReturn)
+						emitConstant(ctx);
+
+					return;
+				}
 			}
-			else
-			{
-				emitCode(ctx, mustReturn);
-			}
+
+			emitCode(ctx, mustReturn);
 		}
 
 		protected virtual void emitCode(Context ctx, bool mustReturn)
