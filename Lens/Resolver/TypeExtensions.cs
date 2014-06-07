@@ -737,5 +737,25 @@ namespace Lens.Resolver
 
 			return type.ResolveInterfaces().Contains(iface);
 		}
+
+		/// <summary>
+		/// Finds an implementation of a generic interface.
+		/// </summary>
+		/// <param name="type">Type to find the implementation in.</param>
+		/// <param name="iface">Desirrable interface.</param>
+		/// <returns>Implementation of the generic interface or null if none.</returns>
+		public static Type ResolveImplementationOf(this Type type, Type iface)
+		{
+			if (iface.IsGenericType && !iface.IsGenericTypeDefinition)
+				iface = iface.GetGenericTypeDefinition();
+
+			var ifaces = type.ResolveInterfaces();
+			if(type.IsInterface)
+				ifaces = ifaces.Union(new[] { type }).ToArray();
+
+			return ifaces.FirstOrDefault(
+				x => x == iface || (x.IsGenericType && x.GetGenericTypeDefinition() == iface)
+			);
+		}
 	}
 }

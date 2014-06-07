@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -25,8 +25,16 @@ namespace Lens.SyntaxTree.Operators
 		{
 			if (!IsConstant)
 			{
-				if(Resolve(ctx) == typeof(string))
-					return Expr.Invoke("string", "Concat", LeftOperand, RightOperand);
+				var type = Resolve(ctx);
+
+				if (type == typeof (string))
+					return stringExpand();
+
+				if (type.IsArray)
+					return arrayExpand(ctx);
+
+				if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof (IEnumerable<>))
+					return seqExpand();
 			}
 
 			return mathExpand(LeftOperand, RightOperand) ?? mathExpand(RightOperand, LeftOperand);
@@ -34,7 +42,18 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return leftType == typeof (string) && rightType == typeof (string) ? typeof (string) : null;
+			if(leftType == typeof (string) && rightType == typeof (string))
+				return typeof (string);
+
+			if (leftType == rightType && leftType.IsArray)
+				return leftType;
+
+			var leftEnumerable = leftType.ResolveImplementationOf(typeof(IEnumerable<>));
+			var rightEnumerable = rightType.ResolveImplementationOf(typeof(IEnumerable<>));
+			if (leftEnumerable == rightEnumerable && leftEnumerable != null)
+				return leftEnumerable;
+
+			return null;
 		}
 
 		protected override void compileOperator(Context ctx)
@@ -56,6 +75,11 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
+		#region Expands
+		
+		/// <summary>
+		/// Returns the code to expand mathematic operations if available.
+		/// </summary>
 		private static NodeBase mathExpand(NodeBase one, NodeBase other)
 		{
 			if (one.IsConstant)
@@ -67,5 +91,67 @@ namespace Lens.SyntaxTree.Operators
 
 			return null;
 		}
+
+		/// <summary>
+		/// Returns the code to concatenate two strings.
+		/// </summary>
+		private NodeBase stringExpand()
+		{
+			return Expr.Invoke("string", "Concat", LeftOperand, RightOperand);
+		}
+
+		/// <summary>
+		/// Returns the code to concatenate two arrays.
+		/// </summary>
+		private NodeBase arrayExpand(Context ctx)
+		{
+			var type = Resolve(ctx);
+
+			var tmpArray = ctx.Scope.DeclareImplicit(ctx, type, false);
+			var tmpLeft = ctx.Scope.DeclareImplicit(ctx, type, false);
+			var tmpRight = ctx.Scope.DeclareImplicit(ctx, type, false);
+
+			return Expr.Block(
+				Expr.Set(tmpLeft, LeftOperand),
+				Expr.Set(tmpRight, RightOperand),
+				Expr.Set(
+					tmpArray,
+					Expr.Array(
+						type.GetElementType(),
+						Expr.Add(
+							Expr.GetMember(Expr.Get(tmpLeft), "Length"),
+							Expr.GetMember(Expr.Get(tmpRight), "Length")
+						)
+					)
+				),
+				Expr.Invoke(
+					"System.Array",
+					"Copy",
+					Expr.Get(tmpLeft),
+					Expr.Get(tmpArray),
+					Expr.GetMember(Expr.Get(tmpLeft), "Length")
+				),
+				Expr.Invoke(
+					"System.Array",
+					"Copy",
+					Expr.Get(tmpRight),
+					Expr.Int(0),
+					Expr.Get(tmpArray),
+					Expr.GetMember(Expr.Get(tmpLeft), "Length"),
+					Expr.GetMember(Expr.Get(tmpRight), "Length")
+				),
+				Expr.Get(tmpArray)
+			);
+		}
+
+		/// <summary>
+		/// Returns the code to concatenate two value sequences.
+		/// </summary>
+		private NodeBase seqExpand()
+		{
+			return Expr.Invoke("System.Linq.Enumerable", "Concat", LeftOperand, RightOperand);
+		}
+
+		#endregion
 	}
 }

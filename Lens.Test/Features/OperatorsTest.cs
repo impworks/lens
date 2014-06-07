@@ -195,6 +195,19 @@ let a = 1
 			Test("(new Decimal 1) >= (new Decimal 2)", false);
 		}
 
+		[Test]
+		public void ArrayConcat()
+		{
+			Test("new [1; 2; 3] + new [4; 5; 6]", new [] { 1, 2, 3, 4, 5, 6 });
+			Test(@"new [""A""; ""B""] + new [""D""; ""C""]", new[] { "A", "B", "D", "C" });
+		}
+
+		[Test]
+		public void IEnumerableConcat()
+		{
+			Test(@"(new [1; 2; 3].Select (x -> x * 2)) + new [[8; 10]]", new [] { 2, 4, 6, 8, 10 });
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);
