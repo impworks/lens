@@ -13,10 +13,10 @@ namespace Lens.SyntaxTree
 	internal static class Expr
 	{
 		#region Constants
-		
+
 		public static IntNode Int(int value = 0)
 		{
-			return new IntNode {Value = value};
+			return new IntNode { Value = value };
 		}
 
 		public static DoubleNode Double(double value = 0)
@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree
 
 		public static ShiftOperatorNode ShiftLeft(NodeBase left, NodeBase right)
 		{
-			return new ShiftOperatorNode {LeftOperand = left, RightOperand = right, IsLeft = true };
+			return new ShiftOperatorNode { LeftOperand = left, RightOperand = right, IsLeft = true };
 		}
 
 		public static ShiftOperatorNode ShiftRight(NodeBase left, NodeBase right)
@@ -100,17 +100,17 @@ namespace Lens.SyntaxTree
 
 		public static InversionOperatorNode Not(NodeBase node)
 		{
-			return new InversionOperatorNode {Operand = node};
+			return new InversionOperatorNode { Operand = node };
 		}
 
 		public static NegationOperatorNode Negate(NodeBase node)
 		{
-			return new NegationOperatorNode {Operand = node};
+			return new NegationOperatorNode { Operand = node };
 		}
 
 		public static DefaultOperatorNode Default(TypeSignature type)
 		{
-			return new DefaultOperatorNode {TypeSignature = type};
+			return new DefaultOperatorNode { TypeSignature = type };
 		}
 
 		public static DefaultOperatorNode Default(Type type)
@@ -125,7 +125,7 @@ namespace Lens.SyntaxTree
 
 		public static TypeofOperatorNode Typeof(TypeSignature type)
 		{
-			return new TypeofOperatorNode {TypeSignature = type};
+			return new TypeofOperatorNode { TypeSignature = type };
 		}
 
 		public static TypeofOperatorNode Typeof(Type type)
@@ -140,7 +140,7 @@ namespace Lens.SyntaxTree
 
 		public static CastOperatorNode Cast(NodeBase node, TypeSignature type)
 		{
-			return new CastOperatorNode {Expression = node, TypeSignature = type};
+			return new CastOperatorNode { Expression = node, TypeSignature = type };
 		}
 
 		public static CastOperatorNode Cast(NodeBase node, Type type)
@@ -175,7 +175,7 @@ namespace Lens.SyntaxTree
 
 		public static BinaryOperatorNodeBase And(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode {LeftOperand = left, RightOperand = right};
+			return new BooleanOperatorNode { LeftOperand = left, RightOperand = right };
 		}
 
 		public static BinaryOperatorNodeBase Or(NodeBase left, NodeBase right)
@@ -195,7 +195,7 @@ namespace Lens.SyntaxTree
 
 		public static ComparisonOperatorNode Equal(NodeBase left, NodeBase right)
 		{
-			return new ComparisonOperatorNode {LeftOperand = left, RightOperand = right};
+			return new ComparisonOperatorNode { LeftOperand = left, RightOperand = right };
 		}
 
 		public static ComparisonOperatorNode NotEqual(NodeBase left, NodeBase right)
@@ -234,7 +234,7 @@ namespace Lens.SyntaxTree
 
 		public static NewArrayNode Array(params NodeBase[] items)
 		{
-			return new NewArrayNode {Expressions = items.ToList()};
+			return new NewArrayNode { Expressions = items.ToList() };
 		}
 
 		public static NewObjectArrayNode Array(TypeSignature type, NodeBase size)
@@ -281,12 +281,12 @@ namespace Lens.SyntaxTree
 
 		public static GetIndexNode GetIdx(NodeBase expr, NodeBase index)
 		{
-			return new GetIndexNode {Expression = expr, Index = index};
+			return new GetIndexNode { Expression = expr, Index = index };
 		}
 
 		public static SetIndexNode SetIdx(NodeBase expr, NodeBase index, NodeBase value)
 		{
-			return new SetIndexNode { Expression = expr, Index = index, Value = value};
+			return new SetIndexNode { Expression = expr, Index = index, Value = value };
 		}
 
 		public static GetIdentifierNode Get(string name)
@@ -355,7 +355,7 @@ namespace Lens.SyntaxTree
 
 		public static ShiftOperatorNode Compose(params NodeBase[] args)
 		{
-			if(args.Length < 2)
+			if (args.Length < 2)
 				throw new ArgumentException("At least 2 functions are required for composition!");
 
 			var node = ShiftRight(args[0], args[1]);
@@ -365,7 +365,7 @@ namespace Lens.SyntaxTree
 			return node;
 		}
 
-		public static T Ref<T>(T expr) where T: NodeBase, IPointerProvider
+		public static T Ref<T>(T expr) where T : NodeBase, IPointerProvider
 		{
 			expr.RefArgumentRequired = true;
 			return expr;
@@ -416,12 +416,12 @@ namespace Lens.SyntaxTree
 
 		public static CodeBlockNode Block(params NodeBase[] stmts)
 		{
-			return new CodeBlockNode {Statements = stmts.ToList()};
+			return new CodeBlockNode { Statements = stmts.ToList() };
 		}
 
 		public static VarNode Var(string name, NodeBase expr)
 		{
-			return new VarNode(name) {Value = expr};
+			return new VarNode(name) { Value = expr };
 		}
 
 		public static VarNode Var(string name, TypeSignature type)
@@ -446,22 +446,32 @@ namespace Lens.SyntaxTree
 
 		public static WhileNode While(NodeBase condition, CodeBlockNode body)
 		{
-			return new WhileNode {Condition = condition, Body = {Statements = body.Statements}};
+			return new WhileNode { Condition = condition, Body = { Statements = body.Statements } };
 		}
 
 		public static IfNode If(NodeBase condition, CodeBlockNode ifTrue, CodeBlockNode ifFalse = null)
 		{
-			return new IfNode {Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse};
+			return new IfNode { Condition = condition, TrueAction = ifTrue, FalseAction = ifFalse };
 		}
 
 		public static ForeachNode For(string name, NodeBase seq, CodeBlockNode body)
 		{
-			return new ForeachNode {VariableName = name, IterableExpression = seq, Body = body};
+			return new ForeachNode { VariableName = name, IterableExpression = seq, Body = body };
+		}
+
+		public static ForeachNode For(Local local, NodeBase seq, CodeBlockNode body)
+		{
+			return new ForeachNode { Local = local, IterableExpression = seq, Body = body };
 		}
 
 		public static ForeachNode For(string name, NodeBase from, NodeBase to, CodeBlockNode body)
 		{
 			return new ForeachNode { VariableName = name, RangeStart = from, RangeEnd = to, Body = body };
+		}
+
+		public static ForeachNode For(Local local, NodeBase from, NodeBase to, CodeBlockNode body)
+		{
+			return new ForeachNode { Local = local, RangeStart = from, RangeEnd = to, Body = body };
 		}
 
 		public static ThrowNode Throw()
@@ -471,7 +481,7 @@ namespace Lens.SyntaxTree
 
 		public static ThrowNode Throw(NodeBase expr)
 		{
-			return new ThrowNode {Expression = expr};
+			return new ThrowNode { Expression = expr };
 		}
 
 		public static ThrowNode Throw(TypeSignature type, params NodeBase[] args)
@@ -481,7 +491,7 @@ namespace Lens.SyntaxTree
 
 		public static TryNode Try(CodeBlockNode body, params CatchNode[] catches)
 		{
-			return new TryNode {Code = body, CatchClauses = catches.ToList()};
+			return new TryNode { Code = body, CatchClauses = catches.ToList() };
 		}
 
 		public static TryNode Try(CodeBlockNode body, CodeBlockNode final, params CatchNode[] catches)
@@ -491,7 +501,7 @@ namespace Lens.SyntaxTree
 
 		public static CatchNode Catch(TypeSignature excType, string varName, CodeBlockNode body)
 		{
-			return new CatchNode {Code = body, ExceptionType = excType, ExceptionVariable = varName};
+			return new CatchNode { Code = body, ExceptionType = excType, ExceptionVariable = varName };
 		}
 
 		public static CatchNode Catch(TypeSignature excType, CodeBlockNode body)
@@ -506,7 +516,7 @@ namespace Lens.SyntaxTree
 
 		public static UsingNode Using(NodeBase expr, params NodeBase[] stmts)
 		{
-			return new UsingNode {Expression = expr, Body = Block(stmts)};
+			return new UsingNode { Expression = expr, Body = Block(stmts) };
 		}
 
 		public static UsingNode Using(string name, NodeBase expr, params NodeBase[] stmts)
@@ -520,28 +530,28 @@ namespace Lens.SyntaxTree
 
 		public static RecordDefinitionNode Record(string name, params RecordField[] fields)
 		{
-			var node = new RecordDefinitionNode {Name = name};
-			foreach(var curr in fields)
+			var node = new RecordDefinitionNode { Name = name };
+			foreach (var curr in fields)
 				node.Entries.Add(curr);
 			return node;
 		}
 
 		public static RecordField Field(string name, TypeSignature type)
 		{
-			return new RecordField {Name = name, Type = type};
+			return new RecordField { Name = name, Type = type };
 		}
 
 		public static TypeDefinitionNode Type(string name, params TypeLabel[] labels)
 		{
-			var node = new TypeDefinitionNode {Name = name};
-			foreach(var curr in labels)
+			var node = new TypeDefinitionNode { Name = name };
+			foreach (var curr in labels)
 				node.Entries.Add(curr);
 			return node;
 		}
 
 		public static TypeLabel Label(string name, TypeSignature tag = null)
 		{
-			return new TypeLabel {Name = name, TagType = tag};
+			return new TypeLabel { Name = name, TagType = tag };
 		}
 
 		public static FunctionNode Fun(string name, params NodeBase[] body)
@@ -588,7 +598,7 @@ namespace Lens.SyntaxTree
 
 		public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
 		{
-			return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};
+			return new FunctionArgument { Name = name, TypeSignature = type, IsRefArgument = isRef };
 		}
 
 		public static FunctionArgument Arg<T>(string name, bool isRef = false)

@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms.VisualStyles;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
@@ -16,6 +15,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// A variable to assign current item to.
 		/// </summary>
 		public string VariableName { get; set; }
+
+		/// <summary>
+		/// Explicitly specified local variable.
+		/// </summary>
+		public Local Local { get; set; }
 
 		/// <summary>
 		/// A single expression of iterable type.
@@ -48,14 +52,21 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				detectRangeType(ctx);
 
-			if (ctx.Scope.FindLocal(VariableName) != null)
+			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
 			if (!mustReturn)
 				return typeof (UnitType);
 
-			var tmpVar = new Local(VariableName, _VariableType);
-		    return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), tmpVar);
+			if (Local == null)
+			{
+				// variable must be defined: declare it in a temporary scope for pre-resolve state
+				var tmpVar = new Local(VariableName, _VariableType);
+				return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), tmpVar);
+			}
+
+			// index local specified explicitly: no need to account for it in pre-resolve
+			return Body.Resolve(ctx);
 		}
 
 		public override NodeBase Expand(Context ctx, bool mustReturn)
@@ -105,10 +116,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var loop = Expr.While(
 				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
-					Expr.Let(
-						VariableName,
-						Expr.GetMember(Expr.Get(iteratorVar), "Current")
-					),
+					getIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
 					Body
 				)
 			);
@@ -162,9 +170,11 @@ namespace Lens.SyntaxTree.ControlFlow
 						Expr.Get(lenVar)
 					),
 					Expr.Block(
-						Expr.Let(
-							VariableName,
-							Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
+						getIndexAssignment(
+							Expr.GetIdx(
+								Expr.Get(arrayVar),
+								Expr.Get(idxVar)
+							)
 						),
 						Expr.Set(
 							idxVar,
@@ -197,7 +207,7 @@ namespace Lens.SyntaxTree.ControlFlow
 						Expr.Block(Expr.GreaterEqual(Expr.Get(idxVar), RangeEnd))
 					),
 					Expr.Block(
-						Expr.Let(VariableName, Expr.Get(idxVar)),
+						getIndexAssignment(Expr.Get(idxVar)),
 						Body,
 						Expr.Set(
 							idxVar,
@@ -250,6 +260,13 @@ namespace Lens.SyntaxTree.ControlFlow
 				error(CompilerMessages.ForeachRangeNotInteger, t1);
 
 			_VariableType = t1;
+		}
+
+		private NodeBase getIndexAssignment(NodeBase indexGetter)
+		{
+			return Local == null
+				? Expr.Let(VariableName, indexGetter)
+				: Expr.Set(Local, indexGetter) as NodeBase;
 		}
 
 		#region Equality members

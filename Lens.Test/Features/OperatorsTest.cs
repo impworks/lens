@@ -205,7 +205,19 @@ let a = 1
 		[Test]
 		public void IEnumerableConcat()
 		{
-			Test(@"(new [1; 2; 3].Select (x -> x * 2)) + new [[8; 10]]", new [] { 2, 4, 6, 8, 10 });
+			Test(
+				@"(new [1; 2; 3].Select (x -> x * 2)) + new [[8; 10]]",
+				new [] { 2, 4, 6, 8, 10 }
+			);
+		}
+
+		[Test]
+		public void DictionaryConcat()
+		{
+			Test(
+				@"new {1 => true; 2 => true } + new { 2 => false; 3 => false }",
+				new Dictionary<int, bool> { { 1, true }, { 2, false }, { 3, false} }
+			);
 		}
 
 		private void TestType<T>(string src)
