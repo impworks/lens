@@ -729,13 +729,24 @@ namespace Lens.Resolver
 		/// <param name="unwindGenerics">A flag indicating that generic arguments should be discarded from both the type and the interface.</param>
 		public static bool Implements(this Type type, Type iface, bool unwindGenerics)
 		{
-			if (unwindGenerics && type.IsGenericType && iface.IsGenericType)
-			{
-				type = type.GetGenericTypeDefinition();
-				iface = iface.GetGenericTypeDefinition();
-			}
+			var ifaces = type.ResolveInterfaces();
+			if (type.IsInterface)
+				ifaces = ifaces.Union(new[] { type }).ToArray();
 
-			return type.ResolveInterfaces().Contains(iface);
+			if (unwindGenerics)
+			{
+				for (var idx = 0; idx < ifaces.Length; idx++)
+				{
+					var curr = ifaces[idx];
+					if (curr.IsGenericType)
+						ifaces[idx] = curr.GetGenericTypeDefinition();
+				}
+
+				if(iface.IsGenericType)
+					iface = iface.GetGenericTypeDefinition();
+			}
+			
+			return ifaces.Contains(iface);
 		}
 
 		/// <summary>
@@ -756,6 +767,39 @@ namespace Lens.Resolver
 			return ifaces.FirstOrDefault(
 				x => x == iface || (x.IsGenericType && x.GetGenericTypeDefinition() == iface)
 			);
+		}
+
+		/// <summary>
+		/// Resolves the common implementation of the given interface for two types.
+		/// </summary>
+		/// <param name="iface">Interface to find an implementation for in given types.</param>
+		/// <param name="type1">First type to examine.</param>
+		/// <param name="type2">First type to examine.</param>
+		/// <returns>Common implementation of an interface, or null if none.</returns>
+		public static Type ResolveCommonImplementationFor(this Type iface, Type type1, Type type2)
+		{
+			var impl1 = type1.ResolveImplementationOf(iface);
+			var impl2 = type2.ResolveImplementationOf(iface);
+			return impl1 == impl2 ? impl1 : null;
+		}
+
+		/// <summary>
+		/// Checks if a type is (or implements) a specified type with any generic argument values given.
+		/// Example: Dictionary&lt;A, B&gt; is Dictionary`2
+		/// </summary>
+		/// <param name="type">Closed type to test.</param>
+		/// <param name="genericType">Generic type.</param>
+		public static bool IsAppliedVersionOf(this Type type, Type genericType)
+		{
+			if (type.IsInterface && !genericType.IsInterface)
+				throw new ArgumentException(string.Format("Interface {0} cannot implement a type! ({1} given).", type.FullName, genericType.FullName));
+
+			if (!type.IsGenericType || !genericType.IsGenericType)
+				return false;
+
+			return genericType.IsInterface
+				? type.Implements(genericType, true)
+				: type.GetGenericTypeDefinition() == genericType.GetGenericTypeDefinition();
 		}
 	}
 }
