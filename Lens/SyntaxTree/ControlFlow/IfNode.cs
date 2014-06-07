@@ -61,9 +61,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
-				var node = Condition.ConstantValue ? TrueAction : FalseAction;
+				var node = Condition.ConstantValue ? (NodeBase)TrueAction : FalseAction;
 				if (node != null)
 				{
+					var nodeType = node.Resolve(ctx);
+					var desiredType = Resolve(ctx);
+					if (nodeType.IsNotVoid() && desiredType.IsNotVoid())
+						node = Expr.Cast(node, desiredType);
+
 					node.Emit(ctx, mustReturn);
 					if (!mustReturn && node.Resolve(ctx).IsNotVoid())
 						gen.EmitPop();
