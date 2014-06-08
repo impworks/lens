@@ -226,6 +226,28 @@ let a = 1
 			Test(@"""abc"" * 2", "abcabc", true);
 		}
 
+		[Test]
+		public void ArrayRepetition()
+		{
+			Test(@"new [1; 2; 3] * 3", new [] { 1, 2, 3, 1, 2, 3, 1, 2, 3 });
+		}
+
+		[Test]
+		public void TypedSequenceRepetition()
+		{
+			Test(@"(1.to 3) * 2", new[] { 1, 2, 3, 1, 2, 3 });
+		}
+
+		[Test]
+		public void UntypedSequenceRepetition()
+		{
+			var src = @"
+var x = 1.to 3
+(x as IEnumerable) * 2";
+
+			Test(src, new[] { 1, 2, 3, 1, 2, 3 });
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);
