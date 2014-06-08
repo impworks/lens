@@ -220,6 +220,12 @@ let a = 1
 			);
 		}
 
+		[Test]
+		public void StringRepetition()
+		{
+			Test(@"""abc"" * 2", "abcabc", true);
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);

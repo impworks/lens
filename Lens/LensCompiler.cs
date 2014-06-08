@@ -7,7 +7,6 @@ using Lens.Lexer;
 using Lens.Parser;
 using Lens.Resolver;
 using Lens.SyntaxTree;
-using Lens.Utils;
 
 namespace Lens
 {

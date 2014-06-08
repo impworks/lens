@@ -190,6 +190,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
 			var idxVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+
 			return Expr.Block(
 				Expr.Set(idxVar, RangeStart),
 				Expr.Set(

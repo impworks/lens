@@ -130,7 +130,11 @@ namespace Lens.SyntaxTree.ControlFlow
 				curr.Emit(ctx, subReturn);
 
 				if (!subReturn && retType.IsNotVoid())
-					gen.EmitPop();
+				{
+					// nested code block nodes take care of themselves
+					if(!(curr is CodeBlockNode))
+						gen.EmitPop();
+				}
 			}
 		}
 

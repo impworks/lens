@@ -87,7 +87,7 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		#region Expands
+		#region Expansion rules
 		
 		/// <summary>
 		/// Returns the code to expand mathematic operations if available.
