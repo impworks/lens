@@ -152,7 +152,7 @@ for i in 5..1 do
     a = a + i.ToString ()
 a";
 
-			Test(src, "54321");
+			Test(src, "5432");
 		}
 
 		[Test]
@@ -195,6 +195,18 @@ for x in new [[1; 2; 3; 4; 5]] do
     println ""and {0}"" x";
 
 			Test(src, null);
+		}
+
+		[Test]
+		public void ForLoop6()
+		{
+			var src = @"
+var x = 0
+for y in 1..1 do
+    x = x + 1
+x
+";
+			Test(src, 0);
 		}
 
 		[Test]

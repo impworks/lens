@@ -195,6 +195,59 @@ let a = 1
 			Test("(new Decimal 1) >= (new Decimal 2)", false);
 		}
 
+		[Test]
+		public void ArrayConcat()
+		{
+			Test("new [1; 2; 3] + new [4; 5; 6]", new [] { 1, 2, 3, 4, 5, 6 });
+			Test(@"new [""A""; ""B""] + new [""D""; ""C""]", new[] { "A", "B", "D", "C" });
+		}
+
+		[Test]
+		public void IEnumerableConcat()
+		{
+			Test(
+				@"(new [1; 2; 3].Select (x -> x * 2)) + new [[8; 10]]",
+				new [] { 2, 4, 6, 8, 10 }
+			);
+		}
+
+		[Test]
+		public void DictionaryConcat()
+		{
+			Test(
+				@"new {1 => true; 2 => true } + new { 2 => false; 3 => false }",
+				new Dictionary<int, bool> { { 1, true }, { 2, false }, { 3, false} }
+			);
+		}
+
+		[Test]
+		public void StringRepetition()
+		{
+			Test(@"""abc"" * 2", "abcabc", true);
+		}
+
+		[Test]
+		public void ArrayRepetition()
+		{
+			Test(@"new [1; 2; 3] * 3", new [] { 1, 2, 3, 1, 2, 3, 1, 2, 3 });
+		}
+
+		[Test]
+		public void TypedSequenceRepetition()
+		{
+			Test(@"(1.to 3) * 2", new[] { 1, 2, 3, 1, 2, 3 });
+		}
+
+		[Test]
+		public void UntypedSequenceRepetition()
+		{
+			var src = @"
+var x = 1.to 3
+(x as IEnumerable) * 2";
+
+			Test(src, new[] { 1, 2, 3, 1, 2, 3 });
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);

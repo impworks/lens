@@ -460,7 +460,7 @@ namespace Lens.Resolver
 		public static Type[] ResolveInterfaces(this Type type)
 		{
 			if (m_InterfaceCache.ContainsKey(type))
-				return m_InterfaceCache[type];
+				return m_InterfaceCache[type].ToArray();
 
 			Type[] ifaces;
 			try
@@ -501,7 +501,7 @@ namespace Lens.Resolver
 			}
 
 			m_InterfaceCache.Add(type, ifaces);
-			return ifaces;
+			return ifaces.ToArray();
 		}
 
 		#endregion
