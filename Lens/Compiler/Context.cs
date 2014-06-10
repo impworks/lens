@@ -41,7 +41,9 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
-			_TypeResolver = new TypeResolver(Namespaces)
+			_AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
+			_ExtensionResolver = new ExtensionMethodResolver(Namespaces, _AssemblyCache);
+			_TypeResolver = new TypeResolver(Namespaces, _AssemblyCache)
 			{
 				ExternalLookup = name =>
 				{
@@ -50,8 +52,6 @@ namespace Lens.Compiler
 					return ent == null ? null : ent.TypeBuilder;
 				}
 			};
-
-			_ExtensionResolver = new ExtensionMethodResolver(Namespaces);
 
 			AssemblyName an;
 			lock(typeof(Context))
@@ -208,6 +208,11 @@ namespace Lens.Compiler
 		/// The stack of currently processed scopes.
 		/// </summary>
 		private readonly Stack<Scope> _ScopeStack = new Stack<Scope>();
+
+		/// <summary>
+		/// The list of assemblies referenced by current script.
+		/// </summary>
+		internal readonly ReferencedAssemblyCache _AssemblyCache;
 
 		#endregion
 	}

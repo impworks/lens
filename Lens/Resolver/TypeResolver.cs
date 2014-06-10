@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Lens.Compiler;
 using Lens.Translations;
 
@@ -42,53 +41,28 @@ namespace Lens.Resolver
 				{"char", typeof (char)},
 				{"byte", typeof (byte)},
 			};
-
-			loadAssemblies();
 		}
 
-		public TypeResolver(Dictionary<string, bool> namespaces)
+		public TypeResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
 			_Cache = new Dictionary<string, Type>();
 			_Namespaces = namespaces;
+			_AsmCache = asmCache;
 		}
 
 		private static IEnumerable<string> _EmptyNamespaces = new[] { string.Empty };
 		private static Dictionary<string, List<string>> _Locations;
-		private static List<Assembly> _Assemblies;
 		private static readonly Dictionary<string, Type> _TypeAliases;
 
 		private readonly Dictionary<string, Type> _Cache;
 		private Dictionary<string, bool> _Namespaces;
 
+		private readonly ReferencedAssemblyCache _AsmCache;
+
 		/// <summary>
 		/// The method that allows external types to be looked up.
 		/// </summary>
 		public Func<string, Type> ExternalLookup { get; set; }
-
-		private static void loadAssemblies()
-		{
-			_Assemblies = new List<Assembly>();
-			var fullNames = new[]
-			{
-				"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-				"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-				"System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-				"System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
-			};
-
-			foreach (var name in fullNames)
-			{
-				try
-				{
-					_Assemblies.Add(Assembly.Load(name));
-				}
-				catch { }
-			}
-
-			foreach(var asm in AppDomain.CurrentDomain.GetAssemblies())
-				if(!_Assemblies.Contains(asm))
-					_Assemblies.Add(asm);
-		}
 
 		/// <summary>
 		/// Resolves a type by its string signature.
@@ -168,7 +142,7 @@ namespace Lens.Resolver
 			
 			Type foundType = null;
 
-			foreach (var currAsm in _Assemblies)
+			foreach (var currAsm in _AsmCache.Assemblies)
 			{
 				var namespaces = checkNamespaces ? _Namespaces.Keys : _EmptyNamespaces;
 				if (checkNamespaces)

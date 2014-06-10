@@ -10,6 +10,14 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		/// <summary>
+		/// Registers a new assembly in resolvers.
+		/// </summary>
+		public void RegisterAssembly(Assembly asm)
+		{
+			_AssemblyCache.ReferenceAssembly(asm);
+		}
+
+		/// <summary>
 		/// Imports an existing external type with given name.
 		/// </summary>
 		public void ImportType(string name, Type type)

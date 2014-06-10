@@ -36,6 +36,11 @@ namespace Lens
 			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
 		}
 
+		public void RegisterAssembly(Assembly asm)
+		{
+			_Context.RegisterAssembly(asm);
+		}
+
 		/// <summary>
 		/// Register a type to be used by LENS script.
 		/// </summary>

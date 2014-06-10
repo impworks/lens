@@ -17,13 +17,15 @@ namespace Lens.Resolver
 			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
 		}
 
-		public ExtensionMethodResolver(Dictionary<string, bool> namespaces)
+		public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
 			_Namespaces = namespaces;
+			_AsmCache = asmCache;
 		}
 
 		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
 		private readonly Dictionary<string, bool> _Namespaces;
+		private readonly ReferencedAssemblyCache _AsmCache;
 
 		/// <summary>
 		/// Gets an extension method by given arguments.
@@ -56,8 +58,7 @@ namespace Lens.Resolver
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
-			var asms = AppDomain.CurrentDomain.GetAssemblies();
-			foreach (var asm in asms)
+			foreach (var asm in _AsmCache.Assemblies)
 			{
 				if (asm.IsDynamic)
 					continue;

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test.Internals
@@ -11,7 +10,7 @@ namespace Lens.Test.Internals
 	[TestFixture]
 	public class TypeResolverTest
 	{
-		private static readonly TypeResolver Resolver = new TypeResolver(new Dictionary<string, bool> { { "System", true } });
+		private static readonly TypeResolver Resolver = new TypeResolver(new Dictionary<string, bool> { { "System", true } }, new ReferencedAssemblyCache());
 
 		[Test]
 		public void BasicName()

@@ -224,7 +224,7 @@ namespace Lens.SyntaxTree.Operators
 			NodeBase leftWrapper;
 			if (seqType == typeof (IEnumerable))
 			{
-				leftWrapper = Expr.Invoke(Expr.GetMember("System.Linq.Enumerable", "OfType", "object"), LeftOperand)
+				leftWrapper = Expr.Invoke(Expr.GetMember("System.Linq.Enumerable", "OfType", "object"), LeftOperand);
 				seqType = typeof (IEnumerable<object>);
 			}
 			else
