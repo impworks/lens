@@ -30,9 +30,10 @@ let_stmt <LetNode>                          = "let" identifier "=" expr
 
 // assignment
 set_stmt <NodeBase>                         = set_id_stmt | set_stmbr_stmt | set_any_stmt
-set_id_stmt <SetIdentifierNode>             = identifier "=" expr
-set_stmbr_stmt <SetMemberNode>              = type "::" identifier "=" expr
-set_any_stmt <NodeBase>                     = lvalue_expr "=" expr
+set_id_stmt <SetIdentifierNode>             = identifier assignment_op expr
+set_stmbr_stmt <SetMemberNode>              = type "::" identifier assignment_op expr
+set_any_stmt <NodeBase>                     = lvalue_expr assignment_op expr
+assignment_op                               = [ binary_op ] "="
 
 // lvalues
 lvalue_expr <NodeBase>                      = lvalue_name_expr | lvalue_paren_expr
