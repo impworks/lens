@@ -17,14 +17,14 @@ fun maker:Figure (x:int y:int) ->
     c.Blur = -> hover = false
     c.Update = ->
         if hover && c.Radius > 10  then
-            c.Y = c.Y + 2
-            c.X = c.X + 2
-            c.Radius = c.Radius - 4
+            c.Y += 2
+            c.X += 2
+            c.Radius -= 4
             c.Fill = color (c.Radius / size)
         if not hover && c.Radius < size then
-            c.X = c.X - 0.5
-            c.Y = c.Y - 0.5
-            c.Radius = c.Radius + 1
+            c.X -= 0.5
+            c.Y -= 0.5
+            c.Radius += 1
             c.Fill = color (c.Radius / size)
     c
 

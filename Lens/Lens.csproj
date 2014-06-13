@@ -125,6 +125,7 @@
     <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
     <Compile Include="SyntaxTree\Expressions\NewObjectArrayNode.cs" />
     <Compile Include="SyntaxTree\Internals\GetArgumentNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\ShortAssignmentNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\XorOperatorNode.cs" />

@@ -248,6 +248,58 @@ var x = 1.to 3
 			Test(src, new[] { 1, 2, 3, 1, 2, 3 });
 		}
 
+		[Test]
+		public void ShorthandAssignment1()
+		{
+			var src = @"
+var x = 1
+x += 2
+x
+";
+			Test(src, 3);
+		}
+
+		[Test]
+		public void ShorthandAssignment2()
+		{
+			var src = @"
+var x = new [""a""; ""b""]
+x[0] += ""c""
+x
+";
+			Test(src, new [] { "ac", "b"});
+		}
+
+		[Test]
+		public void ShorthandAssignment3()
+		{
+			var src = @"
+record Point
+    X : double
+    Y : double
+
+var pt = new Point ()
+pt.X += 1.5
+pt.Y += pt.X + 1
+pt.X + pt.Y
+";
+			Test(src, 4);
+		}
+
+		[Test]
+		public void ShorthandAssignment4()
+		{
+			var src = @"
+let data = new [ new [1]; new [2]; new [3] ]
+let getter = (x:int) -> data[x]
+let indexOffset = 2
+(getter 1)[indexOffset - 2] += 1
+(getter 2)[indexOffset - indexOffset] += 2
+data.Select (x -> x[0])
+";
+			Test(src, new[] { 1, 3, 5 });
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);

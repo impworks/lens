@@ -7,7 +7,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// The base class for literal nodes.
 	/// </summary>
-	internal abstract class LiteralNodeBase<T> : NodeBase
+	internal abstract class LiteralNodeBase<T> : NodeBase, ILiteralNode
 	{
 		/// <summary>
 		/// The literal value.
@@ -49,4 +49,9 @@ namespace Lens.SyntaxTree.Literals
 			return string.Format("{0}({1})", typeof (T).Name, Value);
 		}
 	}
+
+	/// <summary>
+	/// Marker interface for all literal expressions.
+	/// </summary>
+	internal interface ILiteralNode { }
 }

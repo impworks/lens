@@ -269,7 +269,10 @@ namespace Lens.Parser
 
 		#region Operators
 
-		private static List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
+		/// <summary>
+		/// List of binary operators and their corresponding function wrappers in precedence order.
+		/// </summary>
+		private static readonly List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
 		{
 			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 			{
@@ -313,12 +316,38 @@ namespace Lens.Parser
 			},
 		};
 
-		private Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
+		/// <summary>
+		/// List of unary operators and their corresponding function wrappers in precedence order.
+		/// </summary>
+		private static readonly Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
 		{
 			{ 3, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Minus, Expr.Negate) },
 			{ 0, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Not, Expr.Not) }
 		};
 
+		/// <summary>
+		/// List of binary operator lexems (for shorthand assignment checking).
+		/// </summary>
+		private static readonly LexemType[] _BinaryOperators =
+		{
+			LexemType.And,
+			LexemType.Or,
+			LexemType.Xor,
+			LexemType.ShiftLeft,
+			LexemType.ShiftRight,
+			LexemType.Plus,
+			LexemType.Minus,
+			LexemType.Multiply,
+			LexemType.Divide,
+			LexemType.Remainder,
+			LexemType.Power
+		};
+
+		/// <summary>
+		/// Recursively creates a tree of binary expressions according to operator precedence.
+		/// </summary>
+		/// <param name="getter">Function that returns the expression.</param>
+		/// <param name="priority">Current priority.</param>
 		private NodeBase processOperator(Func<NodeBase> getter, int priority = 0)
 		{
 			if (priority == _BinaryOperatorPriorities.Count)
