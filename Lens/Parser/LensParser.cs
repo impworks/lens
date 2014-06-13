@@ -452,25 +452,37 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// set_id_stmt                                 = identifier "=" expr
+		/// set_id_stmt                                 = identifier assignment_op expr
 		/// </summary>
-		private SetIdentifierNode parseSetIdStmt()
+		private NodeBase parseSetIdStmt()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Assign))
+			if (!peek(LexemType.Identifier))
 				return null;
 
 			var node = new SetIdentifierNode();
 			node.Identifier = getValue();
-			skip();
-			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 
-			return node;
+			if (check(LexemType.Assign))
+			{
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return node;
+			}
+
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = Lexems[LexemId].Type;
+				skip(2);
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return new ShortAssignmentNode(opType, node);
+			}
+
+			return null;
 		}
 
 		/// <summary>
-		/// set_stmbr_stmt                              = type "::" identifier "=" expr
+		/// set_stmbr_stmt                              = type "::" identifier assignment_op expr
 		/// </summary>
-		private SetMemberNode parseSetStmbrStmt()
+		private NodeBase parseSetStmbrStmt()
 		{
 			var type = attempt(parseType);
 			if (type == null)
@@ -483,12 +495,21 @@ namespace Lens.Parser
 			node.StaticType = type;
 			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			if (!check(LexemType.Assign))
-				return null;
+			if (check(LexemType.Assign))
+			{
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return node;
+			}
 
-			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = Lexems[LexemId].Type;
+				skip(2);
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return new ShortAssignmentNode(opType, node);
+			}
 
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -497,11 +518,24 @@ namespace Lens.Parser
 		private NodeBase parseSetAnyStmt()
 		{
 			var node = attempt(parseLvalueExpr);
-			if (node == null || !check(LexemType.Assign))
+			if (node == null)
 				return null;
 
-			var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
-			return makeSetter(node, expr);
+			if (check(LexemType.Assign))
+			{
+				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
+				return makeSetter(node, expr);
+			}
+
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = Lexems[LexemId].Type;
+				skip(2);
+				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
+				return new ShortAssignmentNode(opType, makeSetter(node, expr));
+			}
+
+			return null;
 		}
 
 		#endregion
