@@ -290,7 +290,7 @@ pt.X + pt.Y
 		public void ShorthandAssignment4()
 		{
 			var src = @"
-let data = new [ new [1]; new [2]; new [3] ]
+let data = new [new [1]; new [2]; new [3]]
 let getter = (x:int) -> data[x]
 let indexOffset = 2
 (getter 1)[indexOffset - 2] += 1

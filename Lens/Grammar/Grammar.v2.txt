@@ -75,7 +75,7 @@ using_header <UsingNode>                    = "using" [ identifier "=" ] line_ex
 // block initializers
 new_block_expr <NodeBase>                   = "new" ( new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block )
 new_tuple_block <NewTupleNode>              = "(" init_expr_block ")"
-new_list_block <NewListNode>                = "[[" init_expr_block "]]"
+new_list_block <NewListNode>                = "[" "[" init_expr_block "]" "]"
 new_array_block <NewArrayNode>              = "[" init_expr_block "]"
 new_dict_block <NewDictionaryNode>          = "{" init_dict_expr_block "}"
 init_expr_block <~NodeBase>                 = INDENT line_expr { NL line_expr } DEDENT
@@ -118,7 +118,7 @@ throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
 new_object_expr <NodeBase>                  = "new" ( new_objarray_line | new_object_line )
 new_collection_expr <NodeBase>              = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
 new_tuple_line <NewTupleNode>               = "(" init_expr_line ")"
-new_list_line <NewListNode>                 = "[[" init_expr_line "]]"
+new_list_line <NewListNode>                 = "[" "[" init_expr_line "]" "]"
 new_array_line <NewArrayNode>               = "[" init_expr_line "]"
 new_dict_line <NewDictionaryNode>           = "{" init_dict_expr_line "}"
 new_objarray_line <NewObjectArrayNode>      = type "[" line_expr "]"
