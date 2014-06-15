@@ -61,7 +61,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Argument type is expected!.
+        ///   Looks up a localized string similar to LE2001: Argument type is expected!.
         /// </summary>
         internal static string ArgTypeExpected {
             get {
@@ -70,7 +70,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;&lt;|&apos; statements must be indented!.
+        ///   Looks up a localized string similar to LE2002: &apos;&lt;|&apos; statements must be indented!.
         /// </summary>
         internal static string ArgumentPassIndentExpected {
             get {
@@ -79,7 +79,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Method call arguments are expected!.
+        ///   Looks up a localized string similar to LE2003: Method call arguments are expected!.
         /// </summary>
         internal static string ArgumentsExpected {
             get {
@@ -88,7 +88,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An array must contain at least one item!.
+        ///   Looks up a localized string similar to LE2004: An array must contain at least one item!.
         /// </summary>
         internal static string ArrayItem {
             get {
@@ -97,7 +97,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Assignment expression is expected!.
+        ///   Looks up a localized string similar to LE2005: Assignment expression is expected!.
         /// </summary>
         internal static string AssignExpressionExpected {
             get {
@@ -106,7 +106,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The expression at left side cannot be assigned to!.
+        ///   Looks up a localized string similar to LE2006: The expression at left side cannot be assigned to!.
         /// </summary>
         internal static string AssignLvalueExpected {
             get {
@@ -115,7 +115,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Catch clause is expected!.
+        ///   Looks up a localized string similar to LE2007: Catch clause is expected!.
         /// </summary>
         internal static string CatchExpected {
             get {
@@ -124,7 +124,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Closing brace must be placed on the next line!.
+        ///   Looks up a localized string similar to LE2008: Closing brace must be placed on the next line!.
         /// </summary>
         internal static string ClosingBraceNewLine {
             get {
@@ -133,7 +133,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Code block is expected!.
+        ///   Looks up a localized string similar to LE2009: Code block is expected!.
         /// </summary>
         internal static string CodeBlockExpected {
             get {
@@ -142,7 +142,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Condition block is expected!.
+        ///   Looks up a localized string similar to LE2010: Condition block is expected!.
         /// </summary>
         internal static string ConditionBlockExpected {
             get {
@@ -151,7 +151,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Condition is expected!.
+        ///   Looks up a localized string similar to LE2011: Condition is expected!.
         /// </summary>
         internal static string ConditionExpected {
             get {
@@ -160,7 +160,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Condition expression is expected!.
+        ///   Looks up a localized string similar to LE2012: Condition expression is expected!.
         /// </summary>
         internal static string ConditionExpressionExpected {
             get {
@@ -169,7 +169,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A dictionary must contain at least one item!.
+        ///   Looks up a localized string similar to LE2013: A dictionary must contain at least one item!.
         /// </summary>
         internal static string DictionaryItem {
             get {
@@ -178,7 +178,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dictionary key expression is expected!.
+        ///   Looks up a localized string similar to LE2014: Dictionary key expression is expected!.
         /// </summary>
         internal static string DictionaryKeyExpected {
             get {
@@ -187,7 +187,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dictionary value expression is expected!.
+        ///   Looks up a localized string similar to LE2015: Dictionary value expression is expected!.
         /// </summary>
         internal static string DictionaryValueExpected {
             get {
@@ -196,7 +196,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Exception handler code block is expected!.
+        ///   Looks up a localized string similar to LE2016: Exception handler code block is expected!.
         /// </summary>
         internal static string ExceptionHandlerExpected {
             get {
@@ -205,7 +205,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Exception type signature is expected!.
+        ///   Looks up a localized string similar to LE2017: Exception type signature is expected!.
         /// </summary>
         internal static string ExceptionTypeExpected {
             get {
@@ -214,7 +214,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Expression is expected!.
+        ///   Looks up a localized string similar to LE2018: Expression is expected!.
         /// </summary>
         internal static string ExpressionExpected {
             get {
@@ -223,7 +223,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function body is expected!.
+        ///   Looks up a localized string similar to LE2019: Function body is expected!.
         /// </summary>
         internal static string FunctionBodyExpected {
             get {
@@ -232,7 +232,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function definition is expected!.
+        ///   Looks up a localized string similar to LE2020: Function definition is expected!.
         /// </summary>
         internal static string FunctionDefExpected {
             get {
@@ -241,7 +241,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function name must be an identifier!.
+        ///   Looks up a localized string similar to LE2021: Function name must be an identifier!.
         /// </summary>
         internal static string FunctionIdentifierExpected {
             get {
@@ -250,7 +250,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function return type is expected!.
+        ///   Looks up a localized string similar to LE2022: Function return type is expected!.
         /// </summary>
         internal static string FunctionReturnExpected {
             get {
@@ -259,7 +259,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An identifier is expected!.
+        ///   Looks up a localized string similar to LE2023: An identifier is expected!.
         /// </summary>
         internal static string IdentifierExpected {
             get {
@@ -268,7 +268,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Index expression is expected!.
+        ///   Looks up a localized string similar to LE2024: Index expression is expected!.
         /// </summary>
         internal static string IndexExpressionExpected {
             get {
@@ -277,7 +277,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initializer expression is expected!.
+        ///   Looks up a localized string similar to LE2025: Initializer expression is expected!.
         /// </summary>
         internal static string InitExpressionExpected {
             get {
@@ -286,7 +286,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initializer expression or type signature is expected!.
+        ///   Looks up a localized string similar to LE2026: Initializer expression or type signature is expected!.
         /// </summary>
         internal static string InitExpressionOrTypeExpected {
             get {
@@ -295,7 +295,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initializer expressions must be separated by a newline!.
+        ///   Looks up a localized string similar to LE2027: Initializer expressions must be separated by a newline!.
         /// </summary>
         internal static string InitExpressionSeparatorExpected {
             get {
@@ -304,7 +304,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initializer expressions must be indented!.
+        ///   Looks up a localized string similar to LE2028: Initializer expressions must be indented!.
         /// </summary>
         internal static string InitializerIndentExprected {
             get {
@@ -313,7 +313,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Value &apos;{0}&apos; is not a valid double!.
+        ///   Looks up a localized string similar to LE2029: Value &apos;{0}&apos; is not a valid double!.
         /// </summary>
         internal static string InvalidDouble {
             get {
@@ -322,7 +322,16 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Value &apos;{0}&apos; is not a valid integer!.
+        ///   Looks up a localized string similar to LE2063: Value &apos;{0}&apos; is not a valid float!.
+        /// </summary>
+        internal static string InvalidFloat {
+            get {
+                return ResourceManager.GetString("InvalidFloat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE2030: Value &apos;{0}&apos; is not a valid integer!.
         /// </summary>
         internal static string InvalidInteger {
             get {
@@ -331,7 +340,16 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invoke passes must be separated by a newline!.
+        ///   Looks up a localized string similar to LE2064: Value &apos;{0}&apos; is not a valid long!.
+        /// </summary>
+        internal static string InvalidLong {
+            get {
+                return ResourceManager.GetString("InvalidLong", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE2031: Invoke passes must be separated by a newline!.
         /// </summary>
         internal static string InvokePassSeparatorExpected {
             get {
@@ -340,7 +358,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A list must contain at least one item!.
+        ///   Looks up a localized string similar to LE2032: A list must contain at least one item!.
         /// </summary>
         internal static string ListItem {
             get {
@@ -349,7 +367,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Loop body block is expected!.
+        ///   Looks up a localized string similar to LE2033: Loop body block is expected!.
         /// </summary>
         internal static string LoopBodyExpected {
             get {
@@ -358,7 +376,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Loop body expression is expected!.
+        ///   Looks up a localized string similar to LE2034: Loop body expression is expected!.
         /// </summary>
         internal static string LoopExpressionExpected {
             get {
@@ -367,7 +385,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Member name is expected!.
+        ///   Looks up a localized string similar to LE2035: Member name is expected!.
         /// </summary>
         internal static string MemberNameExpected {
             get {
@@ -376,7 +394,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;|&gt;&apos; statements must be indented!.
+        ///   Looks up a localized string similar to LE2036: &apos;|&gt;&apos; statements must be indented!.
         /// </summary>
         internal static string MethodPassIndentExpected {
             get {
@@ -385,7 +403,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A namespace is expected!.
+        ///   Looks up a localized string similar to LE2037: A namespace is expected!.
         /// </summary>
         internal static string NamespaceExpected {
             get {
@@ -394,7 +412,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Statements must be separated by newlines!.
+        ///   Looks up a localized string similar to LE2038: Statements must be separated by newlines!.
         /// </summary>
         internal static string NewlineSeparatorExpected {
             get {
@@ -403,7 +421,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Range end expression is expected!.
+        ///   Looks up a localized string similar to LE2039: Range end expression is expected!.
         /// </summary>
         internal static string RangeEndExpected {
             get {
@@ -412,7 +430,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Record field name must be an identifier!.
+        ///   Looks up a localized string similar to LE2040: Record field name must be an identifier!.
         /// </summary>
         internal static string RecordFieldIdentifierExpected {
             get {
@@ -421,7 +439,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Record field type signature is expected!.
+        ///   Looks up a localized string similar to LE2041: Record field type signature is expected!.
         /// </summary>
         internal static string RecordFieldTypeExpected {
             get {
@@ -430,7 +448,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Record name must be an identifier!.
+        ///   Looks up a localized string similar to LE2042: Record name must be an identifier!.
         /// </summary>
         internal static string RecordIdentifierExpected {
             get {
@@ -439,7 +457,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Record body must be indented block!.
+        ///   Looks up a localized string similar to LE2043: Record body must be indented block!.
         /// </summary>
         internal static string RecordIndentExpected {
             get {
@@ -448,7 +466,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Record fields must be separated by a newline!.
+        ///   Looks up a localized string similar to LE2044: Record fields must be separated by a newline!.
         /// </summary>
         internal static string RecordSeparatorExpected {
             get {
@@ -457,7 +475,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The &apos;ref&apos; modifier can only be applied to a variable, a field or an array index!.
+        ///   Looks up a localized string similar to LE2045: The &apos;ref&apos; modifier can only be applied to a variable, a field or an array index!.
         /// </summary>
         internal static string RefLvalueExpected {
             get {
@@ -466,7 +484,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sequence expression is expected!.
+        ///   Looks up a localized string similar to LE2046: Sequence expression is expected!.
         /// </summary>
         internal static string SequenceExpected {
             get {
@@ -475,7 +493,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; expected!.
+        ///   Looks up a localized string similar to LE2047: &apos;{0}&apos; expected!.
         /// </summary>
         internal static string SymbolExpected {
             get {
@@ -484,7 +502,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Try block is expected!.
+        ///   Looks up a localized string similar to LE2048: Try block is expected!.
         /// </summary>
         internal static string TryBlockExpected {
             get {
@@ -493,7 +511,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A tuple must contain at least one item!.
+        ///   Looks up a localized string similar to LE2049: A tuple must contain at least one item!.
         /// </summary>
         internal static string TupleItem {
             get {
@@ -502,7 +520,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type argument is expected!.
+        ///   Looks up a localized string similar to LE2050: Type argument is expected!.
         /// </summary>
         internal static string TypeArgumentExpected {
             get {
@@ -511,7 +529,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type name must be an identifier!.
+        ///   Looks up a localized string similar to LE2051: Type name must be an identifier!.
         /// </summary>
         internal static string TypeIdentifierExpected {
             get {
@@ -520,7 +538,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type body must be indented block!.
+        ///   Looks up a localized string similar to LE2052: Type body must be indented block!.
         /// </summary>
         internal static string TypeIndentExpected {
             get {
@@ -529,7 +547,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type label name must be an identifier!.
+        ///   Looks up a localized string similar to LE2053: Type label name must be an identifier!.
         /// </summary>
         internal static string TypeLabelIdentifierExpected {
             get {
@@ -538,7 +556,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tag type signature is expected!.
+        ///   Looks up a localized string similar to LE2054: Tag type signature is expected!.
         /// </summary>
         internal static string TypeLabelTagTypeExpected {
             get {
@@ -547,7 +565,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type labels must be separated by a newline!.
+        ///   Looks up a localized string similar to LE2055: Type labels must be separated by a newline!.
         /// </summary>
         internal static string TypeSeparatorExpected {
             get {
@@ -556,7 +574,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type signature is expected!.
+        ///   Looks up a localized string similar to LE2056: Type signature is expected!.
         /// </summary>
         internal static string TypeSignatureExpected {
             get {
@@ -565,7 +583,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unknown kind of statement!.
+        ///   Looks up a localized string similar to LE2057: Unknown kind of statement!.
         /// </summary>
         internal static string UnknownStatement {
             get {
@@ -574,7 +592,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Resource block body is expected!.
+        ///   Looks up a localized string similar to LE2058: Resource block body is expected!.
         /// </summary>
         internal static string UsingBodyExpected {
             get {
@@ -583,7 +601,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Resource block expression is expected!.
+        ///   Looks up a localized string similar to LE2059: Resource block expression is expected!.
         /// </summary>
         internal static string UsingExpressionExpected {
             get {
@@ -592,7 +610,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A by-ref argument cannot be marked with &apos;...&apos; modifier!.
+        ///   Looks up a localized string similar to LE2060: A by-ref argument cannot be marked with &apos;...&apos; modifier!.
         /// </summary>
         internal static string VariadicByRef {
             get {
@@ -601,7 +619,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Variable name must be an identifier!.
+        ///   Looks up a localized string similar to LE2061: Variable name must be an identifier!.
         /// </summary>
         internal static string VarIdentifierExpected {
             get {
@@ -610,7 +628,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Variable type is expected!.
+        ///   Looks up a localized string similar to LE2062: Variable type is expected!.
         /// </summary>
         internal static string VarTypeExpected {
             get {

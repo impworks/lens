@@ -303,4 +303,10 @@
   <data name="MethodPassIndentExpected" xml:space="preserve">
     <value>LE2036: Перед выражением '|&gt;' требуется отступ!</value>
   </data>
+  <data name="InvalidFloat" xml:space="preserve">
+    <value>LE2063: Значение '{0}' не является дробным числом!</value>
+  </data>
+  <data name="InvalidLong" xml:space="preserve">
+    <value>LE2064: Значение '{0}' не является целым числом двойной точности!</value>
+  </data>
 </root>

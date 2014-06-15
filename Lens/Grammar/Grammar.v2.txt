@@ -134,11 +134,13 @@ bool <BoolNode>                             = "true" | "false"
 
 // specials
 unary_op                                    = "-" | "not"
-binary_op                                   = ...
+binary_op                                   = "&&" | "||" | "^^" | "<:" | ":>" | "==" | "<>" | ">" | "<" | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" | "**"
 
 // value literals
-string <StringNode>                         = "[^"]*" (any character except double quote inside double quotes)
-int <IntNode>                               = [0-9]+
-double <DoubleNode>                         = [0-9]+\.[0-9]+
-char <CharNode>                             = '.' (one character in single quotes)
+string <StringNode>                         = "([^"]|\\["ntr\\])*"
+int <IntNode>                               = [1-9][0-9]*+
+long <LongNode>                             = [1-9][0-9]*L
+float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
+double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
+char <CharNode>                             = '([^']|\\["ntr\\])'
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

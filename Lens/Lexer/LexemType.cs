@@ -40,7 +40,10 @@
 		True,
 		False,
 		Int,
+		Long,
+		Float,
 		Double,
+		Char,
 		String,
 		Identifier,
 

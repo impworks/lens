@@ -1758,16 +1758,19 @@ namespace Lens.Parser
 		#region Literals
 
 		/// <summary>
-		/// literal                                     = unit | null | bool | string | int | double
+		/// literal                                     = unit | null | bool | int | long | float | double | char | string
 		/// </summary>
 		private NodeBase parseLiteral()
 		{
 			return attempt(parseUnit)
 				   ?? attempt(parseNull)
 				   ?? attempt(parseBool)
-				   ?? attempt(parseString)
 				   ?? attempt(parseInt)
-				   ?? attempt(parseDouble) as NodeBase;
+				   ?? attempt(parseLong)
+				   ?? attempt(parseFloat)
+				   ?? attempt(parseDouble)
+				   ?? attempt(parseChar)
+				   ?? attempt(parseString) as NodeBase;
 		}
 
 		private UnitNode parseUnit()
@@ -1816,6 +1819,40 @@ namespace Lens.Parser
 			}
 		}
 
+		private LongNode parseLong()
+		{
+			if (!peek(LexemType.Long))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new LongNode(long.Parse(value.Substring(0, value.Length - 1), NumberStyles.Integer, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidLong, value);
+				return null;
+			}
+		}
+
+		private FloatNode parseFloat()
+		{
+			if (!peek(LexemType.Float))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new FloatNode(float.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidFloat, value);
+				return null;
+			}
+		}
+ 
 		private DoubleNode parseDouble()
 		{
 			if (!peek(LexemType.Double))
@@ -1831,6 +1868,11 @@ namespace Lens.Parser
 				error(ParserMessages.InvalidDouble, value);
 				return null;
 			}
+		}
+
+		private CharNode parseChar()
+		{
+			return peek(LexemType.Char) ? new CharNode(getValue()[0]) : null;
 		}
 
 		#endregion
