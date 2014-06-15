@@ -1003,19 +1003,24 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// new_list_block                              = "[[" init_expr_block "]]"
+		/// new_list_block                              = "[" "[" init_expr_block "]" "]"
 		/// </summary>
 		private NewListNode parseNewListBlock()
 		{
-			if (!check(LexemType.DoubleSquareOpen))
+			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
+
+			skip(2);
 
 			var node = new NewListNode();
 			node.Expressions = parseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
+			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
+				error(ParserMessages.SymbolExpected, "]]");
+
+			skip(2);
 
 			return node;
 		}
@@ -1071,7 +1076,7 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
-				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose, LexemType.DoubleSquareClose))
+				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose))
 					error(ParserMessages.ClosingBraceNewLine);
 
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
@@ -1615,19 +1620,24 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// new_list_line                               = "[[" init_expr_block "]]"
+		/// new_list_line                               = "[" "[" init_expr_block "]" "]"
 		/// </summary>
 		private NewListNode parseNewListLine()
 		{
-			if (!check(LexemType.DoubleSquareOpen))
+			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
+
+			skip(2);
 
 			var node = new NewListNode();
 			node.Expressions = parseInitExprLine().ToList();
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.ListItem);
 
-			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
+			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
+				error(ParserMessages.SymbolExpected, "]]");
+
+			skip(2);
 
 			return node;
 		}

@@ -63,8 +63,6 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(">", LexemType.Greater),
 			new StaticLexemDefinition("=", LexemType.Assign),
 
-			new StaticLexemDefinition("[[", LexemType.DoubleSquareOpen),
-			new StaticLexemDefinition("]]", LexemType.DoubleSquareClose),
 			new StaticLexemDefinition("[", LexemType.SquareOpen),
 			new StaticLexemDefinition("]", LexemType.SquareClose),
 			new StaticLexemDefinition("(", LexemType.ParenOpen),

@@ -51,8 +51,6 @@
 		CurlyClose,
 		SquareOpen,
 		SquareClose,
-		DoubleSquareOpen,
-		DoubleSquareClose,
 
 		// Operators
 		Plus,
