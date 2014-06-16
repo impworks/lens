@@ -92,15 +92,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsNumericType(this Type type)
 		{
-			return type.IsIntegerType() || type.IsFloatType();
-		}
-
-		/// <summary>
-		/// Checks if the type is returnable.
-		/// </summary>
-		public static bool IsNotVoid(this Type type)
-		{
-			return type != typeof (void) && type != typeof (UnitType);
+			return type.IsSignedIntegerType() || type.IsUnsignedIntegerType() || type.IsFloatType();
 		}
 
 		/// <summary>

@@ -101,13 +101,13 @@ namespace Lens.Compiler.Entities
 			var gen = ctx.CurrentMethod.Generator;
 			var actualType = Body.Resolve(ctx);
 
-			if (ReturnType.IsNotVoid() || actualType.IsNotVoid())
+			if (!ReturnType.IsVoid() || !actualType.IsVoid())
 			{
 				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
 					Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
 			}
 
-			if (ReturnType == typeof(object) && actualType.IsValueType && actualType.IsNotVoid())
+			if (ReturnType == typeof(object) && actualType.IsValueType && !actualType.IsVoid())
 				gen.EmitBox(actualType);
 
 			// special hack: if the main method's implicit type is Unit, it should still return null
