@@ -28,11 +28,8 @@ namespace Lens.SyntaxTree.Operators
 			if (toType.IsExtendablyAssignableFrom(fromType, true))
 				Expression.Emit(ctx, true);
 
-			else if (fromType.IsNumericType() && toType.IsNumericType())
-			{
-				Expression.Emit(ctx, true);
-				gen.EmitConvert(toType);
-			}
+			else if (fromType.IsNumericType() && toType.IsNumericType() && fromType != typeof(decimal)) // (decimal -> T) is processed via op_Explicit()
+				castNumeric(ctx, fromType, toType);
 
 			else if(fromType.IsCallableType() && toType.IsCallableType())
 				castDelegate(ctx, fromType, toType);
@@ -98,11 +95,11 @@ namespace Lens.SyntaxTree.Operators
 					gen.EmitCast(toType);
 
 				else
-					castError(fromType, toType);
+					error(fromType, toType);
 			}
 
 			else
-				castError(fromType, toType);
+				error(fromType, toType);
 		}
 
 		private void castDelegate(Context ctx, Type from, Type to)
@@ -134,7 +131,30 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitCreateObject(toCtor.ConstructorInfo);
 		}
 
-		private void castError(Type from, Type to)
+		private void castNumeric(Context ctx, Type from, Type to)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+			
+			Expression.Emit(ctx, true);
+
+			if (to == typeof (decimal))
+			{
+				var ctor = ctx.ResolveConstructor(typeof (decimal), new[] { from });
+				if (ctor == null)
+				{
+					ctor = ctx.ResolveConstructor(typeof(decimal), new[] { typeof(int) });
+					gen.EmitConvert(typeof(int));
+				}
+
+				gen.EmitCreateObject(ctor.ConstructorInfo);
+			}
+			else
+			{
+				gen.EmitConvert(to);
+			}
+		}
+
+		private void error(Type from, Type to)
 		{
 			error(CompilerMessages.CastTypesMismatch, from, to);
 		}
