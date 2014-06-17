@@ -9,7 +9,8 @@ namespace Lens.Compiler
 	{
 		#region Identifier fields
 
-		private int _AssemblyId;
+		private static int _AssemblyId;
+
 		private int _AnonymousArgumentId;
 		private int _ClosureId;
 		private int _ClosureMethodId;
