@@ -5,10 +5,21 @@ using NUnit.Framework;
 
 namespace Lens.Test.Internals
 {
+	using System;
+	using System.IO;
+
+
 	[TestFixture]
 	class TranslationsTest
 	{
-		private const string TranslationsFolder = @"..\..\..\Lens\Translations\";
+		private string TranslationsFolder
+		{
+			get
+			{
+				var currFolder = Environment.CurrentDirectory;
+				return Path.Combine(currFolder, @"..\..\..\Lens\Translations\");
+			}	
+		}
 
 		[Test]
 		[TestCaseSource("TranslationComponents")]
