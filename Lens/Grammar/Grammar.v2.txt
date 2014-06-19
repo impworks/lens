@@ -13,10 +13,16 @@ record_def <RecordDefinitionNode>           = "record" identifier INDENT record_
 record_stmt <RecordField>                   = identifier ":" type
 type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
 type_stmt <TypeLabel>                       = identifier [ "of" type ]
-fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
+fun_def <FunctionNode>                      = [ "pure" ] "fun" [ generic_defs ] identifier [ ":" type ] fun_args [ generic_constraints ] "->" block
 fun_args <~FunctionArgument>                = fun_arg | fun_arg_list
 fun_arg <FunctionArgument>                  = identifier [ ":" [ "ref" ] type [ "..." ] ]
 fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"
+
+// generic definitions
+generic_defs                                = "<" identifier { "," identifier } ">"
+generic_constraint_def_list                 = { [ NL ] generic_constraint }
+generic_constraint_def                      = "where" identifier ":" generic_constraint { "," generic_constraint }
+generic_constraint                          = "new" | type
 
 // blocks
 block <CodeBlockNode>                       = local_stmt_list | local_stmt
