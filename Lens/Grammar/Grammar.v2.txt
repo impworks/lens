@@ -22,7 +22,7 @@ fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"
 generic_defs                                = "<" identifier { "," identifier } ">"
 generic_constraint_def_list                 = { [ NL ] generic_constraint }
 generic_constraint_def                      = "where" identifier ":" generic_constraint { "," generic_constraint }
-generic_constraint                          = "new" | type
+generic_constraint                          = "new" | "ref" | type
 
 // blocks
 block <CodeBlockNode>                       = local_stmt_list | local_stmt

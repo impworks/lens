@@ -75,6 +75,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\Entities\GenericParameterEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
     <Compile Include="Resolver\ReferencedAssemblyCache.cs" />

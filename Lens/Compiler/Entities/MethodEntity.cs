@@ -6,7 +6,6 @@ using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
@@ -39,6 +38,11 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
+		/// <summary>
+		/// List of generic parameters for current method.
+		/// </summary>
+		public GenericParameterEntity[] GenericParameters { get; private set; }
+
 		private MethodInfo m_MethodInfo;
 		public MethodInfo MethodInfo
 		{
@@ -63,10 +67,8 @@ namespace Lens.Compiler.Entities
 			var ctx = ContainerType.Context;
 
 			var attrs = MethodAttributes.Public;
-			if(IsStatic)
-				attrs |= MethodAttributes.Static;
-			if(IsVirtual)
-				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
+			if(IsStatic) attrs |= MethodAttributes.Static;
+			if(IsVirtual) attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
 			if (ReturnType == null)
 				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)

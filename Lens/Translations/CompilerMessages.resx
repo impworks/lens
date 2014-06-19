@@ -498,4 +498,19 @@
   <data name="TypeInterface" xml:space="preserve">
     <value>LE3108: Cannot create an instance of interface '{0}'!</value>
   </data>
+  <data name="GenericParameterBaseDuplicate" xml:space="preserve">
+    <value>LE3131: Type '{1}' has been specified more than once as base type for generic parameter '{0}'!</value>
+  </data>
+  <data name="GenericParameterBaseRestrictedType" xml:space="preserve">
+    <value>LE3132: Cannot use type '{1}' as generic constraint for '{0}' because it is built-in! Use constraint '{2}' instead.</value>
+  </data>
+  <data name="GenericParameterGenericBased" xml:space="preserve">
+    <value>LE3130: Generic parameter '{0}' cannot inherit from another generic parameter '{1}'!</value>
+  </data>
+  <data name="GenericParameterManyBaseTypes" xml:space="preserve">
+    <value>LE3129: Generic parameter '{0}' has more than 1 base types: {1}!</value>
+  </data>
+  <data name="GenericParameterRefVal" xml:space="preserve">
+    <value>LE3128: Generic parameter '{0}' cannot be both 'ref' and 'val'!</value>
+  </data>
 </root>

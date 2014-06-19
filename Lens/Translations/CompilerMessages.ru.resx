@@ -498,4 +498,19 @@
   <data name="ExpressionNotIDisposable" xml:space="preserve">
     <value>LE3033: Выражение типа '{0}' не может быть использовано в блоке 'using', поскольку не приводится к интерфейсу 'IDisposable'!</value>
   </data>
+  <data name="GenericParameterBaseDuplicate" xml:space="preserve">
+    <value>LE3131: Тип '{1}' был повторно указан в качестве базового типа для обобщенного параметра '{0}'!</value>
+  </data>
+  <data name="GenericParameterBaseRestrictedType" xml:space="preserve">
+    <value>LE3132: Нельзя использовать тип '{1}' в качестве базового для обобщенного параметра '{0}'! Вместо этого воспользуйтесь ограничением '{2}'.</value>
+  </data>
+  <data name="GenericParameterGenericBased" xml:space="preserve">
+    <value>LE3130: Обобщенный параметр '{0}' не может наследоваться от другого обобщенного параметра '{1}'!</value>
+  </data>
+  <data name="GenericParameterManyBaseTypes" xml:space="preserve">
+    <value>LE3129: Для обобщенного параметра '{0}' указано более одного базового типа: {1}!</value>
+  </data>
+  <data name="GenericParameterRefVal" xml:space="preserve">
+    <value>LE3128: Обобщенный параметр '{0}' не может одновременно иметь ограничения 'ref' и 'val'!</value>
+  </data>
 </root>
