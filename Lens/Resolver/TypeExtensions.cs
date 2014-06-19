@@ -34,7 +34,8 @@ namespace Lens.Resolver
 			FloatTypes = new[]
 			{
 				typeof (float),
-				typeof (double)
+				typeof (double),
+				typeof (decimal)
 			};
 
 			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();

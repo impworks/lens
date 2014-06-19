@@ -67,8 +67,8 @@ namespace Lens.Test.Internals
 		[Test]
 		public void DecimalNotSupported()
 		{
-			TestDistanceFrom<decimal, sbyte>(int.MaxValue);
-			TestDistanceFrom<decimal, ulong>(int.MaxValue);
+			TestDistanceFrom<decimal, sbyte>(4);
+			TestDistanceFrom<decimal, ulong>(1);
 		}
 
 		[Test]
