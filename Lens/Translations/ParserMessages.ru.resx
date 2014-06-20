@@ -307,7 +307,7 @@
     <value>LE2063: Значение '{0}' не является допустимым дробным числом!</value>
   </data>
   <data name="InvalidLong" xml:space="preserve">
-    <value>LE2064: Значение '{0}' не является допустимым целым числом!</value>
+    <value>LE2065: Значение '{0}' не является допустимым целым числом!</value>
   </data>
   <data name="InvalidDecimal" xml:space="preserve">
     <value>LE2064: Значение '{0}' не является допустимым десятичным числом!</value>
