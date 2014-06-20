@@ -91,8 +91,11 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a type is any of the numeric types.
 		/// </summary>
-		public static bool IsNumericType(this Type type)
+		public static bool IsNumericType(this Type type, bool allowNonPrimitives = false)
 		{
+			if (!allowNonPrimitives && type == typeof (decimal))
+				return false;
+
 			return type.IsSignedIntegerType() || type.IsUnsignedIntegerType() || type.IsFloatType();
 		}
 
@@ -165,7 +168,7 @@ namespace Lens.Resolver
 				if ((varType.IsClass || varType.IsNullableType()) && exprType == typeof(NullType))
 					return 1;
 
-				if (varType.IsNumericType() && exprType.IsNumericType())
+				if (varType.IsNumericType(true) && exprType.IsNumericType(true))
 					return numericTypeConversion(varType, exprType);
 			}
 
