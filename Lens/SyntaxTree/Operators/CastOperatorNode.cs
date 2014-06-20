@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Operators
 			if (toType.IsExtendablyAssignableFrom(fromType, true))
 				Expression.Emit(ctx, true);
 
-			else if (fromType.IsNumericType() && toType.IsNumericType() && fromType != typeof(decimal)) // (decimal -> T) is processed via op_Explicit()
+			else if (fromType.IsNumericType() && toType.IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
 				castNumeric(ctx, fromType, toType);
 
 			else if(fromType.IsCallableType() && toType.IsCallableType())
