@@ -309,4 +309,7 @@
   <data name="InvalidLong" xml:space="preserve">
     <value>LE2064: Value '{0}' is not a valid long!</value>
   </data>
+  <data name="InvalidDecimal" xml:space="preserve">
+    <value>LE2065: Value '{0}' is not a valid decimal!</value>
+  </data>
 </root>

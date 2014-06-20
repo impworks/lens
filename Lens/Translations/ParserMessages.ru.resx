@@ -199,10 +199,10 @@
     <value>LE2028: Инициализирующие выражения должны быть выделены отступом!</value>
   </data>
   <data name="InvalidDouble" xml:space="preserve">
-    <value>LE2029: Значение '{0}' не является дробным числом!</value>
+    <value>LE2029: Значение '{0}' не является допустимым дробным числом!</value>
   </data>
   <data name="InvalidInteger" xml:space="preserve">
-    <value>LE2030: Значение '{0}' не является целым числом!</value>
+    <value>LE2030: Значение '{0}' не является допустимым целым числом!</value>
   </data>
   <data name="InvokePassSeparatorExpected" xml:space="preserve">
     <value>LE2031: Выражения передачи значения должны располагаться на отдельных строках!</value>
@@ -304,9 +304,12 @@
     <value>LE2036: Перед выражением '|&gt;' требуется отступ!</value>
   </data>
   <data name="InvalidFloat" xml:space="preserve">
-    <value>LE2063: Значение '{0}' не является дробным числом!</value>
+    <value>LE2063: Значение '{0}' не является допустимым дробным числом!</value>
   </data>
   <data name="InvalidLong" xml:space="preserve">
-    <value>LE2064: Значение '{0}' не является целым числом двойной точности!</value>
+    <value>LE2064: Значение '{0}' не является допустимым целым числом!</value>
+  </data>
+  <data name="InvalidDecimal" xml:space="preserve">
+    <value>LE2064: Значение '{0}' не является допустимым десятичным числом!</value>
   </data>
 </root>

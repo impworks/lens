@@ -127,7 +127,7 @@ init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }
 
 // literals
-literal <NodeBase>                          = unit | null | bool | string | int | double | char
+literal <NodeBase>                          = unit | null | bool | string | long | int | decimal | float | double | char
 unit <UnitNode>                             = "()"
 null <NullNode>                             = "null"
 bool <BoolNode>                             = "true" | "false"
@@ -138,8 +138,9 @@ binary_op                                   = "&&" | "||" | "^^" | "<:" | ":>" |
 
 // value literals
 string <StringNode>                         = "([^"]|\\["ntr\\])*"
-int <IntNode>                               = [1-9][0-9]*+
 long <LongNode>                             = [1-9][0-9]*L
+int <IntNode>                               = [1-9][0-9]*+
+decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
 float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
 double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
 char <CharNode>                             = '([^']|\\["ntr\\])'

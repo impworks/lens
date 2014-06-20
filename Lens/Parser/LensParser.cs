@@ -1758,7 +1758,7 @@ namespace Lens.Parser
 		#region Literals
 
 		/// <summary>
-		/// literal                                     = unit | null | bool | int | long | float | double | char | string
+		/// literal                                     = unit | null | bool | int | long | float | double | decimal | char | string
 		/// </summary>
 		private NodeBase parseLiteral()
 		{
@@ -1769,6 +1769,7 @@ namespace Lens.Parser
 				   ?? attempt(parseLong)
 				   ?? attempt(parseFloat)
 				   ?? attempt(parseDouble)
+				   ?? attempt(parseDecimal)
 				   ?? attempt(parseChar)
 				   ?? attempt(parseString) as NodeBase;
 		}
@@ -1866,6 +1867,23 @@ namespace Lens.Parser
 			catch
 			{
 				error(ParserMessages.InvalidDouble, value);
+				return null;
+			}
+		}
+
+		private DecimalNode parseDecimal()
+		{
+			if (!peek(LexemType.Decimal))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new DecimalNode(decimal.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidDecimal, value);
 				return null;
 			}
 		}
