@@ -579,14 +579,7 @@ namespace Lens.Resolver
 				return signedToFloatConversion(varType, exprType);
 
 			if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
-			{
-				var correspondingSignedType = getCorrespondingSignedType(varType);
-				var result = unsignedToSignedConversion(correspondingSignedType, exprType);
-
-				return result == int.MaxValue
-					? int.MaxValue
-					: result + 1;
-			}
+				return unsignedToFloatConversion(varType, exprType);
 
 			return int.MaxValue;
 		}
@@ -626,12 +619,37 @@ namespace Lens.Resolver
 				: result + 1;
 		}
 
+		private static int unsignedToFloatConversion(Type varType, Type exprType)
+		{
+			if (exprType == typeof (ulong))
+			{
+				// ulong can be implicitly converted only to double or decimal.
+				if (varType == typeof (double))
+					return 1;
+
+				if (varType == typeof (decimal))
+					return 2;
+			}
+			else
+			{
+				// If type is not ulong we need to convert it to the corresponding signed type.
+				var correspondingSignedType = getCorrespondingSignedType(varType);
+				var result = unsignedToSignedConversion(correspondingSignedType, exprType);
+
+				return result == int.MaxValue
+					? int.MaxValue
+					: result + 1;
+			}
+
+			return int.MaxValue;
+		}
+
 		private static Type getCorrespondingSignedType(Type floatType)
 		{
 			if (floatType == typeof (float))
 				return typeof (int);
 
-			if (floatType == typeof (double))
+			if (floatType == typeof (double) || floatType == typeof (decimal))
 				return typeof (long);
 
 			return null;

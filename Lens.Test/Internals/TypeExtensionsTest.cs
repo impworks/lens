@@ -65,13 +65,6 @@ namespace Lens.Test.Internals
 		}
 
 		[Test]
-		public void DecimalNotSupported()
-		{
-			TestDistanceFrom<decimal, sbyte>(4);
-			TestDistanceFrom<decimal, ulong>(1);
-		}
-
-		[Test]
 		public void IntegralTypeConversion()
 		{
 			TestDistanceFrom<long, sbyte>(3);
@@ -81,6 +74,8 @@ namespace Lens.Test.Internals
 		public void FloatingPointTypeConversion()
 		{
 			TestDistanceFrom<double, float>(1);
+			TestDistanceFrom<decimal, float>(2);
+			TestDistanceFrom<decimal, double>(1);
 		}
 
 		[Test]
@@ -88,7 +83,10 @@ namespace Lens.Test.Internals
 		{
 			TestDistanceFrom<float, int>(1);
 			TestDistanceFrom<double, long>(1);
+			TestDistanceFrom<double, ulong>(1);
 			TestDistanceFrom<double, short>(3);
+			TestDistanceFrom<decimal, sbyte>(4);
+			TestDistanceFrom<decimal, ulong>(2);
 		}
 
 		[Test]
