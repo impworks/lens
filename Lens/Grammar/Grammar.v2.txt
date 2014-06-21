@@ -127,18 +127,21 @@ init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }
 
 // literals
-literal <NodeBase>                          = unit | null | bool | string | int | double | char
+literal <NodeBase>                          = unit | null | bool | string | long | int | decimal | float | double | char
 unit <UnitNode>                             = "()"
 null <NullNode>                             = "null"
 bool <BoolNode>                             = "true" | "false"
 
 // specials
 unary_op                                    = "-" | "not"
-binary_op                                   = ...
+binary_op                                   = "&&" | "||" | "^^" | "<:" | ":>" | "==" | "<>" | ">" | "<" | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" | "**"
 
 // value literals
-string <StringNode>                         = "[^"]*" (any character except double quote inside double quotes)
-int <IntNode>                               = [0-9]+
-double <DoubleNode>                         = [0-9]+\.[0-9]+
-char <CharNode>                             = '.' (one character in single quotes)
+string <StringNode>                         = "([^"]|\\["ntr\\])*"
+long <LongNode>                             = [1-9][0-9]*L
+int <IntNode>                               = [1-9][0-9]*+
+decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
+float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
+double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
+char <CharNode>                             = '([^']|\\["ntr\\])'
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

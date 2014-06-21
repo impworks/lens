@@ -17,46 +17,6 @@ fx (1.0 / 0)";
 		}
 
 		[Test]
-		public void DelegateCasting()
-		{
-			var src = @"
-var ts = (-> Console::WriteLine 1) as ThreadStart
-ts ()";
-			Test(src, null);
-		}
-
-		[Test]
-		public void DelegateCasting2()
-		{
-			var src = @"
-var filter = (x:int -> x > 2) as Predicate<int>
-var arr = new [1; 2; 3; 4; 5]
-Array::FindAll arr filter";
-
-			Test(src, new[] { 3, 4, 5 });
-		}
-
-		[Test]
-		public void DelegateCastingError1()
-		{
-			var src = @"
-let fx = x:int -> x
-fx as Func<string, int>
-";
-			TestError(src, CompilerMessages.CastDelegateArgTypesMismatch);
-		}
-
-		[Test]
-		public void DelegateCastingError2()
-		{
-			var src = @"
-let fx = x:int -> x
-fx as Func<int, string>
-";
-			TestError(src, CompilerMessages.CastDelegateReturnTypesMismatch);
-		}
-
-		[Test]
 		public void Closure1()
 		{
 			var src = @"

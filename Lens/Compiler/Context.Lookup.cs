@@ -174,6 +174,15 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
+		/// Resolves a conversion operator to a certain type.
+		/// </summary>
+		public MethodWrapper ResolveConvertorToType(Type from, Type to)
+		{
+			return ResolveMethodGroup(@from, "op_Explicit").FirstOrDefault(x => x.ReturnType == to)
+				   ?? ResolveMethodGroup(@from, "op_Implicit").FirstOrDefault(x => x.ReturnType == to);
+		}
+
+		/// <summary>
 		/// Resolves a global property by its name.
 		/// </summary>
 		internal GlobalPropertyInfo ResolveGlobalProperty(string name)

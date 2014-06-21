@@ -34,7 +34,8 @@ namespace Lens.Resolver
 			FloatTypes = new[]
 			{
 				typeof (float),
-				typeof (double)
+				typeof (double),
+				typeof (decimal)
 			};
 
 			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
@@ -90,17 +91,12 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a type is any of the numeric types.
 		/// </summary>
-		public static bool IsNumericType(this Type type)
+		public static bool IsNumericType(this Type type, bool allowNonPrimitives = false)
 		{
-			return type.IsIntegerType() || type.IsFloatType();
-		}
+			if (!allowNonPrimitives && type == typeof (decimal))
+				return false;
 
-		/// <summary>
-		/// Checks if the type is returnable.
-		/// </summary>
-		public static bool IsNotVoid(this Type type)
-		{
-			return type != typeof (void) && type != typeof (UnitType);
+			return type.IsSignedIntegerType() || type.IsUnsignedIntegerType() || type.IsFloatType();
 		}
 
 		/// <summary>
@@ -172,7 +168,7 @@ namespace Lens.Resolver
 				if ((varType.IsClass || varType.IsNullableType()) && exprType == typeof(NullType))
 					return 1;
 
-				if (varType.IsNumericType() && exprType.IsNumericType())
+				if (varType.IsNumericType(true) && exprType.IsNumericType(true))
 					return numericTypeConversion(varType, exprType);
 			}
 
@@ -583,14 +579,7 @@ namespace Lens.Resolver
 				return signedToFloatConversion(varType, exprType);
 
 			if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
-			{
-				var correspondingSignedType = getCorrespondingSignedType(varType);
-				var result = unsignedToSignedConversion(correspondingSignedType, exprType);
-
-				return result == int.MaxValue
-					? int.MaxValue
-					: result + 1;
-			}
+				return unsignedToFloatConversion(varType, exprType);
 
 			return int.MaxValue;
 		}
@@ -630,12 +619,31 @@ namespace Lens.Resolver
 				: result + 1;
 		}
 
+		private static int unsignedToFloatConversion(Type varType, Type exprType)
+		{
+			if (exprType == typeof (ulong) && varType == typeof (decimal))
+			{
+				// ulong can be implicitly converted only to decimal.
+				return 1;
+			}
+			else
+			{
+				// If type is not ulong we need to convert it to the corresponding signed type.
+				var correspondingSignedType = getCorrespondingSignedType(varType);
+				var result = unsignedToSignedConversion(correspondingSignedType, exprType);
+
+				return result == int.MaxValue
+					? int.MaxValue
+					: result + 1;
+			}
+		}
+
 		private static Type getCorrespondingSignedType(Type floatType)
 		{
 			if (floatType == typeof (float))
 				return typeof (int);
 
-			if (floatType == typeof (double))
+			if (floatType == typeof (double) || floatType == typeof (decimal))
 				return typeof (long);
 
 			return null;

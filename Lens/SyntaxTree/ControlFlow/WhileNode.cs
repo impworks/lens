@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		public override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var loopType = Resolve(ctx);
-			var saveLast = mustReturn && loopType.IsNotVoid();
+			var saveLast = mustReturn && !loopType.IsVoid();
 
 			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var loopType = Resolve(ctx);
-			var saveLast = mustReturn && loopType.IsNotVoid();
+			var saveLast = mustReturn && !loopType.IsVoid();
 
 			var beginLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();

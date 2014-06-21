@@ -10,7 +10,7 @@ namespace Lens.Lexer
 
 		public RegexLexemDefinition(string regex, LexemType type)
 		{
-			Regex = new Regex("\\G" + regex, RegexOptions.Compiled);
+			Regex = new Regex(@"\G" + regex, RegexOptions.Compiled);
 			Type = type;
 		}
 	}

@@ -605,7 +605,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public static void EmitUnbox(this ILGenerator gen, Type type)
 		{
-			gen.Emit(OpCodes.Box, type);
+			gen.Emit(OpCodes.Unbox_Any, type);
 		}
 
 		/// <summary>

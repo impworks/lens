@@ -36,23 +36,36 @@ namespace Lens.SyntaxTree.Operators
 			if (result != null)
 				return result;
 
-			if (IsNumericOperator)
-			{
-				if (leftType.IsNumericType() && rightType.IsNumericType())
-					return resolveNumericType(ctx);
-			}
-
 			if (OverloadedMethodName != null)
 			{
 				try
 				{
 					m_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
-
-					// cannot be generic
-					if (m_OverloadedMethod != null)
-						return m_OverloadedMethod.ReturnType;
 				}
-				catch { }
+				catch
+				{
+					try
+					{
+						m_OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
+					}
+					catch { }
+				}
+
+				// cannot be generic
+				if (m_OverloadedMethod != null)
+					return m_OverloadedMethod.ReturnType;
+			}
+
+			if (IsNumericOperator)
+			{
+				if (leftType.IsNumericType() && rightType.IsNumericType())
+				{
+					var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
+					if (commonNumericType == null)
+						error(CompilerMessages.OperatorTypesSignednessMismatch);
+
+					return commonNumericType;
+				}
 			}
 
 			error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
@@ -114,21 +127,14 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		protected void loadAndConvertNumerics(Context ctx, Type type = null)
 		{
-			var gen = ctx.CurrentMethod.Generator;
-
 			var left = LeftOperand.Resolve(ctx);
 			var right = RightOperand.Resolve(ctx);
 
 			if(type == null)
 				type = TypeExtensions.GetNumericOperationType(left, right);
 
-			LeftOperand.Emit(ctx, true);
-			if (left != type)
-				gen.EmitConvert(type);
-
-			RightOperand.Emit(ctx, true);
-			if (right != type)
-				gen.EmitConvert(type);
+			Expr.Cast(LeftOperand, type).Emit(ctx, true);
+			Expr.Cast(RightOperand, type).Emit(ctx, true);
 		}
 
 		#endregion

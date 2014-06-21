@@ -126,6 +126,10 @@
     <Compile Include="SyntaxTree\Expressions\NewObjectArrayNode.cs" />
     <Compile Include="SyntaxTree\Internals\GetArgumentNode.cs" />
     <Compile Include="SyntaxTree\Expressions\ShortAssignmentNode.cs" />
+    <Compile Include="SyntaxTree\Literals\CharLiteral.cs" />
+    <Compile Include="SyntaxTree\Literals\DecimalNode.cs" />
+    <Compile Include="SyntaxTree\Literals\FloatNode.cs" />
+    <Compile Include="SyntaxTree\Literals\LongNode.cs" />
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\XorOperatorNode.cs" />
