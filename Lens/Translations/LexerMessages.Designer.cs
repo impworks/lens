@@ -61,7 +61,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Inconsistent identation!.
+        ///   Looks up a localized string similar to LE1001: Inconsistent identation!.
         /// </summary>
         internal static string InconsistentIdentation {
             get {
@@ -70,7 +70,16 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tabulation is not allowed in source code! Use spaces to indent code blocks..
+        ///   Looks up a localized string similar to LE1006: Incorrect char literal!.
+        /// </summary>
+        internal static string IncorrectCharLiteral {
+            get {
+                return ResourceManager.GetString("IncorrectCharLiteral", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE1002: Tabulation is not allowed in source code! Use spaces to indent code blocks..
         /// </summary>
         internal static string TabChar {
             get {
@@ -79,7 +88,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unclosed string literal!.
+        ///   Looks up a localized string similar to LE1003: Unclosed string literal!.
         /// </summary>
         internal static string UnclosedString {
             get {
@@ -88,7 +97,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unknown escape sequence: \{0}.
+        ///   Looks up a localized string similar to LE1004: Unknown escape sequence: \{0}.
         /// </summary>
         internal static string UnknownEscape {
             get {
@@ -97,7 +106,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unknown lexem!.
+        ///   Looks up a localized string similar to LE1005: Unknown lexem!.
         /// </summary>
         internal static string UnknownLexem {
             get {

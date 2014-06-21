@@ -66,11 +66,11 @@ namespace Lens.SyntaxTree.ControlFlow
 				{
 					var nodeType = node.Resolve(ctx);
 					var desiredType = Resolve(ctx);
-					if (nodeType.IsNotVoid() && desiredType.IsNotVoid())
+					if (!nodeType.IsVoid() && !desiredType.IsVoid())
 						node = Expr.Cast(node, desiredType);
 
 					node.Emit(ctx, mustReturn);
-					if (!mustReturn && node.Resolve(ctx).IsNotVoid())
+					if (!mustReturn && !node.Resolve(ctx).IsVoid())
 						gen.EmitPop();
 				}
 
@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			{
 				gen.EmitBranchFalse(endLabel);
 				TrueAction.Emit(ctx, mustReturn);
-				if (TrueAction.Resolve(ctx).IsNotVoid())
+				if (!TrueAction.Resolve(ctx).IsVoid())
 					gen.EmitPop();
 
 				gen.MarkLabel(endLabel);
@@ -112,7 +112,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var desiredType = Resolve(ctx);
 			var branchType = branch.Resolve(ctx, canReturn);
 
-			if (branchType.IsNotVoid() && desiredType.IsNotVoid())
+			if (!branchType.IsVoid() && !desiredType.IsVoid())
 				branch = Expr.Cast(branch, desiredType);
 			
 			branch.Emit(ctx, canReturn);

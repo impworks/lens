@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -49,9 +50,13 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
+			var stringyTypes = new[] {typeof (string), typeof (char)};
+			if (leftType.IsAnyOf(stringyTypes) && rightType.IsAnyOf(stringyTypes))
+				return typeof (string);
+
 			if (leftType == rightType)
 			{
-				if(leftType == typeof(string) || leftType.IsArray || leftType.IsAppliedVersionOf(typeof(Dictionary<,>)))
+				if(leftType.IsArray || leftType.IsAppliedVersionOf(typeof(Dictionary<,>)))
 					return leftType;
 			}
 
@@ -76,6 +81,9 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
+			if (left is char && right is char)
+				return string.Concat(left, right);
+
 			try
 			{
 				return checked(left + right);

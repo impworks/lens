@@ -181,18 +181,26 @@ let a = 1
 		[Test]
 		public void OverloadedOperators()
 		{
-			Test("(new Decimal 1) + (new Decimal 2)", 3);
-			Test("(new Decimal 2) - (new Decimal 1)", 1);
-			Test("(new Decimal 2) * (new Decimal 2)", 4);
-			Test("(new Decimal 42) / (new Decimal 2)", 21);
-			Test("(new Decimal 100) % (new Decimal 3)", 1);
+			Test("1M + 2M", 3);
+			Test("2M - 1M", 1);
+			Test("2M * 2M", 4);
+			Test("42M / 2M", 21);
+			Test("100M % 3M", 1);
+			Test("1M == 2M", false);
+			Test("1M <> 2M", true);
+			Test("1M < 2M", true);
+			Test("1M <= 2M", true);
+			Test("1M > 2M", false);
+			Test("1M >= 2M", false);
+		}
 
-			Test("(new Decimal 1) == (new Decimal 2)", false);
-			Test("(new Decimal 1) <> (new Decimal 2)", true);
-			Test("(new Decimal 1) < (new Decimal 2)", true);
-			Test("(new Decimal 1) <= (new Decimal 2)", true);
-			Test("(new Decimal 1) > (new Decimal 2)", false);
-			Test("(new Decimal 1) >= (new Decimal 2)", false);
+		[Test]
+		public void OverloadedOperatorsCasting()
+		{
+			Test("1M + 1", 2M);
+			Test("1 + 1M", 2M);
+			Test("1M + 2L", 3M);
+			Test("2L + 1M", 3M);
 		}
 
 		[Test]

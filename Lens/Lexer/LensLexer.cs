@@ -76,6 +76,9 @@ namespace Lens.Lexer
 					if (lex == null)
 						Error(LexerMessages.UnknownLexem);
 
+					if (lex.Type == LexemType.Char)
+						lex = transformCharLiteral(lex);
+
 					Lexems.Add(lex);
 				}
 
@@ -204,6 +207,22 @@ namespace Lens.Lexer
 		}
 
 		/// <summary>
+		/// Processes the contents of a char literal.
+		/// </summary>
+		private Lexem transformCharLiteral(Lexem lex)
+		{
+			var value = lex.Value;
+			if(value.Length < 3 || value.Length > 4)
+				Error(LexerMessages.IncorrectCharLiteral);
+
+			value = value[1] == '\\'
+				? escapeChar(value[2]).ToString()
+				: value[1].ToString();
+
+			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
+		}
+
+		/// <summary>
 		/// Attempts to find a keyword or operator at the current position in the file.
 		/// </summary>
 		private Lexem processStaticLexem()
@@ -313,6 +332,7 @@ namespace Lens.Lexer
 
 				case '\\':
 				case '"':
+				case '\'':
 					return t;
 			}
 

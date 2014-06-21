@@ -247,9 +247,9 @@ namespace Lens.SyntaxTree.Expressions
 				gen.EmitNull();
 
 			var retType = _Method.ReturnType;
-			var type = retType.IsNotVoid()
-				? FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes)
-				: FunctionalHelper.CreateActionType(_Method.ArgumentTypes);
+			var type = retType.IsVoid()
+				? FunctionalHelper.CreateActionType(_Method.ArgumentTypes)
+				: FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes);
 
 			var ctor = ctx.ResolveConstructor(type, new [] { typeof(object), typeof(IntPtr) });
 			gen.EmitLoadFunctionPointer(_Method.MethodInfo);

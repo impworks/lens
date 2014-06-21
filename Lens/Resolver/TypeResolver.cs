@@ -37,6 +37,7 @@ namespace Lens.Resolver
 				{"long", typeof (long)},
 				{"float", typeof (float)},
 				{"double", typeof (double)},
+				{"decimal", typeof (decimal)},
 				{"string", typeof (string)},
 				{"char", typeof (char)},
 				{"byte", typeof (byte)},

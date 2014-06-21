@@ -303,4 +303,13 @@
   <data name="UsingExpressionExpected" xml:space="preserve">
     <value>LE2059: Resource block expression is expected!</value>
   </data>
+  <data name="InvalidFloat" xml:space="preserve">
+    <value>LE2063: Value '{0}' is not a valid float!</value>
+  </data>
+  <data name="InvalidLong" xml:space="preserve">
+    <value>LE2064: Value '{0}' is not a valid long!</value>
+  </data>
+  <data name="InvalidDecimal" xml:space="preserve">
+    <value>LE2065: Value '{0}' is not a valid decimal!</value>
+  </data>
 </root>

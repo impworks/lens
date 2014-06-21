@@ -120,6 +120,9 @@
   <data name="InconsistentIdentation" xml:space="preserve">
     <value>LE1001: Неожиданный уровень блока!</value>
   </data>
+  <data name="IncorrectCharLiteral" xml:space="preserve">
+    <value>LE1006: Недопустимый символьный литерал!</value>
+  </data>
   <data name="TabChar" xml:space="preserve">
     <value>LE1002: Символы табуляции недопустимы в исходном коде! Используйте пробелы для выделения блоков кода.</value>
   </data>

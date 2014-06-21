@@ -93,9 +93,13 @@ namespace Lens.Lexer
 
 		private readonly static RegexLexemDefinition[] RegexLexems =
 		{
-			new RegexLexemDefinition(@"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", LexemType.Double),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Ff]", LexemType.Float),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Mm]", LexemType.Decimal),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)\.[0-9]+", LexemType.Double),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)L", LexemType.Long),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
-			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier)
+			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier),
+			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char)
 		};
 
 		[DebuggerStepThrough]

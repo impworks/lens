@@ -3,11 +3,11 @@
 namespace Lens.SyntaxTree.Literals
 {
 	/// <summary>
-	/// A node representing a double-precision floating point literal.
+	/// A node representing a long literal.
 	/// </summary>
-	internal class DoubleNode : LiteralNodeBase<double>
+	internal class LongNode : LiteralNodeBase<long>
 	{
-		public DoubleNode(double value = 0)
+		public LongNode(long value = 0)
 		{
 			Value = value;
 		}
