@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Literals;
@@ -83,10 +84,9 @@ namespace Lens.Test.Internals
 		{
 			TestDistanceFrom<float, int>(1);
 			TestDistanceFrom<double, long>(1);
-			TestDistanceFrom<double, ulong>(1);
 			TestDistanceFrom<double, short>(3);
 			TestDistanceFrom<decimal, sbyte>(4);
-			TestDistanceFrom<decimal, ulong>(2);
+			TestDistanceFrom<decimal, ulong>(1);
 		}
 
 		[Test]
@@ -137,6 +137,8 @@ namespace Lens.Test.Internals
 			TestDistanceFrom<long, float>(int.MaxValue);
 			TestDistanceFrom<long, double>(int.MaxValue);
 			TestDistanceFrom<long, decimal>(int.MaxValue);
+
+			TestDistanceFrom<double, ulong>(int.MaxValue);
 		}
 
 		[Test]

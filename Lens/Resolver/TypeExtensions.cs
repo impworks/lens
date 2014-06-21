@@ -621,14 +621,10 @@ namespace Lens.Resolver
 
 		private static int unsignedToFloatConversion(Type varType, Type exprType)
 		{
-			if (exprType == typeof (ulong))
+			if (exprType == typeof (ulong) && varType == typeof (decimal))
 			{
-				// ulong can be implicitly converted only to double or decimal.
-				if (varType == typeof (double))
-					return 1;
-
-				if (varType == typeof (decimal))
-					return 2;
+				// ulong can be implicitly converted only to decimal.
+				return 1;
 			}
 			else
 			{
@@ -640,8 +636,6 @@ namespace Lens.Resolver
 					? int.MaxValue
 					: result + 1;
 			}
-
-			return int.MaxValue;
 		}
 
 		private static Type getCorrespondingSignedType(Type floatType)
