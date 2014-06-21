@@ -46,8 +46,9 @@ namespace Lens.SyntaxTree.Operators
 
 				else if (!toType.IsValueType)
 				{
-					Expression.Emit(ctx, true);
-					gen.EmitCast(toType);
+					gen.EmitNull();
+//					Expression.Emit(ctx, true);
+//					gen.EmitCast(toType);
 				}
 
 				else
@@ -71,12 +72,9 @@ namespace Lens.SyntaxTree.Operators
 
 				else
 				{
-					// todo: a more elegant approach maybe?
-					var castOp = fromType.GetMethods().Where(m => m.Name == "op_Explicit" || m.Name == "op_Implicit" && m.ReturnType == toType)
-													  .OrderBy(m => m.Name == "op_Implicit" ? 0 : 1)
-													  .FirstOrDefault();
+					var castOp = ctx.ResolveConvertorToType(fromType, toType);
 					if (castOp != null)
-						gen.EmitCall(castOp);
+						gen.EmitCall(castOp.MethodInfo);
 					else
 						gen.EmitCast(toType);
 				}
@@ -95,7 +93,13 @@ namespace Lens.SyntaxTree.Operators
 					gen.EmitCast(toType);
 
 				else
-					error(fromType, toType);
+				{
+					var castOp = ctx.ResolveConvertorToType(fromType, toType);
+					if (castOp != null)
+						gen.EmitCall(castOp.MethodInfo);
+					else
+						error(fromType, toType);
+				}
 			}
 
 			else

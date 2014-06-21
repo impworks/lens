@@ -182,17 +182,25 @@ let a = 1
 		public void OverloadedOperators()
 		{
 			Test("1M + 2M", 3);
-//			Test("2M - 1M", 1);
-//			Test("2M * 2M", 4);
-//			Test("42M / 2M", 21);
-//			Test("100M % 3M", 1);
-//
-//			Test("1M == 2M", false);
-//			Test("1M <> 2M", true);
-//			Test("1M < 2M", true);
-//			Test("1M <= 2M", true);
-//			Test("1M > 2M", false);
-//			Test("1M >= 2M", false);
+			Test("2M - 1M", 1);
+			Test("2M * 2M", 4);
+			Test("42M / 2M", 21);
+			Test("100M % 3M", 1);
+			Test("1M == 2M", false);
+			Test("1M <> 2M", true);
+			Test("1M < 2M", true);
+			Test("1M <= 2M", true);
+			Test("1M > 2M", false);
+			Test("1M >= 2M", false);
+		}
+
+		[Test]
+		public void OverloadedOperatorsCasting()
+		{
+			Test("1M + 1", 2M);
+			Test("1 + 1M", 2M);
+			Test("1M + 2L", 3M);
+			Test("2L + 1M", 3M);
 		}
 
 		[Test]

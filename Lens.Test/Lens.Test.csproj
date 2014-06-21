@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Features\CastingTest.cs" />
     <Compile Include="Features\ControlStructuresTest.cs" />
     <Compile Include="Features\FunctionalTest.cs" />
     <Compile Include="Features\LambdasInferenceTest.cs" />
