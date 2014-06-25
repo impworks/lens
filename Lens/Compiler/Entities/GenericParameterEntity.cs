@@ -79,8 +79,17 @@ namespace Lens.Compiler.Entities
 
 			// no restrictions on types rejected in C#: System.Array, System.Delegate, System.Enum
 			// System.Object and System.ValueType have "ref" and "val" keys instead
-			if(typeConstraints.Contains(typeof(object))) Context.Error(CompilerMessages.GenericParameterBaseRestrictedType, Name, typeof(object).Name, "ref");
-			if (typeConstraints.Contains(typeof(ValueType))) Context.Error(CompilerMessages.GenericParameterBaseRestrictedType, Name, typeof(ValueType).Name, "val");
+			var restricted = new[]
+			{
+				new { Type = typeof (object), ConstraintKey = "ref" },
+				new { Type = typeof (ValueType), ConstraintKey = "val" },
+			};
+
+			foreach (var curr in restricted)
+			{
+				if (typeConstraints.Contains(curr.Type))
+					Context.Error(CompilerMessages.GenericParameterBaseRestrictedType, Name, curr.Type.Name, curr.ConstraintKey);
+			}
 
 			// where T1: T2
 			// generic argument cannot have other generic arguments as base (unlike in C#)

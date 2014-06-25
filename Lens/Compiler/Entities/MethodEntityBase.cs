@@ -42,11 +42,16 @@ namespace Lens.Compiler.Entities
 		public TryNode CurrentTryBlock { get; set; }
 		public CatchNode CurrentCatchBlock { get; set; }
 
+		#region Methods
+
 		/// <summary>
 		/// Checks if the method must return a value.
 		/// </summary>
 		public abstract bool IsVoid { get; }
 
+		/// <summary>
+		/// Recursively applies expand transformations to all nodes.
+		/// </summary>
 		public void TransformBody()
 		{
 			withContext(ctx =>
@@ -58,7 +63,7 @@ namespace Lens.Compiler.Entities
 		}
 
 		/// <summary>
-		/// Process closures.
+		/// Recursively processes closures within current method.
 		/// </summary>
 		public void ProcessClosures()
 		{
@@ -66,7 +71,7 @@ namespace Lens.Compiler.Entities
 		}
 
 		/// <summary>
-		/// Compiles the curent method.
+		/// Emits the code for the curent method.
 		/// </summary>
 		public void Compile()
 		{
@@ -81,6 +86,21 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		/// <summary>
+		/// Gets the information about argument types.
+		/// </summary>
+		public Type[] GetArgumentTypes(Context ctx)
+		{
+			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
+		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Performs an action with current method's context.
+		/// </summary>
 		[DebuggerStepThrough]
 		private void withContext(Action<Context> act)
 		{
@@ -95,27 +115,28 @@ namespace Lens.Compiler.Entities
 			CurrentCatchBlock = null;
 
 			act(ctx);
-			
+
 			ctx.CurrentMethod = oldMethod;
 			ctx.CurrentType = oldType;
 		}
 
-		/// <summary>
-		/// Gets the information about argument types.
-		/// </summary>
-		public Type[] GetArgumentTypes(Context ctx)
-		{
-			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
-		}
+		#endregion
+
+		#region Overriddable members
 
 		/// <summary>
-		/// Creates closure instances.
+		/// Emits code before the body of the method.
 		/// </summary>
 		protected virtual void emitPrelude(Context ctx)
 		{ }
 
+		/// <summary>
+		/// Emits code after the body of the method.
+		/// </summary>
 		protected virtual void emitTrailer(Context ctx)
 		{ }
+
+		#endregion
 
 		public override string ToString()
 		{
