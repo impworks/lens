@@ -10,16 +10,12 @@ namespace Lens.Compiler
 	/// </summary>
 	internal class TypeSignature : LocationEntity
 	{
-		public TypeSignature(string name, params TypeSignature[] args)
-			: this(name, null, args)
-		{ }
-
-		public TypeSignature(string name, string postfix, params TypeSignature[] args)
+		private TypeSignature(string name, string postfix, params TypeSignature[] args)
 		{
 			Name = name;
 			Arguments = args.Length > 0 ? args : null;
 			Postfix = postfix;
-			FullSignature = getSignature(name, args);
+			FullSignature = getSignature(name, postfix, args);
 		}
 
 		#region Fields
@@ -34,13 +30,14 @@ namespace Lens.Compiler
 
 		#region Methods
 
-		private string getSignature(string name, TypeSignature[] args)
+		private static string getSignature(string name, string postfix, TypeSignature[] args)
 		{
 			if (args.Length == 0)
 				return name;
 
-			if (!string.IsNullOrEmpty(Postfix))
-				return Arguments[0].FullSignature + Postfix;
+			// postfix case: name is null, and the single element of `args` contains all the signature tree
+			if (!string.IsNullOrEmpty(postfix))
+				return args[0].FullSignature + postfix;
 
 			var sb = new StringBuilder(name);
 			sb.Append("<");
@@ -81,6 +78,22 @@ namespace Lens.Compiler
 		private static List<string> _Postfixes = new List<string> {"[]", "?", "~"};
 
 		/// <summary>
+		/// Creates a new TypeSignature in the form "T&lt;...&gt;"
+		/// </summary>
+		public static TypeSignature FromName(string name, params TypeSignature[] args)
+		{
+			return new TypeSignature(name, null, args);
+		}
+
+		/// <summary>
+		/// Creates a new TypeSignature in the form "T?"
+		/// </summary>
+		public static TypeSignature FromPostfix(string postfix, params TypeSignature[] args)
+		{
+			return new TypeSignature(null, postfix, args);
+		}
+
+		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
 		public static TypeSignature Parse(string signature)
@@ -94,13 +107,13 @@ namespace Lens.Compiler
 
 			var open = signature.IndexOf('<');
 			if(open == -1)
-				return new TypeSignature(signature);
+				return FromName(signature);
 
 			var close = signature.LastIndexOf('>');
 			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
 			var typeName = signature.Substring(0, open);
 
-			return new TypeSignature(typeName, args);
+			return FromName(typeName, args);
 		}
 
 		/// <summary>

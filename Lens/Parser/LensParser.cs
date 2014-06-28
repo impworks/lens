@@ -78,7 +78,7 @@ namespace Lens.Parser
 
 					var identifier = getValue();
 					if (!peek(LexemType.Dot))
-						return new TypeSignature(identifier);
+						return TypeSignature.FromName(identifier);
 
 					var sb = new StringBuilder(identifier);
 					while (check(LexemType.Dot))
@@ -88,7 +88,7 @@ namespace Lens.Parser
 						sb.Append(identifier);
 					}
 
-					return new TypeSignature(sb.ToString());
+					return TypeSignature.FromName(sb.ToString());
 				}
 			);
 		}
@@ -104,16 +104,16 @@ namespace Lens.Parser
 
 			var args = attempt(parseTypeArgs);
 			if(args != null)
-				node = new TypeSignature(node.Name, args.ToArray());
+				node = TypeSignature.FromName(node.Name, args.ToArray());
 
 			while (true)
 			{
 				if(check(LexemType.ArrayDef))
-					node = new TypeSignature(null, "[]", node);
+					node = TypeSignature.FromPostfix("[]", node);
 				else if(check(LexemType.Tilde))
-					node = new TypeSignature(null, "~", node);
+					node = TypeSignature.FromPostfix("~", node);
 				else if(check(LexemType.QuestionMark))
-					node = new TypeSignature(null, "?", node);
+					node = TypeSignature.FromPostfix("?", node);
 				else
 					return node;
 			}

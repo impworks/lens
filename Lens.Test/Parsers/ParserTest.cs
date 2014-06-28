@@ -14,7 +14,7 @@ namespace Lens.Test.Parsers
 		[Test]
 		public void Testy()
 		{
-			Assert.AreEqual(new TypeSignature("int"), new TypeSignature("int"));
+			Assert.AreEqual(TypeSignature.FromName("int"), TypeSignature.FromName("int"));
 		}
 
 		[Test]
@@ -707,7 +707,7 @@ finally
 		public void IsOperator()
 		{
 			var src = "1 is double";
-			var result = Expr.Is(Expr.Int(1), new TypeSignature("double"));
+			var result = Expr.Is(Expr.Int(1), TypeSignature.FromName("double"));
 			TestParser(src, result);
 		}
 
@@ -878,9 +878,9 @@ catch ex:DivisionByZeroException
 			var src = "Enumerable::Empty<int>";
 			var result = new GetMemberNode
 			{
-				StaticType = new TypeSignature("Enumerable"),
+				StaticType = TypeSignature.FromName("Enumerable"),
 				MemberName = "Empty",
-				TypeHints = { new TypeSignature("int") }
+				TypeHints = { TypeSignature.FromName("int") }
 			};
 
 			TestParser(src, result);
@@ -1008,7 +1008,7 @@ Enumerable::Range 1 100
 			var result = Expr.Fun
 			(
 				"test",
-				new TypeSignature("object"),
+				TypeSignature.FromName("object"),
 				new [] { Expr.Arg("x", "int"), Expr.Arg("y", "int", true) },
 				Expr.Set("y", Expr.Get("x"))
 			);
