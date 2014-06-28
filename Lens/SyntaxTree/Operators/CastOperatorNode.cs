@@ -47,8 +47,6 @@ namespace Lens.SyntaxTree.Operators
 				else if (!toType.IsValueType)
 				{
 					gen.EmitNull();
-//					Expression.Emit(ctx, true);
-//					gen.EmitCast(toType);
 				}
 
 				else
