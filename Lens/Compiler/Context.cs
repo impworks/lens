@@ -31,6 +31,7 @@ namespace Lens.Compiler
 
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
+			_DefinedTypeDetails = new Dictionary<Type, TypeDetails>();
 
 			Unique = new UniqueNameGenerator();
 
@@ -198,6 +199,11 @@ namespace Lens.Compiler
 		/// The root of type lookup.
 		/// </summary>
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
+
+		/// <summary>
+		/// Lookup that provides extended type details (mostly for generic parameter types).
+		/// </summary>
+		private readonly Dictionary<Type, TypeDetails> _DefinedTypeDetails;
 
 		/// <summary>
 		/// The lookup table for imported properties.

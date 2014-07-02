@@ -13,13 +13,23 @@ namespace Lens.Compiler
 	internal partial class Context
 	{
 		/// <summary>
-		/// Finds a locally declared type.
+		/// Finds a globally declared type.
 		/// </summary>
 		public TypeEntity FindType(string name)
 		{
 			TypeEntity declared;
 			_DefinedTypes.TryGetValue(name, out declared);
 			return declared;
+		}
+
+		/// <summary>
+		/// Finds details for the current dynamically declared type.
+		/// </summary>
+		public TypeDetails FindTypeDetails(Type type)
+		{
+			TypeDetails details;
+			_DefinedTypeDetails.TryGetValue(type, out details);
+			return details;
 		}
 
 		/// <summary>

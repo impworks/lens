@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="Compiler\Entities\GenericParameterEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
+    <Compile Include="Compiler\Entities\TypeDetails.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
     <Compile Include="Resolver\ReferencedAssemblyCache.cs" />
     <Compile Include="Resolver\ReflectionHelper.cs" />
