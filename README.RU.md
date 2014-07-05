@@ -16,16 +16,18 @@
 
 ### 2.1. Типы данных
 
-В интерпретатор встроена поддержка следующих типов:
+В интерпретатор встроена поддержка следующих типов, аналогичных C#:
 
-* `unit = void`
-* `object = System.Object`
-* `bool = System.Boolean`
-* `int = System.Int32`
-* `long = System.Int64`
-* `float = System.Single`
-* `double = System.Double`
-* `string = System.String`
+* `unit` - он же `void`
+* `object`
+* `bool`
+* `int`
+* `long`
+* `float`
+* `double`
+* `decimal`
+* `string`
+* `char`
 
 ### 2.2. Объявление констант и переменных
 
@@ -326,7 +328,7 @@ let a = if 1 > 2 then 3 else 4
 ```csharp
 var a = 0
 while a < 10 do
-    Console.WriteLine "{0} loop iteration" a
+    Console::WriteLine "{0} loop iteration" a
     a = a + 1
 ```
 
@@ -350,17 +352,27 @@ catch
 
 Блок `try-catch` всегда возвращает `unit`.
 
-#### 2.7.5. using
+#### 2.7.5. use
 
-Ключевое слово using открывает пространство имен, добавляя объявленные в нем
+Ключевое слово `use` открывает пространство имен, добавляя объявленные в нем
 классы в глобальное:
 
 ```csharp
-using System.Text.RegularExpressions
+use System.Text.RegularExpressions
 let rx = new Regex "[a-z]{2}"
 ```
 
-#### 2.7.6. Приведение и проверка типов
+#### 2.7.6. using
+
+Ключевое слово `using` позволяет объявить блок, которым ограничен интервал жизни
+ресурса, реализуюшего интерфейс IDisposable:
+
+```csharp
+using fs = (new FileStream "file.txt" FileMode::Create) do
+    fs.WriteByte 1
+```
+
+#### 2.7.7. Приведение и проверка типов
 
 Для приведения типов используется оператор `as`. В отличие от C#, он кидает
 `InvalidCastException` в случае неудачи, а не возвращает `null`. Может быть
@@ -426,7 +438,8 @@ let t = new (1, "hello world", new object())
 
 ```csharp
     let filter = (x:int) -> x % 2 == 0
-    let data = Enumerable.Range 1 100 |> ToArray ()
+    let data = Enumerable::Range 1 100
+        |> ToArray ()
     let even = Array::FindAll data (filter as Predicate<int>)
 ```
 
@@ -476,8 +489,8 @@ public void Run()
 
 * Поддержка переопределенных операторов
 * Раскрутка констант во время компиляции
-* Сохранение сгенерированной в виде исполняемого файла
-* Возможость отключать поиск extension-методов для ускорения компиляции
+* Сохранение сгенерированной сборки в виде исполняемого файла
+* Возможность отключать поиск extension-методов для ускорения компиляции
 
 ## 5. Ограничения
 
@@ -485,7 +498,6 @@ public void Run()
 
 Будет реализовано в дальнейших версиях:
 
-* Сокращенное присваивание (+= и т.д.)
 * Подписка на события
 * Pattern matching
 
