@@ -136,16 +136,17 @@ The compiler already supports the following features:
 * Anonymous functions with closures
 * Extension methods and LINQ
 * Overloaded operators support
-* Basic optimizations like constant unrolling
-
-Some cool features are on the way:
-
-* Safe mode: certain types or namespaces can be disabled for security reasons
-* Pattern matching
-* Object initializers
 * Partial function application and function composition
 * Automatic memoization support
 * Shorthand operators
+* Basic optimizations like constant unrolling
+* Safe mode: certain types or namespaces can be disabled for security reasons
+
+Some cool features are on the way:
+
+* Generic function definition
+* Pattern matching
+* Object initializers
 * Attributes
 
 The complete list of expected features (in russian) can be found in the Issues tab.
