@@ -105,7 +105,7 @@ namespace Lens.Compiler.Entities
 
 			if (!ReturnType.IsVoid() || !actualType.IsVoid())
 			{
-				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
+				if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(ReturnType, actualType))
 					Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
 			}
 

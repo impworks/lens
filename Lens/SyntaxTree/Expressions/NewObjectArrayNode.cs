@@ -21,7 +21,7 @@ namespace Lens.SyntaxTree.Expressions
                 Type = ctx.ResolveType(TypeSignature);
 
             var idxType = Size.Resolve(ctx);
-            if (!typeof (int).IsExtendablyAssignableFrom(idxType))
+            if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(typeof (int), idxType))
                 error(Size, CompilerMessages.ArraySizeNotInt, idxType);
 
             return Type.MakeArrayType();

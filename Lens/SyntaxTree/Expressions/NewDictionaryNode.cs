@@ -72,7 +72,7 @@ namespace Lens.SyntaxTree.Expressions
 				if (currKeyType != _KeyType)
 					error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _KeyType, _ValueType);
 
-				if (!_ValueType.IsExtendablyAssignableFrom(currValType))
+				if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(_ValueType, currValType))
 					error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _KeyType, _ValueType);
 
 				gen.EmitLoadLocal(tmpVar.LocalBuilder);

@@ -60,7 +60,7 @@ namespace Lens.SyntaxTree.Operators
 			{
 				if (leftType.IsNumericType() && rightType.IsNumericType())
 				{
-					var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
+					var commonNumericType = ctx.ReflectionResolver.GetNumericOperationType(leftType, rightType);
 					if (commonNumericType == null)
 						error(CompilerMessages.OperatorTypesSignednessMismatch);
 
@@ -115,7 +115,7 @@ namespace Lens.SyntaxTree.Operators
 			var left = LeftOperand.Resolve(ctx);
 			var right = RightOperand.Resolve(ctx);
 
-			var type = TypeExtensions.GetNumericOperationType(left, right);
+			var type = ctx.ReflectionResolver.GetNumericOperationType(left, right);
 			if(type == null)
 				error(CompilerMessages.OperatorTypesSignednessMismatch);
 
@@ -131,7 +131,7 @@ namespace Lens.SyntaxTree.Operators
 			var right = RightOperand.Resolve(ctx);
 
 			if(type == null)
-				type = TypeExtensions.GetNumericOperationType(left, right);
+				type = ctx.ReflectionResolver.GetNumericOperationType(left, right);
 
 			Expr.Cast(LeftOperand, type).Emit(ctx, true);
 			Expr.Cast(RightOperand, type).Emit(ctx, true);

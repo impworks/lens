@@ -80,7 +80,6 @@
     <Compile Include="Compiler\Entities\TypeDetails.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
     <Compile Include="Resolver\ReferencedAssemblyCache.cs" />
-    <Compile Include="Resolver\ReflectionHelper.cs" />
     <Compile Include="Compiler\Scope.cs" />
     <Compile Include="Compiler\UniqueNameGenerator.cs" />
     <Compile Include="Compiler\Context.Compilation.cs" />
@@ -103,11 +102,11 @@
     <Compile Include="Compiler\EmitterExtensions.cs" />
     <Compile Include="Resolver\ExtensionMethodResolver.cs" />
     <Compile Include="Compiler\Entities\FieldEntity.cs" />
-    <Compile Include="Resolver\GenericHelper.cs" />
     <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
     <Compile Include="Compiler\Entities\MethodEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.cs" />
+    <Compile Include="Resolver\ReflectionResolver.cs" />
     <Compile Include="Resolver\TypeResolver.cs" />
     <Compile Include="Resolver\Wrappers.cs" />
     <Compile Include="IScript.cs" />

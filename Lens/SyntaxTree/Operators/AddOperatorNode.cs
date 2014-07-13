@@ -35,13 +35,13 @@ namespace Lens.SyntaxTree.Operators
 				if (type.IsArray)
 					return arrayExpand(ctx);
 
-				if (type.IsAppliedVersionOf(typeof(IDictionary<,>)))
+				if (ctx.ReflectionResolver.IsAppliedVersionOf(type, typeof(IDictionary<,>)))
 					return dictExpand(ctx);
 
 				if (type == typeof (IEnumerable))
 					return seqExpand();
 
-				if (type.IsAppliedVersionOf(typeof (IEnumerable<>)))
+				if (ctx.ReflectionResolver.IsAppliedVersionOf(type, typeof (IEnumerable<>)))
 					return typedSeqExpand();
 			}
 
@@ -56,16 +56,16 @@ namespace Lens.SyntaxTree.Operators
 
 			if (leftType == rightType)
 			{
-				if(leftType.IsArray || leftType.IsAppliedVersionOf(typeof(Dictionary<,>)))
+				if(leftType.IsArray || ctx.ReflectionResolver.IsAppliedVersionOf(leftType, typeof(Dictionary<,>)))
 					return leftType;
 			}
 
-			var dictType = typeof(IDictionary<,>).ResolveCommonImplementationFor(leftType, rightType);
+			var dictType = ctx.ReflectionResolver.ResolveCommonImplementationFor(typeof(IDictionary<,>), leftType, rightType);
 			if (dictType != null)
 				return dictType;
 
-			var enumerableType = typeof (IEnumerable<>).ResolveCommonImplementationFor(leftType, rightType)
-								 ?? typeof(IEnumerable).ResolveCommonImplementationFor(leftType, rightType);
+			var enumerableType = ctx.ReflectionResolver.ResolveCommonImplementationFor(typeof (IEnumerable<>), leftType, rightType)
+								 ?? ctx.ReflectionResolver.ResolveCommonImplementationFor(typeof(IEnumerable), leftType, rightType);
 
 			if (enumerableType != null)
 				return enumerableType;

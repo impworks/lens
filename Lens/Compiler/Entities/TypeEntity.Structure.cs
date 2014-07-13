@@ -27,7 +27,7 @@ namespace Lens.Compiler.Entities
 				IsImported = true,
 				IsStatic = true,
 				IsVirtual = false,
-				IsVariadic = ReflectionHelper.IsVariadic(mi),
+				IsVariadic = Context.ReflectionResolver.IsVariadic(mi),
 				MethodInfo = mi,
 				ReturnType = mi.ReturnType,
 				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)

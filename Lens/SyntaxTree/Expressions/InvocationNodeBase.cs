@@ -141,7 +141,7 @@ namespace Lens.SyntaxTree.Expressions
 				var lambda = (LambdaNode) Arguments[idx];
 				if (lambda.MustInferArgTypes)
 				{
-					var actualWrapper = ReflectionHelper.WrapDelegate(_Wrapper.ArgumentTypes[idx]);
+					var actualWrapper = ctx.ReflectionResolver.WrapDelegate(_Wrapper.ArgumentTypes[idx]);
 					lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
 					lambda.Resolve(ctx);
 				}

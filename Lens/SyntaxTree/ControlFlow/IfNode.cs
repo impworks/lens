@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var type = TrueAction.Resolve(ctx);
 			var otherType = FalseAction.Resolve(ctx);
-			return new[] {type, otherType}.GetMostCommonType();
+			return ctx.ReflectionResolver.GetMostCommonType(type, otherType);
 		}
 
 		public override IEnumerable<NodeChild> GetChildren()
@@ -56,7 +56,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var gen = ctx.CurrentMethod.Generator;
 
 			var condType = Condition.Resolve(ctx);
-			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+			if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(condType, typeof(bool)))
 				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)

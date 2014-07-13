@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				{
 					if(currType == prevType)
 						error(curr, CompilerMessages.CatchTypeDuplicate, currType);
-					else if(prevType.IsExtendablyAssignableFrom(currType))
+					else if (ctx.ReflectionResolver.IsExtendablyAssignableFrom(prevType, currType))
 						error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
 				}
 

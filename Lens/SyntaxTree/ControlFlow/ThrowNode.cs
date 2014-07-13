@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			{
 				var type = Expression.Resolve(ctx);
 
-				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
+				if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(typeof (Exception), type))
 					error(Expression, CompilerMessages.ThrowTypeNotException, type);
 
 				Expression.Emit(ctx, true);

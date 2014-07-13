@@ -24,7 +24,7 @@ namespace Lens.Compiler.Entities
 				var left = Expr.GetMember(Expr.This(), f.Name);
 				var right = Expr.GetMember(Expr.Get("other"), f.Name);
 
-				var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof(IEnumerable<>), true);
+				var isSeq = f.Type.IsGenericType && Context.ReflectionResolver.Implements(f.Type, typeof(IEnumerable<>), true);
 				var expr = isSeq
 					? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
 					: Expr.Invoke(Expr.This(), "Equals", Expr.Cast(left, "object"), Expr.Cast(right, "object"));

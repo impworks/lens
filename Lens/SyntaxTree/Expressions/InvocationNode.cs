@@ -212,7 +212,7 @@ namespace Lens.SyntaxTree.Expressions
 				{
 					var fromType = _ArgTypes[idx];
 					var toType = argTypes[idx];
-					if (!toType.IsExtendablyAssignableFrom(fromType))
+					if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(toType, fromType))
 						error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 				}
 			}

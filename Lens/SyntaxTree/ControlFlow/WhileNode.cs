@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			var saveLast = mustReturn && !loopType.IsVoid();
 
 			var condType = Condition.Resolve(ctx);
-			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+			if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(condType, typeof(bool)))
 				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)

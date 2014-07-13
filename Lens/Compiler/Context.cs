@@ -42,9 +42,10 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
+			ReflectionResolver = new ReflectionResolver();
 			_AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
-			_ExtensionResolver = new ExtensionMethodResolver(Namespaces, _AssemblyCache);
-			_TypeResolver = new TypeResolver(Namespaces, _AssemblyCache)
+			_ExtensionResolver = new ExtensionMethodResolver(ReflectionResolver, Namespaces, _AssemblyCache);
+			_TypeResolver = new TypeResolver(ReflectionResolver, Namespaces, _AssemblyCache)
 			{
 				ExternalLookup = name =>
 				{
@@ -176,6 +177,8 @@ namespace Lens.Compiler
 		internal Dictionary<string, bool> Namespaces = new Dictionary<string, bool>();
 
 		internal readonly UniqueNameGenerator Unique;
+
+		internal readonly ReflectionResolver ReflectionResolver;
 
 		internal readonly List<TypeEntity> UnpreparedTypes = new List<TypeEntity>();
 		internal readonly List<TypeContentsBase> UnpreparedTypeContents = new List<TypeContentsBase>();

@@ -10,7 +10,7 @@ namespace Lens.Test.Internals
 	[TestFixture]
 	public class TypeResolverTest
 	{
-		private static readonly TypeResolver Resolver = new TypeResolver(new Dictionary<string, bool> { { "System", true } }, new ReferencedAssemblyCache());
+		private static readonly TypeResolver Resolver = new TypeResolver(new ReflectionResolver(), new Dictionary<string, bool> { { "System", true } }, new ReferencedAssemblyCache());
 
 		[Test]
 		public void BasicName()

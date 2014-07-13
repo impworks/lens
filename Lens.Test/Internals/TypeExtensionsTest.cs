@@ -2,11 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.Literals;
-using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test.Internals
@@ -188,7 +185,9 @@ namespace Lens.Test.Internals
 		{
 			var from = typeof(bool[]);
 			var to = typeof (IEnumerable<>);
-			Assert.AreEqual(2, to.DistanceFrom(from));
+
+			var rr = new ReflectionResolver();
+			Assert.AreEqual(2, rr.DistanceFrom(to, from));
 		}
 
 		[Test]
@@ -208,19 +207,21 @@ namespace Lens.Test.Internals
 
 			var to = typeof (Array).GetMethod("FindAll").GetParameters().Select(p => p.ParameterType).ToArray();
 
-			Assert.AreEqual(1, to[0].DistanceFrom(from1));
-			Assert.AreEqual(1, to[1].DistanceFrom(from2));
+			var rr = new ReflectionResolver();
+			Assert.AreEqual(1, rr.DistanceFrom(to[0], from1));
+			Assert.AreEqual(1, rr.DistanceFrom(to[1], from2));
 		}
 
 		[Test]
 		public void RefArguments()
 		{
+			var rr = new ReflectionResolver();
 			var types = new[] {typeof (object), typeof (float), typeof (int), typeof (string)};
 			foreach (var type in types)
-				Assert.AreEqual(0, type.MakeByRefType().DistanceFrom(type));
+				Assert.AreEqual(0, rr.DistanceFrom(type.MakeByRefType(), type));
 
-			Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(typeof(float)));
-			Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(typeof(int)));
+			Assert.AreEqual(int.MaxValue, rr.DistanceFrom(typeof(int).MakeByRefType(), typeof(float)));
+			Assert.AreEqual(int.MaxValue, rr.DistanceFrom(typeof(float).MakeByRefType(), typeof(int)));
 		}
 
 		[Test]
@@ -294,7 +295,8 @@ namespace Lens.Test.Internals
 		{
 			var from = typeof (IOrderedEnumerable<int>);
 			var to = typeof (IEnumerable<>);
-			Assert.IsTrue(to.DistanceFrom(from) < int.MaxValue);
+			var rr = new ReflectionResolver();
+			Assert.IsTrue(rr.DistanceFrom(to, from) < int.MaxValue);
 		}
 
 		/// <summary>
@@ -305,23 +307,27 @@ namespace Lens.Test.Internals
 		/// <param name="expected">Expected distance between types.</param>
 		private static void TestDistanceFrom<T1, T2>(int expected)
 		{
-			var result = typeof (T1).DistanceFrom(typeof (T2));
+			var rr = new ReflectionResolver();
+			var result = rr.DistanceFrom(typeof (T1), typeof (T2));
 			Assert.AreEqual(expected, result);
 		}
 
 		private static void AssertNumericOperationType<T1, T2, TResult>()
 		{
-			Assert.AreEqual(typeof (TResult), TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
+			var rr = new ReflectionResolver();
+			Assert.AreEqual(typeof (TResult), rr.GetNumericOperationType(typeof (T1), typeof (T2)));
 		}
 
 		private static void AssertNumericOperationNotPermitted<T1, T2>()
 		{
-			Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof (T1), typeof (T2)));
+			var rr = new ReflectionResolver();
+			Assert.IsNull(rr.GetNumericOperationType(typeof (T1), typeof (T2)));
 		}
 
 		private static void TestCommonType<T>(params Type[] types)
 		{
-			Assert.AreEqual(typeof (T), types.GetMostCommonType());
+			var rr = new ReflectionResolver();
+			Assert.AreEqual(typeof(T), rr.GetMostCommonType(types));
 		}
 	}
 }

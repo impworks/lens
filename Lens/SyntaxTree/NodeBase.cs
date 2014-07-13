@@ -202,7 +202,7 @@ namespace Lens.SyntaxTree
 			if (lambda == null)
 				return;
 
-			var wrapper = ReflectionHelper.WrapDelegate(delegateType);
+			var wrapper = ctx.ReflectionResolver.WrapDelegate(delegateType);
 			if(!wrapper.ReturnType.IsGenericParameter)
 				lambda.SetInferredReturnType(wrapper.ReturnType);
 

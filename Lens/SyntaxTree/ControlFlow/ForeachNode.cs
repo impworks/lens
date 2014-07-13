@@ -121,7 +121,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				)
 			);
 
-			if (_EnumeratorType.Implements(typeof (IDisposable), false))
+			if (ctx.ReflectionResolver.Implements(_EnumeratorType, typeof(IDisposable), false))
 			{
 				var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
 				var returnType = Resolve(ctx);
@@ -231,7 +231,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				return;
 			}
 			
-			var ifaces = seqType.ResolveInterfaces();
+			var ifaces = ctx.ReflectionResolver.ResolveInterfaces(seqType);
 			if (seqType.IsInterface)
 				ifaces = ifaces.Union(new[] {seqType}).ToArray();
 

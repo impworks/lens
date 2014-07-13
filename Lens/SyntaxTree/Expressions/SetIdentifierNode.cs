@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Expressions
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
-			if (!destType.IsExtendablyAssignableFrom(exprType))
+			if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(destType, exprType))
 			{
 				error(
 					nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,

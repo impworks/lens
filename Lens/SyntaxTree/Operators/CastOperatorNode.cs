@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.Operators
 			var fromType = Expression.Resolve(ctx);
 			var toType = Resolve(ctx);
 
-			if (toType.IsExtendablyAssignableFrom(fromType, true))
+			if (ctx.ReflectionResolver.IsExtendablyAssignableFrom(toType, fromType, true))
 				Expression.Emit(ctx, true);
 
 			else if (fromType.IsNumericType() && toType.IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.Operators
 					error(CompilerMessages.CastNullValueType, toType);
 			}
 
-			else if (toType.IsExtendablyAssignableFrom(fromType))
+			else if (ctx.ReflectionResolver.IsExtendablyAssignableFrom(toType, fromType))
 			{
 				Expression.Emit(ctx, true);
 
@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.Operators
 				}
 			}
 
-			else if (fromType.IsExtendablyAssignableFrom(toType))
+			else if (ctx.ReflectionResolver.IsExtendablyAssignableFrom(fromType, toType))
 			{
 				Expression.Emit(ctx, true);
 
@@ -115,10 +115,10 @@ namespace Lens.SyntaxTree.Operators
 			var fromArgs = fromMethod.ArgumentTypes;
 			var toArgs = toMethod.ArgumentTypes;
 
-			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
+			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ctx.ReflectionResolver.IsExtendablyAssignableFrom(ta, fromArgs[id], true)).Any(x => x))
 				error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
-			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
+			if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(toMethod.ReturnType, fromMethod.ReturnType, true))
 				error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
 
 			if (fromMethod.IsStatic)

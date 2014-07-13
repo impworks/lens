@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions
 			var valType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, valType, true);
 
-			if (!destType.IsExtendablyAssignableFrom(valType))
+			if (!ctx.ReflectionResolver.IsExtendablyAssignableFrom(destType, valType))
 				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 		}
 

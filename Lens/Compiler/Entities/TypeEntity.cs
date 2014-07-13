@@ -182,7 +182,7 @@ namespace Lens.Compiler.Entities
 			if (!_Methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 
-			var info = ReflectionHelper.ResolveMethodByArgs(
+			var info = Context.ReflectionResolver.ResolveMethodByArgs(
 				group,
 				m => m.GetArgumentTypes(Context),
 				m => m.IsVariadic,
@@ -212,7 +212,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
-			var info = ReflectionHelper.ResolveMethodByArgs(
+			var info = Context.ReflectionResolver.ResolveMethodByArgs(
 				_Constructors,
 				c => c.GetArgumentTypes(Context),
 				c => false,

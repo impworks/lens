@@ -61,7 +61,7 @@ namespace Lens.Compiler
 		public FieldWrapper ResolveField(Type type, string name)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveField(type, name);
+				return ReflectionResolver.ResolveField(type, name);
 
 			var typeEntity = _DefinedTypes[type.Name];
 			var fi = typeEntity.ResolveField(name);
@@ -82,7 +82,7 @@ namespace Lens.Compiler
 		public PropertyWrapper ResolveProperty(Type type, string name)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveProperty(type, name);
+				return ReflectionResolver.ResolveProperty(type, name);
 
 			// no internal properties
 			throw new KeyNotFoundException();
@@ -94,7 +94,7 @@ namespace Lens.Compiler
 		public ConstructorWrapper ResolveConstructor(Type type, Type[] argTypes)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveConstructor(type, argTypes);
+				return ReflectionResolver.ResolveConstructor(type, argTypes);
 
 			var typeEntity = _DefinedTypes[type.Name];
 			var ctor = typeEntity.ResolveConstructor(argTypes);
@@ -105,7 +105,7 @@ namespace Lens.Compiler
 				ConstructorInfo = ctor.ConstructorBuilder,
 				ArgumentTypes = ctor.GetArgumentTypes(this),
 
-				IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+				IsPartiallyApplied = ReflectionResolver.IsPartiallyApplied(argTypes),
 				IsVariadic = false // built-in ctors can't do that
 			};
 		}
@@ -117,25 +117,25 @@ namespace Lens.Compiler
 		public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver resolver = null)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveMethod(type, name, argTypes, hints, resolver);
+				return ReflectionResolver.ResolveMethod(type, name, argTypes, hints, resolver);
 
 			var typeEntity = _DefinedTypes[type.Name];
 			try
 			{
 				var method = typeEntity.ResolveMethod(name, argTypes);
-				var mw = wrapMethod(method, ReflectionHelper.IsPartiallyApplied(argTypes));
+				var mw = wrapMethod(method, ReflectionResolver.IsPartiallyApplied(argTypes));
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
 				if (isGeneric)
 				{
 					var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
 					var genericDefs = method.MethodInfo.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints);
+					var genericValues = ReflectionResolver.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints);
 
 					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genericValues);
-					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
+					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => ReflectionResolver.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
 					mw.GenericArguments = genericValues;
-					mw.ReturnType = GenericHelper.ApplyGenericArguments(method.MethodInfo.ReturnType, genericDefs, genericValues);
+					mw.ReturnType = ReflectionResolver.ApplyGenericArguments(method.MethodInfo.ReturnType, genericDefs, genericValues);
 				}
 				else
 				{
@@ -167,7 +167,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver lambdaResolver = null)
 		{
-			return ReflectionHelper.ResolveExtensionMethod(_ExtensionResolver, type, name, argTypes, hints, lambdaResolver);
+			return ReflectionResolver.ResolveExtensionMethod(_ExtensionResolver, type, name, argTypes, hints, lambdaResolver);
 		}
 
 		/// <summary>
@@ -177,7 +177,7 @@ namespace Lens.Compiler
 		public IEnumerable<MethodWrapper> ResolveMethodGroup(Type type, string name)
 		{
 			if (!(type is TypeBuilder))
-				return ReflectionHelper.ResolveMethodGroup(type, name);
+				return ReflectionResolver.ResolveMethodGroup(type, name);
 
 			var typeEntity = _DefinedTypes[type.Name];
 			return typeEntity.ResolveMethodGroup(name).Select(x => wrapMethod(x));
@@ -213,7 +213,7 @@ namespace Lens.Compiler
 		{
 			lambda.SetInferredArgumentTypes(argTypes);
 			var delegateType = lambda.Resolve(this);
-			return ReflectionHelper.WrapDelegate(delegateType).ReturnType;
+			return ReflectionResolver.WrapDelegate(delegateType).ReturnType;
 		}
 
 		/// <summary>

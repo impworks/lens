@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Resolver;
-using Lens.Utils;
 using NUnit.Framework;
 
 namespace Lens.Test.Internals
@@ -50,9 +49,10 @@ namespace Lens.Test.Internals
 
 		private void Test(Type desired, string name, Type[] args = null, Type[] hints = null)
 		{
+			var rr = new ReflectionResolver();
 			var method = typeof (GenericHelperTestExample).GetMethods().Single(m => m.Name == name);
 			var defs = method.GetGenericArguments();
-			var values = GenericHelper.ResolveMethodGenericsByArgs(
+			var values = rr.ResolveMethodGenericsByArgs(
 				method.GetParameters().Select(p => p.ParameterType).ToArray(),
 				args,
 				defs,

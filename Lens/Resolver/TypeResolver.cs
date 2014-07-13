@@ -44,8 +44,9 @@ namespace Lens.Resolver
 			};
 		}
 
-		public TypeResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
+		public TypeResolver(ReflectionResolver resolverCore, Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
+			_ResolverCore = resolverCore;
 			_Cache = new Dictionary<string, Type>();
 			_Namespaces = namespaces;
 			_AsmCache = asmCache;
@@ -55,6 +56,7 @@ namespace Lens.Resolver
 		private static Dictionary<string, List<string>> _Locations;
 		private static readonly Dictionary<string, Type> _TypeAliases;
 
+		private readonly ReflectionResolver _ResolverCore;
 		private readonly Dictionary<string, Type> _Cache;
 		private Dictionary<string, bool> _Namespaces;
 
@@ -101,7 +103,7 @@ namespace Lens.Resolver
 
 				var type = findType(name);
 				return hasArgs
-					? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(parseTypeSignature).ToArray())
+					? _ResolverCore.MakeGenericTypeChecked(type, signature.Arguments.Select(parseTypeSignature).ToArray())
 					: type;
 			}
 			catch (ArgumentException ex)
@@ -119,10 +121,10 @@ namespace Lens.Resolver
 				return type.MakeArrayType();
 
 			if (postfix == "~")
-				return GenericHelper.MakeGenericTypeChecked(typeof (IEnumerable<>), type);
+				return _ResolverCore.MakeGenericTypeChecked(typeof(IEnumerable<>), type);
 
 			if (postfix == "?")
-				return GenericHelper.MakeGenericTypeChecked(typeof(Nullable<>), type);
+				return _ResolverCore.MakeGenericTypeChecked(typeof(Nullable<>), type);
 
 			throw new ArgumentException(string.Format("Unknown postfix '{0}'!", postfix));
 		}

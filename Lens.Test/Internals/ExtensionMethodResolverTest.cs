@@ -30,7 +30,8 @@ namespace Lens.Test.Internals
 
 		private void Test(Type type, string name, Type[] args, Type ethalonType)
 		{
-			var res = new ExtensionMethodResolver(new Dictionary<string, bool> {{"System", true}, {"System.Linq", true}}, new ReferencedAssemblyCache());
+			var rr = new ReflectionResolver();
+			var res = new ExtensionMethodResolver(rr, new Dictionary<string, bool> {{"System", true}, {"System.Linq", true}}, new ReferencedAssemblyCache());
 			var found = res.ResolveExtensionMethod(type, name, args);
 			var bucket = ethalonType.GetMethods().Where(m => m.Name == name).ToArray();
 			Assert.Contains(found, bucket);

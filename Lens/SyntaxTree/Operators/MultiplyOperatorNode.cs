@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Operators
 				if (type.IsArray)
 					return arrayExpand(ctx);
 
-				if (type == typeof (IEnumerable) || type.IsAppliedVersionOf(typeof (IEnumerable<>)))
+				if (type == typeof (IEnumerable) || ctx.ReflectionResolver.IsAppliedVersionOf(type, typeof (IEnumerable<>)))
 					return seqExpand(ctx);
 			}
 
@@ -57,12 +57,12 @@ namespace Lens.SyntaxTree.Operators
 					return leftType;
 
 				// typed sequence repetition
-				var enumerable = leftType.ResolveImplementationOf(typeof (IEnumerable<>));
+				var enumerable = ctx.ReflectionResolver.ResolveImplementationOf(leftType, typeof (IEnumerable<>));
 				if (enumerable != null)
 					return enumerable;
 
 				// untyped sequence repetition
-				if(leftType.Implements(typeof(IEnumerable), false))
+				if (ctx.ReflectionResolver.Implements(leftType, typeof(IEnumerable), false))
 					return typeof (IEnumerable);
 			}
 

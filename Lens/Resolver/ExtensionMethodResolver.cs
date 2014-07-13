@@ -17,8 +17,9 @@ namespace Lens.Resolver
 			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
 		}
 
-		public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
+		public ExtensionMethodResolver(ReflectionResolver resolverCore, Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
+			_ResolverCore = resolverCore;
 			_Namespaces = namespaces;
 			_AsmCache = asmCache;
 		}
@@ -26,6 +27,7 @@ namespace Lens.Resolver
 		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
 		private readonly Dictionary<string, bool> _Namespaces;
 		private readonly ReferencedAssemblyCache _AsmCache;
+		private readonly ReflectionResolver _ResolverCore;
 
 		/// <summary>
 		/// Gets an extension method by given arguments.
@@ -81,7 +83,7 @@ namespace Lens.Resolver
 								continue;
 
 							var argType = method.GetParameters()[0].ParameterType;
-							if (!argType.IsExtendablyAssignableFrom(forType))
+							if (!_ResolverCore.IsExtendablyAssignableFrom(argType, forType))
 								continue;
 
 							if (!dict.ContainsKey(method.Name))
@@ -100,11 +102,11 @@ namespace Lens.Resolver
 			_Cache[forType] = dict;
 		}
 
-		private static int getExtensionDistance(MethodInfo method, Type type, Type[] args)
+		private int getExtensionDistance(MethodInfo method, Type type, Type[] args)
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = TypeExtensions.TypeListDistance(args, methodArgs.Skip(1));
+			var baseDist = _ResolverCore.DistanceFrom(methodArgs.First(), type);
+			var argsDist = _ResolverCore.TypeListDistance(args, methodArgs.Skip(1));
 
 			if(baseDist == int.MaxValue || argsDist == int.MaxValue)
 				return int.MaxValue;

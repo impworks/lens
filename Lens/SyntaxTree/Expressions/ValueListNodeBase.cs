@@ -4,7 +4,6 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -30,7 +29,7 @@ namespace Lens.SyntaxTree.Expressions
 					error(curr, CompilerMessages.ExpressionVoid);
 
 			var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
-			return types.GetMostCommonType();
+			return ctx.ReflectionResolver.GetMostCommonType(types);
 		}
 
 		#region Equality members
