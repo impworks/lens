@@ -47,6 +47,9 @@ namespace Lens.Compiler.Entities
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
+
+			if (IsArgumentless)
+				ContainerType.Context.TypeDetailsLookup[ContainerType.TypeBuilder].HasDefaultConstructor = true;
 		}
 
 		// call default constructor

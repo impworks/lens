@@ -31,7 +31,8 @@ namespace Lens.Compiler
 
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
-			_TypeDetailsLookup = new Dictionary<Type, TypeDetails>();
+
+			TypeDetailsLookup = new Dictionary<Type, TypeDetails>();
 
 			Unique = new UniqueNameGenerator();
 			Namespaces = new Dictionary<string, bool>();
@@ -43,7 +44,7 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
-			ReflectionResolver = new ReflectionResolver(_TypeDetailsLookup);
+			ReflectionResolver = new ReflectionResolver(TypeDetailsLookup);
 			_AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
 			_ExtensionResolver = new ExtensionMethodResolver(ReflectionResolver, Namespaces, _AssemblyCache);
 			_TypeResolver = new TypeResolver(ReflectionResolver, Namespaces, _AssemblyCache)
@@ -185,6 +186,11 @@ namespace Lens.Compiler
 		internal readonly List<TypeContentsBase> UnpreparedTypeContents = new List<TypeContentsBase>();
 		internal readonly List<MethodEntityBase> UnprocessedMethods = new List<MethodEntityBase>();
 
+		/// <summary>
+		/// Information about types declared in the assembly (user-defined and generic parameters).
+		/// </summary>
+		internal readonly Dictionary<Type, TypeDetails> TypeDetailsLookup;
+
 		#endregion
 
 		#region Fields
@@ -218,11 +224,6 @@ namespace Lens.Compiler
 		/// The list of assemblies referenced by current script.
 		/// </summary>
 		private readonly ReferencedAssemblyCache _AssemblyCache;
-
-		/// <summary>
-		/// Information about types declared in the assembly (user-defined and generic parameters).
-		/// </summary>
-		private readonly Dictionary<Type, TypeDetails> _TypeDetailsLookup;
 
 		#endregion
 	}
