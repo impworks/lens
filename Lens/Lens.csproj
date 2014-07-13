@@ -77,7 +77,6 @@
   <ItemGroup>
     <Compile Include="Compiler\Entities\GenericParameterEntity.cs" />
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
-    <Compile Include="Compiler\Entities\TypeDetails.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
     <Compile Include="Resolver\ReferencedAssemblyCache.cs" />
     <Compile Include="Compiler\Scope.cs" />
@@ -107,6 +106,7 @@
     <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
     <Compile Include="Compiler\Entities\TypeEntity.cs" />
     <Compile Include="Resolver\ReflectionResolver.cs" />
+    <Compile Include="Resolver\TypeDetails.cs" />
     <Compile Include="Resolver\TypeResolver.cs" />
     <Compile Include="Resolver\Wrappers.cs" />
     <Compile Include="IScript.cs" />

@@ -18,11 +18,31 @@ namespace Lens.Resolver
 	{
 		#region Constructor
 
-		public ReflectionResolver()
+		public ReflectionResolver(Dictionary<Type, TypeDetails> typeLookup = null)
 		{
+			_Lookup = typeLookup ?? new Dictionary<Type, TypeDetails>();
 			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
 			m_InterfaceCache = new Dictionary<Type, Type[]>();
 		}
+
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Lookup function for assembly-defined types;
+		/// </summary>
+		private Dictionary<Type, TypeDetails> _Lookup;
+
+		/// <summary>
+		///  Type distance memoization cache.
+		/// </summary>
+		private Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
+
+		/// <summary>
+		/// Type interface memoization cache.
+		/// </summary>
+		private readonly Dictionary<Type, Type[]> m_InterfaceCache;
 
 		#endregion
 
@@ -463,8 +483,6 @@ namespace Lens.Resolver
 
 		#region Interface resolver
 
-		private readonly Dictionary<Type, Type[]> m_InterfaceCache;
-
 		/// <summary>
 		/// Get interfaces of a possibly generic type.
 		/// </summary>
@@ -653,6 +671,8 @@ namespace Lens.Resolver
 		/// <param name="source">Type that contains the processed type as a generic parameter.</param>
 		public static Type ApplyGenericArguments(Type type, Type source, bool throwNotFound = true)
 		{
+			// TODO: apply memoization
+
 			if (source.IsGenericType)
 			{
 				return ApplyGenericArguments(
@@ -961,8 +981,6 @@ namespace Lens.Resolver
 		#endregion
 
 		#region Type distance
-
-		private Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
 
 		/// <summary>
 		/// Checks if a variable of given type can be assigned from other type (including type extension).

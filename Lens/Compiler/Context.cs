@@ -31,9 +31,10 @@ namespace Lens.Compiler
 
 			_DefinedTypes = new Dictionary<string, TypeEntity>();
 			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
-			_DefinedTypeDetails = new Dictionary<Type, TypeDetails>();
+			_TypeDetailsLookup = new Dictionary<Type, TypeDetails>();
 
 			Unique = new UniqueNameGenerator();
+			Namespaces = new Dictionary<string, bool>();
 
 			if (Options.UseDefaultNamespaces)
 			{
@@ -42,7 +43,7 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
-			ReflectionResolver = new ReflectionResolver();
+			ReflectionResolver = new ReflectionResolver(_TypeDetailsLookup);
 			_AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
 			_ExtensionResolver = new ExtensionMethodResolver(ReflectionResolver, Namespaces, _AssemblyCache);
 			_TypeResolver = new TypeResolver(ReflectionResolver, Namespaces, _AssemblyCache)
@@ -174,7 +175,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The list of namespaces to only look in when resolving a type or an extension method.
 		/// </summary>
-		internal Dictionary<string, bool> Namespaces = new Dictionary<string, bool>();
+		internal Dictionary<string, bool> Namespaces;
 
 		internal readonly UniqueNameGenerator Unique;
 
@@ -204,11 +205,6 @@ namespace Lens.Compiler
 		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
 
 		/// <summary>
-		/// Lookup that provides extended type details (mostly for generic parameter types).
-		/// </summary>
-		private readonly Dictionary<Type, TypeDetails> _DefinedTypeDetails;
-
-		/// <summary>
 		/// The lookup table for imported properties.
 		/// </summary>
 		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
@@ -221,7 +217,12 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The list of assemblies referenced by current script.
 		/// </summary>
-		internal readonly ReferencedAssemblyCache _AssemblyCache;
+		private readonly ReferencedAssemblyCache _AssemblyCache;
+
+		/// <summary>
+		/// Information about types declared in the assembly (user-defined and generic parameters).
+		/// </summary>
+		private readonly Dictionary<Type, TypeDetails> _TypeDetailsLookup;
 
 		#endregion
 	}

@@ -42,6 +42,11 @@ namespace Lens.Compiler.Entities
 		public TryNode CurrentTryBlock { get; set; }
 		public CatchNode CurrentCatchBlock { get; set; }
 
+		public bool IsArgumentless
+		{
+			get { return (Arguments == null || Arguments.Count == 0) && (ArgumentTypes == null || ArgumentTypes.Length == 0); }
+		}
+
 		#region Methods
 
 		/// <summary>

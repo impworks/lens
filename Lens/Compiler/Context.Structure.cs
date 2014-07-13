@@ -48,6 +48,14 @@ namespace Lens.Compiler
 			}
 		}
 
+		/// <summary>
+		/// Registers type details in the central lookup.
+		/// </summary>
+		public void RegisterTypeDetails(Type type, TypeDetails details)
+		{
+			_TypeDetailsLookup.Add(type, details);
+		}
+
 		#endregion
 
 		#region Helpers

@@ -23,16 +23,6 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// Finds details for the current dynamically declared type.
-		/// </summary>
-		public TypeDetails FindTypeDetails(Type type)
-		{
-			TypeDetails details;
-			_DefinedTypeDetails.TryGetValue(type, out details);
-			return details;
-		}
-
-		/// <summary>
 		/// Resolves a type by its string signature.
 		/// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
 		/// </summary>

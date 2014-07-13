@@ -113,6 +113,9 @@ namespace Lens.Compiler.Entities
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
 					TypeBuilder.AddInterfaceImplementation(iface);
+
+			var details = new TypeDetails(TypeBuilder, Parent, Interfaces, _Constructors.Any(c => c.IsArgumentless), true);
+			Context.RegisterTypeDetails(TypeBuilder, details);
 		}
 
 		/// <summary>
