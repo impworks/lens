@@ -32,12 +32,12 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Lookup function for assembly-defined types;
 		/// </summary>
-		private Dictionary<Type, TypeDetails> _Lookup;
+		private readonly Dictionary<Type, TypeDetails> _Lookup;
 
 		/// <summary>
 		///  Type distance memoization cache.
 		/// </summary>
-		private Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
+		private readonly Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
 
 		/// <summary>
 		/// Type interface memoization cache.
@@ -378,9 +378,6 @@ namespace Lens.Resolver
 		/// </summary>
 		public MethodWrapper ResolveIndexer(Type type, Type idxType, bool isGetter)
 		{
-			if (type is TypeBuilder)
-				throw new NotSupportedException();
-
 			try
 			{
 				var indexer = resolveIndexerProperty(type, idxType, isGetter, p => p);
@@ -1680,9 +1677,19 @@ namespace Lens.Resolver
 		#region Helpers
 
 		/// <summary>
+		/// Attempts to find the type in the lookup table.
+		/// </summary>
+		private TypeDetails lookup(Type type)
+		{
+			TypeDetails result;
+			_Lookup.TryGetValue(type, out result);
+			return result;
+		}
+
+		/// <summary>
 		/// Returns the list of methods by name, flattening interface hierarchy.
 		/// </summary>
-		public IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
+		private IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
 		{
 			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
