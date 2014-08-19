@@ -58,6 +58,33 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
+		/// Pushes a Decimal object onto the stack.
+		/// </summary>
+		public static void EmitConstant(this ILGenerator gen, decimal value)
+		{
+			if (value <= int.MaxValue && value >= int.MinValue && Decimal.Truncate(value) == value)
+			{
+				var ctor = typeof(Decimal).GetConstructor(new[] { typeof(int) });
+				gen.EmitConstant((int)value);
+				gen.EmitCreateObject(ctor);
+			}
+			else
+			{
+				var bits = Decimal.GetBits(value);
+				var ctor = typeof(Decimal).GetConstructor(new[] { typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte) });
+				var sign = value < Decimal.Zero;
+				var scale = (bits[3] >> 16) & 0xFF;
+
+				gen.EmitConstant(bits[0]);
+				gen.EmitConstant(bits[1]);
+				gen.EmitConstant(bits[2]);
+				gen.EmitConstant(sign);
+				gen.EmitConstant((byte)scale);
+				gen.EmitCreateObject(ctor);
+			}
+		}
+
+		/// <summary>
 		/// Pushes a boolean value onto the stack (actually an integer).
 		/// </summary>
 		public static void EmitConstant(this ILGenerator gen, bool value)

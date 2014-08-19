@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
@@ -222,14 +221,22 @@ namespace Lens.SyntaxTree
 
 			if (value is bool)
 				gen.EmitConstant((bool)value);
+
 			else if (value is int)
 				gen.EmitConstant((int)value);
+
 			else if (value is long)
 				gen.EmitConstant((long)value);
+
 			else if (value is double)
 				gen.EmitConstant((double)value);
+
 			else if (value is string)
 				gen.EmitConstant((string)value);
+
+			else if (value is decimal)
+				gen.EmitConstant((decimal)value);
+
 			else
 				emitCode(ctx, true);
 		}
