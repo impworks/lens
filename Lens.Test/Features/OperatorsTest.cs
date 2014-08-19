@@ -308,6 +308,16 @@ data.Select (x -> x[0])
 			Test(src, new[] { 1, 3, 5 });
 		}
 
+		[Test]
+		public void ComplexConstants()
+		{
+			var src = @"
+let x = 1.3M
+let y = 1.2M
+x + y";
+			Test(src, 2.5M);
+		}
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);

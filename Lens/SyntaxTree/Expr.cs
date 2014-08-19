@@ -16,12 +16,27 @@ namespace Lens.SyntaxTree
 
 		public static IntNode Int(int value = 0)
 		{
-			return new IntNode { Value = value };
+			return new IntNode(value);
+		}
+
+		public static LongNode Long(long value = 0)
+		{
+			return new LongNode(value);
+		}
+
+		public static FloatNode Float(float value = 0)
+		{
+			return new FloatNode(value);
 		}
 
 		public static DoubleNode Double(double value = 0)
 		{
 			return new DoubleNode(value);
+		}
+
+		public static DecimalNode Decimal(decimal value = 0)
+		{
+			return new DecimalNode(value);
 		}
 
 		public static BooleanNode True()

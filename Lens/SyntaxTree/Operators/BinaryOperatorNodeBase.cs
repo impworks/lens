@@ -108,21 +108,6 @@ namespace Lens.SyntaxTree.Operators
 		#region Helper methods
 
 		/// <summary>
-		/// Resolves a common numeric type.
-		/// </summary>
-		private Type resolveNumericType(Context ctx)
-		{
-			var left = LeftOperand.Resolve(ctx);
-			var right = RightOperand.Resolve(ctx);
-
-			var type = TypeExtensions.GetNumericOperationType(left, right);
-			if(type == null)
-				error(CompilerMessages.OperatorTypesSignednessMismatch);
-
-			return type;
-		}
-
-		/// <summary>
 		/// Loads both arguments and converts them to the biggest common type.
 		/// </summary>
 		protected void loadAndConvertNumerics(Context ctx, Type type = null)

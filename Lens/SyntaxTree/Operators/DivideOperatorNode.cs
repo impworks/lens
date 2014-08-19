@@ -1,5 +1,6 @@
 ﻿using Lens.Compiler;
 using Lens.Translations;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -34,7 +35,10 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
-			if(left is int && right is int && right == 0)
+			var leftType = left.GetType();
+			var rightType = right.GetType();
+
+			if(TypeExtensions.IsIntegerType(leftType) && TypeExtensions.IsIntegerType(rightType) && right == 0)
 				error(CompilerMessages.ConstantDivisionByZero);
 
 			return left/right;

@@ -83,6 +83,9 @@ namespace Lens.Resolver
 			return FloatTypes.Contains(type);
 		}
 
+		/// <summary>
+		/// Checks if a type is any of integer types, signed or unsigned.
+		/// </summary>
 		public static bool IsIntegerType(this Type type)
 		{
 			return type.IsSignedIntegerType() || type.IsUnsignedIntegerType();
@@ -568,10 +571,10 @@ namespace Lens.Resolver
 
 			if (varType.IsUnsignedIntegerType() && exprType.IsUnsignedIntegerType())
 				return simpleNumericConversion(varType, exprType, UnsignedIntegerTypes);
-			
+
 			if (varType.IsFloatType() && exprType.IsFloatType())
 				return simpleNumericConversion(varType, exprType, FloatTypes);
-			
+
 			if (varType.IsSignedIntegerType() && exprType.IsUnsignedIntegerType())
 				return unsignedToSignedConversion(varType, exprType);
 			
