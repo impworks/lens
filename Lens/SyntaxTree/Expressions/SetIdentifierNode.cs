@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.Expressions
 			return base.resolve(ctx, mustReturn);
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Value, x => Value = x);
 		}

@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.ExitScope();
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
 		}

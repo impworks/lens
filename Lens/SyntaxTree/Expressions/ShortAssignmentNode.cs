@@ -50,12 +50,12 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region NodeBase overrides
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (Expression is SetIdentifierNode)
 				return expandIdentifier(Expression as SetIdentifierNode);

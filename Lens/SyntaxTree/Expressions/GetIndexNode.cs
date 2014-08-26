@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Index, x => Index = x);

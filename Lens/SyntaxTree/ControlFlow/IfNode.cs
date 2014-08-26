@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return new[] {type, otherType}.GetMostCommonType();
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
 			yield return new NodeChild(TrueAction, null);

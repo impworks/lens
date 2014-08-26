@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Multiply"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var type = Resolve(ctx);
 			if (type.IsNumericType())
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitMultiply();

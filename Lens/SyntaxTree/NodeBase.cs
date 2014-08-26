@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Lens.Compiler;
-using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
@@ -24,7 +23,7 @@ namespace Lens.SyntaxTree
 
 		#endregion
 
-		#region Properties
+		#region Constant values
 
 		/// <summary>
 		/// Checks if the current node is a constant.
@@ -44,10 +43,10 @@ namespace Lens.SyntaxTree
 
 		#endregion
 
-		#region Main pass stages
+		#region Resolve
 
 		/// <summary>
-		/// Calculates the type of expression represented by current node.
+		/// Returns or resolves the type of expression represented by current node.
 		/// </summary>
 		[DebuggerStepThrough]
 		public Type Resolve(Context ctx, bool mustReturn = true)
@@ -61,24 +60,32 @@ namespace Lens.SyntaxTree
 			return _CachedExpressionType;
 		}
 
+		/// <summary>
+		/// Resolves the expression type.
+		/// Must be overridden in child types if they represent a meaninful value.
+		/// </summary>
 		protected virtual Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (UnitType);
 		}
+
+		#endregion
+
+		#region Transform & Expand
 
 		/// <summary>
 		/// Enables recursive children resolution & expansion.
 		/// </summary>
 		public virtual void Transform(Context ctx, bool mustReturn)
 		{
-			var children = GetChildren().ToArray();
+			var children = getChildren().ToArray();
 			foreach (var child in children)
 			{
 				if (child == null || child.Node == null)
 					continue;
 
 				child.Node.Resolve(ctx, mustReturn);
-				var sub = child.Node.Expand(ctx, mustReturn);
+				var sub = child.Node.expand(ctx, mustReturn);
 				if (sub != null)
 				{
 					child.Setter(sub);
@@ -94,26 +101,33 @@ namespace Lens.SyntaxTree
 
 		/// <summary>
 		/// Checks if current node can be expanded into another node or a set of nodes.
+		/// To be overridden in child nodes if required.
 		/// </summary>
 		/// <returns>
 		/// Null if no expansion is suitable, a NodeBase object instance otherwise.
 		/// </returns>
-		public virtual NodeBase Expand(Context ctx, bool mustReturn)
+		protected virtual NodeBase expand(Context ctx, bool mustReturn)
 		{
 			return null;
 		}
 
+		#endregion
+
+		#region Process closures
+
 		/// <summary>
-		/// Processes closures.
+		/// Processes closures for node and its children.
 		/// </summary>
 		public virtual void ProcessClosures(Context ctx)
 		{
-			foreach (var child in GetChildren())
+			foreach (var child in getChildren())
 				if (child != null && child.Node != null)
 					child.Node.ProcessClosures(ctx);
 		}
 
 		#endregion
+
+		#region Emit
 
 		/// <summary>
 		/// Generates the IL for this node.
@@ -122,22 +136,17 @@ namespace Lens.SyntaxTree
 		/// <param name="mustReturn">Flag indicating the node should return a value.</param>
 		public void Emit(Context ctx, bool mustReturn)
 		{
-			if (IsConstant && ctx.Options.UnrollConstants)
-			{
-				// cannot unroll constant pointers
-				var pp = this as IPointerProvider;
-				if (pp == null || (!pp.PointerRequired && !pp.RefArgumentRequired))
-				{
-					if (mustReturn)
-						emitConstant(ctx);
-
-					return;
-				}
-			}
+			if (IsConstant && !mustReturn)
+				return;
 
 			emitCode(ctx, mustReturn);
 		}
 
+		/// <summary>
+		/// Emits 
+		/// </summary>
+		/// <param name="ctx"></param>
+		/// <param name="mustReturn"></param>
 		protected virtual void emitCode(Context ctx, bool mustReturn)
 		{
 			throw new InvalidOperationException(
@@ -148,15 +157,17 @@ namespace Lens.SyntaxTree
 			);
 		}
 
+		#endregion
+
+		#region Helpers
+
 		/// <summary>
 		/// Gets the list of child nodes.
 		/// </summary>
-		public virtual IEnumerable<NodeChild> GetChildren()
+		protected virtual IEnumerable<NodeChild> getChildren()
 		{
 			yield break;
 		}
-
-		#region Private helpers
 
 		/// <summary>
 		/// Reports an error to the compiler.
@@ -209,36 +220,6 @@ namespace Lens.SyntaxTree
 
 			if (lambda.MustInferArgTypes)
 				lambda.SetInferredArgumentTypes(wrapper.ArgumentTypes);
-		}
-
-		/// <summary>
-		/// Emit the value of current node as a constant.
-		/// </summary>
-		private void emitConstant(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var value = ConstantValue;
-
-			if (value is bool)
-				gen.EmitConstant((bool)value);
-
-			else if (value is int)
-				gen.EmitConstant((int)value);
-
-			else if (value is long)
-				gen.EmitConstant((long)value);
-
-			else if (value is double)
-				gen.EmitConstant((double)value);
-
-			else if (value is string)
-				gen.EmitConstant((string)value);
-
-			else if (value is decimal)
-				gen.EmitConstant((decimal)value);
-
-			else
-				emitCode(ctx, true);
 		}
 
 		#endregion

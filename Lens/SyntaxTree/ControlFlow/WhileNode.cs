@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var loopType = Resolve(ctx);
 			var saveLast = mustReturn && !loopType.IsVoid();
@@ -35,10 +35,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
 				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Unit();
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
 			yield return new NodeChild(Body, null);

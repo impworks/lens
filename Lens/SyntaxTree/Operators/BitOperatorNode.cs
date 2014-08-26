@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == rightType && leftType.IsIntegerType() ? leftType : null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 

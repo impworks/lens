@@ -222,13 +222,13 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			var canExpandExpr = !(Expression is GetIdentifierNode || Expression is GetMemberNode);
 			if(canExpandExpr)
 				yield return new NodeChild(Expression, x => Expression = x);
 
-			foreach (var curr in base.GetChildren())
+			foreach (var curr in base.getChildren())
 				yield return curr;
 		}
 

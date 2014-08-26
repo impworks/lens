@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Expressions
 			return _ItemType.MakeArrayType();
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}

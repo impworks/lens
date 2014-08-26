@@ -20,14 +20,14 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_UnaryNegation"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			// double negation
 			var op = Operand as NegationOperatorNode;
 			if (op != null)
 				return op.Operand;
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx)

@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}

@@ -1,7 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -25,7 +24,7 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -36,7 +35,7 @@ namespace Lens.SyntaxTree.Operators
 			return mathExpand(LeftOperand, RightOperand, false) ?? mathExpand(RightOperand, LeftOperand, true);
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitSubtract();

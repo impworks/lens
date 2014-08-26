@@ -69,6 +69,19 @@ namespace Lens.SyntaxTree
 			return new UnitNode();
 		}
 
+		public static NodeBase Constant(dynamic value)
+		{
+			if (value is int) return Int(value);
+			if (value is long) return Long(value);
+			if (value is float) return Float(value);
+			if (value is double) return Double(value);
+			if (value is decimal) return Decimal(value);
+			if (value is string) return Str(value);
+			if (value is bool) return Bool(value);
+
+			throw new ArgumentException(string.Format("Type {0} is not constant!", value.GetType()));
+		}
+
 		#endregion
 
 		#region Operators

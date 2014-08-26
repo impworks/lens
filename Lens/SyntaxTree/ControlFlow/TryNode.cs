@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label EndLabel { get; private set; }
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Code, null);
 

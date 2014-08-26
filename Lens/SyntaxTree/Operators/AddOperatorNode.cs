@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Addition"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitAdd();

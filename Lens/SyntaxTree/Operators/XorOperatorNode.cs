@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == typeof(bool) && rightType == typeof(bool) ? typeof(bool) : null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
