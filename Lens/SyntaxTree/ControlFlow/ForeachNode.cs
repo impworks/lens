@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return Body.Resolve(ctx);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
 			{
@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return expandRange(ctx);
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			if (IterableExpression != null)
 			{

@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public readonly bool IsImmutable;
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Value, x => Value = x);
 		}
@@ -80,7 +80,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return base.resolve(ctx, mustReturn);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var name = Local ?? ctx.Scope.FindLocal(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)

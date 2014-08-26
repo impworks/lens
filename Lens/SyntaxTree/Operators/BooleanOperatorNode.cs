@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Operators
 				       : null;
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators
 					: Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
 			}
 
-			return null;
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Operators
 			return Kind == LogicalOperatorKind.And ? left && right : left || right;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			throw new InvalidOperationException("The BooleanOperatorNode has not been expanded!");
 		}

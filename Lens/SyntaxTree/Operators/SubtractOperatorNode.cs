@@ -1,7 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -25,7 +24,7 @@ namespace Lens.SyntaxTree.Operators
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -33,10 +32,10 @@ namespace Lens.SyntaxTree.Operators
 					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
 			}
 
-			return mathExpand(LeftOperand, RightOperand, false) ?? mathExpand(RightOperand, LeftOperand, true);
+			return base.expand(ctx, mustReturn);
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitSubtract();
@@ -48,18 +47,6 @@ namespace Lens.SyntaxTree.Operators
 				return left.Replace(right, "");
 
 			return left - right;
-		}
-
-		private static NodeBase mathExpand(NodeBase one, NodeBase other, bool inv)
-		{
-			if (one.IsConstant)
-			{
-				var value = one.ConstantValue;
-				if (TypeExtensions.IsNumericType(value.GetType()) && value == 0)
-					return inv ? other : Expr.Negate(other);
-			}
-
-			return null;
 		}
 	}
 }

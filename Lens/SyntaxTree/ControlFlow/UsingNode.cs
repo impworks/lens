@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		        : Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), new Local(VariableName, exprType));
         }
 
-	    public override NodeBase Expand(Context ctx, bool mustReturn)
+	    protected override NodeBase expand(Context ctx, bool mustReturn)
 	    {
 			var exprType = Expression.Resolve(ctx, mustReturn);
 		    var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
@@ -60,7 +60,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			);
 	    }
 
-	    public override IEnumerable<NodeChild> GetChildren()
+	    protected override IEnumerable<NodeChild> getChildren()
 	    {
 		    yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Body, null);

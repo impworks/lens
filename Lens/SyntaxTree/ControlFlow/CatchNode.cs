@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private Local _ExceptionVariable;
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Code, null);
 		}

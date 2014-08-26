@@ -22,5 +22,14 @@ namespace Lens.SyntaxTree.Operators
 		/// The pointer to overloaded version of the operator.
 		/// </summary>
 		protected MethodWrapper m_OverloadedMethod;
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
+		{
+			var result = IsConstant && ctx.Options.UnrollConstants
+				? Expr.Constant(ConstantValue)
+				: null;
+
+			return result;
+		}
 	}
 }

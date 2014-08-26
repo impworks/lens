@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Addition"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -45,7 +45,7 @@ namespace Lens.SyntaxTree.Operators
 					return typedSeqExpand();
 			}
 
-			return mathExpand(LeftOperand, RightOperand) ?? mathExpand(RightOperand, LeftOperand);
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitAdd();
@@ -97,21 +97,6 @@ namespace Lens.SyntaxTree.Operators
 
 		#region Expansion rules
 		
-		/// <summary>
-		/// Returns the code to expand mathematic operations if available.
-		/// </summary>
-		private static NodeBase mathExpand(NodeBase one, NodeBase other)
-		{
-			if (one.IsConstant)
-			{
-				var value = one.ConstantValue;
-				if(TypeExtensions.IsNumericType(value.GetType()) && value == 0)
-					return other;
-			}
-
-			return null;
-		}
-
 		/// <summary>
 		/// Returns the code to concatenate two strings.
 		/// </summary>

@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Expressions
 			return typeof(Dictionary<,>).MakeGenericType(_KeyType, _ValueType);
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			for (var idx = 0; idx < Expressions.Count; idx++)
 			{

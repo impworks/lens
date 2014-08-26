@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.Operators
 			return base.resolve(ctx, mustReturn);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx, mustReturn);
 			var rightType = RightOperand.Resolve(ctx, mustReturn);
@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.Operators
 				);
 			}
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -99,7 +99,7 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 

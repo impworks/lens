@@ -78,12 +78,12 @@ namespace Lens.SyntaxTree.Expressions
 			return resolvePartial(_Constructor, type, _ArgTypes);
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (_IsDefault)
 				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override void emitCode(Context ctx, bool mustReturn)

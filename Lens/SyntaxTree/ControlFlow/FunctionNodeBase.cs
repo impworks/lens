@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			return Body.Resolve(ctx);
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Body, null);
 		}

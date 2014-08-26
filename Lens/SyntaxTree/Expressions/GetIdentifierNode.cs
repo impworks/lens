@@ -29,12 +29,15 @@ namespace Lens.SyntaxTree.Expressions
 			Identifier = identifier;
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (_Type != null)
 				return Expr.New(_Type.TypeInfo);
 
-			return base.Expand(ctx, mustReturn);
+			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
+				return Expr.Constant(_LocalConstant.ConstantValue);
+
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolve(Context ctx, bool mustReturn)

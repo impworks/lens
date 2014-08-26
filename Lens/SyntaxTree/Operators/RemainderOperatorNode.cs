@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Modulus"; }
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitRemainder();

@@ -132,7 +132,7 @@ namespace Lens.SyntaxTree.Expressions
 			return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}

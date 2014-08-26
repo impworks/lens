@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
@@ -77,7 +77,7 @@ namespace Lens.SyntaxTree.Operators
 			var gen = ctx.CurrentMethod.Generator;
 			if (m_OverloadedMethod == null)
 			{
-				compileOperator(ctx);
+				emitOperator(ctx);
 				return;
 			}
 
@@ -98,7 +98,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Emits operator code, in case it's not an overloaded method call.
 		/// </summary>
-		protected abstract void compileOperator(Context ctx);
+		protected abstract void emitOperator(Context ctx);
 
 		/// <summary>
 		/// Calculates the constant value in compile time.
@@ -129,7 +129,7 @@ namespace Lens.SyntaxTree.Operators
 		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
 		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
 			yield return new NodeChild(RightOperand, x => RightOperand = x);

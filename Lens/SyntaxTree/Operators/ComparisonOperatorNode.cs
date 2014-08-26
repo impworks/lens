@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree.Operators
 			return canCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			var leftType = LeftOperand.Resolve(ctx);
 			var rightType = RightOperand.Resolve(ctx);

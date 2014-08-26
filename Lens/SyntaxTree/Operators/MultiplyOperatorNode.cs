@@ -23,14 +23,12 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Multiply"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
-			var type = Resolve(ctx);
-			if (type.IsNumericType())
-				return mathExpansion(LeftOperand, RightOperand) ?? mathExpansion(RightOperand, LeftOperand);
-
 			if (!IsConstant)
-			{ 
+			{
+				var type = Resolve(ctx);
+
 				if (type == typeof (string))
 					return stringExpand(ctx);
 
@@ -41,7 +39,7 @@ namespace Lens.SyntaxTree.Operators
 					return seqExpand(ctx);
 			}
 
-			return null;
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
@@ -69,7 +67,7 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitMultiply();

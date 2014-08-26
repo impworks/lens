@@ -19,15 +19,15 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Division"; }
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
 				return LeftOperand;
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitDivide();

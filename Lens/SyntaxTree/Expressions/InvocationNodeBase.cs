@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Methods
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			for (var idx = 0; idx < Arguments.Count; idx++)
 			{
@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.Expressions
 			return null;
 		}
 
-		public override NodeBase Expand(Context ctx, bool mustReturn)
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (_Wrapper.IsPartiallyApplied)
 			{
@@ -105,7 +105,7 @@ namespace Lens.SyntaxTree.Expressions
 				}
 			}
 
-			return base.Expand(ctx, mustReturn);
+			return base.expand(ctx, mustReturn);
 		}
 
 		/// <summary>

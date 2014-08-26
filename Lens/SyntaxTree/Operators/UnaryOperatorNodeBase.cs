@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Operators
 		public override bool IsConstant { get { return Operand.IsConstant; } }
 		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
 
-		public override IEnumerable<NodeChild> GetChildren()
+		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Operand, x => Operand = x);
 		}
@@ -52,8 +52,6 @@ namespace Lens.SyntaxTree.Operators
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-
-			Resolve(ctx);
 
 			if (m_OverloadedMethod == null)
 			{

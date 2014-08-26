@@ -2,7 +2,6 @@
 using System.Reflection;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -23,7 +22,7 @@ namespace Lens.SyntaxTree.Operators
 			return leftType.IsNumericType() && rightType.IsNumericType() ? typeof (double) : null;
 		}
 
-		protected override void compileOperator(Context ctx)
+		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx, typeof(double));
 			ctx.CurrentMethod.Generator.EmitCall(_PowMethod);
