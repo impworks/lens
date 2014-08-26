@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.Operators
 					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
 			}
 
-			return mathExpand(LeftOperand, RightOperand, false) ?? mathExpand(RightOperand, LeftOperand, true);
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override void emitOperator(Context ctx)
@@ -47,18 +47,6 @@ namespace Lens.SyntaxTree.Operators
 				return left.Replace(right, "");
 
 			return left - right;
-		}
-
-		private static NodeBase mathExpand(NodeBase one, NodeBase other, bool inv)
-		{
-			if (one.IsConstant)
-			{
-				var value = one.ConstantValue;
-				if (TypeExtensions.IsNumericType(value.GetType()) && value == 0)
-					return inv ? other : Expr.Negate(other);
-			}
-
-			return null;
 		}
 	}
 }

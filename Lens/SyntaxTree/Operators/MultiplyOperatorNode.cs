@@ -25,12 +25,10 @@ namespace Lens.SyntaxTree.Operators
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
-			var type = Resolve(ctx);
-			if (type.IsNumericType())
-				return mathExpansion(LeftOperand, RightOperand) ?? mathExpansion(RightOperand, LeftOperand);
-
 			if (!IsConstant)
-			{ 
+			{
+				var type = Resolve(ctx);
+
 				if (type == typeof (string))
 					return stringExpand(ctx);
 
@@ -41,7 +39,7 @@ namespace Lens.SyntaxTree.Operators
 					return seqExpand(ctx);
 			}
 
-			return null;
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)

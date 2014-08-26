@@ -2,7 +2,6 @@
 using System.Reflection;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators
 {
