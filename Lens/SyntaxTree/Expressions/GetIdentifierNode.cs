@@ -34,6 +34,9 @@ namespace Lens.SyntaxTree.Expressions
 			if (_Type != null)
 				return Expr.New(_Type.TypeInfo);
 
+			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
+				return Expr.Constant(_LocalConstant.ConstantValue);
+
 			return base.expand(ctx, mustReturn);
 		}
 
