@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators
 					: Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
 			}
 
-			return null;
+			return base.expand(ctx, mustReturn);
 		}
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)

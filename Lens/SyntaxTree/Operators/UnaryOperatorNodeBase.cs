@@ -53,8 +53,6 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			Resolve(ctx);
-
 			if (m_OverloadedMethod == null)
 			{
 				compileOperator(ctx);
