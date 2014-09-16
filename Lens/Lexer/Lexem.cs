@@ -2,11 +2,12 @@
 
 namespace Lens.Lexer
 {
+	/// <summary>
+	/// A single lexem parsed from the source by lexer.
+	/// </summary>
 	internal class Lexem : LocationEntity
 	{
-		public readonly LexemType Type;
-
-		public readonly string Value;
+		#region Constructor
 
 		public Lexem(LexemType type, LexemLocation start, LexemLocation end, string value = null)
 		{
@@ -15,6 +16,17 @@ namespace Lens.Lexer
 			StartLocation = start;
 			EndLocation = end;
 		}
+
+		#endregion
+
+		#region Fields
+
+		public readonly LexemType Type;
+		public readonly string Value;
+
+		#endregion
+
+		#region Equality members
 
 		public override bool Equals(object obj)
 		{
@@ -32,15 +44,21 @@ namespace Lens.Lexer
 			}
 		}
 
+		private bool Equals(Lexem other)
+		{
+			return Type.Equals(other.Type) && string.Equals(Value, other.Value);
+		}
+
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			var format = string.IsNullOrEmpty(Value) ? "{0}" : "{0}({1})";
 			return string.Format(format, Type, Value);
 		}
 
-		private bool Equals(Lexem other)
-		{
-			return Type.Equals(other.Type) && string.Equals(Value, other.Value);
-		}
+		#endregion
 	}
 }

@@ -12,16 +12,7 @@ namespace Lens.Lexer
 	/// </summary>
 	internal partial class LensLexer
 	{
-		public List<Lexem> Lexems { get; private set; }
-
-		private int Position;
-		private int Offset;
-		private int Line;
-
-		private bool NewLine;
-		private Stack<int> IndentLookup;
-
-		private string Source;
+		#region Constructor
 
 		public LensLexer(string src)
 		{
@@ -38,6 +29,49 @@ namespace Lens.Lexer
 			parse();
 			filterNewlines();
 		}
+
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Source code as single string.
+		/// </summary>
+		private string Source;
+
+		/// <summary>
+		/// Generated list of lexems.
+		/// </summary>
+		public List<Lexem> Lexems { get; private set; }
+
+		/// <summary>
+		/// Current position in the entire source string.
+		/// </summary>
+		private int Position;
+
+		/// <summary>
+		/// Current line in source.
+		/// </summary>
+		private int Line;
+
+		/// <summary>
+		/// Horizontal offset in current line.
+		/// </summary>
+		private int Offset;
+
+		/// <summary>
+		/// Flag indicating the line has just started.
+		/// </summary>
+		private bool NewLine;
+
+		/// <summary>
+		/// Lookup of identation levels.
+		/// </summary>
+		private Stack<int> IndentLookup;
+
+		#endregion
+
+		#region Private methods
 
 		/// <summary>
 		/// Processes the input string into a list of lexems.
@@ -68,13 +102,13 @@ namespace Lens.Lexer
 				}
 				else if (Source[Position] == '\t')
 				{
-					Error(LexerMessages.TabChar);
+					error(LexerMessages.TabChar);
 				}
 				else
 				{
 					var lex = processStaticLexem() ?? processRegexLexem();
 					if (lex == null)
-						Error(LexerMessages.UnknownLexem);
+						error(LexerMessages.UnknownLexem);
 
 					if (lex.Type == LexemType.Char)
 						lex = transformCharLiteral(lex);
@@ -135,7 +169,7 @@ namespace Lens.Lexer
 					if (IndentLookup.Count > 0)
 						IndentLookup.Pop();
 					else
-						Error(LexerMessages.InconsistentIdentation);
+						error(LexerMessages.InconsistentIdentation);
 
 					addLexem(LexemType.Dedent, getPosition());
 
@@ -204,22 +238,6 @@ namespace Lens.Lexer
 
 			var end = getPosition();
 			throw new LensCompilerException(LexerMessages.UnclosedString).BindToLocation(start, end);
-		}
-
-		/// <summary>
-		/// Processes the contents of a char literal.
-		/// </summary>
-		private Lexem transformCharLiteral(Lexem lex)
-		{
-			var value = lex.Value;
-			if(value.Length < 3 || value.Length > 4)
-				Error(LexerMessages.IncorrectCharLiteral);
-
-			value = value[1] == '\\'
-				? escapeChar(value[2]).ToString()
-				: value[1].ToString();
-
-			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
 		}
 
 		/// <summary>
@@ -315,32 +333,6 @@ namespace Lens.Lexer
 		}
 
 		/// <summary>
-		/// Returns an escaped version of the given character.
-		/// </summary>
-		private char escapeChar(char t)
-		{
-			switch (t)
-			{
-				case 't':
-					return '\t';
-
-				case 'n':
-					return '\n';
-
-				case 'r':
-					return '\r';
-
-				case '\\':
-				case '"':
-				case '\'':
-					return t;
-			}
-
-			Error(LexerMessages.UnknownEscape, t);
-			return ' ';
-		}
-
-		/// <summary>
 		/// Checks if the current position contains a newline character.
 		/// </summary>
 		private bool processNewLine()
@@ -363,9 +355,14 @@ namespace Lens.Lexer
 			return false;
 		}
 
+		/// <summary>
+		/// Appends a new lexem to the list.
+		/// </summary>
 		private void addLexem(LexemType type, LexemLocation loc)
 		{
 			Lexems.Add(new Lexem(type, loc, default(LexemLocation)));
 		}
+
+		#endregion
 	}
 }

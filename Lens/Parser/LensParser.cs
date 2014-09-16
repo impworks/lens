@@ -15,10 +15,7 @@ namespace Lens.Parser
 {
 	internal partial class LensParser
 	{
-		public List<NodeBase> Nodes { get; private set; }
-
-		private Lexem[] Lexems;
-		private int LexemId;
+		#region Constructor
 
 		public LensParser(IEnumerable<Lexem> lexems)
 		{
@@ -26,6 +23,27 @@ namespace Lens.Parser
 
 			Nodes = parseMain().ToList();
 		}
+
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Generated list of nodes.
+		/// </summary>
+		public List<NodeBase> Nodes { get; private set; }
+
+		/// <summary>
+		/// Source list of lexems.
+		/// </summary>
+		private Lexem[] Lexems;
+
+		/// <summary>
+		/// Current index of the lexem in the stream.
+		/// </summary>
+		private int LexemId;
+
+		#endregion
 
 		#region Globals
 

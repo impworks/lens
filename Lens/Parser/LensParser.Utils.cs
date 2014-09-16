@@ -12,6 +12,8 @@ namespace Lens.Parser
 {
 	internal partial class LensParser
 	{
+		#region Error reporting
+
 		[DebuggerStepThrough]
 		private void error(string msg, params object[] args)
 		{
@@ -20,6 +22,8 @@ namespace Lens.Parser
 				Lexems[LexemId]
 			);
 		}
+
+		#endregion
 
 		#region Lexem handling
 
@@ -195,6 +199,9 @@ namespace Lens.Parser
 
 		#region Setters
 
+		/// <summary>
+		/// Creates a setter from a getter expression and a value to be set.
+		/// </summary>
 		private NodeBase makeSetter(NodeBase getter, NodeBase expr)
 		{
 			if (getter is GetIdentifierNode)
@@ -221,6 +228,11 @@ namespace Lens.Parser
 			throw new InvalidOperationException(string.Format("Node {0} is not a getter!", getter.GetType()));
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetIdentifierNode.
+		/// From: a
+		/// To:   a = ...
+		/// </summary>
 		private SetIdentifierNode setterOf(GetIdentifierNode node)
 		{
 			return new SetIdentifierNode
@@ -230,6 +242,11 @@ namespace Lens.Parser
 			};
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetMemberNode.
+		/// From: expr.a 
+		/// To:   expr.a = ...
+		/// </summary>
 		private SetMemberNode setterOf(GetMemberNode node)
 		{
 			return new SetMemberNode
@@ -240,6 +257,11 @@ namespace Lens.Parser
 			};
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetIndexNode.
+		/// From: expr[a]
+		/// To:   expr[a] = ...
+		/// </summary>
 		private SetIndexNode setterOf(GetIndexNode node)
 		{
 			return new SetIndexNode
@@ -253,12 +275,17 @@ namespace Lens.Parser
 
 		#region Accessors
 
-		private NodeBase attachAccessor(NodeBase node, NodeBase accessor)
+		/// <summary>
+		/// Attaches a member of index accessor to an expression.
+		/// From: x
+		/// To:   x.field or x[idx]
+		/// </summary>
+		private static NodeBase attachAccessor(NodeBase expr, NodeBase accessor)
 		{
 			if (accessor is GetMemberNode)
-				(accessor as GetMemberNode).Expression = node;
+				(accessor as GetMemberNode).Expression = expr;
 			else if (accessor is GetIndexNode)
-				(accessor as GetIndexNode).Expression = node;
+				(accessor as GetIndexNode).Expression = expr;
 			else
 				throw new InvalidOperationException(string.Format("Node {0} is not an accessor!", accessor.GetType()));
 
