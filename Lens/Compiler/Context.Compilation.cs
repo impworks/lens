@@ -13,6 +13,13 @@ namespace Lens.Compiler
 	{
 		#region Compilation essentials
 
+		/// <summary>
+		/// The main compilation method.
+		/// Processes the list of nodes, performs all compilation stages.
+		/// </summary>
+		/// <returns>
+		/// The instance of generated assembly's entry point class.
+		/// </returns>
 		public IScript Compile(IEnumerable<NodeBase> nodes)
 		{
 			loadTree(nodes);

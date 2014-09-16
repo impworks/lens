@@ -5,6 +5,9 @@ namespace Lens.Compiler
 {
 	internal partial class Context
 	{
+		/// <summary>
+		/// Initializes the standard library.
+		/// </summary>
 		private void initStdlib()
 		{
 			importOverloads(typeof(Utilities), "Times", "times");

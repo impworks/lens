@@ -12,6 +12,8 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	abstract internal class MethodEntityBase : TypeContentsBase
 	{
+		#region Constructor
+
 		protected MethodEntityBase(TypeEntity type, bool isImported = false) : base(type)
 		{
 			Arguments = new HashList<FunctionArgument>();
@@ -19,8 +21,17 @@ namespace Lens.Compiler.Entities
 			IsImported = isImported;
 		}
 
+		#endregion
+
+		#region Fields
+
 		public bool IsImported;
 		public bool IsStatic;
+
+		public CodeBlockNode Body;
+
+		public TryNode CurrentTryBlock { get; set; }
+		public CatchNode CurrentCatchBlock { get; set; }
 
 		/// <summary>
 		/// The complete argument list with variable names and detailed info.
@@ -32,21 +43,23 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type[] ArgumentTypes;
 
-		public CodeBlockNode Body;
-
 		/// <summary>
 		/// The MSIL Generator stream to which commands are emitted.
 		/// </summary>
 		public ILGenerator Generator { get; protected set; }
-
-		public TryNode CurrentTryBlock { get; set; }
-		public CatchNode CurrentCatchBlock { get; set; }
 
 		/// <summary>
 		/// Checks if the method must return a value.
 		/// </summary>
 		public abstract bool IsVoid { get; }
 
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Traverses all nodes in the body and expands them if necessary.
+		/// </summary>
 		public void TransformBody()
 		{
 			withContext(ctx =>
@@ -66,7 +79,7 @@ namespace Lens.Compiler.Entities
 		}
 
 		/// <summary>
-		/// Compiles the curent method.
+		/// Emits the body's IL code.
 		/// </summary>
 		public void Compile()
 		{
@@ -80,6 +93,18 @@ namespace Lens.Compiler.Entities
 			    }
 			);
 		}
+
+		/// <summary>
+		/// Gets the information about argument types.
+		/// </summary>
+		public Type[] GetArgumentTypes(Context ctx)
+		{
+			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
+		}
+
+		#endregion
+
+		#region Helpers
 
 		[DebuggerStepThrough]
 		private void withContext(Action<Context> act)
@@ -100,26 +125,31 @@ namespace Lens.Compiler.Entities
 			ctx.CurrentType = oldType;
 		}
 
-		/// <summary>
-		/// Gets the information about argument types.
-		/// </summary>
-		public Type[] GetArgumentTypes(Context ctx)
-		{
-			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
-		}
+		#endregion
+
+		#region Extension point methods
 
 		/// <summary>
-		/// Creates closure instances.
+		/// Emits code before the body of the method (if needed).
 		/// </summary>
 		protected virtual void emitPrelude(Context ctx)
 		{ }
 
+		/// <summary>
+		/// Emits code after the body of the method (if needed).
+		/// </summary>
 		protected virtual void emitTrailer(Context ctx)
 		{ }
+
+		#endregion
+
+		#region Debug
 
 		public override string ToString()
 		{
 			return string.Format("{0}.{1}({2})", ContainerType.Name, Name, Arguments.Count);
 		}
+
+		#endregion
 	}
 }

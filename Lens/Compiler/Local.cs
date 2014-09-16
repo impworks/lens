@@ -9,6 +9,8 @@ namespace Lens.Compiler
 	/// </summary>
 	internal class Local
 	{
+		#region Constructors
+
 		public Local(string name, Type type, bool isConst = false, bool isRefArg = false)
 		{
 			Name = name;
@@ -35,6 +37,10 @@ namespace Lens.Compiler
 
 			ClosureDistance = dist;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// Variable name.
@@ -92,6 +98,10 @@ namespace Lens.Compiler
 		/// </summary>
 		public dynamic ConstantValue;
 
+		#endregion
+
+		#region Methods
+
 		/// <summary>
 		/// Create a copy of the name information and bind it to the distance.
 		/// </summary>
@@ -99,6 +109,10 @@ namespace Lens.Compiler
 		{
 			return new Local(this, distance);
 		}
+
+		#endregion
+
+		#region Debug
 
 		public override string ToString()
 		{
@@ -110,5 +124,7 @@ namespace Lens.Compiler
 			if(ArgumentId != null) entities.Add(string.Format("arg({0})", ArgumentId));
 			return string.Format("{0}:{1} ({2})", Name, Type.Name, string.Join(", ", entities));
 		}
+
+		#endregion
 	}
 }

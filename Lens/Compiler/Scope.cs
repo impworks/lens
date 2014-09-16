@@ -1,23 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
-using Lens.SyntaxTree;
 using Lens.Translations;
 
 namespace Lens.Compiler
 {
+	/// <summary>
+	/// A scope slice that contains a list of local variables.
+	/// </summary>
 	internal class Scope
 	{
+		#region Constructor
+
 		public Scope(ScopeKind kind)
 		{
 			Locals = new Dictionary<string, Local>();
 			Kind = kind;
 		}
 
+		#endregion
+
 		#region Fields
-		
+
 		/// <summary>
 		/// The list of names in current scope.
 		/// </summary>
@@ -49,7 +54,7 @@ namespace Lens.Compiler
 		public bool ClosureReferencesOuter { get; private set; }
 
 		/// <summary>
-		/// Returns the nearest scope which contains a closure.
+		/// The nearest scope which contains a closure.
 		/// </summary>
 		public Scope ActiveClosure
 		{
@@ -142,6 +147,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Registers a name being referenced during closure detection.
 		/// </summary>
+		/// <returns>True if the local name has been found. Otherwise false.</returns>
 		public bool ReferenceLocal(Context ctx, string name)
 		{
 			var scope = this;
@@ -277,6 +283,10 @@ namespace Lens.Compiler
 			}
 			return cscope.ClosureType;
 		}
+
+		#endregion
+
+		#region Debug
 
 		public override string ToString()
 		{
