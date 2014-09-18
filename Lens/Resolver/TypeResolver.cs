@@ -15,7 +15,7 @@ namespace Lens.Resolver
 
 		static TypeResolver()
 		{
-			_Locations = new Dictionary<string, List<string>>
+			Locations = new Dictionary<string, List<string>>
 			{
 				{
 					"mscorlib",
@@ -31,7 +31,7 @@ namespace Lens.Resolver
 				}
 			};
 
-			_TypeAliases = new Dictionary<string, Type>
+			TypeAliases = new Dictionary<string, Type>
 			{
 				{"object", typeof (object)},
 				{"bool", typeof (bool)},
@@ -60,12 +60,12 @@ namespace Lens.Resolver
 		/// <summary>
 		/// List of known locations: assembly name and the list of default namespaces in it.
 		/// </summary>
-		private static Dictionary<string, List<string>> _Locations;
+		private static readonly Dictionary<string, List<string>> Locations;
 
 		/// <summary>
 		/// List of known type short names (like 'int' = 'System.Int32').
 		/// </summary>
-		private static readonly Dictionary<string, Type> _TypeAliases;
+		private static readonly Dictionary<string, Type> TypeAliases;
 
 		/// <summary>
 		/// Cached list of already resolved types.
@@ -75,7 +75,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// List of namespaces to check when finding the type.
 		/// </summary>
-		private Dictionary<string, bool> _Namespaces;
+		private readonly Dictionary<string, bool> _Namespaces;
 
 		/// <summary>
 		/// List of referenced assemblies.
@@ -126,8 +126,8 @@ namespace Lens.Resolver
 				if (hasArgs)
 					name += "`" + signature.Arguments.Length;
 
-				if (_TypeAliases.ContainsKey(name))
-					return _TypeAliases[name];
+				if (TypeAliases.ContainsKey(name))
+					return TypeAliases[name];
 
 				var type = findType(name);
 				return hasArgs
@@ -179,7 +179,7 @@ namespace Lens.Resolver
 				if (checkNamespaces)
 				{
 					List<string> extras;
-					if (_Locations.TryGetValue(currAsm.GetName().Name, out extras))
+					if (Locations.TryGetValue(currAsm.GetName().Name, out extras))
 						namespaces = namespaces.Union(extras);
 				}
 

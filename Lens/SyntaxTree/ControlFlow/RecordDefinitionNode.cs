@@ -4,6 +4,8 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// A node representing the record definition construct.
+	/// 
+	/// This node is for parser only.
 	/// </summary>
 	internal class RecordDefinitionNode : TypeDefinitionNodeBase<RecordField>
 	{ }
@@ -13,6 +15,8 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class RecordField : LocationEntity
 	{
+		#region Fields
+
 		/// <summary>
 		/// The name of the entry.
 		/// </summary>
@@ -23,7 +27,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public TypeSignature Type { get; set; }
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(RecordField other)
 		{

@@ -17,7 +17,7 @@ namespace Lens.Resolver
 
 			if (useDefault)
 			{
-				foreach (var name in _DefaultAssemblyFullNames)
+				foreach (var name in DefaultAssemblyFullNames)
 				{
 					try
 					{
@@ -38,7 +38,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Full names of assemblies referenced by the script by default.
 		/// </summary>
-		private readonly string[] _DefaultAssemblyFullNames =
+		private readonly static string[] DefaultAssemblyFullNames =
 		{
 			"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",

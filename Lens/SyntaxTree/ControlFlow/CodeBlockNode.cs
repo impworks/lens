@@ -15,11 +15,17 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
 	{
+		#region Constructor
+
 		public CodeBlockNode(ScopeKind scopeKind = ScopeKind.Unclosured)
 		{
 			Statements = new List<NodeBase>();	
 			Scope = new Scope(scopeKind);
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The scope frame corresponding to current code block.
@@ -30,6 +36,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// The statements to execute.
 		/// </summary>
 		public List<NodeBase> Statements { get; set; }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -48,6 +58,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			return result;
 		}
 
+		#endregion
+
+		#region Transform
+
 		public override void Transform(Context ctx, bool mustReturn)
 		{
 			ctx.EnterScope(Scope);
@@ -61,6 +75,21 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
 		}
+
+		#endregion
+
+		#region Process closures
+
+		public override void ProcessClosures(Context ctx)
+		{
+			ctx.EnterScope(Scope);
+			base.ProcessClosures(ctx);
+			ctx.ExitScope().FinalizeSelf(ctx);
+		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -138,12 +167,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 		}
 
-		public override void ProcessClosures(Context ctx)
-		{
-			ctx.EnterScope(Scope);
-			base.ProcessClosures(ctx);
-			ctx.ExitScope().FinalizeSelf(ctx);
-		}
+		#endregion
 
 		#region Equality members
 
@@ -191,7 +215,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#endregion
 
-		#region Helpers
+		#region Additional methods
 
 		/// <summary>
 		/// Loads nodes from other block.

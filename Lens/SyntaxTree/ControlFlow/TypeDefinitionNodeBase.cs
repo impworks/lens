@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Lens.Compiler;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -11,10 +9,16 @@ namespace Lens.SyntaxTree.ControlFlow
 	internal abstract class TypeDefinitionNodeBase<T> : NodeBase
 		where T : LocationEntity
 	{
+		#region Constructor
+
 		protected TypeDefinitionNodeBase()
 		{
 			Entries = new List<T>();
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The name of the type.
@@ -26,13 +30,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public List<T> Entries { get; private set; }
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			// nothing to do here
-			throw new InvalidOperationException();
-		}
+		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(TypeDefinitionNodeBase<T> other)
 		{

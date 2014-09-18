@@ -4,13 +4,21 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// A function that has a name.
+	/// 
+	/// This node is for parser only - it gets translated to a MethodEntity during compilation stage.
 	/// </summary>
 	internal class FunctionNode : FunctionNodeBase
 	{
+		#region Constructor
+
 		public FunctionNode()
 		{
 			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// Function name.
@@ -26,6 +34,8 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// Checks whether the function can be memoized.
 		/// </summary>
 		public bool IsPure { get; set; }
+
+		#endregion
 
 		#region Equality members
 

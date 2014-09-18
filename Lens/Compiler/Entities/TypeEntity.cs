@@ -64,16 +64,16 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type Parent;
 
-		private Type m_TypeInfo;
+		private Type _TypeInfo;
 		public Type TypeInfo
 		{
-			get { return TypeBuilder ?? m_TypeInfo; }
+			get { return TypeBuilder ?? _TypeInfo; }
 			set
 			{
 				if(!IsImported)
 					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
 
-				m_TypeInfo = value;
+				_TypeInfo = value;
 			}
 		}
 

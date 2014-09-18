@@ -37,7 +37,7 @@ namespace Lens.Resolver
 			/// _GenericValues[0] == typeof(int)
 			/// Therefore, 'T' means 'int' for current method.
 			/// </summary>
-			private Type[] _GenericValues;
+			private readonly Type[] _GenericValues;
 
 			/// <summary>
 			/// Callback for lambda argument resolving.

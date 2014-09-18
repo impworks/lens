@@ -11,6 +11,8 @@ namespace Lens.SyntaxTree.ControlFlow
     /// </summary>
     internal class UsingNode : NodeBase
     {
+		#region Fields
+
 	    /// <summary>
         /// A variable to assign the resource to.
         /// </summary>
@@ -23,7 +25,11 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public CodeBlockNode Body { get; set; }
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx, mustReturn);
             if(!typeof(IDisposable).IsAssignableFrom(exprType))
@@ -40,7 +46,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		        : Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), new Local(VariableName, exprType));
         }
 
-	    protected override NodeBase expand(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 	    {
 			var exprType = Expression.Resolve(ctx, mustReturn);
 		    var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
@@ -65,6 +75,8 @@ namespace Lens.SyntaxTree.ControlFlow
 		    yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Body, null);
 		}
+
+		#endregion
 
 		#region Equality members
 

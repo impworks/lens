@@ -12,15 +12,25 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class ThrowNode : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// The exception expression to be thrown.
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -45,6 +55,8 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 		}
 
+		#endregion
+
 		#region Equality members
 
 		protected bool Equals(ThrowNode other)
@@ -65,11 +77,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			return (Expression != null ? Expression.GetHashCode() : 0);
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("throw({0})", Expression);
 		}
+
+		#endregion
 	}
 }

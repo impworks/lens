@@ -122,7 +122,7 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private bool inBounds()
 		{
-			return Position < Source.Length;
+			return _Position < _Source.Length;
 		}
 
 		/// <summary>
@@ -132,7 +132,7 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private bool isComment()
 		{
-			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
+			return _Position < _Source.Length - 2 && _Source[_Position] == '/' && _Source[_Position + 1] == '/';
 		}
 
 		/// <summary>
@@ -141,8 +141,8 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
-			Position += count;
-			Offset += count;
+			_Position += count;
+			_Offset += count;
 		}
 
 		/// <summary>
@@ -153,8 +153,8 @@ namespace Lens.Lexer
 		{
 			return new LexemLocation
 			{
-				Line = Line,
-				Offset = Offset
+				Line = _Line,
+				Offset = _Offset
 			};
 		}
 

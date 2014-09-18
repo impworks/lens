@@ -11,6 +11,8 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	internal class ForeachNode : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// A variable to assign current item to.
 		/// </summary>
@@ -45,6 +47,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		private Type _EnumeratorType;
 		private PropertyWrapper _CurrentProperty;
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
@@ -68,6 +74,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			// index local specified explicitly: no need to account for it in pre-resolve
 			return Body.Resolve(ctx);
 		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -98,6 +108,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			yield return new NodeChild(Body, null);
 		}
 
+		/// <summary>
+		/// Expands the foreach loop if it iterates over an IEnumerable`1.
+		/// </summary>
 		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
 			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
@@ -154,6 +167,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			);
 		}
 
+		/// <summary>
+		/// Expands the foreach loop if it iterates over T[].
+		/// </summary>
 		private NodeBase expandArray(Context ctx)
 		{
 			var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
@@ -186,6 +202,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			);
 		}
 
+		/// <summary>
+		/// Expands the foreach loop if it iterates over a numeric range.
+		/// </summary>
 		private NodeBase expandRange(Context ctx)
 		{
 			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
@@ -222,6 +241,13 @@ namespace Lens.SyntaxTree.ControlFlow
 			);
 		}
 
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Calculates the variable type and other required values for enumeration of an IEnumerable`1.
+		/// </summary>
 		private void detectEnumerableType(Context ctx)
 		{
 			var seqType = IterableExpression.Resolve(ctx);
@@ -230,17 +256,17 @@ namespace Lens.SyntaxTree.ControlFlow
 				_VariableType = seqType.GetElementType();
 				return;
 			}
-			
+
 			var ifaces = seqType.ResolveInterfaces();
 			if (seqType.IsInterface)
-				ifaces = ifaces.Union(new[] {seqType}).ToArray();
+				ifaces = ifaces.Union(new[] { seqType }).ToArray();
 
-			var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IEnumerable<>));
+			var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 			if (generic != null)
-				_EnumeratorType = typeof (IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
+				_EnumeratorType = typeof(IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
 
-			else if (ifaces.Contains(typeof (IEnumerable)))
-				_EnumeratorType = typeof (IEnumerator);
+			else if (ifaces.Contains(typeof(IEnumerable)))
+				_EnumeratorType = typeof(IEnumerator);
 
 			else
 				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
@@ -249,26 +275,34 @@ namespace Lens.SyntaxTree.ControlFlow
 			_VariableType = _CurrentProperty.PropertyType;
 		}
 
+		/// <summary>
+		/// Calculates the variable type of a numeric range iteration.
+		/// </summary>
 		private void detectRangeType(Context ctx)
 		{
 			var t1 = RangeStart.Resolve(ctx);
 			var t2 = RangeEnd.Resolve(ctx);
 
-			if(t1 != t2)
+			if (t1 != t2)
 				error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
-			if(!t1.IsIntegerType())
+			if (!t1.IsIntegerType())
 				error(CompilerMessages.ForeachRangeNotInteger, t1);
 
 			_VariableType = t1;
 		}
 
+		/// <summary>
+		/// Gets the expression for saving the value at an index to a variable.
+		/// </summary>
 		private NodeBase getIndexAssignment(NodeBase indexGetter)
 		{
 			return Local == null
 				? Expr.Let(VariableName, indexGetter)
 				: Expr.Set(Local, indexGetter) as NodeBase;
 		}
+
+		#endregion
 
 		#region Equality members
 

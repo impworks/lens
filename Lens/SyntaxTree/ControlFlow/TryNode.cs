@@ -14,16 +14,31 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class TryNode : NodeBase
 	{
+		#region Constructor
+
 		public TryNode()
 		{
 			Code = new CodeBlockNode();
 			CatchClauses = new List<CatchNode>();
 		}
 
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// The body of the Try block.
+		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
+		/// <summary>
+		/// The optional list of Catch clauses.
+		/// </summary>
 		public List<CatchNode> CatchClauses { get; set; }
 
+		/// <summary>
+		/// The optional Finally clause.
+		/// </summary>
 		public CodeBlockNode Finally { get; set; }
 
 		/// <summary>
@@ -31,16 +46,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label EndLabel { get; private set; }
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Code, null);
+		#endregion
 
-			foreach(var curr in CatchClauses)
-				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
-
-			if(Finally != null)
-				yield return new NodeChild(Finally, null);
-		}
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -63,6 +71,25 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			return base.resolve(ctx, mustReturn);
 		}
+
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(Code, null);
+
+			foreach(var curr in CatchClauses)
+				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
+
+			if(Finally != null)
+				yield return new NodeChild(Finally, null);
+		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -90,7 +117,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.CurrentTryBlock = backup;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TryNode other)
 		{

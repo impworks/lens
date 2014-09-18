@@ -50,11 +50,11 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
-		private MethodInfo m_MethodInfo;
+		private MethodInfo _MethodInfo;
 		public MethodInfo MethodInfo
 		{
-			get { return IsImported ? m_MethodInfo : MethodBuilder; }
-			set { m_MethodInfo = value; }
+			get { return IsImported ? _MethodInfo : MethodBuilder; }
+			set { _MethodInfo = value; }
 		}
 
 		#endregion

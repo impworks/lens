@@ -15,7 +15,7 @@ namespace Lens.Resolver
 
 		static GlobalPropertyHelper()
 		{
-			m_Properties = new List<List<GlobalPropertyEntity>>();
+			Properties = new List<List<GlobalPropertyEntity>>();
 		}
 
 		#endregion
@@ -26,7 +26,7 @@ namespace Lens.Resolver
 		/// The total list of registered properties in ALL contexts.
 		/// Values are NEVER removed: an unregistered context is replaced by a null value, therefore maintaining the sequence of context IDs.
 		/// </summary>
-		private static readonly List<List<GlobalPropertyEntity>> m_Properties;
+		private static readonly List<List<GlobalPropertyEntity>> Properties;
 
 		#endregion
 
@@ -37,8 +37,8 @@ namespace Lens.Resolver
 		/// </summary>
 		public static int RegisterContext()
 		{
-			m_Properties.Add(new List<GlobalPropertyEntity>());
-			return m_Properties.Count - 1;
+			Properties.Add(new List<GlobalPropertyEntity>());
+			return Properties.Count - 1;
 		}
 
 		/// <summary>
@@ -46,7 +46,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static void UnregisterContext(int contextId)
 		{
-			if (contextId < 0 || contextId > m_Properties.Count - 1)
+			if (contextId < 0 || contextId > Properties.Count - 1)
 				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 #if DEBUG
@@ -55,7 +55,7 @@ namespace Lens.Resolver
 				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 #endif
 
-			m_Properties[contextId] = null;
+			Properties[contextId] = null;
 		}
 
 		/// <summary>
@@ -66,8 +66,8 @@ namespace Lens.Resolver
 			if (getter == null && setter == null)
 				throw new ArgumentNullException("getter");
 
-			m_Properties[contextId].Add(new GlobalPropertyEntity { Getter = getter, Setter = setter } );
-			var id = m_Properties[contextId].Count - 1;
+			Properties[contextId].Add(new GlobalPropertyEntity { Getter = getter, Setter = setter } );
+			var id = Properties[contextId].Count - 1;
 
 			return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
 		}
@@ -78,7 +78,7 @@ namespace Lens.Resolver
 		public static T Get<T>(int contextId, int id)
 		{
 			validateId(contextId, id);
-			var info = m_Properties[contextId][id];
+			var info = Properties[contextId][id];
 
 #if DEBUG
 			if(info.Getter == null)
@@ -94,7 +94,7 @@ namespace Lens.Resolver
 		public static void Set<T>(int contextId, int id, T value)
 		{
 			validateId(contextId, id);
-			var info = m_Properties[contextId][id];
+			var info = Properties[contextId][id];
 
 #if DEBUG
 			if (info.Setter == null)
@@ -111,14 +111,14 @@ namespace Lens.Resolver
 		[Conditional("DEBUG")]
 		private static void validateId(int contextId, int id)
 		{
-			if (contextId < 0 || contextId > m_Properties.Count - 1)
+			if (contextId < 0 || contextId > Properties.Count - 1)
 				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
-			var curr = m_Properties[contextId];
+			var curr = Properties[contextId];
 			if(curr == null)
 				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 
-			if(id < 0 || id > m_Properties[contextId].Count - 1)
+			if(id < 0 || id > Properties[contextId].Count - 1)
 				throw new ArgumentException(string.Format(CompilerMessages.PropertyIdNotFound, id));
 		}
 

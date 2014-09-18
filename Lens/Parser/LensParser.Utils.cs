@@ -19,7 +19,7 @@ namespace Lens.Parser
 		{
 			throw new LensCompilerException(
 				string.Format(msg, args),
-				Lexems[LexemId]
+				_Lexems[_LexemId]
 			);
 		}
 
@@ -44,8 +44,8 @@ namespace Lens.Parser
 		{
 			foreach (var curr in types)
 			{
-				var id = Math.Min(LexemId + offset, Lexems.Length - 1);
-				var lex = Lexems[id];
+				var id = Math.Min(_LexemId + offset, _Lexems.Length - 1);
+				var lex = _Lexems[id];
 
 				if (lex.Type != curr)
 					return false;
@@ -61,8 +61,8 @@ namespace Lens.Parser
 		/// </summary>
 		private bool peekAny(params LexemType[] types)
 		{
-			var id = Math.Min(LexemId, Lexems.Length - 1);
-			var lex = Lexems[id];
+			var id = Math.Min(_LexemId, _Lexems.Length - 1);
+			var lex = _Lexems[id];
 			return lex.Type.IsAnyOf(types);
 		}
 
@@ -72,7 +72,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private Lexem ensure(LexemType type, string msg, params object[] args)
 		{
-			var lex = Lexems[LexemId];
+			var lex = _Lexems[_LexemId];
 
 			if(lex.Type != type)
 				error(msg, args);
@@ -87,7 +87,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private bool check(LexemType lexem)
 		{
-			var lex = Lexems[LexemId];
+			var lex = _Lexems[_LexemId];
 
 			if (lex.Type != lexem)
 				return false;
@@ -102,7 +102,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private string getValue()
 		{
-			var value = Lexems[LexemId].Value;
+			var value = _Lexems[_LexemId].Value;
 			skip();
 			return value;
 		}
@@ -113,7 +113,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
-			LexemId = Math.Min(LexemId + count, Lexems.Length - 1);
+			_LexemId = Math.Min(_LexemId + count, _Lexems.Length - 1);
 		}
 
 		/// <summary>
@@ -121,7 +121,7 @@ namespace Lens.Parser
 		/// </summary>
 		private bool isStmtSeparator()
 		{
-			return check(LexemType.NewLine) || Lexems[LexemId - 1].Type == LexemType.Dedent;
+			return check(LexemType.NewLine) || _Lexems[_LexemId - 1].Type == LexemType.Dedent;
 		}
 
 		#endregion
@@ -136,10 +136,10 @@ namespace Lens.Parser
 		private T attempt<T>(Func<T> getter)
 			where T : LocationEntity
 		{
-			var backup = LexemId;
+			var backup = _LexemId;
 			var result = bind(getter);
 			if (result == null)
-				LexemId = backup;
+				_LexemId = backup;
 			return result;
 		}
 
@@ -149,10 +149,10 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private List<T> attempt<T>(Func<List<T>> getter)
 		{
-			var backup = LexemId;
+			var backup = _LexemId;
 			var result = getter();
 			if (result == null || result.Count == 0)
-				LexemId = backup;
+				_LexemId = backup;
 			return result;
 		}
 
@@ -178,8 +178,8 @@ namespace Lens.Parser
 		private T bind<T>(Func<T> getter)
 			where T : LocationEntity
 		{
-			var startId = LexemId;
-			var start = Lexems[LexemId];
+			var startId = _LexemId;
+			var start = _Lexems[_LexemId];
 
 			var result = getter();
 
@@ -187,9 +187,9 @@ namespace Lens.Parser
 			{
 				result.StartLocation = start.StartLocation;
 
-				var endId = LexemId;
+				var endId = _LexemId;
 				if (endId > startId && endId > 0)
-					result.EndLocation = Lexems[LexemId - 1].EndLocation;
+					result.EndLocation = _Lexems[_LexemId - 1].EndLocation;
 			}
 
 			return result;

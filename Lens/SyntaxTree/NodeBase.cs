@@ -112,6 +112,14 @@ namespace Lens.SyntaxTree
 			return null;
 		}
 
+		/// <summary>
+		/// Gets the list of child nodes.
+		/// </summary>
+		protected virtual IEnumerable<NodeChild> getChildren()
+		{
+			yield break;
+		}
+
 		#endregion
 
 		#region Process closures
@@ -144,10 +152,8 @@ namespace Lens.SyntaxTree
 		}
 
 		/// <summary>
-		/// Emits 
+		/// Emits the IL opcodes that represents the current node.
 		/// </summary>
-		/// <param name="ctx"></param>
-		/// <param name="mustReturn"></param>
 		protected virtual void emitCode(Context ctx, bool mustReturn)
 		{
 			throw new InvalidOperationException(
@@ -161,14 +167,6 @@ namespace Lens.SyntaxTree
 		#endregion
 
 		#region Helpers
-
-		/// <summary>
-		/// Gets the list of child nodes.
-		/// </summary>
-		protected virtual IEnumerable<NodeChild> getChildren()
-		{
-			yield break;
-		}
 
 		/// <summary>
 		/// Reports an error to the compiler.

@@ -8,10 +8,16 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class NullNode : NodeBase
 	{
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (NullType);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -19,7 +25,9 @@ namespace Lens.SyntaxTree.Literals
 			gen.EmitNull();
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		public override bool Equals(object obj)
 		{
@@ -33,11 +41,11 @@ namespace Lens.SyntaxTree.Literals
 			return 0;
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return "(null)";
 		}
+
+		#endregion
 	}
 }
