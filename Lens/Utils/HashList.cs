@@ -6,13 +6,11 @@ using System.Linq;
 namespace Lens.Utils
 {
 	/// <summary>
-	/// Dictionary, учитывающий также порядок добавления элементов.
+	/// A dictionary-like type that maintains item addition order.
 	/// </summary>
-	/// <typeparam name="T">Тип данных</typeparam>
 	internal class HashList<T> : IEnumerable<string>
 	{
-		private readonly Dictionary<string, T> _Data;
-		private readonly List<string> _Keys;
+		#region Constructors
 
 		public HashList()
 		{
@@ -27,11 +25,23 @@ namespace Lens.Utils
 					Add(nameGetter(curr), curr);
 		}
 
+		#endregion
+
+		#region Fields
+
+		private readonly Dictionary<string, T> _Data;
+		private readonly List<string> _Keys;
+
+		public IEnumerable<string> Keys { get { return _Keys.OfType<string>(); } }
+		public IEnumerable<T> Values { get { return _Keys.Select(curr => _Data[curr]); } }
+
+		#endregion
+
+		#region Methods
+
 		/// <summary>
-		/// Add an item to the collection
+		/// Adds an item to the collection.
 		/// </summary>
-		/// <param name="key">Key</param>
-		/// <param name="value">Object</param>
 		public void Add(string key, T value)
 		{
 			_Data.Add(key, value);
@@ -39,7 +49,7 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
-		/// Remove everything from the collection
+		/// Removes everything from the collection.
 		/// </summary>
 		public void Clear()
 		{
@@ -48,18 +58,16 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
-		/// Check if a key exists
+		/// Checks if a key exists.
 		/// </summary>
-		/// <param name="key">Key</param>
 		public bool Contains(string key)
 		{
 			return _Data.ContainsKey(key);
 		}
 
 		/// <summary>
-		/// Get an item by string key
+		/// Gets an item by string key.
 		/// </summary>
-		/// <param name="key">String key</param>
 		public T this[string key]
 		{
 			get { return _Data[key]; }
@@ -67,9 +75,8 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
-		/// Get an item by integer index
+		/// Get an item by integer index.
 		/// </summary>
-		/// <param name="id">Integer index</param>
 		public T this[int id]
 		{
 			get { return _Data[_Keys[id]]; }
@@ -77,7 +84,7 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
-		/// Proxied count
+		/// Proxied count.
 		/// </summary>
 		public int Count
 		{
@@ -85,15 +92,19 @@ namespace Lens.Utils
 		}
 
 		/// <summary>
-		/// Get index of key.
+		/// Gets index of key.
 		/// </summary>
 		public int IndexOf(string key)
 		{
 			return _Keys.IndexOf(key);
 		}
 
+		#endregion
+
+		#region IEnumerable<T> implementation
+
 		/// <summary>
-		/// Proxied enumerator
+		/// Proxied enumerator.
 		/// </summary>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
@@ -105,14 +116,6 @@ namespace Lens.Utils
 			return _Keys.GetEnumerator();
 		}
 
-		public IEnumerable<string> Keys
-		{
-			get { return _Keys.OfType<string>(); }
-		}
-
-		public IEnumerable<T> Values
-		{
-			get { return _Keys.Select(curr => _Data[curr]); }
-		}
+		#endregion
 	}
 }
