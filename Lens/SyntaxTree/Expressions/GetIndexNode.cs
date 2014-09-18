@@ -12,6 +12,8 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class GetIndexNode : IndexNodeBase, IPointerProvider
 	{
+		#region Fields
+
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
@@ -19,6 +21,10 @@ namespace Lens.SyntaxTree.Expressions
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -39,11 +45,19 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Index, x => Index = x);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -53,6 +67,9 @@ namespace Lens.SyntaxTree.Expressions
 				compileCustom(ctx);
 		}
 
+		/// <summary>
+		/// Emits the code for retrieving an array item by index.
+		/// </summary>
 		private void compileArray(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
@@ -66,6 +83,9 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
 		}
 
+		/// <summary>
+		/// Emits the code for retrieving a value from an object by custom indexer.
+		/// </summary>
 		private void compileCustom(Context ctx)
 		{
 			var retType = _Getter.ReturnType;
@@ -89,12 +109,9 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitCall(_Getter.MethodInfo);
 		}
 
-		public override string ToString()
-		{
-			return string.Format("getidx({0} of {1})", Index, Expression);
-		}
+		#endregion
 
-		#region Equality
+		#region Equality members
 
 		protected bool Equals(GetIndexNode other)
 		{
@@ -122,6 +139,10 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		public override string ToString()
+		{
+			return string.Format("getidx({0} of {1})", Index, Expression);
+		}
 
 		#endregion
 	}

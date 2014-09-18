@@ -3,10 +3,12 @@
 namespace Lens.SyntaxTree.Expressions
 {
 	/// <summary>
-	/// The base node for 
+	/// The base node for member getters and setters.
 	/// </summary>
 	abstract internal class MemberNodeBase : AccessorNodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// Type signature to access a static type.
 		/// </summary>
@@ -16,6 +18,8 @@ namespace Lens.SyntaxTree.Expressions
 		/// The name of the member to access.
 		/// </summary>
 		public string MemberName { get; set; }
+
+		#endregion
 
 		#region Equality members
 

@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.Expressions
 		
 		public ShortAssignmentNode(LexemType opType, NodeBase expr)
 		{
-			AssignmentOperator = _OperatorLookups[opType];
+			AssignmentOperator = OperatorLookups[opType];
 			Expression = expr;
 		}
 
@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Expression;
 
-		private readonly static Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> _OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+		private readonly static Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 		{
 			{ LexemType.And, Expr.And },
 			{ LexemType.Or, Expr.Or },
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region NodeBase overrides
+		#region Transform
 
 		protected override IEnumerable<NodeChild> getChildren()
 		{

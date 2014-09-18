@@ -13,6 +13,17 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class GetIdentifierNode : IdentifierNodeBase, IPointerProvider
 	{
+		#region Constructor
+
+		public GetIdentifierNode(string identifier = null)
+		{
+			Identifier = identifier;
+		}
+
+		#endregion
+
+		#region Fields
+
 		private MethodEntity _Method;
 		private GlobalPropertyInfo _Property;
 		private Local _LocalConstant;
@@ -21,13 +32,16 @@ namespace Lens.SyntaxTree.Expressions
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
 
+		#endregion
+
+		#region Constant checkers
+
 		public override bool IsConstant { get { return _LocalConstant != null; } }
 		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
 
-		public GetIdentifierNode(string identifier = null)
-		{
-			Identifier = identifier;
-		}
+		#endregion
+
+		#region Resolve
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -40,6 +54,10 @@ namespace Lens.SyntaxTree.Expressions
 			return base.expand(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Transform
+		
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Identifier == "_")
@@ -96,6 +114,10 @@ namespace Lens.SyntaxTree.Expressions
 			return typeof (UnitType);
 		}
 
+		#endregion
+
+		#region Emit
+
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var resultType = Resolve(ctx);
@@ -113,13 +135,13 @@ namespace Lens.SyntaxTree.Expressions
 				if (local.IsClosured)
 				{
 					if (local.ClosureDistance == 0)
-						getClosuredLocal(ctx, local);
+						emitGetClosuredLocal(ctx, local);
 					else
-						getClosuredRemote(ctx, local);
+						emitGetClosuredRemote(ctx, local);
 				}
 				else
 				{
-					getLocal(ctx, local);
+					emitGetLocal(ctx, local);
 				}
 
 				return;
@@ -165,7 +187,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Gets a closured variable that has been declared in the current scope.
 		/// </summary>
-		private void getClosuredLocal(Context ctx, Local name)
+		private void emitGetClosuredLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -178,7 +200,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Gets a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void getClosuredRemote(Context ctx, Local name)
+		private void emitGetClosuredRemote(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -199,7 +221,10 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
 		}
 
-		private void getLocal(Context ctx, Local name)
+		/// <summary>
+		/// Gets a local variable from current scope.
+		/// </summary>
+		private void emitGetLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var ptr = PointerRequired || RefArgumentRequired;
@@ -216,12 +241,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		public override string ToString()
-		{
-			return string.Format("get({0})", Identifier);
-		}
+		#endregion
 
-		#region Equality
+		#region Equality members
 
 		protected bool Equals(GetIdentifierNode other)
 		{
@@ -247,6 +269,11 @@ namespace Lens.SyntaxTree.Expressions
 				hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
 				return hash;
 			}
+		}
+
+		public override string ToString()
+		{
+			return string.Format("get({0})", Identifier);
 		}
 
 		#endregion

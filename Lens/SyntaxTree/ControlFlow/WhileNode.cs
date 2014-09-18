@@ -9,19 +9,33 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	internal class WhileNode : NodeBase
 	{
+		#region Constructor
+
 		public WhileNode()
 		{
 			Body = new CodeBlockNode(ScopeKind.Loop);	
 		}
 
+		#endregion
+
+		#region Fields
+
 		public NodeBase Condition { get; set; }
 
 		public CodeBlockNode Body { get; protected set; }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
 		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -43,6 +57,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			yield return new NodeChild(Condition, x => Condition = x);
 			yield return new NodeChild(Body, null);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -79,6 +97,8 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 				gen.EmitNop();
 		}
+
+		#endregion
 
 		#region Equality members
 

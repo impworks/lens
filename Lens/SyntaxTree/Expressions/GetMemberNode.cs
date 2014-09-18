@@ -14,10 +14,16 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class GetMemberNode : MemberNodeBase, IPointerProvider
 	{
+		#region Constructor
+
 		public GetMemberNode()
 		{
 			TypeHints = new List<TypeSignature>();
 		}
+
+		#endregion
+
+		#region Fields
 
 		private Type _Type;
 		private FieldWrapper _Field;
@@ -33,6 +39,10 @@ namespace Lens.SyntaxTree.Expressions
 		/// The list of type signatures if the given identifier is a method.
 		/// </summary>
 		public List<TypeSignature> TypeHints { get; set; }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
@@ -55,6 +65,13 @@ namespace Lens.SyntaxTree.Expressions
 				: FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.ArgumentTypes);
 		}
 
+		/// <summary>
+		/// Attempts to resolve current node and sets either of the following fields:
+		/// _Field, _Method, _Property
+		/// 
+		/// The following fields are also set:
+		/// _Type, _Static
+		/// </summary>
 		private void resolveSelf(Context ctx)
 		{
 			Action check = () =>
@@ -132,10 +149,18 @@ namespace Lens.SyntaxTree.Expressions
 			return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -181,6 +206,9 @@ namespace Lens.SyntaxTree.Expressions
 				emitMethod(ctx, gen);
 		}
 
+		/// <summary>
+		/// Emits code for loading a field (possibly constant).
+		/// </summary>
 		private void emitField(ILGenerator gen)
 		{
 			if (_Field.IsLiteral)
@@ -223,6 +251,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		/// <summary>
+		/// Emits code for loading a property value.
+		/// </summary>
 		private void emitProperty(Context ctx, ILGenerator gen)
 		{
 			if (_Property.PropertyType.IsValueType && RefArgumentRequired)
@@ -238,6 +269,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		/// <summary>
+		/// Emits code for getting the method as a delegate instance.
+		/// </summary>
 		private void emitMethod(Context ctx, ILGenerator gen)
 		{
 			if (RefArgumentRequired)
@@ -256,13 +290,7 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
-		public override string ToString()
-		{
-			var typehints = TypeHints.Any() ? "<" + string.Join(", ", TypeHints) + ">" : string.Empty;
-			return StaticType == null
-				? string.Format("getmbr({0}{1} of value {2})", MemberName, typehints, Expression)
-				: string.Format("getmbr({0}{1} of type {2})", MemberName, typehints, StaticType);
-		}
+		#endregion
 
 		#region Equality
 
@@ -292,6 +320,14 @@ namespace Lens.SyntaxTree.Expressions
 				hashCode = (hashCode * 397) ^ (TypeHints != null ? TypeHints.GetHashCode() : 0);
 				return hashCode;
 			}
+		}
+
+		public override string ToString()
+		{
+			var typehints = TypeHints.Any() ? "<" + string.Join(", ", TypeHints) + ">" : string.Empty;
+			return StaticType == null
+				? string.Format("getmbr({0}{1} of value {2})", MemberName, typehints, Expression)
+				: string.Format("getmbr({0}{1} of type {2})", MemberName, typehints, StaticType);
 		}
 
 		#endregion

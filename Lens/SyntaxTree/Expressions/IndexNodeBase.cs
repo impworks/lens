@@ -5,10 +5,14 @@
 	/// </summary>
 	internal abstract class IndexNodeBase : AccessorNodeBase
 	{
+		#region Fields
+
 		/// <summary>
-		/// The index value.
+		/// Index expression.
 		/// </summary>
 		public NodeBase Index { get; set; }
+
+		#endregion
 
 		#region Equality members
 
