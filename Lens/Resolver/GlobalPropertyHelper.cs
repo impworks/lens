@@ -7,16 +7,30 @@ using Lens.Translations;
 namespace Lens.Resolver
 {
 	/// <summary>
-	/// A class that lets LENS code invoke delegates from 
+	/// A class that lets LENS code invoke delegates from the host application.
 	/// </summary>
 	public static class GlobalPropertyHelper
 	{
+		#region Constructor
+
 		static GlobalPropertyHelper()
 		{
 			m_Properties = new List<List<GlobalPropertyEntity>>();
 		}
 
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// The total list of registered properties in ALL contexts.
+		/// Values are NEVER removed: an unregistered context is replaced by a null value, therefore maintaining the sequence of context IDs.
+		/// </summary>
 		private static readonly List<List<GlobalPropertyEntity>> m_Properties;
+
+		#endregion
+
+		#region Methods
 
 		/// <summary>
 		/// Adds a new tier for current compiler instance and returns the unique id.
@@ -27,6 +41,9 @@ namespace Lens.Resolver
 			return m_Properties.Count - 1;
 		}
 
+		/// <summary>
+		/// Removes current context from the global list of registered properties.
+		/// </summary>
 		public static void UnregisterContext(int contextId)
 		{
 			if (contextId < 0 || contextId > m_Properties.Count - 1)
@@ -42,7 +59,7 @@ namespace Lens.Resolver
 		}
 
 		/// <summary>
-		/// Registers a property and returns its unique ID.
+		/// Registers a strongly typed property and returns its unique ID.
 		/// </summary>
 		internal static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
 		{
@@ -53,20 +70,6 @@ namespace Lens.Resolver
 			var id = m_Properties[contextId].Count - 1;
 
 			return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
-		}
-
-		/// <summary>
-		/// Registers a property and returns its unique ID.
-		/// </summary>
-		internal static GlobalPropertyInfo RegisterProperty(int contextId, Type type, MethodEntity getter, MethodEntity setter)
-		{
-			if (getter == null && setter == null)
-				throw new ArgumentNullException("getter");
-
-			m_Properties[contextId].Add(new GlobalPropertyEntity { GetterEntity = getter, SetterEntity = setter });
-			var id = m_Properties[contextId].Count - 1;
-
-			return new GlobalPropertyInfo(id, type, getter != null, setter != null, getter, setter);
 		}
 
 		/// <summary>
@@ -101,6 +104,10 @@ namespace Lens.Resolver
 			(info.Setter as Action<T>).Invoke(value);
 		}
 
+		#endregion
+
+		#region Helpers
+
 		[Conditional("DEBUG")]
 		private static void validateId(int contextId, int id)
 		{
@@ -119,11 +126,14 @@ namespace Lens.Resolver
 		{
 			public Delegate Getter;
 			public Delegate Setter;
-			public MethodEntity GetterEntity;
-			public MethodEntity SetterEntity;
 		}
+
+		#endregion
 	}
 
+	/// <summary>
+	/// Single entry of a registered property.
+	/// </summary>
 	internal class GlobalPropertyInfo
 	{
 		public readonly int PropertyId;

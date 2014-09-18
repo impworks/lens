@@ -3,27 +3,43 @@ using System.Collections.Generic;
 
 namespace Lens.Stdlib
 {
+	/// <summary>
+	/// Miscelaneous handy functions.
+	/// </summary>
 	public static class Utilities
 	{
 		#region Misc
 
+		/// <summary>
+		/// Throws an error from a string.
+		/// </summary>
+		/// <param name="msg"></param>
 		public static void FailWith(string msg)
 		{
 			throw new Exception(msg);
 		}
 
+		/// <summary>
+		/// Calls an action N times.
+		/// </summary>
         public static void Times(int t, Action action)
         {
             for (var idx = 0; idx < t; idx++)
                 action();
         }
 
+		/// <summary>
+		/// Calls an action N times and passes an argument.
+		/// </summary>
 		public static void Times(int t, Action<int> action)
 		{
 			for (var idx = 0; idx < t; idx++)
 				action(idx);
 		}
 
+		/// <summary>
+		/// Calls an action for a 2D loop with indices.
+		/// </summary>
         public static void Times(Tuple<int,int> ts, Action<int,int> action)
         {
             for (var idx = 0; idx < ts.Item1; idx++)
@@ -31,6 +47,9 @@ namespace Lens.Stdlib
                     action(idx, idx2);
         }
 
+		/// <summary>
+		/// Calls an action for a 3D loop with indices.
+		/// </summary>
         public static void Times(Tuple<int, int, int> ts, Action<int, int, int> action)
         {
             for (var idx = 0; idx < ts.Item1; idx++)
@@ -39,6 +58,9 @@ namespace Lens.Stdlib
                         action(idx, idx2, idx3);
         }
 
+		/// <summary>
+		/// Calls an action for a 4D loop with indices.
+		/// </summary>
         public static void Times(Tuple<int, int, int, int> ts, Action<int, int, int, int> action)
         {
             for (var idx = 0; idx < ts.Item1; idx++)
@@ -48,42 +70,66 @@ namespace Lens.Stdlib
                             action(idx, idx2, idx3, idx4);
         }
 
-		public static int ClampInt(int value, int min, int max)
+		/// <summary>
+		/// Limits the value between two points.
+		/// </summary>
+		public static int Clamp(int value, int min, int max)
 		{
 			return value < min ? min : (value > max ? max : value);
 		}
 
-		public static float ClampFloat(float value, float min, float max)
+		/// <summary>
+		/// Limits the value between two points.
+		/// </summary>
+		public static float Clamp(float value, float min, float max)
 		{
 			return value < min ? min : (value > max ? max : value);
 		}
 
-		public static double ClampDouble(double value, double min, double max)
+		/// <summary>
+		/// Limits the value between two points.
+		/// </summary>
+		public static double Clamp(double value, double min, double max)
 		{
 			return value < min ? min : (value > max ? max : value);
 		}
 
-		public static long ClampLong(long value, long min, long max)
+		/// <summary>
+		/// Limits the value between two points.
+		/// </summary>
+		public static long Clamp(long value, long min, long max)
 		{
 			return value < min ? min : (value > max ? max : value);
 		}
 
-		public static bool OddInt(int value)
+		/// <summary>
+		/// Checks if the value is odd.
+		/// </summary>
+		public static bool Odd(int value)
 		{
 			return value%2 != 0;
 		}
 
-		public static bool EvenInt(int value)
+		/// <summary>
+		/// Checks if the value is even.
+		/// </summary>
+		public static bool Even(int value)
 		{
 			return value % 2 == 0;
 		}
 
-		public static bool OddLong(long value)
+		/// <summary>
+		/// Checks if the value is odd.
+		/// </summary>
+		public static bool Odd(long value)
 		{
 			return value % 2 != 0;
 		}
 
-		public static bool EvenLong(long value)
+		/// <summary>
+		/// Checks if the value is even.
+		/// </summary>
+		public static bool Even(long value)
 		{
 			return value % 2 == 0;
 		}
@@ -92,12 +138,18 @@ namespace Lens.Stdlib
 
 		#region Range
 
-		public static IEnumerable<int> RangeInt(int from, int to)
+		/// <summary>
+		/// Creates a range from X to Y (inclusive) with step 1.
+		/// </summary>
+		public static IEnumerable<int> Range(int from, int to)
 		{
-			return RangeIntStep(from, to, 1);
+			return Range(from, to, 1);
 		}
 
-		public static IEnumerable<int> RangeIntStep(int from, int to, int step)
+		/// <summary>
+		/// Creates a range from X to Y (inclusive) with given step.
+		/// </summary>
+		public static IEnumerable<int> Range(int from, int to, int step)
 		{
 			if(step <= 0)
 				throw new ArgumentException("step");
@@ -111,27 +163,28 @@ namespace Lens.Stdlib
 					yield return i;
 		}
 
-		public static IEnumerable<string> RangeString(string from, string to)
+		/// <summary>
+		/// Creates a range of characters with step 1.
+		/// </summary>
+		public static IEnumerable<char> Range(char from, char to)
 		{
-			return RangeStringStep(from, to, 1);
+			return Range(from, to, 1);
 		}
 
-		public static IEnumerable<string> RangeStringStep(string from, string to, int step)
+		/// <summary>
+		/// Creates a range of characters with given step.
+		/// </summary>
+		public static IEnumerable<char> Range(char from, char to, int step)
 		{
-			if (from.Length != 1) throw new ArgumentException("from");
-			if (to.Length != 1) throw new ArgumentException("to");
 			if (step <= 0) throw new ArgumentException("step");
 
-			var fromChar = from[0];
-			var toChar = to[0];
+			if (from < to)
+				for (var i = from; i <= to; i = (char)(i + step))
+					yield return i;
 
-			if (fromChar < toChar)
-				for (var i = fromChar; i <= toChar; i = (char)(i + step))
-					yield return i.ToString();
-
-			else if (fromChar > toChar)
-				for (var i = fromChar; i >= toChar; i = (char)(i - step))
-					yield return i.ToString();
+			else if (from > to)
+				for (var i = from; i >= to; i = (char)(i - step))
+					yield return i;
 		}
 
 		#endregion

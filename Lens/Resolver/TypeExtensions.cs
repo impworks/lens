@@ -13,6 +13,8 @@ namespace Lens.Resolver
 	/// </summary>
 	internal static class TypeExtensions
 	{
+		#region Static constructor
+
 		static TypeExtensions()
 		{
 			SignedIntegerTypes = new[]
@@ -41,11 +43,17 @@ namespace Lens.Resolver
 			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
 		}
 
-		public static Type[] SignedIntegerTypes { get; private set; }
-		public static Type[] UnsignedIntegerTypes { get; private set; }
-		public static Type[] FloatTypes { get; private set; }
+		#endregion
 
-		private static Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
+		#region Fields
+
+		public static readonly Type[] SignedIntegerTypes;
+		public static readonly Type[] UnsignedIntegerTypes;
+		public static readonly Type[] FloatTypes;
+
+		private static readonly Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
+
+		#endregion
 
 		#region Type class checking
 
@@ -732,6 +740,8 @@ namespace Lens.Resolver
 
 		#endregion
 
+		#region Interface implementations and generic type applications
+
 		/// <summary>
 		/// Checks if a type implements an interface.
 		/// </summary>
@@ -812,5 +822,7 @@ namespace Lens.Resolver
 				? type.Implements(genericType, true)
 				: type.GetGenericTypeDefinition() == genericType.GetGenericTypeDefinition();
 		}
+
+		#endregion
 	}
 }

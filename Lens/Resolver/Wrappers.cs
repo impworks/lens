@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace Lens.Resolver
 {
+	/// <summary>
+	/// Base class for all entity wrappers.
+	/// </summary>
 	internal class WrapperBase
 	{
 		public string Name;
@@ -12,6 +15,9 @@ namespace Lens.Resolver
 		public bool IsStatic;
 	}
 
+	/// <summary>
+	/// Base class for method or constructor wrappers.
+	/// </summary>
 	internal class CallableWrapperBase : WrapperBase
 	{
 		public bool IsPartiallyApplied;
@@ -20,6 +26,9 @@ namespace Lens.Resolver
 		public Type[] ArgumentTypes;
 	}
 
+	/// <summary>
+	/// Wrapper for a method entity.
+	/// </summary>
 	internal class MethodWrapper : CallableWrapperBase
 	{
 		public MethodWrapper() { }
@@ -53,11 +62,18 @@ namespace Lens.Resolver
 		}
 	}
 
+	/// <summary>
+	/// Wrapper for a constructor entity.
+	/// </summary>
 	internal class ConstructorWrapper : CallableWrapperBase
 	{
 		public ConstructorInfo ConstructorInfo;
 	}
 
+
+	/// <summary>
+	/// Wrapper for a field entity.
+	/// </summary>
 	internal class FieldWrapper : WrapperBase
 	{
 		public FieldInfo FieldInfo;
@@ -67,6 +83,9 @@ namespace Lens.Resolver
 		public Type FieldType;
 	}
 
+	/// <summary>
+	/// Wrapper for a property entity.
+	/// </summary>
 	internal class PropertyWrapper : WrapperBase
 	{
 		public Type PropertyType;

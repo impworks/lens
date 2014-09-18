@@ -9,6 +9,8 @@ namespace Lens.Resolver
 	/// </summary>
 	internal class ReferencedAssemblyCache
 	{
+		#region Constructor
+
 		public ReferencedAssemblyCache(bool useDefault = true)
 		{
 			_Assemblies = new HashSet<Assembly>();
@@ -21,15 +23,15 @@ namespace Lens.Resolver
 					{
 						_Assemblies.Add(Assembly.Load(name));
 					}
-					catch
-					{
-					}
+					catch { }
 				}
 
 				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
 					_Assemblies.Add(asm);
 			}
 		}
+
+		#endregion
 
 		#region Fields
 

@@ -9,6 +9,8 @@ namespace Lens.Resolver
 	/// </summary>
 	internal static class FunctionalHelper
 	{
+		#region Static constructor
+
 		static FunctionalHelper()
 		{
 			_ActionBaseTypes = new[]
@@ -90,6 +92,10 @@ namespace Lens.Resolver
 			_TupleTypesLookup = new HashSet<Type>(_TupleBaseTypes);
 		}
 
+		#endregion
+
+		#region Fields
+
 		private static readonly Type[] _ActionBaseTypes;
 		private static readonly Type[] _FuncBaseTypes;
 		private static readonly Type[] _LambdaBaseTypes;
@@ -99,6 +105,10 @@ namespace Lens.Resolver
 		private static readonly HashSet<Type> _FuncTypesLookup;
 		private static readonly HashSet<Type> _LambdaTypesLookup;
 		private static readonly HashSet<Type> _TupleTypesLookup;
+
+		#endregion
+
+		#region Type kind methods
 
 		/// <summary>
 		/// Checks if a type is a function type.
@@ -133,14 +143,6 @@ namespace Lens.Resolver
 		}
 
 		/// <summary>
-		/// Checks if a type is generic and is contained in the lookup table.
-		/// </summary>
-		private static bool isKnownType(HashSet<Type> typesLookup, Type type)
-		{
-			return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
-		}
-
-		/// <summary>
 		/// Checks if the type can be called.
 		/// </summary>
 		public static bool IsCallableType(this Type type)
@@ -154,6 +156,10 @@ namespace Lens.Resolver
 
 			return false;
 		}
+
+		#endregion
+
+		#region Type constructing
 
 		/// <summary>
 		/// Creates a Func or Action depending on return type.
@@ -221,5 +227,19 @@ namespace Lens.Resolver
 			var baseType = _TupleBaseTypes[args.Length - 1];
 			return baseType.MakeGenericType(args);
 		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Checks if a type is generic and is contained in the lookup table.
+		/// </summary>
+		private static bool isKnownType(HashSet<Type> typesLookup, Type type)
+		{
+			return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
+		}
+
+		#endregion
 	}
 }
