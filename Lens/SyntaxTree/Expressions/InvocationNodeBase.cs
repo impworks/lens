@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;#
+using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
@@ -178,7 +178,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(InvocationNodeBase other)
 		{

@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -8,15 +9,25 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class InversionOperatorNode : UnaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "not"; }
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolveOperatorType(Context ctx)
 		{
-			return CastOperatorNode.IsImplicitlyBoolean(Operand.Resolve(ctx)) ? typeof (bool) : null;
+			return Operand.Resolve(ctx).IsImplicitlyBoolean() ? typeof(bool) : null;
 		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -27,7 +38,11 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
-		protected override void compileOperator(Context ctx)
+		#endregion
+
+		#region Emit
+
+		protected override void emitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -37,9 +52,15 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitCompareEqual();
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic value)
 		{
 			return !value;
 		}
+
+		#endregion
 	}
 }

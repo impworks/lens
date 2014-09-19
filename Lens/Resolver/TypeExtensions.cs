@@ -126,6 +126,14 @@ namespace Lens.Resolver
 			return type.IsValueType && !type.IsNumericType();
 		}
 
+		/// <summary>
+		/// Checks if type is actually boolean or can be implicitly casted to boolean.
+		/// </summary>
+		public static bool IsImplicitlyBoolean(this Type type)
+		{
+			return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof(bool));
+		}
+
 		#endregion
 
 		#region Type distance

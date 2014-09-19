@@ -24,26 +24,6 @@ namespace Lens.SyntaxTree
 
 		#endregion
 
-		#region Constant values
-
-		/// <summary>
-		/// Checks if the current node is a constant.
-		/// </summary>
-		public virtual bool IsConstant
-		{
-			get { return false; }
-		}
-
-		/// <summary>
-		/// Returns a constant value corresponding to the current node.
-		/// </summary>
-		public virtual dynamic ConstantValue
-		{
-			get { throw new InvalidOperationException("Not a constant!"); }
-		}
-
-		#endregion
-
 		#region Resolve
 
 		/// <summary>
@@ -162,6 +142,26 @@ namespace Lens.SyntaxTree
 					GetType()
 				)
 			);
+		}
+
+		#endregion
+
+		#region Constant checkers
+
+		/// <summary>
+		/// Checks if the current node is a constant.
+		/// </summary>
+		public virtual bool IsConstant
+		{
+			get { return false; }
+		}
+
+		/// <summary>
+		/// Returns a constant value corresponding to the current node.
+		/// </summary>
+		public virtual dynamic ConstantValue
+		{
+			get { throw new InvalidOperationException("Not a constant!"); }
 		}
 
 		#endregion

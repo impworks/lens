@@ -13,6 +13,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class MultiplyOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "*"; }
@@ -22,6 +24,39 @@ namespace Lens.SyntaxTree.Operators
 		{
 			get { return "op_Multiply"; }
 		}
+
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			if (rightType == typeof(int))
+			{
+				// string repetition
+				if (leftType == typeof(string))
+					return typeof(string);
+
+				// array repetition
+				if (leftType.IsArray)
+					return leftType;
+
+				// typed sequence repetition
+				var enumerable = leftType.ResolveImplementationOf(typeof(IEnumerable<>));
+				if (enumerable != null)
+					return enumerable;
+
+				// untyped sequence repetition
+				if (leftType.Implements(typeof(IEnumerable), false))
+					return typeof(IEnumerable);
+			}
+
+			return null;
+		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -42,79 +77,13 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			if (rightType == typeof(int))
-			{
-				// string repetition
-				if (leftType == typeof (string))
-					return typeof (string);
-
-				// array repetition
-				if (leftType.IsArray)
-					return leftType;
-
-				// typed sequence repetition
-				var enumerable = leftType.ResolveImplementationOf(typeof (IEnumerable<>));
-				if (enumerable != null)
-					return enumerable;
-
-				// untyped sequence repetition
-				if(leftType.Implements(typeof(IEnumerable), false))
-					return typeof (IEnumerable);
-			}
-
-			return null;
-		}
-
-		protected override void emitOperator(Context ctx)
-		{
-			loadAndConvertNumerics(ctx);
-			ctx.CurrentMethod.Generator.EmitMultiply();
-		}
-
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			var leftType = left.GetType();
-			var rightType = right.GetType();
-
-			if (leftType == typeof (string) && rightType == typeof(int))
-			{
-				var sb = new StringBuilder();
-				for (var idx = 0; idx < right; idx++)
-					sb.Append(left);
-				return sb.ToString();
-			}
-
-			try
-			{
-				return checked(left * right);
-			}
-			catch (OverflowException)
-			{
-				error(CompilerMessages.ConstantOverflow);
-				return null;
-			}
-		}
-
-		#region Expansion rules
-		
-		private static NodeBase mathExpansion(NodeBase one, NodeBase other)
-		{
-			if (one.IsConstant)
-			{
-				var value = one.ConstantValue;
-				if (value == 0) return Expr.Int(0);
-				if (value == 1) return other;
-			}
-
-			return null;
-		}
-
+		/// <summary>
+		/// Repeats a string.
+		/// </summary>
 		private NodeBase stringExpand(Context ctx)
 		{
 			var tmpString = ctx.Scope.DeclareImplicit(ctx, typeof(string), false);
-			var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof (StringBuilder), false);
+			var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof(StringBuilder), false);
 			var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx), false);
 
 			// var sb = new StringBuilder();
@@ -220,10 +189,10 @@ namespace Lens.SyntaxTree.Operators
 			var seqType = LeftOperand.Resolve(ctx);
 
 			NodeBase leftWrapper;
-			if (seqType == typeof (IEnumerable))
+			if (seqType == typeof(IEnumerable))
 			{
 				leftWrapper = Expr.Invoke(Expr.GetMember("System.Linq.Enumerable", "OfType", "object"), LeftOperand);
-				seqType = typeof (IEnumerable<object>);
+				seqType = typeof(IEnumerable<object>);
 			}
 			else
 			{
@@ -264,6 +233,44 @@ namespace Lens.SyntaxTree.Operators
 				),
 				Expr.Get(tmpResult)
 			);
+		}
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitOperator(Context ctx)
+		{
+			loadAndConvertNumerics(ctx);
+			ctx.CurrentMethod.Generator.EmitMultiply();
+		}
+
+		#endregion
+
+		#region Constant unroll
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			var leftType = left.GetType();
+			var rightType = right.GetType();
+
+			if (leftType == typeof (string) && rightType == typeof(int))
+			{
+				var sb = new StringBuilder();
+				for (var idx = 0; idx < right; idx++)
+					sb.Append(left);
+				return sb.ToString();
+			}
+
+			try
+			{
+				return checked(left * right);
+			}
+			catch (OverflowException)
+			{
+				error(CompilerMessages.ConstantOverflow);
+				return null;
+			}
 		}
 
 		#endregion

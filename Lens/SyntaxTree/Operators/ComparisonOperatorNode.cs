@@ -2,7 +2,6 @@
 using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -13,15 +12,25 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class ComparisonOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Constructor
+
 		public ComparisonOperatorNode(ComparisonOperatorKind kind = default(ComparisonOperatorKind))
 		{
 			Kind = kind;
 		}
 
+		#endregion
+
+		#region Fields
+
 		/// <summary>
 		/// The kind of equality operator.
 		/// </summary>
 		public ComparisonOperatorKind Kind { get; set; }
+
+		#endregion
+
+		#region Operator basics
 
 		protected override string OperatorRepresentation
 		{
@@ -59,25 +68,14 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 			return canCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
-		}
-
-		protected override void emitOperator(Context ctx)
-		{
-			var leftType = LeftOperand.Resolve(ctx);
-			var rightType = RightOperand.Resolve(ctx);
-			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
-
-			if(!canCompare(leftType, rightType, isEquality))
-				error(CompilerMessages.TypesIncomparable, leftType, rightType);
-
-			if (isEquality)
-				compileEquality(ctx, leftType, rightType);
-			else
-				compileRelation(ctx, leftType, rightType);
 		}
 
 		/// <summary>
@@ -86,7 +84,7 @@ namespace Lens.SyntaxTree.Operators
 		private bool canCompare(Type left, Type right, bool equalityOnly)
 		{
 			// there's an overridden method
-			if (m_OverloadedMethod != null)
+			if (_OverloadedMethod != null)
 				return true;
 
 			// string .. string
@@ -118,10 +116,29 @@ namespace Lens.SyntaxTree.Operators
 			return false;
 		}
 
+		#endregion
+
+		#region Emit
+
+		protected override void emitOperator(Context ctx)
+		{
+			var leftType = LeftOperand.Resolve(ctx);
+			var rightType = RightOperand.Resolve(ctx);
+			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
+
+			if(!canCompare(leftType, rightType, isEquality))
+				error(CompilerMessages.TypesIncomparable, leftType, rightType);
+
+			if (isEquality)
+				emitEqualityComparison(ctx, leftType, rightType);
+			else
+				emitRelation(ctx, leftType, rightType);
+		}
+
 		/// <summary>
 		/// Emits code for equality and inequality comparison.
 		/// </summary>
-		private void compileEquality(Context ctx, Type left, Type right)
+		private void emitEqualityComparison(Context ctx, Type left, Type right)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -156,9 +173,9 @@ namespace Lens.SyntaxTree.Operators
 			if (left.IsNullableType())
 			{
 				if(left == right || Nullable.GetUnderlyingType(left) == right)
-					compileNullable(ctx, LeftOperand, RightOperand);
+					emitNullableComparison(ctx, LeftOperand, RightOperand);
 				else if(right == typeof(NullType))
-					compileHasValue(ctx, LeftOperand);
+					emitHasValueCheck(ctx, LeftOperand);
 
 				return;
 			}
@@ -166,9 +183,9 @@ namespace Lens.SyntaxTree.Operators
 			if (right.IsNullableType())
 			{
 				if (Nullable.GetUnderlyingType(right) == left)
-					compileNullable(ctx, RightOperand, LeftOperand);
+					emitNullableComparison(ctx, RightOperand, LeftOperand);
 				else if (left == typeof(NullType))
-					compileHasValue(ctx, RightOperand);
+					emitHasValueCheck(ctx, RightOperand);
 
 				return;
 			}
@@ -205,7 +222,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Emits code for comparing a nullable 
 		/// </summary>
-		private void compileNullable(Context ctx, NodeBase nullValue, NodeBase otherValue)
+		private void emitNullableComparison(Context ctx, NodeBase nullValue, NodeBase otherValue)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -278,7 +295,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Checks if the nullable expression is null.
 		/// </summary>
-		private void compileHasValue(Context ctx, NodeBase nullValue)
+		private void emitHasValueCheck(Context ctx, NodeBase nullValue)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var nullType = nullValue.Resolve(ctx);
@@ -308,7 +325,7 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// Emits code for relation comparison: greater, less, etc.
 		/// </summary>
-		private void compileRelation(Context ctx, Type left, Type right)
+		private void emitRelation(Context ctx, Type left, Type right)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -353,6 +370,10 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			switch (Kind)
@@ -368,7 +389,9 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(ComparisonOperatorNode other)
 		{

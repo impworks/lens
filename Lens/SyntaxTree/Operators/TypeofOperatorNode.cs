@@ -9,16 +9,31 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class TypeofOperatorNode : TypeOperatorNodeBase
 	{
+		#region Constants
+
 		private static readonly MethodInfo _HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
+
+		#endregion
+
+		#region Constructor
+
 		public TypeofOperatorNode(string type = null)
 		{
 			TypeSignature = type;
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (Type);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -29,9 +44,15 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitCall(_HandleMethod);
 		}
 
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			return string.Format("typeof({0})", Type != null ? Type.Name : TypeSignature);
 		}
+
+		#endregion
 	}
 }

@@ -350,7 +350,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(InvocationNode other)
 		{

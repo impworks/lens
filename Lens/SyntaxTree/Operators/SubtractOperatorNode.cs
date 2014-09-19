@@ -9,6 +9,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class SubtractOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "-"; }
@@ -19,10 +21,18 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Subtraction"; }
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -35,11 +45,19 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Emit
+
 		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitSubtract();
 		}
+
+		#endregion
+
+		#region Constant unroll
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
@@ -48,5 +66,7 @@ namespace Lens.SyntaxTree.Operators
 
 			return left - right;
 		}
+
+		#endregion
 	}
 }

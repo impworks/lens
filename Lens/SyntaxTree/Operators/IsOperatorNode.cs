@@ -8,10 +8,16 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class IsOperatorNode : TypeCheckOperatorNodeBase
 	{
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return typeof (bool);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -53,5 +59,7 @@ namespace Lens.SyntaxTree.Operators
 				gen.EmitCompareGreater(false);
 			}
 		}
+
+		#endregion
 	}
 }

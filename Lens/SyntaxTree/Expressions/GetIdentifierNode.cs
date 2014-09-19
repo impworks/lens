@@ -34,12 +34,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Constant checkers
-
-		public override bool IsConstant { get { return _LocalConstant != null; } }
-		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
-
-		#endregion
+		
 
 		#region Resolve
 
@@ -242,8 +237,15 @@ namespace Lens.SyntaxTree.Expressions
 		}
 
 		#endregion
+		
+		#region Constant unroll
 
-		#region Equality members
+		public override bool IsConstant { get { return _LocalConstant != null; } }
+		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
+
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(GetIdentifierNode other)
 		{

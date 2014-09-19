@@ -162,7 +162,7 @@ namespace Lens.Compiler
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(TypeSignature other)
 		{

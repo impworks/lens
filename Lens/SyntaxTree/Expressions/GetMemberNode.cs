@@ -292,7 +292,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Equality
+		#region Debug
 
 		protected bool Equals(GetMemberNode other)
 		{

@@ -11,7 +11,16 @@ namespace Lens.SyntaxTree.Operators
 {
 	internal class ShiftOperatorNode : BinaryOperatorNodeBase
 	{
-		public bool IsLeft { get; set; }
+		#region Fields
+
+		/// <summary>
+		/// Indicates the direction of the shift: left or right.
+		/// </summary>
+		public bool IsLeft;
+
+		#endregion
+
+		#region Operator basics
 
 		protected override string OperatorRepresentation
 		{
@@ -23,6 +32,10 @@ namespace Lens.SyntaxTree.Operators
 			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
 		}
 
+		#endregion
+
+		#region Resolve
+
 		/// <summary>
 		/// Extra hint for function composition.
 		/// </summary>
@@ -30,6 +43,7 @@ namespace Lens.SyntaxTree.Operators
 		{
 			var leftType = LeftOperand.Resolve(ctx);
 
+			// check if the shift operator is used for function composition
 			if (leftType.IsCallableType())
 			{
 				// add left operand's return type as hint to right operand
@@ -54,15 +68,31 @@ namespace Lens.SyntaxTree.Operators
 					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 			}
 
+			// resolve as a possibly overloaded operator
 			return base.resolve(ctx, mustReturn);
 		}
+
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
+				return leftType;
+
+			if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
+				return ReflectionHelper.CombineDelegates(leftType, rightType);
+
+			return null;
+		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx, mustReturn);
-			var rightType = RightOperand.Resolve(ctx, mustReturn);
 
-			if (leftType.IsCallableType() && rightType.IsCallableType())
+			// create a lambda expression that passes the result of left function to the right one
+			if (leftType.IsCallableType())
 			{
 				var leftVar = ctx.Unique.TempVariableName();
 				var rightVar = ctx.Unique.TempVariableName();
@@ -88,16 +118,9 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
-				return leftType;
+		#endregion
 
-			if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
-				return ReflectionHelper.CombineDelegates(leftType, rightType);
-
-			return null;
-		}
+		#region Emit
 
 		protected override void emitOperator(Context ctx)
 		{
@@ -109,9 +132,15 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitShift(IsLeft);
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			return IsLeft ? left << right : left >> right;
 		}
+
+		#endregion
 	}
 }

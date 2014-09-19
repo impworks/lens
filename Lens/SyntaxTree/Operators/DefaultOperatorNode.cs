@@ -11,6 +11,17 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class DefaultOperatorNode : TypeOperatorNodeBase
 	{
+		#region Constructor
+
+		public DefaultOperatorNode(TypeSignature type = null)
+		{
+			TypeSignature = type;
+		}
+
+		#endregion
+
+		#region Fields
+
 		/// <summary>
 		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
 		/// </summary>
@@ -25,15 +36,18 @@ namespace Lens.SyntaxTree.Operators
 			typeof (uint)
 		};
 
-		public DefaultOperatorNode(TypeSignature type = null)
-		{
-			TypeSignature = type;
-		}
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
 			return Type ?? ctx.ResolveType(TypeSignature);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -74,9 +88,15 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			return string.Format("default({0})", Type != null ? Type.Name : TypeSignature);
 		}
+
+		#endregion
 	}
 }

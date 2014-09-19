@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(FunctionNodeBase other)
 		{
