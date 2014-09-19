@@ -6,7 +6,6 @@ using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Operators;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
@@ -15,10 +14,16 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class NewObjectNode : InvocationNodeBase
 	{
+		#region Constructor
+
 		public NewObjectNode(string type = null)
 		{
 			TypeSignature = type;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The type of the object to create.
@@ -35,8 +40,19 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		private bool _IsDefault;
 
+		/// <summary>
+		/// Constructor wrapper.
+		/// </summary>
 		private ConstructorWrapper _Constructor;
+
+		/// <summary>
+		/// Generic wrapper for base class.
+		/// </summary>
 		protected override CallableWrapperBase _Wrapper { get { return _Constructor; } }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -78,6 +94,10 @@ namespace Lens.SyntaxTree.Expressions
 			return resolvePartial(_Constructor, type, _ArgTypes);
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (_IsDefault)
@@ -85,6 +105,10 @@ namespace Lens.SyntaxTree.Expressions
 
 			return base.expand(ctx, mustReturn);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -107,10 +131,16 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		#endregion
+
+		#region Helpers
+
 		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
 		{
 			return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList() };
 		}
+
+		#endregion
 
 		#region Equality members
 
@@ -135,11 +165,11 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("new({0}, args: {1})", TypeSignature.FullSignature, string.Join(";", Arguments));
 		}
+
+		#endregion
 	}
 }

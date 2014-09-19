@@ -4,24 +4,33 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
 	/// <summary>
-	/// Base node for value lists: dictionaries, arrays, lists etc.
+	/// Base node for collections: dictionaries, arrays, lists, etc.
 	/// </summary>
-	internal abstract class ValueListNodeBase<T> : NodeBase
+	internal abstract class CollectionNodeBase<T> : NodeBase
 	{
-		protected ValueListNodeBase()
+		#region Constructor
+
+		protected CollectionNodeBase()
 		{
 			Expressions = new List<T>();
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The list of items.
 		/// </summary>
 		public List<T> Expressions { get; set; }
+
+		#endregion
+
+		#region Resolve
 
 		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
 		{
@@ -33,9 +42,11 @@ namespace Lens.SyntaxTree.Expressions
 			return types.GetMostCommonType();
 		}
 
+		#endregion
+
 		#region Equality members
 
-		protected bool Equals(ValueListNodeBase<T> other)
+		protected bool Equals(CollectionNodeBase<T> other)
 		{
 			return Expressions.SequenceEqual(other.Expressions);
 		}
@@ -45,7 +56,7 @@ namespace Lens.SyntaxTree.Expressions
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
 			if (obj.GetType() != this.GetType()) return false;
-			return Equals((ValueListNodeBase<T>)obj);
+			return Equals((CollectionNodeBase<T>)obj);
 		}
 
 		public override int GetHashCode()

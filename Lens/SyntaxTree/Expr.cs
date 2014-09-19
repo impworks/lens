@@ -648,11 +648,6 @@ namespace Lens.SyntaxTree
 
 		#region Utilities
 
-		public static GetArgumentNode GetArg(int id)
-		{
-			return new GetArgumentNode { ArgumentId = id };
-		}
-
 		public static ThisNode This()
 		{
 			return new ThisNode();

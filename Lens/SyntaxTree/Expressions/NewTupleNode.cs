@@ -11,9 +11,18 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new tuple declaration.
 	/// </summary>
-	internal class NewTupleNode : ValueListNodeBase<NodeBase>
+	internal class NewTupleNode : CollectionNodeBase<NodeBase>
 	{
+		#region Fields
+
+		/// <summary>
+		/// List of tuple item types.
+		/// </summary>
 		private Type[] _Types;
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -36,10 +45,18 @@ namespace Lens.SyntaxTree.Expressions
 			return FunctionalHelper.CreateTupleType(_Types);
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -54,9 +71,15 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			return string.Format("tuple({0})", string.Join(";", Expressions));
 		}
+
+		#endregion
 	}
 }

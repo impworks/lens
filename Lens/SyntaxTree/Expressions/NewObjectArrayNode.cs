@@ -1,21 +1,42 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
-    /// <summary>
+
+
+
+	/// <summary>
     /// Represents an empty array of specified size.
     /// </summary>
     internal class NewObjectArrayNode : NodeBase
 	{
+		#region Fields
+
+		/// <summary>
+		/// Raw array item type.
+		/// </summary>
 		public TypeSignature TypeSignature;
+
+		/// <summary>
+		/// Processed array item type.
+		/// </summary>
         public Type Type;
 
+		/// <summary>
+		/// Desired size of the array (must be int!).
+		/// </summary>
         public NodeBase Size;
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
         {
             if (Type == null)
                 Type = ctx.ResolveType(TypeSignature);
@@ -27,7 +48,20 @@ namespace Lens.SyntaxTree.Expressions
             return Type.MakeArrayType();
         }
 
-        protected override void emitCode(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Transform
+
+	    protected override IEnumerable<NodeChild> getChildren()
+	    {
+		    yield return new NodeChild(Size, x => Size = x);
+	    }
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 
@@ -35,6 +69,7 @@ namespace Lens.SyntaxTree.Expressions
             gen.EmitCreateArray(Type);
         }
 
+		#endregion
 
 		#region Equality members
 
