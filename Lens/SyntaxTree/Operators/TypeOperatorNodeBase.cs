@@ -10,6 +10,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class TypeOperatorNodeBase : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// Type signature parameter.
 		/// </summary>
@@ -20,7 +22,9 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		public Type Type { get; set; }
 
-		#region Equality
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TypeOperatorNodeBase other)
 		{
@@ -51,17 +55,25 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class TypeCheckOperatorNodeBase : TypeOperatorNodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		///  The expression to check against the type.
 		/// </summary>
 		public NodeBase Expression { get; set; }
+
+		#endregion
+
+		#region Transform
 
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		#region Equality
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TypeCheckOperatorNodeBase other)
 		{

@@ -12,6 +12,11 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetIndexNode : IndexNodeBase
 	{
+		#region Fields
+
+		/// <summary>
+		/// Wrapper for indexer method (if object is not an array and has a custom indexer defined).
+		/// </summary>
 		private MethodWrapper _Indexer;
 
 		/// <summary>
@@ -19,12 +24,9 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Expression, x => Expression = x);
-			yield return new NodeChild(Index, x => Index = x);
-			yield return new NodeChild(Value, x => Value = x);
-		}
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -58,15 +60,33 @@ namespace Lens.SyntaxTree.Expressions
 			return base.resolve(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Index, x => Index = x);
+			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		#endregion
+
+		#region Emit
+
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			if (_Indexer == null)
-				compileArray(ctx);
+				emitSetArray(ctx);
 			else
-				compileCustom(ctx);
+				emitSetCustomIndexer(ctx);
 		}
 
-		private void compileArray(Context ctx)
+		/// <summary>
+		/// Saves the value to an array location.
+		/// </summary>
+		private void emitSetArray(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -79,7 +99,10 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitSaveIndex(itemType);
 		}
 
-		private void compileCustom(Context ctx)
+		/// <summary>
+		/// Invokes the object's custom indexer setter.
+		/// </summary>
+		private void emitSetCustomIndexer(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -102,7 +125,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(SetIndexNode other)
 		{
@@ -125,11 +150,11 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("setidx({0} of {1} = {2})", Index, Expression, Value);
 		}
+
+		#endregion
 	}
 }

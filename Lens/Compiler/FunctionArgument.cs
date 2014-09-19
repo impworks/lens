@@ -9,6 +9,8 @@ namespace Lens.Compiler
 	/// </summary>
 	internal class FunctionArgument : LocationEntity
 	{
+		#region Constructors
+
 		public FunctionArgument()
 		{ }
 
@@ -25,6 +27,10 @@ namespace Lens.Compiler
 			TypeSignature = type;
 			IsRefArgument = isRefArg;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// Argument name.
@@ -56,6 +62,10 @@ namespace Lens.Compiler
 		/// </summary>
 		public bool IsVariadic { get; set; }
 
+		#endregion
+
+		#region Methods
+
 		/// <summary>
 		/// Calculates argument type.
 		/// </summary>
@@ -74,7 +84,9 @@ namespace Lens.Compiler
 			return Type;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(FunctionArgument other)
 		{

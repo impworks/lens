@@ -24,18 +24,24 @@ namespace Lens
 
 		#region Fields
 
+		/// <summary>
+		/// Timings of various compiler states (for debug purposes).
+		/// </summary>
 		public readonly Dictionary<string, TimeSpan> Measurements;
+
+		/// <summary>
+		/// The main context class.
+		/// </summary>
 		private readonly Context _Context;
 
 		#endregion
 
 		#region Methods
-		
-		public void Dispose()
-		{
-			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
-		}
 
+		/// <summary>
+		/// Register an assembly to be used by the LENS script.
+		/// </summary>
+		/// <param name="asm"></param>
 		public void RegisterAssembly(Assembly asm)
 		{
 			_Context.RegisterAssembly(asm);
@@ -71,7 +77,10 @@ namespace Lens
 		/// <summary>
 		/// Registers a list of overloaded methods to be used by LENS script.
 		/// </summary>
-		public void RegisterFunctionOverloads(Type type, string name, string newName)
+		/// <param name="type">Source type.</param>
+		/// <param name="name">The name of the group of source methods.</param>
+		/// <param name="newName">The new name of the methods that will be available in the LENS script. Equals the source name by default.</param>
+		public void RegisterFunctionOverloads(Type type, string name, string newName = null)
 		{
 			_Context.ImportFunctionOverloads(type, name, newName);
 		}
@@ -149,6 +158,15 @@ namespace Lens
 				Measurements[title] = end - start;
 
 			return res;
+		}
+
+		#endregion
+
+		#region IDisposable implementation
+
+		public void Dispose()
+		{
+			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
 		}
 
 		#endregion

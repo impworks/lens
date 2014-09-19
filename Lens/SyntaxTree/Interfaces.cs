@@ -5,7 +5,14 @@
 	/// </summary>
 	internal interface IPointerProvider
 	{
+		/// <summary>
+		/// Indicates that the pointer to the value is required.
+		/// </summary>
 		bool PointerRequired { get; set; }
+
+		/// <summary>
+		/// Indicates that the argument is passed by reference.
+		/// </summary>
 		bool RefArgumentRequired { get; set; }
 	}
 }

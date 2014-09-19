@@ -12,11 +12,17 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal abstract class NameDeclarationNodeBase : NodeBase
 	{
+		#region Constructor
+
 		protected NameDeclarationNodeBase(string name, bool immutable)
 		{
 			Name = name;
 			IsImmutable = immutable;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The name of the variable.
@@ -43,10 +49,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public readonly bool IsImmutable;
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Value, x => Value = x);
-		}
+		#endregion
+
+		#region Resolve
+
+		
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -80,6 +87,15 @@ namespace Lens.SyntaxTree.ControlFlow
 			return base.resolve(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(Value, x => Value = x);
+		}
+
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			var name = Local ?? ctx.Scope.FindLocal(Name);
@@ -95,7 +111,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			};
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(NameDeclarationNodeBase other)
 		{
@@ -121,11 +139,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("{0}({1} = {2})", IsImmutable ? "let" : "var", Name, Value);
 		}
+		
+		#endregion
 	}
 }

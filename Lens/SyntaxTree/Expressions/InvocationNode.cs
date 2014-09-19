@@ -17,19 +17,41 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class InvocationNode : InvocationNodeBase
 	{
+		#region Fields
+
 		/// <summary>
-		/// An expression to invoke the method on.
+		/// Entire invokable expression, like:
+		/// myFunc
+		/// type::myMethod
+		/// obj.myMethod
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
+		/// <summary>
+		/// Expression to invoke the method on, if any.
+		/// Is null for functions or static methods.
+		/// </summary>
 		private NodeBase _InvocationSource;
+
+		/// <summary>
+		/// Invoked method wrapper.
+		/// </summary>
 		private MethodWrapper _Method;
+
+		/// <summary>
+		/// Generic wrapper implementation for base class interface (used for partial application, etc).
+		/// </summary>
 		protected override CallableWrapperBase _Wrapper { get { return _Method; } }
 
+		/// <summary>
+		/// Optional type hints for generic methods or delegates.
+		/// </summary>
 		private Type[] _TypeHints;
 
+		#endregion
+
 		#region Resolve
-		
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			// resolve _ArgTypes
@@ -47,6 +69,9 @@ namespace Lens.SyntaxTree.Expressions
 			return resolvePartial(_Method, _Method.ReturnType, _ArgTypes);
 		}
 
+		/// <summary>
+		/// Resolves the method if the expression was a member getter (obj.field or type::field).
+		/// </summary>
 		private void resolveGetMember(Context ctx, GetMemberNode node)
 		{
 			_InvocationSource = node.Expression;
@@ -153,6 +178,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		/// <summary>
+		/// Resolves the method as a global function, imported property or a local variable with a delegate.
+		/// </summary>
 		private void resolveGetIdentifier(Context ctx, GetIdentifierNode node)
 		{
 			var nameInfo = ctx.Scope.FindLocal(node.Identifier);
@@ -187,6 +215,9 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
+		/// <summary>
+		/// Resolves a method from the expression, considering it an instance of a delegate type.
+		/// </summary>
 		private void resolveExpression(Context ctx, NodeBase node)
 		{
 			var exprType = node.Resolve(ctx);
@@ -222,6 +253,8 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			var canExpandExpr = !(Expression is GetIdentifierNode || Expression is GetMemberNode);
@@ -232,6 +265,10 @@ namespace Lens.SyntaxTree.Expressions
 				yield return curr;
 		}
 
+		#endregion
+
+		#region Process closures
+
 		public override void ProcessClosures(Context ctx)
 		{
 			if(Expression is GetIdentifierNode || Expression is GetMemberNode)
@@ -240,7 +277,9 @@ namespace Lens.SyntaxTree.Expressions
 			base.ProcessClosures(ctx);
 		}
 
-		#region Compile
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -302,7 +341,16 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Equality members
+		#region Helpers
+
+		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		{
+			return new InvocationNode { Expression = Expression, Arguments = newArgs.ToList() };
+		}
+
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(InvocationNode other)
 		{
@@ -328,16 +376,13 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#endregion
-
-		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
-		{
-			return new InvocationNode { Expression = Expression, Arguments = newArgs.ToList() };
-		}
-
 		public override string ToString()
 		{
 			return string.Format("invoke({0}, args: {1})", Expression, string.Join(",", Arguments));
 		}
+
+		#endregion
+
+
 	}
 }

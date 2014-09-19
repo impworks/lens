@@ -11,12 +11,18 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class CastOperatorNode : TypeCheckOperatorNodeBase
 	{
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
 			ensureLambdaInferred(ctx, Expression, type);
 			return type;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -45,11 +51,7 @@ namespace Lens.SyntaxTree.Operators
 				}
 
 				else if (!toType.IsValueType)
-				{
 					gen.EmitNull();
-//					Expression.Emit(ctx, true);
-//					gen.EmitCast(toType);
-				}
 
 				else
 					error(CompilerMessages.CastNullValueType, toType);
@@ -158,14 +160,18 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Displays a default error for uncastable types.
+		/// </summary>
 		private void error(Type from, Type to)
 		{
 			error(CompilerMessages.CastTypesMismatch, from, to);
 		}
 
-		public static bool IsImplicitlyBoolean(Type type)
-		{
-			return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof (bool));
-		}
+		#endregion
 	}
 }

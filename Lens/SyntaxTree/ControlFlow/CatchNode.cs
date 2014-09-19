@@ -11,10 +11,16 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class CatchNode : NodeBase
 	{
+		#region Constructor
+
 		public CatchNode()
 		{
 			Code = new CodeBlockNode();
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The type of the exception this catch block handles.
@@ -34,10 +40,18 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		private Local _ExceptionVariable;
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Code, null);
 		}
+
+		#endregion
+
+		#region Process closures
 
 		public override void ProcessClosures(Context ctx)
 		{
@@ -50,6 +64,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			if(!string.IsNullOrEmpty(ExceptionVariable))
 				_ExceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -73,7 +91,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.CurrentCatchBlock = backup;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(CatchNode other)
 		{

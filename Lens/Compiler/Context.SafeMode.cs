@@ -22,6 +22,9 @@ namespace Lens.Compiler
 
 		#region Methods
 
+		/// <summary>
+		/// Loads safe mode restrictions into the list of allowed namespaces and types.
+		/// </summary>
 		private void InitSafeMode()
 		{
 			if (Options.SafeMode == SafeMode.Disabled)
@@ -70,6 +73,9 @@ namespace Lens.Compiler
 			}
 		}
 
+		/// <summary>
+		/// Checks if the type is allowed according to the safe mode restrictions.
+		/// </summary>
 		public bool IsTypeAllowed(Type type)
 		{
 			if (Options.SafeMode == SafeMode.Disabled)

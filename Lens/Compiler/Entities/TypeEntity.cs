@@ -13,6 +13,8 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	internal partial class TypeEntity
 	{
+		#region Constructor
+
 		public TypeEntity(Context ctx)
 		{
 			Context = ctx;
@@ -24,13 +26,18 @@ namespace Lens.Compiler.Entities
 			ClosureMethodId = 1;
 		}
 
+		#endregion
+
+		#region Properties
+
 		public Type[] Interfaces;
 
 		private readonly Dictionary<string, FieldEntity> _Fields;
 		private readonly Dictionary<string, List<MethodEntity>> _Methods;
 		private readonly List<ConstructorEntity> _Constructors;
 
-		#region Properties
+		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
+		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
 
 		/// <summary>
 		/// Pointer to context.
@@ -57,16 +64,16 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type Parent;
 
-		private Type m_TypeInfo;
+		private Type _TypeInfo;
 		public Type TypeInfo
 		{
-			get { return TypeBuilder ?? m_TypeInfo; }
+			get { return TypeBuilder ?? _TypeInfo; }
 			set
 			{
 				if(!IsImported)
 					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
 
-				m_TypeInfo = value;
+				_TypeInfo = value;
 			}
 		}
 
@@ -84,10 +91,6 @@ namespace Lens.Compiler.Entities
 		/// A kind of LENS type this entity represents.
 		/// </summary>
 		public TypeEntityKind Kind;
-
-		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
-
-		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
 
 		#endregion
 
@@ -224,9 +227,13 @@ namespace Lens.Compiler.Entities
 
 		#endregion
 
+		#region Debug
+
 		public override string ToString()
 		{
 			return Name;
 		}
+
+		#endregion
 	}
 }

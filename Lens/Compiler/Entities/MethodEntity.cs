@@ -6,23 +6,34 @@ using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Literals;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
+	/// <summary>
+	/// An assembly-level method.
+	/// </summary>
 	internal class MethodEntity : MethodEntityBase
 	{
+		#region Constructor
+
 		public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
 		{
-			var scopeKind = type.Kind == TypeEntityKind.Closure ? ScopeKind.LambdaRoot : ScopeKind.FunctionRoot;
+			var scopeKind = type.Kind == TypeEntityKind.Closure
+				? ScopeKind.LambdaRoot
+				: ScopeKind.FunctionRoot;
+
 			Body = new CodeBlockNode(scopeKind);
 		}
+
+		#endregion
 
 		#region Fields
 
 		public bool IsVirtual;
 		public bool IsPure;
 		public bool IsVariadic;
+
+		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
 
 		/// <summary>
 		/// The signature of method's return type.
@@ -39,14 +50,12 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
-		private MethodInfo m_MethodInfo;
+		private MethodInfo _MethodInfo;
 		public MethodInfo MethodInfo
 		{
-			get { return IsImported ? m_MethodInfo : MethodBuilder; }
-			set { m_MethodInfo = value; }
+			get { return IsImported ? _MethodInfo : MethodBuilder; }
+			set { _MethodInfo = value; }
 		}
-
-		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
 
 		#endregion
 
@@ -96,6 +105,10 @@ namespace Lens.Compiler.Entities
 				Body.Statements.Add(new UnitNode());
 		}
 
+		#endregion
+
+		#region Extension points
+
 		protected override void emitTrailer(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
@@ -111,7 +124,7 @@ namespace Lens.Compiler.Entities
 				gen.EmitBox(actualType);
 
 			// special hack: if the main method's implicit type is Unit, it should still return null
-			if(this == ctx.MainMethod && actualType.IsVoid())
+			if (this == ctx.MainMethod && actualType.IsVoid())
 				gen.EmitNull();
 		}
 

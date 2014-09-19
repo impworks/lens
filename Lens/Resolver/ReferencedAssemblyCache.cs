@@ -9,21 +9,21 @@ namespace Lens.Resolver
 	/// </summary>
 	internal class ReferencedAssemblyCache
 	{
+		#region Constructor
+
 		public ReferencedAssemblyCache(bool useDefault = true)
 		{
 			_Assemblies = new HashSet<Assembly>();
 
 			if (useDefault)
 			{
-				foreach (var name in _DefaultAssemblyFullNames)
+				foreach (var name in DefaultAssemblyFullNames)
 				{
 					try
 					{
 						_Assemblies.Add(Assembly.Load(name));
 					}
-					catch
-					{
-					}
+					catch { }
 				}
 
 				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -31,12 +31,14 @@ namespace Lens.Resolver
 			}
 		}
 
+		#endregion
+
 		#region Fields
 
 		/// <summary>
 		/// Full names of assemblies referenced by the script by default.
 		/// </summary>
-		private readonly string[] _DefaultAssemblyFullNames =
+		private readonly static string[] DefaultAssemblyFullNames =
 		{
 			"mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
 			"System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",

@@ -15,17 +15,35 @@ namespace Lens.Parser
 {
 	internal partial class LensParser
 	{
-		public List<NodeBase> Nodes { get; private set; }
-
-		private Lexem[] Lexems;
-		private int LexemId;
+		#region Constructor
 
 		public LensParser(IEnumerable<Lexem> lexems)
 		{
-			Lexems = lexems.ToArray();
+			_Lexems = lexems.ToArray();
 
 			Nodes = parseMain().ToList();
 		}
+
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Generated list of nodes.
+		/// </summary>
+		public List<NodeBase> Nodes { get; private set; }
+
+		/// <summary>
+		/// Source list of lexems.
+		/// </summary>
+		private readonly Lexem[] _Lexems;
+
+		/// <summary>
+		/// Current index of the lexem in the stream.
+		/// </summary>
+		private int _LexemId;
+
+		#endregion
 
 		#region Globals
 
@@ -470,7 +488,7 @@ namespace Lens.Parser
 
 			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
 			{
-				var opType = Lexems[LexemId].Type;
+				var opType = _Lexems[_LexemId].Type;
 				skip(2);
 				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 				return new ShortAssignmentNode(opType, node);
@@ -503,7 +521,7 @@ namespace Lens.Parser
 
 			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
 			{
-				var opType = Lexems[LexemId].Type;
+				var opType = _Lexems[_LexemId].Type;
 				skip(2);
 				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 				return new ShortAssignmentNode(opType, node);
@@ -529,7 +547,7 @@ namespace Lens.Parser
 
 			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
 			{
-				var opType = Lexems[LexemId].Type;
+				var opType = _Lexems[_LexemId].Type;
 				skip(2);
 				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
 				return new ShortAssignmentNode(opType, makeSetter(node, expr));

@@ -40,15 +40,15 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Imports all overrides of a method specified by name.
 		/// </summary>
-		/// <param name="type">Type to search in</param>
-		/// <param name="name">Name of the method in type</param>
-		/// <param name="newName">New name for overloaded functions</param>
-		public void ImportFunctionOverloads(Type type, string name, string newName)
+		/// <param name="type">Type to search in.</param>
+		/// <param name="name">Name of the method in type.</param>
+		/// <param name="newName">New name for overloaded functions.</param>
+		public void ImportFunctionOverloads(Type type, string name, string newName = null)
 		{
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			importOverloads(type, name, newName, true);
+			importOverloads(type, name, newName ?? name, true);
 		}
 
 		/// <summary>

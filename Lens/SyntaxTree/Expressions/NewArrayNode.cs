@@ -11,9 +11,18 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new array declaration.
 	/// </summary>
-	internal class NewArrayNode : ValueListNodeBase<NodeBase>
+	internal class NewArrayNode : CollectionNodeBase<NodeBase>
 	{
+		#region Fields
+
+		/// <summary>
+		/// Common type for all collection items.
+		/// </summary>
 		private Type _ItemType;
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -24,10 +33,18 @@ namespace Lens.SyntaxTree.Expressions
 			return _ItemType.MakeArrayType();
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -70,9 +87,15 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			return string.Format("array({0})", string.Join(";", Expressions));
 		}
+
+		#endregion
 	}
 }

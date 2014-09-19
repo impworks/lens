@@ -9,6 +9,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class NegationOperatorNode : UnaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "-"; }
@@ -18,6 +20,20 @@ namespace Lens.SyntaxTree.Operators
 		{
 			get { return "op_UnaryNegation"; }
 		}
+
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolveOperatorType(Context ctx)
+		{
+			var type = Operand.Resolve(ctx);
+			return type.IsNumericType() ? type : null;
+		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -29,21 +45,25 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
-		protected override Type resolveOperatorType(Context ctx)
-		{
-			var type = Operand.Resolve(ctx);
-			return type.IsNumericType() ? type : null;
-		}
+		#endregion
 
-		protected override void compileOperator(Context ctx)
+		#region Emit
+
+		protected override void emitOperator(Context ctx)
 		{
 			Operand.Emit(ctx, true);
 			ctx.CurrentMethod.Generator.EmitNegate();
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic value)
 		{
 			return -value;
 		}
+
+		#endregion
 	}
 }

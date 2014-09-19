@@ -3,13 +3,25 @@
 namespace Lens.SyntaxTree.Expressions
 {
 	/// <summary>
-	/// The base node for identifier access.
+	/// The base node for identifier getters and setters.
 	/// </summary>
 	internal abstract class IdentifierNodeBase : NodeBase
 	{
+		#region Fields
+
+		/// <summary>
+		/// Identifier name.
+		/// </summary>
 		public string Identifier { get; set; }
 
+		/// <summary>
+		/// Reference to local variable.
+		/// </summary>
 		public Local Local { get; set; }
+
+		#endregion
+
+		#region Process closures
 
 		public override void ProcessClosures(Context ctx)
 		{
@@ -18,7 +30,9 @@ namespace Lens.SyntaxTree.Expressions
 			ctx.Scope.ReferenceLocal(ctx, Identifier ?? Local.Name);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(IdentifierNodeBase other)
 		{

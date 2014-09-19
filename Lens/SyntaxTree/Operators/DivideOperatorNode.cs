@@ -9,6 +9,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class DivideOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "/"; }
@@ -19,6 +21,10 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Division"; }
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
@@ -27,11 +33,19 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Emit
+
 		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitDivide();
 		}
+
+		#endregion
+
+		#region Constant unroll
 
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
@@ -43,5 +57,7 @@ namespace Lens.SyntaxTree.Operators
 
 			return left/right;
 		}
+
+		#endregion
 	}
 }

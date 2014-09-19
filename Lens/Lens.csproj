@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
     <Compile Include="Compiler\SpecialTypes.cs" />
+    <Compile Include="Resolver\GenericHelper.Resolver.cs" />
     <Compile Include="Resolver\ReferencedAssemblyCache.cs" />
     <Compile Include="Resolver\ReflectionHelper.cs" />
     <Compile Include="Compiler\Scope.cs" />
@@ -124,7 +125,6 @@
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
     <Compile Include="SyntaxTree\Expressions\NewObjectArrayNode.cs" />
-    <Compile Include="SyntaxTree\Internals\GetArgumentNode.cs" />
     <Compile Include="SyntaxTree\Expressions\ShortAssignmentNode.cs" />
     <Compile Include="SyntaxTree\Literals\CharLiteral.cs" />
     <Compile Include="SyntaxTree\Literals\DecimalNode.cs" />
@@ -159,7 +159,7 @@
     <Compile Include="SyntaxTree\Expressions\SetIdentifierNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
     <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\ValueListNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\CollectionNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
-using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 

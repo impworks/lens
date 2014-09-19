@@ -4,6 +4,9 @@ using System.Reflection.Emit;
 
 namespace Lens.Compiler
 {
+	/// <summary>
+	/// A collection of handy wrappers for IL code emitting.
+	/// </summary>
 	internal static class EmitterExtensions
 	{
 		#region Constants

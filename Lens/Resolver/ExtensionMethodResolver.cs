@@ -12,6 +12,8 @@ namespace Lens.Resolver
 	/// </summary>
 	internal class ExtensionMethodResolver
 	{
+		#region Constructors
+
 		static ExtensionMethodResolver()
 		{
 			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
@@ -23,9 +25,17 @@ namespace Lens.Resolver
 			_AsmCache = asmCache;
 		}
 
+		#endregion
+
+		#region Fields
+
 		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
 		private readonly Dictionary<string, bool> _Namespaces;
 		private readonly ReferencedAssemblyCache _AsmCache;
+
+		#endregion
+
+		#region Methods
 
 		/// <summary>
 		/// Gets an extension method by given arguments.
@@ -33,7 +43,7 @@ namespace Lens.Resolver
 		public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
 		{
 			if (!_Cache.ContainsKey(type))
-				findMethodsForType(type);
+				_Cache.Add(type, findMethodsForType(type));
 
 			if(!_Cache[type].ContainsKey(name))
 				throw new KeyNotFoundException();
@@ -54,7 +64,15 @@ namespace Lens.Resolver
 			return result[0].Method;
 		}
 
-		private void findMethodsForType(Type forType)
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Returns the list of extension methods for given type.
+		/// </summary>
+		/// <param name="forType"></param>
+		private Dictionary<string, List<MethodInfo>> findMethodsForType(Type forType)
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
@@ -97,9 +115,12 @@ namespace Lens.Resolver
 				}
 			}
 
-			_Cache[forType] = dict;
+			return dict;
 		}
 
+		/// <summary>
+		/// Calculates the total distance for a list of arguments of an extension method.
+		/// </summary>
 		private static int getExtensionDistance(MethodInfo method, Type type, Type[] args)
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
@@ -111,5 +132,7 @@ namespace Lens.Resolver
 
 			return baseDist + argsDist;
 		}
+
+		#endregion
 	}
 }

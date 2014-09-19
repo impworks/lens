@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
-using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -14,12 +13,16 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetIdentifierNode : IdentifierNodeBase
 	{
-		private GlobalPropertyInfo _Property;
+		#region Constructor
 
 		public SetIdentifierNode(string identifier = null)
 		{
 			Identifier = identifier;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// A flag indicating that assignment to a constant variable is legal
@@ -31,6 +34,15 @@ namespace Lens.SyntaxTree.Expressions
 		/// Value to be assigned.
 		/// </summary>
 		public NodeBase Value { get; set; }
+		
+		/// <summary>
+		/// Global property reference (if resolved).
+		/// </summary>
+		private GlobalPropertyInfo _Property;
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -76,10 +88,18 @@ namespace Lens.SyntaxTree.Expressions
 			return base.resolve(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Value, x => Value = x);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -112,19 +132,22 @@ namespace Lens.SyntaxTree.Expressions
 					if (nameInfo.IsClosured)
 					{
 						if (nameInfo.ClosureDistance == 0)
-							assignClosuredLocal(ctx, nameInfo);
+							emitSetClosuredLocal(ctx, nameInfo);
 						else
-							assignClosuredRemote(ctx, nameInfo);
+							emitSetClosuredRemote(ctx, nameInfo);
 					}
 					else
 					{
-						assignLocal(ctx, nameInfo);
+						emitSetLocal(ctx, nameInfo);
 					}
 				}
 			}
 		}
 
-		private void assignLocal(Context ctx, Local name)
+		/// <summary>
+		/// Assigns an ordinary local variable.
+		/// </summary>
+		private void emitSetLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -149,7 +172,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that is declared in current scope.
 		/// </summary>
-		private void assignClosuredLocal(Context ctx, Local name)
+		private void emitSetClosuredLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -165,7 +188,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Assigns a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void assignClosuredRemote(Context ctx, Local name)
+		private void emitSetClosuredRemote(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -188,7 +211,9 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitSaveField(clsField.FieldInfo);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(SetIdentifierNode other)
 		{
@@ -211,11 +236,11 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("set({0} = {1})", Identifier, Value);
 		}
+
+		#endregion
 	}
 }

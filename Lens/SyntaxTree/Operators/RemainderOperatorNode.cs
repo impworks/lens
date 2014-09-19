@@ -7,6 +7,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class RemainderOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "%"; }
@@ -17,15 +19,25 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_Modulus"; }
 		}
 
+		#endregion
+
+		#region Emit
+
 		protected override void emitOperator(Context ctx)
 		{
 			loadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitRemainder();
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			return left % right;
 		}
+
+		#endregion
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using Lens.Compiler;
+﻿using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Literals
 {
@@ -8,10 +7,16 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class DecimalNode : LiteralNodeBase<decimal>
 	{
+		#region Constructor
+
 		public DecimalNode(decimal value = 0)
 		{
 			Value = value;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -19,5 +24,7 @@ namespace Lens.SyntaxTree.Literals
 
 			gen.EmitConstant(Value);
 		}
+
+		#endregion
 	}
 }

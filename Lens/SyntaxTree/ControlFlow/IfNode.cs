@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
@@ -13,10 +12,16 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class IfNode : NodeBase
 	{
+		#region Constructor
+
 		public IfNode()
 		{
 			TrueAction = new CodeBlockNode();
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The condition.
@@ -33,6 +38,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode FalseAction { get; set; }
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (!mustReturn || FalseAction == null)
@@ -43,6 +52,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			return new[] {type, otherType}.GetMostCommonType();
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
@@ -50,6 +63,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			if(FalseAction != null)
 				yield return new NodeChild(FalseAction, null);
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -118,7 +135,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			branch.Emit(ctx, canReturn);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(IfNode other)
 		{

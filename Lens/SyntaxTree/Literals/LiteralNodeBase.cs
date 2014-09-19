@@ -9,20 +9,32 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal abstract class LiteralNodeBase<T> : NodeBase, ILiteralNode
 	{
+		#region Fields
+
 		/// <summary>
 		/// The literal value.
 		/// </summary>
-		public T Value { get; set; }
+		protected T Value { get; set; }
+
+		#endregion
+
+		#region Constant checkers
+
+		public override bool IsConstant { get { return true; } }
+		public override object ConstantValue { get { return Value; } }
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (T);
 		}
 
-		public override bool IsConstant { get { return true; } }
-		public override object ConstantValue { get { return Value; } }
+		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(LiteralNodeBase<T> other)
 		{
@@ -42,12 +54,12 @@ namespace Lens.SyntaxTree.Literals
 			return EqualityComparer<T>.Default.GetHashCode(Value);
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("{0}({1})", typeof (T).Name, Value);
 		}
+
+		#endregion
 	}
 
 	/// <summary>

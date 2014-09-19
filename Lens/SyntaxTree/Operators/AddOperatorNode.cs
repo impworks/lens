@@ -13,6 +13,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class AddOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "+"; }
@@ -22,6 +24,39 @@ namespace Lens.SyntaxTree.Operators
 		{
 			get { return "op_Addition"; }
 		}
+
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		{
+			var stringyTypes = new[] { typeof(string), typeof(char) };
+			if (leftType.IsAnyOf(stringyTypes) && rightType.IsAnyOf(stringyTypes))
+				return typeof(string);
+
+			if (leftType == rightType)
+			{
+				if (leftType.IsArray || leftType.IsAppliedVersionOf(typeof(Dictionary<,>)))
+					return leftType;
+			}
+
+			var dictType = typeof(IDictionary<,>).ResolveCommonImplementationFor(leftType, rightType);
+			if (dictType != null)
+				return dictType;
+
+			var enumerableType = typeof(IEnumerable<>).ResolveCommonImplementationFor(leftType, rightType)
+								 ?? typeof(IEnumerable).ResolveCommonImplementationFor(leftType, rightType);
+
+			if (enumerableType != null)
+				return enumerableType;
+
+			return null;
+		}
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -48,55 +83,6 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			var stringyTypes = new[] {typeof (string), typeof (char)};
-			if (leftType.IsAnyOf(stringyTypes) && rightType.IsAnyOf(stringyTypes))
-				return typeof (string);
-
-			if (leftType == rightType)
-			{
-				if(leftType.IsArray || leftType.IsAppliedVersionOf(typeof(Dictionary<,>)))
-					return leftType;
-			}
-
-			var dictType = typeof(IDictionary<,>).ResolveCommonImplementationFor(leftType, rightType);
-			if (dictType != null)
-				return dictType;
-
-			var enumerableType = typeof (IEnumerable<>).ResolveCommonImplementationFor(leftType, rightType)
-								 ?? typeof(IEnumerable).ResolveCommonImplementationFor(leftType, rightType);
-
-			if (enumerableType != null)
-				return enumerableType;
-
-			return null;
-		}
-
-		protected override void emitOperator(Context ctx)
-		{
-			loadAndConvertNumerics(ctx);
-			ctx.CurrentMethod.Generator.EmitAdd();
-		}
-
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			if (left is char && right is char)
-				return string.Concat(left, right);
-
-			try
-			{
-				return checked(left + right);
-			}
-			catch (OverflowException)
-			{
-				error(CompilerMessages.ConstantOverflow);
-				return null;
-			}
-		}
-
-		#region Expansion rules
-		
 		/// <summary>
 		/// Returns the code to concatenate two strings.
 		/// </summary>
@@ -196,8 +182,8 @@ namespace Lens.SyntaxTree.Operators
 		private NodeBase dictExpand(Context ctx)
 		{
 			var keyValueTypes = LeftOperand.Resolve(ctx).GetGenericArguments();
-			var dictType = typeof (Dictionary<,>).MakeGenericType(keyValueTypes);
-			var currType = typeof (KeyValuePair<,>).MakeGenericType(keyValueTypes);
+			var dictType = typeof(Dictionary<,>).MakeGenericType(keyValueTypes);
+			var currType = typeof(KeyValuePair<,>).MakeGenericType(keyValueTypes);
 			var tmpDict = ctx.Scope.DeclareImplicit(ctx, dictType, false);
 			var tmpCurr = ctx.Scope.DeclareImplicit(ctx, currType, false);
 
@@ -231,6 +217,36 @@ namespace Lens.SyntaxTree.Operators
 				),
 				Expr.Get(tmpDict)
 			);
+		}
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitOperator(Context ctx)
+		{
+			loadAndConvertNumerics(ctx);
+			ctx.CurrentMethod.Generator.EmitAdd();
+		}
+
+		#endregion
+
+		#region Constant unroll
+
+		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		{
+			if (left is char && right is char)
+				return string.Concat(left, right);
+
+			try
+			{
+				return checked(left + right);
+			}
+			catch (OverflowException)
+			{
+				error(CompilerMessages.ConstantOverflow);
+				return null;
+			}
 		}
 
 		#endregion

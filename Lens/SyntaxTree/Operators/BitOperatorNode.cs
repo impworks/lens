@@ -6,36 +6,50 @@ namespace Lens.SyntaxTree.Operators
 {
 	internal class BitOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Constructor
+
 		public BitOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{
 			Kind = kind;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The kind of boolean operator.
 		/// </summary>
 		public LogicalOperatorKind Kind { get; set; }
 
+		#endregion
+
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
-			get
-			{
-				return Kind == LogicalOperatorKind.And ? "&" : (Kind == LogicalOperatorKind.Or ? "|" : "^");
-			}
+			get { return Kind == LogicalOperatorKind.And ? "&" : (Kind == LogicalOperatorKind.Or ? "|" : "^"); }
 		}
 
 		protected override string OverloadedMethodName
 		{
-			get
-			{
-				return Kind == LogicalOperatorKind.And ? "op_BinaryAnd" : (Kind == LogicalOperatorKind.Or ? "op_BinaryOr" : "op_ExclusiveOr");
-			}
+			get { return Kind == LogicalOperatorKind.And ? "op_BinaryAnd" : (Kind == LogicalOperatorKind.Or ? "op_BinaryOr" : "op_ExclusiveOr"); }
 		}
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return leftType == rightType && leftType.IsIntegerType() ? leftType : null;
+			return leftType == rightType && leftType.IsIntegerType()
+				? leftType
+				: null;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitOperator(Context ctx)
 		{
@@ -52,9 +66,20 @@ namespace Lens.SyntaxTree.Operators
 				gen.EmitXor();
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
-			return Kind == LogicalOperatorKind.And ? left & right : (Kind == LogicalOperatorKind.Or ? left | right : left ^ right);
+			return Kind == LogicalOperatorKind.And
+				? left & right
+				: (Kind == LogicalOperatorKind.Or
+					? left | right
+					: left ^ right
+				  );
 		}
+
+		#endregion
 	}
 }

@@ -12,6 +12,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class BinaryOperatorNodeBase : OperatorNodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// The operand to the left side.
 		/// </summary>
@@ -27,6 +29,10 @@ namespace Lens.SyntaxTree.Operators
 		/// </summary>
 		protected virtual bool IsNumericOperator { get { return true; } }
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx);
@@ -40,20 +46,20 @@ namespace Lens.SyntaxTree.Operators
 			{
 				try
 				{
-					m_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
+					_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
 				}
 				catch
 				{
 					try
 					{
-						m_OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
+						_OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
 					}
 					catch { }
 				}
 
 				// cannot be generic
-				if (m_OverloadedMethod != null)
-					return m_OverloadedMethod.ReturnType;
+				if (_OverloadedMethod != null)
+					return _OverloadedMethod.ReturnType;
 			}
 
 			if (IsNumericOperator)
@@ -72,21 +78,6 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			if (m_OverloadedMethod == null)
-			{
-				emitOperator(ctx);
-				return;
-			}
-
-			var ps = m_OverloadedMethod.ArgumentTypes;
-			Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
-			Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
-			gen.EmitCall(m_OverloadedMethod.MethodInfo);
-		}
-
 		/// <summary>
 		/// Resolves operator return type, in case it's not an overloaded method call.
 		/// </summary>
@@ -95,15 +86,41 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
+			yield return new NodeChild(RightOperand, x => RightOperand = x);
+		}
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+			if (_OverloadedMethod == null)
+			{
+				emitOperator(ctx);
+				return;
+			}
+
+			var ps = _OverloadedMethod.ArgumentTypes;
+			Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
+			Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
+			gen.EmitCall(_OverloadedMethod.MethodInfo);
+		}
+
 		/// <summary>
 		/// Emits operator code, in case it's not an overloaded method call.
 		/// </summary>
 		protected abstract void emitOperator(Context ctx);
 
-		/// <summary>
-		/// Calculates the constant value in compile time.
-		/// </summary>
-		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
+		#endregion
 
 		#region Helper methods
 
@@ -124,20 +141,19 @@ namespace Lens.SyntaxTree.Operators
 
 		#endregion
 
-		#region NodeBase overrides
+		#region Constant unroll
 
 		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
 		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
-			yield return new NodeChild(RightOperand, x => RightOperand = x);
-		}
+		/// <summary>
+		/// Calculates the constant value in compile time.
+		/// </summary>
+		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(BinaryOperatorNodeBase other)
 		{
@@ -160,11 +176,11 @@ namespace Lens.SyntaxTree.Operators
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("op{0}({1}, {2})", OperatorRepresentation, LeftOperand, RightOperand);
 		}
+
+		#endregion
 	}
 }

@@ -2,6 +2,9 @@
 
 namespace Lens.Stdlib
 {
+	/// <summary>
+	/// Standard library shorthand Console methods.
+	/// </summary>
 	public static class ConsoleWrapper
 	{
 		#region Read

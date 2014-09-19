@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -13,10 +12,24 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new dictionary.
 	/// </summary>
-	internal class NewDictionaryNode : ValueListNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
+	internal class NewDictionaryNode : CollectionNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
 	{
+		#region Fields
+
+		/// <summary>
+		/// Dictionary key types.
+		/// Key types are enforced to be strictly equal, no common type is being resolved.
+		/// </summary>
 		private Type _KeyType;
+
+		/// <summary>
+		/// Common type for dictionary's values.
+		/// </summary>
 		private Type _ValueType;
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -35,6 +48,10 @@ namespace Lens.SyntaxTree.Expressions
 			return typeof(Dictionary<,>).MakeGenericType(_KeyType, _ValueType);
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			for (var idx = 0; idx < Expressions.Count; idx++)
@@ -45,6 +62,10 @@ namespace Lens.SyntaxTree.Expressions
 				yield return new NodeChild(curr.Value, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(curr.Key, x));
 			}
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -86,7 +107,9 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(NewDictionaryNode other)
 		{
@@ -108,13 +131,18 @@ namespace Lens.SyntaxTree.Expressions
 			return (Expressions != null ? Expressions.GetHashCode() : 0);
 		}
 
-		IEnumerator IEnumerable.GetEnumerator()
+		public override string ToString()
 		{
-			return GetEnumerator();
+			return string.Format("dict({0})", string.Join(";", Expressions.Select(x => string.Format("{0} => {1}", x.Key, x.Value))));
 		}
 
 		#endregion
 
+		#region Interface implementations
+
+		/// <summary>
+		/// Collection initializer (used in tests).
+		/// </summary>
 		public void Add(NodeBase key, NodeBase value)
 		{
 			Expressions.Add(new KeyValuePair<NodeBase, NodeBase>(key, value));
@@ -125,9 +153,11 @@ namespace Lens.SyntaxTree.Expressions
 			return Expressions.GetEnumerator();
 		}
 
-		public override string ToString()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return string.Format("dict({0})", string.Join(";", Expressions.Select(x => string.Format("{0} => {1}", x.Key, x.Value))));
+			return GetEnumerator();
 		}
+
+		#endregion
 	}
 }

@@ -7,21 +7,28 @@ using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
+	/// <summary>
+	/// An assembly-level constructor.
+	/// </summary>
 	internal class ConstructorEntity : MethodEntityBase
 	{
+		#region Constructor
+
 		public ConstructorEntity(TypeEntity type) : base(type)
 		{
 			Body = new CodeBlockNode(ScopeKind.FunctionRoot);
 		}
 
+		#endregion
+
 		#region Fields
+
+		public override bool IsVoid { get { return true; } }
 
 		/// <summary>
 		/// Assembly-level constructor builder.
 		/// </summary>
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
-
-		public override bool IsVoid { get { return true; } }
 
 		#endregion
 
@@ -49,11 +56,15 @@ namespace Lens.Compiler.Entities
 			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
 		}
 
+		#endregion
+
+		#region Extension points
+
 		// call default constructor
 		protected override void emitPrelude(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			var ctor = typeof (object).GetConstructor(Type.EmptyTypes);
+			var ctor = typeof(object).GetConstructor(Type.EmptyTypes);
 
 			gen.EmitLoadArgument(0);
 			gen.EmitCall(ctor);

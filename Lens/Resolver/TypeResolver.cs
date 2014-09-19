@@ -11,9 +11,11 @@ namespace Lens.Resolver
 	/// </summary>
 	internal class TypeResolver
 	{
+		#region Constructors
+
 		static TypeResolver()
 		{
-			_Locations = new Dictionary<string, List<string>>
+			Locations = new Dictionary<string, List<string>>
 			{
 				{
 					"mscorlib",
@@ -29,7 +31,7 @@ namespace Lens.Resolver
 				}
 			};
 
-			_TypeAliases = new Dictionary<string, Type>
+			TypeAliases = new Dictionary<string, Type>
 			{
 				{"object", typeof (object)},
 				{"bool", typeof (bool)},
@@ -51,19 +53,43 @@ namespace Lens.Resolver
 			_AsmCache = asmCache;
 		}
 
-		private static IEnumerable<string> _EmptyNamespaces = new[] { string.Empty };
-		private static Dictionary<string, List<string>> _Locations;
-		private static readonly Dictionary<string, Type> _TypeAliases;
+		#endregion
 
+		#region Fields
+
+		/// <summary>
+		/// List of known locations: assembly name and the list of default namespaces in it.
+		/// </summary>
+		private static readonly Dictionary<string, List<string>> Locations;
+
+		/// <summary>
+		/// List of known type short names (like 'int' = 'System.Int32').
+		/// </summary>
+		private static readonly Dictionary<string, Type> TypeAliases;
+
+		/// <summary>
+		/// Cached list of already resolved types.
+		/// </summary>
 		private readonly Dictionary<string, Type> _Cache;
-		private Dictionary<string, bool> _Namespaces;
 
+		/// <summary>
+		/// List of namespaces to check when finding the type.
+		/// </summary>
+		private readonly Dictionary<string, bool> _Namespaces;
+
+		/// <summary>
+		/// List of referenced assemblies.
+		/// </summary>
 		private readonly ReferencedAssemblyCache _AsmCache;
 
 		/// <summary>
 		/// The method that allows external types to be looked up.
 		/// </summary>
 		public Func<string, Type> ExternalLookup { get; set; }
+
+		#endregion
+
+		#region Methods
 
 		/// <summary>
 		/// Resolves a type by its string signature.
@@ -81,6 +107,10 @@ namespace Lens.Resolver
 			return type;
 		}
 
+		#endregion
+
+		#region Helpers
+
 		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
@@ -96,8 +126,8 @@ namespace Lens.Resolver
 				if (hasArgs)
 					name += "`" + signature.Arguments.Length;
 
-				if (_TypeAliases.ContainsKey(name))
-					return _TypeAliases[name];
+				if (TypeAliases.ContainsKey(name))
+					return TypeAliases[name];
 
 				var type = findType(name);
 				return hasArgs
@@ -113,7 +143,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Wraps a type into a specific postfix.
 		/// </summary>
-		private Type processPostfix(Type type, string postfix)
+		private static Type processPostfix(Type type, string postfix)
 		{
 			if (postfix == "[]")
 				return type.MakeArrayType();
@@ -145,11 +175,11 @@ namespace Lens.Resolver
 
 			foreach (var currAsm in _AsmCache.Assemblies)
 			{
-				var namespaces = checkNamespaces ? _Namespaces.Keys : _EmptyNamespaces;
+				var namespaces = checkNamespaces ? _Namespaces.Keys : (IEnumerable<string>)new [] { string.Empty };
 				if (checkNamespaces)
 				{
 					List<string> extras;
-					if (_Locations.TryGetValue(currAsm.GetName().Name, out extras))
+					if (Locations.TryGetValue(currAsm.GetName().Name, out extras))
 						namespaces = namespaces.Union(extras);
 				}
 
@@ -184,5 +214,7 @@ namespace Lens.Resolver
 
 			return foundType;
 		}
+
+		#endregion
 	}
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
@@ -12,6 +11,9 @@ namespace Lens.Compiler.Entities
 	{
 		#region Auto-generated entities
 
+		/// <summary>
+		/// Creates the body of Equals(T).
+		/// </summary>
 		private void createSpecificEquals()
 		{
 			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
@@ -40,6 +42,9 @@ namespace Lens.Compiler.Entities
 			eq.Body.Add(Expr.Get("result"));
 		}
 
+		/// <summary>
+		/// Creates the body of Equals(object).
+		/// </summary>
 		private void createGenericEquals()
 		{
 			var eq = CreateMethod(
@@ -79,6 +84,9 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		/// <summary>
+		/// Creates the body of GetHashCode().
+		/// </summary>
 		private void createGetHashCode()
 		{
 			var ghc = CreateMethod(
@@ -133,6 +141,9 @@ namespace Lens.Compiler.Entities
 			ghc.Body.Add(Expr.Get("result"));
 		}
 
+		/// <summary>
+		/// Creates a wrapper for the pure method that contains the value cache.
+		/// </summary>
 		private void createPureWrapper(MethodEntity method)
 		{
 			if (method.ReturnType.IsVoid())
@@ -155,6 +166,9 @@ namespace Lens.Compiler.Entities
 				createPureWrapperMany(method, pureName);
 		}
 
+		/// <summary>
+		/// Creates a pure wrapper for parameterless function.
+		/// </summary>
 		private void createPureWrapper0(MethodEntity wrapper, string pureName)
 		{
 			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
@@ -184,6 +198,9 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		/// <summary>
+		/// Creates a pure wrapper for function with 1 argument.
+		/// </summary>
 		private void createPureWrapper1(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
@@ -238,6 +255,9 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		/// <summary>
+		/// Creates a pure wrapper for function with 2 and more arguments.
+		/// </summary>
 		private void createPureWrapperMany(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);

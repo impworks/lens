@@ -7,12 +7,16 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class UnitNode : NodeBase
 	{
+		#region Emit
+
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			// does nothing
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		public override bool Equals(object obj)
 		{
@@ -26,11 +30,11 @@ namespace Lens.SyntaxTree.Literals
 			return 0;
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return "()";
 		}
+
+		#endregion
 	}
 }

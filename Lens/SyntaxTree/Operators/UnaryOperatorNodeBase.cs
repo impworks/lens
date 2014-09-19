@@ -11,20 +11,18 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class UnaryOperatorNodeBase : OperatorNodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// The operand.
 		/// </summary>
 		public NodeBase Operand { get; set; }
 
-		public override bool IsConstant { get { return Operand.IsConstant; } }
-		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
+		#endregion
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Operand, x => Operand = x);
-		}
+		#region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var type = Operand.Resolve(ctx);
 
@@ -36,11 +34,11 @@ namespace Lens.SyntaxTree.Operators
 			{
 				try
 				{
-					m_OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] { type });
+					_OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] { type });
 
 					// cannot be generic
-					if (m_OverloadedMethod != null)
-						return m_OverloadedMethod.ReturnType;
+					if (_OverloadedMethod != null)
+						return _OverloadedMethod.ReturnType;
 				}
 				catch { }
 			}
@@ -49,30 +47,59 @@ namespace Lens.SyntaxTree.Operators
 			return null;
 		}
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-
-			if (m_OverloadedMethod == null)
-			{
-				compileOperator(ctx);
-				return;
-			}
-
-			var ps = m_OverloadedMethod.ArgumentTypes;
-			Expr.Cast(Operand, ps[0]).Emit(ctx, true);
-			gen.EmitCall(m_OverloadedMethod.MethodInfo);
-		}
-
+		/// <summary>
+		/// Overridable resolver for unary operators.
+		/// </summary>
 		protected virtual Type resolveOperatorType(Context ctx)
 		{
 			return null;
 		}
 
-		protected abstract void compileOperator(Context ctx);
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(Operand, x => Operand = x);
+		}
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+
+			if (_OverloadedMethod == null)
+			{
+				emitOperator(ctx);
+				return;
+			}
+
+			var ps = _OverloadedMethod.ArgumentTypes;
+			Expr.Cast(Operand, ps[0]).Emit(ctx, true);
+			gen.EmitCall(_OverloadedMethod.MethodInfo);
+		}
+
+		protected abstract void emitOperator(Context ctx);
+
+		#endregion
+
+		#region Constant unroll
+
+		public override bool IsConstant { get { return Operand.IsConstant; } }
+		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
+
+		/// <summary>
+		/// Overriddable constant unroller for unary operators.
+		/// </summary>
 		protected abstract dynamic unrollConstant(dynamic value);
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(UnaryOperatorNodeBase other)
 		{
@@ -92,11 +119,11 @@ namespace Lens.SyntaxTree.Operators
 			return (Operand != null ? Operand.GetHashCode() : 0);
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("op{0}({1})", OperatorRepresentation, Operand);
 		}
+
+		#endregion
 	}
 }

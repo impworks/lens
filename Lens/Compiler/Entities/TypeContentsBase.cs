@@ -5,10 +5,16 @@
 	/// </summary>
 	internal abstract class TypeContentsBase
 	{
+		#region Constructor
+
 		protected TypeContentsBase(TypeEntity type)
 		{
 			ContainerType = type;
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The name of the current entity.
@@ -29,5 +35,7 @@
 		/// Creates the assembly instances for the current entity.
 		/// </summary>
 		public abstract void PrepareSelf();
+
+		#endregion
 	}
 }

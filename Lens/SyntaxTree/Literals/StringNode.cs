@@ -7,15 +7,23 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class StringNode : LiteralNodeBase<string>
 	{
+		#region Constructor
+
 		public StringNode(string value = null)
 		{
 			Value = value;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitConstant(Value);
 		}
+
+		#endregion
 	}
 }

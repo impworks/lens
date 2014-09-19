@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
@@ -14,29 +13,35 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	abstract internal class InvocationNodeBase : NodeBase
 	{
+		#region Constructor
+
 		protected InvocationNodeBase()
 		{
 			Arguments = new List<NodeBase>();
 		}
 
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Passed argument expressions.
+		/// </summary>
 		public List<NodeBase> Arguments { get; set; }
 
+		/// <summary>
+		/// Cached callable entity wrapper.
+		/// </summary>
 		protected abstract CallableWrapperBase _Wrapper { get; }
+
+		/// <summary>
+		/// Cached list of argument expression types.
+		/// </summary>
 		protected Type[] _ArgTypes;
 
-		#region Methods
+		#endregion
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			for (var idx = 0; idx < Arguments.Count; idx++)
-			{
-				var id = idx;
-				var identifier = Arguments[id] as GetIdentifierNode;
-				var isPartialArg = identifier != null && identifier.Identifier == "_";
-				if (!isPartialArg)
-					yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
-			}
-		}
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -57,6 +62,22 @@ namespace Lens.SyntaxTree.Expressions
 
 			// prepares arguments only
 			return null;
+		}
+
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			for (var idx = 0; idx < Arguments.Count; idx++)
+			{
+				var id = idx;
+				var identifier = Arguments[id] as GetIdentifierNode;
+				var isPartialArg = identifier != null && identifier.Identifier == "_";
+				if (!isPartialArg)
+					yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
+			}
 		}
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
@@ -113,6 +134,10 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		protected abstract InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
 
+		#endregion
+
+		#region Helpers
+
 		/// <summary>
 		/// Resolves the expression type in case of partial application.
 		/// </summary>
@@ -131,6 +156,9 @@ namespace Lens.SyntaxTree.Expressions
 			return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
 		}
 
+		/// <summary>
+		/// Apply inferred types to untyped lambda arguments.
+		/// </summary>
 		protected void applyLambdaArgTypes(Context ctx)
 		{
 			for (var idx = 0; idx < _ArgTypes.Length; idx++)
@@ -150,7 +178,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region Equality members
+		#region Debug
 
 		protected bool Equals(InvocationNodeBase other)
 		{

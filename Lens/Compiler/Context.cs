@@ -25,6 +25,8 @@ namespace Lens.Compiler
 
 		#endregion
 
+		#region Constructor
+
 		public Context(LensCompilerOptions options = null)
 		{
 			Options = options ?? new LensCompilerOptions();
@@ -84,25 +86,7 @@ namespace Lens.Compiler
 			InitSafeMode();
 		}
 
-		/// <summary>
-		/// Throws a new error.
-		/// </summary>
-		[ContractAnnotation("=> halt")]
-		[DebuggerStepThrough]
-		public static void Error(string msg, params object[] args)
-		{
-			throw new LensCompilerException(string.Format(msg, args));
-		}
-
-		/// <summary>
-		/// Throws a new error bound to a location.
-		/// </summary>
-		[ContractAnnotation("=> halt")]
-		[DebuggerStepThrough]
-		public static void Error(LocationEntity ent, string msg, params object[] args)
-		{
-			throw new LensCompilerException(string.Format(msg, args), ent);
-		}
+		#endregion
 
 		#region Properties
 
@@ -213,6 +197,30 @@ namespace Lens.Compiler
 		/// The list of assemblies referenced by current script.
 		/// </summary>
 		internal readonly ReferencedAssemblyCache _AssemblyCache;
+
+		#endregion
+
+		#region Error reporting methods
+
+		/// <summary>
+		/// Throws a new error.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		public static void Error(string msg, params object[] args)
+		{
+			throw new LensCompilerException(string.Format(msg, args));
+		}
+
+		/// <summary>
+		/// Throws a new error bound to a location.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		public static void Error(LocationEntity ent, string msg, params object[] args)
+		{
+			throw new LensCompilerException(string.Format(msg, args), ent);
+		}
 
 		#endregion
 	}

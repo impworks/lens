@@ -6,6 +6,8 @@ namespace Lens.SyntaxTree.Operators
 {
 	internal class XorOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Operator basics
+
 		protected override string OperatorRepresentation
 		{
 			get { return "^^"; }
@@ -16,10 +18,18 @@ namespace Lens.SyntaxTree.Operators
 			get { return "op_ExclusiveOr"; }
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType == typeof(bool) && rightType == typeof(bool) ? typeof(bool) : null;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitOperator(Context ctx)
 		{
@@ -38,9 +48,15 @@ namespace Lens.SyntaxTree.Operators
 			gen.EmitXor();
 		}
 
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			return left ^ right;
 		}
+
+		#endregion
 	}
 }

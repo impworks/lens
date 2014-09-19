@@ -13,10 +13,16 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class LambdaNode : FunctionNodeBase
 	{
+		#region Constructor
+
 		public LambdaNode()
 		{
 			Body = new CodeBlockNode(ScopeKind.LambdaRoot);
 		}
+
+		#endregion
+
+		#region Fields
 
 		private MethodEntity _Method;
 
@@ -25,7 +31,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public bool MustInferArgTypes { get; private set; }
 
-		#region Overrides
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -60,6 +68,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
 		}
 
+		#endregion
+
+		#region Process closures
+
 		public override void ProcessClosures(Context ctx)
 		{
 			if (MustInferArgTypes)
@@ -85,6 +97,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			ctx.CurrentMethod = outerMethod;
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{

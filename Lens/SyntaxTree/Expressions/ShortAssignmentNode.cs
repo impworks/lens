@@ -7,13 +7,16 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
+	/// <summary>
+	/// Shorthand assignment together with an arithmetic or logic operator.
+	/// </summary>
 	internal class ShortAssignmentNode : NodeBase
 	{
 		#region Constructor
 		
 		public ShortAssignmentNode(LexemType opType, NodeBase expr)
 		{
-			AssignmentOperator = _OperatorLookups[opType];
+			AssignmentOperator = OperatorLookups[opType];
 			Expression = expr;
 		}
 
@@ -31,7 +34,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Expression;
 
-		private readonly static Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> _OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+		private readonly static Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 		{
 			{ LexemType.And, Expr.And },
 			{ LexemType.Or, Expr.Or },
@@ -48,7 +51,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#endregion
 
-		#region NodeBase overrides
+		#region Transform
 
 		protected override IEnumerable<NodeChild> getChildren()
 		{
@@ -73,6 +76,10 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Expansion rules
 
+		/// <summary>
+		/// Expands short assignment to an identifier:
+		/// x += 1
+		/// </summary>
 		private NodeBase expandIdentifier(SetIdentifierNode node)
 		{
 			return Expr.Set(
@@ -84,6 +91,11 @@ namespace Lens.SyntaxTree.Expressions
 			);
 		}
 
+		/// <summary>
+		/// Expands short assignment to an expression member:
+		/// (expr).x += 1
+		/// or type::x += 1
+		/// </summary>
 		private NodeBase expandMember(Context ctx, SetMemberNode node)
 		{
 			// type::name += value
@@ -137,6 +149,10 @@ namespace Lens.SyntaxTree.Expressions
 			);
 		}
 
+		/// <summary>
+		/// Expands short assignment to an array index:
+		/// a[x] += 1
+		/// </summary>
 		private NodeBase expandIndex(Context ctx, SetIndexNode node)
 		{
 			var body = Expr.Block();

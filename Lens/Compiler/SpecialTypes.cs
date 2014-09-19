@@ -10,7 +10,7 @@
 			return "()";
 		}
 
-		#region Equality members
+		#region Debug
 
 		public override bool Equals(object obj)
 		{

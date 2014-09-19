@@ -11,9 +11,15 @@ namespace Lens.SyntaxTree.Expressions
 	/// <summary>
 	/// A node representing a new List declaration.
 	/// </summary>
-	internal class NewListNode : ValueListNodeBase<NodeBase>
+	internal class NewListNode : CollectionNodeBase<NodeBase>
 	{
+		#region Fields
+
 		private Type _ItemType;
+
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -25,10 +31,18 @@ namespace Lens.SyntaxTree.Expressions
 			return typeof(List<>).MakeGenericType(_ItemType);
 		}
 
+		#endregion
+
+		#region Transform
+
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -62,9 +76,15 @@ namespace Lens.SyntaxTree.Expressions
 			gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
+		#endregion
+
+		#region Debug
+
 		public override string ToString()
 		{
 			return string.Format("list({0})", string.Join(";", Expressions));
 		}
+
+		#endregion
 	}
 }

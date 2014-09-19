@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -8,12 +9,22 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal class BooleanOperatorNode : BinaryOperatorNodeBase
 	{
+		#region Constructor
+
 		public BooleanOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{
 			Kind = kind;
 		}
 
-		public LogicalOperatorKind Kind { get; set; }
+		#endregion
+
+		#region Fields
+
+		public LogicalOperatorKind Kind;
+
+		#endregion
+
+		#region Operator basics
 
 		protected override bool IsNumericOperator { get { return false; } }
 
@@ -22,12 +33,20 @@ namespace Lens.SyntaxTree.Operators
 			get { return Kind == LogicalOperatorKind.And ? "&&" : "||"; }
 		}
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return CastOperatorNode.IsImplicitlyBoolean(leftType) && CastOperatorNode.IsImplicitlyBoolean(rightType)
+			return leftType.IsImplicitlyBoolean() && rightType.IsImplicitlyBoolean()
 				       ? typeof (bool)
 				       : null;
 		}
+
+		#endregion
+
+		#region Expand
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -41,15 +60,21 @@ namespace Lens.SyntaxTree.Operators
 			return base.expand(ctx, mustReturn);
 		}
 
+		protected override void emitOperator(Context ctx)
+		{
+			throw new InvalidOperationException("The BooleanOperatorNode has not been expanded!");
+		}
+
+		#endregion
+
+		#region Constant unroll
+
 		protected override dynamic unrollConstant(dynamic left, dynamic right)
 		{
 			return Kind == LogicalOperatorKind.And ? left && right : left || right;
 		}
 
-		protected override void emitOperator(Context ctx)
-		{
-			throw new InvalidOperationException("The BooleanOperatorNode has not been expanded!");
-		}
+		#endregion
 	}
 
 	/// <summary>

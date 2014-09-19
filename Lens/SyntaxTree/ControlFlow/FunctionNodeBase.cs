@@ -7,14 +7,20 @@ using Lens.Utils;
 namespace Lens.SyntaxTree.ControlFlow
 {
 	/// <summary>
-	/// An anonymous function definition node.
+	/// The base node class for named functions and lambdas.
 	/// </summary>
 	internal abstract class FunctionNodeBase : NodeBase
 	{
+		#region Constructor 
+
 		protected FunctionNodeBase()
 		{
 			Arguments = new List<FunctionArgument>();
 		}
+
+		#endregion
+
+		#region Arguments
 
 		/// <summary>
 		/// Function arguments.
@@ -26,17 +32,27 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Body { get; protected set; }
 
+		#endregion
+
+		#region Resolve
+
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return Body.Resolve(ctx);
 		}
+
+		#endregion
+
+		#region Transform
 
 		protected override IEnumerable<NodeChild> getChildren()
 		{
 			yield return new NodeChild(Body, null);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(FunctionNodeBase other)
 		{

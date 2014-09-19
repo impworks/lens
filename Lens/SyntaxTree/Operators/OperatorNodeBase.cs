@@ -8,6 +8,8 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class OperatorNodeBase : NodeBase
 	{
+		#region Operator basics
+
 		/// <summary>
 		/// A textual operator representation for error reporting.
 		/// </summary>
@@ -21,7 +23,11 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// The pointer to overloaded version of the operator.
 		/// </summary>
-		protected MethodWrapper m_OverloadedMethod;
+		protected MethodWrapper _OverloadedMethod;
+
+		#endregion
+
+		#region Transform
 
 		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
@@ -31,5 +37,7 @@ namespace Lens.SyntaxTree.Operators
 
 			return result;
 		}
+
+		#endregion
 	}
 }

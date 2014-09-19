@@ -4,6 +4,8 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	/// <summary>
 	/// A node representing the algebraic type definition construct.
+	/// 
+	/// This node is for parser only.
 	/// </summary>
 	internal class TypeDefinitionNode : TypeDefinitionNodeBase<TypeLabel>
 	{ }
@@ -13,6 +15,8 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class TypeLabel : LocationEntity
 	{
+		#region Fields
+
 		/// <summary>
 		/// The name of the entry.
 		/// </summary>
@@ -28,7 +32,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public bool IsTagged { get { return TagType != null; } }
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TypeLabel other)
 		{

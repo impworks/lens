@@ -1,10 +1,13 @@
 ﻿using System.Diagnostics;
 using Lens.SyntaxTree;
+using Lens.Translations;
 
 namespace Lens.Lexer
 {
 	internal partial class LensLexer
 	{
+		#region Lexem definition tables
+
 		private readonly static StaticLexemDefinition[] Keywords = 
 		{
 			new StaticLexemDefinition("typeof", LexemType.Typeof),
@@ -102,8 +105,12 @@ namespace Lens.Lexer
 			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char)
 		};
 
+		#endregion
+
+		#region Helper methods
+
 		[DebuggerStepThrough]
-		private void Error(string src, params object[] args)
+		private void error(string src, params object[] args)
 		{
 			var loc = new LocationEntity { StartLocation = getPosition() };
 			throw new LensCompilerException(string.Format(src, args), loc);
@@ -115,7 +122,7 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private bool inBounds()
 		{
-			return Position < Source.Length;
+			return _Position < _Source.Length;
 		}
 
 		/// <summary>
@@ -125,7 +132,7 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private bool isComment()
 		{
-			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
+			return _Position < _Source.Length - 2 && _Source[_Position] == '/' && _Source[_Position + 1] == '/';
 		}
 
 		/// <summary>
@@ -134,8 +141,8 @@ namespace Lens.Lexer
 		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
-			Position += count;
-			Offset += count;
+			_Position += count;
+			_Offset += count;
 		}
 
 		/// <summary>
@@ -146,9 +153,58 @@ namespace Lens.Lexer
 		{
 			return new LexemLocation
 			{
-				Line = Line,
-				Offset = Offset
+				Line = _Line,
+				Offset = _Offset
 			};
 		}
+
+		#endregion
+
+		#region Escaping
+
+		/// <summary>
+		/// Processes the contents of a char literal.
+		/// </summary>
+		[DebuggerStepThrough]
+		private Lexem transformCharLiteral(Lexem lex)
+		{
+			var value = lex.Value;
+			if (value.Length < 3 || value.Length > 4)
+				error(LexerMessages.IncorrectCharLiteral);
+
+			value = value[1] == '\\'
+				? escapeChar(value[2]).ToString()
+				: value[1].ToString();
+
+			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
+		}
+
+		/// <summary>
+		/// Returns an escaped version of the given character.
+		/// </summary>
+		private char escapeChar(char t)
+		{
+			switch (t)
+			{
+				case 't':
+					return '\t';
+
+				case 'n':
+					return '\n';
+
+				case 'r':
+					return '\r';
+
+				case '\\':
+				case '"':
+				case '\'':
+					return t;
+			}
+
+			error(LexerMessages.UnknownEscape, t);
+			return ' ';
+		}
+
+		#endregion
 	}
 }

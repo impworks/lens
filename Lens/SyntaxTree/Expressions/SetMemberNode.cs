@@ -12,6 +12,8 @@ namespace Lens.SyntaxTree.Expressions
 	/// </summary>
 	internal class SetMemberNode : MemberNodeBase
 	{
+		#region Fields
+
 		private bool _IsStatic;
 		private PropertyWrapper _Property;
 		private FieldWrapper _Field;
@@ -21,19 +23,21 @@ namespace Lens.SyntaxTree.Expressions
 		/// </summary>
 		public NodeBase Value { get; set; }
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Expression, x => Expression = x);
-			yield return new NodeChild(Value, x => Value = x);
-		}
+		#endregion
+
+		#region Resolve
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			resolve(ctx);
-			return base.resolve(ctx, mustReturn);
+			resolveSelf(ctx);
+
+			return typeof (UnitType);
 		}
 
-		private void resolve(Context ctx)
+		/// <summary>
+		/// Attempts to resolve member reference to a field or a property.
+		/// </summary>
+		private void resolveSelf(Context ctx)
 		{
 			var type = StaticType != null
 				? ctx.ResolveType(StaticType)
@@ -77,6 +81,20 @@ namespace Lens.SyntaxTree.Expressions
 				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 		}
 
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			yield return new NodeChild(Expression, x => Expression = x);
+			yield return new NodeChild(Value, x => Value = x);
+		}
+
+		#endregion
+
+		#region Emit
+
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
@@ -100,7 +118,9 @@ namespace Lens.SyntaxTree.Expressions
 				gen.EmitCall(_Property.Setter, true);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(SetMemberNode other)
 		{
@@ -123,11 +143,11 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("setmbr({0} of {1} = {2})", MemberName, Expression, Value);
 		}
+
+		#endregion
 	}
 }

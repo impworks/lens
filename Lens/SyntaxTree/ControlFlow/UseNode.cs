@@ -4,10 +4,16 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	internal class UseNode : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// Namespace to be resolved.
 		/// </summary>
 		public string Namespace { get; set; }
+
+		#endregion
+
+		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
 		{
@@ -15,7 +21,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			// all UseNodes are processed by Context.CreateFromNodes()
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(UseNode other)
 		{
@@ -35,11 +43,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			return (Namespace != null ? Namespace.GetHashCode() : 0);
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("use({0})", Namespace);
 		}
+
+		#endregion
 	}
 }
