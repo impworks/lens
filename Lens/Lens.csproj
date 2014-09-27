@@ -133,6 +133,9 @@
     <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\XorOperatorNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\MatchNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\MatchRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\MatchStatementNode.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -249,6 +252,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserMessages.ru.resx" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
