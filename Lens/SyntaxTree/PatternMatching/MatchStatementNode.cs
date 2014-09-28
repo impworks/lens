@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.SyntaxTree.PatternMatching.Rules;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching
@@ -14,7 +15,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		public MatchStatementNode()
 		{
-			MatchRules = new List<MatchRule>();
+			MatchRules = new List<MatchRuleBase>();
 		}
 
 		#endregion
@@ -34,7 +35,7 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// List of rules (separated by '|') that yield the same expression.
 		/// </summary>
-		public List<MatchRule> MatchRules;
+		public List<MatchRuleBase> MatchRules;
 
 		#endregion
 

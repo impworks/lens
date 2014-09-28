@@ -5,6 +5,7 @@ using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
 

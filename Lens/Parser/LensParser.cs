@@ -6,9 +6,16 @@ using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations;
+using Lens.SyntaxTree.Declarations.Functions;
+using Lens.SyntaxTree.Declarations.Locals;
+using Lens.SyntaxTree.Declarations.Types;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
+using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.Translations;
 
 namespace Lens.Parser

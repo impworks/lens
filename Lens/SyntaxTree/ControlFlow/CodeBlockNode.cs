@@ -5,6 +5,7 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
+using Lens.SyntaxTree.Declarations.Locals;
 using Lens.Translations;
 using Lens.Utils;
 

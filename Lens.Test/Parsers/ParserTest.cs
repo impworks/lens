@@ -3,7 +3,10 @@ using Lens.Compiler;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Operators;
+using Lens.SyntaxTree.Operators.Binary;
 using NUnit.Framework;
 
 namespace Lens.Test.Parsers
