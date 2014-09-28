@@ -99,18 +99,18 @@ match_rules <~MatchRuleNode>                = match_rule { [ NL ] "|" match_rule
 match_rule <MatchRuleNode>                  = rule_generic [ rule_list | rule_keyvalue ]
 
 // matching rules
-rule_generic <MatchRuleNode>                = rule_tuple | rule_array | rule_record | rule_type | rule_is | rule_range | rule_const | rule_var
-rule_tuple <MatchTupleRuleNode>             = "(" match_rule { ";" match_rule } ")"
-rule_array <MatchArrayRuleNode>             = "[" match_rule { ";" match_rule } "]"
-rule_record <MatchRecordRuleNode>           = identifier "(" rule_record_var { ";" rule_record_var ")"
+rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_record | rule_type | rule_is | rule_range | rule_const | rule_var
+rule_tuple <MatchTupleRule>                 = "(" match_rule { ";" match_rule } ")"
+rule_array <MatchArrayRule>                 = "[" match_rule { ";" match_rule } "]"
+rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var ")"
 rule_record_var                             = identifier "=" match_rule
-rule_type <MatchTypeRuleNode>               = identifier "of" match_rule
-rule_is <MatchRuleIsNode>                   = "is" type
-rule_range <MatchRuleRangeNode>             = rule_const ".." rule_const
-rule_const <MatchRuleConstNode>             = literal
-rule_var <MatchRuleVarNode>                 = identifier
-rule_list <MatchRuleListNode>               = { "~" match_rule }
-rule_keyvalue <MatchRuleKeyValueNode>       = "=>" match_rule
+rule_type <MatchTypeRule>                   = identifier "of" match_rule
+rule_is <MatchIsRule>                       = "is" type
+rule_range <MatchRangeRule>                 = rule_const ".." rule_const
+rule_literal <MatchLiteralRule>             = literal
+rule_name <MatchNameRule>                   = identifier
+rule_list <MatchListRule>                   = { "~" rule_generic }
+rule_keyvalue <MatchKeyValueRule>           = "=>" rule_generic
 
 // line expressions
 line_stmt <NodeBase>                        = set_stmt | line_expr

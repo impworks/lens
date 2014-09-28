@@ -32,6 +32,11 @@ namespace Lens.SyntaxTree.Literals
 			return typeof (T);
 		}
 
+		public Type LiteralType
+		{
+			get { return typeof (T); }
+		}
+
 		#endregion
 
 		#region Debug
@@ -65,5 +70,8 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// Marker interface for all literal expressions.
 	/// </summary>
-	internal interface ILiteralNode { }
+	internal interface ILiteralNode
+	{
+		Type LiteralType { get; }
+	}
 }

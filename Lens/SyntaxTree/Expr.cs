@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Declarations;
@@ -12,7 +13,6 @@ using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
-using Lens.SyntaxTree.Operators;
 using Lens.SyntaxTree.Operators.Binary;
 using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.SyntaxTree.Operators.Unary;
@@ -660,6 +660,11 @@ namespace Lens.SyntaxTree
 		public static ThisNode This()
 		{
 			return new ThisNode();
+		}
+
+		public static JumpNode JumpTo(Label label)
+		{
+			return new JumpNode(label);
 		}
 
 		#endregion
