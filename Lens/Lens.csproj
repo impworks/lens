@@ -135,6 +135,7 @@
     <Compile Include="SyntaxTree\Operators\Binary\ShiftOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\Binary\XorOperatorNode.cs" />
     <Compile Include="SyntaxTree\PatternMatching\MatchNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchArrayRule.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchKeyValueRule.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchNameRule.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRuleBase.cs" />

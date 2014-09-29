@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+
 using Lens.Utils;
+using Lens.Compiler;
+using Lens.SyntaxTree.ControlFlow;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using Lens.Compiler;
-	using Lens.SyntaxTree.ControlFlow;
-
-
 	/// <summary>
 	/// Binds an expression to a name.
 	/// </summary>
@@ -25,6 +24,11 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// Expected type of the expression.
 		/// </summary>
 		public TypeSignature Type;
+
+		/// <summary>
+		/// Checks if the current name is prefixed with a "..." modifier in an array pattern.
+		/// </summary>
+		public bool IsArraySubsequence;
 
 		/// <summary>
 		/// Checks if the name is used as a placeholder.
