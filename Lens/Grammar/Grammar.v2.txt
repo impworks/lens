@@ -105,7 +105,7 @@ rule_array <MatchArrayRule>                 = "[" rule_array_item { ";" rule_arr
 rule_array_item                             = rule_subsequence | match_rule
 rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var ")"
 rule_record_var                             = identifier "=" match_rule
-rule_type <MatchTypeRule>                   = identifier "of" type
+rule_type <MatchTypeRule>                   = identifier "of" match_rule
 rule_range <MatchRangeRule>                 = rule_const ".." rule_const
 rule_literal <MatchLiteralRule>             = literal
 rule_name <MatchNameRule>                   = identifier [ ":" type ]

@@ -9,6 +9,8 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
+	using System.Linq;
+
 	using Lens.Compiler;
 
 
@@ -57,12 +59,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if (ItemTypes.Length != Items.Count)
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", Items.Count));
 
-			for (var idx = 0; idx < Items.Count; idx++)
-			{
-				var subBindings = Items[idx].Resolve(ItemTypes[idx]);
-				foreach (var binding in subBindings)
-					yield return binding;
-			}
+			return Items.Select((t, idx) => t.Resolve(ItemTypes[idx]))
+						.SelectMany(subBindings => subBindings);
 		}
 
 		#endregion
