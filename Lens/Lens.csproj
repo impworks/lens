@@ -139,6 +139,7 @@
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRuleBase.cs" />
     <Compile Include="SyntaxTree\PatternMatching\MatchStatementNode.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchLiteralRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchTupleRule.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

@@ -498,4 +498,28 @@
   <data name="TypeInterface" xml:space="preserve">
     <value>LE3108: Cannot create an instance of interface '{0}'!</value>
   </data>
+  <data name="NoCommonType" xml:space="preserve">
+    <value>LE3134: Cannot infer common type if any of the expressions is 'Unit' or 'Void'!</value>
+  </data>
+  <data name="PatternNameDuplicated" xml:space="preserve">
+    <value>LE3131: Pattern contains duplicate binding to name '{0}'!</value>
+  </data>
+  <data name="PatternNameSetMismatch" xml:space="preserve">
+    <value>LE3132: Pattern binding mismatched: not all alternatives contain definition for '{0}'! Make sure all pattern alternatives contain the identical set of binding names and their corresponding types.</value>
+  </data>
+  <data name="PatternNameTypeMismatch" xml:space="preserve">
+    <value>LE3133: Pattern binding mismatched: binding to '{0}' is inferred to have different types ('{1}' and '{2}') in alternatives.</value>
+  </data>
+  <data name="PatternTupleTooFewArgs" xml:space="preserve">
+    <value>LE3129: Tuple pattern must have at lease 1 element!</value>
+  </data>
+  <data name="PatternTupleTooManyArgs" xml:space="preserve">
+    <value>LE3128: Tuple pattern cannot have more than 7 elements!</value>
+  </data>
+  <data name="PatternTypeMismatch" xml:space="preserve">
+    <value>LE3130: Pattern cannot be applied to type '{0}', because it is incompatible with expected type '{1}'!</value>
+  </data>
+  <data name="PatternArraySubsequences" xml:space="preserve">
+    <value>LE3135: Array pattern cannot contain more than one subsequence defined with ellipsis!</value>
+  </data>
 </root>

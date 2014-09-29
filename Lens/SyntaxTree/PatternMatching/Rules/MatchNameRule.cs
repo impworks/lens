@@ -5,6 +5,10 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
+	using Lens.Compiler;
+	using Lens.SyntaxTree.ControlFlow;
+
+
 	/// <summary>
 	/// Binds an expression to a name.
 	/// </summary>
@@ -16,6 +20,11 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// The desired name to bind to.
 		/// </summary>
 		public string Name;
+
+		/// <summary>
+		/// Expected type of the expression.
+		/// </summary>
+		public TypeSignature Type;
 
 		/// <summary>
 		/// Checks if the name is used as a placeholder.
@@ -39,9 +48,28 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(NodeBase expression, Label nextCheck)
+		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			return IsWildcard ? null : Expr.Let(Name, expression);
+			var block = new CodeBlockNode();
+
+			if (Type != null)
+			{
+				block.Add(
+					Expr.If(
+						Expr.Negate(Expr.Is(expression, Type)),
+						Expr.Block(
+							Expr.JumpTo(nextStatement)
+						)
+					)
+				);
+			}
+
+			if (!IsWildcard)
+			{
+				block.Add(Expr.Let(Name, expression));
+			}
+
+			return block;
 		}
 
 		#endregion

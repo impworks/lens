@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.Literals;
 using Lens.Utils;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
+	using Lens.Compiler;
+
+
 	/// <summary>
 	/// Matches the expression against a literal constant.
 	/// </summary>
@@ -24,8 +28,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
 		{
-			if(expressionType != Literal.LiteralType)
-				throw new InvalidOperationException();
+			if (expressionType != Literal.LiteralType)
+				Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
 
 			// no variables
 			yield break;
@@ -35,12 +39,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(NodeBase expression, Label nextCheck)
+		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
 			return Expr.If(
 				Expr.NotEqual(Literal as NodeBase, expression),
 				Expr.Block(
-					Expr.JumpTo(nextCheck)
+					Expr.JumpTo(nextStatement)
 				)
 			);
 		}

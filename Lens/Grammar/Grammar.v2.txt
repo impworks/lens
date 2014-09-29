@@ -95,21 +95,21 @@ ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lval
 // pattern matching
 match_block <MatchNode>                     = "match" line_expr "with" INDENT { match_stmt } DEDENT
 match_stmt <MatchStatementNode>             = match_rules [ "when" line_expr ] "then" block
-match_rules <~MatchRuleNode>                = match_rule { [ NL ] "|" match_rule }
-match_rule <MatchRuleNode>                  = rule_generic [ rule_list | rule_keyvalue ]
+match_rules <~MatchRuleBase>                = match_rule { [ NL ] "|" match_rule }
+match_rule <MatchRuleBase>                  = rule_generic [ rule_keyvalue ]
 
 // matching rules
 rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_record | rule_type | rule_is | rule_range | rule_const | rule_var
 rule_tuple <MatchTupleRule>                 = "(" match_rule { ";" match_rule } ")"
-rule_array <MatchArrayRule>                 = "[" match_rule { ";" match_rule } "]"
+rule_array <MatchArrayRule>                 = "[" rule_array_item { ";" rule_array_item } "]"
+rule_array_item                             = rule_subsequence | match_rule
 rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var ")"
 rule_record_var                             = identifier "=" match_rule
-rule_type <MatchTypeRule>                   = identifier "of" match_rule
-rule_is <MatchIsRule>                       = "is" type
+rule_type <MatchTypeRule>                   = identifier "of" type
 rule_range <MatchRangeRule>                 = rule_const ".." rule_const
 rule_literal <MatchLiteralRule>             = literal
-rule_name <MatchNameRule>                   = identifier
-rule_list <MatchListRule>                   = { "~" rule_generic }
+rule_name <MatchNameRule>                   = identifier [ ":" type ]
+rule_subsequence <MatchSubsequenceRule>     = "..." identifier
 rule_keyvalue <MatchKeyValueRule>           = "=>" rule_generic
 
 // line expressions
