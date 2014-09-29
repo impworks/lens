@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Resolve
 
-		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
+		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			if (expressionType.IsArray)
 				ElementType = expressionType.GetElementType();
@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					? ElementType
 					: (IsIndexable ? ElementType.MakeArrayType() : typeof (IEnumerable<>).MakeGenericType(ElementType));
 
-				var bindings = Items[idx].Resolve(itemType);
+				var bindings = Items[idx].Resolve(ctx, itemType);
 				foreach (var binding in bindings)
 					yield return binding;
 			}

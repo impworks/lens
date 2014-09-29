@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-
+using System.Runtime.InteropServices.ComTypes;
+using Lens.Resolver;
+using Lens.Translations;
 using Lens.Utils;
 using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
@@ -42,10 +44,17 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Resolve
 
-		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
+		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			if (!IsWildcard)
 				yield return new PatternNameBinding(Name, expressionType);
+
+			if (Type != null)
+			{
+				var specifiedType = ctx.ResolveType(Type);
+				if(!specifiedType.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(specifiedType))
+					Error(CompilerMessages.CastTypesMismatch);
+			}
 		}
 
 		#endregion

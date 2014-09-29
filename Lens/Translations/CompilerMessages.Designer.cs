@@ -844,6 +844,42 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3139: Type &apos;{0}&apos; must be a record defined in the script to be used in this pattern!.
+        /// </summary>
+        public static string PatternNotValidRecord {
+            get {
+                return ResourceManager.GetString("PatternNotValidRecord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3138: Type &apos;{0}&apos; must be a type defined in the script to be used in this pattern!.
+        /// </summary>
+        public static string PatternNotValidType {
+            get {
+                return ResourceManager.GetString("PatternNotValidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3141: Range pattern limits must be numeric constants!.
+        /// </summary>
+        public static string PatternRangeNotNumeric {
+            get {
+                return ResourceManager.GetString("PatternRangeNotNumeric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3140: Record &apos;{0}&apos; does not have a field named &apos;{1}&apos;!.
+        /// </summary>
+        public static string PatternRecordNoField {
+            get {
+                return ResourceManager.GetString("PatternRecordNoField", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3129: Tuple pattern must have at lease 1 element!.
         /// </summary>
         public static string PatternTupleTooFewArgs {
@@ -862,11 +898,38 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3136: Expression of type &apos;{0}&apos; can never be of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string PatternTypeMatchImpossible {
+            get {
+                return ResourceManager.GetString("PatternTypeMatchImpossible", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3130: Pattern cannot be applied to type &apos;{0}&apos;, because it is incompatible with expected type &apos;{1}&apos;!.
         /// </summary>
         public static string PatternTypeMismatch {
             get {
                 return ResourceManager.GetString("PatternTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3140: Type &apos;{0}&apos; does not have a label!.
+        /// </summary>
+        public static string PatternTypeNoLabel {
+            get {
+                return ResourceManager.GetString("PatternTypeNoLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3137: Pattern is unreachable because a catch-all pattern is already defined before!.
+        /// </summary>
+        public static string PatternUnreachable {
+            get {
+                return ResourceManager.GetString("PatternUnreachable", resourceCulture);
             }
         }
         

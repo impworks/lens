@@ -26,13 +26,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Resolve
 
-		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
+		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			if (expressionType != Literal.LiteralType)
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
 
-			// no variables
-			yield break;
+			return NoBindings();
 		}
 
 		#endregion

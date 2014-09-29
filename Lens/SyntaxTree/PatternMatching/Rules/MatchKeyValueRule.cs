@@ -37,15 +37,15 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Resolve
 
-		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
+		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			if(!expressionType.IsAppliedVersionOf(typeof(KeyValuePair<,>)))
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(KeyValuePair<,>));
 
 			Types = expressionType.GetGenericArguments();
 
-			return Key.Resolve(Types[0])
-					  .Concat(Value.Resolve(Types[1]));
+			return Key.Resolve(ctx, Types[0])
+					  .Concat(Value.Resolve(ctx, Types[1]));
 		}
 
 		#endregion

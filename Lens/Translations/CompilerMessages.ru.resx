@@ -522,4 +522,25 @@
   <data name="PatternArraySubsequences" xml:space="preserve">
     <value>LE3135: Шаблон массива не может содержать больше одной вложенной последовательности, объявленной с помощью многоточия!</value>
   </data>
+  <data name="PatternNotValidRecord" xml:space="preserve">
+    <value>LE3139: Тип '{0}' должен быть объявлен как запись, чтобы использовать его в данном шаблоне!</value>
+  </data>
+  <data name="PatternNotValidType" xml:space="preserve">
+    <value>LE3138: Тип '{0}' должен быть объявлен в скрипте, чтобы использовать его в данном шаблоне!</value>
+  </data>
+  <data name="PatternRangeNotNumeric" xml:space="preserve">
+    <value>LE3141: Пределы диапазона должны быть числовыми константами!</value>
+  </data>
+  <data name="PatternRecordNoField" xml:space="preserve">
+    <value>LE3140: Запись '{0}' не содержит поля под названием '{1}'!</value>
+  </data>
+  <data name="PatternTypeMatchImpossible" xml:space="preserve">
+    <value>LE3136: Выражение типа '{0}' никогда не может принимать значения типа '{1}'!</value>
+  </data>
+  <data name="PatternTypeNoLabel" xml:space="preserve">
+    <value>LE3140: Тип '{0}' не содержит метку!</value>
+  </data>
+  <data name="PatternUnreachable" xml:space="preserve">
+    <value>LE3137: Шаблон никогда не будет выполнен, поскольку предыдущий перехватывает все возможные значения!</value>
+  </data>
 </root>

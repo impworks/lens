@@ -522,4 +522,25 @@
   <data name="PatternArraySubsequences" xml:space="preserve">
     <value>LE3135: Array pattern cannot contain more than one subsequence defined with ellipsis!</value>
   </data>
+  <data name="PatternNotValidRecord" xml:space="preserve">
+    <value>LE3139: Type '{0}' must be a record defined in the script to be used in this pattern!</value>
+  </data>
+  <data name="PatternNotValidType" xml:space="preserve">
+    <value>LE3138: Type '{0}' must be a type defined in the script to be used in this pattern!</value>
+  </data>
+  <data name="PatternRangeNotNumeric" xml:space="preserve">
+    <value>LE3141: Range pattern limits must be numeric constants!</value>
+  </data>
+  <data name="PatternRecordNoField" xml:space="preserve">
+    <value>LE3140: Record '{0}' does not have a field named '{1}'!</value>
+  </data>
+  <data name="PatternTypeMatchImpossible" xml:space="preserve">
+    <value>LE3136: Expression of type '{0}' can never be of type '{1}'!</value>
+  </data>
+  <data name="PatternTypeNoLabel" xml:space="preserve">
+    <value>LE3140: Type '{0}' does not have a label!</value>
+  </data>
+  <data name="PatternUnreachable" xml:space="preserve">
+    <value>LE3137: Pattern is unreachable because a catch-all pattern is already defined before!</value>
+  </data>
 </root>

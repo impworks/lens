@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Resovle
 
-		public override IEnumerable<PatternNameBinding> Resolve(Type expressionType)
+		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			if(Items.Count < 1)
 				Error(CompilerMessages.PatternTupleTooFewArgs);
@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if (ItemTypes.Length != Items.Count)
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", Items.Count));
 
-			return Items.Select((t, idx) => t.Resolve(ItemTypes[idx]))
+			return Items.Select((t, idx) => t.Resolve(ctx, ItemTypes[idx]))
 						.SelectMany(subBindings => subBindings);
 		}
 

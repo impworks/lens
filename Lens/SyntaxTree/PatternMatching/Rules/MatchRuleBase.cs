@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using Lens.Compiler;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using Lens.Compiler;
-
 
 	/// <summary>
 	/// One particular rule to match againts an expression.
@@ -16,14 +15,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Gets the list of variables bindings declared in the pattern.
 		/// </summary>
-		public abstract IEnumerable<PatternNameBinding> Resolve(Type expressionType);
+		public abstract IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType);
 
 		/// <summary>
 		/// Returns the AST representation of this rule's checks.
 		/// </summary>
 		public abstract NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement);
 
-		#region Error reporting
+		#region Helpers
 
 		/// <summary>
 		/// Reports an error bound to current matching rule.
@@ -34,6 +33,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				string.Format(message, args),
 				this
 			);
+		}
+
+		/// <summary>
+		/// Returns an empty sequence of name bindings;
+		/// </summary>
+		internal IEnumerable<PatternNameBinding> NoBindings()
+		{
+			yield break;
 		}
 
 		#endregion
