@@ -49,7 +49,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var type = TrueAction.Resolve(ctx);
 			var otherType = FalseAction.Resolve(ctx);
-			return new[] {type, otherType}.GetMostCommonType();
+
+			return type.IsVoid() || otherType.IsVoid()
+				? typeof (UnitType)
+				: new[] { type, otherType }.GetMostCommonType();
 		}
 
 		#endregion
@@ -110,29 +113,28 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 			else
 			{
-				var canReturn = mustReturn && FalseAction != null;
-
 				gen.EmitBranchFalse(falseLabel);
-				emitBranch(ctx, TrueAction, canReturn);
+				emitBranch(ctx, TrueAction, mustReturn);
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				emitBranch(ctx, FalseAction, canReturn);
+				emitBranch(ctx, FalseAction, mustReturn);
 
 				gen.MarkLabel(endLabel);
 				gen.EmitNop();
 			}
 		}
 
-		private void emitBranch(Context ctx, NodeBase branch, bool canReturn)
+		private void emitBranch(Context ctx, NodeBase branch, bool mustReturn)
 		{
 			var desiredType = Resolve(ctx);
-			var branchType = branch.Resolve(ctx, canReturn);
+			mustReturn &= !desiredType.IsVoid();
+			var branchType = branch.Resolve(ctx, mustReturn);
 
 			if (!branchType.IsVoid() && !desiredType.IsVoid())
 				branch = Expr.Cast(branch, desiredType);
 			
-			branch.Emit(ctx, canReturn);
+			branch.Emit(ctx, mustReturn);
 		}
 
 		#endregion
