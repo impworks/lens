@@ -22,12 +22,12 @@ namespace Lens.Utils
 		/// <summary>
 		/// The name as a string.
 		/// </summary>
-		private readonly string Name;
+		public readonly string Name;
 
 		/// <summary>
 		/// The type corresponding to this name.
 		/// </summary>
-		private readonly Type Type;
+		public readonly Type Type;
 
 		#endregion
 

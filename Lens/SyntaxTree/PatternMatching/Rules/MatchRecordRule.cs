@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 
 using Lens.Compiler;
@@ -10,9 +11,6 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using System.Linq;
-
-
 	/// <summary>
 	/// Checks if the expression is of a specified record type and applies a pattern to its fields.
 	/// </summary>

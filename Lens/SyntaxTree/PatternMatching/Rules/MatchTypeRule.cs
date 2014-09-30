@@ -65,12 +65,11 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
 			// no need for temporary variable: field access is idempotent
-
 			return Expr.Block(
 				MakeJumpIf(
 					nextStatement,
 					Expr.Not(
-						Expr.Is(expression, )
+						Expr.Is(expression, Type)
 					)
 				),
 				LabelRule.Expand(

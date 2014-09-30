@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Utils;
@@ -39,7 +40,16 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return MatchStatements.Select(x => x.Resolve(ctx, mustReturn)).ToArray().GetMostCommonType();
+			var stmtTypes = new List<Type>(MatchStatements.Count);
+			foreach (var stmt in MatchStatements)
+			{
+				stmt.ParentNode = this;
+				stmtTypes.Add(stmt.Resolve(ctx, mustReturn));
+			}
+
+			return stmtTypes.Any(x => x.IsVoid())
+				? typeof(UnitType) 
+				: stmtTypes.ToArray().GetMostCommonType();
 		}
 
 		#endregion
