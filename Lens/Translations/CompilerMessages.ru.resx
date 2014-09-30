@@ -537,7 +537,7 @@
   <data name="PatternTypeMatchImpossible" xml:space="preserve">
     <value>LE3136: Выражение типа '{0}' никогда не может принимать значения типа '{1}'!</value>
   </data>
-  <data name="PatternTypeNoLabel" xml:space="preserve">
+  <data name="PatternTypeNoTag" xml:space="preserve">
     <value>LE3140: Тип '{0}' не содержит метку!</value>
   </data>
   <data name="PatternUnreachable" xml:space="preserve">
@@ -545,5 +545,8 @@
   </data>
   <data name="PatternSubsequenceLocation" xml:space="preserve">
     <value>LE3142: Вложенная последовательность в IEnumerable должна быть последним элементом шаблона!</value>
+  </data>
+  <data name="PatternRecordFieldDuplicated" xml:space="preserve">
+    <value>LE3143: Повторно указан шаблон для поля '{0}'!</value>
   </data>
 </root>

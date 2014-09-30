@@ -6,6 +6,8 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
+	using System.Diagnostics;
+
 
 	/// <summary>
 	/// One particular rule to match againts an expression.
@@ -25,14 +27,26 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		#region Helpers
 
 		/// <summary>
-		/// Reports an error bound to current matching rule.
+		/// Reports an error bound to an arbitrary location entity.
 		/// </summary>
-		protected void Error(string message, params object[] args)
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		protected void Error(LocationEntity entity, string message, params object[] args)
 		{
 			throw new LensCompilerException(
 				string.Format(message, args),
-				this
+				entity
 			);
+		}
+
+		/// <summary>
+		/// Reports an error bound to current matching rule.
+		/// </summary>
+		[ContractAnnotation("=> halt")]
+		[DebuggerStepThrough]
+		protected void Error(string message, params object[] args)
+		{
+			Error(this, message, args);
 		}
 
 		/// <summary>

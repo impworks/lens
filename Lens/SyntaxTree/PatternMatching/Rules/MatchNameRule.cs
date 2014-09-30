@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices.ComTypes;
+
 using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			{
 				var specifiedType = ctx.ResolveType(Type);
 				if(!specifiedType.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(specifiedType))
-					Error(CompilerMessages.CastTypesMismatch);
+					Error(CompilerMessages.PatternTypeMatchImpossible, specifiedType, expressionType);
 			}
 		}
 

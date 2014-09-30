@@ -18,13 +18,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Start of the range.
 		/// </summary>
-		public MatchLiteralRule RangeStart;
+		public MatchLiteralRule RangeStartRule;
 
 
 		/// <summary>
 		/// End of the range.
 		/// </summary>
-		public MatchLiteralRule RangeEnd;
+		public MatchLiteralRule RangeEndRule;
 
 		#endregion
 
@@ -32,8 +32,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
-			var startType = RangeStart.Literal.LiteralType;
-			var endType = RangeEnd.Literal.LiteralType;
+			var startType = RangeStartRule.Literal.LiteralType;
+			var endType = RangeEndRule.Literal.LiteralType;
 
 			if(!startType.IsNumericType() || !endType.IsNumericType())
 				Error(CompilerMessages.PatternRangeNotNumeric);
@@ -52,8 +52,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		{
 			return Expr.If(
 				Expr.Or(
-					Expr.Less(expression, RangeStart.Literal as NodeBase),
-					Expr.Greater(expression, RangeEnd.Literal as NodeBase)
+					Expr.Less(expression, RangeStartRule.Literal as NodeBase),
+					Expr.Greater(expression, RangeEndRule.Literal as NodeBase)
 				),
 				Expr.Block(
 					Expr.JumpTo(nextStatement)

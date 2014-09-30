@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public MatchTupleRule()
 		{
-			Items = new List<MatchRuleBase>();
+			ElementRules = new List<MatchRuleBase>();
 		}
 
 		#endregion
@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Items of the tuple.
 		/// </summary>
-		public List<MatchRuleBase> Items;
+		public List<MatchRuleBase> ElementRules;
 
 		/// <summary>
 		/// The cached list of tuple item types.
@@ -46,20 +46,20 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
-			if(Items.Count < 1)
+			if(ElementRules.Count < 1)
 				Error(CompilerMessages.PatternTupleTooFewArgs);
 
-			if (Items.Count > 7)
+			if (ElementRules.Count > 7)
 				Error(CompilerMessages.PatternTupleTooManyArgs);
 
 			if(!expressionType.IsTupleType())
-				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", Items.Count));
+				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 
 			ItemTypes = expressionType.GetGenericArguments();
-			if (ItemTypes.Length != Items.Count)
-				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", Items.Count));
+			if (ItemTypes.Length != ElementRules.Count)
+				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 
-			return Items.Select((t, idx) => t.Resolve(ctx, ItemTypes[idx]))
+			return ElementRules.Select((t, idx) => t.Resolve(ctx, ItemTypes[idx]))
 						.SelectMany(subBindings => subBindings);
 		}
 
@@ -71,7 +71,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		{
 			var block = new CodeBlockNode();
 
-			for (var idx = 0; idx < Items.Count; idx++)
+			for (var idx = 0; idx < ElementRules.Count; idx++)
 			{
 				var fieldName = string.Format("Item{0}", idx + 1);
 				var tmpVar = ctx.Scope.DeclareImplicit(ctx, ItemTypes[idx], false);
@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				);
 
 				block.Add(
-					Items[idx].Expand(ctx, Expr.Get(tmpVar), nextStatement)
+					ElementRules[idx].Expand(ctx, Expr.Get(tmpVar), nextStatement)
 				);
 			}
 

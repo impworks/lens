@@ -871,6 +871,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3143: Duplicate pattern for field &apos;{0}&apos;!.
+        /// </summary>
+        public static string PatternRecordFieldDuplicated {
+            get {
+                return ResourceManager.GetString("PatternRecordFieldDuplicated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3140: Record &apos;{0}&apos; does not have a field named &apos;{1}&apos;!.
         /// </summary>
         public static string PatternRecordNoField {
@@ -925,11 +934,11 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3140: Type &apos;{0}&apos; does not have a label!.
+        ///   Looks up a localized string similar to LE3140: Type &apos;{0}&apos; does not have a tag!.
         /// </summary>
-        public static string PatternTypeNoLabel {
+        public static string PatternTypeNoTag {
             get {
-                return ResourceManager.GetString("PatternTypeNoLabel", resourceCulture);
+                return ResourceManager.GetString("PatternTypeNoTag", resourceCulture);
             }
         }
         

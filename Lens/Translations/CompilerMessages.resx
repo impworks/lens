@@ -537,13 +537,16 @@
   <data name="PatternTypeMatchImpossible" xml:space="preserve">
     <value>LE3136: Expression of type '{0}' can never be of type '{1}'!</value>
   </data>
-  <data name="PatternTypeNoLabel" xml:space="preserve">
-    <value>LE3140: Type '{0}' does not have a label!</value>
+  <data name="PatternTypeNoTag" xml:space="preserve">
+    <value>LE3140: Type '{0}' does not have a tag!</value>
   </data>
   <data name="PatternUnreachable" xml:space="preserve">
     <value>LE3137: Pattern is unreachable because a catch-all pattern is already defined before!</value>
   </data>
   <data name="PatternSubsequenceLocation" xml:space="preserve">
     <value>LE3142: Subsequence is only allowed for IEnumerable if it is the last element of the pattern!</value>
+  </data>
+  <data name="PatternRecordFieldDuplicated" xml:space="preserve">
+    <value>LE3143: Duplicate pattern for field '{0}'!</value>
   </data>
 </root>

@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public MatchArrayRule()
 		{
-			Items = new List<MatchRuleBase>();
+			ElementRules = new List<MatchRuleBase>();
 		}
 
 		#endregion
@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The patterns of array items.
 		/// </summary>
-		public List<MatchRuleBase> Items;
+		public List<MatchRuleBase> ElementRules;
 
 		/// <summary>
 		/// The sequence's complete type.
@@ -79,15 +79,15 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 			IsIndexable = !expressionType.IsAppliedVersionOf(typeof (IEnumerable<>));
 
-			for (var idx = 0; idx < Items.Count; idx++)
+			for (var idx = 0; idx < ElementRules.Count; idx++)
 			{
-				var subseq = Items[idx] as MatchNameRule;
+				var subseq = ElementRules[idx] as MatchNameRule;
 				if (subseq != null && subseq.IsArraySubsequence)
 				{
 					if(SubsequenceIndex != null)
 						Error(CompilerMessages.PatternArraySubsequences);
 
-					if(!IsIndexable && idx < Items.Count-1)
+					if(!IsIndexable && idx < ElementRules.Count-1)
 						Error(CompilerMessages.PatternSubsequenceLocation);
 
 					SubsequenceIndex = idx;
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					? ElementType
 					: (IsIndexable ? ElementType.MakeArrayType() : typeof (IEnumerable<>).MakeGenericType(ElementType));
 
-				var bindings = Items[idx].Resolve(ctx, itemType);
+				var bindings = ElementRules[idx].Resolve(ctx, itemType);
 				foreach (var binding in bindings)
 					yield return binding;
 			}
@@ -121,13 +121,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 							nextStatement,
 							Expr.NotEqual(
 								Expr.GetMember(expression, SizeMemberName),
-								Expr.Int(Items.Count)
+								Expr.Int(ElementRules.Count)
 							)
 						)
 					);
 				}
 
-				expandItemChecksIterated(ctx, block, expression, Items.Count, nextStatement);
+				expandItemChecksIterated(ctx, block, expression, ElementRules.Count, nextStatement);
 				return block;
 			}
 
@@ -139,7 +139,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 						nextStatement,
 						Expr.Less(
 							Expr.GetMember(expression, SizeMemberName),
-							Expr.Int(Items.Count - 1)
+							Expr.Int(ElementRules.Count - 1)
 						)
 					)
 				);
@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 							tempVar,
 							Expr.GetIdx(expression, Expr.Int(idx))
 						),
-						Items[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
+						ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
 					);
 				}
 
@@ -178,17 +178,17 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 								"Take",
 								Expr.Sub(
 									Expr.GetMember(expression, SizeMemberName),
-									Expr.Int(Items.Count - 1)
+									Expr.Int(ElementRules.Count - 1)
 								)
 							),
 							"ToArray"
 						)
 					),
-					Items[subseqIdx].Expand(ctx, Expr.Get(subseqVar), nextStatement)
+					ElementRules[subseqIdx].Expand(ctx, Expr.Get(subseqVar), nextStatement)
 				);
 
 				// post-subsequence
-				for (var idx = subseqIdx+1; idx < Items.Count; idx++)
+				for (var idx = subseqIdx+1; idx < ElementRules.Count; idx++)
 				{
 					block.AddRange(
 						Expr.Set(
@@ -197,17 +197,17 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 								expression,
 								Expr.Sub(
 									Expr.GetMember(expression, SizeMemberName),
-									Expr.Int(Items.Count - idx)
+									Expr.Int(ElementRules.Count - idx)
 								)
 							)
 						),
-						Items[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
+						ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
 					);
 				}
 			}
 			else
 			{
-				var itemsCount = Items.Count - 1;
+				var itemsCount = ElementRules.Count - 1;
 				expandItemChecksIterated(ctx, block, expression, itemsCount, nextStatement);
 
 				// tmpVar = seq.Skip N
@@ -221,7 +221,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 							Expr.Int(itemsCount)
 						)
 					),
-					Items[Items.Count - 1].Expand(ctx, Expr.Get(subseqVar), nextStatement)
+					ElementRules[ElementRules.Count - 1].Expand(ctx, Expr.Get(subseqVar), nextStatement)
 				);
 			}
 
@@ -272,7 +272,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 						)
 					),
 
-					Items[idx].Expand(ctx, Expr.Get(currentVar), nextStatement)
+					ElementRules[idx].Expand(ctx, Expr.Get(currentVar), nextStatement)
 				);
 			}
 		}

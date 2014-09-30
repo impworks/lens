@@ -21,12 +21,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Key pattern.
 		/// </summary>
-		public MatchRuleBase Key;
+		public MatchRuleBase KeyRule;
 
 		/// <summary>
 		/// Value pattern.
 		/// </summary>
-		public MatchRuleBase Value;
+		public MatchRuleBase ValueRule;
 
 		/// <summary>
 		/// The cached types of key and value.
@@ -44,8 +44,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 			Types = expressionType.GetGenericArguments();
 
-			return Key.Resolve(ctx, Types[0])
-					  .Concat(Value.Resolve(ctx, Types[1]));
+			return KeyRule.Resolve(ctx, Types[0])
+					  .Concat(ValueRule.Resolve(ctx, Types[1]));
 		}
 
 		#endregion
@@ -58,10 +58,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			var tmpValue = ctx.Scope.DeclareImplicit(ctx, Types[1], false);
 			return Expr.Block(
 				Expr.Let(tmpKey, Expr.GetMember(expression, "Key")),
-				Key.Expand(ctx, Expr.Get(tmpKey), nextStatement),
+				KeyRule.Expand(ctx, Expr.Get(tmpKey), nextStatement),
 
 				Expr.Let(tmpValue, Expr.GetMember(expression, "Value")),
-				Value.Expand(ctx, Expr.Get(tmpValue), nextStatement)
+				ValueRule.Expand(ctx, Expr.Get(tmpValue), nextStatement)
 			);
 		}
 
