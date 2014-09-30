@@ -880,6 +880,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3142: Subsequence is only allowed for IEnumerable if it is the last element of the pattern!.
+        /// </summary>
+        public static string PatternSubsequenceLocation {
+            get {
+                return ResourceManager.GetString("PatternSubsequenceLocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3129: Tuple pattern must have at lease 1 element!.
         /// </summary>
         public static string PatternTupleTooFewArgs {

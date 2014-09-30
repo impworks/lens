@@ -543,4 +543,7 @@
   <data name="PatternUnreachable" xml:space="preserve">
     <value>LE3137: Шаблон никогда не будет выполнен, поскольку предыдущий перехватывает все возможные значения!</value>
   </data>
+  <data name="PatternSubsequenceLocation" xml:space="preserve">
+    <value>LE3142: Вложенная последовательность в IEnumerable должна быть последним элементом шаблона!</value>
+  </data>
 </root>

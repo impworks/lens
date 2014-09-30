@@ -543,4 +543,7 @@
   <data name="PatternUnreachable" xml:space="preserve">
     <value>LE3137: Pattern is unreachable because a catch-all pattern is already defined before!</value>
   </data>
+  <data name="PatternSubsequenceLocation" xml:space="preserve">
+    <value>LE3142: Subsequence is only allowed for IEnumerable if it is the last element of the pattern!</value>
+  </data>
 </root>

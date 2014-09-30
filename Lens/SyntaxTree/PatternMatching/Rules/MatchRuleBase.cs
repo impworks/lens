@@ -27,7 +27,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Reports an error bound to current matching rule.
 		/// </summary>
-		internal void Error(string message, params object[] args)
+		protected void Error(string message, params object[] args)
 		{
 			throw new LensCompilerException(
 				string.Format(message, args),
@@ -38,9 +38,17 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Returns an empty sequence of name bindings;
 		/// </summary>
-		internal IEnumerable<PatternNameBinding> NoBindings()
+		protected IEnumerable<PatternNameBinding> NoBindings()
 		{
 			yield break;
+		}
+
+		/// <summary>
+		/// Creates a condition to jump to nextStatement label if the expression is true.
+		/// </summary>
+		protected NodeBase MakeJumpIf(Label nextStatement, NodeBase condition)
+		{
+			return Expr.If(condition, Expr.Block(Expr.JumpTo(nextStatement)));
 		}
 
 		#endregion

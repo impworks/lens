@@ -209,6 +209,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			Statements.Add(node);
 		}
 
+		public void AddRange(params NodeBase[] nodes)
+		{
+			Statements.AddRange(nodes);
+		}
+
 		public void Insert(NodeBase node)
 		{
 			Statements.Insert(0, node);
