@@ -15,4 +15,10 @@
 		/// </summary>
 		bool RefArgumentRequired { get; set; }
 	}
+
+	/// <summary>
+	/// Marks a node that is only inserted into the script by the compiler itself.
+	/// Putting the node after an expression does not make the containing block discard the expression's value.
+	/// </summary>
+	interface IMetaNode { }
 }

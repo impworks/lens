@@ -9,6 +9,11 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching
 {
+	using System.Reflection.Emit;
+
+	using Lens.SyntaxTree.ControlFlow;
+
+
 	/// <summary>
 	/// A single statement with many optional rules and a result.
 	/// </summary>
@@ -77,6 +82,31 @@ namespace Lens.SyntaxTree.PatternMatching
 			yield return new NodeChild(Expression, x => Expression = x);
 			if(Condition != null)
 				yield return new NodeChild(Condition, x => Condition = x);
+		}
+
+		/// <summary>
+		/// Expands the current rule into a block of checks.
+		/// </summary>
+		public CodeBlockNode ExpandRules(Context ctx, NodeBase expression)
+		{
+			var block = new CodeBlockNode();
+
+			foreach (var rule in MatchRules)
+			{
+				// current and next labels for each rule
+				var labels = ParentNode.GetLabelsFor(rule);
+				block.AddRange(
+					Expr.JumpLabel(labels.Item1),
+					rule.Expand(ctx, expression, labels.Item2)
+				);
+			}
+
+			block.AddRange(
+				Expression,
+				Expr.JumpTo(ParentNode.EndLabel)
+			);
+
+			return block;
 		}
 
 		#endregion

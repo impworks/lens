@@ -1,18 +1,19 @@
 ﻿using System.Reflection.Emit;
+
 using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Internals
 {
 	/// <summary>
-	/// Represents an unconditional jump-to-label node (GOTO).
+	/// Represents the destination for an unconditional jump-to-label (GOTO).
 	/// </summary>
-	internal class JumpNode : NodeBase, IMetaNode
+	internal class JumpLabelNode : NodeBase, IMetaNode
 	{
 		#region Constructor
 
-		public JumpNode(Label label)
+		public JumpLabelNode(Label label)
 		{
-			DestinationLabel = label;
+			Label = label;
 		}
 
 		#endregion
@@ -20,9 +21,9 @@ namespace Lens.SyntaxTree.Internals
 		#region Fields
 
 		/// <summary>
-		/// The label to jump to.
+		/// The label to place at current location.
 		/// </summary>
-		private readonly Label DestinationLabel;
+		private readonly Label Label;
 
 		#endregion
 
@@ -32,7 +33,8 @@ namespace Lens.SyntaxTree.Internals
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitJump(DestinationLabel);
+			gen.MarkLabel(Label);
+			gen.EmitNop();
 		}
 
 		#endregion

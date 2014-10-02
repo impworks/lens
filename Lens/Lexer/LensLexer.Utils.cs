@@ -30,6 +30,10 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("catch", LexemType.Catch),
 			new StaticLexemDefinition("finally", LexemType.Finally),
 			new StaticLexemDefinition("throw", LexemType.Throw),
+			new StaticLexemDefinition("match", LexemType.Match),
+			new StaticLexemDefinition("with", LexemType.With),
+			new StaticLexemDefinition("case", LexemType.Case),
+			new StaticLexemDefinition("when", LexemType.Case),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),
@@ -92,6 +96,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(";", LexemType.Semicolon),
 			new StaticLexemDefinition("?", LexemType.QuestionMark),
 			new StaticLexemDefinition("~", LexemType.Tilde),
+			new StaticLexemDefinition("|", LexemType.VerticalLine),
 		};
 
 		private readonly static RegexLexemDefinition[] RegexLexems =

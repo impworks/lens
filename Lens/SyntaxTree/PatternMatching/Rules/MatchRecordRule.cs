@@ -108,7 +108,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 	}
 
 	/// <summary>
-	/// One particular 
+	/// One particular record field pattern.
 	/// </summary>
 	internal class MatchRecordField : LocationEntity
 	{

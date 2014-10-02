@@ -22,6 +22,10 @@
 		Try,
 		Catch,
 		Finally,
+		Match,
+		With,
+		Case,
+		When,
 		Let,
 		Var,
 		New,
@@ -91,6 +95,8 @@
 		Tilde,
 		QuestionMark,
 		Ellipsis,
+		VerticalLine,
+
 		Indent,
 		Dedent
 	}

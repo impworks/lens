@@ -667,6 +667,11 @@ namespace Lens.SyntaxTree
 			return new JumpNode(label);
 		}
 
+		public static JumpLabelNode JumpLabel(Label label)
+		{
+			return new JumpLabelNode(label);
+		}
+
 		#endregion
 	}
 }
