@@ -34,7 +34,6 @@ namespace Lens.SyntaxTree.Internals
 			var gen = ctx.CurrentMethod.Generator;
 
 			gen.MarkLabel(Label);
-			gen.EmitNop();
 		}
 
 		#endregion

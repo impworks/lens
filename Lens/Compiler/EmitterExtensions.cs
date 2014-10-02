@@ -119,15 +119,6 @@ namespace Lens.Compiler
 			gen.Emit(OpCodes.Ldnull);
 		}
 
-		/// <summary>
-		/// Does nothing.
-		/// Is  used for marking labels.
-		/// </summary>
-		public static void EmitNop(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Nop);
-		}
-
 		#endregion
 
 		#region Comparison and branching

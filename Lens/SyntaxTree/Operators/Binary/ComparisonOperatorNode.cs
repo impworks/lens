@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 				return true;
 
 			// numeric .. numeric
-			if (left.IsNumericType() && right.IsNumericType())
+			if (left.IsNumericType(true) && right.IsNumericType(true))
 				return left.IsUnsignedIntegerType() == right.IsUnsignedIntegerType();
 
 			if (equalityOnly)
@@ -111,6 +111,8 @@ namespace Lens.SyntaxTree.Operators.Binary
 				if (left is TypeBuilder && left == right)
 					return true;
 
+				if (left == right)
+					return left.IsAnyOf(typeof (bool));
 			}
 
 			return false;
@@ -289,7 +291,6 @@ namespace Lens.SyntaxTree.Operators.Binary
 			gen.EmitConstant(false);
 
 			gen.MarkLabel(endLabel);
-			gen.EmitNop();
 		}
 
 		/// <summary>

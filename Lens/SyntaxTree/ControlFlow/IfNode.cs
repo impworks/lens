@@ -109,7 +109,6 @@ namespace Lens.SyntaxTree.ControlFlow
 					gen.EmitPop();
 
 				gen.MarkLabel(endLabel);
-				gen.EmitNop();
 			}
 			else
 			{
@@ -121,7 +120,6 @@ namespace Lens.SyntaxTree.ControlFlow
 				emitBranch(ctx, FalseAction, mustReturn);
 
 				gen.MarkLabel(endLabel);
-				gen.EmitNop();
 			}
 		}
 

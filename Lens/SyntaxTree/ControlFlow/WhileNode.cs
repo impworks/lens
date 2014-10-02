@@ -94,8 +94,6 @@ namespace Lens.SyntaxTree.ControlFlow
 			gen.MarkLabel(endLabel);
 			if (saveLast)
 				gen.EmitLoadLocal(tmpVar.LocalBuilder);
-			else
-				gen.EmitNop();
 		}
 
 		#endregion

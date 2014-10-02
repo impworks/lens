@@ -1578,7 +1578,7 @@ namespace Lens.Parser
 		/// </summary>
 		private MatchNameRule parseRuleName()
 		{
-			if (!check(LexemType.Identifier))
+			if (!peek(LexemType.Identifier))
 				return null;
 
 			var node = new MatchNameRule { Name = getValue() };

@@ -46,9 +46,22 @@ namespace Lens.SyntaxTree.PatternMatching
 		public Label EndLabel { get; private set; }
 
 		/// <summary>
+		/// The label for default value block (if there is supposed to be one).
+		/// </summary>
+		private Label _DefaultLabel;
+
+		/// <summary>
 		/// Statement labels.
 		/// </summary>
 		private List<Tuple<MatchRuleBase, Label>> _StatementLabels;
+
+		/// <summary>
+		/// Checks if the current node has been resolved as a value-returning context.
+		/// </summary>
+		private bool _MustReturnValue
+		{
+			get { return !_CachedExpressionType.IsVoid(); }
+		}
 
 		#endregion
 
@@ -90,13 +103,12 @@ namespace Lens.SyntaxTree.PatternMatching
 			foreach(var stmt in MatchStatements)
 				block.Add(stmt.ExpandRules(ctx, Expr.Get(tmpVar)));
 
-			var selfType = Resolve(ctx, mustReturn);
-			if (!selfType.IsVoid())
+			if (_MustReturnValue)
 			{
 				block.Add(
 					Expr.Block(
-						Expr.Default(selfType),
-						Expr.JumpTo(EndLabel)
+						Expr.JumpLabel(_DefaultLabel),
+						Expr.Default(_CachedExpressionType)
 					)
 				);
 			}
@@ -117,6 +129,9 @@ namespace Lens.SyntaxTree.PatternMatching
 					_StatementLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
 
 			EndLabel = ctx.CurrentMethod.Generator.DefineLabel();
+
+			if (_MustReturnValue)
+				_DefaultLabel = ctx.CurrentMethod.Generator.DefineLabel();
 		}
 
 		/// <summary>
@@ -130,7 +145,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
 			var next = currIndex < _StatementLabels.Count - 1
 				? _StatementLabels[currIndex + 1].Item2
-				: EndLabel;
+				: (_MustReturnValue ? _DefaultLabel : EndLabel);
 
 			return Tuple.Create(_StatementLabels[currIndex].Item2, next);
 		}
