@@ -139,12 +139,18 @@ namespace Lens.Parser
 
 			while (true)
 			{
-				if(check(LexemType.ArrayDef))
+				if (peek(LexemType.SquareOpen, LexemType.SquareClose))
+				{
 					node = new TypeSignature(null, "[]", node);
-				else if(check(LexemType.Tilde))
+					skip(2);
+				}
+
+				else if (check(LexemType.Tilde))
 					node = new TypeSignature(null, "~", node);
-				else if(check(LexemType.QuestionMark))
+
+				else if (check(LexemType.QuestionMark))
 					node = new TypeSignature(null, "?", node);
+
 				else
 					return node;
 			}
@@ -1459,7 +1465,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// rule_array                                  = "[" rule_array_item { ";" rule_array_item } "]"
+		/// rule_array                                  = "[" [ rule_array_item { ";" rule_array_item } ] "]"
 		/// </summary>
 		private MatchRuleBase parseRuleArray()
 		{
@@ -1467,11 +1473,15 @@ namespace Lens.Parser
 				return null;
 
 			var node = new MatchArrayRule();
-			node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
-			while (check(LexemType.Semicolon))
+			if (!check(LexemType.SquareClose))
+			{
 				node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
 
-			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+				while (check(LexemType.Semicolon))
+					node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+
+				ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			}
 
 			return node;
 		}

@@ -48,9 +48,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			return Expr.If(
+			yield return Expr.If(
 				Expr.Or(
 					Expr.Less(expression, RangeStartRule.Literal as NodeBase),
 					Expr.Greater(expression, RangeEndRule.Literal as NodeBase)

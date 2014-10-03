@@ -50,6 +50,11 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// </summary>
 		public List<MatchRuleBase> MatchRules;
 
+		/// <summary>
+		/// List of names defined in the rule.
+		/// </summary>
+		private PatternNameBinding[] _BindingSet;
+
 		#endregion
 
 		#region Resolve
@@ -66,10 +71,12 @@ namespace Lens.SyntaxTree.PatternMatching
 				validatePatternBindingSets(bindingSets[idx], bindingSets[0]);
 			}
 
-			if(bindingSets[0].Length == 0)
+			_BindingSet = bindingSets[0];
+
+			if (_BindingSet.Length == 0)
 				return Expression.Resolve(ctx, mustReturn);
 
-			var locals = bindingSets[0].Select(x => new Local(x.Name, x.Type)).ToArray();
+			var locals = _BindingSet.Select(x => new Local(x.Name, x.Type)).ToArray();
 			return Scope.WithTempLocals(ctx, () => Expression.Resolve(ctx, mustReturn), locals);
 		}
 
@@ -87,21 +94,37 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// Expands the current rule into a block of checks.
 		/// </summary>
-		public CodeBlockNode ExpandRules(Context ctx, NodeBase expression)
+		public CodeBlockNode ExpandRules(Context ctx, NodeBase expression, Label expressionLabel)
 		{
 			var block = new CodeBlockNode();
+			
+			// declare variables
+			foreach (var binding in _BindingSet)
+				block.Add(Expr.Var(binding.Name, binding.Type.FullName));
 
 			foreach (var rule in MatchRules)
 			{
 				// current and next labels for each rule
-				var labels = ParentNode.GetLabelsFor(rule);
-				block.AddRange(
-					Expr.JumpLabel(labels.Item1),
-					rule.Expand(ctx, expression, labels.Item2)
-				);
+				var ruleLabels = ParentNode.GetRuleLabels(rule);
+
+				block.Add(Expr.JumpLabel(ruleLabels.CurrentRule));
+				block.AddRange(rule.Expand(ctx, expression, ruleLabels.NextRule));
+
+				if (Condition != null)
+				{
+					block.Add(
+						Expr.If(
+							Expr.Not(Condition),
+							Expr.Block(Expr.JumpTo(ruleLabels.NextRule))
+						)
+					);
+				}
+
+				block.Add(Expr.JumpTo(expressionLabel));
 			}
 
 			block.AddRange(
+				Expr.JumpLabel(expressionLabel),
 				Expression,
 				Expr.JumpTo(ParentNode.EndLabel)
 			);

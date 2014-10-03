@@ -81,7 +81,6 @@
 		Assign,
 
 		// Specials
-		ArrayDef,
 		PassLeft,
 		PassRight,
 		Arrow,

@@ -67,28 +67,21 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			var block = new CodeBlockNode();
-
 			for (var idx = 0; idx < ElementRules.Count; idx++)
 			{
 				var fieldName = string.Format("Item{0}", idx + 1);
 				var tmpVar = ctx.Scope.DeclareImplicit(ctx, ItemTypes[idx], false);
 
-				block.Add(
-					Expr.Let(
-						tmpVar,
-						Expr.GetMember(expression, fieldName)
-					)
+				yield return Expr.Let(
+					tmpVar,
+					Expr.GetMember(expression, fieldName)
 				);
 
-				block.Add(
-					ElementRules[idx].Expand(ctx, Expr.Get(tmpVar), nextStatement)
-				);
+				foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tmpVar), nextStatement))
+					yield return rule;
 			}
-
-			return block;
 		}
 
 		#endregion

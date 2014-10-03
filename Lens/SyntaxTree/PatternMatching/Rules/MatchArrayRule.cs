@@ -11,6 +11,9 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
+	using System.Data;
+
+
 	/// <summary>
 	/// Breaks the array into a sequence of element patterns.
 	/// </summary>
@@ -107,40 +110,36 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			var block = new CodeBlockNode();
-
 			if (SubsequenceIndex == null)
 			{
 				if (IsIndexable)
 				{
 					// array size must match exactly
-					block.Add(
-						MakeJumpIf(
-							nextStatement,
-							Expr.NotEqual(
-								Expr.GetMember(expression, SizeMemberName),
-								Expr.Int(ElementRules.Count)
-							)
+					yield return MakeJumpIf(
+						nextStatement,
+						Expr.NotEqual(
+							Expr.GetMember(expression, SizeMemberName),
+							Expr.Int(ElementRules.Count)
 						)
 					);
 				}
 
-				expandItemChecksIterated(ctx, block, expression, ElementRules.Count, nextStatement);
-				return block;
+				foreach (var rule in expandItemChecksIterated(ctx, expression, ElementRules.Count, nextStatement))
+					yield return rule;
+
+				yield break;
 			}
 
 			if (IsIndexable)
 			{
 				// must contain at least N items
-				block.Add(
-					MakeJumpIf(
-						nextStatement,
-						Expr.Less(
-							Expr.GetMember(expression, SizeMemberName),
-							Expr.Int(ElementRules.Count - 1)
-						)
+				yield return MakeJumpIf(
+					nextStatement,
+					Expr.Less(
+						Expr.GetMember(expression, SizeMemberName),
+						Expr.Int(ElementRules.Count - 1)
 					)
 				);
 
@@ -150,13 +149,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				// pre-subsequence
 				for (var idx = 0; idx < subseqIdx; idx++)
 				{
-					block.AddRange(
-						Expr.Set(
-							tempVar,
-							Expr.GetIdx(expression, Expr.Int(idx))
-						),
-						ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
+					yield return Expr.Set(
+						tempVar,
+						Expr.GetIdx(expression, Expr.Int(idx))
 					);
+
+					foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement))
+						yield return rule;
 				}
 
 				// subsequence:
@@ -165,73 +164,73 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				//     |> Take (expr.Length - before - after)
 				//     |> ToArray ()
 				var subseqVar = ctx.Scope.DeclareImplicit(ctx, ElementType.MakeArrayType(), false);
-				block.AddRange(
-					Expr.Set(
-						subseqVar,
+				yield return Expr.Set(
+					subseqVar,
+					Expr.Invoke(
 						Expr.Invoke(
 							Expr.Invoke(
-								Expr.Invoke(
-									expression,
-									"Skip",
-									Expr.Int(subseqIdx)
-								),
-								"Take",
-								Expr.Sub(
-									Expr.GetMember(expression, SizeMemberName),
-									Expr.Int(ElementRules.Count - 1)
-								)
+								expression,
+								"Skip",
+								Expr.Int(subseqIdx)
 							),
-							"ToArray"
-						)
-					),
-					ElementRules[subseqIdx].Expand(ctx, Expr.Get(subseqVar), nextStatement)
+							"Take",
+							Expr.Sub(
+								Expr.GetMember(expression, SizeMemberName),
+								Expr.Int(ElementRules.Count - 1)
+							)
+						),
+						"ToArray"
+					)
 				);
+
+				foreach (var rule in ElementRules[subseqIdx].Expand(ctx, Expr.Get(subseqVar), nextStatement))
+					yield return rule;
 
 				// post-subsequence
 				for (var idx = subseqIdx+1; idx < ElementRules.Count; idx++)
 				{
-					block.AddRange(
-						Expr.Set(
-							tempVar,
-							Expr.GetIdx(
-								expression,
-								Expr.Sub(
-									Expr.GetMember(expression, SizeMemberName),
-									Expr.Int(ElementRules.Count - idx)
-								)
+					yield return Expr.Set(
+						tempVar,
+						Expr.GetIdx(
+							expression,
+							Expr.Sub(
+								Expr.GetMember(expression, SizeMemberName),
+								Expr.Int(ElementRules.Count - idx)
 							)
-						),
-						ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement)
+						)
 					);
+
+					foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement))
+						yield return rule;
 				}
 			}
 			else
 			{
 				var itemsCount = ElementRules.Count - 1;
-				expandItemChecksIterated(ctx, block, expression, itemsCount, nextStatement);
+				var checks = expandItemChecksIterated(ctx, expression, itemsCount, nextStatement);
+				foreach (var check in checks)
+					yield return check;
 
 				// tmpVar = seq.Skip N
 				var subseqVar = ctx.Scope.DeclareImplicit(ctx, typeof(IEnumerable<>).MakeGenericType(ElementType), false);
-				block.AddRange(
-					Expr.Set(
-						subseqVar,
-						Expr.Invoke(
-							expression,
-							"Skip",
-							Expr.Int(itemsCount)
-						)
-					),
-					ElementRules[ElementRules.Count - 1].Expand(ctx, Expr.Get(subseqVar), nextStatement)
+				yield return Expr.Set(
+					subseqVar,
+					Expr.Invoke(
+						expression,
+						"Skip",
+						Expr.Int(itemsCount)
+					)
 				);
-			}
 
-			return block;
+				foreach (var rule in ElementRules[ElementRules.Count - 1].Expand(ctx, Expr.Get(subseqVar), nextStatement))
+					yield return rule;
+			}
 		}
 
 		/// <summary>
 		/// Checks all items in the array with corresponding rules.
 		/// </summary>
-		private void expandItemChecksIterated(Context ctx, CodeBlockNode block, NodeBase expression, int count, Label nextStatement)
+		private IEnumerable<NodeBase> expandItemChecksIterated(Context ctx, NodeBase expression, int count, Label nextStatement)
 		{
 			var enumerableType = typeof(IEnumerable<>).MakeGenericType(ElementType);
 			var enumeratorType = typeof(IEnumerator<>).MakeGenericType(ElementType);
@@ -239,41 +238,38 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			var enumeratorVar = ctx.Scope.DeclareImplicit(ctx, enumeratorType, false);
 			var currentVar = ctx.Scope.DeclareImplicit(ctx, ElementType, false);
 
-			block.Add(
-				Expr.Set(
-					enumeratorVar,
-					Expr.Invoke(
-						Expr.Cast(expression, enumerableType),
-						"GetEnumerator"
-					)
+			yield return Expr.Set(
+				enumeratorVar,
+				Expr.Invoke(
+					Expr.Cast(expression, enumerableType),
+					"GetEnumerator"
 				)
 			);
 
 			for (var idx = 0; idx < count; idx++)
 			{
-				block.AddRange(
-					// if not iter.MoveNext() then jump!
-					MakeJumpIf(
-						nextStatement,
-						Expr.Not(
-							Expr.Invoke(
-								Expr.Get(enumeratorVar),
-								"MoveNext"
-							)
+				// if not iter.MoveNext() then jump!
+				yield return MakeJumpIf(
+					nextStatement,
+					Expr.Not(
+						Expr.Invoke(
+							Expr.Get(enumeratorVar),
+							"MoveNext"
 						)
-					),
+					)
+				);
 
 					// let currentVar = iter.Current
-					Expr.Set(
-						currentVar,
-						Expr.GetMember(
-							Expr.Get(enumeratorVar),
-							"Current"
-						)
-					),
-
-					ElementRules[idx].Expand(ctx, Expr.Get(currentVar), nextStatement)
+				yield return Expr.Set(
+					currentVar,
+					Expr.GetMember(
+						Expr.Get(enumeratorVar),
+						"Current"
+					)
 				);
+
+				foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(currentVar), nextStatement))
+					yield return rule;
 			}
 		}
 

@@ -222,6 +222,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			Statements.AddRange(nodes);
 		}
 
+		public void AddRange(IEnumerable<NodeBase> nodes)
+		{
+			Statements.AddRange(nodes);
+		}
+
 		public void Insert(NodeBase node)
 		{
 			Statements.Insert(0, node);

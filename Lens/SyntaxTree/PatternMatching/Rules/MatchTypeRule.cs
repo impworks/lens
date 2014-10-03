@@ -62,22 +62,24 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
 			// no need for temporary variable: field access is idempotent
-			return Expr.Block(
-				MakeJumpIf(
-					nextStatement,
-					Expr.Not(
-						Expr.Is(expression, Type)
-					)
-				),
-				LabelRule.Expand(
-					ctx,
-					Expr.GetMember(expression, "Tag"),
-					nextStatement
+			yield return MakeJumpIf(
+				nextStatement,
+				Expr.Not(
+					Expr.Is(expression, Type)
 				)
 			);
+
+			var rules = LabelRule.Expand(
+				ctx,
+				Expr.GetMember(expression, "Tag"),
+				nextStatement
+			);
+
+			foreach (var rule in rules)
+				yield return rule;
 		}
 
 		#endregion

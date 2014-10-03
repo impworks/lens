@@ -53,8 +53,6 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
 		#region Resolve
 
-		
-
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var type = Value != null

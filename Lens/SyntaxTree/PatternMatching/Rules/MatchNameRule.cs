@@ -6,7 +6,7 @@ using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 using Lens.Compiler;
-using Lens.SyntaxTree.ControlFlow;
+
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
@@ -61,28 +61,22 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			var block = new CodeBlockNode();
-
 			if (Type != null)
 			{
-				block.Add(
-					Expr.If(
-						Expr.Negate(Expr.Is(expression, Type)),
-						Expr.Block(
-							Expr.JumpTo(nextStatement)
-						)
+				yield return Expr.If(
+					Expr.Not(Expr.Is(expression, Type)),
+					Expr.Block(
+						Expr.JumpTo(nextStatement)
 					)
 				);
 			}
 
 			if (!IsWildcard)
 			{
-				block.Add(Expr.Let(Name, expression));
+				yield return Expr.Set(Name, expression);
 			}
-
-			return block;
 		}
 
 		#endregion

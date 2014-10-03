@@ -59,5 +59,64 @@ match 1 with
 
 			Test(src, "two or less");
 		}
+
+		[Test]
+		public void WhenGuard()
+		{
+			var src = @"
+match 4 with
+    case x when x % 2 == 0 then ""even""
+    case _ then ""odd""";
+
+			Test(src, "even");
+		}
+
+		[Test]
+		public void TypeCheck()
+		{
+			var src = @"
+fun getName:string (obj:object) ->
+    match obj with
+        case x:string then ""string""
+        case x:int then ""int""
+        case x:bool then ""bool""
+        case _ then ""wtf""
+
+new [1; ""test""; 1.3; true]
+    |> Select x -> getName x
+    |> ToArray ()";
+
+			Test(src, new [] { "int", "string", "wtf", "bool"});
+		}
+
+		[Test]
+		public void Array()
+		{
+			var src = @"
+fun describe:string (arr:int[]) ->
+    match arr with
+        case [] then ""empty""
+        case [1] then ""1:1""
+        case [x] when x < 10 then ""1:<10""
+        case [_] then ""1:smth""
+        case [_;_] then ""2""
+        case _ then ""long""
+
+var examples = new [
+    new [1]
+    new int[0]
+    new [4]
+    new [1; 2]
+    new [30]
+    new [1; 2; 3]
+]
+
+examples
+    |> Select x -> describe x
+    |> ToArray ()
+";
+
+			Test(src, new [] { "1:1", "empty", "1:<10", "2", "1:smth", "long" });
+		}
 	}
 }

@@ -81,27 +81,19 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			var block = Expr.Block(
-				MakeJumpIf(
-					nextStatement,
-					Expr.Not(Expr.Is(expression, Type))
-				)
+			yield return MakeJumpIf(
+				nextStatement,
+				Expr.Not(Expr.Is(expression, Type))
 			);
 
 			foreach (var fieldRule in FieldRules)
 			{
-				block.Add(
-					fieldRule.Rule.Expand(
-						ctx,
-						Expr.GetMember(expression, fieldRule.Name.FullSignature),
-						nextStatement
-					)
-				);
+				var rules = fieldRule.Rule.Expand(ctx, Expr.GetMember(expression, fieldRule.Name.FullSignature), nextStatement);
+				foreach(var rule in rules)
+					yield return rule;
 			}
-
-			return block;
 		}
 
 		#endregion

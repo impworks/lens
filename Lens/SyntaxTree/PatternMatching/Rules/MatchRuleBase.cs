@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Returns the AST representation of this rule's checks.
 		/// </summary>
-		public abstract NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement);
+		public abstract IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement);
 
 		#region Helpers
 

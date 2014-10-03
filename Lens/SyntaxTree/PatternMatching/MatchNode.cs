@@ -10,9 +10,6 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching
 {
-	using System.Security.Permissions;
-
-
 	/// <summary>
 	/// The pattern matching base expression.
 	/// </summary>
@@ -23,7 +20,8 @@ namespace Lens.SyntaxTree.PatternMatching
 		public MatchNode()
 		{
 			MatchStatements = new List<MatchStatementNode>();
-			_StatementLabels = new List<Tuple<MatchRuleBase, Label>>();
+			_RuleLabels = new List<Tuple<MatchRuleBase, Label>>();
+			_ExpressionLabels = new Dictionary<MatchStatementNode, Label>();
 		}
 
 		#endregion
@@ -50,10 +48,14 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// </summary>
 		private Label _DefaultLabel;
 
-		/// <summary>
-		/// Statement labels.
+		/// A lookup for rule labels.
 		/// </summary>
-		private List<Tuple<MatchRuleBase, Label>> _StatementLabels;
+		private List<Tuple<MatchRuleBase, Label>> _RuleLabels;
+
+		/// <summary>
+		/// A lookup for expression labels.
+		/// </summary>
+		private Dictionary<MatchStatementNode, Label> _ExpressionLabels;
 
 		/// <summary>
 		/// Checks if the current node has been resolved as a value-returning context.
@@ -101,7 +103,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
 			var block = Expr.Block(ScopeKind.MatchRoot, Expr.Set(tmpVar, Expression));
 			foreach(var stmt in MatchStatements)
-				block.Add(stmt.ExpandRules(ctx, Expr.Get(tmpVar)));
+				block.Add(stmt.ExpandRules(ctx, Expr.Get(tmpVar), _ExpressionLabels[stmt]));
 
 			if (_MustReturnValue)
 			{
@@ -125,8 +127,12 @@ namespace Lens.SyntaxTree.PatternMatching
 		private void defineLabels(Context ctx)
 		{
 			foreach (var stmt in MatchStatements)
+			{
+				_ExpressionLabels.Add(stmt, ctx.CurrentMethod.Generator.DefineLabel());
+
 				foreach (var rule in stmt.MatchRules)
-					_StatementLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
+					_RuleLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
+			}
 
 			EndLabel = ctx.CurrentMethod.Generator.DefineLabel();
 
@@ -137,19 +143,40 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// Returns the current and the next labels for a match rule.
 		/// </summary>
-		public Tuple<Label, Label> GetLabelsFor(MatchRuleBase rule)
+		public MatchRuleLabelSet GetRuleLabels(MatchRuleBase rule)
 		{
-			var currIndex = _StatementLabels.FindIndex(x => x.Item1 == rule);
+			var currIndex = _RuleLabels.FindIndex(x => x.Item1 == rule);
 			if(currIndex == -1)
 				throw new ArgumentException("Rule does not belong to current match block!");
 
-			var next = currIndex < _StatementLabels.Count - 1
-				? _StatementLabels[currIndex + 1].Item2
+			var next = currIndex < _RuleLabels.Count - 1
+				? _RuleLabels[currIndex + 1].Item2
 				: (_MustReturnValue ? _DefaultLabel : EndLabel);
 
-			return Tuple.Create(_StatementLabels[currIndex].Item2, next);
+
+			return new MatchRuleLabelSet
+			{
+				CurrentRule = _RuleLabels[currIndex].Item2,
+				NextRule = next
+			};
 		}
 
 		#endregion
+	}
+
+	/// <summary>
+	/// The set of labels required for each rule.
+	/// </summary>
+	internal class MatchRuleLabelSet
+	{
+		/// <summary>
+		/// Label that is emitted before first check so that other rules can jump to it.
+		/// </summary>
+		public Label CurrentRule;
+
+		/// <summary>
+		/// Label to jump to if any of the current rule's checks fail.
+		/// </summary>
+		public Label NextRule;
 	}
 }

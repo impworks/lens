@@ -52,17 +52,18 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		#region Expand
 
-		public override NodeBase Expand(Context ctx, NodeBase expression, Label nextStatement)
+		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
 			var tmpKey = ctx.Scope.DeclareImplicit(ctx, Types[0], false);
 			var tmpValue = ctx.Scope.DeclareImplicit(ctx, Types[1], false);
-			return Expr.Block(
-				Expr.Let(tmpKey, Expr.GetMember(expression, "Key")),
-				KeyRule.Expand(ctx, Expr.Get(tmpKey), nextStatement),
 
-				Expr.Let(tmpValue, Expr.GetMember(expression, "Value")),
-				ValueRule.Expand(ctx, Expr.Get(tmpValue), nextStatement)
-			);
+			yield return Expr.Let(tmpKey, Expr.GetMember(expression, "Key"));
+			foreach (var rule in KeyRule.Expand(ctx, Expr.Get(tmpKey), nextStatement))
+				yield return rule;
+
+			yield return Expr.Let(tmpValue, Expr.GetMember(expression, "Value"));
+			foreach(var rule in ValueRule.Expand(ctx, Expr.Get(tmpValue), nextStatement))
+				yield return rule;
 		}
 
 		#endregion

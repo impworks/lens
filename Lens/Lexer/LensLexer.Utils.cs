@@ -33,7 +33,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("match", LexemType.Match),
 			new StaticLexemDefinition("with", LexemType.With),
 			new StaticLexemDefinition("case", LexemType.Case),
-			new StaticLexemDefinition("when", LexemType.Case),
+			new StaticLexemDefinition("when", LexemType.When),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),
@@ -52,7 +52,6 @@ namespace Lens.Lexer
 		private readonly static StaticLexemDefinition[] Operators = 
 		{
 			new StaticLexemDefinition("()", LexemType.Unit),
-			new StaticLexemDefinition("[]", LexemType.ArrayDef),
 
 			new StaticLexemDefinition("|>", LexemType.PassRight),
 			new StaticLexemDefinition("<|", LexemType.PassLeft),
