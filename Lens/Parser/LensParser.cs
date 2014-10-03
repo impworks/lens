@@ -1521,7 +1521,7 @@ namespace Lens.Parser
 		/// </summary>
 		private MatchRecordField parseRuleRecordVar()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Of))
+			if (!peek(LexemType.Identifier, LexemType.Assign))
 				return null;
 
 			var identifier = parseType();

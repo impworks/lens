@@ -49,12 +49,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
 			var typeEntity = ctx.FindType(Identifier.FullSignature);
-			if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Type, TypeEntityKind.TypeLabel)))
-				Error(Identifier, CompilerMessages.PatternNotValidType, Identifier.FullSignature);
+			if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
+				Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
-			var type = ctx.ResolveType(Identifier);
-			if (!type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(type))
-				Error(CompilerMessages.PatternTypeMatchImpossible, type, expressionType);
+			Type = ctx.ResolveType(Identifier);
+			if (!Type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(Type))
+				Error(CompilerMessages.PatternTypeMatchImpossible, Type, expressionType);
 
 			var duplicate = FieldRules.GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
 			if(duplicate != null)
@@ -90,7 +90,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 			foreach (var fieldRule in FieldRules)
 			{
-				var rules = fieldRule.Rule.Expand(ctx, Expr.GetMember(expression, fieldRule.Name.FullSignature), nextStatement);
+				var rules = fieldRule.Rule.Expand(
+					ctx,
+					Expr.GetMember(Expr.Cast(expression, Type), fieldRule.Name.FullSignature),
+					nextStatement
+				);
+
 				foreach(var rule in rules)
 					yield return rule;
 			}

@@ -42,9 +42,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if(typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Type, TypeEntityKind.TypeLabel)))
 				Error(Identifier, CompilerMessages.PatternNotValidType, Identifier.FullSignature);
 
-			var type = ctx.ResolveType(Identifier);
-			if (!type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(type))
-				Error(CompilerMessages.PatternTypeMatchImpossible, type, expressionType);
+			Type = ctx.ResolveType(Identifier);
+			if (!Type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(Type))
+				Error(CompilerMessages.PatternTypeMatchImpossible, Type, expressionType);
 
 			try
 			{
@@ -74,7 +74,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 			var rules = LabelRule.Expand(
 				ctx,
-				Expr.GetMember(expression, "Tag"),
+				Expr.GetMember(
+					Expr.Cast(expression, Type),
+					"Tag"
+				),
 				nextStatement
 			);
 
