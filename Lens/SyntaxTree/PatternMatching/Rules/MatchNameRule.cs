@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Checks if the name is used as a placeholder.
 		/// </summary>
-		private bool IsWildcard
+		public bool IsWildcard
 		{
 			get { return Name == "_"; }
 		}

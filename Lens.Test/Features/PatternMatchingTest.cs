@@ -245,11 +245,34 @@ fun describe:string (value:int) ->
         case 6..10 then ""<=10""
         case _ then ""other""
 
-new[12;10;6;5;0]
+new [12; 10; 6; 5; 0]
     |> Select describe
     |> ToArray ()
 ";
 			Test(src, new [] { "other", "<=10", "<=10", "<=5", "<=5" });
+		}
+
+		[Test]
+		public void KeyValue()
+		{
+			var src = @"
+fun describe:string (value:KeyValuePair<string, int[]>) ->
+    match value with
+        case x => [] then fmt ""{0} => empty"" x
+        case x => [y] then fmt ""{0} => {1}"" x y
+        case x => [_; ..._] then fmt ""{0} => many"" x
+
+let values = new {
+    ""a"" => new [1; 2; 3]
+    ""b"" => new int[0]
+    ""c"" => new [42]
+}
+
+values
+    |> Select x -> describe x
+    |> ToArray ()
+";
+			Test(src, new [] { "a => many", "b => empty", "c => 42" });
 		}
 	}
 }

@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 
+using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using System.Linq;
-
-	using Lens.Compiler;
-
-
 	/// <summary>
 	/// Breaks a tuple expression into list of items.
 	/// </summary>
@@ -72,14 +68,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			for (var idx = 0; idx < ElementRules.Count; idx++)
 			{
 				var fieldName = string.Format("Item{0}", idx + 1);
-				var tmpVar = ctx.Scope.DeclareImplicit(ctx, ItemTypes[idx], false);
+				var rules = ElementRules[idx].Expand(ctx, Expr.GetMember(expression, fieldName), nextStatement);
 
-				yield return Expr.Let(
-					tmpVar,
-					Expr.GetMember(expression, fieldName)
-				);
-
-				foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tmpVar), nextStatement))
+				foreach (var rule in rules)
 					yield return rule;
 			}
 		}

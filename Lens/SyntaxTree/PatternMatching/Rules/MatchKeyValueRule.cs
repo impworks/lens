@@ -10,7 +10,6 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-
 	/// <summary>
 	/// Key-value pair pattern.
 	/// </summary>
@@ -54,15 +53,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			var tmpKey = ctx.Scope.DeclareImplicit(ctx, Types[0], false);
-			var tmpValue = ctx.Scope.DeclareImplicit(ctx, Types[1], false);
-
-			yield return Expr.Let(tmpKey, Expr.GetMember(expression, "Key"));
-			foreach (var rule in KeyRule.Expand(ctx, Expr.Get(tmpKey), nextStatement))
+			foreach (var rule in KeyRule.Expand(ctx, Expr.GetMember(expression, "Key"), nextStatement))
 				yield return rule;
 
-			yield return Expr.Let(tmpValue, Expr.GetMember(expression, "Value"));
-			foreach(var rule in ValueRule.Expand(ctx, Expr.Get(tmpValue), nextStatement))
+			foreach (var rule in ValueRule.Expand(ctx, Expr.GetMember(expression, "Value"), nextStatement))
 				yield return rule;
 		}
 

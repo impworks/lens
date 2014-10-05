@@ -5,15 +5,11 @@ using System.Reflection.Emit;
 
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using System.Data;
-
-
 	/// <summary>
 	/// Breaks the array into a sequence of element patterns.
 	/// </summary>
@@ -144,63 +140,68 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				);
 
 				var subseqIdx = SubsequenceIndex.Value;
-				var tempVar = ctx.Scope.DeclareImplicit(ctx, ElementType, false);
 
 				// pre-subsequence
 				for (var idx = 0; idx < subseqIdx; idx++)
 				{
-					yield return Expr.Set(
-						tempVar,
-						Expr.GetIdx(expression, Expr.Int(idx))
+					var rules = ElementRules[idx].Expand(
+						ctx,
+						Expr.GetIdx(expression, Expr.Int(idx)),
+						nextStatement
 					);
 
-					foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement))
+					foreach (var rule in rules)
 						yield return rule;
 				}
 
-				// subsequence:
-				// x = expr
-				//     |> Skip before
-				//     |> Take (expr.Length - before - after)
-				//     |> ToArray ()
-				var subseqVar = ctx.Scope.DeclareImplicit(ctx, ElementType.MakeArrayType(), false);
-				yield return Expr.Set(
-					subseqVar,
-					Expr.Invoke(
+				var subseqRule = (MatchNameRule)ElementRules[subseqIdx];
+				if (!subseqRule.IsWildcard)
+				{
+					// subsequence:
+					// x = expr
+					//     |> Skip before // optional
+					//     |> Take (expr.Length - before - after)
+					//     |> ToArray ()
+					var subseqVar = ctx.Scope.DeclareImplicit(ctx, ElementType.MakeArrayType(), false);
+					var subseqExpr = subseqIdx == 0
+						? expression 
+						: Expr.Invoke(expression, "Skip", Expr.Int(subseqIdx));
+
+					yield return Expr.Set(
+						subseqVar,
 						Expr.Invoke(
 							Expr.Invoke(
-								expression,
-								"Skip",
-								Expr.Int(subseqIdx)
+								subseqExpr,
+								"Take",
+								Expr.Sub(
+									Expr.GetMember(expression, SizeMemberName),
+									Expr.Int(ElementRules.Count - 1)
+								)
 							),
-							"Take",
-							Expr.Sub(
-								Expr.GetMember(expression, SizeMemberName),
-								Expr.Int(ElementRules.Count - 1)
-							)
-						),
-						"ToArray"
-					)
-				);
+							"ToArray"
+						)
+					);
 
-				foreach (var rule in ElementRules[subseqIdx].Expand(ctx, Expr.Get(subseqVar), nextStatement))
-					yield return rule;
+					foreach (var rule in subseqRule.Expand(ctx, Expr.Get(subseqVar), nextStatement))
+						yield return rule;
+				}
 
 				// post-subsequence
 				for (var idx = subseqIdx+1; idx < ElementRules.Count; idx++)
 				{
-					yield return Expr.Set(
-						tempVar,
+					var rules = ElementRules[idx].Expand(
+						ctx,
 						Expr.GetIdx(
 							expression,
 							Expr.Sub(
 								Expr.GetMember(expression, SizeMemberName),
 								Expr.Int(ElementRules.Count - idx)
 							)
-						)
+						),
+						nextStatement
 					);
 
-					foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(tempVar), nextStatement))
+					foreach (var rule in rules)
 						yield return rule;
 				}
 			}
@@ -232,11 +233,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// </summary>
 		private IEnumerable<NodeBase> expandItemChecksIterated(Context ctx, NodeBase expression, int count, Label nextStatement)
 		{
+			if (count == 0)
+				yield break;
+
 			var enumerableType = typeof(IEnumerable<>).MakeGenericType(ElementType);
 			var enumeratorType = typeof(IEnumerator<>).MakeGenericType(ElementType);
 
 			var enumeratorVar = ctx.Scope.DeclareImplicit(ctx, enumeratorType, false);
-			var currentVar = ctx.Scope.DeclareImplicit(ctx, ElementType, false);
 
 			yield return Expr.Set(
 				enumeratorVar,
@@ -259,16 +262,16 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					)
 				);
 
-					// let currentVar = iter.Current
-				yield return Expr.Set(
-					currentVar,
+				var rules = ElementRules[idx].Expand(
+					ctx,
 					Expr.GetMember(
 						Expr.Get(enumeratorVar),
 						"Current"
-					)
+					),
+					nextStatement
 				);
 
-				foreach (var rule in ElementRules[idx].Expand(ctx, Expr.Get(currentVar), nextStatement))
+				foreach (var rule in rules)
 					yield return rule;
 			}
 		}

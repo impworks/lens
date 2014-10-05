@@ -5,6 +5,8 @@ using System.Reflection.Emit;
 
 using Lens.Compiler;
 using Lens.Resolver;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.PatternMatching.Rules;
 using Lens.Utils;
 
@@ -99,11 +101,22 @@ namespace Lens.SyntaxTree.PatternMatching
 			defineLabels(ctx);
 
 			var exprType = Expression.Resolve(ctx);
-			var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
 
-			var block = Expr.Block(ScopeKind.MatchRoot, Expr.Set(tmpVar, Expression));
+			var block = Expr.Block(ScopeKind.MatchRoot);
+			NodeBase exprGetter;
+			if (Expression is ILiteralNode || Expression is GetIdentifierNode)
+			{
+				exprGetter = Expression;
+			}
+			else
+			{
+				var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
+				exprGetter = Expr.Get(tmpVar);
+				block.Add(Expr.Set(tmpVar, Expression));
+			}
+
 			foreach(var stmt in MatchStatements)
-				block.Add(stmt.ExpandRules(ctx, Expr.Get(tmpVar), _ExpressionLabels[stmt]));
+				block.Add(stmt.ExpandRules(ctx, exprGetter, _ExpressionLabels[stmt]));
 
 			if (_MustReturnValue)
 			{

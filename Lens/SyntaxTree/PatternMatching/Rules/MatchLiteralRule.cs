@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+
+using Lens.Compiler;
 using Lens.SyntaxTree.Literals;
 using Lens.Utils;
 using Lens.Translations;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	using Lens.Compiler;
-
-
 	/// <summary>
 	/// Matches the expression against a literal constant.
 	/// </summary>
