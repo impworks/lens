@@ -144,11 +144,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			// load pointer to global function
 			if (_Method != null)
 			{
-				var ctor = resultType.GetConstructor(new[] {typeof (object), typeof (IntPtr)});
+				var ctor = ctx.ResolveConstructor(resultType, new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
 				gen.EmitLoadFunctionPointer(_Method.MethodInfo);
-				gen.EmitCreateObject(ctor);
+				gen.EmitCreateObject(ctor.ConstructorInfo);
 
 				return;
 			}

@@ -196,7 +196,7 @@ var points = new [
 ]
 
 points
-    |> Select describe
+    |> Select x -> describe x
     |> ToArray ()
 ";
 

@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 				return true;
 
 			// numeric .. numeric
-			if (left.IsNumericType(true) && right.IsNumericType(true))
+			if (left.IsNumericType() && right.IsNumericType())
 				return left.IsUnsignedIntegerType() == right.IsUnsignedIntegerType();
 
 			if (equalityOnly)
