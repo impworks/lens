@@ -145,7 +145,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			var gen = ctx.CurrentMethod.Generator;
 
 			// compare two strings
-			if (left == typeof (string) && right == typeof (string))
+			if (left == right && left == typeof (string))
 			{
 				LeftOperand.Emit(ctx, true);
 				RightOperand.Emit(ctx, true);
@@ -159,10 +159,19 @@ namespace Lens.SyntaxTree.Operators.Binary
 				return;
 			}
 
-			// compare two numerics
-			if (left.IsNumericType() && right.IsNumericType())
+			// compare primitive types
+			if ((left.IsNumericType() && right.IsNumericType()) || (left == right && left == typeof(bool)))
 			{
-				loadAndConvertNumerics(ctx);
+				if (left == typeof (bool))
+				{
+					LeftOperand.Emit(ctx, true);
+					RightOperand.Emit(ctx, true);
+				}
+				else
+				{
+					loadAndConvertNumerics(ctx);
+				}
+
 				gen.EmitCompareEqual();
 
 				if(Kind == ComparisonOperatorKind.NotEquals)
@@ -219,6 +228,8 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 				return;
 			}
+
+			throw new ArgumentException("Unknown types to compare!");
 		}
 
 		/// <summary>
