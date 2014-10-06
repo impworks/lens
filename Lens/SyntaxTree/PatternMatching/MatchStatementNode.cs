@@ -65,10 +65,18 @@ namespace Lens.SyntaxTree.PatternMatching
 
 			// name group validation
 			var bindingSets = MatchRules.Select(x => x.Resolve(ctx, exprType).ToArray()).ToArray();
-			for (var idx = 1; idx < bindingSets.Length; idx++)
+			for (var idx = 0; idx < bindingSets.Length; idx++)
 			{
-				validatePatternBindingSets(bindingSets[0], bindingSets[idx]);
-				validatePatternBindingSets(bindingSets[idx], bindingSets[0]);
+				var duplicateName = bindingSets[idx].GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
+				if (duplicateName != null)
+					error(CompilerMessages.PatternNameDuplicated, duplicateName.Key);
+
+				if (idx > 0)
+				{
+					// do not compare binding set #0 with itself
+					validatePatternBindingSets(bindingSets[0], bindingSets[idx]);
+					validatePatternBindingSets(bindingSets[idx], bindingSets[0]);
+				}
 			}
 
 			_BindingSet = bindingSets[0];

@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using Lens.Translations;
+
+using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
@@ -273,6 +275,202 @@ values
     |> ToArray ()
 ";
 			Test(src, new [] { "a => many", "b => empty", "c => 42" });
+		}
+
+		[Test]
+		public void Null()
+		{
+			var src = @"
+fun describe:string (obj:object) ->
+    match obj with
+        case null then ""is null""
+        case _ then ""is not null""
+
+new [""test""; null ]
+    |> Select x -> describe x
+    |> ToArray()
+";
+			Test(src, new[] { "is not null", "is null" });
+		}
+
+		[Test]
+		public void RuleTypeMismatchError()
+		{
+			var src = @"
+match 1 with
+    case true then true
+";
+			TestError(src, CompilerMessages.PatternTypeMismatch);
+		}
+
+		[Test]
+		public void RuleTypeImpossibleError()
+		{
+			var src = @"
+match 1 with
+    case x:string then true
+";
+			TestError(src, CompilerMessages.PatternTypeMatchImpossible);
+		}
+
+		[Test]
+		public void RuleUnreachableError1()
+		{
+			var src = @"
+match 1 with
+    case x then true
+    case _ then false
+";
+			TestError(src, CompilerMessages.PatternUnreachable);
+		}
+
+		[Test]
+		public void RuleUnreachableError2()
+		{
+			var src = @"
+match 1 with
+    case x:object then true
+    case y:int then false
+";
+			TestError(src, CompilerMessages.PatternUnreachable);
+		}
+
+		[Test]
+		public void RuleRecordTypeError()
+		{
+			var src = @"
+use System.Drawing
+
+var pt = new Point ()
+match 1 with
+    case Point(X = x) then true
+";
+			TestError(src, CompilerMessages.PatternNotValidRecord);
+		}
+
+		[Test]
+		public void RuleTypeError()
+		{
+			var src = @"
+use System.Drawing
+
+var pt = new Point ()
+match pt with
+    case Point of x then true
+";
+			TestError(src, CompilerMessages.PatternNotValidType);
+		}
+
+		[Test]
+		public void RuleTypeLabelError()
+		{
+			var src = @"
+type Item
+    Point
+    Circle
+
+var pt = Point
+match pt with
+    case Point of x then true
+";
+			TestError(src, CompilerMessages.PatternTypeNoTag);
+		}
+
+		[Test]
+		public void RuleRecordFieldNotFoundError()
+		{
+			var src = @"
+record Point
+    X : int
+    Y : int
+
+var pt = new Point 1 2
+match pt with
+    case Point(Z = 1) then true
+";
+			TestError(src, CompilerMessages.PatternRecordNoField);
+		}
+
+		[Test]
+		public void RuleRecordFieldDuplicatedError()
+		{
+			var src = @"
+record Point
+    X : int
+    Y : int
+
+var pt = new Point 1 2
+match pt with
+    case Point(X = 1; X = 2) then true
+";
+			TestError(src, CompilerMessages.PatternRecordFieldDuplicated);
+		}
+
+		[Test]
+		public void RuleRangeNotNumericError()
+		{
+			var src = @"
+match 1 with
+    case ""a""..""z"" then true
+";
+			TestError(src, CompilerMessages.PatternRangeNotNumeric);
+		}
+
+		[Test]
+		public void RuleArraySubsequenceError()
+		{
+			var src = @"
+match new [1] with
+    case [...x; ...y] then 1
+";
+			TestError(src, CompilerMessages.PatternArraySubsequences);
+		}
+
+		[Test]
+		public void RuleIEnumerableSubsequenceError()
+		{
+			var src = @"
+var expr = Enumerable::Range 1 30
+match expr with
+    case [...x; y] then 1
+";
+			TestError(src, CompilerMessages.PatternSubsequenceLocation);
+		}
+
+		[Test]
+		public void RuleNameSetsMismatchError()
+		{
+			var src = @"
+var expr = Enumerable::Range 1 30
+match new [1] with
+    case [x] | [x; y] then 1
+";
+			TestError(src, CompilerMessages.PatternNameSetMismatch);
+		}
+
+		[Test]
+		public void RuleNameDuplicatedError()
+		{
+			var src = @"
+match new [1] with
+    case [x; x] then 1
+";
+			TestError(src, CompilerMessages.PatternNameDuplicated);
+		}
+
+		[Test]
+		public void RuleNameTypeMismatchError()
+		{
+			var src = @"
+record MyRecord
+    A : int
+    B : string
+
+var obj = new MyRecord 1 ""test""
+match obj with
+    case MyRecord(A = 1; B = x) | MyRecord(B = ""test""; A = x) then 1
+";
+			TestError(src, CompilerMessages.PatternNameTypeMismatch);
 		}
 	}
 }

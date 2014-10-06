@@ -8,6 +8,7 @@ using Lens.Resolver;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.PatternMatching.Rules;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching
@@ -73,11 +74,28 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
+			ctx.CheckTypedExpression(Expression, allowNull: true);
+
 			var stmtTypes = new List<Type>(MatchStatements.Count);
+			Type commonType = null;
 			foreach (var stmt in MatchStatements)
 			{
 				stmt.ParentNode = this;
 				stmtTypes.Add(stmt.Resolve(ctx, mustReturn));
+
+				foreach (var rule in stmt.MatchRules)
+				{
+					var nameRule = rule as MatchNameRule;
+					// detect catch-all expression for a type
+					if (nameRule != null && stmt.Condition == null)
+					{
+						var nameType = nameRule.Type == null ? typeof (object) : ctx.ResolveType(nameRule.Type);
+						if (commonType != null && commonType.IsExtendablyAssignableFrom(nameType))
+							error(CompilerMessages.PatternUnreachable);
+
+						commonType = nameType;
+					}
+				}
 			}
 
 			return stmtTypes.Any(x => x.IsVoid())

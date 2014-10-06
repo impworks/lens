@@ -27,8 +27,15 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
-			if (expressionType != Literal.LiteralType)
+			if (Literal.LiteralType == typeof (NullType))
+			{
+				if(expressionType.IsValueType)
+					Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
+			}
+			else if (expressionType != Literal.LiteralType)
+			{
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
+			}
 
 			return NoBindings();
 		}
