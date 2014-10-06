@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Literals;
 using Lens.Utils;
 using Lens.Translations;
@@ -29,7 +30,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		{
 			if (Literal.LiteralType == typeof (NullType))
 			{
-				if(expressionType.IsValueType)
+				if(expressionType.IsValueType && !expressionType.IsAppliedVersionOf(typeof(Nullable<>)))
 					Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
 			}
 			else if (expressionType != Literal.LiteralType)
