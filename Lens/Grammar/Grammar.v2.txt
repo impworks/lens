@@ -99,10 +99,11 @@ match_rules <~MatchRuleBase>                = match_rule { [ NL ] "|" match_rule
 match_rule <MatchRuleBase>                  = rule_generic [ rule_keyvalue ]
 
 // matching rules
-rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_record | rule_type | rule_range | rule_literal | rule_name
+rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
 rule_tuple <MatchTupleRule>                 = "(" match_rule { ";" match_rule } ")"
 rule_array <MatchArrayRule>                 = "[" rule_array_item { ";" rule_array_item } "]"
 rule_array_item                             = rule_subsequence | match_rule
+rule_regex <MatchRegexRule>                 = regex
 rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var } ")"
 rule_record_var                             = identifier "=" match_rule
 rule_type <MatchTypeRule>                   = identifier "of" match_rule
@@ -163,5 +164,6 @@ int <IntNode>                               = [1-9][0-9]*+
 decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
 float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
 double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
-char <CharNode>                             = '([^']|\\["ntr\\])'
+char <CharNode>                             = '([^']|\\['ntr\\])'
+regex                                       = /.+?(?<!\\)/[imsc]*
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

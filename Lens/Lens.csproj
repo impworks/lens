@@ -141,6 +141,7 @@
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchNameRule.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRangeRule.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRecordRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRegexNode.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRuleBase.cs" />
     <Compile Include="SyntaxTree\PatternMatching\MatchStatementNode.cs" />
     <Compile Include="SyntaxTree\PatternMatching\Rules\MatchLiteralRule.cs" />
