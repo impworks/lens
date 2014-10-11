@@ -294,6 +294,59 @@ new [""test""; null ]
 		}
 
 		[Test]
+		public void Regex()
+		{
+			var src = @"
+fun describe:string (str:string) ->
+    match str with
+        case #^\d{1}$# then ""1""
+        case #^\d{2}$# then ""2""
+        case #^\d{3,5}$# then ""3-5""
+        case _ then ""other""
+
+new [""42""; ""1""; ""321567""; ""1234""]
+    |> Select describe
+    |> ToArray ()
+";
+			Test(src, new[] {"2", "1", "other", "3-5"});
+		}
+
+		[Test]
+		public void RegexNamedGroups1()
+		{
+			var src = @"
+match ""[world-hello]"" with
+    case #\[(?<fst>\w+)-(?<snd>\w+)\]# then snd + "" "" + fst
+";
+			Test(src, "hello world");
+		}
+
+		[Test]
+		public void RegexNamedGroups2()
+		{
+			var src = @"
+match ""[23-19]"" with
+    case #\[(?<fst:int>\d+)-(?<snd:int>\d+)\]# then fst + snd
+";
+			Test(src, 42);
+		}
+
+		[Test]
+		public void RegexModifiers()
+		{
+			var src = @"
+fun describe:int (str:string) ->
+    match str with
+        case #^[a-z]+$# then 1
+        case #^[a-z]+$#i then 2
+        case _ then 3
+
+new [""ABC""; ""123""; ""hello""].Select describe";
+
+			Test(src, new [] { 2, 3, 1});
+		}
+
+		[Test]
 		public void RuleTypeMismatchError()
 		{
 			var src = @"
@@ -471,6 +524,66 @@ match obj with
     case MyRecord(A = 1; B = x) | MyRecord(B = ""test""; A = x) then 1
 ";
 			TestError(src, CompilerMessages.PatternNameTypeMismatch);
+		}
+
+		[Test]
+		public void RegexSyntaxError()
+		{
+			var src = @"
+match ""123"" with
+    case #[a# then true
+";
+			TestError(src, CompilerMessages.RegexSyntaxError);
+		}
+
+		[Test]
+		public void RegexUnknownModifier()
+		{
+			var src = @"
+match ""123"" with
+    case #\d+#y then true
+";
+			TestError(src, CompilerMessages.RegexUnknownModifier);			
+		}
+
+		[Test]
+		public void RegexDuplicateModifier()
+		{
+			var src = @"
+match ""123"" with
+    case #\d+#ii then true
+";
+			TestError(src, CompilerMessages.RegexDuplicateModifier);
+		}
+
+		[Test]
+		public void RegexConverterTypeNotFound()
+		{
+			var src = @"
+match ""123"" with
+    case #(?<test:MyType>123)# then true
+";
+			TestError(src, CompilerMessages.RegexConverterTypeNotFound);
+		}
+
+		[Test]
+		public void RegexConverterTypeIncompatible()
+		{
+			var src = @"
+match ""123"" with
+    case #(?<test:object>123)# then true
+";
+			TestError(src, CompilerMessages.RegexConverterTypeIncompatible);
+		}
+
+		[Test]
+		public void RegexUnderscoreGroupName()
+		{
+			var src = @"
+match ""123"" with
+    case #(?<_>123)# then true
+";
+			TestError(src, CompilerMessages.UnderscoreNameUsed);
 		}
 	}
 }

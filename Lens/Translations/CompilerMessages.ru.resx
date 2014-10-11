@@ -549,4 +549,19 @@
   <data name="PatternRecordFieldDuplicated" xml:space="preserve">
     <value>LE3143: Повторно указан шаблон для поля '{0}'!</value>
   </data>
+  <data name="RegexConverterTypeIncompatible" xml:space="preserve">
+    <value>LE3147: Тип '{0}' не может быть использован в качестве конвертера, поскольку не содержит метода с сигнатурой Parse(string)!</value>
+  </data>
+  <data name="RegexConverterTypeNotFound" xml:space="preserve">
+    <value>LE3146: Тип-конвертер '{0}' не найден!</value>
+  </data>
+  <data name="RegexDuplicateModifier" xml:space="preserve">
+    <value>LE3145: Дважды использован модификатор '{0}'!</value>
+  </data>
+  <data name="RegexSyntaxError" xml:space="preserve">
+    <value>LE3148: Синтаксическая ошибка в регулярном выражении!</value>
+  </data>
+  <data name="RegexUnknownModifier" xml:space="preserve">
+    <value>LE3144: Неизвестный модификатор '{0}'!</value>
+  </data>
 </root>

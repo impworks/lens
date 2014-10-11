@@ -549,4 +549,19 @@
   <data name="PatternRecordFieldDuplicated" xml:space="preserve">
     <value>LE3143: Duplicate pattern for field '{0}'!</value>
   </data>
+  <data name="RegexConverterTypeIncompatible" xml:space="preserve">
+    <value>LE3147: Converter type '{0}' is incompatible because it doesn't provide a Parse(string) method!</value>
+  </data>
+  <data name="RegexConverterTypeNotFound" xml:space="preserve">
+    <value>LE3146: Converter type '{0}' does not exist!</value>
+  </data>
+  <data name="RegexDuplicateModifier" xml:space="preserve">
+    <value>LE3145: Duplicate regex modifier '{0}'!</value>
+  </data>
+  <data name="RegexSyntaxError" xml:space="preserve">
+    <value>LE3148: Syntax error in regular expression!</value>
+  </data>
+  <data name="RegexUnknownModifier" xml:space="preserve">
+    <value>LE3144: Unknown regex modifier '{0}'!</value>
+  </data>
 </root>

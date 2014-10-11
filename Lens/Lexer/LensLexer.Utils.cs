@@ -106,7 +106,8 @@ namespace Lens.Lexer
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)L", LexemType.Long),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
 			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier),
-			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char)
+			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char),
+			new RegexLexemDefinition(@"#.+?(?<!\#)#[a-zA-Z]*", LexemType.Regex)
 		};
 
 		#endregion
@@ -181,6 +182,15 @@ namespace Lens.Lexer
 				: value[1].ToString();
 
 			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
+		}
+
+		/// <summary>
+		/// Processes the contents of a regex literal.
+		/// </summary>
+		[DebuggerStepThrough]
+		private Lexem transformRegexLiteral(Lexem lex)
+		{
+			return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, lex.Value.Replace(@"\#", "#"));
 		}
 
 		/// <summary>

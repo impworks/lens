@@ -1433,12 +1433,13 @@ namespace Lens.Parser
 		#region Match rules
 
 		/// <summary>
-		/// rule_generic                                = rule_tuple | rule_array | rule_record | rule_type | rule_range | rule_literal | rule_name
+		/// rule_generic                                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
 		/// </summary>
 		private MatchRuleBase parseRuleGeneric()
 		{
 			return attempt(parseRuleTuple)
 			       ?? attempt(parseRuleArray)
+				   ?? attempt(parseRegex)
 			       ?? attempt(parseRuleRecord)
 			       ?? attempt(parseRuleType)
 			       ?? attempt(parseRuleRange)
@@ -1484,6 +1485,21 @@ namespace Lens.Parser
 			}
 
 			return node;
+		}
+
+		/// <summary>
+		/// rule_regex                                 = regex
+		/// </summary>
+		private MatchRegexNode parseRegex()
+		{
+			if (!peek(LexemType.Regex))
+				return null;
+
+			var raw = getValue();
+			var trailPos = raw.LastIndexOf('#');
+			var value = raw.Substring(1, trailPos - 1);
+			var mods = raw.Substring(trailPos + 1);
+			return new MatchRegexNode {Value = value, Modifiers = mods};
 		}
 
 		/// <summary>

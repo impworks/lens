@@ -112,6 +112,8 @@ namespace Lens.Lexer
 
 					if (lex.Type == LexemType.Char)
 						lex = transformCharLiteral(lex);
+					else if (lex.Type == LexemType.Regex)
+						lex = transformRegexLiteral(lex);
 
 					Lexems.Add(lex);
 				}

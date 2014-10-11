@@ -128,6 +128,7 @@
     <Compile Include="SyntaxTree\Expressions\GetSet\ShortAssignmentNode.cs" />
     <Compile Include="SyntaxTree\Internals\JumpLabelNode.cs" />
     <Compile Include="SyntaxTree\Internals\JumpNode.cs" />
+    <Compile Include="SyntaxTree\Internals\RawEnumNode.cs" />
     <Compile Include="SyntaxTree\Literals\CharLiteral.cs" />
     <Compile Include="SyntaxTree\Literals\DecimalNode.cs" />
     <Compile Include="SyntaxTree\Literals\FloatNode.cs" />

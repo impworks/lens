@@ -672,6 +672,11 @@ namespace Lens.SyntaxTree
 			return new JumpLabelNode(label);
 		}
 
+		public static RawEnumNode RawEnum<T>(long value) where T: struct
+		{
+			return new RawEnumNode {EnumType = typeof (T), Value = value};
+		}
+
 		#endregion
 	}
 }

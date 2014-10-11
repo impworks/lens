@@ -51,6 +51,7 @@
 		Char,
 		String,
 		Identifier,
+		Regex,
 
 		// Braces
 		ParenOpen,

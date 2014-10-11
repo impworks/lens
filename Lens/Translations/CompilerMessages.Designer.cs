@@ -1051,6 +1051,51 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3147: Converter type &apos;{0}&apos; is incompatible because it doesn&apos;t provide a Parse(string) method!.
+        /// </summary>
+        public static string RegexConverterTypeIncompatible {
+            get {
+                return ResourceManager.GetString("RegexConverterTypeIncompatible", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3146: Converter type &apos;{0}&apos; does not exist!.
+        /// </summary>
+        public static string RegexConverterTypeNotFound {
+            get {
+                return ResourceManager.GetString("RegexConverterTypeNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3145: Duplicate regex modifier &apos;{0}&apos;!.
+        /// </summary>
+        public static string RegexDuplicateModifier {
+            get {
+                return ResourceManager.GetString("RegexDuplicateModifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3148: Syntax error in regular expression!.
+        /// </summary>
+        public static string RegexSyntaxError {
+            get {
+                return ResourceManager.GetString("RegexSyntaxError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3144: Unknown regex modifier &apos;{0}&apos;!.
+        /// </summary>
+        public static string RegexUnknownModifier {
+            get {
+                return ResourceManager.GetString("RegexUnknownModifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3094: Cannot invoke function &apos;{0}&apos; because it is reserved for internal purposes..
         /// </summary>
         public static string ReservedFunctionInvocation {
