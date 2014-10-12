@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 
 using Lens.Compiler;
+using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.PatternMatching.Rules;
 using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching
 {
-	using System.Reflection.Emit;
-
-	using Lens.SyntaxTree.ControlFlow;
-
-
 	/// <summary>
 	/// A single statement with many optional rules and a result.
 	/// </summary>
@@ -105,6 +102,10 @@ namespace Lens.SyntaxTree.PatternMatching
 		public CodeBlockNode ExpandRules(Context ctx, NodeBase expression, Label expressionLabel)
 		{
 			var block = new CodeBlockNode();
+
+			// rule is never true: do not emit its code at all
+			if (Condition != null && Condition.IsConstant && Condition.ConstantValue == false)
+				return block;
 			
 			// declare variables
 			foreach (var binding in _BindingSet)

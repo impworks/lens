@@ -93,7 +93,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				);
 
 				wrapError(
-					() => ctx.ResolveMethod(actualType, "Parse", new[] {typeof (string)}),
+					() => ctx.ResolveMethod(actualType, "TryParse", new[] {typeof (string), actualType}),
 					CompilerMessages.RegexConverterTypeIncompatible, type
 				);
 
@@ -199,12 +199,15 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				}
 				else
 				{
-					yield return Expr.Set(
-						curr.Name,
-						Expr.Invoke(
-							curr.Type.FullName,
-							"Parse",
-							valueExpr
+					yield return MakeJumpIf(
+						nextStatement,
+						Expr.Not(
+							Expr.Invoke(
+								curr.Type.FullName,
+								"TryParse",
+								valueExpr,
+								Expr.Ref(Expr.Get(curr.Name))
+							)
 						)
 					);
 				}

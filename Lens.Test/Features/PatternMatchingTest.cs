@@ -74,6 +74,17 @@ match 4 with
 		}
 
 		[Test]
+		public void WhenGuard2()
+		{
+			var src = @"
+match 1 with
+    case 1 when false then ""impossible""
+    case _ then ""one""";
+
+			Test(src, "one");
+		}
+
+		[Test]
 		public void TypeCheck()
 		{
 			var src = @"
@@ -84,9 +95,7 @@ fun getName:string (obj:object) ->
         case x:bool then ""bool""
         case _ then ""wtf""
 
-new [1; ""test""; 1.3; true]
-    |> Select getName
-    |> ToArray ()";
+new [1; ""test""; 1.3; true].Select getName";
 
 			Test(src, new [] { "int", "string", "wtf", "bool"});
 		}
@@ -113,9 +122,7 @@ var examples = new [
     new [1; 2; 3]
 ]
 
-examples
-    |> Select describe
-    |> ToArray ()
+examples.Select describe
 ";
 
 			Test(src, new [] { "1:1", "empty", "1:<10", "2", "1:smth", "long" });
@@ -197,9 +204,7 @@ var points = new [
     new MyPoint ()
 ]
 
-points
-    |> Select x -> describe x
-    |> ToArray ()
+points.Select (x -> describe x)
 ";
 
 			Test(src, new [] { "half-zero", "(2;3)", "zero" });
@@ -229,9 +234,7 @@ var exprs = new [
     SumExpr (Tuple::Create 2 3)
 ]
 
-exprs
-    |> Select describe
-    |> ToArray ()
+exprs.Select describe
 ";
 
 			Test(src, new[]{ "str='test'", "int=1", "unknown", "sum=5"});
@@ -247,9 +250,7 @@ fun describe:string (value:int) ->
         case 6..10 then ""<=10""
         case _ then ""other""
 
-new [12; 10; 6; 5; 0]
-    |> Select describe
-    |> ToArray ()
+new [12; 10; 6; 5; 0].Select describe
 ";
 			Test(src, new [] { "other", "<=10", "<=10", "<=5", "<=5" });
 		}
@@ -270,9 +271,7 @@ let values = new {
     ""c"" => new [42]
 }
 
-values
-    |> Select x -> describe x
-    |> ToArray ()
+values.Select (x -> describe x)
 ";
 			Test(src, new [] { "a => many", "b => empty", "c => 42" });
 		}
@@ -286,9 +285,7 @@ fun describe:string (obj:object) ->
         case null then ""is null""
         case _ then ""is not null""
 
-new [""test""; null ]
-    |> Select x -> describe x
-    |> ToArray()
+new [""test""; null ].Select (x -> describe x)
 ";
 			Test(src, new[] { "is not null", "is null" });
 		}
@@ -304,15 +301,13 @@ fun describe:string (str:string) ->
         case #^\d{3,5}$# then ""3-5""
         case _ then ""other""
 
-new [""42""; ""1""; ""321567""; ""1234""]
-    |> Select describe
-    |> ToArray ()
+new [""42""; ""1""; ""321567""; ""1234""].Select describe
 ";
 			Test(src, new[] {"2", "1", "other", "3-5"});
 		}
 
 		[Test]
-		public void RegexNamedGroups1()
+		public void RegexNamedGroups()
 		{
 			var src = @"
 match ""[world-hello]"" with
@@ -322,13 +317,24 @@ match ""[world-hello]"" with
 		}
 
 		[Test]
-		public void RegexNamedGroups2()
+		public void RegexNamedGroupsWithConverters()
 		{
 			var src = @"
 match ""[23-19]"" with
     case #\[(?<fst:int>\d+)-(?<snd:int>\d+)\]# then fst + snd
 ";
 			Test(src, 42);
+		}
+
+		[Test]
+		public void RegexNamedGroupsTryParseNoThrow()
+		{
+			var src = @"
+match ""13,37"" with
+    case #(?<value:int>\d+,\d+)# then ""int""
+    case #(?<value:float>\d+,\d+)# then ""float""
+";
+			Test(src, "float");
 		}
 
 		[Test]
