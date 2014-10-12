@@ -5,11 +5,15 @@ using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
+using Lens.SyntaxTree.Declarations.Locals;
 using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
+	using Lens.SyntaxTree.Internals;
+
+
 	/// <summary>
 	/// A set of consecutive code statements.
 	/// </summary>
@@ -43,15 +47,18 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			var last = Statements.LastOrDefault();
+			var last = Statements.LastOrDefault(x => !(x is IMetaNode));
 			if (last is VarNode || last is LetNode)
 				error(last, CompilerMessages.CodeBlockLastVar);
 
 			ctx.EnterScope(Scope);
 
 			var result = typeof(UnitType);
-			foreach(var curr in Statements)
-				result = curr.Resolve(ctx);
+			foreach (var curr in Statements)
+			{
+				if(!(curr is IMetaNode))
+					result = curr.Resolve(ctx);
+			}
 
 			ctx.ExitScope();
 
@@ -146,9 +153,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
+			var lastExpressionIdx = Statements.FindLastIndex(x => !(x is JumpNode) && !(x is JumpLabelNode));
+
 			for (var idx = 0; idx < Statements.Count; idx++)
 			{
-				var subReturn = mustReturn && idx == Statements.Count - 1;
+				var subReturn = mustReturn && (idx == lastExpressionIdx || Scope.Kind == ScopeKind.MatchRoot);
 				var curr = Statements[idx];
 
 				var retType = curr.Resolve(ctx, subReturn);
@@ -206,6 +215,16 @@ namespace Lens.SyntaxTree.ControlFlow
 		public void Add(NodeBase node)
 		{
 			Statements.Add(node);
+		}
+
+		public void AddRange(params NodeBase[] nodes)
+		{
+			Statements.AddRange(nodes);
+		}
+
+		public void AddRange(IEnumerable<NodeBase> nodes)
+		{
+			Statements.AddRange(nodes);
 		}
 
 		public void Insert(NodeBase node)

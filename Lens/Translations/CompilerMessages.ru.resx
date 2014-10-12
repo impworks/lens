@@ -498,4 +498,70 @@
   <data name="ExpressionNotIDisposable" xml:space="preserve">
     <value>LE3033: Выражение типа '{0}' не может быть использовано в блоке 'using', поскольку не приводится к интерфейсу 'IDisposable'!</value>
   </data>
+  <data name="NoCommonType" xml:space="preserve">
+    <value>LE3134: Невозможно вывести общий тип для выражений, если хотя бы одно из них имеет тип 'Unit' или 'Void'!</value>
+  </data>
+  <data name="PatternNameDuplicated" xml:space="preserve">
+    <value>LE3131: Шаблон содержит повторное объявление имени '{0}'!</value>
+  </data>
+  <data name="PatternNameSetMismatch" xml:space="preserve">
+    <value>LE3132: Некорректное объявление имени в шаблоне: в некоторых альтернативах не объявлено имя '{0}'! Убедитесь, что во всех альтернативах список объявленных имен и их типы в точности совпадают.</value>
+  </data>
+  <data name="PatternNameTypeMismatch" xml:space="preserve">
+    <value>LE3133: Некорректное объявление имени в шаблоне: типы для имени '{0}' не совпадают в альтернативных шаблонах (например, '{1}' и '{2}').</value>
+  </data>
+  <data name="PatternTupleTooFewArgs" xml:space="preserve">
+    <value>LE3129: Шаблон кортежа должен содержать хотя бы 1 элемент!</value>
+  </data>
+  <data name="PatternTupleTooManyArgs" xml:space="preserve">
+    <value>LE3128: Шаблон кортежа не может содержать более 7 элементов!</value>
+  </data>
+  <data name="PatternTypeMismatch" xml:space="preserve">
+    <value>LE3130: Шаблон не может быть применен к типу '{0}', поскольку он несовместим с ожидаемым типом '{1}'!</value>
+  </data>
+  <data name="PatternArraySubsequences" xml:space="preserve">
+    <value>LE3135: Шаблон массива не может содержать больше одной вложенной последовательности, объявленной с помощью многоточия!</value>
+  </data>
+  <data name="PatternNotValidRecord" xml:space="preserve">
+    <value>LE3139: Тип '{0}' должен быть объявлен как запись, чтобы использовать его в данном шаблоне!</value>
+  </data>
+  <data name="PatternNotValidType" xml:space="preserve">
+    <value>LE3138: Тип '{0}' должен быть объявлен в скрипте, чтобы использовать его в данном шаблоне!</value>
+  </data>
+  <data name="PatternRangeNotNumeric" xml:space="preserve">
+    <value>LE3141: Пределы диапазона должны быть числовыми константами!</value>
+  </data>
+  <data name="PatternRecordNoField" xml:space="preserve">
+    <value>LE3140: Запись '{0}' не содержит поля под названием '{1}'!</value>
+  </data>
+  <data name="PatternTypeMatchImpossible" xml:space="preserve">
+    <value>LE3136: Выражение типа '{0}' никогда не может принимать значения типа '{1}'!</value>
+  </data>
+  <data name="PatternTypeNoTag" xml:space="preserve">
+    <value>LE3140: Тип '{0}' не содержит метку!</value>
+  </data>
+  <data name="PatternUnreachable" xml:space="preserve">
+    <value>LE3137: Шаблон никогда не будет выполнен, поскольку предыдущий перехватывает все возможные значения!</value>
+  </data>
+  <data name="PatternSubsequenceLocation" xml:space="preserve">
+    <value>LE3142: Вложенная последовательность в IEnumerable должна быть последним элементом шаблона!</value>
+  </data>
+  <data name="PatternRecordFieldDuplicated" xml:space="preserve">
+    <value>LE3143: Повторно указан шаблон для поля '{0}'!</value>
+  </data>
+  <data name="RegexConverterTypeIncompatible" xml:space="preserve">
+    <value>LE3147: Тип '{0}' не может быть использован в качестве конвертера, поскольку не содержит метода с сигнатурой Parse(string)!</value>
+  </data>
+  <data name="RegexConverterTypeNotFound" xml:space="preserve">
+    <value>LE3146: Тип-конвертер '{0}' не найден!</value>
+  </data>
+  <data name="RegexDuplicateModifier" xml:space="preserve">
+    <value>LE3145: Дважды использован модификатор '{0}'!</value>
+  </data>
+  <data name="RegexSyntaxError" xml:space="preserve">
+    <value>LE3148: Синтаксическая ошибка в регулярном выражении!</value>
+  </data>
+  <data name="RegexUnknownModifier" xml:space="preserve">
+    <value>LE3144: Неизвестный модификатор '{0}'!</value>
+  </data>
 </root>

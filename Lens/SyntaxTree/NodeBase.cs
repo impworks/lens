@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations.Functions;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -34,8 +34,18 @@ namespace Lens.SyntaxTree
 		{
 			if (_CachedExpressionType == null)
 			{
-				_CachedExpressionType = resolve(ctx, mustReturn);
-				checkTypeInSafeMode(ctx, _CachedExpressionType);
+				try
+				{
+					_CachedExpressionType = resolve(ctx, mustReturn);
+					checkTypeInSafeMode(ctx, _CachedExpressionType);
+				}
+				catch (LensCompilerException ex)
+				{
+					if (ex.EndLocation == null || ex.StartLocation == null)
+						ex.BindToLocation(this);
+
+					throw;
+				}
 			}
 
 			return _CachedExpressionType;

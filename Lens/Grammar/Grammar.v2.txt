@@ -55,7 +55,7 @@ accessor_mbr <GetMemberNode>                = "." identifier [ type_args ]
 expr <NodeBase>                             = block_expr | line_expr
 
 // block control structures
-block_expr <NodeBase>                       = if_block | while_block | for_block | using_block | try_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
+block_expr <NodeBase>                       = if_block | while_block | for_block | using_block | try_stmt | match_block | new_block_expr | invoke_block_expr | lambda_block_expr
 if_block <IfNode>                           = if_header block [ "else" block ]
 while_block <WhileNode>                     = while_header block
 for_block <ForNode>                         = for_header block
@@ -91,6 +91,27 @@ invoke_block_arg <NodeBase>                 = "<|" ( ref_arg | expr )
 invoke_line_args <~NodeBase>                = { invoke_line_arg }
 invoke_line_arg <NodeBase>                  = ref_arg | get_expr
 ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
+
+// pattern matching
+match_block <MatchNode>                     = "match" line_expr "with" INDENT match_stmt { NL match_stmt } DEDENT
+match_stmt <MatchStatementNode>             = "case" match_rules [ "when" line_expr ] "then" block
+match_rules <~MatchRuleBase>                = match_rule { [ NL ] "|" match_rule }
+match_rule <MatchRuleBase>                  = rule_generic [ rule_keyvalue ]
+
+// matching rules
+rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
+rule_tuple <MatchTupleRule>                 = "(" match_rule { ";" match_rule } ")"
+rule_array <MatchArrayRule>                 = "[" rule_array_item { ";" rule_array_item } "]"
+rule_array_item                             = rule_subsequence | match_rule
+rule_regex <MatchRegexRule>                 = regex
+rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var } ")"
+rule_record_var                             = identifier "=" match_rule
+rule_type <MatchTypeRule>                   = identifier "of" match_rule
+rule_range <MatchRangeRule>                 = rule_literal ".." rule_literal
+rule_literal <MatchLiteralRule>             = literal
+rule_name <MatchNameRule>                   = identifier [ ":" type ]
+rule_subsequence <MatchSubsequenceRule>     = "..." identifier
+rule_keyvalue <MatchKeyValueRule>           = "=>" rule_generic
 
 // line expressions
 line_stmt <NodeBase>                        = set_stmt | line_expr
@@ -143,5 +164,6 @@ int <IntNode>                               = [1-9][0-9]*+
 decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
 float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
 double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
-char <CharNode>                             = '([^']|\\["ntr\\])'
+char <CharNode>                             = '([^']|\\['ntr\\])'
+regex                                       = /.+?(?<!\\)/[imsc]*
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

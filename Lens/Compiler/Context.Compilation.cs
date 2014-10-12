@@ -4,6 +4,8 @@ using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations.Functions;
+using Lens.SyntaxTree.Declarations.Types;
 using Lens.Translations;
 using Lens.Utils;
 

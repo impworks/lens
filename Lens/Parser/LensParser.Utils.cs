@@ -5,6 +5,7 @@ using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -161,12 +162,12 @@ namespace Lens.Parser
 		/// If the node does not match, an error is thrown.
 		/// </summary>
 		[DebuggerStepThrough]
-		private T ensure<T>(Func<T> getter, string msg)
+		private T ensure<T>(Func<T> getter, string msg, params object[] args)
 			where T : LocationEntity
 		{
 			var result = bind(getter);
 			if(result == null)
-				error(msg);
+				error(msg, args);
 
 			return result;
 		}

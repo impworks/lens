@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations.Functions;
 using Lens.Translations;
 
 namespace Lens.Compiler

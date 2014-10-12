@@ -322,6 +322,12 @@ namespace Lens.Compiler
 		/// Scope is the root of a lambda function.
 		/// Closure parent is loaded from 'this' pointer.
 		/// </summary>
-		LambdaRoot
+		LambdaRoot,
+
+		/// <summary>
+		/// Special case for match node's root scope.
+		/// Makes each of the nested expression blocks explicitly return the value.
+		/// </summary>
+		MatchRoot
 	}
 }

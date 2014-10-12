@@ -30,6 +30,10 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("catch", LexemType.Catch),
 			new StaticLexemDefinition("finally", LexemType.Finally),
 			new StaticLexemDefinition("throw", LexemType.Throw),
+			new StaticLexemDefinition("match", LexemType.Match),
+			new StaticLexemDefinition("with", LexemType.With),
+			new StaticLexemDefinition("case", LexemType.Case),
+			new StaticLexemDefinition("when", LexemType.When),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),
@@ -48,7 +52,6 @@ namespace Lens.Lexer
 		private readonly static StaticLexemDefinition[] Operators = 
 		{
 			new StaticLexemDefinition("()", LexemType.Unit),
-			new StaticLexemDefinition("[]", LexemType.ArrayDef),
 
 			new StaticLexemDefinition("|>", LexemType.PassRight),
 			new StaticLexemDefinition("<|", LexemType.PassLeft),
@@ -92,6 +95,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(";", LexemType.Semicolon),
 			new StaticLexemDefinition("?", LexemType.QuestionMark),
 			new StaticLexemDefinition("~", LexemType.Tilde),
+			new StaticLexemDefinition("|", LexemType.VerticalLine),
 		};
 
 		private readonly static RegexLexemDefinition[] RegexLexems =
@@ -102,7 +106,8 @@ namespace Lens.Lexer
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)L", LexemType.Long),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
 			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier),
-			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char)
+			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char),
+			new RegexLexemDefinition(@"#.+?(?<!\#)#[a-zA-Z]*", LexemType.Regex)
 		};
 
 		#endregion
@@ -177,6 +182,15 @@ namespace Lens.Lexer
 				: value[1].ToString();
 
 			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
+		}
+
+		/// <summary>
+		/// Processes the contents of a regex literal.
+		/// </summary>
+		[DebuggerStepThrough]
+		private Lexem transformRegexLiteral(Lexem lex)
+		{
+			return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, lex.Value.Replace(@"\#", "#"));
 		}
 
 		/// <summary>

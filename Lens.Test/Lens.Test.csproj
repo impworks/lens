@@ -77,6 +77,7 @@
     <Compile Include="Features\ControlStructuresTest.cs" />
     <Compile Include="Features\FunctionalTest.cs" />
     <Compile Include="Features\LambdasInferenceTest.cs" />
+    <Compile Include="Features\PatternMatchingTest.cs" />
     <Compile Include="Features\UserDeclarationsTest.cs" />
     <Compile Include="Internals\ExtensionMethodResolverTest.cs" />
     <Compile Include="Internals\FunctionalHelperTest.cs" />

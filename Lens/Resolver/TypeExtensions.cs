@@ -8,6 +8,9 @@ using Lens.Utils;
 
 namespace Lens.Resolver
 {
+	using Lens.Translations;
+
+
 	/// <summary>
 	/// A collection of helpful methods for types.
 	/// </summary>
@@ -409,6 +412,9 @@ namespace Lens.Resolver
 			Type curr = null;
 			foreach (var type in types)
 			{
+				if(type.IsVoid())
+					throw new LensCompilerException(CompilerMessages.NoCommonType);
+
 				if (type.IsInterface)
 				{
 					curr = typeof(object);

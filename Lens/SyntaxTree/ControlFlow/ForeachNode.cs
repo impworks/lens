@@ -61,18 +61,15 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
-			if (!mustReturn)
-				return typeof (UnitType);
-
 			if (Local == null)
 			{
 				// variable must be defined: declare it in a temporary scope for pre-resolve state
 				var tmpVar = new Local(VariableName, _VariableType);
-				return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), tmpVar);
+				return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx, mustReturn), tmpVar);
 			}
 
 			// index local specified explicitly: no need to account for it in pre-resolve
-			return Body.Resolve(ctx);
+			return Body.Resolve(ctx, mustReturn);
 		}
 
 		#endregion

@@ -2,17 +2,30 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
+
 using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations;
+using Lens.SyntaxTree.Declarations.Functions;
+using Lens.SyntaxTree.Declarations.Locals;
+using Lens.SyntaxTree.Declarations.Types;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Literals;
-using Lens.SyntaxTree.Operators;
+using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.Translations;
 
 namespace Lens.Parser
 {
+	using System.Data;
+
+	using Lens.SyntaxTree.PatternMatching;
+	using Lens.SyntaxTree.PatternMatching.Rules;
+
+
 	internal partial class LensParser
 	{
 		#region Constructor
@@ -126,12 +139,18 @@ namespace Lens.Parser
 
 			while (true)
 			{
-				if(check(LexemType.ArrayDef))
+				if (peek(LexemType.SquareOpen, LexemType.SquareClose))
+				{
 					node = new TypeSignature(null, "[]", node);
-				else if(check(LexemType.Tilde))
+					skip(2);
+				}
+
+				else if (check(LexemType.Tilde))
 					node = new TypeSignature(null, "~", node);
-				else if(check(LexemType.QuestionMark))
+
+				else if (check(LexemType.QuestionMark))
 					node = new TypeSignature(null, "?", node);
+
 				else
 					return node;
 			}
@@ -756,7 +775,7 @@ namespace Lens.Parser
 		#region Block control structures
 
 		/// <summary>
-		/// block_expr                                  = if_block | while_block | for_block | using_block | try_stmt | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
+		/// block_expr                                  = if_block | while_block | for_block | using_block | try_stmt | match_block | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
 		/// </summary>
 		private NodeBase parseBlockExpr()
 		{
@@ -765,6 +784,7 @@ namespace Lens.Parser
 				   ?? attempt(parseForBlock)
 				   ?? attempt(parseUsingBlock)
 				   ?? attempt(parseTryStmt)
+				   ?? attempt(parseMatchBlock)
 				   ?? attempt(parseNewBlockExpr)
 				   ?? attempt(parseInvokeBlockExpr)
 				   ?? attempt(parseInvokeBlockPassExpr)
@@ -1327,6 +1347,298 @@ namespace Lens.Parser
 				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 
 			return node;
+		}
+
+		#endregion
+
+		#region Pattern matching
+
+		/// <summary>
+		/// match_block                                 = "match" line_expr "with" INDENT { match_stmt } DEDENT
+		/// </summary>
+		private MatchNode parseMatchBlock()
+		{
+			if (!check(LexemType.Match))
+				return null;
+
+			var node = new MatchNode { Expression = ensure(parseLineExpr, ParserMessages.MatchExpressionExpected) };
+
+			ensure(LexemType.With, ParserMessages.SymbolExpected, "with");
+			ensure(LexemType.Indent, ParserMessages.MatchIndentExpected);
+
+			node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+
+			while (!check(LexemType.Dedent))
+			{
+				ensure(LexemType.NewLine, ParserMessages.NewlineSeparatorExpected);
+				node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// match_stmt                                  = "case" match_rules [ "when" line_expr ] "then" block
+		/// </summary>
+		private MatchStatementNode parseMatchStmt()
+		{
+			ensure(LexemType.Case, ParserMessages.SymbolExpected, "case");
+
+			var node = new MatchStatementNode { MatchRules = parseMatchRules().ToList() };
+
+			if (check(LexemType.When))
+				node.Condition = ensure(parseLineExpr, ParserMessages.WhenGuardExpressionExpected);
+
+			ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
+
+			node.Expression = ensure(parseBlock, ParserMessages.CodeBlockExpected);
+
+			return node;
+		}
+
+		/// <summary>
+		/// match_rules                                 = match_rule { [ NL ] "|" match_rule }
+		/// </summary>
+		private IEnumerable<MatchRuleBase> parseMatchRules()
+		{
+			yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+
+			while (true)
+			{
+				check(LexemType.NewLine);
+				if (!check(LexemType.VerticalLine))
+					yield break;
+
+				yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+			}
+		}
+
+		/// <summary>
+		/// match_rule                                  = rule_generic [ rule_keyvalue ]
+		/// </summary>
+		private MatchRuleBase parseMatchRule()
+		{
+			var rule = parseRuleGeneric();
+			var keyValue = attempt(parseRuleKeyValue);
+
+			if (keyValue == null)
+				return rule;
+
+			keyValue.KeyRule = rule;
+			return keyValue;
+		}
+
+		#endregion
+
+		#region Match rules
+
+		/// <summary>
+		/// rule_generic                                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
+		/// </summary>
+		private MatchRuleBase parseRuleGeneric()
+		{
+			return attempt(parseRuleTuple)
+			       ?? attempt(parseRuleArray)
+				   ?? attempt(parseRegex)
+			       ?? attempt(parseRuleRecord)
+			       ?? attempt(parseRuleType)
+			       ?? attempt(parseRuleRange)
+			       ?? attempt(parseRuleLiteral)
+				   ?? attempt(parseRuleName) as MatchRuleBase;
+		}
+
+		/// <summary>
+		/// rule_tuple                                  = "(" match_rule { ";" match_rule } ")"
+		/// </summary>
+		private MatchTupleRule parseRuleTuple()
+		{
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var node = new MatchTupleRule();
+			node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
+			while(check(LexemType.Semicolon))
+				node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
+
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_array                                  = "[" [ rule_array_item { ";" rule_array_item } ] "]"
+		/// </summary>
+		private MatchRuleBase parseRuleArray()
+		{
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new MatchArrayRule();
+			if (!check(LexemType.SquareClose))
+			{
+				node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+
+				while (check(LexemType.Semicolon))
+					node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+
+				ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_regex                                 = regex
+		/// </summary>
+		private MatchRegexNode parseRegex()
+		{
+			if (!peek(LexemType.Regex))
+				return null;
+
+			var raw = getValue();
+			var trailPos = raw.LastIndexOf('#');
+			var value = raw.Substring(1, trailPos - 1);
+			var mods = raw.Substring(trailPos + 1);
+			return new MatchRegexNode {Value = value, Modifiers = mods};
+		}
+
+		/// <summary>
+		/// rule_array_item                             = rule_subsequence | match_rule
+		/// </summary>
+		private MatchRuleBase parseRuleArrayItem()
+		{
+			return attempt(parseRuleSubsequence)
+			       ?? attempt(parseMatchRule);
+		}
+
+		/// <summary>
+		/// rule_record                                 = identifier "(" rule_record_var { ";" rule_record_var } ")"
+		/// </summary>
+		private MatchRecordRule parseRuleRecord()
+		{
+			if (!peek(LexemType.Identifier, LexemType.ParenOpen))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			var node = new MatchRecordRule { Identifier = identifier };
+			node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
+			while(check(LexemType.Semicolon))
+				node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
+
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_record_var                             = identifier "=" match_rule
+		/// </summary>
+		private MatchRecordField parseRuleRecordVar()
+		{
+			if (!peek(LexemType.Identifier, LexemType.Assign))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			return new MatchRecordField
+			{
+				Name = identifier,
+				Rule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_type                                   = identifier "of" match_rule
+		/// </summary>
+		private MatchTypeRule parseRuleType()
+		{
+			if (!peek(LexemType.Identifier, LexemType.Of))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			return new MatchTypeRule
+			{
+				Identifier = identifier,
+				LabelRule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_range                                  = rule_literal ".." rule_literal
+		/// </summary>
+		private MatchRangeRule parseRuleRange()
+		{
+			var start = attempt(parseRuleLiteral);
+			if (start == null)
+				return null;
+
+			if (!check(LexemType.DoubleDot))
+				return null;
+
+			return new MatchRangeRule
+			{
+				RangeStartRule = start,
+				RangeEndRule = ensure(parseRuleLiteral, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_literal                                = literal
+		/// </summary>
+		private MatchLiteralRule parseRuleLiteral()
+		{
+			var literal = attempt(parseLiteral);
+			if (literal == null)
+				return null;
+
+			return new MatchLiteralRule { Literal = (ILiteralNode)literal };
+		}
+
+		/// <summary>
+		/// rule_name                                   = identifier [ ":" type ]
+		/// </summary>
+		private MatchNameRule parseRuleName()
+		{
+			if (!peek(LexemType.Identifier))
+				return null;
+
+			var node = new MatchNameRule { Name = getValue() };
+			if (check(LexemType.Colon))
+				node.Type = ensure(parseType, ParserMessages.TypeSignatureExpected);
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_subsequence                            = "..." identifier
+		/// </summary>
+		private MatchNameRule parseRuleSubsequence()
+		{
+			if (!check(LexemType.Ellipsis))
+				return null;
+
+			return new MatchNameRule
+			{
+				Name = getValue(),
+				IsArraySubsequence = true
+			};
+		}
+
+		/// <summary>
+		/// rule_keyvalue                               = "=>" rule_generic
+		/// </summary>
+		private MatchKeyValueRule parseRuleKeyValue()
+		{
+			if (!check(LexemType.FatArrow))
+				return null;
+
+			// key is substituted in match_rule
+			return new MatchKeyValueRule { ValueRule = ensure(parseRuleGeneric, ParserMessages.MatchRuleExpected) };
 		}
 
 		#endregion

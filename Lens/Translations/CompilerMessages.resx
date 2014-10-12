@@ -498,4 +498,70 @@
   <data name="TypeInterface" xml:space="preserve">
     <value>LE3108: Cannot create an instance of interface '{0}'!</value>
   </data>
+  <data name="NoCommonType" xml:space="preserve">
+    <value>LE3134: Cannot infer common type if any of the expressions is 'Unit' or 'Void'!</value>
+  </data>
+  <data name="PatternNameDuplicated" xml:space="preserve">
+    <value>LE3131: Pattern contains duplicate binding to name '{0}'!</value>
+  </data>
+  <data name="PatternNameSetMismatch" xml:space="preserve">
+    <value>LE3132: Pattern binding mismatched: not all alternatives contain definition for '{0}'! Make sure all pattern alternatives contain the identical set of binding names and their corresponding types.</value>
+  </data>
+  <data name="PatternNameTypeMismatch" xml:space="preserve">
+    <value>LE3133: Pattern binding mismatched: binding to '{0}' is inferred to have different types ('{1}' and '{2}') in alternatives.</value>
+  </data>
+  <data name="PatternTupleTooFewArgs" xml:space="preserve">
+    <value>LE3129: Tuple pattern must have at lease 1 element!</value>
+  </data>
+  <data name="PatternTupleTooManyArgs" xml:space="preserve">
+    <value>LE3128: Tuple pattern cannot have more than 7 elements!</value>
+  </data>
+  <data name="PatternTypeMismatch" xml:space="preserve">
+    <value>LE3130: Pattern cannot be applied to type '{0}', because it is incompatible with expected type '{1}'!</value>
+  </data>
+  <data name="PatternArraySubsequences" xml:space="preserve">
+    <value>LE3135: Array pattern cannot contain more than one subsequence defined with ellipsis!</value>
+  </data>
+  <data name="PatternNotValidRecord" xml:space="preserve">
+    <value>LE3139: Type '{0}' must be a record defined in the script to be used in this pattern!</value>
+  </data>
+  <data name="PatternNotValidType" xml:space="preserve">
+    <value>LE3138: Type '{0}' must be a type defined in the script to be used in this pattern!</value>
+  </data>
+  <data name="PatternRangeNotNumeric" xml:space="preserve">
+    <value>LE3141: Range pattern limits must be numeric constants!</value>
+  </data>
+  <data name="PatternRecordNoField" xml:space="preserve">
+    <value>LE3140: Record '{0}' does not have a field named '{1}'!</value>
+  </data>
+  <data name="PatternTypeMatchImpossible" xml:space="preserve">
+    <value>LE3136: Expression of type '{0}' can never be of type '{1}'!</value>
+  </data>
+  <data name="PatternTypeNoTag" xml:space="preserve">
+    <value>LE3140: Type '{0}' does not have a tag!</value>
+  </data>
+  <data name="PatternUnreachable" xml:space="preserve">
+    <value>LE3137: Pattern is unreachable because a catch-all pattern is already defined before!</value>
+  </data>
+  <data name="PatternSubsequenceLocation" xml:space="preserve">
+    <value>LE3142: Subsequence is only allowed for IEnumerable if it is the last element of the pattern!</value>
+  </data>
+  <data name="PatternRecordFieldDuplicated" xml:space="preserve">
+    <value>LE3143: Duplicate pattern for field '{0}'!</value>
+  </data>
+  <data name="RegexConverterTypeIncompatible" xml:space="preserve">
+    <value>LE3147: Converter type '{0}' is incompatible because it doesn't provide a Parse(string) method!</value>
+  </data>
+  <data name="RegexConverterTypeNotFound" xml:space="preserve">
+    <value>LE3146: Converter type '{0}' does not exist!</value>
+  </data>
+  <data name="RegexDuplicateModifier" xml:space="preserve">
+    <value>LE3145: Duplicate regex modifier '{0}'!</value>
+  </data>
+  <data name="RegexSyntaxError" xml:space="preserve">
+    <value>LE3148: Syntax error in regular expression!</value>
+  </data>
+  <data name="RegexUnknownModifier" xml:space="preserve">
+    <value>LE3144: Unknown regex modifier '{0}'!</value>
+  </data>
 </root>

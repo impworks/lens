@@ -123,16 +123,31 @@
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\UsingNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewObjectArrayNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\ShortAssignmentNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\UsingNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewObjectArrayNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\ShortAssignmentNode.cs" />
+    <Compile Include="SyntaxTree\Internals\JumpLabelNode.cs" />
+    <Compile Include="SyntaxTree\Internals\JumpNode.cs" />
+    <Compile Include="SyntaxTree\Internals\RawEnumNode.cs" />
     <Compile Include="SyntaxTree\Literals\CharLiteral.cs" />
     <Compile Include="SyntaxTree\Literals\DecimalNode.cs" />
     <Compile Include="SyntaxTree\Literals\FloatNode.cs" />
     <Compile Include="SyntaxTree\Literals\LongNode.cs" />
-    <Compile Include="SyntaxTree\Operators\BitOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\ShiftOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\XorOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\BitOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\ShiftOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\XorOperatorNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\MatchNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchArrayRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchKeyValueRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchNameRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRangeRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRecordRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRegexNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRuleBase.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\MatchStatementNode.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchLiteralRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchTupleRule.cs" />
+    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchTypeRule.cs" />
     <Compile Include="Translations\CompilerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -142,59 +157,59 @@
     <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\IfNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\LambdaNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\RecordDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Functions\LambdaNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Types\RecordDefinitionNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ThrowNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\TypeDefinitionNodeBase.cs" />
+    <Compile Include="SyntaxTree\Declarations\Types\TypeDefinitionNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Types\TypeDefinitionNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\UseNode.cs" />
     <Compile Include="SyntaxTree\Expr.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetIdentifierNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetIndexNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetMemberNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\IdentifierNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\IndexNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\GetIdentifierNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\GetIndexNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\GetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\IdentifierNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\IndexNodeBase.cs" />
     <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\MemberNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\SetIdentifierNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\SetIndexNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\SetMemberNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\CollectionNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\AccessorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\MemberNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\SetIdentifierNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\SetIndexNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\SetMemberNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\CollectionNodeBase.cs" />
+    <Compile Include="SyntaxTree\Expressions\GetSet\AccessorNodeBase.cs" />
     <Compile Include="SyntaxTree\Literals\NullNode.cs" />
     <Compile Include="SyntaxTree\Interfaces.cs" />
     <Compile Include="SyntaxTree\Internals\ThisNode.cs" />
-    <Compile Include="SyntaxTree\Operators\AddOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\BooleanOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\CastOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\DefaultOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\DivideOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\ComparisonOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\InversionOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\IsOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\NegationOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\MultiplyOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\AddOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\BooleanOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeBased\CastOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeBased\DefaultOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\DivideOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\ComparisonOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Unary\InversionOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeBased\IsOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Unary\NegationOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\MultiplyOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\OperatorNodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\PowOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\RemainderOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\SubtractOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeofOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeOperatorNodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\UnaryOperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\PowOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\RemainderOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\SubtractOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeBased\TypeofOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\TypeBased\TypeOperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Operators\Unary\UnaryOperatorNodeBase.cs" />
     <Compile Include="Compiler\FunctionArgument.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\FunctionNodeBase.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\FunctionNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\LetNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Functions\FunctionNodeBase.cs" />
+    <Compile Include="SyntaxTree\Declarations\Functions\FunctionNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Locals\LetNode.cs" />
     <Compile Include="SyntaxTree\ControlFlow\WhileNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\NameDeclarationNodeBase.cs" />
+    <Compile Include="SyntaxTree\Declarations\Locals\NameDeclarationNodeBase.cs" />
     <Compile Include="SyntaxTree\ControlFlow\TryNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\VarNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Locals\VarNode.cs" />
     <Compile Include="SyntaxTree\Expressions\InvocationNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewArrayNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewDictionaryNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewListNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewObjectNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\NewTupleNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewArrayNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewDictionaryNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewListNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewObjectNode.cs" />
+    <Compile Include="SyntaxTree\Expressions\Instantiation\NewTupleNode.cs" />
     <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
     <Compile Include="SyntaxTree\Literals\DoubleNode.cs" />
     <Compile Include="SyntaxTree\Literals\IntNode.cs" />
@@ -202,7 +217,7 @@
     <Compile Include="SyntaxTree\Literals\StringNode.cs" />
     <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
     <Compile Include="SyntaxTree\NodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\BinaryOperatorNodeBase.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\BinaryOperatorNodeBase.cs" />
     <Compile Include="Translations\LexerMessages.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -225,6 +240,7 @@
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Utils\NodeChild.cs" />
     <Compile Include="Resolver\TypeExtensions.cs" />
+    <Compile Include="Utils\PatternNameBinding.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Grammar\Grammar.v1.txt" />
@@ -249,6 +265,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Translations\ParserMessages.ru.resx" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

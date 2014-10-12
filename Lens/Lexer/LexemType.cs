@@ -22,6 +22,10 @@
 		Try,
 		Catch,
 		Finally,
+		Match,
+		With,
+		Case,
+		When,
 		Let,
 		Var,
 		New,
@@ -47,6 +51,7 @@
 		Char,
 		String,
 		Identifier,
+		Regex,
 
 		// Braces
 		ParenOpen,
@@ -77,7 +82,6 @@
 		Assign,
 
 		// Specials
-		ArrayDef,
 		PassLeft,
 		PassRight,
 		Arrow,
@@ -91,6 +95,8 @@
 		Tilde,
 		QuestionMark,
 		Ellipsis,
+		VerticalLine,
+
 		Indent,
 		Dedent
 	}

@@ -312,4 +312,16 @@
   <data name="InvalidDecimal" xml:space="preserve">
     <value>LE2065: Value '{0}' is not a valid decimal!</value>
   </data>
+  <data name="MatchExpressionExpected" xml:space="preserve">
+    <value>LE2066: Match expresion is expected!</value>
+  </data>
+  <data name="MatchIndentExpected" xml:space="preserve">
+    <value>LE2068: Match rules must be indented!</value>
+  </data>
+  <data name="MatchRuleExpected" xml:space="preserve">
+    <value>LE2069: Match rule is expected!</value>
+  </data>
+  <data name="WhenGuardExpressionExpected" xml:space="preserve">
+    <value>LE2067: When guard expression is expected!</value>
+  </data>
 </root>

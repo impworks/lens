@@ -6,7 +6,7 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node to represent the null literal.
 	/// </summary>
-	internal class NullNode : NodeBase
+	internal class NullNode : NodeBase, ILiteralNode
 	{
 		#region Resolve
 
@@ -23,6 +23,15 @@ namespace Lens.SyntaxTree.Literals
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitNull();
+		}
+
+		#endregion
+
+		#region Literal type
+
+		public Type LiteralType
+		{
+			get { return typeof (NullType); }
 		}
 
 		#endregion

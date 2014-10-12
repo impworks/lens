@@ -312,4 +312,16 @@
   <data name="InvalidLong" xml:space="preserve">
     <value>LE2064: Значение '{0}' не является допустимым целым числом!</value>
   </data>
+  <data name="MatchExpressionExpected" xml:space="preserve">
+    <value>LE2066: Ожидается выражение для сопоставления с образцом!</value>
+  </data>
+  <data name="MatchIndentExpected" xml:space="preserve">
+    <value>LE2068: Правила сопоставления должны быть выделены отступами!</value>
+  </data>
+  <data name="MatchRuleExpected" xml:space="preserve">
+    <value>LE2069: Ожидается правило сопоставления!</value>
+  </data>
+  <data name="WhenGuardExpressionExpected" xml:space="preserve">
+    <value>LE2067: Ожидается проверочное выражение!</value>
+  </data>
 </root>
