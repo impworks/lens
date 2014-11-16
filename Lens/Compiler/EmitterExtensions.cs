@@ -271,6 +271,14 @@ namespace Lens.Compiler
 			gen.Emit(OpCodes.Neg);
 		}
 
+		/// <summary>
+		/// Duplicates the last value on stack.
+		/// </summary>
+		public static void EmitDup(this ILGenerator gen)
+		{
+			gen.Emit(OpCodes.Dup);
+		}
+
 		#endregion
 
 		#region Saving and loading

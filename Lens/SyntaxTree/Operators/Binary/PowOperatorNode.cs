@@ -38,6 +38,43 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		protected override void emitOperator(Context ctx)
 		{
+			if (RightOperand.IsConstant && RightOperand.ConstantValue is int)
+			{
+				var constPower = (int)RightOperand.ConstantValue;
+				if(constPower > 0 && constPower <= 10)
+				{
+					var gen = ctx.CurrentMethod.Generator;
+
+					// detect maximum power of 2 inside current power
+					var squareCount = 0;
+					var powerOf2 = 1;
+					while (constPower - powerOf2 >= powerOf2)
+					{
+						powerOf2 *= 2;
+						squareCount ++;
+					}
+
+					var multCount = constPower - powerOf2;
+
+					LeftOperand.Emit(ctx, true);
+					gen.EmitConvert(typeof(double));
+
+					for (var i = 0; i < multCount; i++)
+						gen.EmitDup();
+
+					for (var i = 0; i < squareCount; i++)
+					{
+						gen.EmitDup();
+						gen.EmitMultiply();
+					}
+
+					for (var i = 0; i < multCount; i++)
+						gen.EmitMultiply();
+
+					return;
+				}
+			}
+
 			loadAndConvertNumerics(ctx, typeof(double));
 			ctx.CurrentMethod.Generator.EmitCall(_PowMethod);
 		}
