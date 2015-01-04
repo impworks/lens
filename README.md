@@ -80,6 +80,18 @@ let invParse = inv :> int::Parse :> doubler :> (x -> println x)
 invParse "1" "2" // 42
 ```
 
+Pattern matching:
+
+```csharp
+fun desribe:string (arr:object[]) ->
+    match arr with
+        case [] then "empty array"
+        case [x:int] when x < 10 then fmt "array with 1 small int ({0})" x
+        case [x] then "array with 1 item"
+        case [x; y] then "array with 2 items"
+        case [x; y; ...z] then fmt "array with {0}, {1} and {2} more items" x y z.Length
+```
+
 ### Why another language?
 
 LENS provides an easy way to compile and execute a script within your application, and manages the interconnection between the app and the script. The language has a light, conscise, and type-safe syntax with rich functional features.
@@ -133,11 +145,12 @@ The compiler already supports the following features:
 * Import of types, methods and even local variables from host into the script
 * Declaration of records and functions inside the script
 * Local type inference
-* Anonymous functions with closures
-* Extension methods and LINQ
+* [Anonymous functions](https://github.com/impworks/lens/wiki/Lambda-expressions) with closures
+* [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
 * Overloaded operators support
-* Partial function application and function composition
-* Automatic memoization support
+* [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)
+* Pattern matching (with [awesome regex support](https://github.com/impworks/lens/wiki/Pattern-Matching#9-regex-rule))
+* Automatic [memoization](https://github.com/impworks/lens/wiki/Functions#memoization) support
 * Shorthand operators
 * Basic optimizations like constant unrolling
 * Safe mode: certain types or namespaces can be disabled for security reasons
@@ -145,7 +158,6 @@ The compiler already supports the following features:
 Some cool features are on the way:
 
 * Generic function definition
-* Pattern matching
 * Object initializers
 * Attributes
 
