@@ -16,7 +16,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		
 		public ShortAssignmentNode(LexemType opType, NodeBase expr)
 		{
-			AssignmentOperator = OperatorLookups[opType];
+			_OperatorType = opType;
+			_AssignmentOperator = OperatorLookups[opType];
 			Expression = expr;
 		}
 
@@ -25,9 +26,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		#region Fields
 
 		/// <summary>
+		/// Type of shorthand operator.
+		/// </summary>
+		private readonly LexemType _OperatorType;
+
+		/// <summary>
 		/// The kind of operator to use short assignment for.
 		/// </summary>
-		public readonly Func<NodeBase, NodeBase, NodeBase> AssignmentOperator;
+		private readonly Func<NodeBase, NodeBase, NodeBase> _AssignmentOperator;
 
 		/// <summary>
 		/// Assignment expression to expand.
@@ -64,7 +70,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return expandIdentifier(Expression as SetIdentifierNode);
 
 			if (Expression is SetMemberNode)
-				return expandMember(ctx, Expression as SetMemberNode);
+			{
+				var expr = Expression as SetMemberNode;
+				return expandEvent(ctx, expr) ?? expandMember(ctx, expr);
+			}
 
 			if (Expression is SetIndexNode)
 				return expandIndex(ctx, Expression as SetIndexNode);
@@ -84,11 +93,28 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		{
 			return Expr.Set(
 				node.Identifier,
-				AssignmentOperator(
+				_AssignmentOperator(
 					Expr.Get(node.Identifier),
 					node.Value
 				)
 			);
+		}
+
+		/// <summary>
+		/// Attempts to expand the expression to an event (un)subscription.
+		/// </summary>
+		private NodeBase expandEvent(Context ctx, SetMemberNode node)
+		{
+			// incorrect operator
+			if (!_OperatorType.IsAnyOf(LexemType.Plus, LexemType.Minus))
+				return null;
+
+			var type = node.StaticType != null
+				? ctx.ResolveType(node.StaticType)
+				: node.Expression.Resolve(ctx);
+
+			// todo
+			return null;
 		}
 
 		/// <summary>
@@ -104,7 +130,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return Expr.SetMember(
 					node.StaticType,
 					node.MemberName,
-					AssignmentOperator(
+					_AssignmentOperator(
 						Expr.GetMember(
 							node.StaticType,
 							node.MemberName
@@ -120,7 +146,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return Expr.SetMember(
 					node.Expression,
 					node.MemberName,
-					AssignmentOperator(
+					_AssignmentOperator(
 						Expr.GetMember(
 							node.Expression,
 							node.MemberName
@@ -138,7 +164,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				Expr.SetMember(
 					Expr.Get(tmpVar),
 					node.MemberName,
-					AssignmentOperator(
+					_AssignmentOperator(
 						Expr.GetMember(
 							Expr.Get(tmpVar),
 							node.MemberName
@@ -177,7 +203,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				Expr.SetIdx(
 					node.Expression,
 					node.Index,
-					AssignmentOperator(
+					_AssignmentOperator(
 						Expr.GetIdx(
 							node.Expression,
 							node.Index
