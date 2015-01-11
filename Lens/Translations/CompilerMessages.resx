@@ -208,7 +208,7 @@
     <value>LE3031: Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DynamicMemberFromStaticContext" xml:space="preserve">
-    <value>LE3032: '{0}' cannot be accessed from static context!</value>
+    <value>LE3032: '{0}.{1}' cannot be accessed from static context!</value>
   </data>
   <data name="ExpressionNull" xml:space="preserve">
     <value>LE3034: Expression type cannot be inferred! Please use type casting to specify actual type.</value>
@@ -563,5 +563,8 @@
   </data>
   <data name="RegexUnknownModifier" xml:space="preserve">
     <value>LE3144: Unknown regex modifier '{0}'!</value>
+  </data>
+  <data name="EventAsExpr" xml:space="preserve">
+    <value>LE3149: Event cannot be used as an expression!</value>
   </data>
 </root>

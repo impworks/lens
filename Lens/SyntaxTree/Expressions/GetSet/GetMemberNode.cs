@@ -77,7 +77,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			Action check = () =>
 			{
 				if (Expression == null && !_IsStatic)
-					error(CompilerMessages.DynamicMemberFromStaticContext, MemberName);
+					error(CompilerMessages.DynamicMemberFromStaticContext, _Type, MemberName);
 
 				if (_Method == null && TypeHints.Count > 0)
 					error(CompilerMessages.TypeArgumentsForNonMethod, _Type, MemberName);
@@ -120,6 +120,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			}
 			catch (KeyNotFoundException) { }
 
+			// check for event: events are only allowed at the left side of += and -=
+			try
+			{
+				ctx.ResolveEvent(_Type, MemberName);
+				error(CompilerMessages.EventAsExpr);
+			}
+			catch (KeyNotFoundException) { }
+
+			// find method
 			var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
 			var methods = ctx.ResolveMethodGroup(_Type, MemberName).Where(m => checkMethodArgs(argTypes, m)).ToArray();
 
@@ -168,28 +177,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			
 			if (!_IsStatic)
 			{
-				var exprType = Expression.Resolve(ctx);
-				if (exprType.IsStruct())
-				{
-					if (Expression is IPointerProvider)
-					{
-						(Expression as IPointerProvider).PointerRequired = true;
-						Expression.Emit(ctx, true);
-					}
-					else
-					{
-						var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
-						Expression.Emit(ctx, true);
-						gen.EmitSaveLocal(tmpVar.LocalBuilder);
-						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-					}
-				}
-				else
-				{
-					Expression.Emit(ctx, true);
-				}
+				Expression.EmitNodeForAccess(ctx);
 
-				if (exprType.IsArray && MemberName == "Length")
+				if (MemberName == "Length" && Expression.Resolve(ctx).IsArray)
 				{
 					gen.EmitGetArrayLength();
 					return;

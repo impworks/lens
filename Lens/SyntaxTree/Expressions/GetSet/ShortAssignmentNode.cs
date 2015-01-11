@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Lexer;
+using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
+using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
@@ -113,8 +115,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				? ctx.ResolveType(node.StaticType)
 				: node.Expression.Resolve(ctx);
 
-			// todo
-			return null;
+			try
+			{
+				var evt = ctx.ResolveEvent(type, node.MemberName);
+//				node.Value = Expr.CastTransparent(node.Value, evt.EventHandlerType);
+				return new EventNode(evt, node, _OperatorType == LexemType.Plus);
+			}
+			catch (KeyNotFoundException)
+			{
+				return null;
+			}
 		}
 
 		/// <summary>

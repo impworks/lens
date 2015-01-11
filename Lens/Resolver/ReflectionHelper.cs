@@ -665,7 +665,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Returns the list of methods by name, flattening interface hierarchy.
 		/// </summary>
-		public static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
+		private static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
 		{
 			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 

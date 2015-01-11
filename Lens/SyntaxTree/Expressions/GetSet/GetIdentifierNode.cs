@@ -33,24 +33,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#endregion
 
-		
-
 		#region Resolve
-
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			if (_Type != null)
-				return Expr.New(_Type.TypeInfo);
-
-			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
-				return Expr.Constant(_LocalConstant.ConstantValue);
-
-			return base.expand(ctx, mustReturn);
-		}
-
-		#endregion
-
-		#region Transform
 		
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
@@ -106,6 +89,21 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			}
 
 			return typeof (UnitType);
+		}
+
+		#endregion
+
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
+		{
+			if (_Type != null)
+				return Expr.New(_Type.TypeInfo);
+
+			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
+				return Expr.Constant(_LocalConstant.ConstantValue);
+
+			return base.expand(ctx, mustReturn);
 		}
 
 		#endregion

@@ -340,11 +340,20 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3032: &apos;{0}&apos; cannot be accessed from static context!.
+        ///   Looks up a localized string similar to LE3032: &apos;{0}.{1}&apos; cannot be accessed from static context!.
         /// </summary>
         public static string DynamicMemberFromStaticContext {
             get {
                 return ResourceManager.GetString("DynamicMemberFromStaticContext", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3149: Event cannot be used as an expression!.
+        /// </summary>
+        public static string EventAsExpr {
+            get {
+                return ResourceManager.GetString("EventAsExpr", resourceCulture);
             }
         }
         

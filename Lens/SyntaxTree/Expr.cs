@@ -185,6 +185,14 @@ namespace Lens.SyntaxTree
 			return new CastOperatorNode { Expression = node, Type = type };
 		}
 
+		public static CastOperatorNode CastTransparent(NodeBase node, Type type)
+		{
+			var expr = Cast(node, type);
+			expr.StartLocation = node.StartLocation;
+			expr.EndLocation = node.EndLocation;
+			return expr;
+		}
+
 		public static CastOperatorNode Cast<T>(NodeBase node)
 		{
 			return new CastOperatorNode { Expression = node, Type = typeof(T) };
