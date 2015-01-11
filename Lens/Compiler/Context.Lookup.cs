@@ -79,6 +79,18 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
+		/// Resolves an event from a type by its name.
+		/// </summary>
+		public EventWrapper ResolveEvent(Type type, string name)
+		{
+			if (!(type is TypeBuilder))
+				return ReflectionHelper.ResolveEvent(type, name);
+
+			// no internal events
+			throw new KeyNotFoundException();
+		}
+
+		/// <summary>
 		/// Resolves a constructor from a type by the list of arguments.
 		/// </summary>
 		public ConstructorWrapper ResolveConstructor(Type type, Type[] argTypes)

@@ -95,4 +95,15 @@ namespace Lens.Resolver
 		public bool CanGet { get { return Getter != null; } }
 		public bool CanSet { get { return Setter != null; } }
 	}
+
+	/// <summary>
+	/// Wrapper for an event entity.
+	/// </summary>
+	internal class EventWrapper : WrapperBase
+	{
+		public Type EventHandlerType;
+
+		public MethodInfo AddMethod;
+		public MethodInfo RemoveMethod;
+	}
 }
