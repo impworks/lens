@@ -126,6 +126,9 @@ namespace Lens.SyntaxTree.Declarations.Functions
 		/// </summary>
 		public void SetInferredArgumentTypes(Type[] argTypes)
 		{
+			if(Arguments.Count != argTypes.Length)
+				error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
+
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var inferred = argTypes[idx];

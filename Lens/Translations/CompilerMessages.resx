@@ -567,4 +567,7 @@
   <data name="EventAsExpr" xml:space="preserve">
     <value>LE3149: Event cannot be used as an expression!</value>
   </data>
+  <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
+    <value>LE3150: Delegate expects {0} arguments, but specified lambda expression accepts {1}!</value>
+  </data>
 </root>

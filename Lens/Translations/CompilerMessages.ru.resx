@@ -567,4 +567,7 @@
   <data name="EventAsExpr" xml:space="preserve">
     <value>LE3149: Событие не может быть использовано в выражении!</value>
   </data>
+  <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
+    <value>LE3150: Делегает ожидает {0} аргументов, но анонимная функция принимает {1}!</value>
+  </data>
 </root>
