@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Expressions.GetSet;
@@ -13,8 +13,9 @@ namespace Lens.SyntaxTree.Internals
 		public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
 		{
 			_Event = evt;
-			_Node = node;
 			_IsSubscription = isSubscription;
+			_Node = node;
+			_Callback = Expr.CastTransparent(node.Value, _Event.EventHandlerType);
 		}
 
 		#endregion
@@ -25,6 +26,11 @@ namespace Lens.SyntaxTree.Internals
 		/// Node containing the event expression and name.
 		/// </summary>
 		private readonly SetMemberNode _Node;
+
+		/// <summary>
+		/// Callback expression to bind to event.
+		/// </summary>
+		private NodeBase _Callback;
 
 		/// <summary>
 		/// Flag indicating that the 
@@ -38,13 +44,11 @@ namespace Lens.SyntaxTree.Internals
 
 		#endregion
 
-		#region Resolve
+		#region Transform
 
-		protected override Type resolve(Context ctx, bool mustReturn)
+		protected override IEnumerable<NodeChild> getChildren()
 		{
-			_Node.Value.Resolve(ctx);
-
-			return base.resolve(ctx, mustReturn);
+			yield return new NodeChild(_Callback, x => _Callback = x);
 		}
 
 		#endregion
@@ -60,7 +64,7 @@ namespace Lens.SyntaxTree.Internals
 				_Node.Expression.EmitNodeForAccess(ctx);
 			}
 
-			_Node.Value.Emit(ctx, true);
+			_Callback.Emit(ctx, true);
 
 			var method = _IsSubscription ? _Event.AddMethod : _Event.RemoveMethod;
 			gen.EmitCall(method, true);
