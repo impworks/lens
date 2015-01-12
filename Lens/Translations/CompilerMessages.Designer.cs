@@ -124,7 +124,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3008: Delegate types &apos;{0}&apos; and &apos;{1}&apos; do not have matching return types!.
+        ///   Looks up a localized string similar to LE3008: Return types mismatch for &apos;{0}&apos; and &apos;{1}&apos;: &apos;{2}&apos; expected, &apos;{3}&apos; given!.
         /// </summary>
         public static string CastDelegateReturnTypesMismatch {
             get {

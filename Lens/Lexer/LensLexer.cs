@@ -347,7 +347,7 @@ namespace Lens.Lexer
 				addLexem(LexemType.NewLine, getPosition());
 
 				skip();
-				_Offset = 0;
+				_Offset = 1;
 				_Line++;
 				_NewLine = true;
 

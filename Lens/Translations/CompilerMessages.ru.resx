@@ -136,7 +136,7 @@
     <value>LE3007: У делегатов '{0}' и '{1}' не совпадают аргументы!</value>
   </data>
   <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
-    <value>LE3008: У делегатов '{0}' и '{1}' не совпадают возвращаемые значения!</value>
+    <value>LE3008: У делегатов '{0}' и '{1}' не совпадают возвращаемые значения: требуется '{2}', но получено '{3}'!</value>
   </data>
   <data name="CastNullValueType" xml:space="preserve">
     <value>LE3009: Невозможно привести выражение null к типу '{0}', поскольку он передается по значению!</value>
