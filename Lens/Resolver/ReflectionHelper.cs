@@ -162,6 +162,58 @@ namespace Lens.Resolver
 		}
 
 		/// <summary>
+		/// Resolves an event by its name.
+		/// </summary>
+		public static EventWrapper ResolveEvent(Type type, string name)
+		{
+			try
+			{
+				var evt = type.GetEvent(name);
+				if (evt == null)
+					throw new KeyNotFoundException();
+
+				return new EventWrapper
+				{
+					Name = name,
+					Type = type,
+
+					IsStatic = evt.GetRemoveMethod().IsStatic,
+
+					AddMethod = evt.GetAddMethod(),
+					RemoveMethod = evt.GetRemoveMethod(),
+					EventHandlerType = evt.EventHandlerType
+				};
+			}
+			catch (NotSupportedException)
+			{
+				if (!type.IsGenericType)
+					throw new KeyNotFoundException();
+
+				var genType = type.GetGenericTypeDefinition();
+				var genEvt = genType.GetEvent(name);
+
+				if (genEvt == null)
+					throw new KeyNotFoundException();
+
+				var adder = genEvt.GetAddMethod();
+				var remover = genEvt.GetRemoveMethod();
+
+				var declType = resolveActualDeclaringType(type, genEvt.DeclaringType);
+
+				return new EventWrapper
+				{
+					Name = name,
+					Type = type,
+
+					AddMethod = getMethodVersionForType(declType, adder),
+					RemoveMethod = getMethodVersionForType(declType, remover),
+					IsStatic = adder.IsStatic,
+					EventHandlerType = GenericHelper.ApplyGenericArguments(genEvt.EventHandlerType, type)
+				};
+			}
+		}
+
+		/// <summary>
 		/// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
 		/// Generic arguments whose values can be inferred from argument types can be skipped.
 		/// </summary>
@@ -613,7 +665,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Returns the list of methods by name, flattening interface hierarchy.
 		/// </summary>
-		public static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
+		private static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
 		{
 			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 

@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 					_IsStatic = _Property.IsStatic;
 					if (Expression == null && !_IsStatic)
-						error(CompilerMessages.DynamicMemberFromStaticContext, MemberName, type);
+						error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 				}
 				catch (KeyNotFoundException)
 				{

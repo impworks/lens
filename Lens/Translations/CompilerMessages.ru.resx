@@ -136,7 +136,7 @@
     <value>LE3007: У делегатов '{0}' и '{1}' не совпадают аргументы!</value>
   </data>
   <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
-    <value>LE3008: У делегатов '{0}' и '{1}' не совпадают возвращаемые значения!</value>
+    <value>LE3008: У делегатов '{0}' и '{1}' не совпадают возвращаемые значения: требуется '{2}', но получено '{3}'!</value>
   </data>
   <data name="CastNullValueType" xml:space="preserve">
     <value>LE3009: Невозможно привести выражение null к типу '{0}', поскольку он передается по значению!</value>
@@ -208,7 +208,7 @@
     <value>LE3031: Невозможно добавить значение типа '{0}' в Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DynamicMemberFromStaticContext" xml:space="preserve">
-    <value>LE3032: Невозможно получить доступ к '{0}' из статического контекста!</value>
+    <value>LE3032: Невозможно получить доступ к '{0}.{1}' из статического контекста!</value>
   </data>
   <data name="ExpressionNull" xml:space="preserve">
     <value>LE3034: Тип выражения не может быть выведен! Воспользуйтесь операцией приведения типов.</value>
@@ -563,5 +563,11 @@
   </data>
   <data name="RegexUnknownModifier" xml:space="preserve">
     <value>LE3144: Неизвестный модификатор '{0}'!</value>
+  </data>
+  <data name="EventAsExpr" xml:space="preserve">
+    <value>LE3149: Событие не может быть использовано в выражении!</value>
+  </data>
+  <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
+    <value>LE3150: Делегает ожидает {0} аргументов, но анонимная функция принимает {1}!</value>
   </data>
 </root>

@@ -136,7 +136,7 @@
     <value>LE3007: Delegate types '{0}' and '{1}' do not have matching argument types!</value>
   </data>
   <data name="CastDelegateReturnTypesMismatch" xml:space="preserve">
-    <value>LE3008: Delegate types '{0}' and '{1}' do not have matching return types!</value>
+    <value>LE3008: Return types mismatch for '{0}' and '{1}': '{2}' expected, '{3}' given!</value>
   </data>
   <data name="CastNullValueType" xml:space="preserve">
     <value>LE3009: Cannot cast a null to type '{0}' because it is a value type!</value>
@@ -208,7 +208,7 @@
     <value>LE3031: Cannot add a value of type '{0}' to Dictionary&lt;{1}, {2}&gt;!</value>
   </data>
   <data name="DynamicMemberFromStaticContext" xml:space="preserve">
-    <value>LE3032: '{0}' cannot be accessed from static context!</value>
+    <value>LE3032: '{0}.{1}' cannot be accessed from static context!</value>
   </data>
   <data name="ExpressionNull" xml:space="preserve">
     <value>LE3034: Expression type cannot be inferred! Please use type casting to specify actual type.</value>
@@ -563,5 +563,11 @@
   </data>
   <data name="RegexUnknownModifier" xml:space="preserve">
     <value>LE3144: Unknown regex modifier '{0}'!</value>
+  </data>
+  <data name="EventAsExpr" xml:space="preserve">
+    <value>LE3149: Event cannot be used as an expression!</value>
+  </data>
+  <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
+    <value>LE3150: Delegate expects {0} arguments, but specified lambda expression accepts {1}!</value>
   </data>
 </root>

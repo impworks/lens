@@ -123,7 +123,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 				error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				error(CompilerMessages.CastDelegateReturnTypesMismatch, from, to);
+				error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();

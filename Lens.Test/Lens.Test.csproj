@@ -75,6 +75,7 @@
   <ItemGroup>
     <Compile Include="Features\CastingTest.cs" />
     <Compile Include="Features\ControlStructuresTest.cs" />
+    <Compile Include="Features\EventsTest.cs" />
     <Compile Include="Features\FunctionalTest.cs" />
     <Compile Include="Features\LambdasInferenceTest.cs" />
     <Compile Include="Features\PatternMatchingTest.cs" />

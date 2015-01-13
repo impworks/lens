@@ -289,30 +289,7 @@ namespace Lens.SyntaxTree.Expressions
 
 			if (_InvocationSource != null)
 			{
-				var type = _InvocationSource.Resolve(ctx);
-
-				if (type.IsValueType)
-				{
-					if (_InvocationSource is IPointerProvider)
-					{
-						(_InvocationSource as IPointerProvider).PointerRequired = true;
-						_InvocationSource.Emit(ctx, true);
-					}
-					else
-					{
-						var tmpVar = ctx.Scope.DeclareImplicit(ctx, type, true);
-						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-
-						_InvocationSource.Emit(ctx, true);
-						gen.EmitSaveObject(type);
-
-						gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-					}
-				}
-				else
-				{
-					_InvocationSource.Emit(ctx, true);
-				}
+				_InvocationSource.EmitNodeForAccess(ctx);
 			}
 
 			if (_ArgTypes.Length > 0)
