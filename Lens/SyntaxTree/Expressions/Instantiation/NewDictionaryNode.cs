@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 			_KeyType = Expressions[0].Key.Resolve(ctx);
 			_ValueType = resolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
-			if (_ValueType == typeof(NullType))
+			if (_ValueType == typeof(NullType) || _KeyType == typeof(NullType))
 				error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
 			ctx.CheckTypedExpression(Expressions[0].Key, _KeyType);

@@ -30,6 +30,10 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 				error(CompilerMessages.ArrayEmpty);
 
 			_ItemType = resolveItemType(Expressions, ctx);
+
+			if(_ItemType == typeof(NullType))
+				error(CompilerMessages.ArrayTypeUnknown);
+
 			return _ItemType.MakeArrayType();
 		}
 

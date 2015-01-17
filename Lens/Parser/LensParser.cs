@@ -1130,27 +1130,19 @@ namespace Lens.Parser
 			if (!check(LexemType.Indent))
 				yield break;
 
-			var value = parseInitDictExpr();
-			if (value != null)
-				yield return value.Value;
-			else
-				error(ParserMessages.InitExpressionExpected);
+			yield return parseInitDictExpr();
 
 			while (!check(LexemType.Dedent))
 			{
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
-				value = parseInitDictExpr();
-				if (value != null)
-					yield return value.Value;
-				else
-					error(ParserMessages.InitExpressionExpected);
+				yield return parseInitDictExpr();
 			}
 		}
 
 		/// <summary>
 		/// init_dict_expr                              = line_expr "=>" line_expr
 		/// </summary>
-		private KeyValuePair<NodeBase, NodeBase>? parseInitDictExpr()
+		private KeyValuePair<NodeBase, NodeBase> parseInitDictExpr()
 		{
 			var key = ensure(parseLineExpr, ParserMessages.DictionaryKeyExpected);
 			ensure(LexemType.FatArrow, ParserMessages.SymbolExpected, "=>");
@@ -1936,11 +1928,16 @@ namespace Lens.Parser
 		/// </summary>
 		private NewTupleNode parseNewTupleLine()
 		{
+			// todo: revise grammar, possibly eliminating the unit literal
+			if(check(LexemType.Unit))
+				error(ParserMessages.TupleItem);
+
 			if (!check(LexemType.ParenOpen))
 				return null;
 
 			var node = new NewTupleNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.TupleItem);
 
@@ -1961,6 +1958,7 @@ namespace Lens.Parser
 
 			var node = new NewListNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.ListItem);
 
@@ -1982,6 +1980,7 @@ namespace Lens.Parser
 
 			var node = new NewArrayNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.ArrayItem);
 
@@ -2000,6 +1999,7 @@ namespace Lens.Parser
 
 			var node = new NewDictionaryNode();
 			node.Expressions = parseInitExprDictLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.DictionaryItem);
 
@@ -2027,20 +2027,13 @@ namespace Lens.Parser
 		/// </summary>
 		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictLine()
 		{
-			var node = parseInitDictExpr();
-			if (node == null)
+			if (check(LexemType.CurlyClose))
 				yield break;
 
-			yield return node.Value;
+			yield return parseInitDictExpr();
 
 			while (check(LexemType.Semicolon))
-			{
-				node = parseInitDictExpr();
-				if(node == null)
-					error(ParserMessages.ExpressionExpected);
-
-				yield return node.Value;
-			}
+				yield return parseInitDictExpr();
 		}
 
 		/// <summary>

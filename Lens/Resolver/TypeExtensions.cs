@@ -415,12 +415,6 @@ namespace Lens.Resolver
 				if(type.IsVoid())
 					throw new LensCompilerException(CompilerMessages.NoCommonType);
 
-				if (type.IsInterface)
-				{
-					curr = typeof(object);
-					break;
-				}
-
 				curr = getMostCommonType(curr, type);
 				if (curr == typeof(object))
 					break;
