@@ -245,7 +245,6 @@
     <Compile Include="Utils\PatternNameBinding.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Grammar\Grammar.v1.txt" />
     <Content Include="Grammar\Grammar.v2.txt" />
   </ItemGroup>
   <ItemGroup>
