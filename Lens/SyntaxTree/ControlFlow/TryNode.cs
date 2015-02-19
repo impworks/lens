@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -12,16 +14,31 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class TryNode : NodeBase
 	{
+		#region Constructor
+
 		public TryNode()
 		{
 			Code = new CodeBlockNode();
 			CatchClauses = new List<CatchNode>();
 		}
 
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// The body of the Try block.
+		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
+		/// <summary>
+		/// The optional list of Catch clauses.
+		/// </summary>
 		public List<CatchNode> CatchClauses { get; set; }
 
+		/// <summary>
+		/// The optional Finally clause.
+		/// </summary>
 		public CodeBlockNode Finally { get; set; }
 
 		/// <summary>
@@ -29,48 +46,70 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public Label EndLabel { get; private set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			yield return Code;
+			var prevTypes = new List<Type>();
+
 			foreach(var curr in CatchClauses)
-				yield return curr;
-			yield return Finally;
+			{
+				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof(Exception);
+
+				foreach (var prevType in prevTypes)
+				{
+					if(currType == prevType)
+						error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+					else if(prevType.IsExtendablyAssignableFrom(currType))
+						error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
+				}
+
+				prevTypes.Add(currType);
+			}
+
+			return base.resolve(ctx, mustReturn);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
 		{
-			var gen = ctx.CurrentILGenerator;
+			yield return new NodeChild(Code, null);
+
+			foreach(var curr in CatchClauses)
+				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
+
+			if(Finally != null)
+				yield return new NodeChild(Finally, null);
+		}
+
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
 
 			var backup = ctx.CurrentTryBlock;
 			ctx.CurrentTryBlock = this;
 
 			EndLabel = gen.BeginExceptionBlock();
 
-			Code.Compile(ctx, false);
+			Code.Emit(ctx, false);
 			gen.EmitLeave(EndLabel);
 
-			var catchTypes = new Dictionary<Type, bool>();
-			var catchAll = false;
 			foreach (var curr in CatchClauses)
-			{
-				if(catchAll)
-					Error(curr, CompilerMessages.CatchClauseUnreachable);
-
-				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof (Exception);
-
-				if(catchTypes.ContainsKey(currType))
-					Error(curr, CompilerMessages.CatchTypeDuplicate, currType);
-
-				if (currType == typeof (Exception))
-					catchAll = true;
-
-				curr.Compile(ctx, false);
-			}
+				curr.Emit(ctx, false);
 
 			if (Finally != null)
 			{
 				gen.BeginFinallyBlock();
-				Finally.Compile(ctx, false);
+				Finally.Emit(ctx, false);
 			}
 
 			gen.EndExceptionBlock();
@@ -78,7 +117,9 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.CurrentTryBlock = backup;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TryNode other)
 		{

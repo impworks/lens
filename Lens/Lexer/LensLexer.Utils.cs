@@ -1,14 +1,19 @@
-﻿using Lens.SyntaxTree;
+﻿using System.Diagnostics;
+using Lens.SyntaxTree;
+using Lens.Translations;
 
 namespace Lens.Lexer
 {
 	internal partial class LensLexer
 	{
-		private StaticLexemDefinition[] Keywords = new[]
+		#region Lexem definition tables
+
+		private readonly static StaticLexemDefinition[] Keywords = 
 		{
 			new StaticLexemDefinition("typeof", LexemType.Typeof),
 			new StaticLexemDefinition("default", LexemType.Default),
 
+			new StaticLexemDefinition("use", LexemType.Use),
 			new StaticLexemDefinition("using", LexemType.Using),
 			new StaticLexemDefinition("type", LexemType.Type),
 			new StaticLexemDefinition("record", LexemType.Record),
@@ -25,6 +30,10 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("catch", LexemType.Catch),
 			new StaticLexemDefinition("finally", LexemType.Finally),
 			new StaticLexemDefinition("throw", LexemType.Throw),
+			new StaticLexemDefinition("match", LexemType.Match),
+			new StaticLexemDefinition("with", LexemType.With),
+			new StaticLexemDefinition("case", LexemType.Case),
+			new StaticLexemDefinition("when", LexemType.When),
 
 			new StaticLexemDefinition("let", LexemType.Let),
 			new StaticLexemDefinition("var", LexemType.Var),
@@ -40,10 +49,9 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("null", LexemType.Null),
 		};
 
-		private readonly static StaticLexemDefinition[] Operators = new []
+		private readonly static StaticLexemDefinition[] Operators = 
 		{
 			new StaticLexemDefinition("()", LexemType.Unit),
-			new StaticLexemDefinition("[]", LexemType.ArrayDef),
 
 			new StaticLexemDefinition("|>", LexemType.PassRight),
 			new StaticLexemDefinition("<|", LexemType.PassLeft),
@@ -61,8 +69,6 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(">", LexemType.Greater),
 			new StaticLexemDefinition("=", LexemType.Assign),
 
-			new StaticLexemDefinition("[[", LexemType.DoubleSquareOpen),
-			new StaticLexemDefinition("]]", LexemType.DoubleSquareClose),
 			new StaticLexemDefinition("[", LexemType.SquareOpen),
 			new StaticLexemDefinition("]", LexemType.SquareClose),
 			new StaticLexemDefinition("(", LexemType.ParenOpen),
@@ -84,21 +90,33 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("::", LexemType.DoubleСolon),
 			new StaticLexemDefinition(":", LexemType.Colon),
 			new StaticLexemDefinition(",", LexemType.Comma),
+			new StaticLexemDefinition("...", LexemType.Ellipsis),
 			new StaticLexemDefinition("..", LexemType.DoubleDot),
 			new StaticLexemDefinition(".", LexemType.Dot),
 			new StaticLexemDefinition(";", LexemType.Semicolon),
 			new StaticLexemDefinition("?", LexemType.QuestionMark),
 			new StaticLexemDefinition("~", LexemType.Tilde),
+			new StaticLexemDefinition("|", LexemType.VerticalLine),
 		};
 
-		private RegexLexemDefinition[] RegexLexems = new[]
+		private readonly static RegexLexemDefinition[] RegexLexems =
 		{
-			new RegexLexemDefinition(@"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", LexemType.Double),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Ff]", LexemType.Float),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Mm]", LexemType.Decimal),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)\.[0-9]+", LexemType.Double),
+			new RegexLexemDefinition(@"(0|[1-9][0-9]*)L", LexemType.Long),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
-			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier)
+			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier),
+			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char),
+			new RegexLexemDefinition(@"#.+?(?<!\#)#[a-zA-Z]*", LexemType.Regex)
 		};
 
-		private void Error(string src, params object[] args)
+		#endregion
+
+		#region Helper methods
+
+		[DebuggerStepThrough]
+		private void error(string src, params object[] args)
 		{
 			var loc = new LocationEntity { StartLocation = getPosition() };
 			throw new LensCompilerException(string.Format(src, args), loc);
@@ -107,39 +125,101 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Checks if the cursor has run outside string bounds.
 		/// </summary>
+		[DebuggerStepThrough]
 		private bool inBounds()
 		{
-			return Position < Source.Length;
+			return _Position < _Source.Length;
 		}
 
 		/// <summary>
 		/// Checks if the cursor is at comment start.
 		/// </summary>
 		/// <returns></returns>
+		[DebuggerStepThrough]
 		private bool isComment()
 		{
-			return Position < Source.Length - 2 && Source[Position] == '/' && Source[Position + 1] == '/';
+			return _Position < _Source.Length - 2 && _Source[_Position] == '/' && _Source[_Position + 1] == '/';
 		}
 
 		/// <summary>
 		/// Skips one or more symbols.
 		/// </summary>
+		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
-			Position += count;
-			Offset += count;
+			_Position += count;
+			_Offset += count;
 		}
 
 		/// <summary>
 		/// Returns the current position in the string.
 		/// </summary>
+		[DebuggerStepThrough]
 		private LexemLocation getPosition()
 		{
 			return new LexemLocation
 			{
-				Line = Line,
-				Offset = Offset
+				Line = _Line,
+				Offset = _Offset
 			};
 		}
+
+		#endregion
+
+		#region Escaping
+
+		/// <summary>
+		/// Processes the contents of a char literal.
+		/// </summary>
+		[DebuggerStepThrough]
+		private Lexem transformCharLiteral(Lexem lex)
+		{
+			var value = lex.Value;
+			if (value.Length < 3 || value.Length > 4)
+				error(LexerMessages.IncorrectCharLiteral);
+
+			value = value[1] == '\\'
+				? escapeChar(value[2]).ToString()
+				: value[1].ToString();
+
+			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
+		}
+
+		/// <summary>
+		/// Processes the contents of a regex literal.
+		/// </summary>
+		[DebuggerStepThrough]
+		private Lexem transformRegexLiteral(Lexem lex)
+		{
+			return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, lex.Value.Replace(@"\#", "#"));
+		}
+
+		/// <summary>
+		/// Returns an escaped version of the given character.
+		/// </summary>
+		private char escapeChar(char t)
+		{
+			switch (t)
+			{
+				case 't':
+					return '\t';
+
+				case 'n':
+					return '\n';
+
+				case 'r':
+					return '\r';
+
+				case '\\':
+				case '"':
+				case '\'':
+					return t;
+			}
+
+			error(LexerMessages.UnknownEscape, t);
+			return ' ';
+		}
+
+		#endregion
 	}
 }

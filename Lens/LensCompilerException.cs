@@ -9,13 +9,22 @@ namespace Lens
 	/// </summary>
 	public class LensCompilerException : Exception
 	{
+		#region Constructors
+
 		public LensCompilerException(string msg) : base(msg)
+		{ }
+
+		public LensCompilerException(string msg, Exception inner) : base(msg, inner)
 		{ }
 
 		public LensCompilerException(string msg, LocationEntity entity) : base(msg)
 		{
 			BindToLocation(entity);
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// Start of the erroneous segment.
@@ -43,6 +52,10 @@ namespace Lens
 			}
 		}
 
+		#endregion
+
+		#region Methods
+
 		/// <summary>
 		/// Bind exception to a location.
 		/// </summary>
@@ -64,5 +77,7 @@ namespace Lens
 
 			return this;
 		}
+
+		#endregion
 	}
 }

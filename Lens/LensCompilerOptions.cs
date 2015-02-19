@@ -15,7 +15,13 @@ namespace Lens
 		public bool AllowSave = false;
 
 		/// <summary>
-		/// Checks whether the compiler should auto-include a bunch of common namespaces and assemblies.
+		/// Checks whether the compiler should auto-include default assemblies for type and extension method resolvers.
+		/// Default = true.
+		/// </summary>
+		public bool UseDefaultAssemblies = true;
+
+		/// <summary>
+		/// Checks whether the compiler should auto-include a bunch of common namespaces.
 		/// Default = true.
 		/// </summary>
 		public bool UseDefaultNamespaces = true;

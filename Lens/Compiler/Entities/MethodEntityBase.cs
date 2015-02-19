@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.SyntaxTree.ControlFlow;
-using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.Compiler.Entities
@@ -13,17 +12,26 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	abstract internal class MethodEntityBase : TypeContentsBase
 	{
-		protected MethodEntityBase(bool isImported = false)
+		#region Constructor
+
+		protected MethodEntityBase(TypeEntity type, bool isImported = false) : base(type)
 		{
-			Body = new CodeBlockNode();
 			Arguments = new HashList<FunctionArgument>();
-			Scope = new Scope();
 
 			IsImported = isImported;
 		}
 
+		#endregion
+
+		#region Fields
+
 		public bool IsImported;
 		public bool IsStatic;
+
+		public CodeBlockNode Body;
+
+		public TryNode CurrentTryBlock { get; set; }
+		public CatchNode CurrentCatchBlock { get; set; }
 
 		/// <summary>
 		/// The complete argument list with variable names and detailed info.
@@ -35,58 +43,55 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type[] ArgumentTypes;
 
-		public CodeBlockNode Body;
-		public Scope Scope { get; private set; }
-
 		/// <summary>
 		/// The MSIL Generator stream to which commands are emitted.
 		/// </summary>
 		public ILGenerator Generator { get; protected set; }
 
-		public TryNode CurrentTryBlock { get; set; }
-		public CatchNode CurrentCatchBlock { get; set; }
+		/// <summary>
+		/// Checks if the method must return a value.
+		/// </summary>
+		public abstract bool IsVoid { get; }
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Traverses all nodes in the body and expands them if necessary.
+		/// </summary>
+		public void TransformBody()
+		{
+			withContext(ctx =>
+				{
+					Body.Scope.RegisterArguments(ctx, IsStatic, Arguments.Values);
+					Body.Transform(ctx, !IsVoid);
+				}
+			);
+		}
 
 		/// <summary>
 		/// Process closures.
 		/// </summary>
 		public void ProcessClosures()
 		{
-			var ctx = ContainerType.Context;
-
-			var oldMethod = ctx.CurrentMethod;
-
-			ctx.CurrentMethod = this;
-			CurrentTryBlock = null;
-			CurrentCatchBlock = null;
-
-			checkArguments(ctx);
-
-			Scope.InitializeScope(ctx);
-			Body.ProcessClosures(ctx);
-			Scope.FinalizeScope(ctx);
-
-			ctx.CurrentMethod = oldMethod;
+			withContext(ctx => Body.ProcessClosures(ctx));
 		}
 
 		/// <summary>
-		/// Compiles the curent method.
+		/// Emits the body's IL code.
 		/// </summary>
 		public void Compile()
 		{
-			var ctx = ContainerType.Context;
+			withContext(ctx =>
+			    {
+				    emitPrelude(ctx);
+				    Body.Emit(ctx, !IsVoid);
+				    emitTrailer(ctx);
 
-			var backup = ctx.CurrentMethod;
-			ctx.CurrentMethod = this;
-			CurrentTryBlock = null;
-			CurrentCatchBlock = null;
-
-			emitPrelude(ctx);
-			compileCore(ctx);
-			emitTrailer(ctx);
-
-			Generator.EmitReturn();
-
-			ctx.CurrentMethod = backup;
+				    Generator.EmitReturn();
+			    }
+			);
 		}
 
 		/// <summary>
@@ -97,71 +102,54 @@ namespace Lens.Compiler.Entities
 			return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
 		}
 
-		/// <summary>
-		/// Creates closure instances.
-		/// </summary>
-		protected virtual void emitPrelude(Context ctx)
+		#endregion
+
+		#region Helpers
+
+		[DebuggerStepThrough]
+		private void withContext(Action<Context> act)
 		{
-			var gen = ctx.CurrentILGenerator;
-			var closure = Scope.ClosureVariable;
-			var closureType = Scope.ClosureType;
+			var ctx = ContainerType.Context;
 
-			if (closure != null)
-			{
-				var ctor = closureType.ResolveConstructor(Type.EmptyTypes);
+			var oldMethod = ctx.CurrentMethod;
+			var oldType = ctx.CurrentType;
 
-				gen.EmitCreateObject(ctor.ConstructorBuilder);
-				gen.EmitSaveLocal(closure);
+			ctx.CurrentMethod = this;
+			ctx.CurrentType = ContainerType;
+			CurrentTryBlock = null;
+			CurrentCatchBlock = null;
 
-				try
-				{
-					var root = closureType.ResolveField(EntityNames.ParentScopeFieldName);
-					gen.EmitLoadLocal(closure);
-					gen.EmitLoadArgument(0);
-					gen.EmitSaveField(root.FieldBuilder);
-				}
-				catch (KeyNotFoundException) { }
-			}
-
-			if (Arguments != null)
-			{
-				for (var idx = 0; idx < Arguments.Count; idx++)
-				{
-					var skip = IsStatic ? 0 : 1;
-					var arg = Arguments[idx];
-					if (arg.IsRefArgument)
-						continue;
-
-					var local = Scope.FindName(arg.Name);
-					if (local.IsClosured)
-					{
-						var fi = closureType.ResolveField(local.ClosureFieldName);
-						gen.EmitLoadLocal(closure);
-						gen.EmitLoadArgument(idx + skip);
-						gen.EmitSaveField(fi.FieldBuilder);
-					}
-					else
-					{
-						gen.EmitLoadArgument(idx + skip);
-						gen.EmitSaveLocal(local);
-					}
-				}
-			}
+			act(ctx);
+			
+			ctx.CurrentMethod = oldMethod;
+			ctx.CurrentType = oldType;
 		}
 
-		protected abstract void compileCore(Context ctx);
+		#endregion
 
+		#region Extension point methods
+
+		/// <summary>
+		/// Emits code before the body of the method (if needed).
+		/// </summary>
+		protected virtual void emitPrelude(Context ctx)
+		{ }
+
+		/// <summary>
+		/// Emits code after the body of the method (if needed).
+		/// </summary>
 		protected virtual void emitTrailer(Context ctx)
 		{ }
 
-		private void checkArguments(Context ctx)
-		{
-			if (Arguments == null)
-				return;
+		#endregion
 
-			foreach(var arg in Arguments.Values)
-				if(arg.Name == "_")
-					ctx.Error(arg, CompilerMessages.UnderscoreName);
+		#region Debug
+
+		public override string ToString()
+		{
+			return string.Format("{0}.{1}({2})", ContainerType.Name, Name, Arguments.Count);
 		}
+
+		#endregion
 	}
 }

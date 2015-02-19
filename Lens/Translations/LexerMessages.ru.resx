@@ -118,15 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="InconsistentIdentation" xml:space="preserve">
-    <value>Неожиданный уровень блока!</value>
+    <value>LE1001: Неожиданный уровень блока!</value>
+  </data>
+  <data name="IncorrectCharLiteral" xml:space="preserve">
+    <value>LE1006: Недопустимый символьный литерал!</value>
+  </data>
+  <data name="TabChar" xml:space="preserve">
+    <value>LE1002: Символы табуляции недопустимы в исходном коде! Используйте пробелы для выделения блоков кода.</value>
   </data>
   <data name="UnclosedString" xml:space="preserve">
-    <value>Строка не закрыта!</value>
+    <value>LE1003: Строка не закрыта!</value>
   </data>
   <data name="UnknownEscape" xml:space="preserve">
-    <value>Неизвестная экранированная последовательность: \{0}!</value>
+    <value>LE1004: Неизвестная экранированная последовательность: \{0}!</value>
   </data>
   <data name="UnknownLexem" xml:space="preserve">
-    <value>Неизвестный тип лексемы!</value>
+    <value>LE1005: Неизвестный тип лексемы!</value>
   </data>
 </root>

@@ -2,31 +2,62 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
+
 using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Attributes;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations;
+using Lens.SyntaxTree.Declarations.Functions;
+using Lens.SyntaxTree.Declarations.Locals;
+using Lens.SyntaxTree.Declarations.Types;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Literals;
-using Lens.SyntaxTree.Operators;
+using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.Translations;
 
 namespace Lens.Parser
 {
+	using System.Data;
+
+	using Lens.SyntaxTree.PatternMatching;
+	using Lens.SyntaxTree.PatternMatching.Rules;
+
+
 	internal partial class LensParser
 	{
-		public List<NodeBase> Nodes { get; private set; }
-
-		private Lexem[] Lexems;
-		private int LexemId;
+		#region Constructor
 
 		public LensParser(IEnumerable<Lexem> lexems)
 		{
-			Lexems = lexems.ToArray();
+			_Lexems = lexems.ToArray();
 
 			Nodes = parseMain().ToList();
 		}
+
+		#endregion
+
+		#region Fields
+
+		/// <summary>
+		/// Generated list of nodes.
+		/// </summary>
+		public List<NodeBase> Nodes { get; private set; }
+
+		/// <summary>
+		/// Source list of lexems.
+		/// </summary>
+		private readonly Lexem[] _Lexems;
+
+		/// <summary>
+		/// Current index of the lexem in the stream.
+		/// </summary>
+		private int _LexemId;
+
+		#endregion
 
 		#region Globals
 
@@ -57,9 +88,9 @@ namespace Lens.Parser
 		private NodeBase parseStmt()
 		{
 			return attempt(parseUsing)
-			       ?? attempt(parseRecordDef)
-			       ?? attempt(parseTypeDef)
-			       ?? attempt(parseFunDef)
+				   ?? attempt(parseRecordDef)
+				   ?? attempt(parseTypeDef)
+				   ?? attempt(parseFunDef)
 				   ?? ensure(parseLocalStmt, ParserMessages.UnknownStatement);
 		}
 
@@ -109,12 +140,18 @@ namespace Lens.Parser
 
 			while (true)
 			{
-				if(check(LexemType.ArrayDef))
+				if (peek(LexemType.SquareOpen, LexemType.SquareClose))
+				{
 					node = new TypeSignature(null, "[]", node);
-				else if(check(LexemType.Tilde))
+					skip(2);
+				}
+
+				else if (check(LexemType.Tilde))
 					node = new TypeSignature(null, "~", node);
-				else if(check(LexemType.QuestionMark))
+
+				else if (check(LexemType.QuestionMark))
 					node = new TypeSignature(null, "?", node);
+
 				else
 					return node;
 			}
@@ -150,13 +187,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// using                                       = "using" namespace NL
 		/// </summary>
-		private UsingNode parseUsing()
+		private UseNode parseUsing()
 		{
-			if (!check(LexemType.Using))
+			if (!check(LexemType.Use))
 				return null;
 
 			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
-			var node = new UsingNode {Namespace = nsp.FullSignature};
+			var node = new UseNode {Namespace = nsp.FullSignature};
 
 			return node;
 		}
@@ -264,7 +301,7 @@ namespace Lens.Parser
 
 			node.Arguments = attempt(() => parseFunArgs(true)) ?? new List<FunctionArgument>();
 			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
-			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
 
 			return node;
 		}
@@ -318,7 +355,7 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// fun_arg                                     = identifier ":" [ "ref" ] type
+		/// fun_arg                                     = identifier [ ":" [ "ref" ] type [ "... " ] ]
 		/// </summary>
 		private FunctionArgument parseFunSingleArg(bool required = false)
 		{
@@ -332,12 +369,21 @@ namespace Lens.Parser
 			{
 				if (required)
 					error(ParserMessages.SymbolExpected, ":");
-				else
-					return null;
+
+				node.Type = typeof (UnspecifiedType);
+				return node;
 			}
 
 			node.IsRefArgument = check(LexemType.Ref);
 			node.TypeSignature = ensure(parseType, ParserMessages.ArgTypeExpected);
+
+			if (check(LexemType.Ellipsis))
+			{
+				if(node.IsRefArgument)
+					error(ParserMessages.VariadicByRef);
+
+				node.IsVariadic = true;
+			}
 
 			return node;
 		}
@@ -413,8 +459,8 @@ namespace Lens.Parser
 				error(ParserMessages.MethodPassIndentExpected);
 
 			return attempt(parseNameDefStmt)
-			       ?? attempt(parseSetStmt)
-			       ?? attempt(parseExpr);
+				   ?? attempt(parseSetStmt)
+				   ?? attempt(parseExpr);
 		}
 
 		#endregion
@@ -476,30 +522,42 @@ namespace Lens.Parser
 		private NodeBase parseSetStmt()
 		{
 			return attempt(parseSetIdStmt)
-			       ?? attempt(parseSetStmbrStmt)
-			       ?? attempt(parseSetAnyStmt);
+				   ?? attempt(parseSetStmbrStmt)
+				   ?? attempt(parseSetAnyStmt);
 		}
 
 		/// <summary>
-		/// set_id_stmt                                 = identifier "=" expr
+		/// set_id_stmt                                 = identifier assignment_op expr
 		/// </summary>
-		private SetIdentifierNode parseSetIdStmt()
+		private NodeBase parseSetIdStmt()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Assign))
+			if (!peek(LexemType.Identifier))
 				return null;
 
 			var node = new SetIdentifierNode();
 			node.Identifier = getValue();
-			skip();
-			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
 
-			return node;
+			if (check(LexemType.Assign))
+			{
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return node;
+			}
+
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = _Lexems[_LexemId].Type;
+				skip(2);
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return new ShortAssignmentNode(opType, node);
+			}
+
+			return null;
 		}
 
 		/// <summary>
-		/// set_stmbr_stmt                              = type "::" identifier "=" expr
+		/// set_stmbr_stmt                              = type "::" identifier assignment_op expr
 		/// </summary>
-		private SetMemberNode parseSetStmbrStmt()
+		private NodeBase parseSetStmbrStmt()
 		{
 			var type = attempt(parseType);
 			if (type == null)
@@ -512,25 +570,47 @@ namespace Lens.Parser
 			node.StaticType = type;
 			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			if (!check(LexemType.Assign))
-				return null;
+			if (check(LexemType.Assign))
+			{
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return node;
+			}
 
-			node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = _Lexems[_LexemId].Type;
+				skip(2);
+				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				return new ShortAssignmentNode(opType, node);
+			}
 
-			return node;
+			return null;
 		}
 
 		/// <summary>
-		/// set_any_stmt                                = lvalue_expr "=" expr
+		/// set_any_stmt                                = lvalue_expr assignment_op expr
 		/// </summary>
 		private NodeBase parseSetAnyStmt()
 		{
 			var node = attempt(parseLvalueExpr);
-			if (node == null || !check(LexemType.Assign))
+			if (node == null)
 				return null;
 
-			var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
-			return makeSetter(node, expr);
+			if (check(LexemType.Assign))
+			{
+				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
+				return makeSetter(node, expr);
+			}
+
+			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			{
+				var opType = _Lexems[_LexemId].Type;
+				skip(2);
+				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
+				return new ShortAssignmentNode(opType, makeSetter(node, expr));
+			}
+
+			return null;
 		}
 
 		#endregion
@@ -543,7 +623,7 @@ namespace Lens.Parser
 		private NodeBase parseLvalueExpr()
 		{
 			return attempt(parseLvalueNameExpr)
-			       ?? attempt(parseLvalueParenExpr);
+				   ?? attempt(parseLvalueParenExpr);
 		}
 
 		/// <summary>
@@ -595,7 +675,7 @@ namespace Lens.Parser
 		private NodeBase parseLvalueName()
 		{
 			return attempt(parseLvalueStmbrExpr)
-			       ?? attempt(parseLvalueIdExpr) as NodeBase;
+				   ?? attempt(parseLvalueIdExpr) as NodeBase;
 		}
 
 		/// <summary>
@@ -680,7 +760,7 @@ namespace Lens.Parser
 		private NodeBase parseAccessor()
 		{
 			return attempt(parseAccessorIdx)
-			       ?? attempt(parseAccessorMbr) as NodeBase;
+				   ?? attempt(parseAccessorMbr) as NodeBase;
 		}
 
 		/// <summary>
@@ -725,7 +805,7 @@ namespace Lens.Parser
 		private NodeBase parseExpr()
 		{
 			return attempt(parseBlockExpr)
-			       ?? attempt(parseLineExpr);
+				   ?? attempt(parseLineExpr);
 		}
 
 		#endregion
@@ -733,18 +813,20 @@ namespace Lens.Parser
 		#region Block control structures
 
 		/// <summary>
-		/// block_expr                                  = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
+		/// block_expr                                  = if_block | while_block | for_block | using_block | try_stmt | match_block | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
 		/// </summary>
 		private NodeBase parseBlockExpr()
 		{
 			return attempt(parseIfBlock)
-			       ?? attempt(parseWhileBlock)
-			       ?? attempt(parseForBlock)
-			       ?? attempt(parseTryStmt)
-			       ?? attempt(parseNewBlockExpr)
-			       ?? attempt(parseInvokeBlockExpr)
+				   ?? attempt(parseWhileBlock)
+				   ?? attempt(parseForBlock)
+				   ?? attempt(parseUsingBlock)
+				   ?? attempt(parseTryStmt)
+				   ?? attempt(parseMatchBlock)
+				   ?? attempt(parseNewBlockExpr)
+				   ?? attempt(parseInvokeBlockExpr)
 				   ?? attempt(parseInvokeBlockPassExpr)
-			       ?? attempt(parseLambdaBlockExpr) as NodeBase;
+				   ?? attempt(parseLambdaBlockExpr) as NodeBase;
 		}
 
 		/// <summary>
@@ -772,7 +854,7 @@ namespace Lens.Parser
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.LoopBodyExpected));
 			return node;
 		}
 
@@ -786,6 +868,19 @@ namespace Lens.Parser
 				return null;
 
 			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
+			return node;
+		}
+
+		/// <summary>
+		/// using_block                                 = using_header block
+		/// </summary>
+		private UsingNode parseUsingBlock()
+		{
+			var node = attempt(parseUsingHeader);
+			if (node == null)
+				return null;
+
+			node.Body = ensure(parseBlock, ParserMessages.UsingBodyExpected);
 			return node;
 		}
 
@@ -860,7 +955,7 @@ namespace Lens.Parser
 			if (!check(LexemType.Arrow))
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.FunctionBodyExpected);
+			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
 			return node;
 		}
 
@@ -925,6 +1020,27 @@ namespace Lens.Parser
 			return node;
 		}
 
+		/// <summary>
+		/// using_header                                = "using" [ identifier "=" ] line_expr "do"
+		/// </summary>
+		private UsingNode parseUsingHeader()
+		{
+			if (!check(LexemType.Using))
+				return null;
+
+			var node = new UsingNode();
+			if (peek(LexemType.Identifier, LexemType.Assign))
+			{
+				node.VariableName = getValue();
+				skip();
+			}
+
+			node.Expression = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+
+			return node;
+		}
+
 		#endregion
 
 		#region Block initializers
@@ -938,10 +1054,10 @@ namespace Lens.Parser
 				return null;
 
 			return attempt(parseNewTupleBlock)
-			       ?? attempt(parseNewListBlock)
-			       ?? attempt(parseNewArrayBlock)
-			       ?? attempt(parseNewDictBlock)
-			       ?? attempt(parseNewObjectBlock) as NodeBase;
+				   ?? attempt(parseNewListBlock)
+				   ?? attempt(parseNewArrayBlock)
+				   ?? attempt(parseNewDictBlock)
+				   ?? attempt(parseNewObjectBlock) as NodeBase;
 		}
 
 		/// <summary>
@@ -963,19 +1079,24 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// new_list_block                              = "[[" init_expr_block "]]"
+		/// new_list_block                              = "[" "[" init_expr_block "]" "]"
 		/// </summary>
 		private NewListNode parseNewListBlock()
 		{
-			if (!check(LexemType.DoubleSquareOpen))
+			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
+
+			skip(2);
 
 			var node = new NewListNode();
 			node.Expressions = parseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
+			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
+				error(ParserMessages.SymbolExpected, "]]");
+
+			skip(2);
 
 			return node;
 		}
@@ -1031,7 +1152,7 @@ namespace Lens.Parser
 
 			while (!check(LexemType.Dedent))
 			{
-				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose, LexemType.DoubleSquareClose))
+				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose))
 					error(ParserMessages.ClosingBraceNewLine);
 
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
@@ -1047,27 +1168,19 @@ namespace Lens.Parser
 			if (!check(LexemType.Indent))
 				yield break;
 
-			var value = parseInitDictExpr();
-			if (value != null)
-				yield return value.Value;
-			else
-				error(ParserMessages.InitExpressionExpected);
+			yield return parseInitDictExpr();
 
 			while (!check(LexemType.Dedent))
 			{
 				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
-				value = parseInitDictExpr();
-				if (value != null)
-					yield return value.Value;
-				else
-					error(ParserMessages.InitExpressionExpected);
+				yield return parseInitDictExpr();
 			}
 		}
 
 		/// <summary>
 		/// init_dict_expr                              = line_expr "=>" line_expr
 		/// </summary>
-		private KeyValuePair<NodeBase, NodeBase>? parseInitDictExpr()
+		private KeyValuePair<NodeBase, NodeBase> parseInitDictExpr()
 		{
 			var key = ensure(parseLineExpr, ParserMessages.DictionaryKeyExpected);
 			ensure(LexemType.FatArrow, ParserMessages.SymbolExpected, "=>");
@@ -1150,7 +1263,7 @@ namespace Lens.Parser
 		}
 		
 		/// <summary>
-		/// invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
+		/// invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
 		/// </summary>
 		private InvocationNode parseInvokePass()
 		{
@@ -1162,12 +1275,24 @@ namespace Lens.Parser
 
 			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			invoker.Arguments = parseInvokeBlockArgs().ToList();
-			if (invoker.Arguments.Count == 0)
-				invoker.Arguments = parseInvokeLineArgs().ToList();
+			var hints = attempt(parseTypeArgs);
+			if(hints != null)
+				getter.TypeHints = hints;
 
-			if (invoker.Arguments.Count == 0)
-				error(ParserMessages.ArgumentsExpected);
+			var lambda = attempt(parseLambdaLineExpr);
+			if (lambda != null)
+			{
+				invoker.Arguments = new List<NodeBase> { lambda };
+			}
+			else
+			{
+				invoker.Arguments = parseInvokeBlockArgs().ToList();
+				if (invoker.Arguments.Count == 0)
+					invoker.Arguments = parseInvokeLineArgs().ToList();
+
+				if (invoker.Arguments.Count == 0)
+					error(ParserMessages.ArgumentsExpected);
+			}
 
 			return invoker;
 		}
@@ -1208,7 +1333,7 @@ namespace Lens.Parser
 				return null;
 
 			return attempt(parseRefArg)
-			       ?? ensure(parseExpr, ParserMessages.ExpressionExpected);
+				   ?? ensure(parseExpr, ParserMessages.ExpressionExpected);
 		}
 		
 		/// <summary>
@@ -1256,6 +1381,298 @@ namespace Lens.Parser
 
 		#endregion
 
+		#region Pattern matching
+
+		/// <summary>
+		/// match_block                                 = "match" line_expr "with" INDENT { match_stmt } DEDENT
+		/// </summary>
+		private MatchNode parseMatchBlock()
+		{
+			if (!check(LexemType.Match))
+				return null;
+
+			var node = new MatchNode { Expression = ensure(parseLineExpr, ParserMessages.MatchExpressionExpected) };
+
+			ensure(LexemType.With, ParserMessages.SymbolExpected, "with");
+			ensure(LexemType.Indent, ParserMessages.MatchIndentExpected);
+
+			node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+
+			while (!check(LexemType.Dedent))
+			{
+				ensure(LexemType.NewLine, ParserMessages.NewlineSeparatorExpected);
+				node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// match_stmt                                  = "case" match_rules [ "when" line_expr ] "then" block
+		/// </summary>
+		private MatchStatementNode parseMatchStmt()
+		{
+			ensure(LexemType.Case, ParserMessages.SymbolExpected, "case");
+
+			var node = new MatchStatementNode { MatchRules = parseMatchRules().ToList() };
+
+			if (check(LexemType.When))
+				node.Condition = ensure(parseLineExpr, ParserMessages.WhenGuardExpressionExpected);
+
+			ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
+
+			node.Expression = ensure(parseBlock, ParserMessages.CodeBlockExpected);
+
+			return node;
+		}
+
+		/// <summary>
+		/// match_rules                                 = match_rule { [ NL ] "|" match_rule }
+		/// </summary>
+		private IEnumerable<MatchRuleBase> parseMatchRules()
+		{
+			yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+
+			while (true)
+			{
+				check(LexemType.NewLine);
+				if (!check(LexemType.VerticalLine))
+					yield break;
+
+				yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+			}
+		}
+
+		/// <summary>
+		/// match_rule                                  = rule_generic [ rule_keyvalue ]
+		/// </summary>
+		private MatchRuleBase parseMatchRule()
+		{
+			var rule = parseRuleGeneric();
+			var keyValue = attempt(parseRuleKeyValue);
+
+			if (keyValue == null)
+				return rule;
+
+			keyValue.KeyRule = rule;
+			return keyValue;
+		}
+
+		#endregion
+
+		#region Match rules
+
+		/// <summary>
+		/// rule_generic                                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
+		/// </summary>
+		private MatchRuleBase parseRuleGeneric()
+		{
+			return attempt(parseRuleTuple)
+			       ?? attempt(parseRuleArray)
+				   ?? attempt(parseRegex)
+			       ?? attempt(parseRuleRecord)
+			       ?? attempt(parseRuleType)
+			       ?? attempt(parseRuleRange)
+			       ?? attempt(parseRuleLiteral)
+				   ?? attempt(parseRuleName) as MatchRuleBase;
+		}
+
+		/// <summary>
+		/// rule_tuple                                  = "(" match_rule { ";" match_rule } ")"
+		/// </summary>
+		private MatchTupleRule parseRuleTuple()
+		{
+			if (!check(LexemType.ParenOpen))
+				return null;
+
+			var node = new MatchTupleRule();
+			node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
+			while(check(LexemType.Semicolon))
+				node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
+
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_array                                  = "[" [ rule_array_item { ";" rule_array_item } ] "]"
+		/// </summary>
+		private MatchRuleBase parseRuleArray()
+		{
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new MatchArrayRule();
+			if (!check(LexemType.SquareClose))
+			{
+				node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+
+				while (check(LexemType.Semicolon))
+					node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+
+				ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			}
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_regex                                 = regex
+		/// </summary>
+		private MatchRegexNode parseRegex()
+		{
+			if (!peek(LexemType.Regex))
+				return null;
+
+			var raw = getValue();
+			var trailPos = raw.LastIndexOf('#');
+			var value = raw.Substring(1, trailPos - 1);
+			var mods = raw.Substring(trailPos + 1);
+			return new MatchRegexNode {Value = value, Modifiers = mods};
+		}
+
+		/// <summary>
+		/// rule_array_item                             = rule_subsequence | match_rule
+		/// </summary>
+		private MatchRuleBase parseRuleArrayItem()
+		{
+			return attempt(parseRuleSubsequence)
+			       ?? attempt(parseMatchRule);
+		}
+
+		/// <summary>
+		/// rule_record                                 = identifier "(" rule_record_var { ";" rule_record_var } ")"
+		/// </summary>
+		private MatchRecordRule parseRuleRecord()
+		{
+			if (!peek(LexemType.Identifier, LexemType.ParenOpen))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			var node = new MatchRecordRule { Identifier = identifier };
+			node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
+			while(check(LexemType.Semicolon))
+				node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
+
+			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_record_var                             = identifier "=" match_rule
+		/// </summary>
+		private MatchRecordField parseRuleRecordVar()
+		{
+			if (!peek(LexemType.Identifier, LexemType.Assign))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			return new MatchRecordField
+			{
+				Name = identifier,
+				Rule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_type                                   = identifier "of" match_rule
+		/// </summary>
+		private MatchTypeRule parseRuleType()
+		{
+			if (!peek(LexemType.Identifier, LexemType.Of))
+				return null;
+
+			var identifier = parseType();
+			skip();
+
+			return new MatchTypeRule
+			{
+				Identifier = identifier,
+				LabelRule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_range                                  = rule_literal ".." rule_literal
+		/// </summary>
+		private MatchRangeRule parseRuleRange()
+		{
+			var start = attempt(parseRuleLiteral);
+			if (start == null)
+				return null;
+
+			if (!check(LexemType.DoubleDot))
+				return null;
+
+			return new MatchRangeRule
+			{
+				RangeStartRule = start,
+				RangeEndRule = ensure(parseRuleLiteral, ParserMessages.MatchRuleExpected)
+			};
+		}
+
+		/// <summary>
+		/// rule_literal                                = literal
+		/// </summary>
+		private MatchLiteralRule parseRuleLiteral()
+		{
+			var literal = attempt(parseLiteral);
+			if (literal == null)
+				return null;
+
+			return new MatchLiteralRule { Literal = (ILiteralNode)literal };
+		}
+
+		/// <summary>
+		/// rule_name                                   = identifier [ ":" type ]
+		/// </summary>
+		private MatchNameRule parseRuleName()
+		{
+			if (!peek(LexemType.Identifier))
+				return null;
+
+			var node = new MatchNameRule { Name = getValue() };
+			if (check(LexemType.Colon))
+				node.Type = ensure(parseType, ParserMessages.TypeSignatureExpected);
+
+			return node;
+		}
+
+		/// <summary>
+		/// rule_subsequence                            = "..." identifier
+		/// </summary>
+		private MatchNameRule parseRuleSubsequence()
+		{
+			if (!check(LexemType.Ellipsis))
+				return null;
+
+			return new MatchNameRule
+			{
+				Name = getValue(),
+				IsArraySubsequence = true
+			};
+		}
+
+		/// <summary>
+		/// rule_keyvalue                               = "=>" rule_generic
+		/// </summary>
+		private MatchKeyValueRule parseRuleKeyValue()
+		{
+			if (!check(LexemType.FatArrow))
+				return null;
+
+			// key is substituted in match_rule
+			return new MatchKeyValueRule { ValueRule = ensure(parseRuleGeneric, ParserMessages.MatchRuleExpected) };
+		}
+
+		#endregion
+
 		#region Line expressions
 
 		/// <summary>
@@ -1268,19 +1685,18 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// line_expr                                   = if_line | while_line | for_line | throw_stmt | yield_stmt | invoke_line_xtra | new_line_expr | typeop_expr | line_typecheck_expr
+		/// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
 		/// </summary>
 		private NodeBase parseLineExpr()
 		{
 			return attempt(parseIfLine)
-			       ?? attempt(parseWhileLine)
-			       ?? attempt(parseForLine)
-			       ?? attempt(parseThrowStmt)
-			       ?? attempt(parseNewLineExpr)
+				   ?? attempt(parseWhileLine)
+				   ?? attempt(parseForLine)
+				   ?? attempt(parseUsingLine)
+				   ?? attempt(parseThrowStmt)
+				   ?? attempt(parseNewObjectExpr)
 				   ?? attempt(parseTypeopExpr)
-			       ?? attempt(parseLineTypecheckExpr);
-
-			// todo: invoke_line_xtra
+				   ?? attempt(parseLineTypecheckExpr);
 		}
 
 		/// <summary>
@@ -1289,7 +1705,7 @@ namespace Lens.Parser
 		private NodeBase parseTypeopExpr()
 		{
 			return attempt(parseDefaultExpr)
-			       ?? attempt(parseTypeofExpr) as NodeBase;
+				   ?? attempt(parseTypeofExpr) as NodeBase;
 		}
 
 		/// <summary>
@@ -1371,7 +1787,7 @@ namespace Lens.Parser
 		private NodeBase parseLineBaseExpr()
 		{
 			return attempt(parseLineInvokeBaseExpr)
-			       ?? attempt(parseGetExpr);
+				   ?? attempt(parseGetExpr);
 		}
 
 		/// <summary>
@@ -1395,14 +1811,15 @@ namespace Lens.Parser
 
 
 		/// <summary>
-		/// atom                                        = literal | get_id_expr | get_stmbr_expr | paren_expr
+		/// atom                                        = literal | get_id_expr | get_stmbr_expr | new_collection_expr | paren_expr
 		/// </summary>
 		private NodeBase parseAtom()
 		{
 			return attempt(parseLiteral)
 				   ?? attempt(parseGetStmbrExpr)
-			       ?? attempt(parseGetIdExpr)
-			       ?? attempt(parseParenExpr);
+				   ?? attempt(parseGetIdExpr)
+				   ?? attempt(parseNewCollectionExpr)
+				   ?? attempt(parseParenExpr);
 		}
 
 		/// <summary>
@@ -1414,7 +1831,7 @@ namespace Lens.Parser
 				return null;
 
 			var expr = attempt(parseLambdaLineExpr)
-			           ?? attempt(parseLineStmt);
+					   ?? attempt(parseLineStmt);
 
 			if (expr != null)
 			{
@@ -1489,6 +1906,19 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
+		/// using_line                                  = using_header line_stmt
+		/// </summary>
+		private UsingNode parseUsingLine()
+		{
+			var node = attempt(parseUsingHeader);
+			if (node == null)
+				return null;
+
+			node.Body.Add(ensure(parseLineStmt, ParserMessages.UsingExpressionExpected));
+			return node;
+		}
+
+		/// <summary>
 		/// throw_stmt                                  = "throw" [ line_expr ]
 		/// </summary>
 		private ThrowNode parseThrowStmt()
@@ -1506,9 +1936,21 @@ namespace Lens.Parser
 		#region Line initializers
 
 		/// <summary>
-		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+		/// new_line_expr                               = "new" ( new_objarray_line | new_object_block )
 		/// </summary>
-		private NodeBase parseNewLineExpr()
+		private NodeBase parseNewObjectExpr()
+		{
+			if (!check(LexemType.New))
+				return null;
+
+			return attempt(parseNewObjArrayLine)
+				   ?? attempt(parseNewObjectLine) as NodeBase;
+		}
+
+		/// <summary>
+		/// new_collection_expr                        = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
+		/// </summary>
+		private NodeBase parseNewCollectionExpr()
 		{
 			if (!check(LexemType.New))
 				return null;
@@ -1516,20 +1958,24 @@ namespace Lens.Parser
 			return attempt(parseNewTupleLine)
 				   ?? attempt(parseNewListLine)
 				   ?? attempt(parseNewArrayLine)
-				   ?? attempt(parseNewDictLine)
-				   ?? attempt(parseNewObjectLine) as NodeBase;
+				   ?? attempt(parseNewDictLine) as NodeBase;
 		}
 
 		/// <summary>
-		/// new_tuple_line                              = "(" init_expr_line ")"
+		/// new_tuple_line                             = "(" init_expr_line ")"
 		/// </summary>
 		private NewTupleNode parseNewTupleLine()
 		{
+			// todo: revise grammar, possibly eliminating the unit literal
+			if(check(LexemType.Unit))
+				error(ParserMessages.TupleItem);
+
 			if (!check(LexemType.ParenOpen))
 				return null;
 
 			var node = new NewTupleNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.TupleItem);
 
@@ -1539,19 +1985,25 @@ namespace Lens.Parser
 		}
 
 		/// <summary>
-		/// new_list_line                               = "[[" init_expr_block "]]"
+		/// new_list_line                               = "[" "[" init_expr_block "]" "]"
 		/// </summary>
 		private NewListNode parseNewListLine()
 		{
-			if (!check(LexemType.DoubleSquareOpen))
+			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
+
+			skip(2);
 
 			var node = new NewListNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.ListItem);
 
-			ensure(LexemType.DoubleSquareClose, ParserMessages.SymbolExpected, "]]");
+			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
+				error(ParserMessages.SymbolExpected, "]]");
+
+			skip(2);
 
 			return node;
 		}
@@ -1566,6 +2018,7 @@ namespace Lens.Parser
 
 			var node = new NewArrayNode();
 			node.Expressions = parseInitExprLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.ArrayItem);
 
@@ -1584,6 +2037,7 @@ namespace Lens.Parser
 
 			var node = new NewDictionaryNode();
 			node.Expressions = parseInitExprDictLine().ToList();
+
 			if (node.Expressions.Count == 0)
 				error(ParserMessages.DictionaryItem);
 
@@ -1611,20 +2065,34 @@ namespace Lens.Parser
 		/// </summary>
 		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictLine()
 		{
-			var node = parseInitDictExpr();
-			if (node == null)
+			if (check(LexemType.CurlyClose))
 				yield break;
 
-			yield return node.Value;
+			yield return parseInitDictExpr();
 
 			while (check(LexemType.Semicolon))
-			{
-				node = parseInitDictExpr();
-				if(node == null)
-					error(ParserMessages.ExpressionExpected);
+				yield return parseInitDictExpr();
+		}
 
-				yield return node.Value;
-			}
+		/// <summary>
+		/// new_objarray_line                          = type "[" line_expr "]"
+		/// </summary>
+		private NewObjectArrayNode parseNewObjArrayLine()
+		{
+			var type = attempt(parseType);
+			if (type == null)
+				return null;
+
+			if (!check(LexemType.SquareOpen))
+				return null;
+
+			var node = new NewObjectArrayNode();
+			node.TypeSignature = type;
+			node.Size = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+
+			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+
+			return node;
 		}
 
 		/// <summary>
@@ -1651,16 +2119,20 @@ namespace Lens.Parser
 		#region Literals
 
 		/// <summary>
-		/// literal                                     = unit | null | bool | string | int | double
+		/// literal                                     = unit | null | bool | int | long | float | double | decimal | char | string
 		/// </summary>
 		private NodeBase parseLiteral()
 		{
 			return attempt(parseUnit)
-			       ?? attempt(parseNull)
-			       ?? attempt(parseBool)
-			       ?? attempt(parseString)
-			       ?? attempt(parseInt)
-			       ?? attempt(parseDouble) as NodeBase;
+				   ?? attempt(parseNull)
+				   ?? attempt(parseBool)
+				   ?? attempt(parseInt)
+				   ?? attempt(parseLong)
+				   ?? attempt(parseFloat)
+				   ?? attempt(parseDouble)
+				   ?? attempt(parseDecimal)
+				   ?? attempt(parseChar)
+				   ?? attempt(parseString) as NodeBase;
 		}
 
 		private UnitNode parseUnit()
@@ -1709,6 +2181,40 @@ namespace Lens.Parser
 			}
 		}
 
+		private LongNode parseLong()
+		{
+			if (!peek(LexemType.Long))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new LongNode(long.Parse(value.Substring(0, value.Length - 1), NumberStyles.Integer, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidLong, value);
+				return null;
+			}
+		}
+
+		private FloatNode parseFloat()
+		{
+			if (!peek(LexemType.Float))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new FloatNode(float.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidFloat, value);
+				return null;
+			}
+		}
+ 
 		private DoubleNode parseDouble()
 		{
 			if (!peek(LexemType.Double))
@@ -1724,6 +2230,28 @@ namespace Lens.Parser
 				error(ParserMessages.InvalidDouble, value);
 				return null;
 			}
+		}
+
+		private DecimalNode parseDecimal()
+		{
+			if (!peek(LexemType.Decimal))
+				return null;
+
+			var value = getValue();
+			try
+			{
+				return new DecimalNode(decimal.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
+			}
+			catch
+			{
+				error(ParserMessages.InvalidDecimal, value);
+				return null;
+			}
+		}
+
+		private CharNode parseChar()
+		{
+			return peek(LexemType.Char) ? new CharNode(getValue()[0]) : null;
 		}
 
 		#endregion

@@ -6,20 +6,37 @@ namespace Lens.SyntaxTree.Literals
 	/// <summary>
 	/// A node to represent the null literal.
 	/// </summary>
-	internal class NullNode : NodeBase
+	internal class NullNode : NodeBase, ILiteralNode
 	{
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			return typeof (NullType);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitNull();
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Literal type
+
+		public Type LiteralType
+		{
+			get { return typeof (NullType); }
+		}
+
+		#endregion
+
+		#region Debug
 
 		public override bool Equals(object obj)
 		{
@@ -33,16 +50,11 @@ namespace Lens.SyntaxTree.Literals
 			return 0;
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return "(null)";
 		}
-	}
 
-	/// <summary>
-	/// A pseudotype to represent the null variable.
-	/// </summary>
-	public class NullType { }
+		#endregion
+	}
 }

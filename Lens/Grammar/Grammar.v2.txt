@@ -1,6 +1,6 @@
 ﻿// globals
 main <~NodeBase>                            = stmt { NL stmt } EOF
-stmt <NodeBase>                             = using | record_def | type_def | fun_def | local_stmt
+stmt <NodeBase>                             = use | record_def | type_def | fun_def | local_stmt
 
 // namespace & type signatures
 namespace <TypeSignature>                   = identifier { "." identifier }
@@ -12,15 +12,15 @@ attributes <~AttributeNode>                 = attribute { NL attribute }
 attribute <AttributeNode>                   = "@" identifier invoke_line_args
 
 // structures
-using <UsingNode>                           = "using" namespace
+use <UseNode>                               = "use" namespace
 record_def <RecordDefinitionNode>           = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
 record_stmt <RecordField>                   = identifier ":" type
 type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
 type_stmt <TypeLabel>                       = identifier [ "of" type ]
 fun_def <FunctionNode>                      = [ attributes ] [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
-fun_args <~FunctionArgument>                = fun_single_arg | fun_many_args
-fun_arg <FunctionArgument>                  = identifier ":" [ "ref" ] type
-fun_arg_list <~FunctionArgument>            = "(" { fun_single_arg } ")"
+fun_args <~FunctionArgument>                = fun_arg | fun_arg_list
+fun_arg <FunctionArgument>                  = identifier [ ":" [ "ref" ] type [ "..." ] ]
+fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"
 
 // blocks
 block <CodeBlockNode>                       = local_stmt_list | local_stmt
@@ -34,9 +34,10 @@ let_stmt <LetNode>                          = "let" identifier "=" expr
 
 // assignment
 set_stmt <NodeBase>                         = set_id_stmt | set_stmbr_stmt | set_any_stmt
-set_id_stmt <SetIdentifierNode>             = identifier "=" expr
-set_stmbr_stmt <SetMemberNode>              = type "::" identifier "=" expr
-set_any_stmt <NodeBase>                     = lvalue_expr "=" expr
+set_id_stmt <SetIdentifierNode>             = identifier assignment_op expr
+set_stmbr_stmt <SetMemberNode>              = type "::" identifier assignment_op expr
+set_any_stmt <NodeBase>                     = lvalue_expr assignment_op expr
+assignment_op                               = [ binary_op ] "="
 
 // lvalues
 lvalue_expr <NodeBase>                      = lvalue_name_expr | lvalue_paren_expr
@@ -58,10 +59,11 @@ accessor_mbr <GetMemberNode>                = "." identifier [ type_args ]
 expr <NodeBase>                             = block_expr | line_expr
 
 // block control structures
-block_expr <NodeBase>                       = if_expr | while_expr | for_expr | try_stmt | new_block_expr | invoke_block_expr | lambda_block_expr
+block_expr <NodeBase>                       = if_block | while_block | for_block | using_block | try_stmt | match_block | new_block_expr | invoke_block_expr | lambda_block_expr
 if_block <IfNode>                           = if_header block [ "else" block ]
 while_block <WhileNode>                     = while_header block
 for_block <ForNode>                         = for_header block
+using_block <UsingNode>                     = using_header block
 try_stmt <TryNode>                          = "try" block catch_stmt_list [ finally_stmt ]
 catch_stmt_list <~CatchNode>                = catch_stmt { catch_stmt }
 catch_stmt <CatchNode>                      = "catch" [ identifier ":" type ] block
@@ -72,11 +74,12 @@ lambda_block_expr <LambdaNode>              = [ fun_args ] "->" block
 if_header <IfNode>                          = "if" line_expr "then"
 while_header <WhileNode>                    = "while" line_expr "do"
 for_block <ForNode>                         = "for" identifier "in" line_expr [ ".." line_expr ] "do"
+using_header <UsingNode>                    = "using" [ identifier "=" ] line_expr "do"
 
 // block initializers
-new_block_expr <NodeBase>                   = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
+new_block_expr <NodeBase>                   = "new" ( new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block )
 new_tuple_block <NewTupleNode>              = "(" init_expr_block ")"
-new_list_block <NewListNode>                = "[[" init_expr_block "]]"
+new_list_block <NewListNode>                = "[" "[" init_expr_block "]" "]"
 new_array_block <NewArrayNode>              = "[" init_expr_block "]"
 new_dict_block <NewDictionaryNode>          = "{" init_dict_expr_block "}"
 init_expr_block <~NodeBase>                 = INDENT line_expr { NL line_expr } DEDENT
@@ -86,16 +89,37 @@ new_object_block <NewObjectNode>            = type invoke_block_args
 
 // block invocations
 invoke_block_expr                           = line_expr { invoke_pass }
-invoke_pass                                 = "|>" identifier ( invoke_block_args | invoke_line_args )
+invoke_pass                                 = "|>" identifier [ type_args ] ( lambda_line_expr | invoke_block_args | invoke_line_args )
 invoke_block_args <~NodeBase>               = INDENT { invoke_block_arg } DEDENT
 invoke_block_arg <NodeBase>                 = "<|" ( ref_arg | expr )
 invoke_line_args <~NodeBase>                = { invoke_line_arg }
 invoke_line_arg <NodeBase>                  = ref_arg | get_expr
 ref_arg <NodeBase>                          = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
 
+// pattern matching
+match_block <MatchNode>                     = "match" line_expr "with" INDENT match_stmt { NL match_stmt } DEDENT
+match_stmt <MatchStatementNode>             = "case" match_rules [ "when" line_expr ] "then" block
+match_rules <~MatchRuleBase>                = match_rule { [ NL ] "|" match_rule }
+match_rule <MatchRuleBase>                  = rule_generic [ rule_keyvalue ]
+
+// matching rules
+rule_generic <MatchRuleBase>                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
+rule_tuple <MatchTupleRule>                 = "(" match_rule { ";" match_rule } ")"
+rule_array <MatchArrayRule>                 = "[" rule_array_item { ";" rule_array_item } "]"
+rule_array_item                             = rule_subsequence | match_rule
+rule_regex <MatchRegexRule>                 = regex
+rule_record <MatchRecordRule>               = identifier "(" rule_record_var { ";" rule_record_var } ")"
+rule_record_var                             = identifier "=" match_rule
+rule_type <MatchTypeRule>                   = identifier "of" match_rule
+rule_range <MatchRangeRule>                 = rule_literal ".." rule_literal
+rule_literal <MatchLiteralRule>             = literal
+rule_name <MatchNameRule>                   = identifier [ ":" type ]
+rule_subsequence <MatchSubsequenceRule>     = "..." identifier
+rule_keyvalue <MatchKeyValueRule>           = "=>" rule_generic
+
 // line expressions
 line_stmt <NodeBase>                        = set_stmt | line_expr
-line_expr <NodeBase>                        = if_line | while_line | for_line | throw_stmt | yield_stmt | new_line_expr | typeop_expr | line_typecheck_expr
+line_expr <NodeBase>                        = if_line | while_line | for_line | using_line | throw_stmt | new_object_expr | typeop_expr | line_typecheck_expr
 typeop_expr <NodeBase>                      = default_expr | typeof_expr
 default_expr <DefaultOperatorNode>          = "default" type
 typeof_expr <TypeofOperatorNode>            = "typeof" type
@@ -104,7 +128,7 @@ line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { bina
 typecheck_op_expr <NodeBase>                = "as" type | "is" type
 line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
 line_invoke_base_expr <NodeBase>            = get_expr [ invoke_line_args ]
-atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | paren_expr
+atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | new_collection_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_stmt
 
@@ -112,32 +136,38 @@ lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_stmt
 if_line <IfNode>                            = if_header line_stmt [ "else" line_stmt ]
 while_line <IfNode>                         = while_header line_stmt
 for_line <IfNode>                           = for_header line_stmt
+using_line <UsingNode>                      = using_header line_stmt
 throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
-yield_stmt <YieldNode>                      = "yield" [ "from" ] line_expr
 
 // line initializers
-new_line_expr <NodeBase>                    = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line | new_object_line )
+new_object_expr <NodeBase>                  = "new" ( new_objarray_line | new_object_line )
+new_collection_expr <NodeBase>              = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
 new_tuple_line <NewTupleNode>               = "(" init_expr_line ")"
-new_list_line <NewListNode>                 = "[[" init_expr_line "]]"
+new_list_line <NewListNode>                 = "[" "[" init_expr_line "]" "]"
 new_array_line <NewArrayNode>               = "[" init_expr_line "]"
 new_dict_line <NewDictionaryNode>           = "{" init_dict_expr_line "}"
+new_objarray_line <NewObjectArrayNode>      = type "[" line_expr "]"
 new_object_line <NewObjectNode>             = type [ invoke_line_args ]
 init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }
 
 // literals
-literal <NodeBase>                          = unit | null | bool | string | int | double | char
+literal <NodeBase>                          = unit | null | bool | string | long | int | decimal | float | double | char
 unit <UnitNode>                             = "()"
 null <NullNode>                             = "null"
 bool <BoolNode>                             = "true" | "false"
 
 // specials
 unary_op                                    = "-" | "not"
-binary_op                                   = ...
+binary_op                                   = "&&" | "||" | "^^" | "<:" | ":>" | "==" | "<>" | ">" | "<" | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" | "**"
 
 // value literals
-string <StringNode>                         = "[^"]*" (any character except double quote inside double quotes)
-int <IntNode>                               = [0-9]+
-double <DoubleNode>                         = [0-9]+\.[0-9]+
-char <CharNode>                             = '.' (one character in single quotes)
+string <StringNode>                         = "([^"]|\\["ntr\\])*"
+long <LongNode>                             = [1-9][0-9]*L
+int <IntNode>                               = [1-9][0-9]*+
+decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
+float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
+double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
+char <CharNode>                             = '([^']|\\['ntr\\])'
+regex                                       = /.+?(?<!\\)/[imsc]*
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

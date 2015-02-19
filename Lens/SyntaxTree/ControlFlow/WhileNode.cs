@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
-using Lens.SyntaxTree.Literals;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -9,75 +9,96 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	internal class WhileNode : NodeBase
 	{
+		#region Constructor
+
 		public WhileNode()
 		{
-			Body = new CodeBlockNode();	
+			Body = new CodeBlockNode(ScopeKind.Loop);	
 		}
+
+		#endregion
+
+		#region Fields
 
 		public NodeBase Condition { get; set; }
 
-		public CodeBlockNode Body { get; set; }
+		public CodeBlockNode Body { get; protected set; }
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
+		#endregion
+
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
+			return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		#endregion
+
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
-			yield return Condition;
-			yield return Body;
+			var loopType = Resolve(ctx);
+			var saveLast = mustReturn && !loopType.IsVoid();
+
+			var condType = Condition.Resolve(ctx);
+			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
+			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Unit();
+
+			return base.expand(ctx, mustReturn);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override IEnumerable<NodeChild> getChildren()
 		{
-			var gen = ctx.CurrentILGenerator;
-			var loopType = GetExpressionType(ctx);
-			var saveLast = mustReturn && loopType != typeof (Unit) && loopType != typeof (void) && loopType != typeof (NullType);
+			yield return new NodeChild(Condition, x => Condition = x);
+			yield return new NodeChild(Body, null);
+		}
 
-			var condType = Condition.GetExpressionType(ctx);
-			if(!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+		#endregion
 
-			if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
-			{
-				if(saveLast)
-					Expr.Default(loopType).Compile(ctx, true);
+		#region Emit
 
-				return;
-			}
+		protected override void emitCode(Context ctx, bool mustReturn)
+		{
+			var gen = ctx.CurrentMethod.Generator;
+			var loopType = Resolve(ctx);
+			var saveLast = mustReturn && !loopType.IsVoid();
 
 			var beginLabel = gen.DefineLabel();
 			var endLabel = gen.DefineLabel();
 
-			LocalName tmpVar = null;
+			Local tmpVar = null;
 			if (saveLast)
 			{
-				tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, loopType, false);
-				Expr.Set(tmpVar, Expr.Default(loopType));
+				tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType, false);
+				Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
 			}
 
 			gen.MarkLabel(beginLabel);
 
-			Expr.Cast(Condition, typeof(bool)).Compile(ctx, true);
+			Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
 			gen.EmitConstant(false);
 			gen.EmitBranchEquals(endLabel);
 
-			Body.Compile(ctx, mustReturn);
+			Body.Emit(ctx, mustReturn);
 
 			if (saveLast)
-				gen.EmitSaveLocal(tmpVar);
+				gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			gen.EmitJump(beginLabel);
 
 			gen.MarkLabel(endLabel);
 			if (saveLast)
-				gen.EmitLoadLocal(tmpVar);
-			else
-				gen.EmitNop();
+				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(WhileNode other)
 		{

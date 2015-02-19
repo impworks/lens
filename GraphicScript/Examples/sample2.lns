@@ -1,4 +1,4 @@
-using System.Windows.Media
+use System.Windows.Media
 
 fun color:Color (frac:double) ->
     let thr = 0.9
@@ -17,16 +17,16 @@ fun maker:Figure (x:int y:int) ->
     c.Blur = -> hover = false
     c.Update = ->
         if hover && c.Radius > 10  then
-            c.Y = c.Y + 2
-            c.X = c.X + 2
-            c.Radius = c.Radius - 4
+            c.Y += 2
+            c.X += 2
+            c.Radius -= 4
             c.Fill = color (c.Radius / size)
         if not hover && c.Radius < size then
-            c.X = c.X - 0.5
-            c.Y = c.Y - 0.5
-            c.Radius = c.Radius + 1
+            c.X -= 0.5
+            c.Y -= 0.5
+            c.Radius += 1
             c.Fill = color (c.Radius / size)
     c
 
-let create = (x:int y:int) -> Screen.Add (maker x y)
-5.times (x:int -> 5.times (y:int -> create x y))
+new (5; 5)
+    |> times (x y) -> Screen.Add (maker x y)

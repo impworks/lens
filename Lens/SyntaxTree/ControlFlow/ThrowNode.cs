@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -11,40 +12,52 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class ThrowNode : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// The exception expression to be thrown.
 		/// </summary>
 		public NodeBase Expression { get; set; }
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
 		{
-			yield return Expression;
+			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			if (Expression == null)
 			{
 				if(ctx.CurrentCatchBlock == null)
-					Error(CompilerMessages.ThrowArgumentExpected);
+					error(CompilerMessages.ThrowArgumentExpected);
 
 				gen.EmitRethrow();
 			}
 			else
 			{
-				var type = Expression.GetExpressionType(ctx);
+				var type = Expression.Resolve(ctx);
 
 				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					Error(Expression, CompilerMessages.ThrowTypeNotException);
+					error(Expression, CompilerMessages.ThrowTypeNotException, type);
 
-				Expression.Compile(ctx, true);
+				Expression.Emit(ctx, true);
 				gen.EmitThrow();
 			}
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(ThrowNode other)
 		{
@@ -64,11 +77,11 @@ namespace Lens.SyntaxTree.ControlFlow
 			return (Expression != null ? Expression.GetHashCode() : 0);
 		}
 
-		#endregion
-
 		public override string ToString()
 		{
 			return string.Format("throw({0})", Expression);
 		}
+
+		#endregion
 	}
 }

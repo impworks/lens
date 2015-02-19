@@ -4,6 +4,9 @@ using System.Reflection.Emit;
 
 namespace Lens.Compiler
 {
+	/// <summary>
+	/// A collection of handy wrappers for IL code emitting.
+	/// </summary>
 	internal static class EmitterExtensions
 	{
 		#region Constants
@@ -58,6 +61,33 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
+		/// Pushes a Decimal object onto the stack.
+		/// </summary>
+		public static void EmitConstant(this ILGenerator gen, decimal value)
+		{
+			if (value <= int.MaxValue && value >= int.MinValue && Decimal.Truncate(value) == value)
+			{
+				var ctor = typeof(Decimal).GetConstructor(new[] { typeof(int) });
+				gen.EmitConstant((int)value);
+				gen.EmitCreateObject(ctor);
+			}
+			else
+			{
+				var bits = Decimal.GetBits(value);
+				var ctor = typeof(Decimal).GetConstructor(new[] { typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte) });
+				var sign = value < Decimal.Zero;
+				var scale = (bits[3] >> 16) & 0xFF;
+
+				gen.EmitConstant(bits[0]);
+				gen.EmitConstant(bits[1]);
+				gen.EmitConstant(bits[2]);
+				gen.EmitConstant(sign);
+				gen.EmitConstant((byte)scale);
+				gen.EmitCreateObject(ctor);
+			}
+		}
+
+		/// <summary>
 		/// Pushes a boolean value onto the stack (actually an integer).
 		/// </summary>
 		public static void EmitConstant(this ILGenerator gen, bool value)
@@ -87,15 +117,6 @@ namespace Lens.Compiler
 		public static void EmitNull(this ILGenerator gen)
 		{
 			gen.Emit(OpCodes.Ldnull);
-		}
-
-		/// <summary>
-		/// Does nothing.
-		/// Is  used for marking labels.
-		/// </summary>
-		public static void EmitNop(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Nop);
 		}
 
 		#endregion
@@ -237,17 +258,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Shift the value X bits left.
 		/// </summary>
-		public static void EmitShiftLeft(this ILGenerator gen)
+		public static void EmitShift(this ILGenerator gen, bool isLeft)
 		{
-			gen.Emit(OpCodes.Shl);
-		}
-
-		/// <summary>
-		/// Shift the value X bits right.
-		/// </summary>
-		public static void EmitShiftRight(this ILGenerator gen)
-		{
-			gen.Emit(OpCodes.Shr);
+			gen.Emit(isLeft ? OpCodes.Shl : OpCodes.Shr);
 		}
 
 		/// <summary>
@@ -256,6 +269,14 @@ namespace Lens.Compiler
 		public static void EmitNegate(this ILGenerator gen)
 		{
 			gen.Emit(OpCodes.Neg);
+		}
+
+		/// <summary>
+		/// Duplicates the last value on stack.
+		/// </summary>
+		public static void EmitDup(this ILGenerator gen)
+		{
+			gen.Emit(OpCodes.Dup);
 		}
 
 		#endregion
@@ -320,9 +341,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Loads the value of a local variable onto the stack.
 		/// </summary>
-		public static void EmitLoadLocal(this ILGenerator gen, LocalName loc, bool getPointer = false)
+		public static void EmitLoadLocal(this ILGenerator gen, LocalBuilder loc, bool getPointer = false)
 		{
-			var varId = loc.LocalId.Value;
+			var varId = loc.LocalIndex;
 
 			if (getPointer)
 			{
@@ -339,7 +360,7 @@ namespace Lens.Compiler
 					case 1: gen.Emit(OpCodes.Ldloc_1); break;
 					case 2: gen.Emit(OpCodes.Ldloc_2); break;
 					case 3: gen.Emit(OpCodes.Ldloc_3); break;
-					default: gen.Emit(OpCodes.Ldloc, (short)varId); break;
+					default: gen.Emit(OpCodes.Ldloc, loc); break;
 				}
 			}
 		}
@@ -347,10 +368,16 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Saves the value from the stack to a local variable.
 		/// </summary>
-		public static void EmitSaveLocal(this ILGenerator gen, LocalName loc)
+		public static void EmitSaveLocal(this ILGenerator gen, LocalBuilder loc)
 		{
-			var varId = loc.LocalId.Value;
-			gen.Emit(OpCodes.Stloc, (short)varId);
+			switch (loc.LocalIndex)
+			{
+				case 0: gen.Emit(OpCodes.Stloc_0); break;
+				case 1: gen.Emit(OpCodes.Stloc_1); break;
+				case 2: gen.Emit(OpCodes.Stloc_2); break;
+				case 3: gen.Emit(OpCodes.Stloc_3); break;
+				default: gen.Emit(OpCodes.Stloc, loc); break;
+			}
 		}
 
 		/// <summary>
@@ -607,7 +634,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public static void EmitUnbox(this ILGenerator gen, Type type)
 		{
-			gen.Emit(OpCodes.Box, type);
+			gen.Emit(OpCodes.Unbox_Any, type);
 		}
 
 		/// <summary>

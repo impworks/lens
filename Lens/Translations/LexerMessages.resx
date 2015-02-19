@@ -118,15 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="InconsistentIdentation" xml:space="preserve">
-    <value>Inconsistent identation!</value>
+    <value>LE1001: Inconsistent identation!</value>
+  </data>
+  <data name="IncorrectCharLiteral" xml:space="preserve">
+    <value>LE1006: Incorrect char literal!</value>
+  </data>
+  <data name="TabChar" xml:space="preserve">
+    <value>LE1002: Tabulation is not allowed in source code! Use spaces to indent code blocks.</value>
   </data>
   <data name="UnclosedString" xml:space="preserve">
-    <value>Unclosed string literal!</value>
+    <value>LE1003: Unclosed string literal!</value>
   </data>
   <data name="UnknownEscape" xml:space="preserve">
-    <value>Unknown escape sequence: \{0}</value>
+    <value>LE1004: Unknown escape sequence: \{0}</value>
   </data>
   <data name="UnknownLexem" xml:space="preserve">
-    <value>Unknown lexem!</value>
+    <value>LE1005: Unknown lexem!</value>
   </data>
 </root>

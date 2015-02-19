@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Lens.Translations;
+using Lens.Resolver;
 using Lens.Utils;
 
 namespace Lens.Compiler.Entities
@@ -13,6 +13,8 @@ namespace Lens.Compiler.Entities
 	/// </summary>
 	internal partial class TypeEntity
 	{
+		#region Constructor
+
 		public TypeEntity(Context ctx)
 		{
 			Context = ctx;
@@ -20,20 +22,22 @@ namespace Lens.Compiler.Entities
 			_Fields = new Dictionary<string, FieldEntity>();
 			_Methods = new Dictionary<string, List<MethodEntity>>();
 			_Constructors = new List<ConstructorEntity>();
-			_MethodList = new List<MethodEntity>();
 
 			ClosureMethodId = 1;
 		}
 
-		public Type[] Interfaces;
-
-		private Dictionary<string, FieldEntity> _Fields;
-		private Dictionary<string, List<MethodEntity>> _Methods;
-		private List<ConstructorEntity> _Constructors;
-
-		private List<MethodEntity> _MethodList;
+		#endregion
 
 		#region Properties
+
+		public Type[] Interfaces;
+
+		private readonly Dictionary<string, FieldEntity> _Fields;
+		private readonly Dictionary<string, List<MethodEntity>> _Methods;
+		private readonly List<ConstructorEntity> _Constructors;
+
+		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
+		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
 
 		/// <summary>
 		/// Pointer to context.
@@ -60,16 +64,16 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type Parent;
 
-		private Type m_TypeInfo;
+		private Type _TypeInfo;
 		public Type TypeInfo
 		{
-			get { return TypeBuilder ?? m_TypeInfo; }
+			get { return TypeBuilder ?? _TypeInfo; }
 			set
 			{
 				if(!IsImported)
 					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
 
-				m_TypeInfo = value;
+				_TypeInfo = value;
 			}
 		}
 
@@ -88,10 +92,6 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public TypeEntityKind Kind;
 
-		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
-
-		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
-
 		#endregion
 
 		#region Preparation & Compilation
@@ -108,23 +108,10 @@ namespace Lens.Compiler.Entities
 			if(IsSealed)
 				attrs |= TypeAttributes.Sealed;
 
-			if (Parent != null || (ParentSignature != null && ParentSignature.FullSignature != null))
-			{
-				if (Parent == null)
-				{
-					var parentType = Context.FindType(ParentSignature.FullSignature);
-					if (parentType != null)
-						parentType.PrepareSelf();
+			if (Parent == null && ParentSignature != null)
+				Parent = Context.ResolveType(ParentSignature);
 
-					Parent = Context.ResolveType(ParentSignature.FullSignature);
-				}
-
-				TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
-			}
-			else
-			{
-				TypeBuilder = Context.MainModule.DefineType(Name, attrs);
-			}
+			TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
 
 			if(Interfaces != null)
 				foreach(var iface in Interfaces)
@@ -132,50 +119,10 @@ namespace Lens.Compiler.Entities
 		}
 
 		/// <summary>
-		/// Invokes generation of FieldBuilder, MethodBuilder and ConstructorBuilder objects for type members.
-		/// </summary>
-		public void PrepareMembers()
-		{
-			foreach(var field in _Fields)
-				field.Value.PrepareSelf();
-
-			foreach (var ctor in _Constructors)
-				ctor.PrepareSelf();
-
-			foreach (var method in _MethodList)
-			{
-				method.PrepareSelf();
-
-				MethodEntity mi = null;
-				try
-				{
-					mi = ResolveMethod(method.Name, method.GetArgumentTypes(Context), true);
-				}
-				catch (KeyNotFoundException) { }
-
-				if (mi != null)
-				{
-					if(this == Context.MainType)
-						Context.Error(CompilerMessages.FunctionRedefinition, method.Name);
-					else
-						Context.Error(CompilerMessages.MethodRedefinition, method.Name, Name);
-				}
-
-				if(!_Methods.ContainsKey(method.Name))
-					_Methods.Add(method.Name, new List<MethodEntity>());
-
-				_Methods[method.Name].Add(method);
-			}
-
-			_MethodList.Clear();
-		}
-
-		/// <summary>
 		/// Compile the method bodies of the current class.
 		/// </summary>
 		public void Compile()
 		{
-			var backup = Context.CurrentType;
 			Context.CurrentType = this;
 
 			foreach (var curr in _Constructors)
@@ -186,23 +133,6 @@ namespace Lens.Compiler.Entities
 				foreach (var curr in currGroup.Value)
 					if(!curr.IsImported)
 						curr.Compile();
-
-			Context.CurrentType = backup;
-		}
-
-		/// <summary>
-		/// Process the closured for the current type.
-		/// </summary>
-		public void ProcessClosures()
-		{
-			foreach (var currGroup in _Methods)
-				foreach(var currMethod in currGroup.Value)
-					if (!currMethod.IsImported)
-						currMethod.ProcessClosures();
-
-			foreach(var currCtor in _Constructors)
-				if (!currCtor.IsImported)
-					currCtor.ProcessClosures();
 		}
 
 		/// <summary>
@@ -219,7 +149,8 @@ namespace Lens.Compiler.Entities
 
 			if (this == Context.MainType)
 			{
-				foreach (var currGroup in _Methods)
+				var groups = _Methods.ToArray();
+				foreach (var currGroup in groups)
 					foreach (var currMethod in currGroup.Value)
 						if (currMethod.IsPure)
 							createPureWrapper(currMethod);		
@@ -229,117 +160,6 @@ namespace Lens.Compiler.Entities
 		#endregion
 
 		#region Structure methods
-
-		/// <summary>
-		/// Imports a new method to the given type.
-		/// </summary>
-		internal void ImportMethod(string name, MethodInfo mi, bool check)
-		{
-			if(!mi.IsStatic || !mi.IsPublic)
-				Context.Error(CompilerMessages.ImportUnsupportedMethod);
-
-			var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
-			var me = new MethodEntity
-			{
-				Name = name,
-				IsImported = true,
-				IsStatic = true,
-				IsVirtual = false,
-				ContainerType = this,
-				MethodInfo = mi,
-				ReturnType = mi.ReturnType,
-				Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
-			};
-
-			if (check)
-			{
-				_MethodList.Add(me);
-			}
-			else
-			{
-				if(_Methods.ContainsKey(name))
-					_Methods[name].Add(me);
-				else
-					_Methods.Add(name, new List<MethodEntity> { me });
-			}
-		}
-
-		/// <summary>
-		/// Creates a new field by type signature.
-		/// </summary>
-		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = false)
-		{
-			var fe = createFieldCore(name, isStatic, prepare);
-			fe.TypeSignature = signature;
-			return fe;
-		}
-
-		/// <summary>
-		/// Creates a new field by resolved type.
-		/// </summary>
-		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = false)
-		{
-			var fe = createFieldCore(name, isStatic, prepare);
-			fe.Type = type;
-			return fe;
-		}
-
-		/// <summary>
-		/// Creates a new method by resolved argument types.
-		/// </summary>
-		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
-		{
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
-			me.ArgumentTypes = argTypes;
-			me.ReturnType = returnType;
-			return me;
-		}
-
-		/// <summary>
-		/// Creates a new method with argument types given by signatures.
-		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
-		{
-			var args = argTypes == null
-				? null
-				: argTypes.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
-
-			return CreateMethod(name, returnType, args, isStatic, isVirtual, prepare);
-		}
-
-		/// <summary>
-		/// Creates a new method with argument types given by function arguments.
-		/// </summary>
-		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = false)
-		{
-			var argHash = new HashList<FunctionArgument>();
-			if(args != null)
-				foreach (var curr in args)
-					argHash.Add(curr.Name, curr);
-
-			var me = createMethodCore(name, isStatic, isVirtual, prepare);
-			me.ReturnTypeSignature = returnType;
-			me.Arguments = argHash;
-			return me;
-		}
-
-		/// <summary>
-		/// Creates a new constructor with the given argument types.
-		/// </summary>
-		internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = false)
-		{
-			var ce = new ConstructorEntity
-			{
-				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
-				ContainerType = this,
-			};
-			_Constructors.Add(ce);
-
-			if(prepare)
-				ce.PrepareSelf();
-
-			return ce;
-		}
 
 		/// <summary>
 		/// Resolves a field assembly entity.
@@ -365,11 +185,17 @@ namespace Lens.Compiler.Entities
 			if (!_Methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 
-			var info = Context.ResolveMethodByArgs(group, m => m.GetArgumentTypes(Context), args);
-			if(exact && info.Item2 != 0)
+			var info = ReflectionHelper.ResolveMethodByArgs(
+				group,
+				m => m.GetArgumentTypes(Context),
+				m => m.IsVariadic,
+				args
+			);
+
+			if(exact && info.Distance != 0)
 				throw new KeyNotFoundException();
 
-			return info.Item1;
+			return info.Method;
 		}
 
 		/// <summary>
@@ -389,56 +215,23 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
-			var info = Context.ResolveMethodByArgs(_Constructors, c => c.GetArgumentTypes(Context), args);
-			return info.Item1;
+			var info = ReflectionHelper.ResolveMethodByArgs(
+				_Constructors,
+				c => c.GetArgumentTypes(Context),
+				c => false,
+				args
+			);
+
+			return info.Method;
 		}
 
 		#endregion
 
-		#region Helpers
+		#region Debug
 
-		/// <summary>
-		/// Create a field without setting type info.
-		/// </summary>
-		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare)
+		public override string ToString()
 		{
-			if (_Fields.ContainsKey(name))
-				Context.Error("Type '{0}' already contains field '{1}'!", Name, name);
-
-			var fe = new FieldEntity
-			{
-				Name = name,
-				IsStatic = isStatic,
-				ContainerType = this,
-			};
-
-			_Fields.Add(name, fe);
-
-			if(prepare)
-				fe.PrepareSelf();
-
-			return fe;
-		}
-
-		/// <summary>
-		/// Creates a method without setting argument type info.
-		/// </summary>
-		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare)
-		{
-			var me = new MethodEntity
-			{
-				Name = name,
-				IsStatic = isStatic,
-				IsVirtual = isVirtual,
-				ContainerType = this,
-			};
-
-			_MethodList.Add(me);
-
-			if(prepare)
-				me.PrepareSelf();
-
-			return me;
+			return Name;
 		}
 
 		#endregion

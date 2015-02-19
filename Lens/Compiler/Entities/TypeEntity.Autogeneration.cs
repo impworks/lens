@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.Translations;
-using Lens.Utils;
 
 namespace Lens.Compiler.Entities
 {
@@ -11,6 +11,9 @@ namespace Lens.Compiler.Entities
 	{
 		#region Auto-generated entities
 
+		/// <summary>
+		/// Creates the body of Equals(T).
+		/// </summary>
 		private void createSpecificEquals()
 		{
 			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
@@ -39,6 +42,9 @@ namespace Lens.Compiler.Entities
 			eq.Body.Add(Expr.Get("result"));
 		}
 
+		/// <summary>
+		/// Creates the body of Equals(object).
+		/// </summary>
 		private void createGenericEquals()
 		{
 			var eq = CreateMethod(
@@ -78,6 +84,9 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
+		/// <summary>
+		/// Creates the body of GetHashCode().
+		/// </summary>
 		private void createGetHashCode()
 		{
 			var ghc = CreateMethod(
@@ -132,6 +141,9 @@ namespace Lens.Compiler.Entities
 			ghc.Body.Add(Expr.Get("result"));
 		}
 
+		/// <summary>
+		/// Creates a wrapper for the pure method that contains the value cache.
+		/// </summary>
 		private void createPureWrapper(MethodEntity method)
 		{
 			if (method.ReturnType.IsVoid())
@@ -140,7 +152,6 @@ namespace Lens.Compiler.Entities
 			var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
 			var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
 			pure.Body = method.Body;
-			method.Body = null;
 
 			var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
 
@@ -155,7 +166,10 @@ namespace Lens.Compiler.Entities
 				createPureWrapperMany(method, pureName);
 		}
 
-		private void createPureWrapper0(MethodEntity wrapper, string originalName)
+		/// <summary>
+		/// Creates a pure wrapper for parameterless function.
+		/// </summary>
+		private void createPureWrapper0(MethodEntity wrapper, string pureName)
 		{
 			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
 			var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
@@ -163,7 +177,8 @@ namespace Lens.Compiler.Entities
 			CreateField(fieldName, wrapper.ReturnTypeSignature, true);
 			CreateField(flagName, typeof(bool), true);
 
-			wrapper.Body = Expr.Block(
+			wrapper.Body =  Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// if (not $flag) $cache = $internal (); $flag = true
 				Expr.If(
@@ -172,7 +187,7 @@ namespace Lens.Compiler.Entities
 						Expr.SetMember(
 							EntityNames.MainTypeName,
 							fieldName,
-							Expr.Invoke(EntityNames.MainTypeName, originalName)
+							Expr.Invoke(EntityNames.MainTypeName, pureName)
 						),
 						Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
 					)
@@ -183,7 +198,10 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
-		private void createPureWrapper1(MethodEntity wrapper, string originalName)
+		/// <summary>
+		/// Creates a pure wrapper for function with 1 argument.
+		/// </summary>
+		private void createPureWrapper1(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 			var argName = wrapper.Arguments[0].Name;
@@ -194,6 +212,7 @@ namespace Lens.Compiler.Entities
 			CreateField(fieldName, fieldType, true);
 
 			wrapper.Body = Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
 				Expr.If(
@@ -223,7 +242,7 @@ namespace Lens.Compiler.Entities
 							Expr.GetMember(EntityNames.MainTypeName, fieldName),
 							"Add",
 							Expr.Get(argName),
-							Expr.Invoke(EntityNames.MainTypeName, originalName, Expr.Get(argName))
+							Expr.Invoke(EntityNames.MainTypeName, pureName, Expr.Get(argName))
 						)
 					)
 				),
@@ -236,7 +255,10 @@ namespace Lens.Compiler.Entities
 			);
 		}
 
-		private void createPureWrapperMany(MethodEntity wrapper, string originalName)
+		/// <summary>
+		/// Creates a pure wrapper for function with 2 and more arguments.
+		/// </summary>
+		private void createPureWrapperMany(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 
@@ -250,6 +272,7 @@ namespace Lens.Compiler.Entities
 			var tupleName = "<args>";
 
 			wrapper.Body = Expr.Block(
+				ScopeKind.FunctionRoot,
 
 				// $tmp = new Tuple<...> $arg1 $arg2 ...
 				Expr.Let(tupleName, Expr.New(tupleType, argGetters)),
@@ -282,7 +305,7 @@ namespace Lens.Compiler.Entities
 							Expr.GetMember(EntityNames.MainTypeName, fieldName),
 							"Add",
 							Expr.Get(tupleName),
-							Expr.Invoke(EntityNames.MainTypeName, originalName, argGetters)
+							Expr.Invoke(EntityNames.MainTypeName, pureName, argGetters)
 						)
 					)
 				),

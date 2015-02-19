@@ -1,7 +1,9 @@
-LENS: Language for Embeddable .NET Scripting
-====
+LENS: Embeddable scripting for .NET
+===
 
 Welcome to the homepage for LENS embeddable compiler!
+
+LENS stands for "<b>L</b>anguage for <b>E</b>mbeddable .<b>N</b>ET <b>S</b>cripting".
 
 ### A few examples of the syntax
 
@@ -25,15 +27,18 @@ println "blastoff!"
 LINQ queries:
 
 ```csharp
-let squares = range 1 100
-    |> Where (x:int -> x % 2 == 0)
-    |> Select (x:int -> x ** 2)
+let squareSum = range 1 100
+    |> Where (x -> x.even())
+    |> Select (x -> x ** 2)
+    |> Sum ()
 ```
         
 Function declaration:
 
 ```csharp
-fun dist:double (p1:Point p2:Point) ->
+using System.Drawing
+
+pure fun dist:double (p1:Point p2:Point) ->
     let x = p1.X - p2.X
     let y = p1.Y - p2.Y
     Math::Sqrt (x ** 2 + y ** 2)
@@ -50,21 +55,41 @@ record Store
     Name : string
     Stock : int
     
-let stores = new [new Store "A" 10; new Store "B" 42]
-for s in stores.OrderByDescending (x:Store -> x.Stock) do
-    println "Store {0} contains has {1} products in stock" (s.Name) (s.Stock)
+let stores = new [
+    new Store "A" 10
+    new Store "B" 42
+    new Store "C" 5
+]
+
+for s in stores.OrderByDescending (x-> x.Stock) do
+    println "Store {0} contains has {1} products in stock" s.Name s.Stock
 ```
 
-Function composition and closures:
+Partial application and function composition:
 
 ```csharp
-let multiplier = (x:int) -> (y:int) -> x * y
-let doubler = multiplier 2
+let multiplier = (x:int y:int) -> x * y
 let inv = (a:string b:string) -> b + a
 
-let invParse = inv :> int::Parse<string> :> doubler
+// partially apply multiplier
+let doubler = multiplier 2 _
 
-print (invParse "1" "2") // 42
+// compose functions together
+let invParse = inv :> int::Parse :> doubler :> (x -> println x)
+
+invParse "1" "2" // 42
+```
+
+Pattern matching:
+
+```csharp
+fun desribe:string (arr:object[]) ->
+    match arr with
+        case [] then "empty array"
+        case [x:int] when x < 10 then fmt "array with 1 small int ({0})" x
+        case [x] then "array with 1 item"
+        case [x; y] then "array with 2 items"
+        case [x; y; ...z] then fmt "array with {0}, {1} and {2} more items" x y z.Length
 ```
 
 ### Why another language?
@@ -120,19 +145,20 @@ The compiler already supports the following features:
 * Import of types, methods and even local variables from host into the script
 * Declaration of records and functions inside the script
 * Local type inference
-* Anonymous functions with closures
-* Extension methods and LINQ
+* [Anonymous functions](https://github.com/impworks/lens/wiki/Lambda-expressions) with closures
+* [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
 * Overloaded operators support
+* [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)
+* Pattern matching (with [awesome regex support](https://github.com/impworks/lens/wiki/Pattern-Matching#9-regex-rule))
+* Automatic [memoization](https://github.com/impworks/lens/wiki/Functions#memoization) support
+* Shorthand operators
 * Basic optimizations like constant unrolling
+* Safe mode: certain types or namespaces can be disabled for security reasons
 
 Some cool features are on the way:
 
-* Safe mode: certain types or namespaces can be disabled for security reasons
-* Pattern matching
+* Generic function definition
 * Object initializers
-* Partial function application and function composition
-* Automatic memoization support
-* Shorthand operators
 * Attributes
 
 The complete list of expected features (in russian) can be found in the Issues tab.

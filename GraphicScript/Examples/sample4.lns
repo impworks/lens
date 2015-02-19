@@ -1,4 +1,4 @@
-using System.Windows.Media
+use System.Windows.Media
 
 let bound = new Rect ()
 bound.X = 50
@@ -14,16 +14,15 @@ fun maker:Figure (x:int) ->
 
     let f = new Circle ()
     f.X = 50
-    f.Y = (x+1)*50
+    f.Y = x*50
     var speed = rand()*5
     f.Update = ->
         if f.X < left && speed < 0 then
             speed = -speed
         if f.X > right && speed > 0 then
             speed = -speed
-        f.X = f.X + speed
+        f.X += speed
     f
 
-let objs = Enumerable::Range 0 10
-    |> Select (x:int -> maker x)
-Screen.Add objs
+for x in 1.to 10 do
+    Screen.Add (maker x)

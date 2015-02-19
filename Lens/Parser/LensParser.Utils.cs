@@ -5,6 +5,7 @@ using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.Expressions;
+using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -12,14 +13,18 @@ namespace Lens.Parser
 {
 	internal partial class LensParser
 	{
+		#region Error reporting
+
 		[DebuggerStepThrough]
 		private void error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(
 				string.Format(msg, args),
-				Lexems[LexemId]
+				_Lexems[_LexemId]
 			);
 		}
+
+		#endregion
 
 		#region Lexem handling
 
@@ -40,8 +45,8 @@ namespace Lens.Parser
 		{
 			foreach (var curr in types)
 			{
-				var id = Math.Min(LexemId + offset, Lexems.Length - 1);
-				var lex = Lexems[id];
+				var id = Math.Min(_LexemId + offset, _Lexems.Length - 1);
+				var lex = _Lexems[id];
 
 				if (lex.Type != curr)
 					return false;
@@ -57,8 +62,8 @@ namespace Lens.Parser
 		/// </summary>
 		private bool peekAny(params LexemType[] types)
 		{
-			var id = Math.Min(LexemId, Lexems.Length - 1);
-			var lex = Lexems[id];
+			var id = Math.Min(_LexemId, _Lexems.Length - 1);
+			var lex = _Lexems[id];
 			return lex.Type.IsAnyOf(types);
 		}
 
@@ -68,7 +73,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private Lexem ensure(LexemType type, string msg, params object[] args)
 		{
-			var lex = Lexems[LexemId];
+			var lex = _Lexems[_LexemId];
 
 			if(lex.Type != type)
 				error(msg, args);
@@ -83,7 +88,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private bool check(LexemType lexem)
 		{
-			var lex = Lexems[LexemId];
+			var lex = _Lexems[_LexemId];
 
 			if (lex.Type != lexem)
 				return false;
@@ -98,7 +103,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private string getValue()
 		{
-			var value = Lexems[LexemId].Value;
+			var value = _Lexems[_LexemId].Value;
 			skip();
 			return value;
 		}
@@ -109,7 +114,7 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private void skip(int count = 1)
 		{
-			LexemId = Math.Min(LexemId + count, Lexems.Length - 1);
+			_LexemId = Math.Min(_LexemId + count, _Lexems.Length - 1);
 		}
 
 		/// <summary>
@@ -117,7 +122,7 @@ namespace Lens.Parser
 		/// </summary>
 		private bool isStmtSeparator()
 		{
-			return check(LexemType.NewLine) || Lexems[LexemId - 1].Type == LexemType.Dedent;
+			return check(LexemType.NewLine) || _Lexems[_LexemId - 1].Type == LexemType.Dedent;
 		}
 
 		#endregion
@@ -132,10 +137,10 @@ namespace Lens.Parser
 		private T attempt<T>(Func<T> getter)
 			where T : LocationEntity
 		{
-			var backup = LexemId;
+			var backup = _LexemId;
 			var result = bind(getter);
 			if (result == null)
-				LexemId = backup;
+				_LexemId = backup;
 			return result;
 		}
 
@@ -145,10 +150,10 @@ namespace Lens.Parser
 		[DebuggerStepThrough]
 		private List<T> attempt<T>(Func<List<T>> getter)
 		{
-			var backup = LexemId;
+			var backup = _LexemId;
 			var result = getter();
 			if (result == null || result.Count == 0)
-				LexemId = backup;
+				_LexemId = backup;
 			return result;
 		}
 
@@ -157,12 +162,12 @@ namespace Lens.Parser
 		/// If the node does not match, an error is thrown.
 		/// </summary>
 		[DebuggerStepThrough]
-		private T ensure<T>(Func<T> getter, string msg)
+		private T ensure<T>(Func<T> getter, string msg, params object[] args)
 			where T : LocationEntity
 		{
 			var result = bind(getter);
 			if(result == null)
-				error(msg);
+				error(msg, args);
 
 			return result;
 		}
@@ -174,8 +179,8 @@ namespace Lens.Parser
 		private T bind<T>(Func<T> getter)
 			where T : LocationEntity
 		{
-			var startId = LexemId;
-			var start = Lexems[LexemId];
+			var startId = _LexemId;
+			var start = _Lexems[_LexemId];
 
 			var result = getter();
 
@@ -183,9 +188,9 @@ namespace Lens.Parser
 			{
 				result.StartLocation = start.StartLocation;
 
-				var endId = LexemId;
+				var endId = _LexemId;
 				if (endId > startId && endId > 0)
-					result.EndLocation = Lexems[LexemId - 1].EndLocation;
+					result.EndLocation = _Lexems[_LexemId - 1].EndLocation;
 			}
 
 			return result;
@@ -195,6 +200,9 @@ namespace Lens.Parser
 
 		#region Setters
 
+		/// <summary>
+		/// Creates a setter from a getter expression and a value to be set.
+		/// </summary>
 		private NodeBase makeSetter(NodeBase getter, NodeBase expr)
 		{
 			if (getter is GetIdentifierNode)
@@ -221,15 +229,25 @@ namespace Lens.Parser
 			throw new InvalidOperationException(string.Format("Node {0} is not a getter!", getter.GetType()));
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetIdentifierNode.
+		/// From: a
+		/// To:   a = ...
+		/// </summary>
 		private SetIdentifierNode setterOf(GetIdentifierNode node)
 		{
 			return new SetIdentifierNode
 			{
 				Identifier = node.Identifier,
-				LocalName = node.LocalName
+				Local = node.Local
 			};
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetMemberNode.
+		/// From: expr.a 
+		/// To:   expr.a = ...
+		/// </summary>
 		private SetMemberNode setterOf(GetMemberNode node)
 		{
 			return new SetMemberNode
@@ -240,6 +258,11 @@ namespace Lens.Parser
 			};
 		}
 
+		/// <summary>
+		/// Creates an appropriate setter for GetIndexNode.
+		/// From: expr[a]
+		/// To:   expr[a] = ...
+		/// </summary>
 		private SetIndexNode setterOf(GetIndexNode node)
 		{
 			return new SetIndexNode
@@ -253,12 +276,17 @@ namespace Lens.Parser
 
 		#region Accessors
 
-		private NodeBase attachAccessor(NodeBase node, NodeBase accessor)
+		/// <summary>
+		/// Attaches a member of index accessor to an expression.
+		/// From: x
+		/// To:   x.field or x[idx]
+		/// </summary>
+		private static NodeBase attachAccessor(NodeBase expr, NodeBase accessor)
 		{
 			if (accessor is GetMemberNode)
-				(accessor as GetMemberNode).Expression = node;
+				(accessor as GetMemberNode).Expression = expr;
 			else if (accessor is GetIndexNode)
-				(accessor as GetIndexNode).Expression = node;
+				(accessor as GetIndexNode).Expression = expr;
 			else
 				throw new InvalidOperationException(string.Format("Node {0} is not an accessor!", accessor.GetType()));
 
@@ -269,7 +297,10 @@ namespace Lens.Parser
 
 		#region Operators
 
-		private static List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
+		/// <summary>
+		/// List of binary operators and their corresponding function wrappers in precedence order.
+		/// </summary>
+		private static readonly List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
 		{
 			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 			{
@@ -313,12 +344,38 @@ namespace Lens.Parser
 			},
 		};
 
-		private Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
+		/// <summary>
+		/// List of unary operators and their corresponding function wrappers in precedence order.
+		/// </summary>
+		private static readonly Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
 		{
 			{ 3, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Minus, Expr.Negate) },
 			{ 0, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Not, Expr.Not) }
 		};
 
+		/// <summary>
+		/// List of binary operator lexems (for shorthand assignment checking).
+		/// </summary>
+		private static readonly LexemType[] _BinaryOperators =
+		{
+			LexemType.And,
+			LexemType.Or,
+			LexemType.Xor,
+			LexemType.ShiftLeft,
+			LexemType.ShiftRight,
+			LexemType.Plus,
+			LexemType.Minus,
+			LexemType.Multiply,
+			LexemType.Divide,
+			LexemType.Remainder,
+			LexemType.Power
+		};
+
+		/// <summary>
+		/// Recursively creates a tree of binary expressions according to operator precedence.
+		/// </summary>
+		/// <param name="getter">Function that returns the expression.</param>
+		/// <param name="priority">Current priority.</param>
 		private NodeBase processOperator(Func<NodeBase> getter, int priority = 0)
 		{
 			if (priority == _BinaryOperatorPriorities.Count)

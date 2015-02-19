@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -10,10 +11,17 @@ namespace Lens.SyntaxTree.ControlFlow
 {
 	internal class ForeachNode : NodeBase
 	{
+		#region Fields
+
 		/// <summary>
 		/// A variable to assign current item to.
 		/// </summary>
 		public string VariableName { get; set; }
+
+		/// <summary>
+		/// Explicitly specified local variable.
+		/// </summary>
+		public Local Local { get; set; }
 
 		/// <summary>
 		/// A single expression of iterable type.
@@ -35,235 +43,265 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public CodeBlockNode Body { get; set; }
 
-		private LocalName m_Variable;
-		private Type m_VariableType;
-		private Type m_EnumeratorType;
-		private PropertyWrapper m_CurrentProperty;
+		private Type _VariableType;
+		private Type _EnumeratorType;
+		private PropertyWrapper _CurrentProperty;
 
-		protected override Type resolveExpressionType(Context ctx, bool mustReturn = true)
-		{
-			return mustReturn ? Body.GetExpressionType(ctx) : typeof(Unit);
-		}
+		#endregion
 
-		public override void ProcessClosures(Context ctx)
+		#region Resolve
+
+		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			if(IterableExpression != null)
+			if (IterableExpression != null)
 				detectEnumerableType(ctx);
 			else
 				detectRangeType(ctx);
 
-			m_Variable = ctx.CurrentScope.DeclareName(VariableName, m_VariableType, false);
+			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
+				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
-			base.ProcessClosures(ctx);
+			if (Local == null)
+			{
+				// variable must be defined: declare it in a temporary scope for pre-resolve state
+				var tmpVar = new Local(VariableName, _VariableType);
+				return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx, mustReturn), tmpVar);
+			}
+
+			// index local specified explicitly: no need to account for it in pre-resolve
+			return Body.Resolve(ctx, mustReturn);
 		}
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		#endregion
+
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
 			{
-				yield return IterableExpression;
-			}
-			else
-			{
-				yield return RangeStart;
-				yield return RangeEnd;
-			}
-
-			yield return Body;
-		}
-
-		protected override void compile(Context ctx, bool mustReturn)
-		{
-			if (IterableExpression != null)
-			{
-				var type = IterableExpression.GetExpressionType(ctx);
+				var type = IterableExpression.Resolve(ctx);
 				if (type.IsArray)
-					compileArray(ctx, mustReturn);
-				else
-					compileEnumerable(ctx, mustReturn);
+					return expandArray(ctx);
+				
+				return expandEnumerable(ctx, mustReturn);
+			}
+
+			return expandRange(ctx);
+		}
+
+		protected override IEnumerable<NodeChild> getChildren()
+		{
+			if (IterableExpression != null)
+			{
+				yield return new NodeChild(IterableExpression, x => IterableExpression = x);
 			}
 			else
 			{
-				compileRange(ctx, mustReturn);
+				yield return new NodeChild(RangeStart, x => RangeStart = x);
+				yield return new NodeChild(RangeEnd, x => RangeEnd = x);
 			}
+
+			yield return new NodeChild(Body, null);
 		}
 
-		private void compileEnumerable(Context ctx, bool mustReturn)
+		/// <summary>
+		/// Expands the foreach loop if it iterates over an IEnumerable`1.
+		/// </summary>
+		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
 		{
-			var returnType = GetExpressionType(ctx);
-			var saveLast = mustReturn && !returnType.IsVoid();
+			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
+			var enumerableType = _EnumeratorType.IsGenericType
+				? typeof (IEnumerable<>).MakeGenericType(_EnumeratorType.GetGenericArguments()[0])
+				: typeof (IEnumerable);
 
-			var tmpVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_EnumeratorType, false);
-			Expr.Set(tmpVar, Expr.Invoke(IterableExpression, "GetEnumerator")).Compile(ctx, false);
+			var init = Expr.Set(
+				iteratorVar,
+				Expr.Invoke(
+					Expr.Cast(IterableExpression, enumerableType),
+					"GetEnumerator"
+				)
+			);
 
-			LocalName result = null;
-
-			var loopWrapper = Expr.Block();
 			var loop = Expr.While(
-				Expr.Invoke(Expr.Get(tmpVar), "MoveNext"),
+				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
-					Expr.Set(
-						m_Variable,
-						Expr.GetMember(Expr.Get(tmpVar), "Current")
-					),
+					getIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
 					Body
 				)
 			);
 
-			if (saveLast)
+			if (_EnumeratorType.Implements(typeof (IDisposable), false))
 			{
-				result = ctx.CurrentScope.DeclareImplicitName(ctx, returnType, false);
-				loopWrapper.Add(Expr.Set(result, loop));
-			}
-			else
-			{
-				loopWrapper.Add(loop);
-			}
+				var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
+				var returnType = Resolve(ctx);
+				var saveLast = mustReturn && !returnType.IsVoid();
 
-			if (m_EnumeratorType.Implements(typeof (IDisposable), false))
-			{
-				var block = Expr.Try(
-					loopWrapper,
-					Expr.Block(Expr.Invoke(Expr.Get(tmpVar), "Dispose"))
+				if (saveLast)
+				{
+					var resultVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
+					return Expr.Block(
+						Expr.Try(
+							Expr.Block(
+								init,
+								Expr.Set(resultVar, loop)
+							),
+							dispose
+						),
+						Expr.Get(resultVar)
+					);
+				}
+
+				return Expr.Try(
+					Expr.Block(init, loop),
+					dispose
 				);
-				block.Compile(ctx, mustReturn);
-			}
-			else
-			{
-				loopWrapper.Compile(ctx, mustReturn);
 			}
 
-			if (saveLast)
-			{
-				var gen = ctx.CurrentILGenerator;
-				gen.EmitLoadLocal(result);
-			}
+			return Expr.Block(
+				init,
+				loop
+			);
 		}
 
-		private void compileArray(Context ctx, bool mustReturn)
+		/// <summary>
+		/// Expands the foreach loop if it iterates over T[].
+		/// </summary>
+		private NodeBase expandArray(Context ctx)
 		{
-			var returnType = GetExpressionType(ctx);
-			var saveLast = mustReturn && !returnType.IsVoid();
+			var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+			var lenVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
 
-			var arrayVar = ctx.CurrentScope.DeclareImplicitName(ctx, IterableExpression.GetExpressionType(ctx), false);
-			var idxVar = ctx.CurrentScope.DeclareImplicitName(ctx, typeof (int), false);
-			var lenVar = ctx.CurrentScope.DeclareImplicitName(ctx, typeof (int), false);
-
-			LocalName result = null;
-
-			var code = Expr.Block(
+			return Expr.Block(
 				Expr.Set(idxVar, Expr.Int(0)),
 				Expr.Set(arrayVar, IterableExpression),
-				Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length"))
-			);
-
-			var loop = Expr.While(
-				Expr.Less(
-					Expr.Get(idxVar),
-					Expr.Get(lenVar)
-				),
-				Expr.Block(
-					Expr.Set(
-						m_Variable,
-						Expr.GetIdx(Expr.Get(arrayVar), Expr.Get(idxVar))
+				Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length")),
+				Expr.While(
+					Expr.Less(
+						Expr.Get(idxVar),
+						Expr.Get(lenVar)
 					),
-					Expr.Set(
-						idxVar,
-						Expr.Add(Expr.Get(idxVar), Expr.Int(1))
-					),
-					Body
+					Expr.Block(
+						getIndexAssignment(
+							Expr.GetIdx(
+								Expr.Get(arrayVar),
+								Expr.Get(idxVar)
+							)
+						),
+						Expr.Set(
+							idxVar,
+							Expr.Add(Expr.Get(idxVar), Expr.Int(1))
+						),
+						Body
+					)
 				)
 			);
-
-			if (saveLast)
-			{
-				result = ctx.CurrentScope.DeclareImplicitName(ctx, returnType, false);
-				code.Add(Expr.Set(result, loop));
-			}
-			else
-			{
-				code.Add(loop);
-			}
-
-			code.Compile(ctx, mustReturn);
-
-			if (saveLast)
-			{
-				var gen = ctx.CurrentILGenerator;
-				gen.EmitLoadLocal(result);
-			}
 		}
 
-		private void compileRange(Context ctx, bool mustReturn)
+		/// <summary>
+		/// Expands the foreach loop if it iterates over a numeric range.
+		/// </summary>
+		private NodeBase expandRange(Context ctx)
 		{
-			var signVar = ctx.CurrentScope.DeclareImplicitName(ctx, m_Variable.Type, false);
-			var code = Expr.Block(
-				Expr.Set(m_Variable, RangeStart),
+			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+
+			return Expr.Block(
+				Expr.Set(idxVar, RangeStart),
 				Expr.Set(
 					signVar,
 					Expr.Invoke(
 						"Math",
 						"Sign",
-						Expr.Sub(RangeEnd, Expr.Get(m_Variable))
+						Expr.Sub(RangeEnd, Expr.Get(idxVar))
 					)
 				),
 				Expr.While(
 					Expr.If(
 						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
-						Expr.Block(Expr.LessEqual(Expr.Get(m_Variable), RangeEnd)),
-						Expr.Block(Expr.GreaterEqual(Expr.Get(m_Variable), RangeEnd))
+						Expr.Block(Expr.Less(Expr.Get(idxVar), RangeEnd)),
+						Expr.Block(Expr.Greater(Expr.Get(idxVar), RangeEnd))
 					),
 					Expr.Block(
+						getIndexAssignment(Expr.Get(idxVar)),
 						Body,
 						Expr.Set(
-							m_Variable,
+							idxVar,
 							Expr.Add(
-								Expr.Get(m_Variable),
+								Expr.Get(idxVar),
 								Expr.Get(signVar)
 							)
 						)
 					)
 				)
 			);
-
-			code.Compile(ctx, mustReturn);
 		}
 
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Calculates the variable type and other required values for enumeration of an IEnumerable`1.
+		/// </summary>
 		private void detectEnumerableType(Context ctx)
 		{
-			var seqType = IterableExpression.GetExpressionType(ctx);
+			var seqType = IterableExpression.Resolve(ctx);
 			if (seqType.IsArray)
 			{
-				m_VariableType = seqType.GetElementType();
+				_VariableType = seqType.GetElementType();
 				return;
 			}
-			
-			var ifaces = GenericHelper.GetInterfaces(seqType);
-			if(!ifaces.Any(i => i == typeof(IEnumerable) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))))
-				Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
-			var enumerator = ctx.ResolveMethod(seqType, "GetEnumerator");
-			m_EnumeratorType = enumerator.ReturnType;
-			m_CurrentProperty = ctx.ResolveProperty(m_EnumeratorType, "Current");
+			var ifaces = seqType.ResolveInterfaces();
+			if (seqType.IsInterface)
+				ifaces = ifaces.Union(new[] { seqType }).ToArray();
 
-			m_VariableType = m_CurrentProperty.PropertyType;
+			var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+			if (generic != null)
+				_EnumeratorType = typeof(IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
+
+			else if (ifaces.Contains(typeof(IEnumerable)))
+				_EnumeratorType = typeof(IEnumerator);
+
+			else
+				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
+
+			_CurrentProperty = ctx.ResolveProperty(_EnumeratorType, "Current");
+			_VariableType = _CurrentProperty.PropertyType;
 		}
 
+		/// <summary>
+		/// Calculates the variable type of a numeric range iteration.
+		/// </summary>
 		private void detectRangeType(Context ctx)
 		{
-			var t1 = RangeStart.GetExpressionType(ctx);
-			var t2 = RangeEnd.GetExpressionType(ctx);
+			var t1 = RangeStart.Resolve(ctx);
+			var t2 = RangeEnd.Resolve(ctx);
 
-			if(t1 != t2)
-				Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
+			if (t1 != t2)
+				error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
-			if(!t1.IsIntegerType())
-				Error(CompilerMessages.ForeachRangeNotInteger, t1);
+			if (!t1.IsIntegerType())
+				error(CompilerMessages.ForeachRangeNotInteger, t1);
 
-			m_VariableType = t1;
+			_VariableType = t1;
 		}
 
-		#region Equality members
+		/// <summary>
+		/// Gets the expression for saving the value at an index to a variable.
+		/// </summary>
+		private NodeBase getIndexAssignment(NodeBase indexGetter)
+		{
+			return Local == null
+				? Expr.Let(VariableName, indexGetter)
+				: Expr.Set(Local, indexGetter) as NodeBase;
+		}
+
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(ForeachNode other)
 		{

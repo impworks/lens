@@ -10,6 +10,8 @@ namespace Lens.Compiler
 	/// </summary>
 	internal class TypeSignature : LocationEntity
 	{
+		#region Constructors
+
 		public TypeSignature(string name, params TypeSignature[] args)
 			: this(name, null, args)
 		{ }
@@ -22,18 +24,84 @@ namespace Lens.Compiler
 			FullSignature = getSignature(name, args);
 		}
 
+		#endregion
+
+		#region Static fields
+
+		/// <summary>
+		/// List of available postfixes.
+		/// </summary>
+		private static string[] _Postfixes = { "[]", "?", "~" };
+
+		#endregion
+
 		#region Fields
 
+		/// <summary>
+		/// The name of the type. Like 'int', or 'Dictionary'.
+		/// </summary>
 		public readonly string Name;
+
+		/// <summary>
+		/// List of generic argument type signatures (if any).
+		/// </summary>
 		public readonly TypeSignature[] Arguments;
+
+		/// <summary>
+		/// Special postfix character:
+		/// [] = array,
+		/// ? = Nullable
+		/// ~ = IEnumerable
+		/// </summary>
 		public readonly string Postfix;
 
+		/// <summary>
+		/// Complete signature with all arguments, postfixes, etc.
+		/// </summary>
 		public readonly string FullSignature;
 
 		#endregion
 
-		#region Methods
+		#region Static constructors
 
+		/// <summary>
+		/// Initializes a type signature with it's string representation.
+		/// </summary>
+		public static implicit operator TypeSignature(string type)
+		{
+			return type == null ? null : Parse(type);
+		}
+
+		/// <summary>
+		/// Parses the type signature.
+		/// </summary>
+		public static TypeSignature Parse(string signature)
+		{
+			if(signature[0] == ' ' || signature[signature.Length - 1] == ' ')
+				signature = signature.Trim();
+
+			foreach (var postfix in _Postfixes)
+				if (signature.EndsWith(postfix))
+					return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
+
+			var open = signature.IndexOf('<');
+			if(open == -1)
+				return new TypeSignature(signature);
+
+			var close = signature.LastIndexOf('>');
+			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
+			var typeName = signature.Substring(0, open);
+
+			return new TypeSignature(typeName, args);
+		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Builds the full string representation of the signature tree.
+		/// </summary>
 		private string getSignature(string name, TypeSignature[] args)
 		{
 			if (args.Length == 0)
@@ -62,48 +130,6 @@ namespace Lens.Compiler
 		}
 
 		/// <summary>
-		/// Initializes a type signature with it's string representation.
-		/// </summary>
-		public static implicit operator TypeSignature(string type)
-		{
-			return type == null ? null : Parse(type);
-		}
-
-		public override string ToString()
-		{
-			return FullSignature;
-		}
-
-		#endregion
-
-		#region Static constructors
-
-		private static List<string> _Postfixes = new List<string> {"[]", "?", "~"};
-
-		/// <summary>
-		/// Parses the type signature.
-		/// </summary>
-		public static TypeSignature Parse(string signature)
-		{
-			if(signature[0] == ' ' || signature[signature.Length - 1] == ' ')
-				signature = signature.Trim();
-
-			foreach (var postfix in _Postfixes)
-				if (signature.EndsWith(postfix))
-					return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
-
-			var open = signature.IndexOf('<');
-			if(open == -1)
-				return new TypeSignature(signature);
-
-			var close = signature.LastIndexOf('>');
-			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
-			var typeName = signature.Substring(0, open);
-
-			return new TypeSignature(typeName, args);
-		}
-
-		/// <summary>
 		/// Parses out the list of generic type arguments delimited by commas.
 		/// </summary>
 		private static IEnumerable<TypeSignature> parseTypeArgs(string args)
@@ -127,7 +153,16 @@ namespace Lens.Compiler
 
 		#endregion
 
-		#region Equality members
+		#region Debug
+
+		public override string ToString()
+		{
+			return FullSignature;
+		}
+
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(TypeSignature other)
 		{

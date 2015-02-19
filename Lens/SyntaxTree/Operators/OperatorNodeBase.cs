@@ -1,4 +1,5 @@
 ﻿using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {
@@ -7,19 +8,36 @@ namespace Lens.SyntaxTree.Operators
 	/// </summary>
 	internal abstract class OperatorNodeBase : NodeBase
 	{
+		#region Operator basics
+
 		/// <summary>
 		/// A textual operator representation for error reporting.
 		/// </summary>
-		public abstract string OperatorRepresentation { get; }
+		protected abstract string OperatorRepresentation { get; }
 
 		/// <summary>
 		/// The name of the method that C# compiler uses for method overloading.
 		/// </summary>
-		public virtual string OverloadedMethodName { get { return null; } }
+		protected virtual string OverloadedMethodName { get { return null; } }
 
 		/// <summary>
 		/// The pointer to overloaded version of the operator.
 		/// </summary>
-		protected MethodWrapper m_OverloadedMethod;
+		protected MethodWrapper _OverloadedMethod;
+
+		#endregion
+
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
+		{
+			var result = IsConstant && ctx.Options.UnrollConstants
+				? Expr.Constant(ConstantValue)
+				: null;
+
+			return result;
+		}
+
+		#endregion
 	}
 }

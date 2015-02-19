@@ -5,10 +5,17 @@ using System.Reflection.Emit;
 namespace Lens.Compiler.Entities
 {
 	/// <summary>
-	/// Represents a field defined in the generated assembly.
+	/// An assembly-level field.
 	/// </summary>
 	internal class FieldEntity : TypeContentsBase
 	{
+		#region Constructor
+
+		public FieldEntity(TypeEntity type) : base(type)
+		{ }
+
+		#endregion
+
 		#region Fields
 
 		/// <summary>
@@ -51,6 +58,15 @@ namespace Lens.Compiler.Entities
 				Type = ContainerType.Context.ResolveType(TypeSignature);
 
 			FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
+		}
+
+		#endregion
+
+		#region Debug
+
+		public override string ToString()
+		{
+			return string.Format("{2} {0}.{1}", ContainerType.Name, Name, Type != null ? Type.ToString() : TypeSignature);
 		}
 
 		#endregion

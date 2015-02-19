@@ -6,6 +6,7 @@
 		NewLine,
 
 		// Keywords
+		Use,
 		Using,
 		Type,
 		Record,
@@ -21,6 +22,10 @@
 		Try,
 		Catch,
 		Finally,
+		Match,
+		With,
+		Case,
+		When,
 		Let,
 		Var,
 		New,
@@ -39,9 +44,14 @@
 		True,
 		False,
 		Int,
+		Long,
+		Float,
 		Double,
+		Decimal,
+		Char,
 		String,
 		Identifier,
+		Regex,
 
 		// Braces
 		ParenOpen,
@@ -50,8 +60,6 @@
 		CurlyClose,
 		SquareOpen,
 		SquareClose,
-		DoubleSquareOpen,
-		DoubleSquareClose,
 
 		// Operators
 		Plus,
@@ -74,7 +82,6 @@
 		Assign,
 
 		// Specials
-		ArrayDef,
 		AtSign,
 		PassLeft,
 		PassRight,
@@ -88,6 +95,9 @@
 		Comma,
 		Tilde,
 		QuestionMark,
+		Ellipsis,
+		VerticalLine,
+
 		Indent,
 		Dedent
 	}

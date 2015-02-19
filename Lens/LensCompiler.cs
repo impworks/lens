@@ -5,6 +5,7 @@ using System.Reflection;
 using Lens.Compiler;
 using Lens.Lexer;
 using Lens.Parser;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 
 namespace Lens
@@ -17,18 +18,34 @@ namespace Lens
 	{
 		public LensCompiler(LensCompilerOptions opts = null)
 		{
-			m_Context = new Context(opts);
+			_Context = new Context(opts);
 			Measurements = new Dictionary<string, TimeSpan>();
 		}
 
-		public void Dispose()
+		#region Fields
+
+		/// <summary>
+		/// Timings of various compiler states (for debug purposes).
+		/// </summary>
+		public readonly Dictionary<string, TimeSpan> Measurements;
+
+		/// <summary>
+		/// The main context class.
+		/// </summary>
+		private readonly Context _Context;
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Register an assembly to be used by the LENS script.
+		/// </summary>
+		/// <param name="asm"></param>
+		public void RegisterAssembly(Assembly asm)
 		{
-			GlobalPropertyHelper.UnregisterContext(m_Context.ContextId);
+			_Context.RegisterAssembly(asm);
 		}
-
-		public Dictionary<string, TimeSpan> Measurements;
-
-		private Context m_Context;
 
 		/// <summary>
 		/// Register a type to be used by LENS script.
@@ -46,7 +63,7 @@ namespace Lens
 			if (type == null)
 				throw new ArgumentNullException("type");
 
-			m_Context.ImportType(alias, type);
+			_Context.ImportType(alias, type);
 		}
 
 		/// <summary>
@@ -54,7 +71,18 @@ namespace Lens
 		/// </summary>
 		public void RegisterFunction(string name, MethodInfo method)
 		{
-			m_Context.ImportFunction(name, method);
+			_Context.ImportFunction(name, method);
+		}
+
+		/// <summary>
+		/// Registers a list of overloaded methods to be used by LENS script.
+		/// </summary>
+		/// <param name="type">Source type.</param>
+		/// <param name="name">The name of the group of source methods.</param>
+		/// <param name="newName">The new name of the methods that will be available in the LENS script. Equals the source name by default.</param>
+		public void RegisterFunctionOverloads(Type type, string name, string newName = null)
+		{
+			_Context.ImportFunctionOverloads(type, name, newName);
 		}
 
 		/// <summary>
@@ -62,7 +90,7 @@ namespace Lens
 		/// </summary>
 		public void RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
-			m_Context.ImportProperty(name, getter, setter);
+			_Context.ImportProperty(name, getter, setter);
 		}
 
 		/// <summary>
@@ -83,7 +111,7 @@ namespace Lens
 			}
 			catch (Exception ex)
 			{
-				throw new LensCompilerException(ex.Message);
+				throw new LensCompilerException(ex.Message, ex);
 			}
 		}
 
@@ -92,7 +120,7 @@ namespace Lens
 		/// </summary>
 		internal Func<object> Compile(IEnumerable<NodeBase> nodes)
 		{
-			var script = m_Context.Compile(nodes);
+			var script = _Context.Compile(nodes);
 			return script.Run;
 		}
 
@@ -112,6 +140,10 @@ namespace Lens
 			return Compile(nodes)();
 		}
 
+		#endregion
+
+		#region Helpers
+		
 		/// <summary>
 		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
 		/// </summary>
@@ -122,10 +154,21 @@ namespace Lens
 			var res = action();
 			var end = DateTime.Now;
 
-			if (m_Context.Options.MeasureTime)
+			if (_Context.Options.MeasureTime)
 				Measurements[title] = end - start;
 
 			return res;
 		}
+
+		#endregion
+
+		#region IDisposable implementation
+
+		public void Dispose()
+		{
+			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
+		}
+
+		#endregion
 	}
 }

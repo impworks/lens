@@ -3,19 +3,27 @@
 namespace Lens.SyntaxTree.Literals
 {
 	/// <summary>
-	/// A node representing floating point double-precision literals.
+	/// A node representing a double-precision floating point literal.
 	/// </summary>
 	internal class DoubleNode : LiteralNodeBase<double>
 	{
+		#region Constructor
+
 		public DoubleNode(double value = 0)
 		{
 			Value = value;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitConstant(Value);
 		}
+
+		#endregion
 	}
 }

@@ -12,19 +12,22 @@
 ## 2. Синтаксис и возможности
 
 Блоки выделяются отступами, выражения разделяются переводом строки.
+Размер отступов не важен, однако разрешается использование только пробелов.
 
 ### 2.1. Типы данных
 
-В интерпретатор встроена поддержка следующих типов:
+В интерпретатор встроена поддержка следующих типов, аналогичных C#:
 
-* `unit = void`
-* `object = System.Object`
-* `bool = System.Boolean`
-* `int = System.Int32`
-* `long = System.Int64`
-* `float = System.Single`
-* `double = System.Double`
-* `string = System.String`
+* `unit` - он же `void`
+* `object`
+* `bool`
+* `int`
+* `long`
+* `float`
+* `double`
+* `decimal`
+* `string`
+* `char`
 
 ### 2.2. Объявление констант и переменных
 
@@ -51,9 +54,11 @@
 Запись - то же самое, что структура. Объект, имеющий только поля. Без методов
 и модификаторов доступа. Объявляется ключевым словом `record`:
 
-    record Student
-        Name : string
-        Age : int
+```csharp
+record Student
+    Name : string
+    Age : int
+```
         
 Все поля структуры являются публичными.
 
@@ -65,37 +70,43 @@
 Объявляются ключевым словом `type` и перечислением возможных ярлыков типа. К
 каждому ярлыку может быть прикреплена метка с помощью ключевого слова `of`:
 
-    type Suit
-        Hearts
-        Clubs
-        Spades
-        Diamonds
+```csharp
+type Suit
+    Hearts
+    Clubs
+    Spades
+    Diamonds
 
-    type Card
-        Ace of Suit
-        King of Suit
-        Queen of Suit
-        Jack of Suit
-        ValueCard of Tuple<Suit, int>
+type Card
+    Ace of Suit
+    King of Suit
+    Queen of Suit
+    Jack of Suit
+    ValueCard of Tuple<Suit, int>
+```
 
 Ярлыки должны быть глобально уникальными идентификаторами в контексте скрипта,
 поскольку они же являются статическими конструкторами:
 
-    let jack = Jack Hearts
-    let two = ValueCard new (Diamonds; 2)
+```csharp
+let jack = Jack Hearts
+let two = ValueCard new (Diamonds; 2)
+```
 
 ### 2.6. Функции
 
 Функции объявляются в теле программы ключевым словом `fun`:
 
-    fun negate of int x:int -> -x
+```csharp
+fun negate:int (x:int) -> -x
 
-    fun hypo of int a:int b:int ->
-        let sq1 = a * a
-        let sq2 = b * b
-        Math::Sqrt (sq1 + sq2)
+fun hypo:int (a:int b:int) ->
+    let sq1 = a * a
+    let sq2 = b * b
+    Math::Sqrt (sq1 + sq2)
+```
         
-После названия функции идет ее тип, после - список параметров с типами.
+После названия функции идет ее тип, после - список параметров с типами в скобках.
 
 Каждая функция имеет свое пространство имен. Переменные, объявленные в глобальной
 области видимости, _не доступны_ внутри функций.
@@ -125,37 +136,43 @@
 Функция вызывается, когда ей передаются все требуемые параметры. Для того, чтобы
 вызвать функцию без параметров, ей нужно передать параметр типа `unit` - пара скобок `()`.
 
-    fun sum of int a:int b:int c:int -> a + b + c
-    fun getTen of int -> 10
-    
-    let five = sum 1 1 3
-    let ten = getTen ()
+```csharp
+fun sum:int (a:int b:int c:int) -> a + b + c
+fun getTen:int -> 10
+
+let five = sum 1 1 3
+let ten = getTen ()
+```
 
 При вызове функции можно использовать только литералы и имена переменных. Любые более сложные
 выражения должны быть взяты в скобки.
 
-    fun sum of double a:double b:double -> a + b
+```csharp
+fun sum:double (a:double b:double) -> a + b
 
-    let sum = sqrt sin 1        // sqrt(sin, 1) - wtf?
-    let sum = sqrt (sin 1)      // компилируется
-    let someData = sum (sin 1) (cos 2)
+let sum = sqrt sin 1        // sqrt(sin, 1) - wtf?
+let sum = sqrt (sin 1)      // компилируется
+let someData = sum (sin 1) (cos 2)
+```
     
 #### 2.6.4. Передача аргумента по ссылке
 
 Аргумент в функцию можно передать по ссылке. Для этого как в объявлении, так и при вызове
 следует использовать модификатор `ref`:
 
-    fun test of bool str: ref string ->
-        if(str.Length > 100)
-            str = str.Substring 0 100
-            true
-        else
-            false
-            
-    var a = "hello world"
-    var b = "test"
-    println (test ref a) // true
-    println (test ref b) // false
+```csharp
+fun test:bool (str:ref string) ->
+    if str.Length > 100 then
+        str = str.Substring 0 100
+        true
+    else
+        false
+        
+var a = "hello world"
+var b = "test"
+println (test ref a) // true
+println (test ref b) // false
+```
     
 После `ref` может использоваться:
 
@@ -189,6 +206,14 @@
 Как видно из следующего примера, оператор `->` разделяет параметры функции и
 ее тело. Даже если параметров нет, `->` все равно необходимо указывать.
 
+Типы аргументов анонимной функции можно не указывать, если они могут быть однозначно
+выведены из места ее применения, например:
+
+* При передаче анонимной функции в качестве параметра метода или конструктора
+* При присвоении в поле, свойство, элемента массива или уже существующую переменную
+* При использовании оператора приведения типов
+* При использовании оператора композиции функций
+
 #### 2.6.6. Чистые функции и мемоизация
 
 При объявлении именованной функции ее можно пометить модификатором `pure`. Это
@@ -214,12 +239,14 @@
 
 Оператор `<|` требует увеличения отступа относительно выражения, к которому он применяется.
 
-    somefx
-        <| value1
-        <| (a:int b:int) ->
-            let sum = a + b
-            sum * sum
-        <| (s:string) -> log s
+```csharp
+somefx
+    <| value1
+    <| (a b) ->
+        let sum = a + b
+        sum * sum
+    <| s -> log s
+```
         
 #### 2.6.9. Оператор передачи контекста
 
@@ -227,10 +254,50 @@
 оператор передачи контекста, аналогичный точке. Он позволяет размещать длинное
 выражение на нескольких строках.
 
-    someData
-        |> Where ((a:MyObj) -> a.Value > 10)
-        |> Select ((a:MyObj) -> a.Value ** 2)
-        |> Sum ()
+```csharp
+someData
+    |> Where (a -> a.Value > 10)
+    |> Select (a -> a.Value ** 2)
+    |> Sum ()
+```
+
+#### 2.6.10 Частичное применение
+
+Функция может быть каррирована, т.е. частично применена для получения новой, более
+частной функции. Для этого при ее вызове вместо неизвестных аргументов следует указать
+идентификатор нижнего подчеркивания:
+
+```csharp
+let sum = (x:int y:int z:int) -> x + y + z
+let add2 = sum 2 _ _
+let add5 = add2 _ 3
+let alsoAdd5 = sum 2 _ 3
+```
+
+По сути, следующие две записи эквивалентны:
+
+```csharp
+let add2 = sum 2 _ _
+let alsoAdd2 = (x:int y:int) -> sum 2 x y
+```
+
+Частичное применение также допустимо в случае с конструкторами.
+
+#### 2.6.11 Переменное число аргументов в функции
+
+Можно объявить функцию, которая будет принимать переменное число аргументов и
+упаковывать их в массив. Для этого необходимо указать модификатор типа с троточием
+у последнего аргумента:
+
+```csharp
+fun count:int (x:object...) ->
+    x.Length
+    
+let three = count 1 2 3
+let five = count true "test" 1.3 3.7 three
+```
+
+Как и в C#, данный аргумент должен быть последним в списке.
 
 ### 2.7. Ключевые слова и конструкции
 
@@ -238,13 +305,17 @@
 
 Новые объекты создаются с помощью ключевого слова `new`:
 
-    let tuple = new Tuple<string, int> "hello" 2
+```csharp
+let tuple = new Tuple<string, int> "hello" 2
+```
 
 #### 2.7.2. Условие
 
 Условие записывается с помощью блока if / else:
     
-    let a = if (1 > 2) 3 else 4
+```csharp
+let a = if 1 > 2 then 3 else 4
+```
 
 Выражение может также использоваться по правую сторону от знака присваивания,
 если указаны обе ветки (`if` и `else`). Если блок `else` не используется, конструкция
@@ -254,10 +325,12 @@
 
 Цикл записывается с помощью блока `while`:
 
-    var a = 0
-    while (a < 10)
-       Console.WriteLine "{0} loop iteration" a
-       a = a + 1
+```csharp
+var a = 0
+while a < 10 do
+    Console::WriteLine "{0} loop iteration" a
+    a = a + 1
+```
 
 Цикл `while` всегда возвращает значение последнего выражения в теле цикла.
 Если цикл не был выполнен ни одного раза, будет возвращено выражение `default(T)`.
@@ -266,26 +339,40 @@
 
 Блоки `try-catch` записываются следующим образом:
 
-    try
-        doSomethingHorrible()
-    catch(WebException ex)
-        notify "web exception" ex.Message
-    catch(DivideByZeroException ex)
-        notify "whoops!"
-    catch
-        notify "something weird has happened"
+```csharp
+try
+    doSomethingHorrible()
+catch ex:WebException
+    notify "web exception" ex.Message
+catch ex:DivideByZeroException
+    notify "whoops!"
+catch
+    notify "something weird has happened"
+```
 
 Блок `try-catch` всегда возвращает `unit`.
 
-#### 2.7.5. using
+#### 2.7.5. use
 
-Ключевое слово using открывает пространство имен, добавляя объявленные в нем
+Ключевое слово `use` открывает пространство имен, добавляя объявленные в нем
 классы в глобальное:
 
-    using System.Text.RegularExpressions
-    let rx = new Regex "[a-z]{2}"
+```csharp
+use System.Text.RegularExpressions
+let rx = new Regex "[a-z]{2}"
+```
 
-#### 2.7.6. Приведение и проверка типов
+#### 2.7.6. using
+
+Ключевое слово `using` позволяет объявить блок, которым ограничен интервал жизни
+ресурса, реализуюшего интерфейс IDisposable:
+
+```csharp
+using fs = (new FileStream "file.txt" FileMode::Create) do
+    fs.WriteByte 1
+```
+
+#### 2.7.7. Приведение и проверка типов
 
 Для приведения типов используется оператор `as`. В отличие от C#, он кидает
 `InvalidCastException` в случае неудачи, а не возвращает `null`. Может быть
@@ -313,37 +400,95 @@
 
 #### 2.8.1. Массивы
 
-    // int[]
-    let ints = new [1; 2; 3]
+```csharp
+// int[]
+let ints = new [1; 2; 3]
+```
 
 #### 2.8.2. Списки
 
-     // System.Collections.Generic.List<int>
-    let ints = new [[1; 2; 3]]
+```csharp
+// System.Collections.Generic.List<int>
+let ints = new [[1; 2; 3]]
+```
 
 #### 2.8.3 Словари
 
-    // System.Collections.Generic.Dictionary<string, int>
-    let dict = new { "hello" => 1; "world" => 2 }
+```csharp
+// System.Collections.Generic.Dictionary<string, int>
+let dict = new { "hello" => 1; "world" => 2 }
+```
 
 #### 2.8.4
 
-    // System.Tuple<int, string, object>
-    let t = new (1, "hello world", new object())
+```csharp
+// System.Tuple<int, string, object>
+let t = new (1, "hello world", new object())
+```
 
 В кортеже должно быть от 1 до 7 элементов. Кортежи неограниченной длины, возможно,
 будут поддерживаться в следующей версии.
 
-### 2.9 Делегаты
+### 2.9 Функциональные возможности
 
-Анонимные функции всегда являются выражениями типа `Func<>` или `Action<>`.
-Для того, чтобы использовать их в функциях, принимающих другие типы делегатов, можно
+#### 2.9.1 Приведение делегатов
+
+Анонимные функции по умолчанию являются выражениями типа `Func<>` или `Action<>`, в зависимости
+от того, возвращают ли они некое значение или их последнее выражение имеет тип `unit`.
+
+Для того, чтобы передать анонимную функцию в качестве параметра с иным типом, можно
 использовать приведение типов. Для этого типы принимаемых и возвращаемых значений должны
 в точности соответствовать:
 
-    let filter = (x:int) -> x % 2 == 0
-    let data = Enumerable.Range 1 100 |> ToArray ()
-    let even = Array::FindAll data (filter as Predicate<int>)
+```csharp
+let filter = (x:int) -> x % 2 == 0
+let data = (Enumerable::Range 1 100).ToArray ()
+let even = Array::FindAll data (filter as Predicate<int>)
+```
+
+#### 2.9.2 Частичное применение
+
+На основе одной функции можно создать другую, передав ей часть параметров, а вместо недостающих
+указав специальный идентификатор `_`. Результирующая функция будет принимать оставшиеся параметры:
+
+```csharp
+fun add:int (x:int y:int) -> x + y
+let add2 = add 2 _
+let alsoAdd2 = add _ 2
+
+let three = add2 1 // int(3)
+```
+
+При наличии перегруженных вариантов функции явно указанные аргументы должны однозначно
+идентифицировать функцию, в противном случае возникнет ошибка неоднозначности:
+
+```csharp
+fun repeat:str (value:int    count:int) -> string::Join "" (new [value] * count)
+fun repeat:str (value:string count:int) -> string::Join "" (new [value] * count)
+
+let repeat2 = repeat _ 2 // error: both functions match
+```
+
+#### 2.9.3 Композиция функций
+
+С помощью оператора композиции можно создавать новые функции из существующих, используя
+результат одной функции в качестве аргумента для другой:
+
+```csharp
+let parse = (x:string) -> Convert::ToInt32 x
+let inc = (x:int) -> x + 1
+
+let compound = parse :> inc
+println (compound "2") // 3
+```
+
+Функция справа от оператора `:>` должна иметь строго 1 параметр, совпадающий с типом
+возвращаемого значения функции слева. В этом случае удобно использовать частичное применение:
+
+```csharp
+let add = (x:int y:int) -> x + y
+let compound = parse :> add _ 1
+```
 
 ## 3. Встраиваемость
 
@@ -364,52 +509,44 @@
   
 Примерный код этого взаимодействия на языке C# представлен ниже:
 
-    public void Run()
+```csharp
+public void Run()
+{
+    var source = "a = 1 + 2";
+    var a = 0;
+
+    var compiler = new LensCompiler();
+    compiler.RegisterProperty("a", () => a, newA => a = newA);
+    
+    try
     {
-        var source = "a = 1 + 2";
-        var a = 0;
+        var fx = compiler.Compile(source);
+        fx();
 
-        var compiler = new LensCompiler();
-        compiler.RegisterProperty("a", () => a, newA => a = newA);
-        
-        try
-        {
-            var fx = compiler.Compile(source);
-            fx();
-
-            Console.WriteLine("Success: {0}", a);
-        }
-        catch (LensCompilerException ex)
-        {
-            Console.WriteLine("Error: {0}", ex.FullMessage);
-        }
+        Console.WriteLine("Success: {0}", a);
     }
+    catch (LensCompilerException ex)
+    {
+        Console.WriteLine("Error: {0}", ex.FullMessage);
+    }
+}
+```
 
 ## 4. Дополнительные возможности
 
 * Поддержка переопределенных операторов
 * Раскрутка констант во время компиляции
-* Сохранение сгенерированной в виде исполняемого файла
-* Возможость отключать поиск extension-методов для ускорения компиляции
+* Сохранение сгенерированной сборки в виде исполняемого файла
+* Возможность отключать поиск extension-методов для ускорения компиляции
 
 ## 5. Ограничения
 
 ### 5.1. Планы на будущее
 
-Уже реализовано, но не включено в парсер:
-
-* Мемоизация функций
-* Цикл `foreach`
-* Блок `finally` в конструкции `try`
-* Побитовые операторы и операторы сдвига
- 
 Будет реализовано в дальнейших версиях:
 
-* Сокращенное присваивание (+= и т.д.)
 * Подписка на события
 * Pattern matching
-* Объявление generic-функций
-* Объявление generic-структур
 
 ### 5.2. Сознательные ограничения
 

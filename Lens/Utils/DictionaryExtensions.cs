@@ -2,6 +2,9 @@
 
 namespace Lens.Utils
 {
+	/// <summary>
+	/// Extension methods for Dictionary`2.
+	/// </summary>
 	internal static class DictionaryExtensions
 	{
 		/// <summary>

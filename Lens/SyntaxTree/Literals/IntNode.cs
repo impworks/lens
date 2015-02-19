@@ -7,15 +7,23 @@ namespace Lens.SyntaxTree.Literals
 	/// </summary>
 	internal class IntNode : LiteralNodeBase<int>
 	{
+		#region Constructor
+
 		public IntNode(int value = 0)
 		{
 			Value = value;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitConstant(Value);
 		}
+
+		#endregion
 	}
 }

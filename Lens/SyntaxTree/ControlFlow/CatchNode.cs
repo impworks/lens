@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
@@ -10,10 +11,16 @@ namespace Lens.SyntaxTree.ControlFlow
 	/// </summary>
 	internal class CatchNode : NodeBase
 	{
+		#region Constructor
+
 		public CatchNode()
 		{
 			Code = new CodeBlockNode();
 		}
+
+		#endregion
+
+		#region Fields
 
 		/// <summary>
 		/// The type of the exception this catch block handles.
@@ -31,12 +38,20 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
-		private LocalName m_ExceptionVariable;
+		private Local _ExceptionVariable;
 
-		public override IEnumerable<NodeBase> GetChildNodes()
+		#endregion
+
+		#region Transform
+
+		protected override IEnumerable<NodeChild> getChildren()
 		{
-			yield return Code;
+			yield return new NodeChild(Code, null);
 		}
+
+		#endregion
+
+		#region Process closures
 
 		public override void ProcessClosures(Context ctx)
 		{
@@ -44,15 +59,19 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
-				Error(CompilerMessages.CatchTypeNotException, type);
+				error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
-				m_ExceptionVariable = ctx.CurrentScope.DeclareName(ExceptionVariable, type, false);
+				_ExceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		#endregion
+
+		#region Emit
+
+		protected override void emitCode(Context ctx, bool mustReturn)
 		{
-			var gen = ctx.CurrentILGenerator;
+			var gen = ctx.CurrentMethod.Generator;
 
 			var backup = ctx.CurrentCatchBlock;
 			ctx.CurrentCatchBlock = this;
@@ -60,19 +79,21 @@ namespace Lens.SyntaxTree.ControlFlow
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			gen.BeginCatchBlock(type);
 
-			if (m_ExceptionVariable == null)
+			if (_ExceptionVariable == null)
 				gen.EmitPop();
 			else
-				gen.EmitSaveLocal(m_ExceptionVariable);
+				gen.EmitSaveLocal(_ExceptionVariable.LocalBuilder);
 
-			Code.Compile(ctx, false);
+			Code.Emit(ctx, false);
 
 			gen.EmitLeave(ctx.CurrentTryBlock.EndLabel);
 
 			ctx.CurrentCatchBlock = backup;
 		}
 
-		#region Equality members
+		#endregion
+
+		#region Debug
 
 		protected bool Equals(CatchNode other)
 		{
