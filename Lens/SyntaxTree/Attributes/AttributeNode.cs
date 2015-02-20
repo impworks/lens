@@ -1,6 +1,8 @@
 ﻿using Lens.Compiler;
 using Lens.SyntaxTree.Expressions;
 using System;
+using System.Collections.Generic;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Attributes
 {
@@ -19,7 +21,12 @@ namespace Lens.SyntaxTree.Attributes
 			return base.Equals(obj) && Name == ((AttributeNode)obj).Name;
 		}
 
-		protected override void compile(Context ctx, bool mustReturn)
+		protected override CallableWrapperBase _Wrapper
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
 		{
 			throw new NotImplementedException();
 		}
