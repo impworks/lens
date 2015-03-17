@@ -124,7 +124,7 @@
     <value>LE2003: Ожидаются аргументы для вызова метода!</value>
   </data>
   <data name="ArrayItem" xml:space="preserve">
-    <value>LE2004: Массив должен содержать по крайней мере один элемент!</value>
+    <value>LE2004: Инициализатор массива должен содержать по крайней мере один элемент!</value>
   </data>
   <data name="AssignExpressionExpected" xml:space="preserve">
     <value>LE2005: Ожидается присваиваемое выражение!</value>
@@ -151,7 +151,7 @@
     <value>LE2012: Ожидается выражение условия!</value>
   </data>
   <data name="DictionaryItem" xml:space="preserve">
-    <value>LE2013: Словарь должен содержать по крайней мере один элемент!</value>
+    <value>LE2013: Инициализатор словаря должен содержать по крайней мере один элемент!</value>
   </data>
   <data name="DictionaryKeyExpected" xml:space="preserve">
     <value>LE2014: Ожидается ключ для записи словаря!</value>
@@ -208,7 +208,7 @@
     <value>LE2031: Выражения передачи значения должны располагаться на отдельных строках!</value>
   </data>
   <data name="ListItem" xml:space="preserve">
-    <value>LE2032: Список должен содержать по крайней мере один элемент!</value>
+    <value>LE2032: Инициализатор списка должен содержать по крайней мере один элемент!</value>
   </data>
   <data name="LoopBodyExpected" xml:space="preserve">
     <value>LE2033: Ожидается тело цикла!</value>
@@ -256,7 +256,7 @@
     <value>LE2048: Ожидается блок try!</value>
   </data>
   <data name="TupleItem" xml:space="preserve">
-    <value>LE2049: Кортеж должен содержать по крайней мере один элемент!</value>
+    <value>LE2049: Инициализатор кортежа должен содержать по крайней мере один элемент!</value>
   </data>
   <data name="TypeArgumentExpected" xml:space="preserve">
     <value>LE2050: Ожидается аргумент обобщенного типа!</value>

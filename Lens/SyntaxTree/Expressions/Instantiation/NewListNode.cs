@@ -27,6 +27,8 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 				error(CompilerMessages.ListEmpty);
 
 			_ItemType = resolveItemType(Expressions, ctx);
+			if(_ItemType == typeof(NullType))
+				error(CompilerMessages.ListTypeUnknown);
 
 			return typeof(List<>).MakeGenericType(_ItemType);
 		}

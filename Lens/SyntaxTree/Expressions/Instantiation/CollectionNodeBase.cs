@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
-using Lens.Translations;
 
 namespace Lens.SyntaxTree.Expressions.Instantiation
 {
@@ -34,12 +33,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
 		{
-			foreach(var curr in nodes)
-				if(curr.Resolve(ctx).IsVoid())
-					error(curr, CompilerMessages.ExpressionVoid);
-
-			var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
-			return types.GetMostCommonType();
+			try
+			{
+				var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
+				return types.GetMostCommonType();
+			}
+			catch (LensCompilerException ex)
+			{
+				ex.BindToLocation(this);
+				throw;
+			}
 		}
 
 		#endregion

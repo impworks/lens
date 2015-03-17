@@ -224,6 +224,11 @@ namespace ConsoleHost
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
 				Console.WriteLine();
+				Console.WriteLine("====================================");
+				Console.WriteLine("=        LENS Compiler v4.0        =");
+				Console.WriteLine("= https://github.com/impworks/lens =");
+				Console.WriteLine("====================================");
+				Console.WriteLine();
 				Console.WriteLine("To enter a script, just type it line by line.");
 				Console.WriteLine("Finish the line with # to execute the script.");
 				Console.WriteLine();
