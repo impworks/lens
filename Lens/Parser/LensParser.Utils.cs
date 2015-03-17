@@ -11,7 +11,10 @@ using Lens.Utils;
 
 namespace Lens.Parser
 {
-	internal partial class LensParser
+    using Lens.SyntaxTree.Operators.Binary;
+
+
+    internal partial class LensParser
 	{
 		#region Error reporting
 
@@ -302,6 +305,13 @@ namespace Lens.Parser
 		/// </summary>
 		private static readonly List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>> _BinaryOperatorPriorities = new List<Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>>
 		{
+            new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+			{
+				{ LexemType.BitAnd, Expr.BitAnd },
+				{ LexemType.BitOr, Expr.BitOr },
+				{ LexemType.BitXor, Expr.BitXor },
+			},
+
 			new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
 			{
 				{ LexemType.And, Expr.And },
@@ -349,8 +359,8 @@ namespace Lens.Parser
 		/// </summary>
 		private static readonly Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>> _UnaryOperatorPriorities = new Dictionary<int, Tuple<LexemType, Func<NodeBase, NodeBase>>>
 		{
-			{ 3, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Minus, Expr.Negate) },
-			{ 0, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Not, Expr.Not) }
+			{ 4, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Minus, Expr.Negate) },
+			{ 1, new Tuple<LexemType, Func<NodeBase, NodeBase>>(LexemType.Not, Expr.Not) }
 		};
 
 		/// <summary>
@@ -358,6 +368,9 @@ namespace Lens.Parser
 		/// </summary>
 		private static readonly LexemType[] _BinaryOperators =
 		{
+            LexemType.BitAnd,
+			LexemType.BitOr,
+			LexemType.BitXor,
 			LexemType.And,
 			LexemType.Or,
 			LexemType.Xor,

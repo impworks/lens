@@ -50,7 +50,7 @@ namespace Lens.Resolver
 				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 #if DEBUG
-			var curr = m_Properties[contextId];
+			var curr = Properties[contextId];
 			if (curr == null)
 				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 #endif

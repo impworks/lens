@@ -5,7 +5,7 @@ using Lens.Resolver;
 namespace Lens.SyntaxTree.Operators.Binary
 {
 	/// <summary>
-	/// A node representing AND, OR or XOR binary operations.
+	/// A node representing AND / OR binary operations.
 	/// </summary>
 	internal class BooleanOperatorNode : BinaryOperatorNodeBase
 	{
@@ -13,6 +13,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		public BooleanOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
 		{
+            if(kind == LogicalOperatorKind.Xor)
+                throw new ArgumentException("Use XorOperatorNode to represent a XOR ");
+
 			Kind = kind;
 		}
 
@@ -78,11 +81,12 @@ namespace Lens.SyntaxTree.Operators.Binary
 	}
 
 	/// <summary>
-	/// The kind of boolean operators.
+	/// The kind of bit or boolean operators.
 	/// </summary>
 	public enum LogicalOperatorKind
 	{
 		And,
-		Or
+		Or,
+        Xor
 	}
 }
