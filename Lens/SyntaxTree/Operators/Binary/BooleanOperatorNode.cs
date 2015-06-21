@@ -33,6 +33,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return Kind == LogicalOperatorKind.And ? "&&" : "||"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new BooleanOperatorNode(Kind) { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

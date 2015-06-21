@@ -68,6 +68,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			}
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new ComparisonOperatorNode(Kind) { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

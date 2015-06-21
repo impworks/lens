@@ -18,6 +18,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "op_ExclusiveOr"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new XorOperatorNode { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

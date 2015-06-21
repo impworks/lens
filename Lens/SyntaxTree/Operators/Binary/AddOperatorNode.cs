@@ -25,6 +25,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "op_Addition"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new AddOperatorNode { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

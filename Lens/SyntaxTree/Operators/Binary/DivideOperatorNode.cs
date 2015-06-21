@@ -21,7 +21,12 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "op_Division"; }
 		}
 
-		#endregion
+	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    {
+	        return new DivideOperatorNode {LeftOperand = left, RightOperand = right};
+	    }
+
+	    #endregion
 
 		#region Transform
 

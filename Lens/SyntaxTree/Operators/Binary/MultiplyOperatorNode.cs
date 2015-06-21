@@ -25,7 +25,12 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "op_Multiply"; }
 		}
 
-		#endregion
+	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    {
+	        return new MultiplyOperatorNode {LeftOperand = left, RightOperand = right};
+	    }
+
+	    #endregion
 
 		#region Resolve
 

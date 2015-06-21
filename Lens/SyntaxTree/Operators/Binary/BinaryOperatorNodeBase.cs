@@ -64,6 +64,18 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 			if (IsNumericOperator)
 			{
+			    if (leftType.IsNullableType() || rightType.IsNullableType())
+			    {
+			        var leftNullable = leftType.IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
+                    var rightNullable = rightType.IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
+
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
+                    if (commonNumericType == null)
+                        error(CompilerMessages.OperatorTypesSignednessMismatch);
+
+                    return typeof(Nullable<>).MakeGenericType(commonNumericType);
+			    }
+
 				if (leftType.IsNumericType() && rightType.IsNumericType())
 				{
 					var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
@@ -96,7 +108,64 @@ namespace Lens.SyntaxTree.Operators.Binary
 			yield return new NodeChild(RightOperand, x => RightOperand = x);
 		}
 
-		#endregion
+	    protected override NodeBase expand(Context ctx, bool mustReturn)
+	    {
+	        if (Resolve(ctx).IsNullableType())
+	        {
+	            var leftNullable = LeftOperand.Resolve(ctx).IsNullableType();
+                var rightNullable = RightOperand.Resolve(ctx).IsNullableType();
+	            if (leftNullable && rightNullable)
+	            {
+	                return Expr.If(
+                        Expr.And(
+                            Expr.GetMember(LeftOperand, "HasValue"),
+                            Expr.GetMember(RightOperand, "HasValue")
+                        ),
+                        Expr.Block(
+                            recreateSelfWithArgs(
+                                Expr.GetMember(LeftOperand, "Value"),
+                                Expr.GetMember(RightOperand, "Value")
+                            )
+                        ),
+                        Expr.Block(Expr.Null())
+	                );
+	            }
+
+	            if (leftNullable)
+	            {
+	                return Expr.If(
+	                    Expr.GetMember(LeftOperand, "HasValue"),
+	                    Expr.Block(
+	                        recreateSelfWithArgs(
+	                            Expr.GetMember(LeftOperand, "Value"),
+	                            RightOperand
+	                        )
+	                    ),
+	                    Expr.Block(Expr.Null())
+	                );
+	            }
+
+	            if (rightNullable)
+	            {
+                    return Expr.If(
+                        Expr.GetMember(RightOperand, "HasValue"),
+                        Expr.Block(
+                            recreateSelfWithArgs(
+                                LeftOperand,
+                                Expr.GetMember(RightOperand, "Value")
+                            )
+                        ),
+                        Expr.Block(Expr.Null())
+                    );
+	            }
+	        }
+
+	        return base.expand(ctx, mustReturn);
+	    }
+
+	    protected abstract BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right);
+
+	    #endregion
 
 		#region Emit
 

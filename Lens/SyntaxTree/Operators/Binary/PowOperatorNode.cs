@@ -23,6 +23,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "**"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new PowOperatorNode { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

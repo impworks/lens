@@ -19,6 +19,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return "op_Modulus"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new RemainderOperatorNode { LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Emit

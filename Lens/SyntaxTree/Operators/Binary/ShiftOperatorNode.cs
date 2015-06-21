@@ -32,6 +32,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
 		}
 
+        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new ShiftOperatorNode { IsLeft = IsLeft, LeftOperand = left, RightOperand = right };
+        }
+
 		#endregion
 
 		#region Resolve

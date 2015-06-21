@@ -36,7 +36,12 @@ namespace Lens.SyntaxTree.Operators.Binary
 			get { return Kind == LogicalOperatorKind.And ? "op_BinaryAnd" : (Kind == LogicalOperatorKind.Or ? "op_BinaryOr" : "op_ExclusiveOr"); }
 		}
 
-		#endregion
+	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    {
+	        return new BitOperatorNode(Kind) {LeftOperand = left, RightOperand = right};
+	    }
+
+	    #endregion
 
 		#region Resolve
 
