@@ -82,9 +82,12 @@ namespace Lens.Lexer
 			new StaticLexemDefinition("*", LexemType.Multiply),
 			new StaticLexemDefinition("/", LexemType.Divide),
 			new StaticLexemDefinition("%", LexemType.Remainder),
-			new StaticLexemDefinition("&&", LexemType.And),
+            new StaticLexemDefinition("&&", LexemType.And),
 			new StaticLexemDefinition("||", LexemType.Or),
 			new StaticLexemDefinition("^^", LexemType.Xor),
+			new StaticLexemDefinition("&", LexemType.BitAnd),
+			new StaticLexemDefinition("|", LexemType.BitOr),
+			new StaticLexemDefinition("^", LexemType.BitXor),
 
 			new StaticLexemDefinition("::", LexemType.DoubleСolon),
 			new StaticLexemDefinition(":", LexemType.Colon),
@@ -94,8 +97,7 @@ namespace Lens.Lexer
 			new StaticLexemDefinition(".", LexemType.Dot),
 			new StaticLexemDefinition(";", LexemType.Semicolon),
 			new StaticLexemDefinition("?", LexemType.QuestionMark),
-			new StaticLexemDefinition("~", LexemType.Tilde),
-			new StaticLexemDefinition("|", LexemType.VerticalLine),
+			new StaticLexemDefinition("~", LexemType.Tilde)
 		};
 
 		private readonly static RegexLexemDefinition[] RegexLexems =

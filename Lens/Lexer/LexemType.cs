@@ -74,6 +74,9 @@
 		LessEqual,
 		Greater,
 		GreaterEqual,
+        BitAnd,
+        BitOr,
+        BitXor,
 		And,
 		Or,
 		Xor,
@@ -95,7 +98,6 @@
 		Tilde,
 		QuestionMark,
 		Ellipsis,
-		VerticalLine,
 
 		Indent,
 		Dedent

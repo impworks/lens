@@ -4,7 +4,10 @@ using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	internal class BitOperatorNode : BinaryOperatorNodeBase
+    using Lens.Translations;
+
+
+    internal class BitOperatorNode : BinaryOperatorNodeBase
 	{
 		#region Constructor
 
@@ -47,9 +50,14 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
-			return leftType == rightType && leftType.IsIntegerType()
-				? leftType
-				: null;
+		    if (leftType == rightType)
+		    {
+		        if (leftType.IsIntegerType() || leftType.IsEnum)
+		            return leftType;
+		    }
+
+			error(CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+		    return null;
 		}
 
 		#endregion

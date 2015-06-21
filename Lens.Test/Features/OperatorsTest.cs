@@ -5,7 +5,10 @@ using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
-	[TestFixture]
+    using Lens.Translations;
+
+
+    [TestFixture]
 	internal class OperatorsTest : TestBase
 	{
 		[Test]
@@ -129,6 +132,32 @@ let a = 1
 
 			Test("42 ^^ 1337", 1299, true);
 		}
+
+	    [Test]
+	    public void IntegerBitOperatorsTest()
+	    {
+	        Test("1 | 2 | 4", 7);
+            Test("1 | 3 | 6", 7);
+
+            Test("1337 & 42", 40);
+
+            Test("1337 ^ 42", 1299);
+	    }
+
+	    [Test]
+	    public void EnumBitOperatorsTest()
+	    {
+	        Test("StringComparison::Ordinal | StringComparison::CurrentCulture", StringComparison.Ordinal | StringComparison.CurrentCulture);
+	    }
+
+	    [Test]
+	    public void BitOperatorsTypeError()
+	    {
+	        TestError("1 & true", CompilerMessages.OperatorBinaryTypesMismatch);
+            TestError("1.2f | 1.5f", CompilerMessages.OperatorBinaryTypesMismatch);
+            TestError("new [1] | new [2]", CompilerMessages.OperatorBinaryTypesMismatch);
+            TestError("1M | 2M", CompilerMessages.OperatorBinaryTypesMismatch);
+	    }
 
 		[Test]
 		public void InversionTest()

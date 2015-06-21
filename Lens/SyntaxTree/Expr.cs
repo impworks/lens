@@ -213,22 +213,32 @@ namespace Lens.SyntaxTree
 			return new IsOperatorNode { Expression = node, Type = typeof(T) };
 		}
 
-		public static BinaryOperatorNodeBase Binary(LogicalOperatorKind kind, NodeBase left, NodeBase right)
+        public static BitOperatorNode BitAnd(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { Kind = kind, LeftOperand = left, RightOperand = right };
+			return new BitOperatorNode { Kind = LogicalOperatorKind.And, LeftOperand = left, RightOperand = right };
 		}
 
-		public static BinaryOperatorNodeBase And(NodeBase left, NodeBase right)
+        public static BitOperatorNode BitOr(NodeBase left, NodeBase right)
+        {
+            return new BitOperatorNode { Kind = LogicalOperatorKind.Or, LeftOperand = left, RightOperand = right };
+        }
+
+        public static BitOperatorNode BitXor(NodeBase left, NodeBase right)
+        {
+            return new BitOperatorNode { Kind = LogicalOperatorKind.Xor, LeftOperand = left, RightOperand = right };
+        }
+
+        public static BooleanOperatorNode And(NodeBase left, NodeBase right)
 		{
-			return new BooleanOperatorNode { LeftOperand = left, RightOperand = right };
+			return new BooleanOperatorNode { Kind = LogicalOperatorKind.And, LeftOperand = left, RightOperand = right };
 		}
 
-		public static BinaryOperatorNodeBase Or(NodeBase left, NodeBase right)
+        public static BooleanOperatorNode Or(NodeBase left, NodeBase right)
 		{
 			return new BooleanOperatorNode { Kind = LogicalOperatorKind.Or, LeftOperand = left, RightOperand = right };
 		}
 
-		public static BinaryOperatorNodeBase Xor(NodeBase left, NodeBase right)
+		public static XorOperatorNode Xor(NodeBase left, NodeBase right)
 		{
 			return Op<XorOperatorNode>(left, right);
 		}

@@ -1398,7 +1398,7 @@ namespace Lens.Parser
 			while (true)
 			{
 				check(LexemType.NewLine);
-				if (!check(LexemType.VerticalLine))
+				if (!check(LexemType.BitOr))
 					yield break;
 
 				yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);

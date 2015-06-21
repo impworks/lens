@@ -5,12 +5,10 @@ using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
 using Lens.Utils;
+using Lens.Translations;
 
 namespace Lens.Resolver
 {
-	using Lens.Translations;
-
-
 	/// <summary>
 	/// A collection of helpful methods for types.
 	/// </summary>
