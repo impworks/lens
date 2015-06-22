@@ -37,10 +37,34 @@ namespace Lens.Test.Features
 		}
 
 		[Test]
-		public void NullableCast()
+		public void CastToNullableNormal()
 		{
 			Test("null as int?", (int?)null);
 			Test("1 as int?", (int?)1);
+
+			Test("true as bool?", (bool?)true);
+		}
+
+		[Test]
+		public void CastToNullableNumeric()
+		{
+			Test("1 as float?", 1.0f);
+			Test("1 as double?", 1.0);
+			Test("1 as long?", 1L);
+
+			Test("1.3 as int?", 1);
+			Test("1.3 as float?", 1.3f);
+			Test("1.3 as long?", 1);
+
+			Test("1.3f as int?", 1);
+		}
+
+		[Test]
+		public void CastFromNullableNumeric()
+		{
+			Test("(34 as int?) as int", 34);
+			Test("(1.3 as float?) as int", 1);
+			Test("(1.3f as double?) as long", 1);
 		}
 
 		[Test]

@@ -22,6 +22,21 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
 		#endregion
 
+		#region Transform
+
+		protected override NodeBase expand(Context ctx, bool mustReturn)
+		{
+			var fromType = Expression.Resolve(ctx);
+			var toType = Resolve(ctx);
+
+			if (fromType.IsNullableType() && !toType.IsNullableType())
+				return Expr.Cast(Expr.GetMember(Expression, "Value"), toType);
+
+			return base.expand(ctx, mustReturn);
+		}
+
+		#endregion
+
 		#region Emit
 
 		protected override void emitCode(Context ctx, bool mustReturn)
@@ -57,6 +72,20 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 					error(CompilerMessages.CastNullValueType, toType);
 			}
 
+			else if (toType.IsNullableType())
+			{
+				Expression.Emit(ctx, true);
+
+				var underlying = Nullable.GetUnderlyingType(toType);
+				if(underlying.IsNumericType() && fromType.IsNumericType() && underlying != fromType)
+					gen.EmitConvert(underlying);
+				else if(underlying != fromType)
+					error(fromType, toType);
+
+				var ctor = toType.GetConstructor(new[] { underlying });
+				gen.EmitCreateObject(ctor);
+			}
+
 			else if (toType.IsExtendablyAssignableFrom(fromType))
 			{
 				Expression.Emit(ctx, true);
@@ -64,13 +93,6 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 				// box
 				if (fromType.IsValueType && toType == typeof (object))
 					gen.EmitBox(fromType);
-
-				// nullable
-				else if (toType.IsNullableType() && Nullable.GetUnderlyingType(toType) == fromType)
-				{
-					var ctor = toType.GetConstructor(new[] {fromType});
-					gen.EmitCreateObject(ctor);
-				}
 
 				else
 				{
