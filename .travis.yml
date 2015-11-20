@@ -1,2 +1,3 @@
 language: csharp
 solution: Lens.sln
+install: true
