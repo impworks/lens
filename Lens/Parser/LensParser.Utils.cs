@@ -399,6 +399,9 @@ namespace Lens.Parser
 				: null;
 			
 			var node = bind(() => processOperator(getter, priority + 1));
+		    if (node == null)
+		        return null;
+
 			if (unaryCvt != null)
 				node = unaryCvt(node);
 

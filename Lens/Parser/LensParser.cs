@@ -1793,7 +1793,7 @@ namespace Lens.Parser
 				return null;
 
 			var expr = attempt(parseLambdaLineExpr)
-					   ?? attempt(parseLineStmt);
+					   ?? ensure(parseLineStmt, ParserMessages.ExpressionExpected);
 
 			if (expr != null)
 			{

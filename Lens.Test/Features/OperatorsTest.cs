@@ -347,6 +347,13 @@ x + y";
 			Test(src, 2.5M);
 		}
 
+        [Test]
+        public void MissingOperandError()
+        {
+            TestError("/1", ParserMessages.UnknownStatement);
+            TestError("1+", ParserMessages.ExpressionExpected);
+        }
+
 		private void TestType<T>(string src)
 		{
 			var obj = Compile(src);
