@@ -169,5 +169,15 @@ namespace Lens.Test.Features
 		{
 			TestError("new {1 => null; 2 => null}", CompilerMessages.DictionaryTypeUnknown);
 		}
+
+		[Test]
+		public void LiteralInvocation()
+		{
+			var src = @"
+let zeros = ""000000""
+zeros.Substring 0 2
+";
+			Test(src, "00");
+		}
 	}
 }

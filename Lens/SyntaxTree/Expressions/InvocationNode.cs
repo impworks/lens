@@ -259,9 +259,17 @@ namespace Lens.SyntaxTree.Expressions
 
 		protected override IEnumerable<NodeChild> getChildren()
 		{
-			var canExpandExpr = !(Expression is GetIdentifierNode || Expression is GetMemberNode);
-			if(canExpandExpr)
+			if (Expression is GetMemberNode)
+			{
+				// epic kludge: had to reset previously cached InvocationSource if it is expanded
+				var getMbr = Expression as GetMemberNode;
+				if(getMbr.Expression != null)
+					yield return new NodeChild(getMbr.Expression, x => getMbr.Expression = _InvocationSource = x);
+			}
+			else if (!(Expression is GetIdentifierNode))
+			{
 				yield return new NodeChild(Expression, x => Expression = x);
+			}
 
 			foreach (var curr in base.getChildren())
 				yield return curr;
