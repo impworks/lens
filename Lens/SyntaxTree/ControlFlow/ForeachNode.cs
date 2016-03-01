@@ -218,11 +218,7 @@ namespace Lens.SyntaxTree.ControlFlow
 					)
 				),
 				Expr.While(
-					Expr.If(
-						Expr.Equal(Expr.Get(signVar), Expr.Int(1)),
-						Expr.Block(Expr.Less(Expr.Get(idxVar), RangeEnd)),
-						Expr.Block(Expr.Greater(Expr.Get(idxVar), RangeEnd))
-					),
+					Expr.NotEqual(Expr.Get(idxVar), RangeEnd),
 					Expr.Block(
 						getIndexAssignment(Expr.Get(idxVar)),
 						Body,
