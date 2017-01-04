@@ -1,4 +1,4 @@
-LENS: Embeddable scripting for .NET
+LENS: Embeddable scripting for .NET [![NuGet][badge-nuget]][nuget-package]
 ===
 
 Welcome to the homepage for LENS embeddable compiler!
@@ -14,16 +14,16 @@ let a = 1
 let b = 2
 print "the result is: {0}" (a + b)
 ```
-    
+
 A loop:
 
 ```csharp
 for x in 10..0 do
     println "{0}..." x
-    
+
 println "blastoff!"
 ```
-    
+
 LINQ queries:
 
 ```csharp
@@ -32,7 +32,7 @@ let squareSum = range 1 100
     |> Select (x -> x ** 2)
     |> Sum ()
 ```
-        
+
 Function declaration:
 
 ```csharp
@@ -42,19 +42,19 @@ pure fun dist:double (p1:Point p2:Point) ->
     let x = p1.X - p2.X
     let y = p1.Y - p2.Y
     Math::Sqrt (x ** 2 + y ** 2)
-    
+
 let pA = new Point 1 2
 let pB = new Point 10 20
 print "The distance is: {0}" (dist pA pB)
 ```
-    
+
 Custom data structures:
 
 ```csharp
 record Store
     Name : string
     Stock : int
-    
+
 let stores = new [
     new Store "A" 10
     new Store "B" 42
@@ -106,16 +106,16 @@ try
     var x = 21;
     var y = 2;
     var result = 0;
-    
+
     var cp = new LensCompiler();
     cp.RegisterProperty("x", () => x);
     cp.RegisterProperty("y", () => y);
     cp.RegisterProperty("res", () => result, r => result = r);
-    
+
     var source = "res = x * y";
     var compiled = cp.Compile(source);
     compiled.Run();
-    
+
     Console.WriteLine("The result is {0}", result);
 }
 catch(LensCompilerException e)
@@ -174,3 +174,13 @@ Being designed as an embeddable language, LENS does not support some features th
 * Multiple source files support
 * Declarations of classes or interfaces
 * Access restrictions (`private` / `public`, etc)
+
+### Supporting documentation
+
+- [How to publish NuGet package][publish]
+
+[publish]: [docs/publish.md]
+
+[nuget-package]: https://www.nuget.org/packages/LENS/
+
+[badge-nuget]: https://img.shields.io/nuget/v/LENS.svg
