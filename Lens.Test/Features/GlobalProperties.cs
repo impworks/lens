@@ -3,26 +3,36 @@
 namespace Lens.Test.Features
 {
 	[TestFixture]
-	public class GlobalProperties
+	internal class GlobalProperties: TestBase
 	{
 		[Test]
 		public void Getter()
 		{
-			var lc = new LensCompiler();
-			lc.RegisterProperty("half", HalfValue);
-			var fx = lc.Compile("half * 2");
-			Assert.AreEqual(42, fx());
+			TestConfigured(
+				ctx =>
+				{
+					ctx.RegisterProperty("half", HalfValue);
+				},
+				"half * 2",
+				42
+			);
 		}
 
 		[Test]
 		public void Statics()
 		{
 			SetX(1337);
-			var lc = new LensCompiler();
-			lc.RegisterProperty("x", GetX);
-			lc.RegisterProperty("y", GetY, SetY);
-			lc.Run("y = x - 337");
-			Assert.AreEqual(1000, GetY());
+			TestConfigured(
+				ctx =>
+				{
+					ctx.RegisterProperty("x", GetX);
+					ctx.RegisterProperty("y", GetY, SetY);
+				},
+				"y = x - 337",
+				null
+			);
+
+			Assert.AreEqual(1000, m_Y);
 		}
 
 		[Test]
@@ -30,10 +40,16 @@ namespace Lens.Test.Features
 		{
 			var x = 10;
 			var y = 0;
-			var lc = new LensCompiler();
-			lc.RegisterProperty("x", () => x, nx => x = nx);
-			lc.RegisterProperty("y", () => y, ny => y = ny);
-			lc.Run("y = x + 32");
+			TestConfigured(
+				ctx =>
+				{
+					ctx.RegisterProperty("x", () => x, nx => x = nx);
+					ctx.RegisterProperty("y", () => y, ny => y = ny);
+				},
+				"y = x + 32",
+				null
+			);
+
 			Assert.AreEqual(42, y);
 		}
 		
