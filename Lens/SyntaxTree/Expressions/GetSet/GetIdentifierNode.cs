@@ -185,7 +185,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 
-			var clsField = ctx.Scope.ClosureType.ResolveField(name.ClosureFieldName);
+			var clsField = ctx.Scope.ActiveClosure.ClosureType.ResolveField(name.ClosureFieldName);
 			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
 		}
 
