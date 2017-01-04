@@ -570,4 +570,7 @@
   <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
     <value>LE3150: Делегает ожидает {0} аргументов, но анонимная функция принимает {1}!</value>
   </data>
+  <data name="NoOverloads" xml:space="preserve">
+    <value>LE3051: В типе '{1}' не найдено публичных статических методов с названием '{0}'!</value>
+  </data>
 </root>

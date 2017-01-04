@@ -77,6 +77,7 @@
     <Compile Include="Features\ControlStructuresTest.cs" />
     <Compile Include="Features\EventsTest.cs" />
     <Compile Include="Features\FunctionalTest.cs" />
+    <Compile Include="Features\ImportingTest.cs" />
     <Compile Include="Features\LambdasInferenceTest.cs" />
     <Compile Include="Features\PatternMatchingTest.cs" />
     <Compile Include="Features\UserDeclarationsTest.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Internals\FunctionalHelperTest.cs" />
     <Compile Include="Internals\GenericHelperTest.cs" />
     <Compile Include="Features\GlobalProperties.cs" />
+    <Compile Include="Internals\ImportableClasses.cs" />
     <Compile Include="Internals\TranslationsTest.cs" />
     <Compile Include="Parsers\ParserLargeTest.cs" />
     <Compile Include="Parsers\LexerTest.cs" />

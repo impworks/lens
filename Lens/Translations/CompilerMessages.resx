@@ -570,4 +570,7 @@
   <data name="LambdaArgumentsCountMismatch" xml:space="preserve">
     <value>LE3150: Delegate expects {0} arguments, but specified lambda expression accepts {1}!</value>
   </data>
+  <data name="NoOverloads" xml:space="preserve">
+    <value>LE3051: No static public methods named '{0}' found in type '{1}'!</value>
+  </data>
 </root>

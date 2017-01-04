@@ -132,7 +132,7 @@ namespace Lens.Compiler
 				{
 					var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
 					var genericDefs = method.MethodInfo.GetGenericArguments();
-					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints);
+					var genericValues = GenericHelper.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints, resolver);
 
 					mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genericValues);
 					mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();

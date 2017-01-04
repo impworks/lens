@@ -35,7 +35,7 @@ namespace Lens.Compiler.Entities
 
 			if (check)
 			{
-				Context.UnprocessedMethods.Add(me);
+				CheckMethod(me);
 			}
 			else
 			{

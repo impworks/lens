@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler.Entities;
@@ -92,7 +93,13 @@ namespace Lens.Compiler
 		/// </summary>
 		private void importOverloads(Type type, string name, string newName, bool check = false)
 		{
-			var overloads = type.GetMethods().Where(m => m.Name == name);
+			var overloads = type.GetMethods(BindingFlags.Static | BindingFlags.Public)
+								.Where(m => m.Name == name)
+								.ToList();
+
+			if(overloads.Count == 0)
+				Error(CompilerMessages.NoOverloads, name, type.Name);
+
 			foreach (var curr in overloads)
 				importFunction(newName, curr, check);
 		}

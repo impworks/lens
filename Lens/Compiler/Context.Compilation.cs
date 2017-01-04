@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.SyntaxTree;
@@ -80,7 +81,7 @@ namespace Lens.Compiler
 		{
 			while (UnprocessedMethods.Count > 0)
 			{
-				var methods = UnprocessedMethods.ToArray();
+				var methods = UnprocessedMethods.OrderByDescending(x => x.IsImported).ToArray();
 				UnprocessedMethods.Clear();
 
 				foreach (var curr in methods)
