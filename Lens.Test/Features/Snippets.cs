@@ -451,5 +451,17 @@ funcs
 ";
             Test(src, new [] { 2, 6, 6, 12, 10 });
 	    }
+
+	    [Test]
+	    public void ClosureAndOrdinaryAccess()
+	    {
+	        var src = @"
+var x = 0
+while x < 5 do
+    (-> Console::WriteLine x) ()
+    x += 1
+";
+            Test(src, null);
+	    }
 	}
 }
