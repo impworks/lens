@@ -432,5 +432,24 @@ new int[true]
 ";
             TestError(src, CompilerMessages.ArraySizeNotInt);
         }
+
+	    [Test]
+	    public void SubScopeClosures()
+	    {
+	        var src = @"
+var arr = Enumerable::Range 1 5
+
+var funcs = new List<Func<int>> ()
+for x in arr do
+    if odd x then
+        funcs.Add (-> x * 2)
+    else
+       funcs.Add (-> x * 3)
+
+funcs
+    |> Select x -> x ()
+";
+            Test(src, new [] { 2, 6, 6, 12, 10 });
+	    }
 	}
 }
