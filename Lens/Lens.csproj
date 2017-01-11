@@ -245,7 +245,7 @@
     <Compile Include="Utils\PatternNameBinding.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Grammar\Grammar.v2.txt" />
+    <None Include="Grammar\Grammar.v2.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Translations\CompilerMessages.resx">
