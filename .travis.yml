@@ -1,3 +1,3 @@
 language: csharp
-solution: Lens.sln
 install: true
+script: xbuild /p:Configuration=Debug /p:Platform=Mono Lens.sln
