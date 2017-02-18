@@ -78,6 +78,7 @@
     <Compile Include="Features\EventsTest.cs" />
     <Compile Include="Features\FunctionalTest.cs" />
     <Compile Include="Features\ImportingTest.cs" />
+    <Compile Include="Features\KnownIssues.cs" />
     <Compile Include="Features\LambdasInferenceTest.cs" />
     <Compile Include="Features\PatternMatchingTest.cs" />
     <Compile Include="Features\UserDeclarationsTest.cs" />
