@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/impworks/lens</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Language for Embeddable .NET Scripting</description>
-    <releaseNotes>Initial NuGet version released.</releaseNotes>
+    <releaseNotes>Initial stable NuGet version released.</releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>lens embeddable script</tags>
   </metadata>
