@@ -65,5 +65,7 @@ namespace Lens.Test.Internals
         }
 
         public string Value { get; private set; }
+
+        public virtual string VirtualValue { get; set; }
     }
 }

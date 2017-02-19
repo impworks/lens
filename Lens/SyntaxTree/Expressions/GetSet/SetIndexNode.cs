@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				Expr.Cast(Index, idxDest).Emit(ctx, true);
 				Expr.Cast(Value, valDest).Emit(ctx, true);
 
-				gen.EmitCall(_Indexer.MethodInfo);
+				gen.EmitCall(_Indexer.MethodInfo, _Indexer.IsVirtual);
 			}
 			catch (LensCompilerException ex)
 			{

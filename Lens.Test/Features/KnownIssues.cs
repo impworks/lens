@@ -24,20 +24,5 @@ while x < 5 do
 ";
             Test(src, null);
         }
-
-        /// <summary>
-        /// https://github.com/impworks/lens/issues/182
-        /// </summary>
-        [Test]
-        public void PatternMatchingBody()
-        {
-            var src = @"
-match new [1; 2; 3] with
-    case [x; ...y] then
-        var t = y.GetType ()
-        t.Name
-";
-            Test(src, "System.Int32[]");
-        }
     }
 }

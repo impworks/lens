@@ -91,6 +91,7 @@ namespace Lens.Resolver
 		public Type PropertyType;
 		public MethodInfo Getter;
 		public MethodInfo Setter;
+	    public bool IsVirtual;
 
 		public bool CanGet { get { return Getter != null; } }
 		public bool CanSet { get { return Setter != null; } }

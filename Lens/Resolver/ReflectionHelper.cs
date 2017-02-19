@@ -74,15 +74,18 @@ namespace Lens.Resolver
 				if (pty == null)
 					throw new KeyNotFoundException();
 
+				var getter = pty.GetGetMethod();
+				var setter = pty.GetSetMethod();
 				return new PropertyWrapper
 				{
 					Name = name,
 					Type = type,
 
-					Getter = pty.GetGetMethod(),
-					Setter = pty.GetSetMethod(),
-					IsStatic = (pty.GetGetMethod() ?? pty.GetSetMethod()).IsStatic,
-					PropertyType = pty.PropertyType
+					Getter = getter,
+					Setter = setter,
+					IsStatic = (getter ?? setter).IsStatic,
+					PropertyType = pty.PropertyType,
+					IsVirtual = (getter ?? setter).IsVirtual
 				};
 			}
 			catch (NotSupportedException)

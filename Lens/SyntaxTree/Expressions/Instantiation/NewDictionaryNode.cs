@@ -101,7 +101,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 				curr.Key.Emit(ctx, true);
 				Expr.Cast(curr.Value, _ValueType).Emit(ctx, true);
 
-				gen.EmitCall(addMethod.MethodInfo);
+				gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
 			}
 
 			gen.EmitLoadLocal(tmpVar.LocalBuilder);

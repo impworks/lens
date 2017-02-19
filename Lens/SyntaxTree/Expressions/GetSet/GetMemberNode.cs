@@ -249,7 +249,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			if (_Property.PropertyType.IsValueType && RefArgumentRequired)
 				error(CompilerMessages.PropertyValuetypeRef, _Property.Type, MemberName, _Property.PropertyType);
 
-			gen.EmitCall(_Property.Getter);
+			gen.EmitCall(_Property.Getter, _Property.IsVirtual);
 
 			if (PointerRequired)
 			{

@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 			Expr.Cast(Index, _Getter.ArgumentTypes[0]).Emit(ctx, true);
 
-			gen.EmitCall(_Getter.MethodInfo);
+			gen.EmitCall(_Getter.MethodInfo, _Getter.IsVirtual);
 		}
 
 		#endregion

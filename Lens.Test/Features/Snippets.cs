@@ -83,6 +83,16 @@ dict[""a""] + dict[""b""]
 			Test(src, 1);
 		}
 
+	    [Test]
+	    public void GetVirtualProperty()
+	    {
+	        var src = @"
+let x = typeof int
+x.Name
+";
+            Test(src, "Int32");
+	    }
+
 		[Test]
 		public void GetStaticField()
 		{
@@ -166,6 +176,15 @@ pt.IsEmpty";
 
 			Test(src, false);
 		}
+
+	    [Test]
+	    public void SetProperty()
+	    {
+	        var src = @"
+let x = new List<int> ()
+x.Capacity = 10
+";
+	    }
 
 		[Test]
 		public void LongArgumentPassing()
