@@ -56,7 +56,43 @@ namespace Lens.Test.Features
 			TestError(@"""a\x""", LexerMessages.UnknownEscape);
 		}
 
-		[Test]
+	    [Test]
+	    public void StringVerbatimLiteral()
+	    {
+	        Test("@\"hello\"", "hello");
+	    }
+
+	    [Test]
+	    public void StringVerbatimLiteralBackslash()
+	    {
+	        Test("@\"hello \\test\"", "hello \\test");
+	    }
+
+	    [Test]
+	    public void StringVerbatimLiteralEscapeQuote()
+	    {
+	        Test("@\"hello \"\" world\"", "hello \" world");
+	    }
+
+	    [Test]
+	    public void StringLiteralUnclosedError()
+	    {
+	        TestError(@"""hello", LexerMessages.UnclosedString);
+	    }
+
+	    [Test]
+	    public void StringVerbatimLiteralUnclosedError()
+	    {
+	        TestError("@\"hello", LexerMessages.UnclosedString);
+	    }
+
+	    [Test]
+	    public void StringVerbatimLiteralIncorrectError()
+	    {
+	        TestError("@hello", LexerMessages.UnknownLexem);
+	    }
+
+        [Test]
 		public void FloatLiteral()
 		{
 			Test("1.337f", 1.337f);

@@ -116,6 +116,26 @@ namespace Lens.Lexer
 
 		#region Helper methods
 
+        /// <summary>
+        /// Returns the current char.
+        /// </summary>
+	    private char currChar()
+	    {
+	        return _Source[_Position];
+	    }
+
+        /// <summary>
+        /// Returns the next char, if there is one.
+        /// </summary>
+	    private char? nextChar(int offset = 1)
+        {
+            var pos = _Position + offset;
+            if (pos < 0 || pos >= _Source.Length)
+                return null;
+
+            return _Source[pos];
+        }
+
 		[DebuggerStepThrough]
 		private void error(string src, params object[] args)
 		{
@@ -135,11 +155,10 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Checks if the cursor is at comment start.
 		/// </summary>
-		/// <returns></returns>
 		[DebuggerStepThrough]
 		private bool isComment()
 		{
-			return _Position < _Source.Length - 2 && _Source[_Position] == '/' && _Source[_Position + 1] == '/';
+			return currChar() == '/' && nextChar() == '/';
 		}
 
 		/// <summary>
