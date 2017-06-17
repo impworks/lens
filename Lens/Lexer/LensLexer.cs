@@ -89,8 +89,7 @@ namespace Lens.Lexer
 				if (processNewLine())
 					continue;
 
-			    var ch = currChar();
-				if (ch == '"' || (ch == '@' && nextChar() == '"'))
+				if (currChar() == '"' || (currChar() == '@' && nextChar() == '"'))
 				{
 					processStringLiteral();
 					if (!inBounds())
@@ -98,10 +97,10 @@ namespace Lens.Lexer
 				}
 				else if (isComment())
 				{
-					while (inBounds() && ch != '\r' && ch != '\n')
+					while (inBounds() && currChar() != '\r' && currChar() != '\n')
 						_Position++;
 				}
-				else if (ch == '\t')
+				else if (currChar() == '\t')
 				{
 					error(LexerMessages.TabChar);
 				}
@@ -143,14 +142,14 @@ namespace Lens.Lexer
 		private void processIndent()
 		{
 			var currIndent = 0;
-			while (_Source[_Position] == ' ')
+			while (currChar() == ' ')
 			{
 				skip();
 				currIndent++;
 			}
 
 			// empty line?
-			if (_Source[_Position] == '\n' || _Source[_Position] == '\r')
+			if (currChar() == '\n' || currChar() == '\r')
 				return;
 
 			// first line?

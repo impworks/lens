@@ -119,6 +119,7 @@ namespace Lens.Lexer
         /// <summary>
         /// Returns the current char.
         /// </summary>
+        [DebuggerStepThrough]
 	    private char currChar()
 	    {
 	        return _Source[_Position];
@@ -127,6 +128,7 @@ namespace Lens.Lexer
         /// <summary>
         /// Returns the next char, if there is one.
         /// </summary>
+        [DebuggerStepThrough]
 	    private char? nextChar(int offset = 1)
         {
             var pos = _Position + offset;
