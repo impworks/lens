@@ -108,7 +108,7 @@ namespace Lens.Lexer
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)L", LexemType.Long),
 			new RegexLexemDefinition(@"(0|[1-9][0-9]*)", LexemType.Int),
 			new RegexLexemDefinition(@"([a-zA-Z_][0-9a-zA-Z_]*)", LexemType.Identifier),
-			new RegexLexemDefinition(@"'([^'\\]|\\['ntr])*'", LexemType.Char),
+			new RegexLexemDefinition(@"'([^'])*'", LexemType.Char),
 			new RegexLexemDefinition(@"#.+?(?<!\#)#[a-zA-Z]*", LexemType.Regex)
 		};
 
@@ -138,11 +138,17 @@ namespace Lens.Lexer
             return _Source[pos];
         }
 
-		[DebuggerStepThrough]
+	    [DebuggerStepThrough]
+	    private void error(LocationEntity loc, string src, params object[] args)
+	    {
+	        throw new LensCompilerException(string.Format(src, args), loc);
+	    }
+
+        [DebuggerStepThrough]
 		private void error(string src, params object[] args)
 		{
 			var loc = new LocationEntity { StartLocation = getPosition() };
-			throw new LensCompilerException(string.Format(src, args), loc);
+		    error(loc, src, args);
 		}
 
 		/// <summary>
@@ -198,7 +204,7 @@ namespace Lens.Lexer
 		{
 			var value = lex.Value;
 			if (value.Length < 3 || value.Length > 4)
-				error(LexerMessages.IncorrectCharLiteral);
+				error(lex, LexerMessages.IncorrectCharLiteral);
 
 			value = value[1] == '\\'
 				? escapeChar(value[2]).ToString()

@@ -193,7 +193,7 @@ namespace ConsoleHost
 			var line = src.Split(new[] { Environment.NewLine }, StringSplitOptions.None)[loc.Line - 1].TrimEnd();
 			var len = ex.EndLocation != null && ex.EndLocation.Value.Line == loc.Line
 				? ex.EndLocation.Value.Offset - loc.Offset
-				: line.Length - loc.Offset;
+				: line.Length - loc.Offset + 1;
 
 			using (new OutputColor(ConsoleColor.DarkGray))
 				Console.Write("> {0}", line.Substring(0, loc.Offset - 1));

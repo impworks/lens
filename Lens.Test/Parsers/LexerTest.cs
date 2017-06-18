@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
 using Lens.Translations;
@@ -68,27 +69,101 @@ b = 2";
 		[Test]
 		public void StringErrorLocation()
 		{
-			try
-			{
-				var src = @"let x = ""hello";
-				new LensLexer(src);
-			}
-			catch (LensCompilerException ex)
-			{
-				Assert.AreEqual(LexerMessages.UnclosedString, ex.Message);
-				Assert.AreEqual(new LexemLocation {Line = 1, Offset = 9}, ex.StartLocation);
-				Assert.AreEqual(new LexemLocation { Line = 1, Offset = 15 }, ex.EndLocation);
-			}
-			catch
-			{
-				Assert.Fail("Incorrect exception type!");
-			}
+            TestError(
+                @"let x = ""hello",
+                LexerMessages.UnclosedString,
+                ex =>
+                {
+                    Assert.AreEqual(new LexemLocation { Line = 1, Offset = 9 }, ex.StartLocation);
+                    Assert.AreEqual(new LexemLocation { Line = 1, Offset = 15 }, ex.EndLocation);
+                }
+            );
 		}
 
-		private void Test(string str, params LexemType[] types)
+	    [Test]
+	    public void StringEscapeTest()
+	    {
+	        void TestEscape(string str, string expectedString)
+	        {
+	            var lexer = new LensLexer(str);
+	            Assert.AreEqual(lexer.Lexems.Count, 2);
+	            Assert.AreEqual(lexer.Lexems[0].Type, LexemType.String);
+	            Assert.AreEqual(lexer.Lexems[0].Value, expectedString);
+            }
+
+	        TestEscape(@"""\n""", "\n");
+	        TestEscape(@"""\t""", "\t");
+	        TestEscape(@"""\r""", "\r");
+	        TestEscape(@"""\\""", "\\");
+	        TestEscape("\"\\\\\"", "\\");
+        }
+
+	    [Test]
+	    public void CharEscapeTest()
+	    {
+	        void TestEscape(string str, string expectedChar)
+	        {
+	            var lexer = new LensLexer(str);
+	            Assert.AreEqual(lexer.Lexems.Count, 2);
+	            Assert.AreEqual(lexer.Lexems[0].Type, LexemType.Char);
+	            Assert.AreEqual(lexer.Lexems[0].Value, expectedChar);
+	        }
+
+            TestEscape(@"'\n'", "\n");
+	        TestEscape(@"'\t'", "\t");
+	        TestEscape(@"'\r'", "\r");
+	        TestEscape(@"'\\'", "\\");
+	        TestEscape("'\\\\'", "\\");
+	    }
+
+	    [Test]
+	    public void InvalidStringEscapeError()
+	    {
+	        TestError(@"""\x""", LexerMessages.UnknownEscape);
+        }
+
+	    [Test]
+	    public void InvalidCharEscapeError()
+	    {
+            TestError(@"'\x'", LexerMessages.UnknownEscape);
+	    }
+
+	    [Test]
+	    public void InvalidCharLiteralError1()
+	    {
+	        TestError(@"''", LexerMessages.IncorrectCharLiteral);
+        }
+
+	    [Test]
+	    public void InvalidCharLiteralError2()
+	    {
+	        TestError(@"'hello'", LexerMessages.IncorrectCharLiteral);
+	    }
+
+        private void Test(string str, params LexemType[] types)
 		{
 			var lexer = new LensLexer(str);
 			Assert.AreEqual(types, lexer.Lexems.Select(l => l.Type).ToArray());
 		}
+
+	    private void TestError(string src, string msg, Action<LensCompilerException> handler = null)
+	    {
+	        try
+	        {
+	            new LensLexer(src);
+	        }
+            catch(LensCompilerException ex)
+            {
+                var actualId = ex.Message.Substring(0, 6);
+                var expectedId = msg.Substring(0, 6);
+                Assert.AreEqual(expectedId, actualId);
+
+                handler?.Invoke(ex);
+            }
+	        catch
+	        {
+	            Assert.Fail("Incorrect exception type!");
+	        }
+        }
 	}
 }
