@@ -184,6 +184,8 @@ pt.IsEmpty";
 let x = new List<int> ()
 x.Capacity = 10
 ";
+
+            Test(src, null);
 	    }
 
 		[Test]

@@ -89,7 +89,7 @@ namespace Lens.Lexer
 				if (processNewLine())
 					continue;
 
-				if (_Source[_Position] == '"')
+				if (currChar() == '"' || (currChar() == '@' && nextChar() == '"'))
 				{
 					processStringLiteral();
 					if (!inBounds())
@@ -97,10 +97,10 @@ namespace Lens.Lexer
 				}
 				else if (isComment())
 				{
-					while (inBounds() && _Source[_Position] != '\r' && _Source[_Position] != '\n')
+					while (inBounds() && currChar() != '\r' && currChar() != '\n')
 						_Position++;
 				}
-				else if (_Source[_Position] == '\t')
+				else if (currChar() == '\t')
 				{
 					error(LexerMessages.TabChar);
 				}
@@ -142,14 +142,14 @@ namespace Lens.Lexer
 		private void processIndent()
 		{
 			var currIndent = 0;
-			while (_Source[_Position] == ' ')
+			while (currChar() == ' ')
 			{
 				skip();
 				currIndent++;
 			}
 
 			// empty line?
-			if (_Source[_Position] == '\n' || _Source[_Position] == '\r')
+			if (currChar() == '\n' || currChar() == '\r')
 				return;
 
 			// first line?
@@ -197,25 +197,26 @@ namespace Lens.Lexer
 		{
 			var start = getPosition();
 
-			// skip first quote
-			skip();
+		    var isVerbatim = currChar() == '@';
+            skip(isVerbatim ? 2 : 1);
 
-			var startPos = getPosition();
+		    var startPos = getPosition();
 			var sb = new StringBuilder();
 			var isEscaped = false;
 
 			while (inBounds())
 			{
-				var ch = _Source[_Position];
-				if (!isEscaped && ch == '\\')
-				{
-					isEscaped = true;
-					continue;
-				}
+				var ch = currChar();
 
-				if (isEscaped)
+			    if (!isEscaped && !isVerbatim && ch == '\\')
+			    {
+			        isEscaped = true;
+			        continue;
+			    }
+
+			    if (isEscaped)
 				{
-					sb.Append(escapeChar(_Source[_Position + 1]));
+					sb.Append(escapeChar(nextChar().Value));
 					skip(2);
 					isEscaped = false;
 					continue;
@@ -223,9 +224,18 @@ namespace Lens.Lexer
 
 				if (ch == '"')
 				{
-					skip();
-					Lexems.Add(new Lexem(LexemType.String, startPos, getPosition(), sb.ToString()));
-					return;
+				    if (isVerbatim && nextChar() == '"')
+				    {
+				        sb.Append('"');
+				        skip(2);
+				        continue;
+				    }
+				    else
+				    {
+				        skip();
+				        Lexems.Add(new Lexem(LexemType.String, startPos, getPosition(), sb.ToString()));
+				        return;
+                    }
 				}
 
 				if (ch == '\n')
@@ -339,10 +349,10 @@ namespace Lens.Lexer
 		/// </summary>
 		private bool processNewLine()
 		{
-			if (inBounds() && _Source[_Position] == '\r')
+			if (inBounds() && currChar() == '\r')
 				skip();
 
-			if (inBounds() && _Source[_Position] == '\n')
+			if (inBounds() && currChar() == '\n')
 			{
 				addLexem(LexemType.NewLine, getPosition());
 
