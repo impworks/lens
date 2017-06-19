@@ -7,318 +7,317 @@ using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
-	internal partial class TypeEntity
-	{
-		#region Auto-generated entities
+    internal partial class TypeEntity
+    {
+        #region Auto-generated entities
 
-		/// <summary>
-		/// Creates the body of Equals(T).
-		/// </summary>
-		private void CreateSpecificEquals()
-		{
-			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
+        /// <summary>
+        /// Creates the body of Equals(T).
+        /// </summary>
+        private void CreateSpecificEquals()
+        {
+            var eq = CreateMethod("Equals", "bool", new[] {Expr.Arg("other", Name)});
 
-			// var result = true
-			eq.Body.Add(Expr.Var("result", Expr.True()));
+            // var result = true
+            eq.Body.Add(Expr.Var("result", Expr.True()));
 
-			foreach (var f in _fields.Values)
-			{
-				var left = Expr.GetMember(Expr.This(), f.Name);
-				var right = Expr.GetMember(Expr.Get("other"), f.Name);
+            foreach (var f in _fields.Values)
+            {
+                var left = Expr.GetMember(Expr.This(), f.Name);
+                var right = Expr.GetMember(Expr.Get("other"), f.Name);
 
-				var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof(IEnumerable<>), true);
-				var expr = isSeq
-					? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
-					: Expr.Invoke(Expr.This(), "Equals", Expr.Cast(left, "object"), Expr.Cast(right, "object"));
+                var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof(IEnumerable<>), true);
+                var expr = isSeq
+                    ? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
+                    : Expr.Invoke(Expr.This(), "Equals", Expr.Cast(left, "object"), Expr.Cast(right, "object"));
 
-				eq.Body.Add(
-					Expr.Set(
-						"result",
-						Expr.And(Expr.Get("result"), expr)
-					)
-				);
-			}
+                eq.Body.Add(
+                    Expr.Set(
+                        "result",
+                        Expr.And(Expr.Get("result"), expr)
+                    )
+                );
+            }
 
-			eq.Body.Add(Expr.Get("result"));
-		}
+            eq.Body.Add(Expr.Get("result"));
+        }
 
-		/// <summary>
-		/// Creates the body of Equals(object).
-		/// </summary>
-		private void CreateGenericEquals()
-		{
-			var eq = CreateMethod(
-				"Equals",
-				"bool",
-				new[] { Expr.Arg<object>("obj") },
-				false,
-				true
-			);
+        /// <summary>
+        /// Creates the body of Equals(object).
+        /// </summary>
+        private void CreateGenericEquals()
+        {
+            var eq = CreateMethod(
+                "Equals",
+                "bool",
+                new[] {Expr.Arg<object>("obj")},
+                false,
+                true
+            );
 
-			// if(this.ReferenceEquals null obj)
-			//    false
-			// else
-			//    (this.ReferenceEquals this obj) || ( (obj.GetType () == this.GetType()) && (this.Equals obj as <Name>))
+            // if(this.ReferenceEquals null obj)
+            //    false
+            // else
+            //    (this.ReferenceEquals this obj) || ( (obj.GetType () == this.GetType()) && (this.Equals obj as <Name>))
 
-			eq.Body.Add(
-				Expr.If(
-					Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.Null(), Expr.Get("obj")),
-					Expr.Block(Expr.False()),
-					Expr.Block(
-						Expr.Or(
-							Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.This(), Expr.Get("obj")),
-							Expr.And(
-								Expr.Equal(
-									Expr.Invoke(Expr.Get("obj"), "GetType"),
-									Expr.Invoke(Expr.This(), "GetType")
-								),
-								Expr.Invoke(
-									Expr.This(),
-									"Equals",
-									Expr.Cast(Expr.Get("obj"), Name)
-								)
-							)
-						)
-					)
-				)
-			);
-		}
+            eq.Body.Add(
+                Expr.If(
+                    Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.Null(), Expr.Get("obj")),
+                    Expr.Block(Expr.False()),
+                    Expr.Block(
+                        Expr.Or(
+                            Expr.Invoke(Expr.This(), "ReferenceEquals", Expr.This(), Expr.Get("obj")),
+                            Expr.And(
+                                Expr.Equal(
+                                    Expr.Invoke(Expr.Get("obj"), "GetType"),
+                                    Expr.Invoke(Expr.This(), "GetType")
+                                ),
+                                Expr.Invoke(
+                                    Expr.This(),
+                                    "Equals",
+                                    Expr.Cast(Expr.Get("obj"), Name)
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        }
 
-		/// <summary>
-		/// Creates the body of GetHashCode().
-		/// </summary>
-		private void CreateGetHashCode()
-		{
-			var ghc = CreateMethod(
-				"GetHashCode",
-				typeof(int),
-				Type.EmptyTypes,
-				false,
-				true
-			);
+        /// <summary>
+        /// Creates the body of GetHashCode().
+        /// </summary>
+        private void CreateGetHashCode()
+        {
+            var ghc = CreateMethod(
+                "GetHashCode",
+                typeof(int),
+                Type.EmptyTypes,
+                false,
+                true
+            );
 
-			// var result = 0
-			ghc.Body.Add(Expr.Var("result", Expr.Int(0)));
+            // var result = 0
+            ghc.Body.Add(Expr.Var("result", Expr.Int(0)));
 
-			// result ^= (<field> != null ? field.GetHashCode() : 0) * 397
-			var id = 0;
-			foreach (var f in _fields.Values)
-			{
-				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
-				NodeBase expr;
-				if (fieldType.IsIntegerType())
-					expr = Expr.GetMember(Expr.This(), f.Name);
-				else if (fieldType.IsValueType)
-					expr = Expr.Invoke(
-						Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
-						"GetHashCode"
-					);
-				else
-					expr = Expr.If(
-						Expr.NotEqual(
-							Expr.GetMember(Expr.This(), f.Name),
-							Expr.Null()
-						),
-						Expr.Block(
-							Expr.Invoke(
-								Expr.GetMember(Expr.This(), f.Name),
-								"GetHashCode"
-							)
-						),
-						Expr.Block(Expr.Int(0))
-					);
+            // result ^= (<field> != null ? field.GetHashCode() : 0) * 397
+            var id = 0;
+            foreach (var f in _fields.Values)
+            {
+                var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
+                NodeBase expr;
+                if (fieldType.IsIntegerType())
+                    expr = Expr.GetMember(Expr.This(), f.Name);
+                else if (fieldType.IsValueType)
+                    expr = Expr.Invoke(
+                        Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
+                        "GetHashCode"
+                    );
+                else
+                    expr = Expr.If(
+                        Expr.NotEqual(
+                            Expr.GetMember(Expr.This(), f.Name),
+                            Expr.Null()
+                        ),
+                        Expr.Block(
+                            Expr.Invoke(
+                                Expr.GetMember(Expr.This(), f.Name),
+                                "GetHashCode"
+                            )
+                        ),
+                        Expr.Block(Expr.Int(0))
+                    );
 
-				if (id < _fields.Count - 1)
-					expr = Expr.Mult(expr, Expr.Int(397));
+                if (id < _fields.Count - 1)
+                    expr = Expr.Mult(expr, Expr.Int(397));
 
-				ghc.Body.Add(
-					Expr.Set("result", Expr.Xor(Expr.Get("result"), expr))
-				);
+                ghc.Body.Add(
+                    Expr.Set("result", Expr.Xor(Expr.Get("result"), expr))
+                );
 
-				id++;
-			}
+                id++;
+            }
 
-			ghc.Body.Add(Expr.Get("result"));
-		}
+            ghc.Body.Add(Expr.Get("result"));
+        }
 
-		/// <summary>
-		/// Creates a wrapper for the pure method that contains the value cache.
-		/// </summary>
-		private void CreatePureWrapper(MethodEntity method)
-		{
-			if (method.ReturnType.IsVoid())
-				Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
+        /// <summary>
+        /// Creates a wrapper for the pure method that contains the value cache.
+        /// </summary>
+        private void CreatePureWrapper(MethodEntity method)
+        {
+            if (method.ReturnType.IsVoid())
+                Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
 
-			var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
-			var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
-			pure.Body = method.Body;
+            var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
+            var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
+            pure.Body = method.Body;
 
-			var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
+            var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
 
-			if (argCount >= 8)
-				Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);
+            if (argCount >= 8)
+                Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);
 
-			if (argCount == 0)
-				CreatePureWrapper0(method, pureName);
-			else if (argCount == 1)
-				CreatePureWrapper1(method, pureName);
-			else
-				CreatePureWrapperMany(method, pureName);
-		}
+            if (argCount == 0)
+                CreatePureWrapper0(method, pureName);
+            else if (argCount == 1)
+                CreatePureWrapper1(method, pureName);
+            else
+                CreatePureWrapperMany(method, pureName);
+        }
 
-		/// <summary>
-		/// Creates a pure wrapper for parameterless function.
-		/// </summary>
-		private void CreatePureWrapper0(MethodEntity wrapper, string pureName)
-		{
-			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-			var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
+        /// <summary>
+        /// Creates a pure wrapper for parameterless function.
+        /// </summary>
+        private void CreatePureWrapper0(MethodEntity wrapper, string pureName)
+        {
+            var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+            var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
 
-			CreateField(fieldName, wrapper.ReturnTypeSignature, true);
-			CreateField(flagName, typeof(bool), true);
+            CreateField(fieldName, wrapper.ReturnTypeSignature, true);
+            CreateField(flagName, typeof(bool), true);
 
-			wrapper.Body =  Expr.Block(
-				ScopeKind.FunctionRoot,
+            wrapper.Body = Expr.Block(
+                ScopeKind.FunctionRoot,
 
-				// if (not $flag) $cache = $internal (); $flag = true
-				Expr.If(
-					Expr.Not(Expr.GetMember(EntityNames.MainTypeName, flagName)),
-					Expr.Block(
-						Expr.SetMember(
-							EntityNames.MainTypeName,
-							fieldName,
-							Expr.Invoke(EntityNames.MainTypeName, pureName)
-						),
-						Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
-					)
-				),
+                // if (not $flag) $cache = $internal (); $flag = true
+                Expr.If(
+                    Expr.Not(Expr.GetMember(EntityNames.MainTypeName, flagName)),
+                    Expr.Block(
+                        Expr.SetMember(
+                            EntityNames.MainTypeName,
+                            fieldName,
+                            Expr.Invoke(EntityNames.MainTypeName, pureName)
+                        ),
+                        Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
+                    )
+                ),
 
-				// $cache
-				Expr.GetMember(EntityNames.MainTypeName, fieldName)
-			);
-		}
+                // $cache
+                Expr.GetMember(EntityNames.MainTypeName, fieldName)
+            );
+        }
 
-		/// <summary>
-		/// Creates a pure wrapper for function with 1 argument.
-		/// </summary>
-		private void CreatePureWrapper1(MethodEntity wrapper, string pureName)
-		{
-			var args = wrapper.GetArgumentTypes(Context);
-			var argName = wrapper.Arguments[0].Name;
+        /// <summary>
+        /// Creates a pure wrapper for function with 1 argument.
+        /// </summary>
+        private void CreatePureWrapper1(MethodEntity wrapper, string pureName)
+        {
+            var args = wrapper.GetArgumentTypes(Context);
+            var argName = wrapper.Arguments[0].Name;
 
-			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-			var fieldType = typeof(Dictionary<,>).MakeGenericType(args[0], wrapper.ReturnType);
+            var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+            var fieldType = typeof(Dictionary<,>).MakeGenericType(args[0], wrapper.ReturnType);
 
-			CreateField(fieldName, fieldType, true);
+            CreateField(fieldName, fieldType, true);
 
-			wrapper.Body = Expr.Block(
-				ScopeKind.FunctionRoot,
+            wrapper.Body = Expr.Block(
+                ScopeKind.FunctionRoot,
 
-				// if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
-				Expr.If(
-					Expr.Equal(
-						Expr.GetMember(EntityNames.MainTypeName, fieldName),
-						Expr.Null()
-					),
-					Expr.Block(
-						Expr.SetMember(
-							EntityNames.MainTypeName, fieldName,
-							Expr.New(fieldType)
-						)
-					)
-				),
+                // if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
+                Expr.If(
+                    Expr.Equal(
+                        Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                        Expr.Null()
+                    ),
+                    Expr.Block(
+                        Expr.SetMember(
+                            EntityNames.MainTypeName, fieldName,
+                            Expr.New(fieldType)
+                        )
+                    )
+                ),
 
-				// if(not $dict.ContainsKey key) $dict.Add ($internal arg)
-				Expr.If(
-					Expr.Not(
-						Expr.Invoke(
-							Expr.GetMember(EntityNames.MainTypeName, fieldName),
-							"ContainsKey",
-							Expr.Get(argName)
-						)
-					),
-					Expr.Block(
-						Expr.Invoke(
-							Expr.GetMember(EntityNames.MainTypeName, fieldName),
-							"Add",
-							Expr.Get(argName),
-							Expr.Invoke(EntityNames.MainTypeName, pureName, Expr.Get(argName))
-						)
-					)
-				),
+                // if(not $dict.ContainsKey key) $dict.Add ($internal arg)
+                Expr.If(
+                    Expr.Not(
+                        Expr.Invoke(
+                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            "ContainsKey",
+                            Expr.Get(argName)
+                        )
+                    ),
+                    Expr.Block(
+                        Expr.Invoke(
+                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            "Add",
+                            Expr.Get(argName),
+                            Expr.Invoke(EntityNames.MainTypeName, pureName, Expr.Get(argName))
+                        )
+                    )
+                ),
 
-				// $dict[arg]
-				Expr.GetIdx(
-					Expr.GetMember(EntityNames.MainTypeName, fieldName),
-					Expr.Get(argName)
-				)
-			);
-		}
+                // $dict[arg]
+                Expr.GetIdx(
+                    Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                    Expr.Get(argName)
+                )
+            );
+        }
 
-		/// <summary>
-		/// Creates a pure wrapper for function with 2 and more arguments.
-		/// </summary>
-		private void CreatePureWrapperMany(MethodEntity wrapper, string pureName)
-		{
-			var args = wrapper.GetArgumentTypes(Context);
+        /// <summary>
+        /// Creates a pure wrapper for function with 2 and more arguments.
+        /// </summary>
+        private void CreatePureWrapperMany(MethodEntity wrapper, string pureName)
+        {
+            var args = wrapper.GetArgumentTypes(Context);
 
-			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-			var tupleType = FunctionalHelper.CreateTupleType(args);
-			var fieldType = typeof(Dictionary<,>).MakeGenericType(tupleType, wrapper.ReturnType);
+            var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
+            var tupleType = FunctionalHelper.CreateTupleType(args);
+            var fieldType = typeof(Dictionary<,>).MakeGenericType(tupleType, wrapper.ReturnType);
 
-			CreateField(fieldName, fieldType, true);
+            CreateField(fieldName, fieldType, true);
 
-			var argGetters = wrapper.Arguments.Select(a => (NodeBase)Expr.Get(a)).ToArray();
-			var tupleName = "<args>";
+            var argGetters = wrapper.Arguments.Select(a => (NodeBase) Expr.Get(a)).ToArray();
+            var tupleName = "<args>";
 
-			wrapper.Body = Expr.Block(
-				ScopeKind.FunctionRoot,
+            wrapper.Body = Expr.Block(
+                ScopeKind.FunctionRoot,
 
-				// $tmp = new Tuple<...> $arg1 $arg2 ...
-				Expr.Let(tupleName, Expr.New(tupleType, argGetters)),
+                // $tmp = new Tuple<...> $arg1 $arg2 ...
+                Expr.Let(tupleName, Expr.New(tupleType, argGetters)),
 
-				// if ($dict == null) $dict = new Dictionary<$tupleType, $valueType> ()
-				Expr.If(
-					Expr.Equal(
-						Expr.GetMember(EntityNames.MainTypeName, fieldName),
-						Expr.Null()
-					),
-					Expr.Block(
-						Expr.SetMember(
-							EntityNames.MainTypeName, fieldName,
-							Expr.New(fieldType)
-						)
-					)
-				),
+                // if ($dict == null) $dict = new Dictionary<$tupleType, $valueType> ()
+                Expr.If(
+                    Expr.Equal(
+                        Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                        Expr.Null()
+                    ),
+                    Expr.Block(
+                        Expr.SetMember(
+                            EntityNames.MainTypeName, fieldName,
+                            Expr.New(fieldType)
+                        )
+                    )
+                ),
 
-				// if(not $dict.ContainsKey key) $dict.Add ($internal arg)
-				Expr.If(
-					Expr.Not(
-						Expr.Invoke(
-							Expr.GetMember(EntityNames.MainTypeName, fieldName),
-							"ContainsKey",
-							Expr.Get(tupleName)
-						)
-					),
-					Expr.Block(
-						Expr.Invoke(
-							Expr.GetMember(EntityNames.MainTypeName, fieldName),
-							"Add",
-							Expr.Get(tupleName),
-							Expr.Invoke(EntityNames.MainTypeName, pureName, argGetters)
-						)
-					)
-				),
+                // if(not $dict.ContainsKey key) $dict.Add ($internal arg)
+                Expr.If(
+                    Expr.Not(
+                        Expr.Invoke(
+                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            "ContainsKey",
+                            Expr.Get(tupleName)
+                        )
+                    ),
+                    Expr.Block(
+                        Expr.Invoke(
+                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            "Add",
+                            Expr.Get(tupleName),
+                            Expr.Invoke(EntityNames.MainTypeName, pureName, argGetters)
+                        )
+                    )
+                ),
 
-				// $dict[arg]
-				Expr.GetIdx(
-					Expr.GetMember(EntityNames.MainTypeName, fieldName),
-					Expr.Get(tupleName)
-				)
+                // $dict[arg]
+                Expr.GetIdx(
+                    Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                    Expr.Get(tupleName)
+                )
+            );
+        }
 
-			);
-		}
-
-		#endregion
-	}
+        #endregion
+    }
 }

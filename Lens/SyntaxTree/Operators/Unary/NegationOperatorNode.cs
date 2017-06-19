@@ -4,60 +4,60 @@ using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.Unary
 {
-	/// <summary>
-	/// A node representing the unary numeric negation operation.
-	/// </summary>
-	internal class NegationOperatorNode : UnaryOperatorNodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// A node representing the unary numeric negation operation.
+    /// </summary>
+    internal class NegationOperatorNode : UnaryOperatorNodeBase
+    {
+        #region Operator basics
 
-		protected override string OperatorRepresentation => "-";
+        protected override string OperatorRepresentation => "-";
 
-	    protected override string OverloadedMethodName => "op_UnaryNegation";
+        protected override string OverloadedMethodName => "op_UnaryNegation";
 
-	    #endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type ResolveOperatorType(Context ctx)
-		{
-			var type = Operand.Resolve(ctx);
-			return type.IsNumericType() ? type : null;
-		}
+        protected override Type ResolveOperatorType(Context ctx)
+        {
+            var type = Operand.Resolve(ctx);
+            return type.IsNumericType() ? type : null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase Expand(Context ctx, bool mustReturn)
-		{
-			// double negation
-			var op = Operand as NegationOperatorNode;
-			if (op != null)
-				return op.Operand;
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            // double negation
+            var op = Operand as NegationOperatorNode;
+            if (op != null)
+                return op.Operand;
 
-			return base.Expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitOperator(Context ctx)
-		{
-			Operand.Emit(ctx, true);
-			ctx.CurrentMethod.Generator.EmitNegate();
-		}
+        protected override void EmitOperator(Context ctx)
+        {
+            Operand.Emit(ctx, true);
+            ctx.CurrentMethod.Generator.EmitNegate();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic UnrollConstant(dynamic value)
-		{
-			return -value;
-		}
+        protected override dynamic UnrollConstant(dynamic value)
+        {
+            return -value;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

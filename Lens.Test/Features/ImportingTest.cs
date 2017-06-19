@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using Lens.Test.Internals;
 using Lens.Translations;
@@ -8,7 +7,7 @@ using NUnit.Framework;
 namespace Lens.Test.Features
 {
     [TestFixture]
-    internal class ImportingTest: TestBase
+    internal class ImportingTest : TestBase
     {
         [Test]
         public void ImportVoidFunction()
@@ -17,10 +16,7 @@ namespace Lens.Test.Features
             Assert.IsNotNull(method);
 
             TestConfigured(
-                ctx =>
-                {
-                   ctx.RegisterFunction("doNothing", method);
-                },
+                ctx => { ctx.RegisterFunction("doNothing", method); },
                 "doNothing()",
                 null
             );
@@ -33,10 +29,7 @@ namespace Lens.Test.Features
             Assert.IsNotNull(method);
 
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("addNumbers", method);
-                },
+                ctx => { ctx.RegisterFunction("addNumbers", method); },
                 "addNumbers 1 2",
                 3
             );
@@ -49,10 +42,7 @@ namespace Lens.Test.Features
             Assert.IsNotNull(method);
 
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("sum", method);
-                },
+                ctx => { ctx.RegisterFunction("sum", method); },
                 "sum 1 2 3",
                 6
             );
@@ -65,16 +55,13 @@ namespace Lens.Test.Features
             Assert.IsNotNull(method);
 
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("project", method);
-                },
+                ctx => { ctx.RegisterFunction("project", method); },
                 @"
 project
   <| new [1; 2; 3; 4; 5]
   <| x -> x*x
 ",
-                new List<int> {  1, 4, 9, 16, 25 }
+                new List<int> {1, 4, 9, 16, 25}
             );
         }
 
@@ -85,12 +72,9 @@ project
             Assert.IsNotNull(method);
 
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("project", method);
-                },
+                ctx => { ctx.RegisterFunction("project", method); },
                 "new [1; 2; 3; 4; 5].project (x -> x*x)",
-                new List<int> { 1, 4, 9, 16, 25 }
+                new List<int> {1, 4, 9, 16, 25}
             );
         }
 
@@ -98,10 +82,7 @@ project
         public void ImportAllOverloads()
         {
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunctionOverloads(typeof(ImportableStaticMethods), nameof(ImportableStaticMethods.OverloadedAdd), "myAdd");
-                },
+                ctx => { ctx.RegisterFunctionOverloads(typeof(ImportableStaticMethods), nameof(ImportableStaticMethods.OverloadedAdd), "myAdd"); },
                 @"
 new [
     myAdd 1.3 3.7
@@ -109,7 +90,7 @@ new [
     myAdd ""hello"" ""world""
 ]
 ",
-                new object[] { 5.0, 6.0, "helloworld" }
+                new object[] {5.0, 6.0, "helloworld"}
             );
         }
 
@@ -117,10 +98,7 @@ new [
         public void ImportClass()
         {
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterType(typeof(ImportableClass));
-                },
+                ctx => { ctx.RegisterType(typeof(ImportableClass)); },
                 @"
 let x = new ImportableClass (""a"" + ""b"")
 x.Value
@@ -133,10 +111,7 @@ x.Value
         public void ImportClassWithRename()
         {
             TestConfigured(
-                ctx =>
-                {
-                    ctx.RegisterType("WtfClass", typeof(ImportableClass));
-                },
+                ctx => { ctx.RegisterType("WtfClass", typeof(ImportableClass)); },
                 @"
 let x = new WtfClass (""a"" + ""b"")
 x.Value
@@ -152,10 +127,7 @@ x.Value
             Assert.IsNotNull(method);
 
             TestErrorConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("wtf", method);
-                },
+                ctx => { ctx.RegisterFunction("wtf", method); },
                 "wtf ()",
                 CompilerMessages.ImportUnsupportedMethod
             );
@@ -168,10 +140,7 @@ x.Value
             Assert.IsNotNull(method);
 
             TestErrorConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunction("wtf", method);
-                },
+                ctx => { ctx.RegisterFunction("wtf", method); },
                 "wtf ()",
                 CompilerMessages.ImportUnsupportedMethod
             );
@@ -181,10 +150,7 @@ x.Value
         public void ImportNoOverloadsError()
         {
             TestErrorConfigured(
-                ctx =>
-                {
-                    ctx.RegisterFunctionOverloads(typeof(ImportableStaticMethods), "NonExistantMethodName");
-                },
+                ctx => { ctx.RegisterFunctionOverloads(typeof(ImportableStaticMethods), "NonExistantMethodName"); },
                 "()",
                 CompilerMessages.NoOverloads
             );

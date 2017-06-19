@@ -6,154 +6,154 @@ using Lens.Translations;
 
 namespace Lens.Resolver
 {
-	/// <summary>
-	/// A class that lets LENS code invoke delegates from the host application.
-	/// </summary>
-	public static class GlobalPropertyHelper
-	{
-		#region Constructor
+    /// <summary>
+    /// A class that lets LENS code invoke delegates from the host application.
+    /// </summary>
+    public static class GlobalPropertyHelper
+    {
+        #region Constructor
 
-		static GlobalPropertyHelper()
-		{
-			Properties = new List<List<GlobalPropertyEntity>>();
-		}
+        static GlobalPropertyHelper()
+        {
+            Properties = new List<List<GlobalPropertyEntity>>();
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The total list of registered properties in ALL contexts.
-		/// Values are NEVER removed: an unregistered context is replaced by a null value, therefore maintaining the sequence of context IDs.
-		/// </summary>
-		private static readonly List<List<GlobalPropertyEntity>> Properties;
+        /// <summary>
+        /// The total list of registered properties in ALL contexts.
+        /// Values are NEVER removed: an unregistered context is replaced by a null value, therefore maintaining the sequence of context IDs.
+        /// </summary>
+        private static readonly List<List<GlobalPropertyEntity>> Properties;
 
-		#endregion
+        #endregion
 
-		#region Methods
+        #region Methods
 
-		/// <summary>
-		/// Adds a new tier for current compiler instance and returns the unique id.
-		/// </summary>
-		public static int RegisterContext()
-		{
-			Properties.Add(new List<GlobalPropertyEntity>());
-			return Properties.Count - 1;
-		}
+        /// <summary>
+        /// Adds a new tier for current compiler instance and returns the unique id.
+        /// </summary>
+        public static int RegisterContext()
+        {
+            Properties.Add(new List<GlobalPropertyEntity>());
+            return Properties.Count - 1;
+        }
 
-		/// <summary>
-		/// Removes current context from the global list of registered properties.
-		/// </summary>
-		public static void UnregisterContext(int contextId)
-		{
-			if (contextId < 0 || contextId > Properties.Count - 1)
-				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
-
-#if DEBUG
-			var curr = Properties[contextId];
-			if (curr == null)
-				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
-#endif
-
-			Properties[contextId] = null;
-		}
-
-		/// <summary>
-		/// Registers a strongly typed property and returns its unique ID.
-		/// </summary>
-		internal static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
-		{
-			if (getter == null && setter == null)
-				throw new ArgumentNullException("getter");
-
-			Properties[contextId].Add(new GlobalPropertyEntity { Getter = getter, Setter = setter } );
-			var id = Properties[contextId].Count - 1;
-
-			return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
-		}
-
-		/// <summary>
-		/// Gets the value of a property.
-		/// </summary>
-		public static T Get<T>(int contextId, int id)
-		{
-			ValidateId(contextId, id);
-			var info = Properties[contextId][id];
+        /// <summary>
+        /// Removes current context from the global list of registered properties.
+        /// </summary>
+        public static void UnregisterContext(int contextId)
+        {
+            if (contextId < 0 || contextId > Properties.Count - 1)
+                throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
 #if DEBUG
-			if(info.Getter == null)
-				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoGetter, id));
+            var curr = Properties[contextId];
+            if (curr == null)
+                throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 #endif
 
-			return (info.Getter as Func<T>).Invoke();
-		}
+            Properties[contextId] = null;
+        }
 
-		/// <summary>
-		/// Sets the value of a property.
-		/// </summary>
-		public static void Set<T>(int contextId, int id, T value)
-		{
-			ValidateId(contextId, id);
-			var info = Properties[contextId][id];
+        /// <summary>
+        /// Registers a strongly typed property and returns its unique ID.
+        /// </summary>
+        internal static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
+        {
+            if (getter == null && setter == null)
+                throw new ArgumentNullException("getter");
+
+            Properties[contextId].Add(new GlobalPropertyEntity {Getter = getter, Setter = setter});
+            var id = Properties[contextId].Count - 1;
+
+            return new GlobalPropertyInfo(id, typeof(T), getter != null, setter != null, null, null);
+        }
+
+        /// <summary>
+        /// Gets the value of a property.
+        /// </summary>
+        public static T Get<T>(int contextId, int id)
+        {
+            ValidateId(contextId, id);
+            var info = Properties[contextId][id];
 
 #if DEBUG
-			if (info.Setter == null)
-				throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoSetter, id));
+            if (info.Getter == null)
+                throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoGetter, id));
 #endif
 
-			(info.Setter as Action<T>).Invoke(value);
-		}
+            return (info.Getter as Func<T>).Invoke();
+        }
 
-		#endregion
+        /// <summary>
+        /// Sets the value of a property.
+        /// </summary>
+        public static void Set<T>(int contextId, int id, T value)
+        {
+            ValidateId(contextId, id);
+            var info = Properties[contextId][id];
 
-		#region Helpers
+#if DEBUG
+            if (info.Setter == null)
+                throw new InvalidOperationException(string.Format(CompilerMessages.PropertyIdNoSetter, id));
+#endif
 
-		[Conditional("DEBUG")]
-		private static void ValidateId(int contextId, int id)
-		{
-			if (contextId < 0 || contextId > Properties.Count - 1)
-				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
+            (info.Setter as Action<T>).Invoke(value);
+        }
 
-			var curr = Properties[contextId];
-			if(curr == null)
-				throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
+        #endregion
 
-			if(id < 0 || id > Properties[contextId].Count - 1)
-				throw new ArgumentException(string.Format(CompilerMessages.PropertyIdNotFound, id));
-		}
+        #region Helpers
 
-		private class GlobalPropertyEntity
-		{
-			public Delegate Getter;
-			public Delegate Setter;
-		}
+        [Conditional("DEBUG")]
+        private static void ValidateId(int contextId, int id)
+        {
+            if (contextId < 0 || contextId > Properties.Count - 1)
+                throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));
 
-		#endregion
-	}
+            var curr = Properties[contextId];
+            if (curr == null)
+                throw new InvalidOperationException(string.Format(CompilerMessages.ContextUnregistered, contextId));
 
-	/// <summary>
-	/// Single entry of a registered property.
-	/// </summary>
-	internal class GlobalPropertyInfo
-	{
-		public readonly int PropertyId;
-		public readonly Type PropertyType;
+            if (id < 0 || id > Properties[contextId].Count - 1)
+                throw new ArgumentException(string.Format(CompilerMessages.PropertyIdNotFound, id));
+        }
 
-		public readonly bool HasGetter;
-		public readonly bool HasSetter;
+        private class GlobalPropertyEntity
+        {
+            public Delegate Getter;
+            public Delegate Setter;
+        }
 
-		public readonly MethodEntity GetterMethod;
-		public readonly MethodEntity SetterMethod;
+        #endregion
+    }
 
-		public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodEntity getterMethod, MethodEntity setterMethod)
-		{
-			PropertyId = id;
-			PropertyType = propType;
-			HasGetter = hasGetter;
-			HasSetter = hasSetter;
+    /// <summary>
+    /// Single entry of a registered property.
+    /// </summary>
+    internal class GlobalPropertyInfo
+    {
+        public readonly int PropertyId;
+        public readonly Type PropertyType;
 
-			GetterMethod = getterMethod;
-			SetterMethod = setterMethod;
-		}
-	}
+        public readonly bool HasGetter;
+        public readonly bool HasSetter;
+
+        public readonly MethodEntity GetterMethod;
+        public readonly MethodEntity SetterMethod;
+
+        public GlobalPropertyInfo(int id, Type propType, bool hasGetter, bool hasSetter, MethodEntity getterMethod, MethodEntity setterMethod)
+        {
+            PropertyId = id;
+            PropertyType = propType;
+            HasGetter = hasGetter;
+            HasSetter = hasSetter;
+
+            GetterMethod = getterMethod;
+            SetterMethod = setterMethod;
+        }
+    }
 }

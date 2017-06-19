@@ -8,239 +8,239 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
-	/// <summary>
-	/// A node representing read access to a local variable or a function.
-	/// </summary>
-	internal class SetIdentifierNode : IdentifierNodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing read access to a local variable or a function.
+    /// </summary>
+    internal class SetIdentifierNode : IdentifierNodeBase
+    {
+        #region Constructor
 
-		public SetIdentifierNode(string identifier = null)
-		{
-			Identifier = identifier;
-		}
+        public SetIdentifierNode(string identifier = null)
+        {
+            Identifier = identifier;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// A flag indicating that assignment to a constant variable is legal
-		/// because it's being instantiated.
-		/// </summary>
-		public bool IsInitialization { get; set; }
+        /// <summary>
+        /// A flag indicating that assignment to a constant variable is legal
+        /// because it's being instantiated.
+        /// </summary>
+        public bool IsInitialization { get; set; }
 
-		/// <summary>
-		/// Value to be assigned.
-		/// </summary>
-		public NodeBase Value { get; set; }
-		
-		/// <summary>
-		/// Global property reference (if resolved).
-		/// </summary>
-		private GlobalPropertyInfo _property;
+        /// <summary>
+        /// Value to be assigned.
+        /// </summary>
+        public NodeBase Value { get; set; }
 
-		#endregion
+        /// <summary>
+        /// Global property reference (if resolved).
+        /// </summary>
+        private GlobalPropertyInfo _property;
 
-		#region Resolve
+        #endregion
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			if (Identifier == "_")
-				Error(CompilerMessages.UnderscoreNameUsed);
+        #region Resolve
 
-			var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
-			if (nameInfo != null)
-			{
-				if (nameInfo.IsImmutable && !IsInitialization)
-					Error(CompilerMessages.IdentifierIsConstant, Identifier);
-			}
-			else
-			{
-				try
-				{
-					_property = ctx.ResolveGlobalProperty(Identifier);
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            if (Identifier == "_")
+                Error(CompilerMessages.UnderscoreNameUsed);
 
-					if (!_property.HasSetter)
-						Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
-				}
-				catch (KeyNotFoundException)
-				{
-					Error(CompilerMessages.VariableNotFound, Identifier);
-				}
-			}
+            var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
+            if (nameInfo != null)
+            {
+                if (nameInfo.IsImmutable && !IsInitialization)
+                    Error(CompilerMessages.IdentifierIsConstant, Identifier);
+            }
+            else
+            {
+                try
+                {
+                    _property = ctx.ResolveGlobalProperty(Identifier);
 
-			var destType = nameInfo != null ? nameInfo.Type : _property.PropertyType;
-			EnsureLambdaInferred(ctx, Value, destType);
+                    if (!_property.HasSetter)
+                        Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
+                }
+                catch (KeyNotFoundException)
+                {
+                    Error(CompilerMessages.VariableNotFound, Identifier);
+                }
+            }
 
-			var exprType = Value.Resolve(ctx);
-			ctx.CheckTypedExpression(Value, exprType, true);
+            var destType = nameInfo != null ? nameInfo.Type : _property.PropertyType;
+            EnsureLambdaInferred(ctx, Value, destType);
 
-			if (!destType.IsExtendablyAssignableFrom(exprType))
-			{
-				Error(
-					nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,
-					exprType,
-					destType
-				);	
-			}
+            var exprType = Value.Resolve(ctx);
+            ctx.CheckTypedExpression(Value, exprType, true);
 
-			return base.resolve(ctx, mustReturn);
-		}
+            if (!destType.IsExtendablyAssignableFrom(exprType))
+            {
+                Error(
+                    nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,
+                    exprType,
+                    destType
+                );
+            }
 
-		#endregion
+            return base.resolve(ctx, mustReturn);
+        }
 
-		#region Transform
+        #endregion
 
-		protected override IEnumerable<NodeChild> GetChildren()
-		{
-			yield return new NodeChild(Value, x => Value = x);
-		}
+        #region Transform
 
-		#endregion
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(Value, x => Value = x);
+        }
 
-		#region Emit
+        #endregion
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var type = Value.Resolve(ctx);
+        #region Emit
 
-			if (_property != null)
-			{
-				var cast = Expr.Cast(Value, type);
-				if (_property.SetterMethod != null)
-				{
-					cast.Emit(ctx, true);
-					gen.EmitCall(_property.SetterMethod.MethodInfo);
-				}
-				else
-				{
-					var method = typeof (GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var type = Value.Resolve(ctx);
 
-					gen.EmitConstant(ctx.ContextId);
-					gen.EmitConstant(_property.PropertyId);
-					Expr.Cast(Value, type).Emit(ctx, true);
-					gen.EmitCall(method);
-				}
-			}
-			else
-			{
-				var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
-				if (nameInfo != null)
-				{
-					if (nameInfo.IsClosured)
-					{
-						if (nameInfo.ClosureDistance == 0)
-							EmitSetClosuredLocal(ctx, nameInfo);
-						else
-							EmitSetClosuredRemote(ctx, nameInfo);
-					}
-					else
-					{
-						EmitSetLocal(ctx, nameInfo);
-					}
-				}
-			}
-		}
+            if (_property != null)
+            {
+                var cast = Expr.Cast(Value, type);
+                if (_property.SetterMethod != null)
+                {
+                    cast.Emit(ctx, true);
+                    gen.EmitCall(_property.SetterMethod.MethodInfo);
+                }
+                else
+                {
+                    var method = typeof(GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
 
-		/// <summary>
-		/// Assigns an ordinary local variable.
-		/// </summary>
-		private void EmitSetLocal(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+                    gen.EmitConstant(ctx.ContextId);
+                    gen.EmitConstant(_property.PropertyId);
+                    Expr.Cast(Value, type).Emit(ctx, true);
+                    gen.EmitCall(method);
+                }
+            }
+            else
+            {
+                var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
+                if (nameInfo != null)
+                {
+                    if (nameInfo.IsClosured)
+                    {
+                        if (nameInfo.ClosureDistance == 0)
+                            EmitSetClosuredLocal(ctx, nameInfo);
+                        else
+                            EmitSetClosuredRemote(ctx, nameInfo);
+                    }
+                    else
+                    {
+                        EmitSetLocal(ctx, nameInfo);
+                    }
+                }
+            }
+        }
 
-			var castNode = Expr.Cast(Value, name.Type);
+        /// <summary>
+        /// Assigns an ordinary local variable.
+        /// </summary>
+        private void EmitSetLocal(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if (!name.IsRefArgument)
-			{
-				castNode.Emit(ctx, true);
-				if(name.ArgumentId.HasValue)
-					gen.EmitSaveArgument(name.ArgumentId.Value);
-				else
-					gen.EmitSaveLocal(name.LocalBuilder);
-			}
-			else
-			{
-				gen.EmitLoadArgument(name.ArgumentId.Value);
-				castNode.Emit(ctx, true);
-				gen.EmitSaveObject(name.Type);
-			}
-		}
+            var castNode = Expr.Cast(Value, name.Type);
 
-		/// <summary>
-		/// Assigns a closured variable that is declared in current scope.
-		/// </summary>
-		private void EmitSetClosuredLocal(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+            if (!name.IsRefArgument)
+            {
+                castNode.Emit(ctx, true);
+                if (name.ArgumentId.HasValue)
+                    gen.EmitSaveArgument(name.ArgumentId.Value);
+                else
+                    gen.EmitSaveLocal(name.LocalBuilder);
+            }
+            else
+            {
+                gen.EmitLoadArgument(name.ArgumentId.Value);
+                castNode.Emit(ctx, true);
+                gen.EmitSaveObject(name.Type);
+            }
+        }
 
-			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
-			
-			Expr.Cast(Value, name.Type).Emit(ctx, true);
+        /// <summary>
+        /// Assigns a closured variable that is declared in current scope.
+        /// </summary>
+        private void EmitSetClosuredLocal(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			var clsType = ctx.Scope.ActiveClosure.ClosureType.TypeInfo;
-			var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
-			gen.EmitSaveField(clsField.FieldInfo);
-		}
+            gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 
-		/// <summary>
-		/// Assigns a closured variable that has been imported from outer scopes.
-		/// </summary>
-		private void EmitSetClosuredRemote(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+            Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-			gen.EmitLoadArgument(0);
+            var clsType = ctx.Scope.ActiveClosure.ClosureType.TypeInfo;
+            var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
+            gen.EmitSaveField(clsField.FieldInfo);
+        }
 
-			var dist = name.ClosureDistance;
-			var type = (Type)ctx.CurrentType.TypeBuilder;
-			while (dist > 1)
-			{
-				var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
-				gen.EmitLoadField(rootField.FieldInfo);
+        /// <summary>
+        /// Assigns a closured variable that has been imported from outer scopes.
+        /// </summary>
+        private void EmitSetClosuredRemote(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-				type = rootField.FieldType;
-				dist--;
-			}
+            gen.EmitLoadArgument(0);
 
-			Expr.Cast(Value, name.Type).Emit(ctx, true);
+            var dist = name.ClosureDistance;
+            var type = (Type) ctx.CurrentType.TypeBuilder;
+            while (dist > 1)
+            {
+                var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
+                gen.EmitLoadField(rootField.FieldInfo);
 
-			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitSaveField(clsField.FieldInfo);
-		}
+                type = rootField.FieldType;
+                dist--;
+            }
 
-		#endregion
+            Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-		#region Debug
+            var clsField = ctx.ResolveField(type, name.ClosureFieldName);
+            gen.EmitSaveField(clsField.FieldInfo);
+        }
 
-		protected bool Equals(SetIdentifierNode other)
-		{
-			return base.Equals(other) && Equals(Value, other.Value);
-		}
+        #endregion
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((SetIdentifierNode)obj);
-		}
+        #region Debug
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return (base.GetHashCode() * 397) ^ (Value != null ? Value.GetHashCode() : 0);
-			}
-		}
+        protected bool Equals(SetIdentifierNode other)
+        {
+            return base.Equals(other) && Equals(Value, other.Value);
+        }
 
-		public override string ToString()
-		{
-			return string.Format("set({0} = {1})", Identifier, Value);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((SetIdentifierNode) obj);
+        }
 
-		#endregion
-	}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (Value != null ? Value.GetHashCode() : 0);
+            }
+        }
+
+        public override string ToString()
+        {
+            return string.Format("set({0} = {1})", Identifier, Value);
+        }
+
+        #endregion
+    }
 }

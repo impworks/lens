@@ -4,60 +4,60 @@ using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.Unary
 {
-	/// <summary>
-	/// A node representing the boolean inversion operator.
-	/// </summary>
-	internal class InversionOperatorNode : UnaryOperatorNodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// A node representing the boolean inversion operator.
+    /// </summary>
+    internal class InversionOperatorNode : UnaryOperatorNodeBase
+    {
+        #region Operator basics
 
-		protected override string OperatorRepresentation => "not";
+        protected override string OperatorRepresentation => "not";
 
-	    #endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type ResolveOperatorType(Context ctx)
-		{
-			return Operand.Resolve(ctx).IsImplicitlyBoolean() ? typeof(bool) : null;
-		}
+        protected override Type ResolveOperatorType(Context ctx)
+        {
+            return Operand.Resolve(ctx).IsImplicitlyBoolean() ? typeof(bool) : null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase Expand(Context ctx, bool mustReturn)
-		{
-			var op = Operand as InversionOperatorNode;
-			if (op != null)
-				return op.Operand;
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            var op = Operand as InversionOperatorNode;
+            if (op != null)
+                return op.Operand;
 
-			return base.Expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitOperator(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitOperator(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			Expr.Cast<bool>(Operand).Emit(ctx, true);
+            Expr.Cast<bool>(Operand).Emit(ctx, true);
 
-			gen.EmitConstant(0);
-			gen.EmitCompareEqual();
-		}
+            gen.EmitConstant(0);
+            gen.EmitCompareEqual();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic UnrollConstant(dynamic value)
-		{
-			return !value;
-		}
+        protected override dynamic UnrollConstant(dynamic value)
+        {
+            return !value;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

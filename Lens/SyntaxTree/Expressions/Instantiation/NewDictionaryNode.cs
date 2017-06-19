@@ -9,155 +9,155 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.Instantiation
 {
-	/// <summary>
-	/// A node representing a new dictionary.
-	/// </summary>
-	internal class NewDictionaryNode : CollectionNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
-	{
-		#region Fields
+    /// <summary>
+    /// A node representing a new dictionary.
+    /// </summary>
+    internal class NewDictionaryNode : CollectionNodeBase<KeyValuePair<NodeBase, NodeBase>>, IEnumerable<KeyValuePair<NodeBase, NodeBase>>
+    {
+        #region Fields
 
-		/// <summary>
-		/// Dictionary key types.
-		/// Key types are enforced to be strictly equal, no common type is being resolved.
-		/// </summary>
-		private Type _keyType;
+        /// <summary>
+        /// Dictionary key types.
+        /// Key types are enforced to be strictly equal, no common type is being resolved.
+        /// </summary>
+        private Type _keyType;
 
-		/// <summary>
-		/// Common type for dictionary's values.
-		/// </summary>
-		private Type _valueType;
+        /// <summary>
+        /// Common type for dictionary's values.
+        /// </summary>
+        private Type _valueType;
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			if(Expressions.Count == 0)
-				Error(CompilerMessages.DictionaryEmpty);
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            if (Expressions.Count == 0)
+                Error(CompilerMessages.DictionaryEmpty);
 
-			_keyType = Expressions[0].Key.Resolve(ctx);
-			_valueType = ResolveItemType(Expressions.Select(exp => exp.Value), ctx);
+            _keyType = Expressions[0].Key.Resolve(ctx);
+            _valueType = ResolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
-			if (_valueType == typeof(NullType) || _keyType == typeof(NullType))
-				Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
+            if (_valueType == typeof(NullType) || _keyType == typeof(NullType))
+                Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
-			ctx.CheckTypedExpression(Expressions[0].Key, _keyType);
-			ctx.CheckTypedExpression(Expressions[0].Value, _valueType, true);
+            ctx.CheckTypedExpression(Expressions[0].Key, _keyType);
+            ctx.CheckTypedExpression(Expressions[0].Value, _valueType, true);
 
-			return typeof(Dictionary<,>).MakeGenericType(_keyType, _valueType);
-		}
+            return typeof(Dictionary<,>).MakeGenericType(_keyType, _valueType);
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> GetChildren()
-		{
-			for (var idx = 0; idx < Expressions.Count; idx++)
-			{
-				var id = idx;
-				var curr = Expressions[idx];
-				yield return new NodeChild(curr.Key, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(x, curr.Value));
-				yield return new NodeChild(curr.Value, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(curr.Key, x));
-			}
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            for (var idx = 0; idx < Expressions.Count; idx++)
+            {
+                var id = idx;
+                var curr = Expressions[idx];
+                yield return new NodeChild(curr.Key, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(x, curr.Value));
+                yield return new NodeChild(curr.Value, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(curr.Key, x));
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var dictType = Resolve(ctx);
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var dictType = Resolve(ctx);
 
-			var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType, true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType, true);
 
-			var ctor = ctx.ResolveConstructor(dictType, new[] {typeof (int)});
-			var addMethod = ctx.ResolveMethod(dictType, "Add", new[] { _keyType, _valueType });
+            var ctor = ctx.ResolveConstructor(dictType, new[] {typeof(int)});
+            var addMethod = ctx.ResolveMethod(dictType, "Add", new[] {_keyType, _valueType});
 
-			var count = Expressions.Count;
-			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar.LocalBuilder);
+            var count = Expressions.Count;
+            gen.EmitConstant(count);
+            gen.EmitCreateObject(ctor.ConstructorInfo);
+            gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
-			foreach (var curr in Expressions)
-			{
-				var currKeyType = curr.Key.Resolve(ctx);
-				var currValType = curr.Value.Resolve(ctx);
+            foreach (var curr in Expressions)
+            {
+                var currKeyType = curr.Key.Resolve(ctx);
+                var currValType = curr.Value.Resolve(ctx);
 
-				ctx.CheckTypedExpression(curr.Key, currKeyType);
-				ctx.CheckTypedExpression(curr.Value, currValType, true);
+                ctx.CheckTypedExpression(curr.Key, currKeyType);
+                ctx.CheckTypedExpression(curr.Value, currValType, true);
 
-				if (currKeyType != _keyType)
-					Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);
+                if (currKeyType != _keyType)
+                    Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);
 
-				if (!_valueType.IsExtendablyAssignableFrom(currValType))
-					Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _keyType, _valueType);
+                if (!_valueType.IsExtendablyAssignableFrom(currValType))
+                    Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _keyType, _valueType);
 
-				gen.EmitLoadLocal(tmpVar.LocalBuilder);
+                gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
-				curr.Key.Emit(ctx, true);
-				Expr.Cast(curr.Value, _valueType).Emit(ctx, true);
+                curr.Key.Emit(ctx, true);
+                Expr.Cast(curr.Value, _valueType).Emit(ctx, true);
 
-				gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
-			}
+                gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
+            }
 
-			gen.EmitLoadLocal(tmpVar.LocalBuilder);
-		}
+            gen.EmitLoadLocal(tmpVar.LocalBuilder);
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(NewDictionaryNode other)
-		{
-			// KeyValuePair doesn't have Equals overridden, that's why it's so messy here:
-			return Expressions.Select(e => e.Key).SequenceEqual(other.Expressions.Select(e => e.Key))
-				   && Expressions.Select(e => e.Value).SequenceEqual(other.Expressions.Select(e => e.Value));
-		}
+        protected bool Equals(NewDictionaryNode other)
+        {
+            // KeyValuePair doesn't have Equals overridden, that's why it's so messy here:
+            return Expressions.Select(e => e.Key).SequenceEqual(other.Expressions.Select(e => e.Key))
+                   && Expressions.Select(e => e.Value).SequenceEqual(other.Expressions.Select(e => e.Value));
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((NewDictionaryNode)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((NewDictionaryNode) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			return (Expressions != null ? Expressions.GetHashCode() : 0);
-		}
+        public override int GetHashCode()
+        {
+            return (Expressions != null ? Expressions.GetHashCode() : 0);
+        }
 
-		public override string ToString()
-		{
-			return string.Format("dict({0})", string.Join(";", Expressions.Select(x => string.Format("{0} => {1}", x.Key, x.Value))));
-		}
+        public override string ToString()
+        {
+            return string.Format("dict({0})", string.Join(";", Expressions.Select(x => string.Format("{0} => {1}", x.Key, x.Value))));
+        }
 
-		#endregion
+        #endregion
 
-		#region Interface implementations
+        #region Interface implementations
 
-		/// <summary>
-		/// Collection initializer (used in tests).
-		/// </summary>
-		public void Add(NodeBase key, NodeBase value)
-		{
-			Expressions.Add(new KeyValuePair<NodeBase, NodeBase>(key, value));
-		}
+        /// <summary>
+        /// Collection initializer (used in tests).
+        /// </summary>
+        public void Add(NodeBase key, NodeBase value)
+        {
+            Expressions.Add(new KeyValuePair<NodeBase, NodeBase>(key, value));
+        }
 
-		public IEnumerator<KeyValuePair<NodeBase, NodeBase>> GetEnumerator()
-		{
-			return Expressions.GetEnumerator();
-		}
+        public IEnumerator<KeyValuePair<NodeBase, NodeBase>> GetEnumerator()
+        {
+            return Expressions.GetEnumerator();
+        }
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

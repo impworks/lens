@@ -8,85 +8,85 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.Instantiation
 {
-	/// <summary>
-	/// A node representing a new List declaration.
-	/// </summary>
-	internal class NewListNode : CollectionNodeBase<NodeBase>
-	{
-		#region Fields
+    /// <summary>
+    /// A node representing a new List declaration.
+    /// </summary>
+    internal class NewListNode : CollectionNodeBase<NodeBase>
+    {
+        #region Fields
 
-		private Type _itemType;
+        private Type _itemType;
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			if(Expressions.Count == 0)
-				Error(CompilerMessages.ListEmpty);
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            if (Expressions.Count == 0)
+                Error(CompilerMessages.ListEmpty);
 
-			_itemType = ResolveItemType(Expressions, ctx);
-			if(_itemType == typeof(NullType))
-				Error(CompilerMessages.ListTypeUnknown);
+            _itemType = ResolveItemType(Expressions, ctx);
+            if (_itemType == typeof(NullType))
+                Error(CompilerMessages.ListTypeUnknown);
 
-			return typeof(List<>).MakeGenericType(_itemType);
-		}
+            return typeof(List<>).MakeGenericType(_itemType);
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> GetChildren()
-		{
-			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
-			
-			var listType = Resolve(ctx);
-			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
-			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { _itemType });
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
-			var count = Expressions.Count;
-			gen.EmitConstant(count);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
-			gen.EmitSaveLocal(tmpVar.LocalBuilder);
+            var listType = Resolve(ctx);
+            var ctor = ctx.ResolveConstructor(listType, new[] {typeof(int)});
+            var addMethod = ctx.ResolveMethod(listType, "Add", new[] {_itemType});
 
-			foreach (var curr in Expressions)
-			{
-				var currType = curr.Resolve(ctx);
+            var count = Expressions.Count;
+            gen.EmitConstant(count);
+            gen.EmitCreateObject(ctor.ConstructorInfo);
+            gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
-				ctx.CheckTypedExpression(curr, currType, true);
+            foreach (var curr in Expressions)
+            {
+                var currType = curr.Resolve(ctx);
 
-				if (!_itemType.IsExtendablyAssignableFrom(currType))
-					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
+                ctx.CheckTypedExpression(curr, currType, true);
 
-				gen.EmitLoadLocal(tmpVar.LocalBuilder);
-				
-				Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
-				gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
-			}
+                if (!_itemType.IsExtendablyAssignableFrom(currType))
+                    Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
 
-			gen.EmitLoadLocal(tmpVar.LocalBuilder);
-		}
+                gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
-		#endregion
+                Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
+                gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
+            }
 
-		#region Debug
+            gen.EmitLoadLocal(tmpVar.LocalBuilder);
+        }
 
-		public override string ToString()
-		{
-			return string.Format("list({0})", string.Join(";", Expressions));
-		}
+        #endregion
 
-		#endregion
-	}
+        #region Debug
+
+        public override string ToString()
+        {
+            return string.Format("list({0})", string.Join(";", Expressions));
+        }
+
+        #endregion
+    }
 }

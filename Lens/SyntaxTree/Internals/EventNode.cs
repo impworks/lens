@@ -6,70 +6,70 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Internals
 {
-	internal class EventNode : NodeBase
-	{
-		#region Constructor
+    internal class EventNode : NodeBase
+    {
+        #region Constructor
 
-		public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
-		{
-			_event = evt;
-			_isSubscription = isSubscription;
-			_node = node;
-			_callback = Expr.CastTransparent(node.Value, _event.EventHandlerType);
-		}
+        public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
+        {
+            _event = evt;
+            _isSubscription = isSubscription;
+            _node = node;
+            _callback = Expr.CastTransparent(node.Value, _event.EventHandlerType);
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// Node containing the event expression and name.
-		/// </summary>
-		private readonly SetMemberNode _node;
+        /// <summary>
+        /// Node containing the event expression and name.
+        /// </summary>
+        private readonly SetMemberNode _node;
 
-		/// <summary>
-		/// Callback expression to bind to event.
-		/// </summary>
-		private NodeBase _callback;
+        /// <summary>
+        /// Callback expression to bind to event.
+        /// </summary>
+        private NodeBase _callback;
 
-		/// <summary>
-		/// Flag indicating that the 
-		/// </summary>
-		private readonly bool _isSubscription;
+        /// <summary>
+        /// Flag indicating that the 
+        /// </summary>
+        private readonly bool _isSubscription;
 
-		/// <summary>
-		/// The event entity.
-		/// </summary>
-		private readonly EventWrapper _event;
+        /// <summary>
+        /// The event entity.
+        /// </summary>
+        private readonly EventWrapper _event;
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> GetChildren()
-		{
-			yield return new NodeChild(_callback, x => _callback = x);
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(_callback, x => _callback = x);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if (_node.Expression != null)
-			{
-				_node.Expression.EmitNodeForAccess(ctx);
-			}
+            if (_node.Expression != null)
+            {
+                _node.Expression.EmitNodeForAccess(ctx);
+            }
 
-			_callback.Emit(ctx, true);
+            _callback.Emit(ctx, true);
 
-			var method = _isSubscription ? _event.AddMethod : _event.RemoveMethod;
-			gen.EmitCall(method, true);
-		}
+            var method = _isSubscription ? _event.AddMethod : _event.RemoveMethod;
+            gen.EmitCall(method, true);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

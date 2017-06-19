@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Declarations.Functions;
@@ -10,196 +9,196 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
 {
-	/// <summary>
-	/// A base class for various forms of method invocation that stores arguments.
-	/// </summary>
-	abstract internal class InvocationNodeBase : NodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A base class for various forms of method invocation that stores arguments.
+    /// </summary>
+    abstract internal class InvocationNodeBase : NodeBase
+    {
+        #region Constructor
 
-		protected InvocationNodeBase()
-		{
-			Arguments = new List<NodeBase>();
-		}
+        protected InvocationNodeBase()
+        {
+            Arguments = new List<NodeBase>();
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// Passed argument expressions.
-		/// </summary>
-		public List<NodeBase> Arguments { get; set; }
+        /// <summary>
+        /// Passed argument expressions.
+        /// </summary>
+        public List<NodeBase> Arguments { get; set; }
 
-		/// <summary>
-		/// Cached callable entity wrapper.
-		/// </summary>
-		protected abstract CallableWrapperBase Wrapper { get; }
+        /// <summary>
+        /// Cached callable entity wrapper.
+        /// </summary>
+        protected abstract CallableWrapperBase Wrapper { get; }
 
-		/// <summary>
-		/// Cached list of argument expression types.
-		/// </summary>
-		protected Type[] ArgTypes;
+        /// <summary>
+        /// Cached list of argument expression types.
+        /// </summary>
+        protected Type[] ArgTypes;
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			Func<NodeBase, Type> typeGetter = arg =>
-			{
-				var gin = arg as GetIdentifierNode;
-				if (gin != null && gin.Identifier == "_")
-					return typeof (UnspecifiedType);
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            Func<NodeBase, Type> typeGetter = arg =>
+            {
+                var gin = arg as GetIdentifierNode;
+                if (gin != null && gin.Identifier == "_")
+                    return typeof(UnspecifiedType);
 
-				return arg.Resolve(ctx);
-			};
-				
-			ArgTypes = Arguments.Select(typeGetter).ToArray();
+                return arg.Resolve(ctx);
+            };
 
-			// discard 'unit' pseudoargument
-			if (ArgTypes.Length == 1 && ArgTypes[0] == typeof (UnitType))
-				ArgTypes = Type.EmptyTypes;
+            ArgTypes = Arguments.Select(typeGetter).ToArray();
 
-			// prepares arguments only
-			return null;
-		}
+            // discard 'unit' pseudoargument
+            if (ArgTypes.Length == 1 && ArgTypes[0] == typeof(UnitType))
+                ArgTypes = Type.EmptyTypes;
 
-		#endregion
+            // prepares arguments only
+            return null;
+        }
 
-		#region Transform
+        #endregion
 
-		protected override IEnumerable<NodeChild> GetChildren()
-		{
-			for (var idx = 0; idx < Arguments.Count; idx++)
-			{
-				var id = idx;
-				var identifier = Arguments[id] as GetIdentifierNode;
-				var isPartialArg = identifier != null && identifier.Identifier == "_";
-				if (!isPartialArg)
-					yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
-			}
-		}
+        #region Transform
 
-		protected override NodeBase Expand(Context ctx, bool mustReturn)
-		{
-			if (Wrapper.IsPartiallyApplied)
-			{
-				// (expr) _ a b _
-				// is transformed into
-				// (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
-				var argDefs = new List<FunctionArgument>();
-				var argExprs = new List<NodeBase>();
-				for (var idx = 0; idx < ArgTypes.Length; idx++)
-				{
-					if (ArgTypes[idx] == typeof(UnspecifiedType))
-					{
-						var argName = ctx.Unique.AnonymousArgName();
-						argDefs.Add(Expr.Arg(argName, Wrapper.ArgumentTypes[idx].FullName));
-						argExprs.Add(Expr.Get(argName));
-					}
-					else
-					{
-						argExprs.Add(Arguments[idx]);
-					}
-				}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            for (var idx = 0; idx < Arguments.Count; idx++)
+            {
+                var id = idx;
+                var identifier = Arguments[id] as GetIdentifierNode;
+                var isPartialArg = identifier != null && identifier.Identifier == "_";
+                if (!isPartialArg)
+                    yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
+            }
+        }
 
-				return Expr.Lambda(argDefs, RecreateSelfWithArgs(argExprs));
-			}
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (Wrapper.IsPartiallyApplied)
+            {
+                // (expr) _ a b _
+                // is transformed into
+                // (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
+                var argDefs = new List<FunctionArgument>();
+                var argExprs = new List<NodeBase>();
+                for (var idx = 0; idx < ArgTypes.Length; idx++)
+                {
+                    if (ArgTypes[idx] == typeof(UnspecifiedType))
+                    {
+                        var argName = ctx.Unique.AnonymousArgName();
+                        argDefs.Add(Expr.Arg(argName, Wrapper.ArgumentTypes[idx].FullName));
+                        argExprs.Add(Expr.Get(argName));
+                    }
+                    else
+                    {
+                        argExprs.Add(Arguments[idx]);
+                    }
+                }
 
-			if (Wrapper.IsVariadic)
-			{
-				var srcTypes = ArgTypes;
-				var dstTypes = Wrapper.ArgumentTypes;
-				var lastDst = dstTypes[dstTypes.Length - 1];
-				var lastSrc = srcTypes[srcTypes.Length - 1];
+                return Expr.Lambda(argDefs, RecreateSelfWithArgs(argExprs));
+            }
 
-				// compress items into an array:
-				//     fx a b c d
-				// becomes
-				//     fx a b (new[ c as X; d as X ])
-				if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
-				{
-					var elemType = lastDst.GetElementType();
-					var simpleArgs = Arguments.Take(dstTypes.Length - 1);
-					var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
-					return RecreateSelfWithArgs(simpleArgs.Union(new[] { combined }));
-				}
-			}
+            if (Wrapper.IsVariadic)
+            {
+                var srcTypes = ArgTypes;
+                var dstTypes = Wrapper.ArgumentTypes;
+                var lastDst = dstTypes[dstTypes.Length - 1];
+                var lastSrc = srcTypes[srcTypes.Length - 1];
 
-			return base.Expand(ctx, mustReturn);
-		}
+                // compress items into an array:
+                //     fx a b c d
+                // becomes
+                //     fx a b (new[ c as X; d as X ])
+                if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
+                {
+                    var elemType = lastDst.GetElementType();
+                    var simpleArgs = Arguments.Take(dstTypes.Length - 1);
+                    var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
+                    return RecreateSelfWithArgs(simpleArgs.Union(new[] {combined}));
+                }
+            }
 
-		/// <summary>
-		/// Creates a similar instance of invocation node descendant with replaced arguments list.
-		/// </summary>
-		protected abstract InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        /// <summary>
+        /// Creates a similar instance of invocation node descendant with replaced arguments list.
+        /// </summary>
+        protected abstract InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
 
-		#region Helpers
+        #endregion
 
-		/// <summary>
-		/// Resolves the expression type in case of partial application.
-		/// </summary>
-		protected static Type ResolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
-		{
-			if (!wrapper.IsPartiallyApplied)
-				return returnType;
+        #region Helpers
 
-			var lambdaArgTypes = new List<Type>();
-			for (var idx = 0; idx < argTypes.Length; idx++)
-			{
-				if (argTypes[idx] == typeof(UnspecifiedType))
-					lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
-			}
+        /// <summary>
+        /// Resolves the expression type in case of partial application.
+        /// </summary>
+        protected static Type ResolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
+        {
+            if (!wrapper.IsPartiallyApplied)
+                return returnType;
 
-			return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
-		}
+            var lambdaArgTypes = new List<Type>();
+            for (var idx = 0; idx < argTypes.Length; idx++)
+            {
+                if (argTypes[idx] == typeof(UnspecifiedType))
+                    lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
+            }
 
-		/// <summary>
-		/// Apply inferred types to untyped lambda arguments.
-		/// </summary>
-		protected void ApplyLambdaArgTypes(Context ctx)
-		{
-			for (var idx = 0; idx < ArgTypes.Length; idx++)
-			{
-				if (!ArgTypes[idx].IsLambdaType())
-					continue;
+            return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
+        }
 
-				var lambda = (LambdaNode) Arguments[idx];
-				if (lambda.MustInferArgTypes)
-				{
-					var actualWrapper = ReflectionHelper.WrapDelegate(Wrapper.ArgumentTypes[idx]);
-					lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
-					lambda.Resolve(ctx);
-				}
-			}
-		}
+        /// <summary>
+        /// Apply inferred types to untyped lambda arguments.
+        /// </summary>
+        protected void ApplyLambdaArgTypes(Context ctx)
+        {
+            for (var idx = 0; idx < ArgTypes.Length; idx++)
+            {
+                if (!ArgTypes[idx].IsLambdaType())
+                    continue;
 
-		#endregion
+                var lambda = (LambdaNode) Arguments[idx];
+                if (lambda.MustInferArgTypes)
+                {
+                    var actualWrapper = ReflectionHelper.WrapDelegate(Wrapper.ArgumentTypes[idx]);
+                    lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
+                    lambda.Resolve(ctx);
+                }
+            }
+        }
 
-		#region Debug
+        #endregion
 
-		protected bool Equals(InvocationNodeBase other)
-		{
-			return Arguments.SequenceEqual(other.Arguments);
-		}
+        #region Debug
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((InvocationNodeBase)obj);
-		}
+        protected bool Equals(InvocationNodeBase other)
+        {
+            return Arguments.SequenceEqual(other.Arguments);
+        }
 
-		public override int GetHashCode()
-		{
-			return (Arguments != null ? Arguments.GetHashCode() : 0);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((InvocationNodeBase) obj);
+        }
 
-		#endregion
-	}
+        public override int GetHashCode()
+        {
+            return (Arguments != null ? Arguments.GetHashCode() : 0);
+        }
+
+        #endregion
+    }
 }

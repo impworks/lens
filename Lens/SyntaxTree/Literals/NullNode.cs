@@ -3,55 +3,55 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// A node to represent the null literal.
-	/// </summary>
-	internal class NullNode : NodeBase, ILiteralNode
-	{
-		#region Resolve
+    /// <summary>
+    /// A node to represent the null literal.
+    /// </summary>
+    internal class NullNode : NodeBase, ILiteralNode
+    {
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			return typeof (NullType);
-		}
+        protected override Type resolve(Context ctx, bool mustReturn)
+        {
+            return typeof(NullType);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			gen.EmitNull();
-		}
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            gen.EmitNull();
+        }
 
-		#endregion
+        #endregion
 
-		#region Literal type
+        #region Literal type
 
-		public Type LiteralType => typeof (NullType);
+        public Type LiteralType => typeof(NullType);
 
-	    #endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			return obj.GetType() == GetType();
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            return obj.GetType() == GetType();
+        }
 
-		public override int GetHashCode()
-		{
-			return 0;
-		}
+        public override int GetHashCode()
+        {
+            return 0;
+        }
 
-		public override string ToString()
-		{
-			return "(null)";
-		}
+        public override string ToString()
+        {
+            return "(null)";
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

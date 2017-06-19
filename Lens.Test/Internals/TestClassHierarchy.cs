@@ -1,30 +1,50 @@
 ﻿namespace Lens.Test.Internals
 {
-	internal class ParentClass { }
+    internal class ParentClass
+    {
+    }
 
-	internal struct Struct { }
+    internal struct Struct
+    {
+    }
 
-	internal interface IInterface { }
+    internal interface IInterface
+    {
+    }
 
-    internal interface IDerivedInterface : IInterface { }
+    internal interface IDerivedInterface : IInterface
+    {
+    }
 
-	internal class InterfaceImplementer : IInterface { }
+    internal class InterfaceImplementer : IInterface
+    {
+    }
 
-	internal class InterfaceDerivedImplementer : InterfaceImplementer { }
+    internal class InterfaceDerivedImplementer : InterfaceImplementer
+    {
+    }
 
-	internal class ImplicitCastable
-	{
-		public static implicit operator int(ImplicitCastable o)
-		{
-			return 0;
-		}
-	}
+    internal class ImplicitCastable
+    {
+        public static implicit operator int(ImplicitCastable o)
+        {
+            return 0;
+        }
+    }
 
-	internal class DerivedInterfaceImplementer : IDerivedInterface { }
+    internal class DerivedInterfaceImplementer : IDerivedInterface
+    {
+    }
 
-	internal class DerivedClass : ParentClass { }
+    internal class DerivedClass : ParentClass
+    {
+    }
 
-	internal class SubDerivedClass : DerivedClass { }
+    internal class SubDerivedClass : DerivedClass
+    {
+    }
 
-	internal class DerivedClass2 : ParentClass { }
+    internal class DerivedClass2 : ParentClass
+    {
+    }
 }

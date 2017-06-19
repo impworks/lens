@@ -2,29 +2,28 @@
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// A node representing a single unicode character.
-	/// </summary>
-	internal class CharNode : LiteralNodeBase<char>
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing a single unicode character.
+    /// </summary>
+    internal class CharNode : LiteralNodeBase<char>
+    {
+        #region Constructor
 
-		public CharNode(char value)
-		{
-			Value = value;
-		}
+        public CharNode(char value)
+        {
+            Value = value;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			gen.EmitConstant(Value);
-		}
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            gen.EmitConstant(Value);
+        }
 
-		#endregion
-
-	}
+        #endregion
+    }
 }

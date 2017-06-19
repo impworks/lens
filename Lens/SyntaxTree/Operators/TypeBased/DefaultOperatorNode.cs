@@ -6,97 +6,97 @@ using Lens.Translations;
 
 namespace Lens.SyntaxTree.Operators.TypeBased
 {
-	/// <summary>
-	/// A node representing the operator that returns a default value for the type.
-	/// </summary>
-	internal class DefaultOperatorNode : TypeOperatorNodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing the operator that returns a default value for the type.
+    /// </summary>
+    internal class DefaultOperatorNode : TypeOperatorNodeBase
+    {
+        #region Constructor
 
-		public DefaultOperatorNode(TypeSignature type = null)
-		{
-			TypeSignature = type;
-		}
+        public DefaultOperatorNode(TypeSignature type = null)
+        {
+            TypeSignature = type;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// Types that are equal to i4.0 in bytecode (according to C# compiler)
-		/// </summary>
-		private static readonly Type[] I4Types =
-		{
-			typeof (bool),
-			typeof (byte),
-			typeof (sbyte),
-			typeof (short),
-			typeof (ushort),
-			typeof (int),
-			typeof (uint)
-		};
+        /// <summary>
+        /// Types that are equal to i4.0 in bytecode (according to C# compiler)
+        /// </summary>
+        private static readonly Type[] I4Types =
+        {
+            typeof(bool),
+            typeof(byte),
+            typeof(sbyte),
+            typeof(short),
+            typeof(ushort),
+            typeof(int),
+            typeof(uint)
+        };
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
-		{
-			return Type ?? ctx.ResolveType(TypeSignature);
-		}
+        protected override Type resolve(Context ctx, bool mustReturn = true)
+        {
+            return Type ?? ctx.ResolveType(TypeSignature);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var type = Resolve(ctx);
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var type = Resolve(ctx);
 
-			if(type.IsVoid())
-				Error(CompilerMessages.VoidTypeDefault);
+            if (type.IsVoid())
+                Error(CompilerMessages.VoidTypeDefault);
 
-			if (I4Types.Contains(type))
-				gen.EmitConstant(0);
+            if (I4Types.Contains(type))
+                gen.EmitConstant(0);
 
-			else if(type == typeof(long) || type == typeof(ulong))
-				gen.EmitConstant(0L);
+            else if (type == typeof(long) || type == typeof(ulong))
+                gen.EmitConstant(0L);
 
-			else if(type == typeof(float))
-				gen.EmitConstant(0.0f);
+            else if (type == typeof(float))
+                gen.EmitConstant(0.0f);
 
-			else if(type == typeof(double))
-				gen.EmitConstant(0.0);
+            else if (type == typeof(double))
+                gen.EmitConstant(0.0);
 
-			else if (type == typeof (decimal))
-			{
-				gen.EmitConstant(0);
-				gen.EmitCreateObject(typeof(decimal).GetConstructor(new [] { typeof(int) }));
-			}
+            else if (type == typeof(decimal))
+            {
+                gen.EmitConstant(0);
+                gen.EmitCreateObject(typeof(decimal).GetConstructor(new[] {typeof(int)}));
+            }
 
-			else if (!type.IsValueType)
-				gen.EmitNull();
+            else if (!type.IsValueType)
+                gen.EmitNull();
 
-			else
-			{
-				var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
+            else
+            {
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
-				gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-				gen.EmitInitObject(type);
-				gen.EmitLoadLocal(tmpVar.LocalBuilder);
-			}
-		}
+                gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
+                gen.EmitInitObject(type);
+                gen.EmitLoadLocal(tmpVar.LocalBuilder);
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		public override string ToString()
-		{
-			return string.Format("default({0})", Type != null ? Type.Name : TypeSignature);
-		}
+        public override string ToString()
+        {
+            return string.Format("default({0})", Type != null ? Type.Name : TypeSignature);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

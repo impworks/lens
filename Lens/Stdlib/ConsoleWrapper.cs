@@ -2,23 +2,23 @@
 
 namespace Lens.Stdlib
 {
-	/// <summary>
-	/// Standard library shorthand Console methods.
-	/// </summary>
-	public static class ConsoleWrapper
-	{
-		#region Read
-		
-		public static ConsoleKeyInfo ReadKey()
-		{
-			return Console.ReadKey();
-		}
+    /// <summary>
+    /// Standard library shorthand Console methods.
+    /// </summary>
+    public static class ConsoleWrapper
+    {
+        #region Read
 
-		public static ConsoleKeyInfo WaitKey()
-		{
-			return Console.ReadKey(true);
-		}
+        public static ConsoleKeyInfo ReadKey()
+        {
+            return Console.ReadKey();
+        }
 
-		#endregion
-	}
+        public static ConsoleKeyInfo WaitKey()
+        {
+            return Console.ReadKey(true);
+        }
+
+        #endregion
+    }
 }

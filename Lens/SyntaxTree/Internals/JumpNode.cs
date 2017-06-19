@@ -3,38 +3,38 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Internals
 {
-	/// <summary>
-	/// Represents an unconditional jump-to-label node (GOTO).
-	/// </summary>
-	internal class JumpNode : NodeBase, IMetaNode
-	{
-		#region Constructor
+    /// <summary>
+    /// Represents an unconditional jump-to-label node (GOTO).
+    /// </summary>
+    internal class JumpNode : NodeBase, IMetaNode
+    {
+        #region Constructor
 
-		public JumpNode(Label label)
-		{
-			_destinationLabel = label;
-		}
+        public JumpNode(Label label)
+        {
+            _destinationLabel = label;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The label to jump to.
-		/// </summary>
-		private readonly Label _destinationLabel;
+        /// <summary>
+        /// The label to jump to.
+        /// </summary>
+        private readonly Label _destinationLabel;
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void EmitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitCode(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitJump(_destinationLabel);
-		}
+            gen.EmitJump(_destinationLabel);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }
