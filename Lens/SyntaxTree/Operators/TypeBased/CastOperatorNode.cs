@@ -16,7 +16,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
-			ensureLambdaInferred(ctx, Expression, type);
+			EnsureLambdaInferred(ctx, Expression, type);
 			return type;
 		}
 
@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var fromType = Expression.Resolve(ctx);
 			var toType = Resolve(ctx);
@@ -32,14 +32,14 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 			if (fromType.IsNullableType() && !toType.IsNullableType())
 				return Expr.Cast(Expr.GetMember(Expression, "Value"), toType);
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -50,10 +50,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 				Expression.Emit(ctx, true);
 
 			else if (fromType.IsNumericType() && toType.IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
-				castNumeric(ctx, fromType, toType);
+				CastNumeric(ctx, fromType, toType);
 
 			else if(fromType.IsCallableType() && toType.IsCallableType())
-				castDelegate(ctx, fromType, toType);
+				CastDelegate(ctx, fromType, toType);
 
 			else if (fromType == typeof (NullType))
 			{
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 					gen.EmitNull();
 
 				else
-					error(CompilerMessages.CastNullValueType, toType);
+					Error(CompilerMessages.CastNullValueType, toType);
 			}
 
 			else if (toType.IsNullableType())
@@ -80,7 +80,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 				if(underlying.IsNumericType() && fromType.IsNumericType() && underlying != fromType)
 					gen.EmitConvert(underlying);
 				else if(underlying != fromType)
-					error(fromType, toType);
+					Error(fromType, toType);
 
 				var ctor = toType.GetConstructor(new[] { underlying });
 				gen.EmitCreateObject(ctor);
@@ -122,15 +122,15 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 					if (castOp != null)
 						gen.EmitCall(castOp.MethodInfo);
 					else
-						error(fromType, toType);
+						Error(fromType, toType);
 				}
 			}
 
 			else
-				error(fromType, toType);
+				Error(fromType, toType);
 		}
 
-		private void castDelegate(Context ctx, Type from, Type to)
+		private void CastDelegate(Context ctx, Type from, Type to)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -142,10 +142,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 			var toArgs = toMethod.ArgumentTypes;
 
 			if(fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
-				error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
+				Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
 			if(!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
-				error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
+				Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
 
 			if (fromMethod.IsStatic)
 				gen.EmitNull();
@@ -159,7 +159,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 			gen.EmitCreateObject(toCtor.ConstructorInfo);
 		}
 
-		private void castNumeric(Context ctx, Type from, Type to)
+		private void CastNumeric(Context ctx, Type from, Type to)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			
@@ -189,9 +189,9 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 		/// <summary>
 		/// Displays a default error for uncastable types.
 		/// </summary>
-		private void error(Type from, Type to)
+		private void Error(Type from, Type to)
 		{
-			error(CompilerMessages.CastTypesMismatch, from, to);
+			Error(CompilerMessages.CastTypesMismatch, from, to);
 		}
 
 		#endregion

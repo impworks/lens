@@ -18,7 +18,7 @@ namespace Lens.Compiler
 		public TypeEntity FindType(string name)
 		{
 			TypeEntity declared;
-			_DefinedTypes.TryGetValue(name, out declared);
+			_definedTypes.TryGetValue(name, out declared);
 			return declared;
 		}
 
@@ -42,7 +42,7 @@ namespace Lens.Compiler
 			var declared = FindType(signature.FullSignature);
 			return declared != null
 				? declared.TypeInfo
-				: _TypeResolver.ResolveType(signature);
+				: _typeResolver.ResolveType(signature);
 		}
 
 		/// <summary>
@@ -53,7 +53,7 @@ namespace Lens.Compiler
 			if (!(type is TypeBuilder))
 				return ReflectionHelper.ResolveField(type, name);
 
-			var typeEntity = _DefinedTypes[type.Name];
+			var typeEntity = _definedTypes[type.Name];
 			var fi = typeEntity.ResolveField(name);
 			return new FieldWrapper
 			{
@@ -98,7 +98,7 @@ namespace Lens.Compiler
 			if (!(type is TypeBuilder))
 				return ReflectionHelper.ResolveConstructor(type, argTypes);
 
-			var typeEntity = _DefinedTypes[type.Name];
+			var typeEntity = _definedTypes[type.Name];
 			var ctor = typeEntity.ResolveConstructor(argTypes);
 
 			return new ConstructorWrapper
@@ -121,11 +121,11 @@ namespace Lens.Compiler
 			if (!(type is TypeBuilder))
 				return ReflectionHelper.ResolveMethod(type, name, argTypes, hints, resolver);
 
-			var typeEntity = _DefinedTypes[type.Name];
+			var typeEntity = _definedTypes[type.Name];
 			try
 			{
 				var method = typeEntity.ResolveMethod(name, argTypes);
-				var mw = wrapMethod(method, ReflectionHelper.IsPartiallyApplied(argTypes));
+				var mw = WrapMethod(method, ReflectionHelper.IsPartiallyApplied(argTypes));
 
 				var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
 				if (isGeneric)
@@ -169,7 +169,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver lambdaResolver = null)
 		{
-			return ReflectionHelper.ResolveExtensionMethod(_ExtensionResolver, type, name, argTypes, hints, lambdaResolver);
+			return ReflectionHelper.ResolveExtensionMethod(_extensionResolver, type, name, argTypes, hints, lambdaResolver);
 		}
 
 		/// <summary>
@@ -181,8 +181,8 @@ namespace Lens.Compiler
 			if (!(type is TypeBuilder))
 				return ReflectionHelper.ResolveMethodGroup(type, name);
 
-			var typeEntity = _DefinedTypes[type.Name];
-			return typeEntity.ResolveMethodGroup(name).Select(x => wrapMethod(x));
+			var typeEntity = _definedTypes[type.Name];
+			return typeEntity.ResolveMethodGroup(name).Select(x => WrapMethod(x));
 		}
 
 		/// <summary>
@@ -200,7 +200,7 @@ namespace Lens.Compiler
 		internal GlobalPropertyInfo ResolveGlobalProperty(string name)
 		{
 			GlobalPropertyInfo ent;
-			if (!_DefinedProperties.TryGetValue(name, out ent))
+			if (!_definedProperties.TryGetValue(name, out ent))
 				throw new KeyNotFoundException();
 
 			return ent;
@@ -221,7 +221,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Creates a wrapper from a method entity.
 		/// </summary>
-		private MethodWrapper wrapMethod(MethodEntity method, bool isPartial = false)
+		private MethodWrapper WrapMethod(MethodEntity method, bool isPartial = false)
 		{
 			return new MethodWrapper
 			{

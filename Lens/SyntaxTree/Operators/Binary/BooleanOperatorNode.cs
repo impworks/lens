@@ -29,14 +29,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Operator basics
 
-		protected override bool IsNumericOperator { get { return false; } }
+		protected override bool IsNumericOperator => false;
 
-		protected override string OperatorRepresentation
-		{
-			get { return Kind == LogicalOperatorKind.And ? "&&" : "||"; }
-		}
+	    protected override string OperatorRepresentation => Kind == LogicalOperatorKind.And ? "&&" : "||";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new BooleanOperatorNode(Kind) { LeftOperand = left, RightOperand = right };
         }
@@ -45,7 +42,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType.IsImplicitlyBoolean() && rightType.IsImplicitlyBoolean()
 				       ? typeof (bool)
@@ -56,7 +53,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Expand
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -65,10 +62,10 @@ namespace Lens.SyntaxTree.Operators.Binary
 					: Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			throw new InvalidOperationException("The BooleanOperatorNode has not been expanded!");
 		}
@@ -77,7 +74,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			return Kind == LogicalOperatorKind.And ? left && right : left || right;
 		}

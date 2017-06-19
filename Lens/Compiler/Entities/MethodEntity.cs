@@ -33,9 +33,9 @@ namespace Lens.Compiler.Entities
 		public bool IsPure;
 		public bool IsVariadic;
 
-		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
+		public override bool IsVoid => ReturnType.IsVoid();
 
-		/// <summary>
+	    /// <summary>
 		/// The signature of method's return type.
 		/// </summary>
 		public TypeSignature ReturnTypeSignature;
@@ -50,11 +50,11 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public MethodBuilder MethodBuilder { get; private set; }
 
-		private MethodInfo _MethodInfo;
+		private MethodInfo _methodInfo;
 		public MethodInfo MethodInfo
 		{
-			get { return IsImported ? _MethodInfo : MethodBuilder; }
-			set { _MethodInfo = value; }
+			get => IsImported ? _methodInfo : MethodBuilder;
+		    set => _methodInfo = value;
 		}
 
 		#endregion
@@ -88,7 +88,7 @@ namespace Lens.Compiler.Entities
 					: Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
 			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
-			Generator = MethodBuilder.GetILGenerator(Context.ILStreamSize);
+			Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
 
 			if (Arguments != null)
 			{
@@ -109,7 +109,7 @@ namespace Lens.Compiler.Entities
 
 		#region Extension points
 
-		protected override void emitTrailer(Context ctx)
+		protected override void EmitTrailer(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var actualType = Body.Resolve(ctx);

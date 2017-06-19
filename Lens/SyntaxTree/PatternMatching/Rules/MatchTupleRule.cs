@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The cached list of tuple item types.
 		/// </summary>
-		private Type[] ItemTypes;
+		private Type[] _itemTypes;
 
 		#endregion
 
@@ -51,11 +51,11 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if(!expressionType.IsTupleType())
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 
-			ItemTypes = expressionType.GetGenericArguments();
-			if (ItemTypes.Length != ElementRules.Count)
+			_itemTypes = expressionType.GetGenericArguments();
+			if (_itemTypes.Length != ElementRules.Count)
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 
-			return ElementRules.Select((t, idx) => t.Resolve(ctx, ItemTypes[idx]))
+			return ElementRules.Select((t, idx) => t.Resolve(ctx, _itemTypes[idx]))
 						.SelectMany(subBindings => subBindings);
 		}
 

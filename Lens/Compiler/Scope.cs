@@ -58,7 +58,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public Scope ActiveClosure
 		{
-			get { return findScope(x => x.ClosureType != null); }
+			get { return FindScope(x => x.ClosureType != null); }
 		}
 
 		#endregion
@@ -162,7 +162,7 @@ namespace Lens.Compiler
 						if (local.IsRefArgument)
 							Context.Error(CompilerMessages.ClosureRef, local.Name);
 
-						createClosureType(ctx, scope);
+						CreateClosureType(ctx, scope);
 						local.IsClosured = true;
 					}
 
@@ -189,7 +189,7 @@ namespace Lens.Compiler
 		public void FinalizeSelf(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			var closure = findScope(s => s.ClosureType != null);
+			var closure = FindScope(s => s.ClosureType != null);
 
 			// create entities for variables to be excluded
 			foreach (var curr in Locals.Values)
@@ -214,7 +214,7 @@ namespace Lens.Compiler
 				if (ClosureReferencesOuter)
 				{
 					// create "Parent" field in the closure type
-					var parentType = findScope(s => s.ClosureType != null, OuterScope).ClosureType;
+					var parentType = FindScope(s => s.ClosureType != null, OuterScope).ClosureType;
 					ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType.TypeInfo);
 				}
 
@@ -227,7 +227,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
 		{
-			var closure = createClosureType(ctx);
+			var closure = CreateClosureType(ctx);
 			var method = closure.CreateMethod(ctx.Unique.ClosureMethodName(ctx.CurrentMethod.Name), returnType.FullName, args);
 			method.Kind = TypeContentsKind.Closure;
 			return method;
@@ -256,7 +256,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Finds closest scope by a condition.
 		/// </summary>
-		private Scope findScope(Func<Scope, bool> condition, Scope start = null)
+		private Scope FindScope(Func<Scope, bool> condition, Scope start = null)
 		{
 			var curr = start ?? this;
 			while (curr != null)
@@ -273,9 +273,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Creates a closure type in the closest appropriate scope.
 		/// </summary>
-		private TypeEntity createClosureType(Context ctx, Scope scope = null)
+		private TypeEntity CreateClosureType(Context ctx, Scope scope = null)
 		{
-			var cscope = findScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
+			var cscope = FindScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
 			if (cscope.ClosureType == null)
 			{
 				cscope.ClosureType = ctx.CreateType(ctx.Unique.ClosureName());

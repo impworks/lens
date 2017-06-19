@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Lens.Test.Features
 {
 	[TestFixture]
-	class FunctionalTest : TestBase
+	internal class FunctionalTest : TestBase
 	{
 		[Test]
 		public void CreateFunctionObjectFromName()

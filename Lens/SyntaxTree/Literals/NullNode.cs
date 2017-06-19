@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Literals
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitNull();
@@ -29,12 +29,9 @@ namespace Lens.SyntaxTree.Literals
 
 		#region Literal type
 
-		public Type LiteralType
-		{
-			get { return typeof (NullType); }
-		}
+		public Type LiteralType => typeof (NullType);
 
-		#endregion
+	    #endregion
 
 		#region Debug
 

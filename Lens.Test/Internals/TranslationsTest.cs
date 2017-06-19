@@ -10,7 +10,7 @@ namespace Lens.Test.Internals
 
 
 	[TestFixture]
-	class TranslationsTest
+	internal class TranslationsTest
 	{
 		private string TranslationsFolder
 		{

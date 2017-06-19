@@ -11,38 +11,37 @@ using Lens;
 
 namespace ConsoleHost
 {
-	class Program
+    internal class Program
 	{
-		static void Main()
+	    private static void Main()
 		{
-			printPreamble();
+			PrintPreamble();
 
-			string source;
 			var timer = false;
-			while (RequestInput(out source, ref timer))
+			while (RequestInput(out var source, ref timer))
 			{
 				Console.WriteLine();
 				try
 				{
 					var lc = new LensCompiler(new LensCompilerOptions { AllowSave = true, MeasureTime = timer });
 					var res = lc.Run(source);
-					printObject(res);
+					PrintObject(res);
 
 					if (timer)
-						printMeasurements(lc.Measurements);
+						PrintMeasurements(lc.Measurements);
 				}
 				catch (LensCompilerException ex)
 				{
-					printError(source, ex);
+					PrintError(source, ex);
 				}
 				catch (Exception ex)
 				{
-					printException("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace);
+					PrintException("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace);
 				}
 			}
 		}
 
-		static bool RequestInput(out string input, ref bool timer)
+	    private static bool RequestInput(out string input, ref bool timer)
 		{
 			var lines = new List<string>();
 			var prefix = 0;
@@ -63,7 +62,7 @@ namespace ConsoleHost
 					if (line.Length > 1 && line[line.Length - 1] == '#')
 					{
 						lines.Add(line.Substring(0, line.Length - 1));
-						input = buildString(lines);
+						input = BuildString(lines);
 						return true;
 					}
 
@@ -78,7 +77,7 @@ namespace ConsoleHost
 
 						if (line == "#run")
 						{
-							input = buildString(lines);
+							input = BuildString(lines);
 							return true;
 						}
 
@@ -86,7 +85,7 @@ namespace ConsoleHost
 						{
 							lines = new List<string>();
 							Console.Clear();
-							printPreamble();
+							PrintPreamble();
 							continue;
 						}
 
@@ -96,13 +95,13 @@ namespace ConsoleHost
 							if (param == "on")
 							{
 								timer = true;
-								printHint("Timer enabled.");
+								PrintHint("Timer enabled.");
 								continue;
 							}
 							if (param == "off")
 							{
 								timer = false;
-								printHint("Timer disabled.");
+								PrintHint("Timer disabled.");
 								continue;
 							}
 						}
@@ -121,7 +120,7 @@ namespace ConsoleHost
 							}
 							catch
 							{
-								printHint(string.Format("File '{0}' could not be loaded!", param));
+								PrintHint(string.Format("File '{0}' could not be loaded!", param));
 								continue;
 							}
 						}
@@ -133,19 +132,19 @@ namespace ConsoleHost
 							continue;
 						}
 
-						printHelp();
+						PrintHelp();
 						continue;
 					}
 
 					#endregion
 				}
 
-				prefix = getIdent(line);
+				prefix = GetIdent(line);
 				lines.Add(line.TrimEnd());
 			}
 		}
 
-		static string buildString(ICollection<string> lines)
+	    private static string BuildString(ICollection<string> lines)
 		{
 			var sb = new StringBuilder(lines.Count);
 
@@ -155,7 +154,7 @@ namespace ConsoleHost
 			return sb.ToString();
 		}
 
-		static void printPreamble()
+	    private static void PrintPreamble()
 		{
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
@@ -167,7 +166,7 @@ namespace ConsoleHost
 			}
 		}
 
-		static void printException(string msg, string details)
+	    private static void PrintException(string msg, string details)
 		{
 			using (new OutputColor(ConsoleColor.Yellow))
 			{
@@ -178,7 +177,7 @@ namespace ConsoleHost
 			}
 		}
 
-		static void printError(string src, LensCompilerException ex)
+	    private static void PrintError(string src, LensCompilerException ex)
 		{
 			using (new OutputColor(ConsoleColor.Red))
 			{
@@ -209,7 +208,7 @@ namespace ConsoleHost
 			Console.WriteLine();
 		}
 
-		static void printHint(string hint)
+	    private static void PrintHint(string hint)
 		{
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
@@ -219,7 +218,7 @@ namespace ConsoleHost
 			}
 		}
 
-		static void printHelp()
+	    private static void PrintHelp()
 		{
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
@@ -245,10 +244,10 @@ namespace ConsoleHost
 			}
 		}
 
-		static void printObject(dynamic obj)
+	    private static void PrintObject(dynamic obj)
 		{
 			Console.WriteLine();
-			Console.WriteLine(getStringRepresentation(obj));
+			Console.WriteLine(GetStringRepresentation(obj));
 
 			if ((object) obj != null)
 				using(new OutputColor(ConsoleColor.DarkGray))
@@ -257,7 +256,7 @@ namespace ConsoleHost
 			Console.WriteLine();
 		}
 
-		static void printMeasurements(Dictionary<string, TimeSpan> measures)
+	    private static void PrintMeasurements(Dictionary<string, TimeSpan> measures)
 		{
 			using (new OutputColor(ConsoleColor.DarkGray))
 			{
@@ -268,7 +267,7 @@ namespace ConsoleHost
 			}
 		}
 
-		static string getStringRepresentation(dynamic obj)
+	    private static string GetStringRepresentation(dynamic obj)
 		{
 			if ((object)obj == null)
 				return "(null)";
@@ -288,8 +287,8 @@ namespace ConsoleHost
 					list.Add(
 						string.Format(
 							"{0} => {1}",
-							getStringRepresentation(currKey),
-							getStringRepresentation(obj[currKey])
+							GetStringRepresentation(currKey),
+							GetStringRepresentation(obj[currKey])
 						)
 					);
 				}
@@ -302,7 +301,7 @@ namespace ConsoleHost
 				var list = new List<string>();
 
 				foreach(var curr in obj)
-					list.Add(getStringRepresentation(curr));
+					list.Add(GetStringRepresentation(curr));
 
 				return string.Format("[ {0} ]", string.Join("; ", list));
 			}
@@ -312,14 +311,14 @@ namespace ConsoleHost
 				: obj.ToString();
 		}
 
-		static int getIdent(string line)
+	    private static int GetIdent(string line)
 		{
 			var idx = 0;
 
 			while (idx < line.Length && line[idx] == ' ')
 				idx++;
 
-			if (shouldIdent(line))
+			if (ShouldIdent(line))
 				idx += 4;
 
 			return idx;
@@ -335,7 +334,7 @@ namespace ConsoleHost
 			new Regex(@"^catch\s+(\([_a-][_a-z0-9]*(\s+[_a-][_a-z0-9]*)?\))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled)
 		};
 
-		static bool shouldIdent(string line)
+	    private static bool ShouldIdent(string line)
 		{
 			var trim = line.Trim();
 			return trim.EndsWith("->") || LineFeeds.Any(curr => curr.IsMatch(trim));

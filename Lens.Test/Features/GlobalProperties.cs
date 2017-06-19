@@ -32,7 +32,7 @@ namespace Lens.Test.Features
 				null
 			);
 
-			Assert.AreEqual(1000, m_Y);
+			Assert.AreEqual(1000, _y);
 		}
 
 		[Test]
@@ -53,18 +53,15 @@ namespace Lens.Test.Features
 			Assert.AreEqual(42, y);
 		}
 		
-		public static int HalfValue()
-		{
-			return 21;
-		}
+		public static int HalfValue() => 21;
 
-		private static int m_X;
-		private static int m_Y;
+	    private static int _x;
+		private static int _y;
 
-		public static int GetX() { return m_X; }
-		public static void SetX(int x) { m_X = x; }
+		public static int GetX() => _x;
+	    public static void SetX(int x) => _x = x;
 
-		public static int GetY() { return m_Y; }
-		public static void SetY(int y) { m_Y = y; }
+	    public static int GetY() => _y;
+	    public static void SetY(int y) => _y = y;
 	}
 }

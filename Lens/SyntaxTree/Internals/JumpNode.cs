@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Internals
 
 		public JumpNode(Label label)
 		{
-			DestinationLabel = label;
+			_destinationLabel = label;
 		}
 
 		#endregion
@@ -22,17 +22,17 @@ namespace Lens.SyntaxTree.Internals
 		/// <summary>
 		/// The label to jump to.
 		/// </summary>
-		private readonly Label DestinationLabel;
+		private readonly Label _destinationLabel;
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitJump(DestinationLabel);
+			gen.EmitJump(_destinationLabel);
 		}
 
 		#endregion

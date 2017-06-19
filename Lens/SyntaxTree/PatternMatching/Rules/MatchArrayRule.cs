@@ -34,67 +34,64 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The sequence's complete type.
 		/// </summary>
-		private Type ExpressionType;
+		private Type _expressionType;
 
 		/// <summary>
 		/// The sequence element's type.
 		/// </summary>
-		private Type ElementType;
+		private Type _elementType;
 
 		/// <summary>
 		/// Checks whether the source expression is indexable.
 		/// </summary>
-		private bool IsIndexable;
+		private bool _isIndexable;
 
 		/// <summary>
 		/// The index of the subsequence item, if any.
 		/// </summary>
-		private int? SubsequenceIndex;
+		private int? _subsequenceIndex;
 
 		/// <summary>
 		/// Name of the field that returns the length of the array.
 		/// </summary>
-		private string SizeMemberName
-		{
-			get { return ExpressionType.IsArray ? "Length" : "Count"; }
-		}
+		private string SizeMemberName => _expressionType.IsArray ? "Length" : "Count";
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
 		public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
 		{
-			ExpressionType = expressionType;
+			_expressionType = expressionType;
 
 			if (expressionType.IsArray)
-				ElementType = expressionType.GetElementType();
+				_elementType = expressionType.GetElementType();
 
 			else if(new [] { typeof(IEnumerable<>), typeof(IList<>) }.Any(expressionType.IsAppliedVersionOf))
-				ElementType = expressionType.GetGenericArguments()[0];
+				_elementType = expressionType.GetGenericArguments()[0];
 
 			else
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, "IEnumerable<T>");
 
-			IsIndexable = !expressionType.IsAppliedVersionOf(typeof (IEnumerable<>));
+			_isIndexable = !expressionType.IsAppliedVersionOf(typeof (IEnumerable<>));
 
 			for (var idx = 0; idx < ElementRules.Count; idx++)
 			{
 				var subseq = ElementRules[idx] as MatchNameRule;
 				if (subseq != null && subseq.IsArraySubsequence)
 				{
-					if(SubsequenceIndex != null)
+					if(_subsequenceIndex != null)
 						Error(CompilerMessages.PatternArraySubsequences);
 
-					if(!IsIndexable && idx < ElementRules.Count-1)
+					if(!_isIndexable && idx < ElementRules.Count-1)
 						Error(CompilerMessages.PatternSubsequenceLocation);
 
-					SubsequenceIndex = idx;
+					_subsequenceIndex = idx;
 				}
 
-				var itemType = SubsequenceIndex != idx
-					? ElementType
-					: (IsIndexable ? ElementType.MakeArrayType() : typeof (IEnumerable<>).MakeGenericType(ElementType));
+				var itemType = _subsequenceIndex != idx
+					? _elementType
+					: (_isIndexable ? _elementType.MakeArrayType() : typeof (IEnumerable<>).MakeGenericType(_elementType));
 
 				var bindings = ElementRules[idx].Resolve(ctx, itemType);
 				foreach (var binding in bindings)
@@ -108,9 +105,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
 		public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
 		{
-			if (SubsequenceIndex == null)
+			if (_subsequenceIndex == null)
 			{
-				if (IsIndexable)
+				if (_isIndexable)
 				{
 					// array size must match exactly
 					yield return MakeJumpIf(
@@ -122,13 +119,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					);
 				}
 
-				foreach (var rule in expandItemChecksIterated(ctx, expression, ElementRules.Count, nextStatement))
+				foreach (var rule in ExpandItemChecksIterated(ctx, expression, ElementRules.Count, nextStatement))
 					yield return rule;
 
 				yield break;
 			}
 
-			if (IsIndexable)
+			if (_isIndexable)
 			{
 				// must contain at least N items
 				yield return MakeJumpIf(
@@ -139,7 +136,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					)
 				);
 
-				var subseqIdx = SubsequenceIndex.Value;
+				var subseqIdx = _subsequenceIndex.Value;
 
 				// pre-subsequence
 				for (var idx = 0; idx < subseqIdx; idx++)
@@ -162,7 +159,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					//     |> Skip before // optional
 					//     |> Take (expr.Length - before - after)
 					//     |> ToArray ()
-					var subseqVar = ctx.Scope.DeclareImplicit(ctx, ElementType.MakeArrayType(), false);
+					var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArrayType(), false);
 					var subseqExpr = subseqIdx == 0
 						? expression 
 						: Expr.Invoke(expression, "Skip", Expr.Int(subseqIdx));
@@ -208,12 +205,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			else
 			{
 				var itemsCount = ElementRules.Count - 1;
-				var checks = expandItemChecksIterated(ctx, expression, itemsCount, nextStatement);
+				var checks = ExpandItemChecksIterated(ctx, expression, itemsCount, nextStatement);
 				foreach (var check in checks)
 					yield return check;
 
 				// tmpVar = seq.Skip N
-				var subseqVar = ctx.Scope.DeclareImplicit(ctx, typeof(IEnumerable<>).MakeGenericType(ElementType), false);
+				var subseqVar = ctx.Scope.DeclareImplicit(ctx, typeof(IEnumerable<>).MakeGenericType(_elementType), false);
 				yield return Expr.Set(
 					subseqVar,
 					Expr.Invoke(
@@ -231,13 +228,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Checks all items in the array with corresponding rules.
 		/// </summary>
-		private IEnumerable<NodeBase> expandItemChecksIterated(Context ctx, NodeBase expression, int count, Label nextStatement)
+		private IEnumerable<NodeBase> ExpandItemChecksIterated(Context ctx, NodeBase expression, int count, Label nextStatement)
 		{
 			if (count == 0)
 				yield break;
 
-			var enumerableType = typeof(IEnumerable<>).MakeGenericType(ElementType);
-			var enumeratorType = typeof(IEnumerator<>).MakeGenericType(ElementType);
+			var enumerableType = typeof(IEnumerable<>).MakeGenericType(_elementType);
+			var enumeratorType = typeof(IEnumerator<>).MakeGenericType(_elementType);
 
 			var enumeratorVar = ctx.Scope.DeclareImplicit(ctx, enumeratorType, false);
 

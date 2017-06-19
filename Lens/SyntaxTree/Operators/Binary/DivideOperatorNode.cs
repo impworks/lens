@@ -11,17 +11,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "/"; }
-		}
+		protected override string OperatorRepresentation => "/";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Division"; }
-		}
+	    protected override string OverloadedMethodName => "op_Division";
 
-	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
 	    {
 	        return new DivideOperatorNode {LeftOperand = left, RightOperand = right};
 	    }
@@ -30,21 +24,21 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
 				return LeftOperand;
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitDivide();
 		}
 
@@ -52,13 +46,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			var leftType = left.GetType();
 			var rightType = right.GetType();
 
 			if(TypeExtensions.IsIntegerType(leftType) && TypeExtensions.IsIntegerType(rightType) && right == 0)
-				error(CompilerMessages.ConstantDivisionByZero);
+				Error(CompilerMessages.ConstantDivisionByZero);
 
 			return left/right;
 		}

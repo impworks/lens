@@ -23,8 +23,8 @@ namespace Lens.SyntaxTree.PatternMatching
 		public MatchNode()
 		{
 			MatchStatements = new List<MatchStatementNode>();
-			_RuleLabels = new List<Tuple<MatchRuleBase, Label>>();
-			_ExpressionLabels = new Dictionary<MatchStatementNode, Label>();
+			_ruleLabels = new List<Tuple<MatchRuleBase, Label>>();
+			_expressionLabels = new Dictionary<MatchStatementNode, Label>();
 		}
 
 		#endregion
@@ -49,26 +49,23 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// The label for default value block (if there is supposed to be one).
 		/// </summary>
-		private Label _DefaultLabel;
+		private Label _defaultLabel;
 
 		/// A lookup for rule labels.
 		/// </summary>
-		private List<Tuple<MatchRuleBase, Label>> _RuleLabels;
+		private List<Tuple<MatchRuleBase, Label>> _ruleLabels;
 
 		/// <summary>
 		/// A lookup for expression labels.
 		/// </summary>
-		private Dictionary<MatchStatementNode, Label> _ExpressionLabels;
+		private Dictionary<MatchStatementNode, Label> _expressionLabels;
 
 		/// <summary>
 		/// Checks if the current node has been resolved as a value-returning context.
 		/// </summary>
-		private bool _MustReturnValue
-		{
-			get { return !_CachedExpressionType.IsVoid(); }
-		}
+		private bool MustReturnValue => !CachedExpressionType.IsVoid();
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
@@ -91,7 +88,7 @@ namespace Lens.SyntaxTree.PatternMatching
 					{
 						var nameType = nameRule.Type == null ? typeof (object) : ctx.ResolveType(nameRule.Type);
 						if (commonType != null && commonType.IsExtendablyAssignableFrom(nameType))
-							error(CompilerMessages.PatternUnreachable);
+							Error(CompilerMessages.PatternUnreachable);
 
 						commonType = nameType;
 					}
@@ -107,16 +104,16 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			foreach(var stmt in MatchStatements)
 				yield return new NodeChild(stmt, null);
 		}
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			defineLabels(ctx);
+			DefineLabels(ctx);
 
 			var exprType = Expression.Resolve(ctx);
 
@@ -134,14 +131,14 @@ namespace Lens.SyntaxTree.PatternMatching
 			}
 
 			foreach(var stmt in MatchStatements)
-				block.Add(stmt.ExpandRules(ctx, exprGetter, _ExpressionLabels[stmt]));
+				block.Add(stmt.ExpandRules(ctx, exprGetter, _expressionLabels[stmt]));
 
-			if (_MustReturnValue)
+			if (MustReturnValue)
 			{
 				block.Add(
 					Expr.Block(
-						Expr.JumpLabel(_DefaultLabel),
-						Expr.Default(_CachedExpressionType)
+						Expr.JumpLabel(_defaultLabel),
+						Expr.Default(CachedExpressionType)
 					)
 				);
 			}
@@ -155,20 +152,20 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		#region Label handling
 
-		private void defineLabels(Context ctx)
+		private void DefineLabels(Context ctx)
 		{
 			foreach (var stmt in MatchStatements)
 			{
-				_ExpressionLabels.Add(stmt, ctx.CurrentMethod.Generator.DefineLabel());
+				_expressionLabels.Add(stmt, ctx.CurrentMethod.Generator.DefineLabel());
 
 				foreach (var rule in stmt.MatchRules)
-					_RuleLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
+					_ruleLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
 			}
 
 			EndLabel = ctx.CurrentMethod.Generator.DefineLabel();
 
-			if (_MustReturnValue)
-				_DefaultLabel = ctx.CurrentMethod.Generator.DefineLabel();
+			if (MustReturnValue)
+				_defaultLabel = ctx.CurrentMethod.Generator.DefineLabel();
 		}
 
 		/// <summary>
@@ -176,18 +173,18 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// </summary>
 		public MatchRuleLabelSet GetRuleLabels(MatchRuleBase rule)
 		{
-			var currIndex = _RuleLabels.FindIndex(x => x.Item1 == rule);
+			var currIndex = _ruleLabels.FindIndex(x => x.Item1 == rule);
 			if(currIndex == -1)
 				throw new ArgumentException("Rule does not belong to current match block!");
 
-			var next = currIndex < _RuleLabels.Count - 1
-				? _RuleLabels[currIndex + 1].Item2
-				: (_MustReturnValue ? _DefaultLabel : EndLabel);
+			var next = currIndex < _ruleLabels.Count - 1
+				? _ruleLabels[currIndex + 1].Item2
+				: (MustReturnValue ? _defaultLabel : EndLabel);
 
 
 			return new MatchRuleLabelSet
 			{
-				CurrentRule = _RuleLabels[currIndex].Item2,
+				CurrentRule = _ruleLabels[currIndex].Item2,
 				NextRule = next
 			};
 		}

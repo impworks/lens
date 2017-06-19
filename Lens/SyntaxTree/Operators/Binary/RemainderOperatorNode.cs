@@ -9,17 +9,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "%"; }
-		}
+		protected override string OperatorRepresentation => "%";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Modulus"; }
-		}
+	    protected override string OverloadedMethodName => "op_Modulus";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new RemainderOperatorNode { LeftOperand = left, RightOperand = right };
         }
@@ -28,9 +22,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitRemainder();
 		}
 
@@ -38,7 +32,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			return left % right;
 		}

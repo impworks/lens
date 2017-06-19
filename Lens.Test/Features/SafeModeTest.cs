@@ -119,49 +119,49 @@ GC::Collect ()
 		public void BlacklistEnvironment1()
 		{
 			var src = @"GC::Collect ()";
-			testSubsystem(typeof(GC), SafeModeSubsystem.Environment, src);
+			TestSubsystem(typeof(GC), SafeModeSubsystem.Environment, src);
 		}
 
 		[Test]
 		public void BlacklistEnvironment2()
 		{
 			var src = @"Environment::StackTrace";
-			testSubsystem(typeof(Environment), SafeModeSubsystem.Environment, src);
+			TestSubsystem(typeof(Environment), SafeModeSubsystem.Environment, src);
 		}
 
 		[Test]
 		public void BlacklistEnvironment3()
 		{
 			var src = @"AppDomain::CurrentDomain.IsFullyTrusted";
-			testSubsystem(typeof(AppDomain), SafeModeSubsystem.Environment, src);
+			TestSubsystem(typeof(AppDomain), SafeModeSubsystem.Environment, src);
 		}
 
 		[Test]
 		public void BlacklistEnvironment4()
 		{
 			var src = @"System.Diagnostics.Debug::WriteLine ""test""";
-			testSubsystem(typeof(System.Diagnostics.Debug), SafeModeSubsystem.Environment, src);
+			TestSubsystem(typeof(System.Diagnostics.Debug), SafeModeSubsystem.Environment, src);
 		}
 		
 		[Test]
 		public void BlacklistEnvironment5()
 		{
 			var src = @"System.Runtime.InteropServices.Marshal::IsComObject (new object ())";
-			testSubsystem(typeof(System.Runtime.InteropServices.Marshal), SafeModeSubsystem.Environment, src);
+			TestSubsystem(typeof(System.Runtime.InteropServices.Marshal), SafeModeSubsystem.Environment, src);
 		}
 
 		[Test]
 		public void BlacklistIO1()
 		{
 			var src = @"System.IO.Directory::Exists ""C:\\A\\B""";
-			testSubsystem(typeof(System.IO.Directory), SafeModeSubsystem.IO, src);
+			TestSubsystem(typeof(System.IO.Directory), SafeModeSubsystem.IO, src);
 		}
 
 		[Test]
 		public void BlacklistIO2()
 		{
 			var src = @"System.IO.IsolatedStorage.IsolatedStorageFile::IsEnabled";
-			testSubsystem(typeof(System.IO.IsolatedStorage.IsolatedStorageFile), SafeModeSubsystem.IO, src);
+			TestSubsystem(typeof(System.IO.IsolatedStorage.IsolatedStorageFile), SafeModeSubsystem.IO, src);
 		}
 
 		[Test]
@@ -171,52 +171,52 @@ GC::Collect ()
 var workThreads = 0
 var cpThreads = 0
 System.Threading.ThreadPool::GetAvailableThreads (ref workThreads) (ref cpThreads)";
-			testSubsystem(typeof(System.Threading.ThreadPool), SafeModeSubsystem.Threading, src);
+			TestSubsystem(typeof(System.Threading.ThreadPool), SafeModeSubsystem.Threading, src);
 		}
 
 		[Test]
 		public void BlacklistThreading2()
 		{
 			var src = @"System.Threading.Tasks.Task::Run (-> print ""hello world!"")";
-			testSubsystem(typeof(System.Threading.Tasks.Task), SafeModeSubsystem.Threading, src);
+			TestSubsystem(typeof(System.Threading.Tasks.Task), SafeModeSubsystem.Threading, src);
 		}
 
 		[Test]
 		public void BlacklistReflection1()
 		{
 			var src = @"System.Reflection.Assembly::GetCallingAssembly()";
-			testSubsystem(typeof(System.Reflection.Assembly), SafeModeSubsystem.Reflection, src);
+			TestSubsystem(typeof(System.Reflection.Assembly), SafeModeSubsystem.Reflection, src);
 		}
 
 		[Test]
 		public void BlacklistReflection2()
 		{
 			var src = @"System.AppDomain::CurrentDomain.IsFullyTrusted";
-			testSubsystem(typeof(AppDomain), SafeModeSubsystem.Reflection, src);
+			TestSubsystem(typeof(AppDomain), SafeModeSubsystem.Reflection, src);
 		}
 
 		[Test]
 		public void BlacklistReflection3()
 		{
 			var src = @"(typeof int).Fullname";
-			testSubsystem(typeof(Type), SafeModeSubsystem.Reflection, src);
+			TestSubsystem(typeof(Type), SafeModeSubsystem.Reflection, src);
 		}
 
 		[Test]
 		public void BlacklistNetwork1()
 		{
 			var src = @"new System.Net.HttpListener ()";
-			testSubsystem(typeof(System.Net.HttpListener), SafeModeSubsystem.Network, src);
+			TestSubsystem(typeof(System.Net.HttpListener), SafeModeSubsystem.Network, src);
 		}
 
 		[Test]
 		public void BlacklistNetwork2()
 		{
 			var src = @"System.Net.Sockets.Socket::OSSupportsIPv4";
-			testSubsystem(typeof(System.Net.Sockets.Socket), SafeModeSubsystem.Network, src);
+			TestSubsystem(typeof(System.Net.Sockets.Socket), SafeModeSubsystem.Network, src);
 		}
 
-		private void testSubsystem(Type type, SafeModeSubsystem system, string code)
+		private void TestSubsystem(Type type, SafeModeSubsystem system, string code)
 		{
 			var opts = new LensCompilerOptions
 			{

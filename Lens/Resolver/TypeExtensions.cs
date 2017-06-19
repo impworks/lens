@@ -41,7 +41,7 @@ namespace Lens.Resolver
 				typeof (decimal)
 			};
 
-			m_DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
+			DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
 		}
 
 		#endregion
@@ -52,7 +52,7 @@ namespace Lens.Resolver
 		public static readonly Type[] UnsignedIntegerTypes;
 		public static readonly Type[] FloatTypes;
 
-		private static readonly Dictionary<Tuple<Type, Type, bool>, int> m_DistanceCache;
+		private static readonly Dictionary<Tuple<Type, Type, bool>, int> DistanceCache;
 
 		#endregion
 
@@ -159,10 +159,10 @@ namespace Lens.Resolver
 		{
 			var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
 
-			if (!m_DistanceCache.ContainsKey(key))
-				m_DistanceCache.Add(key, distanceFrom(varType, exprType, exactly));
+			if (!DistanceCache.ContainsKey(key))
+				DistanceCache.Add(key, distanceFrom(varType, exprType, exactly));
 
-			return m_DistanceCache[key];
+			return DistanceCache[key];
 		}
 
 		/// <summary>
@@ -189,7 +189,7 @@ namespace Lens.Resolver
 					return 1;
 
 				if (varType.IsNumericType(true) && exprType.IsNumericType(true))
-					return numericTypeConversion(varType, exprType);
+					return NumericTypeConversion(varType, exprType);
 			}
 
 			if (varType == typeof(object))
@@ -204,25 +204,25 @@ namespace Lens.Resolver
 			if (varType.IsInterface)
 			{
 				if (exprType.IsInterface)
-					return interfaceDistance(varType, new[] { exprType }.Union(exprType.ResolveInterfaces()));
+					return InterfaceDistance(varType, new[] { exprType }.Union(exprType.ResolveInterfaces()));
 
 				// casting expression to interface takes 1 step
-				var dist = interfaceDistance(varType, exprType.ResolveInterfaces());
+				var dist = InterfaceDistance(varType, exprType.ResolveInterfaces());
 				if (dist < int.MaxValue)
 					return dist + 1;
 			}
 
 			if (varType.IsGenericParameter || exprType.IsGenericParameter)
-				return genericParameterDistance(varType, exprType);
+				return GenericParameterDistance(varType, exprType);
 
 			if (exprType.IsLambdaType())
-				return lambdaDistance(varType, exprType);
+				return LambdaDistance(varType, exprType);
 
 			if (varType.IsGenericType && exprType.IsGenericType)
-				return genericDistance(varType, exprType);
+				return GenericDistance(varType, exprType);
 
 			int result;
-			if (isDerivedFrom(exprType, varType, out result))
+			if (IsDerivedFrom(exprType, varType, out result))
 				return result;
 
 			if (varType.IsArray && exprType.IsArray)
@@ -242,7 +242,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Calculates the distance to any of given interfaces.
 		/// </summary>
-		private static int interfaceDistance(Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
+		private static int InterfaceDistance(Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
 		{
 			var min = int.MaxValue;
 			foreach (var iface in ifaces)
@@ -252,7 +252,7 @@ namespace Lens.Resolver
 
 				if (interfaceType.IsGenericType && iface.IsGenericType)
 				{
-					var dist = genericDistance(interfaceType, iface, exactly);
+					var dist = GenericDistance(interfaceType, iface, exactly);
 					if (dist < min)
 						min = dist;
 				}
@@ -264,7 +264,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a type is a child for some other type.
 		/// </summary>
-		private static bool isDerivedFrom(Type derivedType, Type baseType, out int distance)
+		private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
 		{
 			distance = 0;
 			var current = derivedType;
@@ -280,7 +280,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Calculates compound distance of two generic types' arguments if applicable.
 		/// </summary>
-		private static int genericDistance(Type varType, Type exprType, bool exactly = false)
+		private static int GenericDistance(Type varType, Type exprType, bool exactly = false)
 		{
 			var definition = varType.GetGenericTypeDefinition();
 			if (definition != exprType.GetGenericTypeDefinition())
@@ -306,11 +306,11 @@ namespace Lens.Resolver
 				{
 					// generic parameter may be substituted with anything
 					// including value types
-					conversionResult = genericParameterDistance(argument1, argument2, exactly);
+					conversionResult = GenericParameterDistance(argument1, argument2, exactly);
 				}
 				else if (argument2.IsGenericParameter)
 				{
-					conversionResult = genericParameterDistance(argument2, argument1, exactly);
+					conversionResult = GenericParameterDistance(argument2, argument1, exactly);
 				}
 				else if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
 				{
@@ -350,7 +350,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a type can be used as a substitute for a generic parameter.
 		/// </summary>
-		private static int genericParameterDistance(Type varType, Type exprType, bool exactly = false)
+		private static int GenericParameterDistance(Type varType, Type exprType, bool exactly = false)
 		{
 			// generic parameter is on the same level of inheritance as the expression
 			// therefore getting its parent type does not take a step
@@ -362,7 +362,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a lambda signature matches a delegate.
 		/// </summary>
-		private static int lambdaDistance(Type varType, Type exprType)
+		private static int LambdaDistance(Type varType, Type exprType)
 		{
 			if (!varType.IsCallableType())
 				return int.MaxValue;
@@ -443,7 +443,7 @@ namespace Lens.Resolver
 					break;
 			}
 
-			var iface = getMostSpecificInterface(ifaces);
+			var iface = GetMostSpecificInterface(ifaces);
 			return iface ?? typeof(object);
 		}
 
@@ -506,7 +506,7 @@ namespace Lens.Resolver
 			return typeof(object);
 		}
 
-		private static Type getMostSpecificInterface(IEnumerable<Type> ifaces)
+		private static Type GetMostSpecificInterface(IEnumerable<Type> ifaces)
 		{
 			var remaining = ifaces.ToDictionary(i => i, i => true);
 			foreach (var iface in ifaces)
@@ -546,13 +546,13 @@ namespace Lens.Resolver
 				if (type1 == typeof(long) || type2 == typeof(long))
 					return typeof (double);
 
-				return widestNumericType(FloatTypes, type1, type2);
+				return WidestNumericType(FloatTypes, type1, type2);
 			}
 
 			if (type1.IsSignedIntegerType() && type2.IsSignedIntegerType())
 			{
 				var types = SignedIntegerTypes.SkipWhile(type => type != typeof (int)).ToArray();
-				return widestNumericType(types, type1, type2);
+				return WidestNumericType(types, type1, type2);
 			}
 
 			if (type1.IsUnsignedIntegerType() && type2.IsUnsignedIntegerType())
@@ -563,14 +563,14 @@ namespace Lens.Resolver
 				if (index1 < uintIndex && index2 < uintIndex)
 					return typeof (int);
 
-				return widestNumericType(UnsignedIntegerTypes, type1, type2);
+				return WidestNumericType(UnsignedIntegerTypes, type1, type2);
 			}
 
 			// type1.IsSignedIntegerType() && type2.IsUnsignedIntegerType() or vice versa:
 			return null;
 		}
 
-		private static Type widestNumericType(Type[] types, Type type1, Type type2)
+		private static Type WidestNumericType(Type[] types, Type type1, Type type2)
 		{
 			var index1 = Array.IndexOf(types, type1);
 			var index2 = Array.IndexOf(types, type2);
@@ -578,30 +578,30 @@ namespace Lens.Resolver
 			return types[index < 0 ? 0 : index];
 		}
 
-		private static int numericTypeConversion(Type varType, Type exprType)
+		private static int NumericTypeConversion(Type varType, Type exprType)
 		{
 			if (varType.IsSignedIntegerType() && exprType.IsSignedIntegerType())
-				return simpleNumericConversion(varType, exprType, SignedIntegerTypes);
+				return SimpleNumericConversion(varType, exprType, SignedIntegerTypes);
 
 			if (varType.IsUnsignedIntegerType() && exprType.IsUnsignedIntegerType())
-				return simpleNumericConversion(varType, exprType, UnsignedIntegerTypes);
+				return SimpleNumericConversion(varType, exprType, UnsignedIntegerTypes);
 
 			if (varType.IsFloatType() && exprType.IsFloatType())
-				return simpleNumericConversion(varType, exprType, FloatTypes);
+				return SimpleNumericConversion(varType, exprType, FloatTypes);
 
 			if (varType.IsSignedIntegerType() && exprType.IsUnsignedIntegerType())
-				return unsignedToSignedConversion(varType, exprType);
+				return UnsignedToSignedConversion(varType, exprType);
 			
 			if (varType.IsFloatType() && exprType.IsSignedIntegerType())
-				return signedToFloatConversion(varType, exprType);
+				return SignedToFloatConversion(varType, exprType);
 
 			if (varType.IsFloatType() && exprType.IsUnsignedIntegerType())
-				return unsignedToFloatConversion(varType, exprType);
+				return UnsignedToFloatConversion(varType, exprType);
 
 			return int.MaxValue;
 		}
 
-		private static int simpleNumericConversion(Type varType, Type exprType, Type[] conversionChain)
+		private static int SimpleNumericConversion(Type varType, Type exprType, Type[] conversionChain)
 		{
 			var varTypeIndex = Array.IndexOf(conversionChain, varType);
 			var exprTypeIndex = Array.IndexOf(conversionChain, exprType);
@@ -611,7 +611,7 @@ namespace Lens.Resolver
 			return varTypeIndex - exprTypeIndex;
 		}
 
-		private static int unsignedToSignedConversion(Type varType, Type exprType)
+		private static int UnsignedToSignedConversion(Type varType, Type exprType)
 		{
 			// no unsigned type can be converted to the signed byte.
 			if (varType == typeof (sbyte))
@@ -620,23 +620,23 @@ namespace Lens.Resolver
 			var index = Array.IndexOf(SignedIntegerTypes, varType);
 			var correspondingUnsignedType = UnsignedIntegerTypes[index - 1]; // only expanding conversions allowed
 
-			var result = simpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
+			var result = SimpleNumericConversion(correspondingUnsignedType, exprType, UnsignedIntegerTypes);
 			return result == int.MaxValue
 				? int.MaxValue
 				: result + 1;
 		}
 
-		private static int signedToFloatConversion(Type varType, Type exprType)
+		private static int SignedToFloatConversion(Type varType, Type exprType)
 		{
-			var targetType = getCorrespondingSignedType(varType);
+			var targetType = GetCorrespondingSignedType(varType);
 
-			var result = simpleNumericConversion(targetType, exprType, SignedIntegerTypes);
+			var result = SimpleNumericConversion(targetType, exprType, SignedIntegerTypes);
 			return result == int.MaxValue
 				? int.MaxValue
 				: result + 1;
 		}
 
-		private static int unsignedToFloatConversion(Type varType, Type exprType)
+		private static int UnsignedToFloatConversion(Type varType, Type exprType)
 		{
 			if (exprType == typeof (ulong) && varType == typeof (decimal))
 			{
@@ -646,8 +646,8 @@ namespace Lens.Resolver
 			else
 			{
 				// If type is not ulong we need to convert it to the corresponding signed type.
-				var correspondingSignedType = getCorrespondingSignedType(varType);
-				var result = unsignedToSignedConversion(correspondingSignedType, exprType);
+				var correspondingSignedType = GetCorrespondingSignedType(varType);
+				var result = UnsignedToSignedConversion(correspondingSignedType, exprType);
 
 				return result == int.MaxValue
 					? int.MaxValue
@@ -655,7 +655,7 @@ namespace Lens.Resolver
 			}
 		}
 
-		private static Type getCorrespondingSignedType(Type floatType)
+		private static Type GetCorrespondingSignedType(Type floatType)
 		{
 			if (floatType == typeof (float))
 				return typeof (int);
@@ -681,7 +681,7 @@ namespace Lens.Resolver
 			var simpleCount = actualTypes.Length - 1;
 
 			var simpleDistance = TypeListDistance(passedTypes.Take(simpleCount), actualTypes.Take(simpleCount));
-			var variadicDistance = variadicArgumentDistance(passedTypes.Skip(simpleCount), actualTypes[simpleCount]);
+			var variadicDistance = VariadicArgumentDistance(passedTypes.Skip(simpleCount), actualTypes[simpleCount]);
 			var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
 			return new MethodLookupResult<T>(method, distance, actualTypes);
 		}
@@ -719,7 +719,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Calculates the compound distance of a list of arguments packed into a param array.
 		/// </summary>
-		private static int variadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadicArg)
+		private static int VariadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadicArg)
 		{
 			var args = passedArgs.ToArray();
 

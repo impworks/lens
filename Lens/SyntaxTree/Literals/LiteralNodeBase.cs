@@ -20,10 +20,10 @@ namespace Lens.SyntaxTree.Literals
 
 		#region Constant checkers
 
-		public override bool IsConstant { get { return true; } }
-		public override object ConstantValue { get { return Value; } }
+		public override bool IsConstant => true;
+	    public override object ConstantValue => Value;
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
@@ -32,12 +32,9 @@ namespace Lens.SyntaxTree.Literals
 			return typeof (T);
 		}
 
-		public Type LiteralType
-		{
-			get { return typeof (T); }
-		}
+		public Type LiteralType => typeof (T);
 
-		#endregion
+	    #endregion
 
 		#region Debug
 

@@ -15,17 +15,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "*"; }
-		}
+		protected override string OperatorRepresentation => "*";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Multiply"; }
-		}
+	    protected override string OverloadedMethodName => "op_Multiply";
 
-	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
 	    {
 	        return new MultiplyOperatorNode {LeftOperand = left, RightOperand = right};
 	    }
@@ -34,7 +28,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			if (rightType == typeof(int))
 			{
@@ -63,29 +57,29 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
 				var type = Resolve(ctx);
 
 				if (type == typeof (string))
-					return stringExpand(ctx);
+					return StringExpand(ctx);
 
 				if (type.IsArray)
-					return arrayExpand(ctx);
+					return ArrayExpand(ctx);
 
 				if (type == typeof (IEnumerable) || type.IsAppliedVersionOf(typeof (IEnumerable<>)))
-					return seqExpand(ctx);
+					return SeqExpand(ctx);
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		/// <summary>
 		/// Repeats a string.
 		/// </summary>
-		private NodeBase stringExpand(Context ctx)
+		private NodeBase StringExpand(Context ctx)
 		{
 			var tmpString = ctx.Scope.DeclareImplicit(ctx, typeof(string), false);
 			var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof(StringBuilder), false);
@@ -120,7 +114,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Repeats an array.
 		/// </summary>
-		private NodeBase arrayExpand(Context ctx)
+		private NodeBase ArrayExpand(Context ctx)
 		{
 			var arrayType = LeftOperand.Resolve(ctx);
 			var tmpLeft = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
@@ -189,7 +183,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Repeats a typed or untyped sequence.
 		/// </summary>
-		private NodeBase seqExpand(Context ctx)
+		private NodeBase SeqExpand(Context ctx)
 		{
 			var seqType = LeftOperand.Resolve(ctx);
 
@@ -244,9 +238,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitMultiply();
 		}
 
@@ -254,7 +248,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			var leftType = left.GetType();
 			var rightType = right.GetType();
@@ -273,7 +267,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			}
 			catch (OverflowException)
 			{
-				error(CompilerMessages.ConstantOverflow);
+				Error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
 		}

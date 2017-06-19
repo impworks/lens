@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Lens.Test.Features
 {
 	[TestFixture]
-	class UserDeclarationsTest : TestBase
+	internal class UserDeclarationsTest : TestBase
 	{
 
 		[Test]

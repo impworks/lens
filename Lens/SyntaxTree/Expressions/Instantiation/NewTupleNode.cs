@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		/// <summary>
 		/// List of tuple item types.
 		/// </summary>
-		private Type[] _Types;
+		private Type[] _types;
 
 		#endregion
 
@@ -27,10 +27,10 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (Expressions.Count == 0)
-				error(CompilerMessages.TupleNoArgs);
+				Error(CompilerMessages.TupleNoArgs);
 
 			if (Expressions.Count > 8)
-				error(CompilerMessages.TupleTooManyArgs);
+				Error(CompilerMessages.TupleTooManyArgs);
 
 			var types = new List<Type>();
 			foreach (var curr in Expressions)
@@ -41,15 +41,15 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 				types.Add(type);
 			}
 
-			_Types = types.ToArray();
-			return FunctionalHelper.CreateTupleType(_Types);
+			_types = types.ToArray();
+			return FunctionalHelper.CreateTupleType(_types);
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var tupleType = Resolve(ctx);
 
@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 			foreach(var curr in Expressions)
 				curr.Emit(ctx, true);
 
-			var ctor = ctx.ResolveConstructor(tupleType, _Types);
+			var ctor = ctx.ResolveConstructor(tupleType, _types);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 

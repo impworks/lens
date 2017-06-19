@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Global property reference (if resolved).
 		/// </summary>
-		private GlobalPropertyInfo _Property;
+		private GlobalPropertyInfo _property;
 
 		#endregion
 
@@ -47,38 +47,38 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (Identifier == "_")
-				error(CompilerMessages.UnderscoreNameUsed);
+				Error(CompilerMessages.UnderscoreNameUsed);
 
 			var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
 			if (nameInfo != null)
 			{
 				if (nameInfo.IsImmutable && !IsInitialization)
-					error(CompilerMessages.IdentifierIsConstant, Identifier);
+					Error(CompilerMessages.IdentifierIsConstant, Identifier);
 			}
 			else
 			{
 				try
 				{
-					_Property = ctx.ResolveGlobalProperty(Identifier);
+					_property = ctx.ResolveGlobalProperty(Identifier);
 
-					if (!_Property.HasSetter)
-						error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
+					if (!_property.HasSetter)
+						Error(CompilerMessages.GlobalPropertyNoSetter, Identifier);
 				}
 				catch (KeyNotFoundException)
 				{
-					error(CompilerMessages.VariableNotFound, Identifier);
+					Error(CompilerMessages.VariableNotFound, Identifier);
 				}
 			}
 
-			var destType = nameInfo != null ? nameInfo.Type : _Property.PropertyType;
-			ensureLambdaInferred(ctx, Value, destType);
+			var destType = nameInfo != null ? nameInfo.Type : _property.PropertyType;
+			EnsureLambdaInferred(ctx, Value, destType);
 
 			var exprType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, exprType, true);
 
 			if (!destType.IsExtendablyAssignableFrom(exprType))
 			{
-				error(
+				Error(
 					nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,
 					exprType,
 					destType
@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Value, x => Value = x);
 		}
@@ -101,25 +101,25 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var type = Value.Resolve(ctx);
 
-			if (_Property != null)
+			if (_property != null)
 			{
 				var cast = Expr.Cast(Value, type);
-				if (_Property.SetterMethod != null)
+				if (_property.SetterMethod != null)
 				{
 					cast.Emit(ctx, true);
-					gen.EmitCall(_Property.SetterMethod.MethodInfo);
+					gen.EmitCall(_property.SetterMethod.MethodInfo);
 				}
 				else
 				{
 					var method = typeof (GlobalPropertyHelper).GetMethod("Set").MakeGenericMethod(type);
 
 					gen.EmitConstant(ctx.ContextId);
-					gen.EmitConstant(_Property.PropertyId);
+					gen.EmitConstant(_property.PropertyId);
 					Expr.Cast(Value, type).Emit(ctx, true);
 					gen.EmitCall(method);
 				}
@@ -132,13 +132,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 					if (nameInfo.IsClosured)
 					{
 						if (nameInfo.ClosureDistance == 0)
-							emitSetClosuredLocal(ctx, nameInfo);
+							EmitSetClosuredLocal(ctx, nameInfo);
 						else
-							emitSetClosuredRemote(ctx, nameInfo);
+							EmitSetClosuredRemote(ctx, nameInfo);
 					}
 					else
 					{
-						emitSetLocal(ctx, nameInfo);
+						EmitSetLocal(ctx, nameInfo);
 					}
 				}
 			}
@@ -147,7 +147,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Assigns an ordinary local variable.
 		/// </summary>
-		private void emitSetLocal(Context ctx, Local name)
+		private void EmitSetLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -172,7 +172,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Assigns a closured variable that is declared in current scope.
 		/// </summary>
-		private void emitSetClosuredLocal(Context ctx, Local name)
+		private void EmitSetClosuredLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -188,7 +188,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Assigns a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void emitSetClosuredRemote(Context ctx, Local name)
+		private void EmitSetClosuredRemote(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 

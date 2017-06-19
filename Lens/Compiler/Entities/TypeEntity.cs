@@ -19,9 +19,9 @@ namespace Lens.Compiler.Entities
 		{
 			Context = ctx;
 
-			_Fields = new Dictionary<string, FieldEntity>();
-			_Methods = new Dictionary<string, List<MethodEntity>>();
-			_Constructors = new List<ConstructorEntity>();
+			_fields = new Dictionary<string, FieldEntity>();
+			_methods = new Dictionary<string, List<MethodEntity>>();
+			_constructors = new List<ConstructorEntity>();
 
 			ClosureMethodId = 1;
 		}
@@ -32,14 +32,14 @@ namespace Lens.Compiler.Entities
 
 		public Type[] Interfaces;
 
-		private readonly Dictionary<string, FieldEntity> _Fields;
-		private readonly Dictionary<string, List<MethodEntity>> _Methods;
-		private readonly List<ConstructorEntity> _Constructors;
+		private readonly Dictionary<string, FieldEntity> _fields;
+		private readonly Dictionary<string, List<MethodEntity>> _methods;
+		private readonly List<ConstructorEntity> _constructors;
 
-		public bool IsImported { get { return Kind == TypeEntityKind.Imported; } }
-		public bool IsUserDefined { get { return Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record; } }
+		public bool IsImported => Kind == TypeEntityKind.Imported;
+	    public bool IsUserDefined => Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record;
 
-		/// <summary>
+	    /// <summary>
 		/// Pointer to context.
 		/// </summary>
 		public Context Context { get; private set; }
@@ -64,16 +64,16 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public Type Parent;
 
-		private Type _TypeInfo;
+		private Type _typeInfo;
 		public Type TypeInfo
 		{
-			get { return TypeBuilder ?? _TypeInfo; }
-			set
+			get => TypeBuilder ?? _typeInfo;
+		    set
 			{
 				if(!IsImported)
 					throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
 
-				_TypeInfo = value;
+				_typeInfo = value;
 			}
 		}
 
@@ -125,11 +125,11 @@ namespace Lens.Compiler.Entities
 		{
 			Context.CurrentType = this;
 
-			foreach (var curr in _Constructors)
+			foreach (var curr in _constructors)
 				if (!curr.IsImported)
 					curr.Compile();
 
-			foreach (var currGroup in _Methods)
+			foreach (var currGroup in _methods)
 				foreach (var curr in currGroup.Value)
 					if(!curr.IsImported)
 						curr.Compile();
@@ -142,18 +142,18 @@ namespace Lens.Compiler.Entities
 		{
 			if (IsUserDefined)
 			{
-				createSpecificEquals();
-				createGenericEquals();
-				createGetHashCode();	
+				CreateSpecificEquals();
+				CreateGenericEquals();
+				CreateGetHashCode();	
 			}
 
 			if (this == Context.MainType)
 			{
-				var groups = _Methods.ToArray();
+				var groups = _methods.ToArray();
 				foreach (var currGroup in groups)
 					foreach (var currMethod in currGroup.Value)
 						if (currMethod.IsPure)
-							createPureWrapper(currMethod);		
+							CreatePureWrapper(currMethod);		
 			}
 		}
 
@@ -167,7 +167,7 @@ namespace Lens.Compiler.Entities
 		internal FieldEntity ResolveField(string name)
 		{
 			FieldEntity fe;
-			if (!_Fields.TryGetValue(name, out fe))
+			if (!_fields.TryGetValue(name, out fe))
 				throw new KeyNotFoundException();
 
 			if(fe.FieldBuilder == null)
@@ -182,7 +182,7 @@ namespace Lens.Compiler.Entities
 		internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false)
 		{
 			List<MethodEntity> group;
-			if (!_Methods.TryGetValue(name, out group))
+			if (!_methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 
 			var info = ReflectionHelper.ResolveMethodByArgs(
@@ -204,7 +204,7 @@ namespace Lens.Compiler.Entities
 		internal MethodEntity[] ResolveMethodGroup(string name)
 		{
 			List<MethodEntity> group;
-			if(!_Methods.TryGetValue(name, out group))
+			if(!_methods.TryGetValue(name, out group))
 				throw new KeyNotFoundException();
 			
 			return group.ToArray();
@@ -216,7 +216,7 @@ namespace Lens.Compiler.Entities
 		internal ConstructorEntity ResolveConstructor(Type[] args)
 		{
 			var info = ReflectionHelper.ResolveMethodByArgs(
-				_Constructors,
+				_constructors,
 				c => c.GetArgumentTypes(Context),
 				c => false,
 				args

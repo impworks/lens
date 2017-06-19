@@ -18,18 +18,18 @@ namespace Lens.SyntaxTree.Operators
 		/// <summary>
 		/// The name of the method that C# compiler uses for method overloading.
 		/// </summary>
-		protected virtual string OverloadedMethodName { get { return null; } }
+		protected virtual string OverloadedMethodName => null;
 
-		/// <summary>
+	    /// <summary>
 		/// The pointer to overloaded version of the operator.
 		/// </summary>
-		protected MethodWrapper _OverloadedMethod;
+		protected MethodWrapper OverloadedMethod;
 
 		#endregion
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var result = IsConstant && ctx.Options.UnrollConstants
 				? Expr.Constant(ConstantValue)

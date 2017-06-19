@@ -13,7 +13,7 @@ namespace Lens.Resolver
 
 		public ReferencedAssemblyCache(bool useDefault = true)
 		{
-			_Assemblies = new HashSet<Assembly>();
+			_assemblies = new HashSet<Assembly>();
 
 			if (useDefault)
 			{
@@ -21,13 +21,13 @@ namespace Lens.Resolver
 				{
 					try
 					{
-						_Assemblies.Add(Assembly.Load(name));
+						_assemblies.Add(Assembly.Load(name));
 					}
 					catch { }
 				}
 
 				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-					_Assemblies.Add(asm);
+					_assemblies.Add(asm);
 			}
 		}
 
@@ -48,7 +48,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// The unique list of referenced assemblies.
 		/// </summary>
-		private readonly HashSet<Assembly> _Assemblies;
+		private readonly HashSet<Assembly> _assemblies;
 
 		/// <summary>
 		/// List of assemblies that can be used by type or extension method resolvers.
@@ -58,7 +58,7 @@ namespace Lens.Resolver
 			get
 			{
 				// return independent enumerable that cannot be cast to the original HashSet for manipulations
-				foreach (var curr in _Assemblies)
+				foreach (var curr in _assemblies)
 					yield return curr;
 			}
 		}
@@ -72,7 +72,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public void ReferenceAssembly(Assembly asm)
 		{
-			_Assemblies.Add(asm);
+			_assemblies.Add(asm);
 		}
 
 		#endregion

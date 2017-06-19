@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 		{
 			var type = Operand.Resolve(ctx);
 
-			var result = resolveOperatorType(ctx);
+			var result = ResolveOperatorType(ctx);
 			if (result != null)
 				return result;
 
@@ -34,23 +34,23 @@ namespace Lens.SyntaxTree.Operators.Unary
 			{
 				try
 				{
-					_OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] { type });
+					OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] { type });
 
 					// cannot be generic
-					if (_OverloadedMethod != null)
-						return _OverloadedMethod.ReturnType;
+					if (OverloadedMethod != null)
+						return OverloadedMethod.ReturnType;
 				}
 				catch { }
 			}
 
-			error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
+			Error(CompilerMessages.OperatorUnaryTypeMismatch, OperatorRepresentation, type);
 			return null;
 		}
 
 		/// <summary>
 		/// Overridable resolver for unary operators.
 		/// </summary>
-		protected virtual Type resolveOperatorType(Context ctx)
+		protected virtual Type ResolveOperatorType(Context ctx)
 		{
 			return null;
 		}
@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Operand, x => Operand = x);
 		}
@@ -68,34 +68,34 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			if (_OverloadedMethod == null)
+			if (OverloadedMethod == null)
 			{
-				emitOperator(ctx);
+				EmitOperator(ctx);
 				return;
 			}
 
-			var ps = _OverloadedMethod.ArgumentTypes;
+			var ps = OverloadedMethod.ArgumentTypes;
 			Expr.Cast(Operand, ps[0]).Emit(ctx, true);
-			gen.EmitCall(_OverloadedMethod.MethodInfo);
+			gen.EmitCall(OverloadedMethod.MethodInfo);
 		}
 
-		protected abstract void emitOperator(Context ctx);
+		protected abstract void EmitOperator(Context ctx);
 
 		#endregion
 
 		#region Constant unroll
 
-		public override bool IsConstant { get { return Operand.IsConstant; } }
-		public override dynamic ConstantValue { get { return unrollConstant(Operand.ConstantValue); } }
+		public override bool IsConstant => Operand.IsConstant;
+	    public override dynamic ConstantValue => UnrollConstant(Operand.ConstantValue);
 
-		/// <summary>
+	    /// <summary>
 		/// Overriddable constant unroller for unary operators.
 		/// </summary>
-		protected abstract dynamic unrollConstant(dynamic value);
+		protected abstract dynamic UnrollConstant(dynamic value);
 
 		#endregion
 

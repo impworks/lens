@@ -12,33 +12,33 @@ namespace GraphicScript.Objects
 		{
 			Canvas = cvs;
 			Dispatcher = disp;
-			m_Figures = new List<Figure>();
-			m_Continuations = new List<Action>();
+			_figures = new List<Figure>();
+			_continuations = new List<Action>();
 		}
 
-		private bool m_IsActive;
+		private bool _isActive;
 		public Canvas Canvas { get; private set; }
 		public Dispatcher Dispatcher { get; private set; }
 
-		private List<Figure> m_Figures;
-		private List<Action> m_Continuations;
+		private List<Figure> _figures;
+		private List<Action> _continuations;
 
 		public void Add(Figure fig)
 		{
-			m_Continuations.Add(() =>
+			_continuations.Add(() =>
 				{
 					fig.Register(this);
-					m_Figures.Add(fig);
+					_figures.Add(fig);
 				}
 			);
 		}
 
 		public void Remove(Figure fig)
 		{
-			m_Continuations.Add(() =>
+			_continuations.Add(() =>
 				{
 					fig.Unregister();
-					m_Figures.Remove(fig);
+					_figures.Remove(fig);
 				}
 			);
 		}
@@ -51,36 +51,36 @@ namespace GraphicScript.Objects
 
 		public void Draw()
 		{
-			m_IsActive = true;
-			new Thread(drawLoop).Start();
+			_isActive = true;
+			new Thread(DrawLoop).Start();
 		}
 
 		public void StopDrawing()
 		{
-			if (!m_IsActive)
+			if (!_isActive)
 				return;
 
 			Canvas.Children.Clear();
-			m_Figures = new List<Figure>();
-			m_IsActive = false;
+			_figures = new List<Figure>();
+			_isActive = false;
 		}
 
-		private void drawLoop()
+		private void DrawLoop()
 		{
-			while (m_IsActive)
+			while (_isActive)
 			{
-				foreach (var curr in m_Figures)
+				foreach (var curr in _figures)
 				{
-					if (!m_IsActive) return;
+					if (!_isActive) return;
 					curr.UpdateObject();
 				}
 
-				if (m_Continuations.Count > 0)
+				if (_continuations.Count > 0)
 				{
-					foreach (var curr in m_Continuations)
+					foreach (var curr in _continuations)
 						Dispatcher.Invoke(curr);
 
-					m_Continuations.Clear();
+					_continuations.Clear();
 				}
 
 				Thread.Sleep(10);

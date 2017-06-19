@@ -20,7 +20,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// The cached expression type.
 		/// </summary>
-		protected Type _CachedExpressionType;
+		protected Type CachedExpressionType;
 
 		#endregion
 
@@ -32,12 +32,12 @@ namespace Lens.SyntaxTree
 		[DebuggerStepThrough]
 		public Type Resolve(Context ctx, bool mustReturn = true)
 		{
-			if (_CachedExpressionType == null)
+			if (CachedExpressionType == null)
 			{
 				try
 				{
-					_CachedExpressionType = resolve(ctx, mustReturn);
-					checkTypeInSafeMode(ctx, _CachedExpressionType);
+					CachedExpressionType = resolve(ctx, mustReturn);
+					CheckTypeInSafeMode(ctx, CachedExpressionType);
 				}
 				catch (LensCompilerException ex)
 				{
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree
 				}
 			}
 
-			return _CachedExpressionType;
+			return CachedExpressionType;
 		}
 
 		/// <summary>
@@ -69,14 +69,14 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		public virtual void Transform(Context ctx, bool mustReturn)
 		{
-			var children = getChildren().ToArray();
+			var children = GetChildren().ToArray();
 			foreach (var child in children)
 			{
 				if (child == null || child.Node == null)
 					continue;
 
 				child.Node.Resolve(ctx, mustReturn);
-				var sub = child.Node.expand(ctx, mustReturn);
+				var sub = child.Node.Expand(ctx, mustReturn);
 				if (sub != null)
 				{
 					child.Setter(sub);
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree
 		/// <returns>
 		/// Null if no expansion is suitable, a NodeBase object instance otherwise.
 		/// </returns>
-		protected virtual NodeBase expand(Context ctx, bool mustReturn)
+		protected virtual NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			return null;
 		}
@@ -105,7 +105,7 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// Gets the list of child nodes.
 		/// </summary>
-		protected virtual IEnumerable<NodeChild> getChildren()
+		protected virtual IEnumerable<NodeChild> GetChildren()
 		{
 			yield break;
 		}
@@ -119,7 +119,7 @@ namespace Lens.SyntaxTree
 		/// </summary>
 		public virtual void ProcessClosures(Context ctx)
 		{
-			foreach (var child in getChildren())
+			foreach (var child in GetChildren())
 				if (child != null && child.Node != null)
 					child.Node.ProcessClosures(ctx);
 		}
@@ -138,13 +138,13 @@ namespace Lens.SyntaxTree
 			if (IsConstant && !mustReturn)
 				return;
 
-			emitCode(ctx, mustReturn);
+			EmitCode(ctx, mustReturn);
 		}
 
 		/// <summary>
 		/// Emits the IL opcodes that represents the current node.
 		/// </summary>
-		protected virtual void emitCode(Context ctx, bool mustReturn)
+		protected virtual void EmitCode(Context ctx, bool mustReturn)
 		{
 			throw new InvalidOperationException(
 				string.Format(
@@ -161,20 +161,14 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// Checks if the current node is a constant.
 		/// </summary>
-		public virtual bool IsConstant
-		{
-			get { return false; }
-		}
+		public virtual bool IsConstant => false;
 
-		/// <summary>
+	    /// <summary>
 		/// Returns a constant value corresponding to the current node.
 		/// </summary>
-		public virtual dynamic ConstantValue
-		{
-			get { throw new InvalidOperationException("Not a constant!"); }
-		}
+		public virtual dynamic ConstantValue => throw new InvalidOperationException("Not a constant!");
 
-		#endregion
+	    #endregion
 
 		#region Helpers
 
@@ -185,9 +179,9 @@ namespace Lens.SyntaxTree
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		protected void error(string message, params object[] args)
+		protected void Error(string message, params object[] args)
 		{
-			error(this, message, args);
+			Error(this, message, args);
 		}
 
 		/// <summary>
@@ -197,7 +191,7 @@ namespace Lens.SyntaxTree
 		/// <param name="args">Optional error arguments.</param>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		protected void error(LocationEntity entity, string message, params object[] args)
+		protected void Error(LocationEntity entity, string message, params object[] args)
 		{
 			var msg = string.Format(message, args);
 			throw new LensCompilerException(msg, entity);
@@ -206,16 +200,16 @@ namespace Lens.SyntaxTree
 		/// <summary>
 		/// Throws an error that the current type is not alowed in safe mode.
 		/// </summary>
-		protected void checkTypeInSafeMode(Context ctx, Type type)
+		protected void CheckTypeInSafeMode(Context ctx, Type type)
 		{
 			if (!ctx.IsTypeAllowed(type))
-				error(CompilerMessages.SafeModeIllegalType, type.FullName);
+				Error(CompilerMessages.SafeModeIllegalType, type.FullName);
 		}
 
 		/// <summary>
 		/// Re-infers the lambda if argument types were not specified before.
 		/// </summary>
-		protected static void ensureLambdaInferred(Context ctx, NodeBase canBeLambda, Type delegateType)
+		protected static void EnsureLambdaInferred(Context ctx, NodeBase canBeLambda, Type delegateType)
 		{
 			var lambda = canBeLambda as LambdaNode;
 			if (lambda == null)

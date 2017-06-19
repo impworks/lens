@@ -22,17 +22,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return IsLeft ? "<:" : ":>"; }
-		}
+		protected override string OperatorRepresentation => IsLeft ? "<:" : ":>";
 
-		protected override string OverloadedMethodName
-		{
-			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
-		}
+	    protected override string OverloadedMethodName => IsLeft ? "op_LeftShift" : "op_RightShift";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new ShiftOperatorNode { IsLeft = IsLeft, LeftOperand = left, RightOperand = right };
         }
@@ -70,14 +64,14 @@ namespace Lens.SyntaxTree.Operators.Binary
 				var rightType = RightOperand.Resolve(ctx);
 
 				if (!ReflectionHelper.CanCombineDelegates(leftType, rightType))
-					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
+					Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
 			}
 
 			// resolve as a possibly overloaded operator
 			return base.resolve(ctx, mustReturn);
 		}
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
 				return leftType;
@@ -92,7 +86,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var leftType = LeftOperand.Resolve(ctx, mustReturn);
 
@@ -120,14 +114,14 @@ namespace Lens.SyntaxTree.Operators.Binary
 				);
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -141,7 +135,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			return IsLeft ? left << right : left >> right;
 		}

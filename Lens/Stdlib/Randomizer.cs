@@ -14,7 +14,7 @@ namespace Lens.Stdlib
 		/// <summary>
 		/// Random seed.
 		/// </summary>
-		public static readonly Random m_Random = new Random();
+		public static readonly Random _random = new Random();
 
 		#endregion
 
@@ -26,7 +26,7 @@ namespace Lens.Stdlib
 		/// <returns></returns>
 		public static double Random()
 		{
-			return m_Random.NextDouble();
+			return _random.NextDouble();
 		}
 
 		/// <summary>
@@ -34,7 +34,7 @@ namespace Lens.Stdlib
 		/// </summary>
 		public static int Random(int max)
 		{
-			return m_Random.Next(max);
+			return _random.Next(max);
 		}
 
 		/// <summary>
@@ -42,7 +42,7 @@ namespace Lens.Stdlib
 		/// </summary>
 		public static int Random(int min, int max)
 		{
-			return m_Random.Next(min, max);
+			return _random.Next(min, max);
 		}
 
 		/// <summary>
@@ -59,7 +59,7 @@ namespace Lens.Stdlib
 		/// </summary>
 		public static T Random<T>(IList<T> src, Func<T, double> weighter)
 		{
-			var rnd = m_Random.NextDouble();
+			var rnd = _random.NextDouble();
 			var weight = src.Sum(weighter);
 			if (weight < 0.000001)
 				throw new ArgumentException("src");

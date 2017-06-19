@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The cached types of key and value.
 		/// </summary>
-		private Type[] Types;
+		private Type[] _types;
 
 		#endregion
 
@@ -41,10 +41,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if(!expressionType.IsAppliedVersionOf(typeof(KeyValuePair<,>)))
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(KeyValuePair<,>));
 
-			Types = expressionType.GetGenericArguments();
+			_types = expressionType.GetGenericArguments();
 
-			return KeyRule.Resolve(ctx, Types[0])
-					  .Concat(ValueRule.Resolve(ctx, Types[1]));
+			return KeyRule.Resolve(ctx, _types[0])
+					  .Concat(ValueRule.Resolve(ctx, _types[1]));
 		}
 
 		#endregion

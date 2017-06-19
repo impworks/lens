@@ -120,75 +120,75 @@ namespace Lens.Lexer
         /// Returns the current char.
         /// </summary>
         [DebuggerStepThrough]
-	    private char currChar()
+	    private char CurrChar()
 	    {
-	        return _Source[_Position];
+	        return _source[_position];
 	    }
 
         /// <summary>
         /// Returns the next char, if there is one.
         /// </summary>
         [DebuggerStepThrough]
-	    private char? nextChar(int offset = 1)
+	    private char? NextChar(int offset = 1)
         {
-            var pos = _Position + offset;
-            if (pos < 0 || pos >= _Source.Length)
+            var pos = _position + offset;
+            if (pos < 0 || pos >= _source.Length)
                 return null;
 
-            return _Source[pos];
+            return _source[pos];
         }
 
 	    [DebuggerStepThrough]
-	    private void error(LocationEntity loc, string src, params object[] args)
+	    private void Error(LocationEntity loc, string src, params object[] args)
 	    {
 	        throw new LensCompilerException(string.Format(src, args), loc);
 	    }
 
         [DebuggerStepThrough]
-		private void error(string src, params object[] args)
+		private void Error(string src, params object[] args)
 		{
-			var loc = new LocationEntity { StartLocation = getPosition() };
-		    error(loc, src, args);
+			var loc = new LocationEntity { StartLocation = GetPosition() };
+		    Error(loc, src, args);
 		}
 
 		/// <summary>
 		/// Checks if the cursor has run outside string bounds.
 		/// </summary>
 		[DebuggerStepThrough]
-		private bool inBounds()
+		private bool InBounds()
 		{
-			return _Position < _Source.Length;
+			return _position < _source.Length;
 		}
 
 		/// <summary>
 		/// Checks if the cursor is at comment start.
 		/// </summary>
 		[DebuggerStepThrough]
-		private bool isComment()
+		private bool IsComment()
 		{
-			return currChar() == '/' && nextChar() == '/';
+			return CurrChar() == '/' && NextChar() == '/';
 		}
 
 		/// <summary>
 		/// Skips one or more symbols.
 		/// </summary>
 		[DebuggerStepThrough]
-		private void skip(int count = 1)
+		private void Skip(int count = 1)
 		{
-			_Position += count;
-			_Offset += count;
+			_position += count;
+			_offset += count;
 		}
 
 		/// <summary>
 		/// Returns the current position in the string.
 		/// </summary>
 		[DebuggerStepThrough]
-		private LexemLocation getPosition()
+		private LexemLocation GetPosition()
 		{
 			return new LexemLocation
 			{
-				Line = _Line,
-				Offset = _Offset
+				Line = _line,
+				Offset = _offset
 			};
 		}
 
@@ -200,14 +200,14 @@ namespace Lens.Lexer
 		/// Processes the contents of a char literal.
 		/// </summary>
 		[DebuggerStepThrough]
-		private Lexem transformCharLiteral(Lexem lex)
+		private Lexem TransformCharLiteral(Lexem lex)
 		{
 			var value = lex.Value;
 			if (value.Length < 3 || value.Length > 4)
-				error(lex, LexerMessages.IncorrectCharLiteral);
+				Error(lex, LexerMessages.IncorrectCharLiteral);
 
 			value = value[1] == '\\'
-				? escapeChar(value[2]).ToString()
+				? EscapeChar(value[2]).ToString()
 				: value[1].ToString();
 
 			return new Lexem(LexemType.Char, lex.StartLocation, lex.EndLocation, value);
@@ -217,7 +217,7 @@ namespace Lens.Lexer
 		/// Processes the contents of a regex literal.
 		/// </summary>
 		[DebuggerStepThrough]
-		private Lexem transformRegexLiteral(Lexem lex)
+		private Lexem TransformRegexLiteral(Lexem lex)
 		{
 			return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, lex.Value.Replace(@"\#", "#"));
 		}
@@ -225,7 +225,7 @@ namespace Lens.Lexer
 		/// <summary>
 		/// Returns an escaped version of the given character.
 		/// </summary>
-		private char escapeChar(char t)
+		private char EscapeChar(char t)
 		{
 			switch (t)
 			{
@@ -244,7 +244,7 @@ namespace Lens.Lexer
 					return t;
 			}
 
-			error(LexerMessages.UnknownEscape, t);
+			Error(LexerMessages.UnknownEscape, t);
 			return ' ';
 		}
 

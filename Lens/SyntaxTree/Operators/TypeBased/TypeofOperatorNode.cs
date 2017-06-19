@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 	{
 		#region Constants
 
-		private static readonly MethodInfo _HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
+		private static readonly MethodInfo HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
 
 		#endregion
 
@@ -35,13 +35,13 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var type = Type ?? ctx.ResolveType(TypeSignature);
 			var gen = ctx.CurrentMethod.Generator;
 
 			gen.EmitConstant(type);
-			gen.EmitCall(_HandleMethod);
+			gen.EmitCall(HandleMethod);
 		}
 
 		#endregion

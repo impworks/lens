@@ -30,9 +30,9 @@ namespace Lens.SyntaxTree.Declarations.Types
 		/// <summary>
 		/// Checks whether the entry has a tag.
 		/// </summary>
-		public bool IsTagged { get { return TagType != null; } }
+		public bool IsTagged => TagType != null;
 
-		#endregion
+	    #endregion
 
 		#region Debug
 

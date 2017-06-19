@@ -14,14 +14,14 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates the body of Equals(T).
 		/// </summary>
-		private void createSpecificEquals()
+		private void CreateSpecificEquals()
 		{
 			var eq = CreateMethod("Equals", "bool", new[] { Expr.Arg("other", Name) });
 
 			// var result = true
 			eq.Body.Add(Expr.Var("result", Expr.True()));
 
-			foreach (var f in _Fields.Values)
+			foreach (var f in _fields.Values)
 			{
 				var left = Expr.GetMember(Expr.This(), f.Name);
 				var right = Expr.GetMember(Expr.Get("other"), f.Name);
@@ -45,7 +45,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates the body of Equals(object).
 		/// </summary>
-		private void createGenericEquals()
+		private void CreateGenericEquals()
 		{
 			var eq = CreateMethod(
 				"Equals",
@@ -87,7 +87,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates the body of GetHashCode().
 		/// </summary>
-		private void createGetHashCode()
+		private void CreateGetHashCode()
 		{
 			var ghc = CreateMethod(
 				"GetHashCode",
@@ -102,7 +102,7 @@ namespace Lens.Compiler.Entities
 
 			// result ^= (<field> != null ? field.GetHashCode() : 0) * 397
 			var id = 0;
-			foreach (var f in _Fields.Values)
+			foreach (var f in _fields.Values)
 			{
 				var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
 				NodeBase expr;
@@ -128,7 +128,7 @@ namespace Lens.Compiler.Entities
 						Expr.Block(Expr.Int(0))
 					);
 
-				if (id < _Fields.Count - 1)
+				if (id < _fields.Count - 1)
 					expr = Expr.Mult(expr, Expr.Int(397));
 
 				ghc.Body.Add(
@@ -144,7 +144,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a wrapper for the pure method that contains the value cache.
 		/// </summary>
-		private void createPureWrapper(MethodEntity method)
+		private void CreatePureWrapper(MethodEntity method)
 		{
 			if (method.ReturnType.IsVoid())
 				Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
@@ -159,17 +159,17 @@ namespace Lens.Compiler.Entities
 				Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);
 
 			if (argCount == 0)
-				createPureWrapper0(method, pureName);
+				CreatePureWrapper0(method, pureName);
 			else if (argCount == 1)
-				createPureWrapper1(method, pureName);
+				CreatePureWrapper1(method, pureName);
 			else
-				createPureWrapperMany(method, pureName);
+				CreatePureWrapperMany(method, pureName);
 		}
 
 		/// <summary>
 		/// Creates a pure wrapper for parameterless function.
 		/// </summary>
-		private void createPureWrapper0(MethodEntity wrapper, string pureName)
+		private void CreatePureWrapper0(MethodEntity wrapper, string pureName)
 		{
 			var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
 			var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
@@ -201,7 +201,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a pure wrapper for function with 1 argument.
 		/// </summary>
-		private void createPureWrapper1(MethodEntity wrapper, string pureName)
+		private void CreatePureWrapper1(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 			var argName = wrapper.Arguments[0].Name;
@@ -258,7 +258,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a pure wrapper for function with 2 and more arguments.
 		/// </summary>
-		private void createPureWrapperMany(MethodEntity wrapper, string pureName)
+		private void CreatePureWrapperMany(MethodEntity wrapper, string pureName)
 		{
 			var args = wrapper.GetArgumentTypes(Context);
 

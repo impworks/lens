@@ -18,7 +18,7 @@ namespace Lens
 	{
 		public LensCompiler(LensCompilerOptions opts = null)
 		{
-			_Context = new Context(opts);
+			_context = new Context(opts);
 			Measurements = new Dictionary<string, TimeSpan>();
 		}
 
@@ -32,7 +32,7 @@ namespace Lens
 		/// <summary>
 		/// The main context class.
 		/// </summary>
-		private readonly Context _Context;
+		private readonly Context _context;
 
 		#endregion
 
@@ -44,7 +44,7 @@ namespace Lens
 		/// <param name="asm"></param>
 		public void RegisterAssembly(Assembly asm)
 		{
-			_Context.RegisterAssembly(asm);
+			_context.RegisterAssembly(asm);
 		}
 
 		/// <summary>
@@ -63,7 +63,7 @@ namespace Lens
 			if (type == null)
 				throw new ArgumentNullException("type");
 
-			_Context.ImportType(alias, type);
+			_context.ImportType(alias, type);
 		}
 
 		/// <summary>
@@ -71,7 +71,7 @@ namespace Lens
 		/// </summary>
 		public void RegisterFunction(string name, MethodInfo method)
 		{
-			_Context.ImportFunction(name, method);
+			_context.ImportFunction(name, method);
 		}
 
 		/// <summary>
@@ -82,7 +82,7 @@ namespace Lens
 		/// <param name="newName">The new name of the methods that will be available in the LENS script. Equals the source name by default.</param>
 		public void RegisterFunctionOverloads(Type type, string name, string newName = null)
 		{
-			_Context.ImportFunctionOverloads(type, name, newName);
+			_context.ImportFunctionOverloads(type, name, newName);
 		}
 
 		/// <summary>
@@ -90,7 +90,7 @@ namespace Lens
 		/// </summary>
 		public void RegisterProperty<T>(string name, Func<T> getter, Action<T> setter = null)
 		{
-			_Context.ImportProperty(name, getter, setter);
+			_context.ImportProperty(name, getter, setter);
 		}
 
 		/// <summary>
@@ -100,9 +100,9 @@ namespace Lens
 		{
 			try
 			{
-				var lexer = measure(() => new LensLexer(src), "Lexer");
-				var parser = measure(() => new LensParser(lexer.Lexems), "Parser");
-				var λ = measure(() => Compile(parser.Nodes), "Compiler");
+				var lexer = Measure(() => new LensLexer(src), "Lexer");
+				var parser = Measure(() => new LensParser(lexer.Lexems), "Parser");
+				var λ = Measure(() => Compile(parser.Nodes), "Compiler");
 				return λ;
 			}
 			catch (LensCompilerException)
@@ -120,7 +120,7 @@ namespace Lens
 		/// </summary>
 		internal Func<object> Compile(IEnumerable<NodeBase> nodes)
 		{
-			var script = _Context.Compile(nodes);
+			var script = _context.Compile(nodes);
 			return script.Run;
 		}
 
@@ -148,13 +148,13 @@ namespace Lens
 		/// Prints out debug information about compilation stage timing if Options.DebugOutput flag is set.
 		/// </summary>
 		[DebuggerStepThrough]
-		private T measure<T>(Func<T> action, string title)
+		private T Measure<T>(Func<T> action, string title)
 		{
 			var start = DateTime.Now;
 			var res = action();
 			var end = DateTime.Now;
 
-			if (_Context.Options.MeasureTime)
+			if (_context.Options.MeasureTime)
 				Measurements[title] = end - start;
 
 			return res;
@@ -166,7 +166,7 @@ namespace Lens
 
 		public void Dispose()
 		{
-			GlobalPropertyHelper.UnregisterContext(_Context.ContextId);
+			GlobalPropertyHelper.UnregisterContext(_context.ContextId);
 		}
 
 		#endregion

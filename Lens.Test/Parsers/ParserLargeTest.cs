@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Lens.Test.Parsers
 {
 	[TestFixture]
-	class LargeSnippets : TestBase
+	internal class LargeSnippets : TestBase
 	{
 		[Test]
 		public void GraphicScript1()

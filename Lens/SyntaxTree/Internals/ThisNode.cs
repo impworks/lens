@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.Internals
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(ctx.CurrentMethod.IsStatic)
-				error("Cannot access self-reference in static context!");
+				Error("Cannot access self-reference in static context!");
 
 			return ctx.CurrentType.TypeBuilder;
 		}
@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Internals
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			gen.EmitLoadArgument(0);

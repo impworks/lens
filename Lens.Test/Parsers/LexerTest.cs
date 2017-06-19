@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Lens.Test.Parsers
 {
 	[TestFixture]
-	class LexerTest
+	internal class LexerTest
 	{
 		[Test]
 		public void StartNewlines()
@@ -23,7 +23,7 @@ let a = 1";
 				LexemType.Identifier,
 				LexemType.Assign,
 				LexemType.Int,
-				LexemType.EOF
+				LexemType.Eof
 			);
 		}
 
@@ -41,7 +41,7 @@ let a = 1";
 				LexemType.Identifier,
 				LexemType.Assign,
 				LexemType.Int,
-				LexemType.EOF
+				LexemType.Eof
 			);
 		}
 
@@ -62,7 +62,7 @@ b = 2";
 				LexemType.Identifier,
 				LexemType.Assign,
 				LexemType.Int,
-				LexemType.EOF
+				LexemType.Eof
 			);
 		}
 

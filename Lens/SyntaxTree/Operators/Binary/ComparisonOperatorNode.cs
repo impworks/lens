@@ -68,7 +68,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			}
 		}
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new ComparisonOperatorNode(Kind) { LeftOperand = left, RightOperand = right };
         }
@@ -77,19 +77,19 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
-			return canCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
+			return CanCompare(leftType, rightType, isEquality) ? typeof (bool) : null;
 		}
 
 		/// <summary>
 		/// Checks if two types can be compared.
 		/// </summary>
-		private bool canCompare(Type left, Type right, bool equalityOnly)
+		private bool CanCompare(Type left, Type right, bool equalityOnly)
 		{
 			// there's an overridden method
-			if (_OverloadedMethod != null)
+			if (OverloadedMethod != null)
 				return true;
 
 			// string .. string
@@ -127,25 +127,25 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			var leftType = LeftOperand.Resolve(ctx);
 			var rightType = RightOperand.Resolve(ctx);
 			var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
-			if(!canCompare(leftType, rightType, isEquality))
-				error(CompilerMessages.TypesIncomparable, leftType, rightType);
+			if(!CanCompare(leftType, rightType, isEquality))
+				Error(CompilerMessages.TypesIncomparable, leftType, rightType);
 
 			if (isEquality)
-				emitEqualityComparison(ctx, leftType, rightType);
+				EmitEqualityComparison(ctx, leftType, rightType);
 			else
-				emitRelation(ctx, leftType, rightType);
+				EmitRelation(ctx, leftType, rightType);
 		}
 
 		/// <summary>
 		/// Emits code for equality and inequality comparison.
 		/// </summary>
-		private void emitEqualityComparison(Context ctx, Type left, Type right)
+		private void EmitEqualityComparison(Context ctx, Type left, Type right)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -159,7 +159,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 				gen.EmitCall(method);
 
 				if (Kind == ComparisonOperatorKind.NotEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 
 				return;
 			}
@@ -174,13 +174,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 				}
 				else
 				{
-					loadAndConvertNumerics(ctx);
+					LoadAndConvertNumerics(ctx);
 				}
 
 				gen.EmitCompareEqual();
 
 				if(Kind == ComparisonOperatorKind.NotEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 
 				return;
 			}
@@ -189,9 +189,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 			if (left.IsNullableType())
 			{
 				if(left == right || Nullable.GetUnderlyingType(left) == right)
-					emitNullableComparison(ctx, LeftOperand, RightOperand);
+					EmitNullableComparison(ctx, LeftOperand, RightOperand);
 				else if(right == typeof(NullType))
-					emitHasValueCheck(ctx, LeftOperand);
+					EmitHasValueCheck(ctx, LeftOperand);
 
 				return;
 			}
@@ -199,9 +199,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 			if (right.IsNullableType())
 			{
 				if (Nullable.GetUnderlyingType(right) == left)
-					emitNullableComparison(ctx, RightOperand, LeftOperand);
+					EmitNullableComparison(ctx, RightOperand, LeftOperand);
 				else if (left == typeof(NullType))
-					emitHasValueCheck(ctx, RightOperand);
+					EmitHasValueCheck(ctx, RightOperand);
 
 				return;
 			}
@@ -214,7 +214,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 				gen.EmitCompareEqual();
 
 				if (Kind == ComparisonOperatorKind.NotEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 
 				return;
 			}
@@ -229,7 +229,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 				gen.EmitCall(equals.MethodInfo);
 
 				if (Kind == ComparisonOperatorKind.NotEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 
 				return;
 			}
@@ -240,7 +240,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Emits code for comparing a nullable 
 		/// </summary>
-		private void emitNullableComparison(Context ctx, NodeBase nullValue, NodeBase otherValue)
+		private void EmitNullableComparison(Context ctx, NodeBase nullValue, NodeBase otherValue)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -299,7 +299,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			}
 
 			if(Kind == ComparisonOperatorKind.NotEquals)
-				emitInversion(gen);
+				EmitInversion(gen);
 
 			gen.EmitJump(endLabel);
 
@@ -312,7 +312,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Checks if the nullable expression is null.
 		/// </summary>
-		private void emitHasValueCheck(Context ctx, NodeBase nullValue)
+		private void EmitHasValueCheck(Context ctx, NodeBase nullValue)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var nullType = nullValue.Resolve(ctx);
@@ -327,13 +327,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 			// sic! get_HasValue == true when value != null
 			if(Kind == ComparisonOperatorKind.Equals)
-				emitInversion(gen);
+				EmitInversion(gen);
 		}
 
 		/// <summary>
 		/// Emits code for inverting the relation.
 		/// </summary>
-		private void emitInversion(ILGenerator gen)
+		private void EmitInversion(ILGenerator gen)
 		{
 			gen.EmitConstant(false);
 			gen.EmitCompareEqual();
@@ -342,7 +342,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Emits code for relation comparison: greater, less, etc.
 		/// </summary>
-		private void emitRelation(Context ctx, Type left, Type right)
+		private void EmitRelation(Context ctx, Type left, Type right)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -360,30 +360,30 @@ namespace Lens.SyntaxTree.Operators.Binary
 					gen.EmitConstant(-1);
 					gen.EmitCompareEqual();
 					if (Kind == ComparisonOperatorKind.GreaterEquals)
-						emitInversion(gen);
+						EmitInversion(gen);
 				}
 				else
 				{
 					gen.EmitConstant(1);
 					gen.EmitCompareEqual();
 					if (Kind == ComparisonOperatorKind.LessEquals)
-						emitInversion(gen);
+						EmitInversion(gen);
 				}
 			}
 
 			// numeric comparison
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			if (Kind.IsAnyOf(ComparisonOperatorKind.Less, ComparisonOperatorKind.GreaterEquals))
 			{
 				gen.EmitCompareLess();
 				if (Kind == ComparisonOperatorKind.GreaterEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 			}
 			else
 			{
 				gen.EmitCompareGreater();
 				if (Kind == ComparisonOperatorKind.LessEquals)
-					emitInversion(gen);
+					EmitInversion(gen);
 			}
 		}
 
@@ -391,7 +391,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			switch (Kind)
 			{

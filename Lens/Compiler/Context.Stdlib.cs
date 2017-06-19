@@ -8,20 +8,20 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Initializes the standard library.
 		/// </summary>
-		private void initStdlib()
+		private void InitStdlib()
 		{
-			importOverloads(typeof(Utilities), "Times", "times");
+			ImportOverloads(typeof(Utilities), "Times", "times");
 			importFunction("fail", typeof(Utilities).GetMethod("FailWith"));
 
-			importOverloads(typeof(string), "Format", "fmt");
-			importOverloads(typeof(Console), "Write", "print");
-			importOverloads(typeof(Console), "WriteLine", "println");
+			ImportOverloads(typeof(string), "Format", "fmt");
+			ImportOverloads(typeof(Console), "Write", "print");
+			ImportOverloads(typeof(Console), "WriteLine", "println");
 
-			importOverloads(typeof(Randomizer), "Random", "rand");
-			importOverloads(typeof(Utilities), "Range", "to");
-			importOverloads(typeof(Utilities), "Clamp", "clamp");
-			importOverloads(typeof(Utilities), "Odd", "odd");
-			importOverloads(typeof(Utilities), "Even", "even");
+			ImportOverloads(typeof(Randomizer), "Random", "rand");
+			ImportOverloads(typeof(Utilities), "Range", "to");
+			ImportOverloads(typeof(Utilities), "Clamp", "clamp");
+			ImportOverloads(typeof(Utilities), "Odd", "odd");
+			ImportOverloads(typeof(Utilities), "Even", "even");
 
 			importFunction("read", typeof(Console).GetMethod("Read"));
 			importFunction("readln", typeof(Console).GetMethod("ReadLine"));

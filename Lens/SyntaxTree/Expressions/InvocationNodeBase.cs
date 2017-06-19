@@ -34,12 +34,12 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Cached callable entity wrapper.
 		/// </summary>
-		protected abstract CallableWrapperBase _Wrapper { get; }
+		protected abstract CallableWrapperBase Wrapper { get; }
 
 		/// <summary>
 		/// Cached list of argument expression types.
 		/// </summary>
-		protected Type[] _ArgTypes;
+		protected Type[] ArgTypes;
 
 		#endregion
 
@@ -56,11 +56,11 @@ namespace Lens.SyntaxTree.Expressions
 				return arg.Resolve(ctx);
 			};
 				
-			_ArgTypes = Arguments.Select(typeGetter).ToArray();
+			ArgTypes = Arguments.Select(typeGetter).ToArray();
 
 			// discard 'unit' pseudoargument
-			if (_ArgTypes.Length == 1 && _ArgTypes[0] == typeof (UnitType))
-				_ArgTypes = Type.EmptyTypes;
+			if (ArgTypes.Length == 1 && ArgTypes[0] == typeof (UnitType))
+				ArgTypes = Type.EmptyTypes;
 
 			// prepares arguments only
 			return null;
@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			for (var idx = 0; idx < Arguments.Count; idx++)
 			{
@@ -82,21 +82,21 @@ namespace Lens.SyntaxTree.Expressions
 			}
 		}
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			if (_Wrapper.IsPartiallyApplied)
+			if (Wrapper.IsPartiallyApplied)
 			{
 				// (expr) _ a b _
 				// is transformed into
 				// (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
 				var argDefs = new List<FunctionArgument>();
 				var argExprs = new List<NodeBase>();
-				for (var idx = 0; idx < _ArgTypes.Length; idx++)
+				for (var idx = 0; idx < ArgTypes.Length; idx++)
 				{
-					if (_ArgTypes[idx] == typeof(UnspecifiedType))
+					if (ArgTypes[idx] == typeof(UnspecifiedType))
 					{
 						var argName = ctx.Unique.AnonymousArgName();
-						argDefs.Add(Expr.Arg(argName, _Wrapper.ArgumentTypes[idx].FullName));
+						argDefs.Add(Expr.Arg(argName, Wrapper.ArgumentTypes[idx].FullName));
 						argExprs.Add(Expr.Get(argName));
 					}
 					else
@@ -105,13 +105,13 @@ namespace Lens.SyntaxTree.Expressions
 					}
 				}
 
-				return Expr.Lambda(argDefs, recreateSelfWithArgs(argExprs));
+				return Expr.Lambda(argDefs, RecreateSelfWithArgs(argExprs));
 			}
 
-			if (_Wrapper.IsVariadic)
+			if (Wrapper.IsVariadic)
 			{
-				var srcTypes = _ArgTypes;
-				var dstTypes = _Wrapper.ArgumentTypes;
+				var srcTypes = ArgTypes;
+				var dstTypes = Wrapper.ArgumentTypes;
 				var lastDst = dstTypes[dstTypes.Length - 1];
 				var lastSrc = srcTypes[srcTypes.Length - 1];
 
@@ -124,17 +124,17 @@ namespace Lens.SyntaxTree.Expressions
 					var elemType = lastDst.GetElementType();
 					var simpleArgs = Arguments.Take(dstTypes.Length - 1);
 					var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
-					return recreateSelfWithArgs(simpleArgs.Union(new[] { combined }));
+					return RecreateSelfWithArgs(simpleArgs.Union(new[] { combined }));
 				}
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		/// <summary>
 		/// Creates a similar instance of invocation node descendant with replaced arguments list.
 		/// </summary>
-		protected abstract InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
+		protected abstract InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs);
 
 		#endregion
 
@@ -143,7 +143,7 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Resolves the expression type in case of partial application.
 		/// </summary>
-		protected static Type resolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
+		protected static Type ResolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
 		{
 			if (!wrapper.IsPartiallyApplied)
 				return returnType;
@@ -161,17 +161,17 @@ namespace Lens.SyntaxTree.Expressions
 		/// <summary>
 		/// Apply inferred types to untyped lambda arguments.
 		/// </summary>
-		protected void applyLambdaArgTypes(Context ctx)
+		protected void ApplyLambdaArgTypes(Context ctx)
 		{
-			for (var idx = 0; idx < _ArgTypes.Length; idx++)
+			for (var idx = 0; idx < ArgTypes.Length; idx++)
 			{
-				if (!_ArgTypes[idx].IsLambdaType())
+				if (!ArgTypes[idx].IsLambdaType())
 					continue;
 
 				var lambda = (LambdaNode) Arguments[idx];
 				if (lambda.MustInferArgTypes)
 				{
-					var actualWrapper = ReflectionHelper.WrapDelegate(_Wrapper.ArgumentTypes[idx]);
+					var actualWrapper = ReflectionHelper.WrapDelegate(Wrapper.ArgumentTypes[idx]);
 					lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
 					lambda.Resolve(ctx);
 				}

@@ -12,10 +12,10 @@ namespace Lens.SyntaxTree.Internals
 
 		public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
 		{
-			_Event = evt;
-			_IsSubscription = isSubscription;
-			_Node = node;
-			_Callback = Expr.CastTransparent(node.Value, _Event.EventHandlerType);
+			_event = evt;
+			_isSubscription = isSubscription;
+			_node = node;
+			_callback = Expr.CastTransparent(node.Value, _event.EventHandlerType);
 		}
 
 		#endregion
@@ -25,48 +25,48 @@ namespace Lens.SyntaxTree.Internals
 		/// <summary>
 		/// Node containing the event expression and name.
 		/// </summary>
-		private readonly SetMemberNode _Node;
+		private readonly SetMemberNode _node;
 
 		/// <summary>
 		/// Callback expression to bind to event.
 		/// </summary>
-		private NodeBase _Callback;
+		private NodeBase _callback;
 
 		/// <summary>
 		/// Flag indicating that the 
 		/// </summary>
-		private readonly bool _IsSubscription;
+		private readonly bool _isSubscription;
 
 		/// <summary>
 		/// The event entity.
 		/// </summary>
-		private readonly EventWrapper _Event;
+		private readonly EventWrapper _event;
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
-			yield return new NodeChild(_Callback, x => _Callback = x);
+			yield return new NodeChild(_callback, x => _callback = x);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			if (_Node.Expression != null)
+			if (_node.Expression != null)
 			{
-				_Node.Expression.EmitNodeForAccess(ctx);
+				_node.Expression.EmitNodeForAccess(ctx);
 			}
 
-			_Callback.Emit(ctx, true);
+			_callback.Emit(ctx, true);
 
-			var method = _IsSubscription ? _Event.AddMethod : _Event.RemoveMethod;
+			var method = _isSubscription ? _event.AddMethod : _event.RemoveMethod;
 			gen.EmitCall(method, true);
 		}
 

@@ -48,9 +48,9 @@ namespace Lens.Resolver
 
 		public TypeResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
-			_Cache = new Dictionary<string, Type>();
-			_Namespaces = namespaces;
-			_AsmCache = asmCache;
+			_cache = new Dictionary<string, Type>();
+			_namespaces = namespaces;
+			_asmCache = asmCache;
 		}
 
 		#endregion
@@ -70,17 +70,17 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Cached list of already resolved types.
 		/// </summary>
-		private readonly Dictionary<string, Type> _Cache;
+		private readonly Dictionary<string, Type> _cache;
 
 		/// <summary>
 		/// List of namespaces to check when finding the type.
 		/// </summary>
-		private readonly Dictionary<string, bool> _Namespaces;
+		private readonly Dictionary<string, bool> _namespaces;
 
 		/// <summary>
 		/// List of referenced assemblies.
 		/// </summary>
-		private readonly ReferencedAssemblyCache _AsmCache;
+		private readonly ReferencedAssemblyCache _asmCache;
 
 		/// <summary>
 		/// The method that allows external types to be looked up.
@@ -97,12 +97,12 @@ namespace Lens.Resolver
 		public Type ResolveType(TypeSignature signature)
 		{
 			Type cached;
-			if (_Cache.TryGetValue(signature.FullSignature, out cached))
+			if (_cache.TryGetValue(signature.FullSignature, out cached))
 				return cached;
 
-			var type = parseTypeSignature(signature);
+			var type = ParseTypeSignature(signature);
 			if (type != null)
-				_Cache.Add(signature.FullSignature, type);
+				_cache.Add(signature.FullSignature, type);
 
 			return type;
 		}
@@ -114,12 +114,12 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Parses the type signature.
 		/// </summary>
-		private Type parseTypeSignature(TypeSignature signature)
+		private Type ParseTypeSignature(TypeSignature signature)
 		{
 			try
 			{
 				if (!string.IsNullOrEmpty(signature.Postfix))
-					return processPostfix(parseTypeSignature(signature.Arguments[0]), signature.Postfix);
+					return ProcessPostfix(ParseTypeSignature(signature.Arguments[0]), signature.Postfix);
 
 				var name = signature.Name;
 				var hasArgs = signature.Arguments != null && signature.Arguments.Length > 0;
@@ -129,9 +129,9 @@ namespace Lens.Resolver
 				if (TypeAliases.ContainsKey(name))
 					return TypeAliases[name];
 
-				var type = findType(name);
+				var type = FindType(name);
 				return hasArgs
-					? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(parseTypeSignature).ToArray())
+					? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(ParseTypeSignature).ToArray())
 					: type;
 			}
 			catch (ArgumentException ex)
@@ -143,7 +143,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Wraps a type into a specific postfix.
 		/// </summary>
-		private static Type processPostfix(Type type, string postfix)
+		private static Type ProcessPostfix(Type type, string postfix)
 		{
 			if (postfix == "[]")
 				return type.MakeArrayType();
@@ -160,7 +160,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Searches for the specified type in the namespaces.
 		/// </summary>
-		private Type findType(string name)
+		private Type FindType(string name)
 		{
 			var checkNamespaces = !name.Contains('.');
 
@@ -173,9 +173,9 @@ namespace Lens.Resolver
 			
 			Type foundType = null;
 
-			foreach (var currAsm in _AsmCache.Assemblies)
+			foreach (var currAsm in _asmCache.Assemblies)
 			{
-				var namespaces = checkNamespaces ? _Namespaces.Keys : (IEnumerable<string>)new [] { string.Empty };
+				var namespaces = checkNamespaces ? _namespaces.Keys : (IEnumerable<string>)new [] { string.Empty };
 				if (checkNamespaces)
 				{
 					List<string> extras;

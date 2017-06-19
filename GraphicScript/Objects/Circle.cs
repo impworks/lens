@@ -11,12 +11,12 @@ namespace GraphicScript.Objects
 			Radius = 50;
 		}
 
-		protected override Shape createShape()
+		protected override Shape CreateShape()
 		{
 			return new Ellipse();
 		}
 
-		protected override void updateShape()
+		protected override void UpdateShape()
 		{
 			Shape.Width = Shape.Height = Radius;
 		}

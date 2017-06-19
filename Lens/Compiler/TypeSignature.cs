@@ -21,7 +21,7 @@ namespace Lens.Compiler
 			Name = name;
 			Arguments = args.Length > 0 ? args : null;
 			Postfix = postfix;
-			FullSignature = getSignature(name, args);
+			FullSignature = GetSignature(name, args);
 		}
 
 		#endregion
@@ -31,7 +31,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// List of available postfixes.
 		/// </summary>
-		private static string[] _Postfixes = { "[]", "?", "~" };
+		private static string[] _postfixes = { "[]", "?", "~" };
 
 		#endregion
 
@@ -80,7 +80,7 @@ namespace Lens.Compiler
 			if(signature[0] == ' ' || signature[signature.Length - 1] == ' ')
 				signature = signature.Trim();
 
-			foreach (var postfix in _Postfixes)
+			foreach (var postfix in _postfixes)
 				if (signature.EndsWith(postfix))
 					return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
 
@@ -89,7 +89,7 @@ namespace Lens.Compiler
 				return new TypeSignature(signature);
 
 			var close = signature.LastIndexOf('>');
-			var args = parseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
+			var args = ParseTypeArgs(signature.Substring(open + 1, close - open - 1)).ToArray();
 			var typeName = signature.Substring(0, open);
 
 			return new TypeSignature(typeName, args);
@@ -102,7 +102,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Builds the full string representation of the signature tree.
 		/// </summary>
-		private string getSignature(string name, TypeSignature[] args)
+		private string GetSignature(string name, TypeSignature[] args)
 		{
 			if (args.Length == 0)
 				return name;
@@ -132,7 +132,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Parses out the list of generic type arguments delimited by commas.
 		/// </summary>
-		private static IEnumerable<TypeSignature> parseTypeArgs(string args)
+		private static IEnumerable<TypeSignature> ParseTypeArgs(string args)
 		{
 			var depth = 0;
 			var start = 0;

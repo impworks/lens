@@ -25,12 +25,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Fields
 
-		private Type _Type;
-		private FieldWrapper _Field;
-		private MethodWrapper _Method;
-		private PropertyWrapper _Property;
+		private Type _type;
+		private FieldWrapper _field;
+		private MethodWrapper _method;
+		private PropertyWrapper _property;
 
-		private bool _IsStatic;
+		private bool _isStatic;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
@@ -46,23 +46,23 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		protected override Type resolve(Context ctx, bool mustReturn = true)
 		{
-			resolveSelf(ctx);
+			ResolveSelf(ctx);
 
-			if (_Type != null)
-				checkTypeInSafeMode(ctx, _Type);
+			if (_type != null)
+				CheckTypeInSafeMode(ctx, _type);
 
 			if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
 				return typeof (int);
 
-			if (_Field != null)
-				return _Field.FieldType;
+			if (_field != null)
+				return _field.FieldType;
 
-			if (_Property != null)
-				return _Property.PropertyType;
+			if (_property != null)
+				return _property.PropertyType;
 
-			return _Method.ReturnType.IsVoid()
-				? FunctionalHelper.CreateActionType(_Method.ArgumentTypes)
-				: FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.ArgumentTypes);
+			return _method.ReturnType.IsVoid()
+				? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
+				: FunctionalHelper.CreateFuncType(_method.ReturnType, _method.ArgumentTypes);
 		}
 
 		/// <summary>
@@ -72,23 +72,23 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// The following fields are also set:
 		/// _Type, _Static
 		/// </summary>
-		private void resolveSelf(Context ctx)
+		private void ResolveSelf(Context ctx)
 		{
 			Action check = () =>
 			{
-				if (Expression == null && !_IsStatic)
-					error(CompilerMessages.DynamicMemberFromStaticContext, _Type, MemberName);
+				if (Expression == null && !_isStatic)
+					Error(CompilerMessages.DynamicMemberFromStaticContext, _type, MemberName);
 
-				if (_Method == null && TypeHints.Count > 0)
-					error(CompilerMessages.TypeArgumentsForNonMethod, _Type, MemberName);
+				if (_method == null && TypeHints.Count > 0)
+					Error(CompilerMessages.TypeArgumentsForNonMethod, _type, MemberName);
 			};
 
-			_Type = StaticType != null
+			_type = StaticType != null
 				? ctx.ResolveType(StaticType)
 				: Expression.Resolve(ctx);
 
 			// special case: array length
-			if (_Type.IsArray && MemberName == "Length")
+			if (_type.IsArray && MemberName == "Length")
 			{
 				check();
 				return;
@@ -97,8 +97,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			// check for field
 			try
 			{
-				_Field = ctx.ResolveField(_Type, MemberName);
-				_IsStatic = _Field.IsStatic;
+				_field = ctx.ResolveField(_type, MemberName);
+				_isStatic = _field.IsStatic;
 
 				check();
 				return;
@@ -108,12 +108,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			// check for property
 			try
 			{
-				_Property = ctx.ResolveProperty(_Type, MemberName);
+				_property = ctx.ResolveProperty(_type, MemberName);
 
-				if(!_Property.CanGet)
-					error(CompilerMessages.PropertyNoGetter, _Type, MemberName);
+				if(!_property.CanGet)
+					Error(CompilerMessages.PropertyNoGetter, _type, MemberName);
 
-				_IsStatic = _Property.IsStatic;
+				_isStatic = _property.IsStatic;
 
 				check();
 				return;
@@ -123,31 +123,31 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			// check for event: events are only allowed at the left side of += and -=
 			try
 			{
-				ctx.ResolveEvent(_Type, MemberName);
-				error(CompilerMessages.EventAsExpr);
+				ctx.ResolveEvent(_type, MemberName);
+				Error(CompilerMessages.EventAsExpr);
 			}
 			catch (KeyNotFoundException) { }
 
 			// find method
 			var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
-			var methods = ctx.ResolveMethodGroup(_Type, MemberName).Where(m => checkMethodArgs(argTypes, m)).ToArray();
+			var methods = ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
 
 			if (methods.Length == 0)
-				error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, _Type.Name, MemberName);
+				Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, _type.Name, MemberName);
 
 			if (methods.Length > 1)
-				error(CompilerMessages.TypeMethodAmbiguous, _Type.Name, MemberName);
+				Error(CompilerMessages.TypeMethodAmbiguous, _type.Name, MemberName);
 
-			_Method = methods[0];
-			if (_Method.ArgumentTypes.Length > 16)
-				error(CompilerMessages.CallableTooManyArguments);
+			_method = methods[0];
+			if (_method.ArgumentTypes.Length > 16)
+				Error(CompilerMessages.CallableTooManyArguments);
 
-			_IsStatic = _Method.IsStatic;
+			_isStatic = _method.IsStatic;
 
 			check();
 		}
 
-		private static bool checkMethodArgs(Type[] argTypes, MethodWrapper method)
+		private static bool CheckMethodArgs(Type[] argTypes, MethodWrapper method)
 		{
 			if(argTypes.Length == 0)
 				return true;
@@ -162,7 +162,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
@@ -171,11 +171,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			
-			if (!_IsStatic)
+			if (!_isStatic)
 			{
 				Expression.EmitNodeForAccess(ctx);
 
@@ -186,27 +186,27 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				}
 			}
 
-			if (_Field != null)
-				emitField(gen);
+			if (_field != null)
+				EmitField(gen);
 
-			else if (_Property != null)
-				emitProperty(ctx, gen);
+			else if (_property != null)
+				EmitProperty(ctx, gen);
 
-			if (_Method != null)
-				emitMethod(ctx, gen);
+			if (_method != null)
+				EmitMethod(ctx, gen);
 		}
 
 		/// <summary>
 		/// Emits code for loading a field (possibly constant).
 		/// </summary>
-		private void emitField(ILGenerator gen)
+		private void EmitField(ILGenerator gen)
 		{
-			if (_Field.IsLiteral)
+			if (_field.IsLiteral)
 			{
-				var fieldType = _Field.FieldType;
+				var fieldType = _field.FieldType;
 				var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
 
-				var value = _Field.FieldInfo.GetValue(null);
+				var value = _field.FieldInfo.GetValue(null);
 
 				if (dataType == typeof(int))
 					gen.EmitConstant((int)value);
@@ -237,23 +237,23 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			}
 			else
 			{
-				gen.EmitLoadField(_Field.FieldInfo, PointerRequired || RefArgumentRequired);
+				gen.EmitLoadField(_field.FieldInfo, PointerRequired || RefArgumentRequired);
 			}
 		}
 
 		/// <summary>
 		/// Emits code for loading a property value.
 		/// </summary>
-		private void emitProperty(Context ctx, ILGenerator gen)
+		private void EmitProperty(Context ctx, ILGenerator gen)
 		{
-			if (_Property.PropertyType.IsValueType && RefArgumentRequired)
-				error(CompilerMessages.PropertyValuetypeRef, _Property.Type, MemberName, _Property.PropertyType);
+			if (_property.PropertyType.IsValueType && RefArgumentRequired)
+				Error(CompilerMessages.PropertyValuetypeRef, _property.Type, MemberName, _property.PropertyType);
 
-			gen.EmitCall(_Property.Getter, _Property.IsVirtual);
+			gen.EmitCall(_property.Getter, _property.IsVirtual);
 
 			if (PointerRequired)
 			{
-				var tmpVar = ctx.Scope.DeclareImplicit(ctx, _Property.PropertyType, false);
+				var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType, false);
 				gen.EmitSaveLocal(tmpVar.LocalBuilder);
 				gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 			}
@@ -262,21 +262,21 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Emits code for getting the method as a delegate instance.
 		/// </summary>
-		private void emitMethod(Context ctx, ILGenerator gen)
+		private void EmitMethod(Context ctx, ILGenerator gen)
 		{
 			if (RefArgumentRequired)
-				error(CompilerMessages.MethodRef);
+				Error(CompilerMessages.MethodRef);
 
-			if (_IsStatic)
+			if (_isStatic)
 				gen.EmitNull();
 
-			var retType = _Method.ReturnType;
+			var retType = _method.ReturnType;
 			var type = retType.IsVoid()
-				? FunctionalHelper.CreateActionType(_Method.ArgumentTypes)
-				: FunctionalHelper.CreateFuncType(retType, _Method.ArgumentTypes);
+				? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
+				: FunctionalHelper.CreateFuncType(retType, _method.ArgumentTypes);
 
 			var ctor = ctx.ResolveConstructor(type, new [] { typeof(object), typeof(IntPtr) });
-			gen.EmitLoadFunctionPointer(_Method.MethodInfo);
+			gen.EmitLoadFunctionPointer(_method.MethodInfo);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 

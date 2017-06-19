@@ -14,9 +14,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 	{
 		#region Fields
 
-		private bool _IsStatic;
-		private PropertyWrapper _Property;
-		private FieldWrapper _Field;
+		private bool _isStatic;
+		private PropertyWrapper _property;
+		private FieldWrapper _field;
 
 		/// <summary>
 		/// Value to be assigned.
@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
-			resolveSelf(ctx);
+			ResolveSelf(ctx);
 
 			return typeof (UnitType);
 		}
@@ -37,55 +37,55 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Attempts to resolve member reference to a field or a property.
 		/// </summary>
-		private void resolveSelf(Context ctx)
+		private void ResolveSelf(Context ctx)
 		{
 			var type = StaticType != null
 				? ctx.ResolveType(StaticType)
 				: Expression.Resolve(ctx);
 
-			checkTypeInSafeMode(ctx, type);
+			CheckTypeInSafeMode(ctx, type);
 
 			// check for field
 			try
 			{
-				_Field = ctx.ResolveField(type, MemberName);
-				_IsStatic = _Field.IsStatic;
-				if (Expression == null && !_IsStatic)
-					error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
+				_field = ctx.ResolveField(type, MemberName);
+				_isStatic = _field.IsStatic;
+				if (Expression == null && !_isStatic)
+					Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 			}
 			catch (KeyNotFoundException)
 			{
 				try
 				{
-					_Property = ctx.ResolveProperty(type, MemberName);
-					if (!_Property.CanSet)
-						error(CompilerMessages.PropertyNoSetter, MemberName, type);
+					_property = ctx.ResolveProperty(type, MemberName);
+					if (!_property.CanSet)
+						Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
-					_IsStatic = _Property.IsStatic;
-					if (Expression == null && !_IsStatic)
-						error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
+					_isStatic = _property.IsStatic;
+					if (Expression == null && !_isStatic)
+						Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
 				}
 				catch (KeyNotFoundException)
 				{
-					error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
+					Error(CompilerMessages.TypeSettableIdentifierNotFound, type, MemberName);
 				}
 			}
 
-			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
-			ensureLambdaInferred(ctx, Value, destType);
+			var destType = _field != null ? _field.FieldType : _property.PropertyType;
+			EnsureLambdaInferred(ctx, Value, destType);
 
 			var valType = Value.Resolve(ctx);
 			ctx.CheckTypedExpression(Value, valType, true);
 
 			if (!destType.IsExtendablyAssignableFrom(valType))
-				error(CompilerMessages.ImplicitCastImpossible, valType, destType);
+				Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Value, x => Value = x);
@@ -95,13 +95,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			var destType = _Field != null ? _Field.FieldType : _Property.PropertyType;
+			var destType = _field != null ? _field.FieldType : _property.PropertyType;
 
-			if (!_IsStatic)
+			if (!_isStatic)
 			{
 				var exprType = Expression.Resolve(ctx);
 				if (Expression is IPointerProvider && exprType.IsStruct())
@@ -112,10 +112,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 			Expr.Cast(Value, destType).Emit(ctx, true);
 
-			if (_Field != null)
-				gen.EmitSaveField(_Field.FieldInfo);
+			if (_field != null)
+				gen.EmitSaveField(_field.FieldInfo);
 			else
-				gen.EmitCall(_Property.Setter, true);
+				gen.EmitCall(_property.Setter, true);
 		}
 
 		#endregion

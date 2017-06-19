@@ -10,17 +10,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "-"; }
-		}
+		protected override string OperatorRepresentation => "-";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Subtraction"; }
-		}
+	    protected override string OverloadedMethodName => "op_Subtraction";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new SubtractOperatorNode { LeftOperand = left, RightOperand = right };
         }
@@ -29,7 +23,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
 		}
@@ -38,7 +32,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
@@ -46,16 +40,16 @@ namespace Lens.SyntaxTree.Operators.Binary
 					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitSubtract();
 		}
 
@@ -63,7 +57,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			if (left is string && right is string)
 				return left.Replace(right, "");

@@ -53,7 +53,7 @@ namespace Lens.Test
 
         protected void TestConfigured(Action<LensCompiler> setup, string src, object value)
         {
-            var compiler = createCompiler(new LensCompilerOptions { AllowSave = false });
+            var compiler = CreateCompiler(new LensCompilerOptions { AllowSave = false });
             setup(compiler);
 
             var actualValue = compiler.Run(src);
@@ -62,7 +62,7 @@ namespace Lens.Test
 
         protected void TestErrorConfigured(Action<LensCompiler> setup, string src, string msg)
         {
-            var compiler = createCompiler(new LensCompilerOptions { AllowSave = false });
+            var compiler = CreateCompiler(new LensCompilerOptions { AllowSave = false });
             var exception = Assert.Throws<LensCompilerException>(() =>
             {
                 setup(compiler);
@@ -94,15 +94,15 @@ namespace Lens.Test
 
         protected static object Compile(string src, LensCompilerOptions opts = null)
         {
-            return createCompiler(opts).Run(src);
+            return CreateCompiler(opts).Run(src);
         }
 
         protected static object Compile(IEnumerable<NodeBase> nodes, LensCompilerOptions opts = null)
         {
-            return createCompiler(opts).Run(nodes);
+            return CreateCompiler(opts).Run(nodes);
         }
 
-        protected static LensCompiler createCompiler(LensCompilerOptions opts)
+        protected static LensCompiler CreateCompiler(LensCompilerOptions opts)
         {
             var compiler = new LensCompiler(opts ?? new LensCompilerOptions { AllowSave = true });
             compiler.RegisterAssembly(Assembly.Load("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));

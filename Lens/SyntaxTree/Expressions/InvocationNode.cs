@@ -33,22 +33,22 @@ namespace Lens.SyntaxTree.Expressions
 		/// Expression to invoke the method on, if any.
 		/// Is null for functions or static methods.
 		/// </summary>
-		private NodeBase _InvocationSource;
+		private NodeBase _invocationSource;
 
 		/// <summary>
 		/// Invoked method wrapper.
 		/// </summary>
-		private MethodWrapper _Method;
+		private MethodWrapper _method;
 
 		/// <summary>
 		/// Generic wrapper implementation for base class interface (used for partial application, etc).
 		/// </summary>
-		protected override CallableWrapperBase _Wrapper { get { return _Method; } }
+		protected override CallableWrapperBase Wrapper => _method;
 
-		/// <summary>
+	    /// <summary>
 		/// Optional type hints for generic methods or delegates.
 		/// </summary>
-		private Type[] _TypeHints;
+		private Type[] _typeHints;
 
 		#endregion
 
@@ -60,53 +60,53 @@ namespace Lens.SyntaxTree.Expressions
 			base.resolve(ctx, mustReturn);
 
 			if (Expression is GetMemberNode)
-				resolveGetMember(ctx, Expression as GetMemberNode);
+				ResolveGetMember(ctx, Expression as GetMemberNode);
 			else if (Expression is GetIdentifierNode)
-				resolveGetIdentifier(ctx, Expression as GetIdentifierNode);
+				ResolveGetIdentifier(ctx, Expression as GetIdentifierNode);
 			else
-				resolveExpression(ctx, Expression);
+				ResolveExpression(ctx, Expression);
 
-			applyLambdaArgTypes(ctx);
+			ApplyLambdaArgTypes(ctx);
 
-			return resolvePartial(_Method, _Method.ReturnType, _ArgTypes);
+			return ResolvePartial(_method, _method.ReturnType, ArgTypes);
 		}
 
 		/// <summary>
 		/// Resolves the method if the expression was a member getter (obj.field or type::field).
 		/// </summary>
-		private void resolveGetMember(Context ctx, GetMemberNode node)
+		private void ResolveGetMember(Context ctx, GetMemberNode node)
 		{
-			_InvocationSource = node.Expression;
-			var type = _InvocationSource != null
-				? _InvocationSource.Resolve(ctx)
+			_invocationSource = node.Expression;
+			var type = _invocationSource != null
+				? _invocationSource.Resolve(ctx)
 				: ctx.ResolveType(node.StaticType);
 
-			checkTypeInSafeMode(ctx, type);
+			CheckTypeInSafeMode(ctx, type);
 
 			if (node.TypeHints != null && node.TypeHints.Count > 0)
-				_TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
+				_typeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
 
 			try
 			{
 				// resolve a normal method
 				try
 				{
-					_Method = ctx.ResolveMethod(
+					_method = ctx.ResolveMethod(
 						type,
 						node.MemberName,
-						_ArgTypes,
-						_TypeHints,
+						ArgTypes,
+						_typeHints,
 						(idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
 					);
 
-					if (_Method.IsStatic)
-						_InvocationSource = null;
+					if (_method.IsStatic)
+						_invocationSource = null;
 
 					return;
 				}
 				catch (KeyNotFoundException)
 				{
-					if (_InvocationSource == null)
+					if (_invocationSource == null)
 						throw;
 				}
 
@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.Expressions
 				try
 				{
 					ctx.ResolveField(type, node.MemberName);
-					resolveExpression(ctx, node);
+					ResolveExpression(ctx, node);
 					return;
 				}
 				catch (KeyNotFoundException) { }
@@ -123,26 +123,26 @@ namespace Lens.SyntaxTree.Expressions
 				try
 				{
 					ctx.ResolveProperty(type, node.MemberName);
-					resolveExpression(ctx, node);
+					ResolveExpression(ctx, node);
 					return;
 				}
 				catch (KeyNotFoundException) { }
 
 				Arguments = (Arguments[0] is UnitNode)
-					? new List<NodeBase> {_InvocationSource}
-					: new[] {_InvocationSource}.Union(Arguments).ToList();
+					? new List<NodeBase> {_invocationSource}
+					: new[] {_invocationSource}.Union(Arguments).ToList();
 
-				var oldArgTypes = _ArgTypes;
-				_ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
-				_InvocationSource = null;
+				var oldArgTypes = ArgTypes;
+				ArgTypes = Arguments.Select(a => a.Resolve(ctx)).ToArray();
+				_invocationSource = null;
 
 				try
 				{
 					// resolve a local function that is implicitly used as an extension method
-					_Method = ctx.ResolveMethod(
+					_method = ctx.ResolveMethod(
 						ctx.MainType.TypeInfo,
 						node.MemberName,
-						_ArgTypes,
+						ArgTypes,
 						resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
 					);
 
@@ -157,11 +157,11 @@ namespace Lens.SyntaxTree.Expressions
 					if(!ctx.Options.AllowExtensionMethods)
 						throw new KeyNotFoundException();
 
-					_Method = ctx.ResolveExtensionMethod(
+					_method = ctx.ResolveExtensionMethod(
 						type,
 						node.MemberName,
 						oldArgTypes,
-						_TypeHints,
+						_typeHints,
 						(idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
 					);
 				}
@@ -171,107 +171,107 @@ namespace Lens.SyntaxTree.Expressions
 						? CompilerMessages.TypeStaticMethodNotFound
 						: CompilerMessages.TypeMethodNotFound;
 
-					error(msg, type, node.MemberName);
+					Error(msg, type, node.MemberName);
 				}
 			}
 			catch (AmbiguousMatchException)
 			{
-				error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
+				Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
 			}
 		}
 
 		/// <summary>
 		/// Resolves the method as a global function, imported property or a local variable with a delegate.
 		/// </summary>
-		private void resolveGetIdentifier(Context ctx, GetIdentifierNode node)
+		private void ResolveGetIdentifier(Context ctx, GetIdentifierNode node)
 		{
 			var nameInfo = ctx.Scope.FindLocal(node.Identifier);
 			if (nameInfo != null)
 			{
-				resolveExpression(ctx, node);
+				ResolveExpression(ctx, node);
 				return;
 			}
 
 			try
 			{
-				_Method = ctx.ResolveMethod(
+				_method = ctx.ResolveMethod(
 					ctx.MainType.TypeInfo,
 					node.Identifier,
-					_ArgTypes,
+					ArgTypes,
 					resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
 				);
 
-				if (_Method == null)
+				if (_method == null)
 					throw new KeyNotFoundException();
 
-				if(_ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
-					error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
+				if(ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
+					Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
 			}
 			catch (KeyNotFoundException)
 			{
-				error(CompilerMessages.FunctionNotFound, node.Identifier);
+				Error(CompilerMessages.FunctionNotFound, node.Identifier);
 			}
 			catch (AmbiguousMatchException)
 			{
-				error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
+				Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
 			}
 		}
 
 		/// <summary>
 		/// Resolves a method from the expression, considering it an instance of a delegate type.
 		/// </summary>
-		private void resolveExpression(Context ctx, NodeBase node)
+		private void ResolveExpression(Context ctx, NodeBase node)
 		{
 			var exprType = node.Resolve(ctx);
 			if (!exprType.IsCallableType())
-				error(CompilerMessages.TypeNotCallable, exprType);
+				Error(CompilerMessages.TypeNotCallable, exprType);
 
 			try
 			{
 				// argtypes are required for partial application
-				_Method = ctx.ResolveMethod(exprType, "Invoke", _ArgTypes);
+				_method = ctx.ResolveMethod(exprType, "Invoke", ArgTypes);
 			}
 			catch (KeyNotFoundException)
 			{
 				// delegate argument types are mismatched:
 				// infer whatever method there is and detect actual error
-				_Method = ctx.ResolveMethod(exprType, "Invoke");
+				_method = ctx.ResolveMethod(exprType, "Invoke");
 
-				var argTypes = _Method.ArgumentTypes;
-				if (argTypes.Length != _ArgTypes.Length)
-					error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, _ArgTypes.Length);
+				var argTypes = _method.ArgumentTypes;
+				if (argTypes.Length != ArgTypes.Length)
+					Error(CompilerMessages.DelegateArgumentsCountMismatch, exprType, argTypes.Length, ArgTypes.Length);
 
 				for (var idx = 0; idx < argTypes.Length; idx++)
 				{
-					var fromType = _ArgTypes[idx];
+					var fromType = ArgTypes[idx];
 					var toType = argTypes[idx];
 					if (!toType.IsExtendablyAssignableFrom(fromType))
-						error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
+						Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
 				}
 			}
 
-			_InvocationSource = node;
+			_invocationSource = node;
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			if (Expression is GetMemberNode)
 			{
 				// epic kludge: had to reset previously cached InvocationSource if it is expanded
 				var getMbr = Expression as GetMemberNode;
 				if(getMbr.Expression != null)
-					yield return new NodeChild(getMbr.Expression, x => getMbr.Expression = _InvocationSource = x);
+					yield return new NodeChild(getMbr.Expression, x => getMbr.Expression = _invocationSource = x);
 			}
 			else if (!(Expression is GetIdentifierNode))
 			{
 				yield return new NodeChild(Expression, x => Expression = x);
 			}
 
-			foreach (var curr in base.getChildren())
+			foreach (var curr in base.GetChildren())
 				yield return curr;
 		}
 
@@ -291,18 +291,18 @@ namespace Lens.SyntaxTree.Expressions
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			if (_InvocationSource != null)
+			if (_invocationSource != null)
 			{
-				_InvocationSource.EmitNodeForAccess(ctx);
+				_invocationSource.EmitNodeForAccess(ctx);
 			}
 
-			if (_ArgTypes.Length > 0)
+			if (ArgTypes.Length > 0)
 			{
-				var destTypes = _Method.ArgumentTypes;
+				var destTypes = _method.ArgumentTypes;
 				for (var idx = 0; idx < Arguments.Count; idx++)
 				{
 					var arg = Arguments[idx];
@@ -312,9 +312,9 @@ namespace Lens.SyntaxTree.Expressions
 					if (argRef != targetRef)
 					{
 						if (argRef)
-							error(arg, CompilerMessages.ReferenceArgUnexpected);
+							Error(arg, CompilerMessages.ReferenceArgUnexpected);
 						else
-							error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+							Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
 					}
 
 					var expr = argRef ? Arguments[idx] : Expr.Cast(Arguments[idx], destTypes[idx]);
@@ -322,15 +322,15 @@ namespace Lens.SyntaxTree.Expressions
 				}
 			}
 
-			var isVirt = _InvocationSource != null && _InvocationSource.Resolve(ctx).IsClass;
-			gen.EmitCall(_Method.MethodInfo, isVirt);
+			var isVirt = _invocationSource != null && _invocationSource.Resolve(ctx).IsClass;
+			gen.EmitCall(_method.MethodInfo, isVirt);
 		}
 
 		#endregion
 
 		#region Helpers
 
-		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		protected override InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
 		{
 			return new InvocationNode { Expression = Expression, Arguments = newArgs.ToList() };
 		}

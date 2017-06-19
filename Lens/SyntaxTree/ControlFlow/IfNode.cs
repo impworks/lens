@@ -59,7 +59,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
 			yield return new NodeChild(TrueAction, null);
@@ -71,13 +71,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && ctx.Options.UnrollConstants)
 			{
@@ -113,17 +113,17 @@ namespace Lens.SyntaxTree.ControlFlow
 			else
 			{
 				gen.EmitBranchFalse(falseLabel);
-				emitBranch(ctx, TrueAction, mustReturn);
+				EmitBranch(ctx, TrueAction, mustReturn);
 				gen.EmitJump(endLabel);
 
 				gen.MarkLabel(falseLabel);
-				emitBranch(ctx, FalseAction, mustReturn);
+				EmitBranch(ctx, FalseAction, mustReturn);
 
 				gen.MarkLabel(endLabel);
 			}
 		}
 
-		private void emitBranch(Context ctx, NodeBase branch, bool mustReturn)
+		private void EmitBranch(Context ctx, NodeBase branch, bool mustReturn)
 		{
 			var desiredType = Resolve(ctx);
 			mustReturn &= !desiredType.IsVoid();

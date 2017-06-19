@@ -8,17 +8,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "^^"; }
-		}
+		protected override string OperatorRepresentation => "^^";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_ExclusiveOr"; }
-		}
+	    protected override string OverloadedMethodName => "op_ExclusiveOr";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new XorOperatorNode { LeftOperand = left, RightOperand = right };
         }
@@ -27,7 +21,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType == typeof(bool) && rightType == typeof(bool) ? typeof(bool) : null;
 		}
@@ -36,13 +30,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			if (LeftOperand.Resolve(ctx).IsNumericType())
 			{
-				loadAndConvertNumerics(ctx);
+				LoadAndConvertNumerics(ctx);
 			}
 			else
 			{
@@ -57,7 +51,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			return left ^ right;
 		}

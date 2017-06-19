@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
@@ -32,14 +32,14 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			if (Expression == null)
 			{
 				if(ctx.CurrentCatchBlock == null)
-					error(CompilerMessages.ThrowArgumentExpected);
+					Error(CompilerMessages.ThrowArgumentExpected);
 
 				gen.EmitRethrow();
 			}
@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				var type = Expression.Resolve(ctx);
 
 				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					error(Expression, CompilerMessages.ThrowTypeNotException, type);
+					Error(Expression, CompilerMessages.ThrowTypeNotException, type);
 
 				Expression.Emit(ctx, true);
 				gen.EmitThrow();

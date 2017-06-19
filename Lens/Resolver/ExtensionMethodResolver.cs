@@ -16,22 +16,22 @@ namespace Lens.Resolver
 
 		static ExtensionMethodResolver()
 		{
-			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
+			Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
 		}
 
 		public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
 		{
-			_Namespaces = namespaces;
-			_AsmCache = asmCache;
+			_namespaces = namespaces;
+			_asmCache = asmCache;
 		}
 
 		#endregion
 
 		#region Fields
 
-		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
-		private readonly Dictionary<string, bool> _Namespaces;
-		private readonly ReferencedAssemblyCache _AsmCache;
+		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> Cache;
+		private readonly Dictionary<string, bool> _namespaces;
+		private readonly ReferencedAssemblyCache _asmCache;
 
 		#endregion
 
@@ -42,15 +42,15 @@ namespace Lens.Resolver
 		/// </summary>
 		public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
 		{
-			if (!_Cache.ContainsKey(type))
-				_Cache.Add(type, findMethodsForType(type));
+			if (!Cache.ContainsKey(type))
+				Cache.Add(type, FindMethodsForType(type));
 
-			if(!_Cache[type].ContainsKey(name))
+			if(!Cache[type].ContainsKey(name))
 				throw new KeyNotFoundException();
 
-			var methods = _Cache[type][name];
+			var methods = Cache[type][name];
 			var result = methods.Where(m => m.Name == name)
-								.Select(mi => new { Method = mi, Distance = getExtensionDistance(mi, type, args) })
+								.Select(mi => new { Method = mi, Distance = GetExtensionDistance(mi, type, args) })
 								.OrderBy(p => p.Distance)
 								.Take(2)
 								.ToArray();
@@ -72,11 +72,11 @@ namespace Lens.Resolver
 		/// Returns the list of extension methods for given type.
 		/// </summary>
 		/// <param name="forType"></param>
-		private Dictionary<string, List<MethodInfo>> findMethodsForType(Type forType)
+		private Dictionary<string, List<MethodInfo>> FindMethodsForType(Type forType)
 		{
 			var dict = new Dictionary<string, List<MethodInfo>>();
 
-			foreach (var asm in _AsmCache.Assemblies)
+			foreach (var asm in _asmCache.Assemblies)
 			{
 				if (asm.IsDynamic)
 					continue;
@@ -89,7 +89,7 @@ namespace Lens.Resolver
 						if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
 							continue;
 
-						if (type.Namespace == null || !_Namespaces.ContainsKey(type.Namespace))
+						if (type.Namespace == null || !_namespaces.ContainsKey(type.Namespace))
 							continue;
 
 						var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
@@ -121,7 +121,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Calculates the total distance for a list of arguments of an extension method.
 		/// </summary>
-		private static int getExtensionDistance(MethodInfo method, Type type, Type[] args)
+		private static int GetExtensionDistance(MethodInfo method, Type type, Type[] args)
 		{
 			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
 			var baseDist = methodArgs.First().DistanceFrom(type);

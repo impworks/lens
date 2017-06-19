@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.Declarations
         {
             var exprType = Expression.Resolve(ctx, mustReturn);
             if(!typeof(IDisposable).IsAssignableFrom(exprType))
-                error(Expression, CompilerMessages.ExpressionNotIDisposable, exprType);
+                Error(Expression, CompilerMessages.ExpressionNotIDisposable, exprType);
 
 			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Declarations
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 	    {
 			var exprType = Expression.Resolve(ctx, mustReturn);
 		    var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
@@ -71,7 +71,7 @@ namespace Lens.SyntaxTree.Declarations
 			);
 	    }
 
-	    protected override IEnumerable<NodeChild> getChildren()
+	    protected override IEnumerable<NodeChild> GetChildren()
 	    {
 		    yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Body, null);

@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			// does nothing
 			// all UseNodes are processed by Context.CreateFromNodes()

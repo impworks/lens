@@ -56,10 +56,7 @@ namespace Lens.Resolver
 		public Type ReturnType;
 		public Type[] GenericArguments;
 
-		public bool IsGeneric
-		{
-			get { return GenericArguments != null; }
-		}
+		public bool IsGeneric => GenericArguments != null;
 	}
 
 	/// <summary>
@@ -93,8 +90,8 @@ namespace Lens.Resolver
 		public MethodInfo Setter;
 	    public bool IsVirtual;
 
-		public bool CanGet { get { return Getter != null; } }
-		public bool CanSet { get { return Setter != null; } }
+		public bool CanGet => Getter != null;
+	    public bool CanSet => Setter != null;
 	}
 
 	/// <summary>

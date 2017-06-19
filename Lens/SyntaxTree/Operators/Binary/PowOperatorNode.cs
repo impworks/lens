@@ -12,18 +12,15 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Constants
 
-		private static readonly MethodInfo _PowMethod = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
+		private static readonly MethodInfo PowMethod = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
 
 		#endregion
 
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "**"; }
-		}
+		protected override string OperatorRepresentation => "**";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new PowOperatorNode { LeftOperand = left, RightOperand = right };
         }
@@ -32,7 +29,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return leftType.IsNumericType() && rightType.IsNumericType() ? typeof (double) : null;
 		}
@@ -41,7 +38,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			if (RightOperand.IsConstant && RightOperand.ConstantValue is int)
 			{
@@ -80,15 +77,15 @@ namespace Lens.SyntaxTree.Operators.Binary
 				}
 			}
 
-			loadAndConvertNumerics(ctx, typeof(double));
-			ctx.CurrentMethod.Generator.EmitCall(_PowMethod);
+			LoadAndConvertNumerics(ctx, typeof(double));
+			ctx.CurrentMethod.Generator.EmitCall(PowMethod);
 		}
 
 		#endregion
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			return Math.Pow(left, right);
 		}

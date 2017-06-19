@@ -115,7 +115,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsFuncType(this Type type)
 		{
-			return isKnownType(FuncTypesLookup, type);
+			return IsKnownType(FuncTypesLookup, type);
 		}
 
 		/// <summary>
@@ -123,7 +123,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsActionType(this Type type)
 		{
-			return type == typeof(Action) || isKnownType(ActionTypesLookup, type);
+			return type == typeof(Action) || IsKnownType(ActionTypesLookup, type);
 		}
 
 		/// <summary>
@@ -131,7 +131,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsLambdaType(this Type type)
 		{
-			return isKnownType(LambdaTypesLookup, type);
+			return IsKnownType(LambdaTypesLookup, type);
 		}
 
 		/// <summary>
@@ -139,7 +139,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static bool IsTupleType(this Type type)
 		{
-			return isKnownType(TupleTypesLookup, type);
+			return IsKnownType(TupleTypesLookup, type);
 		}
 
 		/// <summary>
@@ -235,7 +235,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Checks if a type is generic and is contained in the lookup table.
 		/// </summary>
-		private static bool isKnownType(HashSet<Type> typesLookup, Type type)
+		private static bool IsKnownType(HashSet<Type> typesLookup, Type type)
 		{
 			return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
 		}

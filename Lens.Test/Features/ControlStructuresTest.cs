@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Lens.Test.Features
 {
 	[TestFixture]
-	class ControlStructuresTest : TestBase
+	internal class ControlStructuresTest : TestBase
 	{
 		[Test]
 		public void Condition1()
@@ -387,14 +387,14 @@ using x = new Lens.Test.Features.SampleDisposable (-> x = 2) do
 	{
 		public SampleDisposable(Action act)
 		{
-			_Action = act;
+			_action = act;
 		}
 
-		private readonly Action _Action;
+		private readonly Action _action;
 
 		public void Dispose()
 		{
-			_Action();
+			_action();
 		}
 	}
 }

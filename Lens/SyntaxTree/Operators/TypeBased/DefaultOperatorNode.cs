@@ -49,13 +49,13 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var type = Resolve(ctx);
 
 			if(type.IsVoid())
-				error(CompilerMessages.VoidTypeDefault);
+				Error(CompilerMessages.VoidTypeDefault);
 
 			if (I4Types.Contains(type))
 				gen.EmitConstant(0);

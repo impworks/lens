@@ -9,7 +9,7 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
 {
-	class MatchRegexNode : MatchRuleBase
+    internal class MatchRegexNode : MatchRuleBase
 	{
 		#region Static constants
 
@@ -43,9 +43,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// </summary>
 		public string Modifiers;
 
-		private string _Regex;
-		private RegexOptions _Options;
-		private List<PatternNameBinding> _NamedGroups;
+		private string _regex;
+		private RegexOptions _options;
+		private List<PatternNameBinding> _namedGroups;
 
 		#endregion
 
@@ -56,18 +56,18 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if(expressionType != typeof(string))
 				Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(string));
 
-			parseValue(ctx);
-			parseModifiers();
+			ParseValue(ctx);
+			ParseModifiers();
 
-			return _NamedGroups;
+			return _namedGroups;
 		}
 
 		/// <summary>
 		/// Finds named groups, checks their types and fixes the regex string.
 		/// </summary>
-		private void parseValue(Context ctx)
+		private void ParseValue(Context ctx)
 		{
-			_NamedGroups = new List<PatternNameBinding>();
+			_namedGroups = new List<PatternNameBinding>();
 			var groups = NamedGroupPattern.Matches(Value);
 			foreach (Match group in groups)
 			{
@@ -83,35 +83,35 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				// no type specified: assume string
 				if (string.IsNullOrEmpty(type))
 				{
-					_NamedGroups.Add(new PatternNameBinding(name, typeof(string)));
+					_namedGroups.Add(new PatternNameBinding(name, typeof(string)));
 					continue;
 				}
 
-				var actualType = wrapError(
+				var actualType = WrapError(
 					() => ctx.ResolveType(type),
 					CompilerMessages.RegexConverterTypeNotFound, type
 				);
 
-				wrapError(
+				WrapError(
 					() => ctx.ResolveMethod(actualType, "TryParse", new[] {typeof (string), actualType}),
 					CompilerMessages.RegexConverterTypeIncompatible, type
 				);
 
-				_NamedGroups.Add(new PatternNameBinding(name, actualType));
+				_namedGroups.Add(new PatternNameBinding(name, actualType));
 			}
 
-			_Regex = NamedGroupPattern.Replace(Value, "(?<$1>");
+			_regex = NamedGroupPattern.Replace(Value, "(?<$1>");
 
-			wrapError(() => new Regex(_Regex), CompilerMessages.RegexSyntaxError);
+			WrapError(() => new Regex(_regex), CompilerMessages.RegexSyntaxError);
 		}
 
 		/// <summary>
 		/// Converts the string of modifiers into a RegexOptions set.
 		/// </summary>
-		private void parseModifiers()
+		private void ParseModifiers()
 		{
-			_Options = RegexOptions.ExplicitCapture;
-			var last = _Options;
+			_options = RegexOptions.ExplicitCapture;
+			var last = _options;
 
 			foreach (var mod in Modifiers)
 			{
@@ -120,10 +120,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 					Error(CompilerMessages.RegexUnknownModifier, mod);
 
 				last |= curr;
-				if (last == _Options)
+				if (last == _options)
 					Error(CompilerMessages.RegexDuplicateModifier, mod);
 
-				_Options = last;
+				_options = last;
 			}
 		}
 
@@ -135,11 +135,11 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		{
 			var regexExpr = Expr.New(
 				typeof (Regex),
-				Expr.Str(_Regex),
-				Expr.RawEnum<RegexOptions>((long) _Options)
+				Expr.Str(_regex),
+				Expr.RawEnum<RegexOptions>((long) _options)
 			);
 
-			if (_NamedGroups.Count == 0)
+			if (_namedGroups.Count == 0)
 			{
 				yield return MakeJumpIf(
 					nextStatement,
@@ -175,7 +175,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 				)
 			);
 
-			foreach (var curr in _NamedGroups)
+			foreach (var curr in _namedGroups)
 			{
 				// match.Groups['name'].Value
 				var valueExpr = Expr.GetMember(
@@ -221,7 +221,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Return a value if no exception arises, or throw a customized exception otherwise.
 		/// </summary>
-		private T wrapError<T>(Func<T> action, string msg, params object[] args)
+		private T WrapError<T>(Func<T> action, string msg, params object[] args)
 		{
 			try
 			{

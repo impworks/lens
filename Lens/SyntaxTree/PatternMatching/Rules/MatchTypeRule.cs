@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The actual type.
 		/// </summary>
-		private Type Type;
+		private Type _type;
 
 		#endregion
 
@@ -42,9 +42,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if(typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Type, TypeEntityKind.TypeLabel)))
 				Error(Identifier, CompilerMessages.PatternNotValidType, Identifier.FullSignature);
 
-			Type = ctx.ResolveType(Identifier);
-			if (!Type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(Type))
-				Error(CompilerMessages.PatternTypeMatchImpossible, Type, expressionType);
+			_type = ctx.ResolveType(Identifier);
+			if (!_type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(_type))
+				Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
 			try
 			{
@@ -68,14 +68,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			yield return MakeJumpIf(
 				nextStatement,
 				Expr.Not(
-					Expr.Is(expression, Type)
+					Expr.Is(expression, _type)
 				)
 			);
 
 			var rules = LabelRule.Expand(
 				ctx,
 				Expr.GetMember(
-					Expr.Cast(expression, Type),
+					Expr.Cast(expression, _type),
 					"Tag"
 				),
 				nextStatement

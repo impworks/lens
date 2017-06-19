@@ -11,21 +11,15 @@ namespace Lens.SyntaxTree.Operators.Unary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "-"; }
-		}
+		protected override string OperatorRepresentation => "-";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_UnaryNegation"; }
-		}
+	    protected override string OverloadedMethodName => "op_UnaryNegation";
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx)
+		protected override Type ResolveOperatorType(Context ctx)
 		{
 			var type = Operand.Resolve(ctx);
 			return type.IsNumericType() ? type : null;
@@ -35,21 +29,21 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			// double negation
 			var op = Operand as NegationOperatorNode;
 			if (op != null)
 				return op.Operand;
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			Operand.Emit(ctx, true);
 			ctx.CurrentMethod.Generator.EmitNegate();
@@ -59,7 +53,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic value)
+		protected override dynamic UnrollConstant(dynamic value)
 		{
 			return -value;
 		}

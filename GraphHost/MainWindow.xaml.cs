@@ -14,7 +14,7 @@ namespace GraphHost
 	/// </summary>
 	public partial class MainWindow
 	{
-		private LineGraph m_PreviousGraph;
+		private LineGraph _previousGraph;
 
 		public MainWindow()
 		{
@@ -23,33 +23,33 @@ namespace GraphHost
 
 		private void Run_OnClick(object sender, RoutedEventArgs e)
 		{
-			run();
+			Run();
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			if (e.Key == Key.Enter)
-				run();
+				Run();
 
 			base.OnKeyDown(e);
 		}
 
-		private void run()
+		private void Run()
 		{
 			var lens = new LensCompiler();
 
-			var currX = getDouble(StartPos, -10);
-			var endX = getDouble(EndPos, 10);
+			var currX = GetDouble(StartPos, -10);
+			var endX = GetDouble(EndPos, 10);
 			var currY = 0.0;
-			var step = getDouble(Step, 0.1);
+			var step = GetDouble(Step, 0.1);
 
 			var obs = new ObservableDataSource<Point>();
 			obs.SetXYMapping(p => p);
 
-			if (m_PreviousGraph != null)
-				m_PreviousGraph.Remove();
+			if (_previousGraph != null)
+				_previousGraph.Remove();
 
-			m_PreviousGraph = Chart.AddLineGraph(obs, Colors.Green, 2, "Graph");
+			_previousGraph = Chart.AddLineGraph(obs, Colors.Green, 2, "Graph");
 
 			lens.RegisterProperty("x", () => currX);
 			lens.RegisterProperty("y", () => currY, y => currY = y);
@@ -76,7 +76,7 @@ namespace GraphHost
 			}
 		}
 
-		private double getDouble(TextBox tb, double def)
+		private double GetDouble(TextBox tb, double def)
 		{
 			double val;
 			if (double.TryParse(tb.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out val))

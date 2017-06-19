@@ -13,10 +13,10 @@ namespace Lens.Resolver
 
 			public GenericResolver(Type[] genericDefs, Type[] hints, LambdaResolver lambdaResolver)
 			{
-				_GenericDefs = genericDefs;
-				_GenericValues = hints ?? new Type[_GenericDefs.Length];
+				_genericDefs = genericDefs;
+				_genericValues = hints ?? new Type[_genericDefs.Length];
 
-				_LambdaResolver = lambdaResolver;
+				_lambdaResolver = lambdaResolver;
 			}
 
 			#endregion
@@ -26,7 +26,7 @@ namespace Lens.Resolver
 			/// <summary>
 			/// The source list of generic argument definitions.
 			/// </summary>
-			private readonly Type[] _GenericDefs;
+			private readonly Type[] _genericDefs;
 
 			/// <summary>
 			/// The calculated list of generic argument values.
@@ -37,12 +37,12 @@ namespace Lens.Resolver
 			/// _GenericValues[0] == typeof(int)
 			/// Therefore, 'T' means 'int' for current method.
 			/// </summary>
-			private readonly Type[] _GenericValues;
+			private readonly Type[] _genericValues;
 
 			/// <summary>
 			/// Callback for lambda argument resolving.
 			/// </summary>
-			private readonly LambdaResolver _LambdaResolver;
+			private readonly LambdaResolver _lambdaResolver;
 
 			#endregion
 
@@ -50,14 +50,14 @@ namespace Lens.Resolver
 
 			public Type[] Resolve(Type[] expected, Type[] actual)
 			{
-				resolveRecursive(expected, actual, 0);
+				ResolveRecursive(expected, actual, 0);
 
 				// check if all generics have been resolved
-				for (var idx = 0; idx < _GenericDefs.Length; idx++)
-					if (_GenericValues[idx] == null)
-						throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, _GenericDefs[idx]));
+				for (var idx = 0; idx < _genericDefs.Length; idx++)
+					if (_genericValues[idx] == null)
+						throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, _genericDefs[idx]));
 
-				return _GenericValues;
+				return _genericValues;
 			}
 
 			#endregion
@@ -70,7 +70,7 @@ namespace Lens.Resolver
 			/// <param name="expectedTypes">Parameter types from method definition.</param>
 			/// <param name="actualTypes">Actual types of arguments passed to the parameters.</param>
 			/// <param name="depth">Recursion depth for condition checks.</param>
-			private void resolveRecursive(Type[] expectedTypes, Type[] actualTypes, int depth)
+			private void ResolveRecursive(Type[] expectedTypes, Type[] actualTypes, int depth)
 			{
 				var exLen = expectedTypes != null ? expectedTypes.Length : 0;
 				var actLen = actualTypes != null ? actualTypes.Length : 0;
@@ -90,12 +90,12 @@ namespace Lens.Resolver
 							if (depth > 0)
 								throw new InvalidOperationException("Lambda expressions cannot be nested!");
 
-							resolveLambda(expected, actual, idx, depth);
+							ResolveLambda(expected, actual, idx, depth);
 						}
 						else
 						{
-							var closest = findImplementation(expected, actual);
-							resolveRecursive(
+							var closest = FindImplementation(expected, actual);
+							ResolveRecursive(
 								expected.GetGenericArguments(),
 								closest.GetGenericArguments(),
 								depth + 1
@@ -105,10 +105,10 @@ namespace Lens.Resolver
 
 					else
 					{
-						for (var defIdx = 0; defIdx < _GenericDefs.Length; defIdx++)
+						for (var defIdx = 0; defIdx < _genericDefs.Length; defIdx++)
 						{
-							var def = _GenericDefs[defIdx];
-							var value = _GenericValues[defIdx];
+							var def = _genericDefs[defIdx];
+							var value = _genericValues[defIdx];
 
 							if (expected != def)
 								continue;
@@ -116,7 +116,7 @@ namespace Lens.Resolver
 							if (value != null && value != actual)
 								throw new TypeMatchException(string.Format(CompilerMessages.GenericArgMismatch, def, actual, value));
 
-							_GenericValues[defIdx] = actual;
+							_genericValues[defIdx] = actual;
 						}
 					}
 				}
@@ -125,7 +125,7 @@ namespace Lens.Resolver
 			/// <summary>
 			/// Resolves the lambda's input types if they are not specified.
 			/// </summary>
-			private void resolveLambda(Type expected, Type actual, int lambdaPosition, int depth)
+			private void ResolveLambda(Type expected, Type actual, int lambdaPosition, int depth)
 			{
 				var expectedInfo = ReflectionHelper.WrapDelegate(expected);
 				var actualInfo = ReflectionHelper.WrapDelegate(actual);
@@ -144,7 +144,7 @@ namespace Lens.Resolver
 						// type is unspecified: try to infer it
 						try
 						{
-							argTypes[idx] = ApplyGenericArguments(expArg, _GenericDefs, _GenericValues);
+							argTypes[idx] = ApplyGenericArguments(expArg, _genericDefs, _genericValues);
 						}
 						catch (InvalidOperationException)
 						{
@@ -155,7 +155,7 @@ namespace Lens.Resolver
 					{
 						// type is specified: use it
 						argTypes[idx] = actualArg;
-						resolveRecursive(
+						ResolveRecursive(
 							new[] { expArg },
 							new[] { actualArg },
 							depth + 1
@@ -163,14 +163,14 @@ namespace Lens.Resolver
 					}
 				}
 
-				if (_LambdaResolver != null)
+				if (_lambdaResolver != null)
 				{
-					var lambdaReturnType = _LambdaResolver(lambdaPosition, argTypes);
+					var lambdaReturnType = _lambdaResolver(lambdaPosition, argTypes);
 
 					// return type is significant for generic resolution
-					if (containsGenericParameter(expectedInfo.ReturnType))
+					if (ContainsGenericParameter(expectedInfo.ReturnType))
 					{
-						resolveRecursive(
+						ResolveRecursive(
 							new[] { expectedInfo.ReturnType },
 							new[] { lambdaReturnType },
 							depth + 1
@@ -182,7 +182,7 @@ namespace Lens.Resolver
 			/// <summary>
 			/// Finds the appropriate generic type in the inheritance of the actual type.
 			/// </summary>
-			private static Type findImplementation(Type desired, Type actual)
+			private static Type FindImplementation(Type desired, Type actual)
 			{
 				var generic = desired.GetGenericTypeDefinition();
 
@@ -217,7 +217,7 @@ namespace Lens.Resolver
 			/// <summary>
 			/// Recursively checks if the type has a reference to any of the generic argument types.
 			/// </summary>
-			private static bool containsGenericParameter(Type type)
+			private static bool ContainsGenericParameter(Type type)
 			{
 				if (type.IsGenericParameter)
 					return true;
@@ -225,7 +225,7 @@ namespace Lens.Resolver
 				if (type.IsGenericType && !type.IsGenericTypeDefinition)
 				{
 					foreach (var curr in type.GetGenericArguments())
-						if (containsGenericParameter(curr))
+						if (ContainsGenericParameter(curr))
 							return true;
 				}
 

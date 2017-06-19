@@ -18,8 +18,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		
 		public ShortAssignmentNode(LexemType opType, NodeBase expr)
 		{
-			_OperatorType = opType;
-			_AssignmentOperator = OperatorLookups[opType];
+			_operatorType = opType;
+			_assignmentOperator = OperatorLookups[opType];
 			Expression = expr;
 		}
 
@@ -30,12 +30,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Type of shorthand operator.
 		/// </summary>
-		private readonly LexemType _OperatorType;
+		private readonly LexemType _operatorType;
 
 		/// <summary>
 		/// The kind of operator to use short assignment for.
 		/// </summary>
-		private readonly Func<NodeBase, NodeBase, NodeBase> _AssignmentOperator;
+		private readonly Func<NodeBase, NodeBase, NodeBase> _assignmentOperator;
 
 		/// <summary>
 		/// Assignment expression to expand.
@@ -61,24 +61,24 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 		}
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (Expression is SetIdentifierNode)
-				return expandIdentifier(Expression as SetIdentifierNode);
+				return ExpandIdentifier(Expression as SetIdentifierNode);
 
 			if (Expression is SetMemberNode)
 			{
 				var expr = Expression as SetMemberNode;
-				return expandEvent(ctx, expr) ?? expandMember(ctx, expr);
+				return ExpandEvent(ctx, expr) ?? ExpandMember(ctx, expr);
 			}
 
 			if (Expression is SetIndexNode)
-				return expandIndex(ctx, Expression as SetIndexNode);
+				return ExpandIndex(ctx, Expression as SetIndexNode);
 
 			throw new InvalidOperationException("Invalid shorthand assignment expression!");
 		}
@@ -91,11 +91,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// Expands short assignment to an identifier:
 		/// x += 1
 		/// </summary>
-		private NodeBase expandIdentifier(SetIdentifierNode node)
+		private NodeBase ExpandIdentifier(SetIdentifierNode node)
 		{
 			return Expr.Set(
 				node.Identifier,
-				_AssignmentOperator(
+				_assignmentOperator(
 					Expr.Get(node.Identifier),
 					node.Value
 				)
@@ -105,10 +105,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Attempts to expand the expression to an event (un)subscription.
 		/// </summary>
-		private NodeBase expandEvent(Context ctx, SetMemberNode node)
+		private NodeBase ExpandEvent(Context ctx, SetMemberNode node)
 		{
 			// incorrect operator
-			if (!_OperatorType.IsAnyOf(LexemType.Plus, LexemType.Minus))
+			if (!_operatorType.IsAnyOf(LexemType.Plus, LexemType.Minus))
 				return null;
 
 			var type = node.StaticType != null
@@ -119,7 +119,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			{
 				var evt = ctx.ResolveEvent(type, node.MemberName);
 //				node.Value = Expr.CastTransparent(node.Value, evt.EventHandlerType);
-				return new EventNode(evt, node, _OperatorType == LexemType.Plus);
+				return new EventNode(evt, node, _operatorType == LexemType.Plus);
 			}
 			catch (KeyNotFoundException)
 			{
@@ -132,7 +132,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// (expr).x += 1
 		/// or type::x += 1
 		/// </summary>
-		private NodeBase expandMember(Context ctx, SetMemberNode node)
+		private NodeBase ExpandMember(Context ctx, SetMemberNode node)
 		{
 			// type::name += value
 			if (node.StaticType != null)
@@ -140,7 +140,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return Expr.SetMember(
 					node.StaticType,
 					node.MemberName,
-					_AssignmentOperator(
+					_assignmentOperator(
 						Expr.GetMember(
 							node.StaticType,
 							node.MemberName
@@ -156,7 +156,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return Expr.SetMember(
 					node.Expression,
 					node.MemberName,
-					_AssignmentOperator(
+					_assignmentOperator(
 						Expr.GetMember(
 							node.Expression,
 							node.MemberName
@@ -174,7 +174,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				Expr.SetMember(
 					Expr.Get(tmpVar),
 					node.MemberName,
-					_AssignmentOperator(
+					_assignmentOperator(
 						Expr.GetMember(
 							Expr.Get(tmpVar),
 							node.MemberName
@@ -189,7 +189,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// Expands short assignment to an array index:
 		/// a[x] += 1
 		/// </summary>
-		private NodeBase expandIndex(Context ctx, SetIndexNode node)
+		private NodeBase ExpandIndex(Context ctx, SetIndexNode node)
 		{
 			var body = Expr.Block();
 
@@ -213,7 +213,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				Expr.SetIdx(
 					node.Expression,
 					node.Index,
-					_AssignmentOperator(
+					_assignmentOperator(
 						Expr.GetIdx(
 							node.Expression,
 							node.Index

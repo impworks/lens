@@ -10,8 +10,8 @@ namespace GraphicScript.Objects
 
 		public Tuple<double, double> Size
 		{
-			get { return new Tuple<double, double>(Width, Height); }
-			set { Width = value.Item1; Height = value.Item2; }
+			get => new Tuple<double, double>(Width, Height);
+		    set { Width = value.Item1; Height = value.Item2; }
 		}
 
 		public Rect()
@@ -19,12 +19,12 @@ namespace GraphicScript.Objects
 			Width = Height = 50;
 		}
 
-		protected override Shape createShape()
+		protected override Shape CreateShape()
 		{
 			return new Rectangle();
 		}
 
-		protected override void updateShape()
+		protected override void UpdateShape()
 		{
 			Shape.Width = Width;
 			Shape.Height = Height;

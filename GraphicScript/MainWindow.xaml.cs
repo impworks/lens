@@ -22,7 +22,7 @@ namespace GraphicScript
 			DataContext = this;
 
 			Status = Status.Ready;
-			m_Manager = new FigureManager(Canvas, Dispatcher);
+			_manager = new FigureManager(Canvas, Dispatcher);
 
 			CodeEditor.PreviewKeyDown += (s, e) =>
 			{
@@ -40,48 +40,45 @@ namespace GraphicScript
 
 		#region Properties
 
-		private FigureManager m_Manager;
+		private FigureManager _manager;
 
-		private string m_Code;
+		private string _code;
 		public string Code
 		{
-			get { return m_Code; }
-			set
+			get => _code;
+		    set
 			{
-				m_Code = value;
-				notify(() => Code);
+				_code = value;
+				Notify(() => Code);
 			}
 		}
 
-		private string m_ErrorMessage;
+		private string _errorMessage;
 		public string ErrorMessage
 		{
-			get { return m_ErrorMessage; }
-			set
+			get => _errorMessage;
+		    set
 			{
-				m_ErrorMessage = value;
-				notify(() => ErrorMessage);
+				_errorMessage = value;
+				Notify(() => ErrorMessage);
 			}
 		}
 
-		private Status m_Status;
+		private Status _status;
 		public Status Status
 		{
-			get { return m_Status; }
-			set
+			get => _status;
+		    set
 			{
-				m_Status = value;
-				notify(() => Status);
-				notify(() => EditEnabled);
+				_status = value;
+				Notify(() => Status);
+				Notify(() => EditEnabled);
 			}
 		}
 
-		public bool EditEnabled
-		{
-			get { return Status == Status.Ready || Status == Status.Error; }
-		}
+		public bool EditEnabled => Status == Status.Ready || Status == Status.Error;
 
-		#endregion
+	    #endregion
 
 		#region Commands
 
@@ -124,7 +121,7 @@ namespace GraphicScript
 			lc.RegisterType(typeof(Figure));
 			lc.RegisterType("Rect", typeof(Rect));
 			lc.RegisterType("Circle", typeof(Circle));
-			lc.RegisterProperty("Screen", () => m_Manager);
+			lc.RegisterProperty("Screen", () => _manager);
 
 			try
 			{
@@ -133,7 +130,7 @@ namespace GraphicScript
 				
 				Status = Status.Success;
 
-				m_Manager.Draw();
+				_manager.Draw();
 			}
 			catch (LensCompilerException ex)
 			{
@@ -146,7 +143,7 @@ namespace GraphicScript
 		public void Stop()
 		{
 			Status = Status.Ready;
-			m_Manager.StopDrawing();
+			_manager.StopDrawing();
 			CodeEditor.Focus();
 		}
 
@@ -190,7 +187,7 @@ namespace GraphicScript
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		private void notify<T>(Expression<Func<T>> ptyAccessor)
+		private void Notify<T>(Expression<Func<T>> ptyAccessor)
 		{
 			var name = ((MemberExpression)ptyAccessor.Body).Member.Name;
 			var handler = PropertyChanged;

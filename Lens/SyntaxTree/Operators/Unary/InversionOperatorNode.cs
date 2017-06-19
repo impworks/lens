@@ -11,16 +11,13 @@ namespace Lens.SyntaxTree.Operators.Unary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "not"; }
-		}
+		protected override string OperatorRepresentation => "not";
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx)
+		protected override Type ResolveOperatorType(Context ctx)
 		{
 			return Operand.Resolve(ctx).IsImplicitlyBoolean() ? typeof(bool) : null;
 		}
@@ -29,20 +26,20 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var op = Operand as InversionOperatorNode;
 			if (op != null)
 				return op.Operand;
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -56,7 +53,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic value)
+		protected override dynamic UnrollConstant(dynamic value)
 		{
 			return !value;
 		}

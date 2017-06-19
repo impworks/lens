@@ -62,7 +62,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void TransformBody()
 		{
-			withContext(ctx =>
+			WithContext(ctx =>
 				{
 					Body.Scope.RegisterArguments(ctx, IsStatic, Arguments.Values);
 					Body.Transform(ctx, !IsVoid);
@@ -75,7 +75,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void ProcessClosures()
 		{
-			withContext(ctx => Body.ProcessClosures(ctx));
+			WithContext(ctx => Body.ProcessClosures(ctx));
 		}
 
 		/// <summary>
@@ -83,11 +83,11 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		public void Compile()
 		{
-			withContext(ctx =>
+			WithContext(ctx =>
 			    {
-				    emitPrelude(ctx);
+				    EmitPrelude(ctx);
 				    Body.Emit(ctx, !IsVoid);
-				    emitTrailer(ctx);
+				    EmitTrailer(ctx);
 
 				    Generator.EmitReturn();
 			    }
@@ -107,7 +107,7 @@ namespace Lens.Compiler.Entities
 		#region Helpers
 
 		[DebuggerStepThrough]
-		private void withContext(Action<Context> act)
+		private void WithContext(Action<Context> act)
 		{
 			var ctx = ContainerType.Context;
 
@@ -132,13 +132,13 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Emits code before the body of the method (if needed).
 		/// </summary>
-		protected virtual void emitPrelude(Context ctx)
+		protected virtual void EmitPrelude(Context ctx)
 		{ }
 
 		/// <summary>
 		/// Emits code after the body of the method (if needed).
 		/// </summary>
-		protected virtual void emitTrailer(Context ctx)
+		protected virtual void EmitTrailer(Context ctx)
 		{ }
 
 		#endregion

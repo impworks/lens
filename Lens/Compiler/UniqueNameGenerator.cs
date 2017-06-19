@@ -9,44 +9,44 @@ namespace Lens.Compiler
 	{
 		#region Identifier fields
 
-		private static int _AssemblyId;
+		private static int _assemblyId;
 
-		private int _AnonymousArgumentId;
-		private int _ClosureId;
-		private int _ClosureMethodId;
-		private int _ClosureFieldId;
-		private int _TempVariableId;
+		private int _anonymousArgumentId;
+		private int _closureId;
+		private int _closureMethodId;
+		private int _closureFieldId;
+		private int _tempVariableId;
 
 		#endregion
 
 		public string AssemblyName()
 		{
-			return string.Format(EntityNames.AssemblyNameTemplate, ++_AssemblyId);
+			return string.Format(EntityNames.AssemblyNameTemplate, ++_assemblyId);
 		}
 
 		public string ClosureName()
 		{
-			return string.Format(EntityNames.ClosureTypeNameTemplate, ++_ClosureId);
+			return string.Format(EntityNames.ClosureTypeNameTemplate, ++_closureId);
 		}
 
 		public string ClosureMethodName(string methodName)
 		{
-			return string.Format(EntityNames.ClosureMethodNameTemplate, methodName, ++_ClosureMethodId);
+			return string.Format(EntityNames.ClosureMethodNameTemplate, methodName, ++_closureMethodId);
 		}
 
 		public string ClosureFieldName(string fieldName)
 		{
-			return string.Format(EntityNames.ClosureFieldNameTemplate, fieldName, ++_ClosureFieldId);
+			return string.Format(EntityNames.ClosureFieldNameTemplate, fieldName, ++_closureFieldId);
 		}
 
 		public string AnonymousArgName()
 		{
-			return string.Format(EntityNames.AnonymousArgumentTemplate, ++_AnonymousArgumentId);
+			return string.Format(EntityNames.AnonymousArgumentTemplate, ++_anonymousArgumentId);
 		}
 
 		public string TempVariableName()
 		{
-			return string.Format(EntityNames.ImplicitVariableNameTemplate, ++_TempVariableId);
+			return string.Format(EntityNames.ImplicitVariableNameTemplate, ++_tempVariableId);
 		}
 	}
 }

@@ -35,12 +35,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// Checks if the name is used as a placeholder.
 		/// </summary>
-		public bool IsWildcard
-		{
-			get { return Name == "_"; }
-		}
+		public bool IsWildcard => Name == "_";
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 

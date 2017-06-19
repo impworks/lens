@@ -25,10 +25,10 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
 		#region Fields
 
-		private MethodEntity _Method;
+		private MethodEntity _method;
 
-		private Type _InferredReturnType;
-		private Type _InferredDelegateType;
+		private Type _inferredReturnType;
+		private Type _inferredDelegateType;
 
 		public bool MustInferArgTypes { get; private set; }
 
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 			foreach (var curr in Arguments)
 			{
 				if (curr.IsVariadic)
-					error(CompilerMessages.VariadicArgumentLambda);
+					Error(CompilerMessages.VariadicArgumentLambda);
 
 				var type = curr.GetArgumentType(ctx);
 				argTypes.Add(type);
@@ -58,12 +58,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
 			var retType = Body.Resolve(ctx);
 
-			if (_InferredDelegateType != null)
+			if (_inferredDelegateType != null)
 			{
-				if(!_InferredReturnType.IsExtendablyAssignableFrom(retType))
-					error(CompilerMessages.LambdaReturnTypeMismatch, _InferredDelegateType.Name, retType.Name, _InferredReturnType.Name);
+				if(!_inferredReturnType.IsExtendablyAssignableFrom(retType))
+					Error(CompilerMessages.LambdaReturnTypeMismatch, _inferredDelegateType.Name, retType.Name, _inferredReturnType.Name);
 
-				return _InferredDelegateType;
+				return _inferredDelegateType;
 			}
 
 			return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
@@ -78,23 +78,23 @@ namespace Lens.SyntaxTree.Declarations.Functions
 			if (MustInferArgTypes)
 			{
 				var name = Arguments.First(a => a.Type == typeof (UnspecifiedType)).Name;
-				error(CompilerMessages.LambdaArgTypeUnknown, name);
+				Error(CompilerMessages.LambdaArgTypeUnknown, name);
 			}
 
 			// get evaluated return type
-			var retType = _InferredReturnType ?? Body.Resolve(ctx);
+			var retType = _inferredReturnType ?? Body.Resolve(ctx);
 			if (retType == typeof(NullType))
-				error(CompilerMessages.LambdaReturnTypeUnknown);
+				Error(CompilerMessages.LambdaReturnTypeUnknown);
 			if (retType.IsVoid())
 				retType = typeof (void);
 
-			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
-			_Method.Body = Body;
+			_method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
+			_method.Body = Body;
 
 			var outerMethod = ctx.CurrentMethod;
-			ctx.CurrentMethod = _Method;
+			ctx.CurrentMethod = _method;
 
-			_Method.Body.ProcessClosures(ctx);
+			_method.Body.ProcessClosures(ctx);
 
 			ctx.CurrentMethod = outerMethod;
 		}
@@ -103,17 +103,17 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			// find constructor
-			var type = _InferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
+			var type = _inferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _method.ArgumentTypes);
 			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
 
 			var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
 			gen.EmitLoadLocal(closureInstance);
-			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
+			gen.EmitLoadFunctionPointer(_method.MethodBuilder);
 			gen.EmitCreateObject(ctor.ConstructorInfo);
 		}
 
@@ -127,13 +127,13 @@ namespace Lens.SyntaxTree.Declarations.Functions
 		public void SetInferredArgumentTypes(Type[] argTypes)
 		{
 			if(Arguments.Count != argTypes.Length)
-				error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
+				Error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
 
 			for (var idx = 0; idx < argTypes.Length; idx++)
 			{
 				var inferred = argTypes[idx];
 				if (inferred == typeof(UnspecifiedType))
-					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
+					Error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
 				var specified = Arguments[idx].Type;
@@ -145,7 +145,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 			}
 
 			MustInferArgTypes = false;
-			_CachedExpressionType = null;
+			CachedExpressionType = null;
 		}
 
 		/// <summary>
@@ -153,7 +153,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 		/// </summary>
 		public void SetInferredReturnType(Type type)
 		{
-			_InferredReturnType = type;
+			_inferredReturnType = type;
 		}
 
 		#endregion

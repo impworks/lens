@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             var idxType = Size.Resolve(ctx);
             if (!typeof (int).IsExtendablyAssignableFrom(idxType))
-                error(Size, CompilerMessages.ArraySizeNotInt, idxType);
+                Error(Size, CompilerMessages.ArraySizeNotInt, idxType);
 
             return Type.MakeArrayType();
         }
@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Transform
 
-	    protected override IEnumerable<NodeChild> getChildren()
+	    protected override IEnumerable<NodeChild> GetChildren()
 	    {
 		    yield return new NodeChild(Size, x => Size = x);
 	    }
@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

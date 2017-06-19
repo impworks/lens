@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Resolve
 
-		protected Type resolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
+		protected Type ResolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
 		{
 			try
 			{

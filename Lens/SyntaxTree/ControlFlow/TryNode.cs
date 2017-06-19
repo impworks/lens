@@ -61,9 +61,9 @@ namespace Lens.SyntaxTree.ControlFlow
 				foreach (var prevType in prevTypes)
 				{
 					if(currType == prevType)
-						error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+						Error(curr, CompilerMessages.CatchTypeDuplicate, currType);
 					else if(prevType.IsExtendablyAssignableFrom(currType))
-						error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
+						Error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
 				}
 
 				prevTypes.Add(currType);
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Code, null);
 
@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 

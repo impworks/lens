@@ -21,7 +21,7 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The default size of a method's IL Generator stream.
 		/// </summary>
-		public const int ILStreamSize = 16384;
+		public const int IlStreamSize = 16384;
 
 		#endregion
 
@@ -31,8 +31,8 @@ namespace Lens.Compiler
 		{
 			Options = options ?? new LensCompilerOptions();
 
-			_DefinedTypes = new Dictionary<string, TypeEntity>();
-			_DefinedProperties = new Dictionary<string, GlobalPropertyInfo>();
+			_definedTypes = new Dictionary<string, TypeEntity>();
+			_definedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
 			Unique = new UniqueNameGenerator();
 
@@ -43,14 +43,14 @@ namespace Lens.Compiler
 				Namespaces.Add("System.Text.RegularExpressions", true);
 			}
 
-			_AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
-			_ExtensionResolver = new ExtensionMethodResolver(Namespaces, _AssemblyCache);
-			_TypeResolver = new TypeResolver(Namespaces, _AssemblyCache)
+			AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
+			_extensionResolver = new ExtensionMethodResolver(Namespaces, AssemblyCache);
+			_typeResolver = new TypeResolver(Namespaces, AssemblyCache)
 			{
 				ExternalLookup = name =>
 				{
 					TypeEntity ent;
-					_DefinedTypes.TryGetValue(name, out ent);
+					_definedTypes.TryGetValue(name, out ent);
 					return ent == null ? null : ent.TypeBuilder;
 				}
 			};
@@ -81,7 +81,7 @@ namespace Lens.Compiler
 			MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true, false);
 
 			if(Options.LoadStandardLibrary)
-				initStdlib();
+				InitStdlib();
 
 			InitSafeMode();
 		}
@@ -133,24 +133,24 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The current scope frame in which all local variables are registered and searched for.
 		/// </summary>
-		internal Scope Scope { get { return _ScopeStack.Count > 0 ? _ScopeStack.Peek() : null; } }
+		internal Scope Scope => _scopeStack.Count > 0 ? _scopeStack.Peek() : null;
 
-		/// <summary>
+	    /// <summary>
 		/// The current most nested try block.
 		/// </summary>
 		internal TryNode CurrentTryBlock
 		{
-			get { return CurrentMethod.CurrentTryBlock; }
-			set { CurrentMethod.CurrentTryBlock = value; }
-		}
+			get => CurrentMethod.CurrentTryBlock;
+	        set => CurrentMethod.CurrentTryBlock = value;
+	    }
 
 		/// <summary>
 		/// The current most nested catch block.
 		/// </summary>
 		internal CatchNode CurrentCatchBlock
 		{
-			get { return CurrentMethod.CurrentCatchBlock; }
-			set { CurrentMethod.CurrentCatchBlock = value; }
+			get => CurrentMethod.CurrentCatchBlock;
+		    set => CurrentMethod.CurrentCatchBlock = value;
 		}
 
 		/// <summary>
@@ -171,32 +171,32 @@ namespace Lens.Compiler
 		/// <summary>
 		/// A helper that resolves built-in .NET types by their string signatures.
 		/// </summary>
-		private readonly TypeResolver _TypeResolver;
+		private readonly TypeResolver _typeResolver;
 
 		/// <summary>
 		/// A helper that resolves extension methods by type and arguments.
 		/// </summary>
-		private readonly ExtensionMethodResolver _ExtensionResolver;
+		private readonly ExtensionMethodResolver _extensionResolver;
 
 		/// <summary>
 		/// The root of type lookup.
 		/// </summary>
-		private readonly Dictionary<string, TypeEntity> _DefinedTypes;
+		private readonly Dictionary<string, TypeEntity> _definedTypes;
 
 		/// <summary>
 		/// The lookup table for imported properties.
 		/// </summary>
-		private readonly Dictionary<string, GlobalPropertyInfo> _DefinedProperties;
+		private readonly Dictionary<string, GlobalPropertyInfo> _definedProperties;
 
 		/// <summary>
 		/// The stack of currently processed scopes.
 		/// </summary>
-		private readonly Stack<Scope> _ScopeStack = new Stack<Scope>();
+		private readonly Stack<Scope> _scopeStack = new Stack<Scope>();
 
 		/// <summary>
 		/// The list of assemblies referenced by current script.
 		/// </summary>
-		internal readonly ReferencedAssemblyCache _AssemblyCache;
+		internal readonly ReferencedAssemblyCache AssemblyCache;
 
 		#endregion
 

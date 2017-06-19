@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Cached property information.
 		/// </summary>
-		private MethodWrapper _Getter;
+		private MethodWrapper _getter;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
@@ -35,8 +35,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			var idxType = Index.Resolve(ctx);
 			try
 			{
-				_Getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
-				return _Getter.ReturnType;
+				_getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
+				return _getter.ReturnType;
 			}
 			catch (LensCompilerException ex)
 			{
@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Index, x => Index = x);
@@ -59,18 +59,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
-			if (_Getter == null)
-				compileArray(ctx);
+			if (_getter == null)
+				CompileArray(ctx);
 			else
-				compileCustom(ctx);
+				CompileCustom(ctx);
 		}
 
 		/// <summary>
 		/// Emits the code for retrieving an array item by index.
 		/// </summary>
-		private void compileArray(Context ctx)
+		private void CompileArray(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -86,12 +86,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Emits the code for retrieving a value from an object by custom indexer.
 		/// </summary>
-		private void compileCustom(Context ctx)
+		private void CompileCustom(Context ctx)
 		{
-			var retType = _Getter.ReturnType;
+			var retType = _getter.ReturnType;
 
 			if(RefArgumentRequired && retType.IsValueType)
-				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
+				Error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -104,9 +104,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 			Expression.Emit(ctx, true);
 
-			Expr.Cast(Index, _Getter.ArgumentTypes[0]).Emit(ctx, true);
+			Expr.Cast(Index, _getter.ArgumentTypes[0]).Emit(ctx, true);
 
-			gen.EmitCall(_Getter.MethodInfo, _Getter.IsVirtual);
+			gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
 		}
 
 		#endregion

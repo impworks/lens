@@ -32,9 +32,9 @@ namespace Lens.Parser
 
 		public LensParser(IEnumerable<Lexem> lexems)
 		{
-			_Lexems = lexems.ToArray();
+			_lexems = lexems.ToArray();
 
-			Nodes = parseMain().ToList();
+			Nodes = ParseMain().ToList();
 		}
 
 		#endregion
@@ -49,12 +49,12 @@ namespace Lens.Parser
 		/// <summary>
 		/// Source list of lexems.
 		/// </summary>
-		private readonly Lexem[] _Lexems;
+		private readonly Lexem[] _lexems;
 
 		/// <summary>
 		/// Current index of the lexem in the stream.
 		/// </summary>
-		private int _LexemId;
+		private int _lexemId;
 
 		#endregion
 
@@ -63,34 +63,34 @@ namespace Lens.Parser
 		/// <summary>
 		/// main                                        = stmt { NL stmt } EOF
 		/// </summary>
-		private IEnumerable<NodeBase> parseMain()
+		private IEnumerable<NodeBase> ParseMain()
 		{
-			yield return parseStmt();
+			yield return ParseStmt();
 
-			while (!check(LexemType.EOF))
+			while (!Check(LexemType.Eof))
 			{
-				if (!isStmtSeparator())
+				if (!IsStmtSeparator())
 				{
-					if(peek(LexemType.Assign))
-						error(ParserMessages.AssignLvalueExpected);
+					if(Peek(LexemType.Assign))
+						Error(ParserMessages.AssignLvalueExpected);
 					else
-						error(ParserMessages.NewlineSeparatorExpected);
+						Error(ParserMessages.NewlineSeparatorExpected);
 				}
 
-				yield return parseStmt();
+				yield return ParseStmt();
 			}
 		}
 
 		/// <summary>
 		/// stmt                                        = using | record_def | type_def | fun_def | local_stmt
 		/// </summary>
-		private NodeBase parseStmt()
+		private NodeBase ParseStmt()
 		{
-			return attempt(parseUsing)
-				   ?? attempt(parseRecordDef)
-				   ?? attempt(parseTypeDef)
-				   ?? attempt(parseFunDef)
-				   ?? ensure(parseLocalStmt, ParserMessages.UnknownStatement);
+			return Attempt(ParseUsing)
+				   ?? Attempt(ParseRecordDef)
+				   ?? Attempt(ParseTypeDef)
+				   ?? Attempt(ParseFunDef)
+				   ?? Ensure(ParseLocalStmt, ParserMessages.UnknownStatement);
 		}
 
 		#endregion
@@ -100,21 +100,21 @@ namespace Lens.Parser
 		/// <summary>
 		/// namespace                                   = identifier { "." identifier }
 		/// </summary>
-		private TypeSignature parseNamespace()
+		private TypeSignature ParseNamespace()
 		{
-			return bind(() =>
+			return Bind(() =>
 				{
-					if (!peek(LexemType.Identifier))
+					if (!Peek(LexemType.Identifier))
 						return null;
 
-					var identifier = getValue();
-					if (!peek(LexemType.Dot))
+					var identifier = GetValue();
+					if (!Peek(LexemType.Dot))
 						return new TypeSignature(identifier);
 
 					var sb = new StringBuilder(identifier);
-					while (check(LexemType.Dot))
+					while (Check(LexemType.Dot))
 					{
-						identifier = ensure(LexemType.Identifier, ParserMessages.IdentifierExpected).Value;
+						identifier = Ensure(LexemType.Identifier, ParserMessages.IdentifierExpected).Value;
 						sb.Append(".");
 						sb.Append(identifier);
 					}
@@ -127,28 +127,28 @@ namespace Lens.Parser
 		/// <summary>
 		/// type                                        = namespace [ type_args ] { "[]" | "?" | "~" }
 		/// </summary>
-		private TypeSignature parseType()
+		private TypeSignature ParseType()
 		{
-			var node = attempt(parseNamespace);
+			var node = Attempt(ParseNamespace);
 			if (node == null)
 				return null;
 
-			var args = attempt(parseTypeArgs);
+			var args = Attempt(ParseTypeArgs);
 			if(args != null)
 				node = new TypeSignature(node.Name, args.ToArray());
 
 			while (true)
 			{
-				if (peek(LexemType.SquareOpen, LexemType.SquareClose))
+				if (Peek(LexemType.SquareOpen, LexemType.SquareClose))
 				{
 					node = new TypeSignature(null, "[]", node);
-					skip(2);
+					Skip(2);
 				}
 
-				else if (check(LexemType.Tilde))
+				else if (Check(LexemType.Tilde))
 					node = new TypeSignature(null, "~", node);
 
-				else if (check(LexemType.QuestionMark))
+				else if (Check(LexemType.QuestionMark))
 					node = new TypeSignature(null, "?", node);
 
 				else
@@ -159,23 +159,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// type_args                                   = "<" type { "," type } ">"
 		/// </summary>
-		private List<TypeSignature> parseTypeArgs()
+		private List<TypeSignature> ParseTypeArgs()
 		{
-			if (!check(LexemType.Less))
+			if (!Check(LexemType.Less))
 				return null;
 
-			var arg = attempt(parseType);
+			var arg = Attempt(ParseType);
 			if (arg == null)
 				return null;
 
-			if (!peekAny(new[] {LexemType.Comma, LexemType.Greater}))
+			if (!PeekAny(new[] {LexemType.Comma, LexemType.Greater}))
 				return null;
 
 			var list = new List<TypeSignature> {arg};
-			while (check(LexemType.Comma))
-				list.Add(ensure(parseType, ParserMessages.TypeArgumentExpected));
+			while (Check(LexemType.Comma))
+				list.Add(Ensure(ParseType, ParserMessages.TypeArgumentExpected));
 
-			ensure(LexemType.Greater, ParserMessages.SymbolExpected, '>');
+			Ensure(LexemType.Greater, ParserMessages.SymbolExpected, '>');
 			return list;
 		}
 
@@ -186,12 +186,12 @@ namespace Lens.Parser
 		/// <summary>
 		/// using                                       = "using" namespace NL
 		/// </summary>
-		private UseNode parseUsing()
+		private UseNode ParseUsing()
 		{
-			if (!check(LexemType.Use))
+			if (!Check(LexemType.Use))
 				return null;
 
-			var nsp = ensure(parseNamespace, ParserMessages.NamespaceExpected);
+			var nsp = Ensure(ParseNamespace, ParserMessages.NamespaceExpected);
 			var node = new UseNode {Namespace = nsp.FullSignature};
 
 			return node;
@@ -200,23 +200,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// record_def                                  = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
 		/// </summary>
-		private RecordDefinitionNode parseRecordDef()
+		private RecordDefinitionNode ParseRecordDef()
 		{
-			if (!check(LexemType.Record))
+			if (!Check(LexemType.Record))
 				return null;
 
 			var node = new RecordDefinitionNode();
 
-			node.Name = ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected).Value;
-			ensure(LexemType.Indent, ParserMessages.RecordIndentExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected).Value;
+			Ensure(LexemType.Indent, ParserMessages.RecordIndentExpected);
 			
-			var field = bind(parseRecordStmt);
+			var field = Bind(ParseRecordStmt);
 			node.Entries.Add(field);
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, ParserMessages.RecordSeparatorExpected);
-				field = bind(parseRecordStmt);
+				Ensure(LexemType.NewLine, ParserMessages.RecordSeparatorExpected);
+				field = Bind(ParseRecordStmt);
 				node.Entries.Add(field);
 			}
 
@@ -226,13 +226,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// record_stmt                                 = identifier ":" type
 		/// </summary>
-		private RecordField parseRecordStmt()
+		private RecordField ParseRecordStmt()
 		{
 			var node = new RecordField();
 
-			node.Name = ensure(LexemType.Identifier, ParserMessages.RecordFieldIdentifierExpected).Value;
-			ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
-			node.Type = ensure(parseType, ParserMessages.RecordFieldTypeExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.RecordFieldIdentifierExpected).Value;
+			Ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+			node.Type = Ensure(ParseType, ParserMessages.RecordFieldTypeExpected);
 
 			return node;
 		}
@@ -240,23 +240,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// type_def                                    = "type" identifier INDENT type_stmt { type_stmt } DEDENT
 		/// </summary>
-		private TypeDefinitionNode parseTypeDef()
+		private TypeDefinitionNode ParseTypeDef()
 		{
-			if (!check(LexemType.Type))
+			if (!Check(LexemType.Type))
 				return null;
 
 			var node = new TypeDefinitionNode();
 
-			node.Name = ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
-			ensure(LexemType.Indent, ParserMessages.TypeIndentExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
+			Ensure(LexemType.Indent, ParserMessages.TypeIndentExpected);
 
-			var field = bind(parseTypeStmt);
+			var field = Bind(ParseTypeStmt);
 			node.Entries.Add(field);
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, ParserMessages.TypeSeparatorExpected);
-				field = bind(parseTypeStmt);
+				Ensure(LexemType.NewLine, ParserMessages.TypeSeparatorExpected);
+				field = Bind(ParseTypeStmt);
 				node.Entries.Add(field);
 			}
 
@@ -266,13 +266,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// type_stmt                                   = identifier [ "of" type ]
 		/// </summary>
-		private TypeLabel parseTypeStmt()
+		private TypeLabel ParseTypeStmt()
 		{
 			var node = new TypeLabel();
 
-			node.Name = ensure(LexemType.Identifier, ParserMessages.TypeLabelIdentifierExpected).Value;
-			if (check(LexemType.Of))
-				node.TagType = ensure(parseType, ParserMessages.TypeLabelTagTypeExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.TypeLabelIdentifierExpected).Value;
+			if (Check(LexemType.Of))
+				node.TagType = Ensure(ParseType, ParserMessages.TypeLabelTagTypeExpected);
 
 			return node;
 		}
@@ -280,26 +280,26 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_def                                     = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
 		/// </summary>
-		private FunctionNode parseFunDef()
+		private FunctionNode ParseFunDef()
 		{
 			var node = new FunctionNode();
-			node.IsPure = check(LexemType.Pure);
+			node.IsPure = Check(LexemType.Pure);
 
-			if (!check(LexemType.Fun))
+			if (!Check(LexemType.Fun))
 			{
 				if (node.IsPure)
-					error(ParserMessages.FunctionDefExpected);
+					Error(ParserMessages.FunctionDefExpected);
 				else
 					return null;
 			}
 
-			node.Name = ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
-			if (check(LexemType.Colon))
-				node.ReturnTypeSignature = ensure(parseType, ParserMessages.FunctionReturnExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
+			if (Check(LexemType.Colon))
+				node.ReturnTypeSignature = Ensure(ParseType, ParserMessages.FunctionReturnExpected);
 
-			node.Arguments = attempt(() => parseFunArgs(true)) ?? new List<FunctionArgument>();
-			ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
-			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
+			node.Arguments = Attempt(() => ParseFunArgs(true)) ?? new List<FunctionArgument>();
+			Ensure(LexemType.Arrow, ParserMessages.SymbolExpected, "->");
+			node.Body.LoadFrom(Ensure(ParseBlock, ParserMessages.FunctionBodyExpected));
 
 			return node;
 		}
@@ -307,42 +307,42 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_args                                    = fun_single_arg | fun_many_args
 		/// </summary>
-		private List<FunctionArgument> parseFunArgs(bool required = false)
+		private List<FunctionArgument> ParseFunArgs(bool required = false)
 		{
-			var single = attempt(() => parseFunSingleArg(required));
+			var single = Attempt(() => ParseFunSingleArg(required));
 			if (single != null)
 				return new List<FunctionArgument> {single};
 
-			return parseFunManyArgs(required);
+			return ParseFunManyArgs(required);
 		}
 
 		/// <summary>
 		/// fun_arg                                     = identifier [ ":" [ "ref" ] type [ "... " ] ]
 		/// </summary>
-		private FunctionArgument parseFunSingleArg(bool required = false)
+		private FunctionArgument ParseFunSingleArg(bool required = false)
 		{
-			if (!peek(LexemType.Identifier))
+			if (!Peek(LexemType.Identifier))
 				return null;
 
 			var node = new FunctionArgument();
-			node.Name = getValue();
+			node.Name = GetValue();
 
-			if (!check(LexemType.Colon))
+			if (!Check(LexemType.Colon))
 			{
 				if (required)
-					error(ParserMessages.SymbolExpected, ":");
+					Error(ParserMessages.SymbolExpected, ":");
 
 				node.Type = typeof (UnspecifiedType);
 				return node;
 			}
 
-			node.IsRefArgument = check(LexemType.Ref);
-			node.TypeSignature = ensure(parseType, ParserMessages.ArgTypeExpected);
+			node.IsRefArgument = Check(LexemType.Ref);
+			node.TypeSignature = Ensure(ParseType, ParserMessages.ArgTypeExpected);
 
-			if (check(LexemType.Ellipsis))
+			if (Check(LexemType.Ellipsis))
 			{
 				if(node.IsRefArgument)
-					error(ParserMessages.VariadicByRef);
+					Error(ParserMessages.VariadicByRef);
 
 				node.IsVariadic = true;
 			}
@@ -353,15 +353,15 @@ namespace Lens.Parser
 		/// <summary>
 		/// fun_arg_list                                = "(" { fun_single_arg } ")"
 		/// </summary>
-		private List<FunctionArgument> parseFunManyArgs(bool required = false)
+		private List<FunctionArgument> ParseFunManyArgs(bool required = false)
 		{
-			if (!check(LexemType.ParenOpen))
+			if (!Check(LexemType.ParenOpen))
 				return null;
 
 			var args = new List<FunctionArgument>();
-			while (!check(LexemType.ParenClose))
+			while (!Check(LexemType.ParenClose))
 			{
-				var arg = attempt(() => parseFunSingleArg(required));
+				var arg = Attempt(() => ParseFunSingleArg(required));
 				if (arg == null)
 					return null;
 
@@ -378,13 +378,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// block                                       = local_stmt_list | local_stmt
 		/// </summary>
-		private CodeBlockNode parseBlock()
+		private CodeBlockNode ParseBlock()
 		{
-			var many = parseLocalStmtList().ToList();
+			var many = ParseLocalStmtList().ToList();
 			if (many.Count > 0)
 				return new CodeBlockNode { Statements = many };
 
-			var single = parseLocalStmt();
+			var single = ParseLocalStmt();
 			if (single != null)
 				return new CodeBlockNode { single };
 
@@ -394,35 +394,35 @@ namespace Lens.Parser
 		/// <summary>
 		/// local_stmt_list                             = INDENT local_stmt { NL local_stmt } DEDENT
 		/// </summary>
-		private IEnumerable<NodeBase> parseLocalStmtList()
+		private IEnumerable<NodeBase> ParseLocalStmtList()
 		{
-			if (!check(LexemType.Indent))
+			if (!Check(LexemType.Indent))
 				yield break;
 
-			yield return ensure(parseLocalStmt, ParserMessages.ExpressionExpected);
+			yield return Ensure(ParseLocalStmt, ParserMessages.ExpressionExpected);
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				if(!isStmtSeparator())
-					error(ParserMessages.NewlineSeparatorExpected);
-				yield return ensure(parseLocalStmt, ParserMessages.ExpressionExpected);
+				if(!IsStmtSeparator())
+					Error(ParserMessages.NewlineSeparatorExpected);
+				yield return Ensure(ParseLocalStmt, ParserMessages.ExpressionExpected);
 			}
 		}
 
 		/// <summary>
 		/// local_stmt                                  = name_def_stmt | set_stmt | expr
 		/// </summary>
-		private NodeBase parseLocalStmt()
+		private NodeBase ParseLocalStmt()
 		{
-			if(peek(LexemType.PassLeft))
-				error(ParserMessages.ArgumentPassIndentExpected);
+			if(Peek(LexemType.PassLeft))
+				Error(ParserMessages.ArgumentPassIndentExpected);
 
-			if (peek(LexemType.PassRight))
-				error(ParserMessages.MethodPassIndentExpected);
+			if (Peek(LexemType.PassRight))
+				Error(ParserMessages.MethodPassIndentExpected);
 
-			return attempt(parseNameDefStmt)
-				   ?? attempt(parseSetStmt)
-				   ?? attempt(parseExpr);
+			return Attempt(ParseNameDefStmt)
+				   ?? Attempt(ParseSetStmt)
+				   ?? Attempt(ParseExpr);
 		}
 
 		#endregion
@@ -432,28 +432,28 @@ namespace Lens.Parser
 		/// <summary>
 		/// name_def_stmt                               = var_stmt | let_stmt
 		/// </summary>
-		private NameDeclarationNodeBase parseNameDefStmt()
+		private NameDeclarationNodeBase ParseNameDefStmt()
 		{
-			return attempt(parseVarStmt)
-				   ?? attempt(parseLetStmt) as NameDeclarationNodeBase;
+			return Attempt(ParseVarStmt)
+				   ?? Attempt(ParseLetStmt) as NameDeclarationNodeBase;
 		}
 
 		/// <summary>
 		/// var_stmt                                    = "var" identifier ( "=" expr | ":" type )
 		/// </summary>
-		private VarNode parseVarStmt()
+		private VarNode ParseVarStmt()
 		{
-			if (!check(LexemType.Var))
+			if (!Check(LexemType.Var))
 				return null;
 
 			var node = new VarNode();
-			node.Name = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
-			if (check(LexemType.Colon))
-				node.Type = ensure(parseType, ParserMessages.VarTypeExpected);
-			else if(check(LexemType.Assign))
-				node.Value = ensure(parseExpr, ParserMessages.InitExpressionExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+			if (Check(LexemType.Colon))
+				node.Type = Ensure(ParseType, ParserMessages.VarTypeExpected);
+			else if(Check(LexemType.Assign))
+				node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
 			else
-				error(ParserMessages.InitExpressionOrTypeExpected);
+				Error(ParserMessages.InitExpressionOrTypeExpected);
 
 			return node;
 		}
@@ -461,15 +461,15 @@ namespace Lens.Parser
 		/// <summary>
 		/// let_stmt                                    = "let" identifier "=" expr
 		/// </summary>
-		private LetNode parseLetStmt()
+		private LetNode ParseLetStmt()
 		{
-			if (!check(LexemType.Let))
+			if (!Check(LexemType.Let))
 				return null;
 
 			var node = new LetNode();
-			node.Name = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
-			ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
-			node.Value = ensure(parseExpr, ParserMessages.InitExpressionExpected);
+			node.Name = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+			Ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
+			node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
 
 			return node;
 		}
@@ -481,35 +481,35 @@ namespace Lens.Parser
 		/// <summary>
 		/// set_stmt                                    = set_id_stmt | set_stmbr_stmt | set_any_stmt
 		/// </summary>
-		private NodeBase parseSetStmt()
+		private NodeBase ParseSetStmt()
 		{
-			return attempt(parseSetIdStmt)
-				   ?? attempt(parseSetStmbrStmt)
-				   ?? attempt(parseSetAnyStmt);
+			return Attempt(ParseSetIdStmt)
+				   ?? Attempt(ParseSetStmbrStmt)
+				   ?? Attempt(ParseSetAnyStmt);
 		}
 
 		/// <summary>
 		/// set_id_stmt                                 = identifier assignment_op expr
 		/// </summary>
-		private NodeBase parseSetIdStmt()
+		private NodeBase ParseSetIdStmt()
 		{
-			if (!peek(LexemType.Identifier))
+			if (!Peek(LexemType.Identifier))
 				return null;
 
 			var node = new SetIdentifierNode();
-			node.Identifier = getValue();
+			node.Identifier = GetValue();
 
-			if (check(LexemType.Assign))
+			if (Check(LexemType.Assign))
 			{
-				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				node.Value = Ensure(ParseExpr, ParserMessages.ExpressionExpected);
 				return node;
 			}
 
-			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			if (PeekAny(BinaryOperators) && Peek(1, LexemType.Assign))
 			{
-				var opType = _Lexems[_LexemId].Type;
-				skip(2);
-				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				var opType = _lexems[_lexemId].Type;
+				Skip(2);
+				node.Value = Ensure(ParseExpr, ParserMessages.ExpressionExpected);
 				return new ShortAssignmentNode(opType, node);
 			}
 
@@ -519,30 +519,30 @@ namespace Lens.Parser
 		/// <summary>
 		/// set_stmbr_stmt                              = type "::" identifier assignment_op expr
 		/// </summary>
-		private NodeBase parseSetStmbrStmt()
+		private NodeBase ParseSetStmbrStmt()
 		{
-			var type = attempt(parseType);
+			var type = Attempt(ParseType);
 			if (type == null)
 				return null;
 
-			if (!check(LexemType.DoubleСolon))
+			if (!Check(LexemType.DoubleСolon))
 				return null;
 
 			var node = new SetMemberNode();
 			node.StaticType = type;
-			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+			node.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			if (check(LexemType.Assign))
+			if (Check(LexemType.Assign))
 			{
-				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				node.Value = Ensure(ParseExpr, ParserMessages.ExpressionExpected);
 				return node;
 			}
 
-			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			if (PeekAny(BinaryOperators) && Peek(1, LexemType.Assign))
 			{
-				var opType = _Lexems[_LexemId].Type;
-				skip(2);
-				node.Value = ensure(parseExpr, ParserMessages.ExpressionExpected);
+				var opType = _lexems[_lexemId].Type;
+				Skip(2);
+				node.Value = Ensure(ParseExpr, ParserMessages.ExpressionExpected);
 				return new ShortAssignmentNode(opType, node);
 			}
 
@@ -552,24 +552,24 @@ namespace Lens.Parser
 		/// <summary>
 		/// set_any_stmt                                = lvalue_expr assignment_op expr
 		/// </summary>
-		private NodeBase parseSetAnyStmt()
+		private NodeBase ParseSetAnyStmt()
 		{
-			var node = attempt(parseLvalueExpr);
+			var node = Attempt(ParseLvalueExpr);
 			if (node == null)
 				return null;
 
-			if (check(LexemType.Assign))
+			if (Check(LexemType.Assign))
 			{
-				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
-				return makeSetter(node, expr);
+				var expr = Ensure(ParseExpr, ParserMessages.AssignExpressionExpected);
+				return MakeSetter(node, expr);
 			}
 
-			if (peekAny(_BinaryOperators) && peek(1, LexemType.Assign))
+			if (PeekAny(BinaryOperators) && Peek(1, LexemType.Assign))
 			{
-				var opType = _Lexems[_LexemId].Type;
-				skip(2);
-				var expr = ensure(parseExpr, ParserMessages.AssignExpressionExpected);
-				return new ShortAssignmentNode(opType, makeSetter(node, expr));
+				var opType = _lexems[_lexemId].Type;
+				Skip(2);
+				var expr = Ensure(ParseExpr, ParserMessages.AssignExpressionExpected);
+				return new ShortAssignmentNode(opType, MakeSetter(node, expr));
 			}
 
 			return null;
@@ -582,88 +582,88 @@ namespace Lens.Parser
 		/// <summary>
 		/// lvalue_expr                                 = lvalue_name_expr | lvalue_paren_expr
 		/// </summary>
-		private NodeBase parseLvalueExpr()
+		private NodeBase ParseLvalueExpr()
 		{
-			return attempt(parseLvalueNameExpr)
-				   ?? attempt(parseLvalueParenExpr);
+			return Attempt(ParseLvalueNameExpr)
+				   ?? Attempt(ParseLvalueParenExpr);
 		}
 
 		/// <summary>
 		/// lvalue_name_expr                            = lvalue_name { accessor }
 		/// </summary>
-		private NodeBase parseLvalueNameExpr()
+		private NodeBase ParseLvalueNameExpr()
 		{
-			var node = attempt(parseLvalueName);
+			var node = Attempt(ParseLvalueName);
 			if (node == null)
 				return null;
 
 			while (true)
 			{
-				var acc = attempt(parseAccessor);
+				var acc = Attempt(ParseAccessor);
 				if (acc == null)
 					return node;
 
-				node = attachAccessor(node, acc);
+				node = AttachAccessor(node, acc);
 			}
 		}
 
 		/// <summary>
 		/// lvalue_paren_expr                           = paren_expr accessor { accessor }
 		/// </summary>
-		private NodeBase parseLvalueParenExpr()
+		private NodeBase ParseLvalueParenExpr()
 		{
-			var node = attempt(parseParenExpr);
+			var node = Attempt(ParseParenExpr);
 			if (node == null)
 				return null;
 
-			var acc = attempt(parseAccessor);
+			var acc = Attempt(ParseAccessor);
 			if (acc == null)
 				return null;
 
-			node = attachAccessor(node, acc);
+			node = AttachAccessor(node, acc);
 			while (true)
 			{
-				acc = attempt(parseAccessor);
+				acc = Attempt(ParseAccessor);
 				if (acc == null)
 					return node;
 
-				node = attachAccessor(node, acc);
+				node = AttachAccessor(node, acc);
 			}
 		}
 
 		/// <summary>
 		/// lvalue_name                                 = lvalue_stmbr_expr | lvalue_id_expr
 		/// </summary>
-		private NodeBase parseLvalueName()
+		private NodeBase ParseLvalueName()
 		{
-			return attempt(parseLvalueStmbrExpr)
-				   ?? attempt(parseLvalueIdExpr) as NodeBase;
+			return Attempt(ParseLvalueStmbrExpr)
+				   ?? Attempt(ParseLvalueIdExpr) as NodeBase;
 		}
 
 		/// <summary>
 		/// lvalue_stmbr_expr                           = type "::" identifier
 		/// </summary>
-		private GetMemberNode parseLvalueStmbrExpr()
+		private GetMemberNode ParseLvalueStmbrExpr()
 		{
-			var type = attempt(parseType);
-			if (type == null || !check(LexemType.DoubleСolon))
+			var type = Attempt(ParseType);
+			if (type == null || !Check(LexemType.DoubleСolon))
 				return null;
 
 			var node = new GetMemberNode();
 			node.StaticType = type;
-			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+			node.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 			return node;
 		}
 
 		/// <summary>
 		/// lvalue_id_expr                              = identifier
 		/// </summary>
-		private GetIdentifierNode parseLvalueIdExpr()
+		private GetIdentifierNode ParseLvalueIdExpr()
 		{
-			if (!peek(LexemType.Identifier))
+			if (!Peek(LexemType.Identifier))
 				return null;
 
-			return new GetIdentifierNode(getValue());
+			return new GetIdentifierNode(GetValue());
 		}
 
 		#endregion
@@ -673,28 +673,28 @@ namespace Lens.Parser
 		/// <summary>
 		/// get_expr                                    = atom { accessor }
 		/// </summary>
-		private NodeBase parseGetExpr()
+		private NodeBase ParseGetExpr()
 		{
-			var node = attempt(parseAtom);
+			var node = Attempt(ParseAtom);
 			if (node == null)
 				return null;
 
 			while (true)
 			{
-				var acc = attempt(parseAccessor);
+				var acc = Attempt(ParseAccessor);
 				if (acc == null)
 					return node;
 
-				node = attachAccessor(node, acc);
+				node = AttachAccessor(node, acc);
 			}
 		}
 
 		/// <summary>
 		/// get_id_expr                                 = identifier [ type_args ]
 		/// </summary>
-		private GetIdentifierNode parseGetIdExpr()
+		private GetIdentifierNode ParseGetIdExpr()
 		{
-			var node = attempt(parseLvalueIdExpr);
+			var node = Attempt(ParseLvalueIdExpr);
 			return node;
 
 			// todo: type args
@@ -703,13 +703,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// get_stmbr_expr                              = type "::" identifier [ type_args ]
 		/// </summary>
-		private GetMemberNode parseGetStmbrExpr()
+		private GetMemberNode ParseGetStmbrExpr()
 		{
-			var node = attempt(parseLvalueStmbrExpr);
+			var node = Attempt(ParseLvalueStmbrExpr);
 			if (node == null)
 				return null;
 
-			var hints = attempt(parseTypeArgs);
+			var hints = Attempt(ParseTypeArgs);
 			if (hints != null)
 				node.TypeHints = hints;
 
@@ -719,38 +719,38 @@ namespace Lens.Parser
 		/// <summary>
 		/// accessor                                    = accessor_idx | accessor_mbr
 		/// </summary>
-		private NodeBase parseAccessor()
+		private NodeBase ParseAccessor()
 		{
-			return attempt(parseAccessorIdx)
-				   ?? attempt(parseAccessorMbr) as NodeBase;
+			return Attempt(ParseAccessorIdx)
+				   ?? Attempt(ParseAccessorMbr) as NodeBase;
 		}
 
 		/// <summary>
 		/// accessor_idx                                = "[" line_expr "]"
 		/// </summary>
-		private GetIndexNode parseAccessorIdx()
+		private GetIndexNode ParseAccessorIdx()
 		{
-			if (!check(LexemType.SquareOpen))
+			if (!Check(LexemType.SquareOpen))
 				return null;
 
 			var node = new GetIndexNode();
-			node.Index = ensure(parseLineExpr, ParserMessages.IndexExpressionExpected);
-			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
+			node.Index = Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected);
+			Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
 			return node;
 		}
 
 		/// <summary>
 		/// accessor_mbr                                = "." identifier [ type_args ]
 		/// </summary>
-		private GetMemberNode parseAccessorMbr()
+		private GetMemberNode ParseAccessorMbr()
 		{
-			if (!check(LexemType.Dot))
+			if (!Check(LexemType.Dot))
 				return null;
 
 			var node = new GetMemberNode();
-			node.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+			node.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			var args = attempt(parseTypeArgs);
+			var args = Attempt(ParseTypeArgs);
 			if (args != null)
 				node.TypeHints = args;
 
@@ -764,10 +764,10 @@ namespace Lens.Parser
 		/// <summary>
 		/// expr                                        = block_expr | line_expr
 		/// </summary>
-		private NodeBase parseExpr()
+		private NodeBase ParseExpr()
 		{
-			return attempt(parseBlockExpr)
-				   ?? attempt(parseLineExpr);
+			return Attempt(ParseBlockExpr)
+				   ?? Attempt(ParseLineExpr);
 		}
 
 		#endregion
@@ -777,32 +777,32 @@ namespace Lens.Parser
 		/// <summary>
 		/// block_expr                                  = if_block | while_block | for_block | using_block | try_stmt | match_block | new_block_expr | invoke_block_expr | invoke_block_pass_expr | lambda_block_expr
 		/// </summary>
-		private NodeBase parseBlockExpr()
+		private NodeBase ParseBlockExpr()
 		{
-			return attempt(parseIfBlock)
-				   ?? attempt(parseWhileBlock)
-				   ?? attempt(parseForBlock)
-				   ?? attempt(parseUsingBlock)
-				   ?? attempt(parseTryStmt)
-				   ?? attempt(parseMatchBlock)
-				   ?? attempt(parseNewBlockExpr)
-				   ?? attempt(parseInvokeBlockExpr)
-				   ?? attempt(parseInvokeBlockPassExpr)
-				   ?? attempt(parseLambdaBlockExpr) as NodeBase;
+			return Attempt(ParseIfBlock)
+				   ?? Attempt(ParseWhileBlock)
+				   ?? Attempt(ParseForBlock)
+				   ?? Attempt(ParseUsingBlock)
+				   ?? Attempt(ParseTryStmt)
+				   ?? Attempt(ParseMatchBlock)
+				   ?? Attempt(ParseNewBlockExpr)
+				   ?? Attempt(ParseInvokeBlockExpr)
+				   ?? Attempt(ParseInvokeBlockPassExpr)
+				   ?? Attempt(ParseLambdaBlockExpr) as NodeBase;
 		}
 
 		/// <summary>
 		/// if_block                                    = if_header block [ NL "else" block ]
 		/// </summary>
-		private IfNode parseIfBlock()
+		private IfNode ParseIfBlock()
 		{
-			var node = attempt(parseIfHeader);
+			var node = Attempt(ParseIfHeader);
 			if (node == null)
 				return null;
 
-			node.TrueAction = ensure(parseBlock, ParserMessages.ConditionBlockExpected);
-			if (check(LexemType.Else))
-				node.FalseAction = ensure(parseBlock, ParserMessages.CodeBlockExpected);
+			node.TrueAction = Ensure(ParseBlock, ParserMessages.ConditionBlockExpected);
+			if (Check(LexemType.Else))
+				node.FalseAction = Ensure(ParseBlock, ParserMessages.CodeBlockExpected);
 
 			return node;
 		}
@@ -810,57 +810,57 @@ namespace Lens.Parser
 		/// <summary>
 		/// while_block                                 = while_header block
 		/// </summary>
-		private WhileNode parseWhileBlock()
+		private WhileNode ParseWhileBlock()
 		{
-			var node = attempt(parseWhileHeader);
+			var node = Attempt(ParseWhileHeader);
 			if (node == null)
 				return null;
 
-			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.LoopBodyExpected));
+			node.Body.LoadFrom(Ensure(ParseBlock, ParserMessages.LoopBodyExpected));
 			return node;
 		}
 
 		/// <summary>
 		/// for_block                                   = for_header block
 		/// </summary>
-		private ForeachNode parseForBlock()
+		private ForeachNode ParseForBlock()
 		{
-			var node = attempt(parseForHeader);
+			var node = Attempt(ParseForHeader);
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.LoopBodyExpected);
+			node.Body = Ensure(ParseBlock, ParserMessages.LoopBodyExpected);
 			return node;
 		}
 
 		/// <summary>
 		/// using_block                                 = using_header block
 		/// </summary>
-		private UsingNode parseUsingBlock()
+		private UsingNode ParseUsingBlock()
 		{
-			var node = attempt(parseUsingHeader);
+			var node = Attempt(ParseUsingHeader);
 			if (node == null)
 				return null;
 
-			node.Body = ensure(parseBlock, ParserMessages.UsingBodyExpected);
+			node.Body = Ensure(ParseBlock, ParserMessages.UsingBodyExpected);
 			return node;
 		}
 
 		/// <summary>
 		/// try_stmt                                    = "try" block catch_stmt_list [ finally_stmt ]
 		/// </summary>
-		private TryNode parseTryStmt()
+		private TryNode ParseTryStmt()
 		{
-			if (!check(LexemType.Try))
+			if (!Check(LexemType.Try))
 				return null;
 
 			var node = new TryNode();
-			node.Code = ensure(parseBlock, ParserMessages.TryBlockExpected);
-			node.CatchClauses = parseCatchStmtList().ToList();
-			node.Finally = attempt(parseFinallyStmt);
+			node.Code = Ensure(ParseBlock, ParserMessages.TryBlockExpected);
+			node.CatchClauses = ParseCatchStmtList().ToList();
+			node.Finally = Attempt(ParseFinallyStmt);
 
 			if (node.Finally == null && node.CatchClauses.Count == 0)
-				error(ParserMessages.CatchExpected);
+				Error(ParserMessages.CatchExpected);
 
 			return node;
 		}
@@ -868,56 +868,56 @@ namespace Lens.Parser
 		/// <summary>
 		/// catch_stmt_list                             = catch_stmt { catch_stmt }
 		/// </summary>
-		private IEnumerable<CatchNode> parseCatchStmtList()
+		private IEnumerable<CatchNode> ParseCatchStmtList()
 		{
-			while (peek(LexemType.Catch))
-				yield return parseCatchStmt();
+			while (Peek(LexemType.Catch))
+				yield return ParseCatchStmt();
 		}
 
 		/// <summary>
 		/// catch_stmt                                  = "catch" [ identifier ":" type ] block
 		/// </summary>
-		private CatchNode parseCatchStmt()
+		private CatchNode ParseCatchStmt()
 		{
-			if (!check(LexemType.Catch))
+			if (!Check(LexemType.Catch))
 				return null;
 
 			var node = new CatchNode();
-			if (peek(LexemType.Identifier))
+			if (Peek(LexemType.Identifier))
 			{
-				node.ExceptionVariable = getValue();
-				ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
-				node.ExceptionType = ensure(parseType, ParserMessages.ExceptionTypeExpected);
+				node.ExceptionVariable = GetValue();
+				Ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+				node.ExceptionType = Ensure(ParseType, ParserMessages.ExceptionTypeExpected);
 			}
 
-			node.Code = ensure(parseBlock, ParserMessages.ExceptionHandlerExpected);
+			node.Code = Ensure(ParseBlock, ParserMessages.ExceptionHandlerExpected);
 			return node;
 		}
 
 		/// <summary>
 		/// finally_stmt                                = "finally" block
 		/// </summary>
-		private CodeBlockNode parseFinallyStmt()
+		private CodeBlockNode ParseFinallyStmt()
 		{
-			if (!check(LexemType.Finally))
+			if (!Check(LexemType.Finally))
 				return null;
 
-			var block = parseBlock();
+			var block = ParseBlock();
 			return block;
 		}
 
 		/// <summary>
 		/// lambda_block_expr                           = [ fun_args ] "->" block
 		/// </summary>
-		private LambdaNode parseLambdaBlockExpr()
+		private LambdaNode ParseLambdaBlockExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = attempt(() => parseFunArgs()) ?? new List<FunctionArgument>();
+			node.Arguments = Attempt(() => ParseFunArgs()) ?? new List<FunctionArgument>();
 			
-			if (!check(LexemType.Arrow))
+			if (!Check(LexemType.Arrow))
 				return null;
 
-			node.Body.LoadFrom(ensure(parseBlock, ParserMessages.FunctionBodyExpected));
+			node.Body.LoadFrom(Ensure(ParseBlock, ParserMessages.FunctionBodyExpected));
 			return node;
 		}
 
@@ -928,14 +928,14 @@ namespace Lens.Parser
 		/// <summary>
 		/// if_header                                   = "if" line_expr "then"
 		/// </summary>
-		private IfNode parseIfHeader()
+		private IfNode ParseIfHeader()
 		{
-			if (!check(LexemType.If))
+			if (!Check(LexemType.If))
 				return null;
 
 			var node = new IfNode();
-			node.Condition = ensure(parseLineExpr, ParserMessages.ConditionExpected);
-			ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
+			node.Condition = Ensure(ParseLineExpr, ParserMessages.ConditionExpected);
+			Ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
 
 			return node;
 		}
@@ -943,14 +943,14 @@ namespace Lens.Parser
 		/// <summary>
 		/// while_header                                = "while" line_expr "do"
 		/// </summary>
-		private WhileNode parseWhileHeader()
+		private WhileNode ParseWhileHeader()
 		{
-			if (!check(LexemType.While))
+			if (!Check(LexemType.While))
 				return null;
 
 			var node = new WhileNode();
-			node.Condition = ensure(parseLineExpr, ParserMessages.ConditionExpected);
-			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+			node.Condition = Ensure(ParseLineExpr, ParserMessages.ConditionExpected);
+			Ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
 
 			return node;
 		}
@@ -958,47 +958,47 @@ namespace Lens.Parser
 		/// <summary>
 		/// for_block                                   = "for" identifier "in" line_expr [ ".." line_expr ] "do"
 		/// </summary>
-		private ForeachNode parseForHeader()
+		private ForeachNode ParseForHeader()
 		{
-			if (!check(LexemType.For))
+			if (!Check(LexemType.For))
 				return null;
 
 			var node = new ForeachNode();
-			node.VariableName = ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
-			ensure(LexemType.In, ParserMessages.SymbolExpected, "in");
+			node.VariableName = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+			Ensure(LexemType.In, ParserMessages.SymbolExpected, "in");
 
-			var iter = ensure(parseLineExpr, ParserMessages.SequenceExpected);
-			if (check(LexemType.DoubleDot))
+			var iter = Ensure(ParseLineExpr, ParserMessages.SequenceExpected);
+			if (Check(LexemType.DoubleDot))
 			{
 				node.RangeStart = iter;
-				node.RangeEnd = ensure(parseLineExpr, ParserMessages.RangeEndExpected);
+				node.RangeEnd = Ensure(ParseLineExpr, ParserMessages.RangeEndExpected);
 			}
 			else
 			{
 				node.IterableExpression = iter;
 			}
 
-			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+			Ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
 			return node;
 		}
 
 		/// <summary>
 		/// using_header                                = "using" [ identifier "=" ] line_expr "do"
 		/// </summary>
-		private UsingNode parseUsingHeader()
+		private UsingNode ParseUsingHeader()
 		{
-			if (!check(LexemType.Using))
+			if (!Check(LexemType.Using))
 				return null;
 
 			var node = new UsingNode();
-			if (peek(LexemType.Identifier, LexemType.Assign))
+			if (Peek(LexemType.Identifier, LexemType.Assign))
 			{
-				node.VariableName = getValue();
-				skip();
+				node.VariableName = GetValue();
+				Skip();
 			}
 
-			node.Expression = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
-			ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
+			node.Expression = Ensure(ParseLineExpr, ParserMessages.ExpressionExpected);
+			Ensure(LexemType.Do, ParserMessages.SymbolExpected, "do");
 
 			return node;
 		}
@@ -1010,32 +1010,32 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_block_expr                              = "new" new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block
 		/// </summary>
-		private NodeBase parseNewBlockExpr()
+		private NodeBase ParseNewBlockExpr()
 		{
-			if (!check(LexemType.New))
+			if (!Check(LexemType.New))
 				return null;
 
-			return attempt(parseNewTupleBlock)
-				   ?? attempt(parseNewListBlock)
-				   ?? attempt(parseNewArrayBlock)
-				   ?? attempt(parseNewDictBlock)
-				   ?? attempt(parseNewObjectBlock) as NodeBase;
+			return Attempt(ParseNewTupleBlock)
+				   ?? Attempt(ParseNewListBlock)
+				   ?? Attempt(ParseNewArrayBlock)
+				   ?? Attempt(ParseNewDictBlock)
+				   ?? Attempt(ParseNewObjectBlock) as NodeBase;
 		}
 
 		/// <summary>
 		/// new_tuple_block                             = "(" init_expr_block ")"
 		/// </summary>
-		private NewTupleNode parseNewTupleBlock()
+		private NewTupleNode ParseNewTupleBlock()
 		{
-			if (!check(LexemType.ParenOpen))
+			if (!Check(LexemType.ParenOpen))
 				return null;
 
 			var node = new NewTupleNode();
-			node.Expressions = parseInitExprBlock().ToList();
+			node.Expressions = ParseInitExprBlock().ToList();
 			if(node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
+			Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 
 			return node;
 		}
@@ -1043,22 +1043,22 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_list_block                              = "[" "[" init_expr_block "]" "]"
 		/// </summary>
-		private NewListNode parseNewListBlock()
+		private NewListNode ParseNewListBlock()
 		{
-			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
+			if (!Peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
 
-			skip(2);
+			Skip(2);
 
 			var node = new NewListNode();
-			node.Expressions = parseInitExprBlock().ToList();
+			node.Expressions = ParseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
 				return null;
 
-			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
-				error(ParserMessages.SymbolExpected, "]]");
+			if (!Peek(LexemType.SquareClose, LexemType.SquareClose))
+				Error(ParserMessages.SymbolExpected, "]]");
 
-			skip(2);
+			Skip(2);
 
 			return node;
 		}
@@ -1066,17 +1066,17 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_array_block                             = "[" init_expr_block "]"
 		/// </summary>
-		private NewArrayNode parseNewArrayBlock()
+		private NewArrayNode ParseNewArrayBlock()
 		{
-			if (!check(LexemType.SquareOpen))
+			if (!Check(LexemType.SquareOpen))
 				return null;
 
 			var node = new NewArrayNode();
-			node.Expressions = parseInitExprBlock().ToList();
+			node.Expressions = ParseInitExprBlock().ToList();
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 
 			return node;
 		}
@@ -1084,17 +1084,17 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_dict_block                              = "{" init_dict_expr_block "}"
 		/// </summary>
-		private NewDictionaryNode parseNewDictBlock()
+		private NewDictionaryNode ParseNewDictBlock()
 		{
-			if (!check(LexemType.CurlyOpen))
+			if (!Check(LexemType.CurlyOpen))
 				return null;
 
 			var node = new NewDictionaryNode();
-			node.Expressions = parseInitExprDictBlock().ToList();
+			node.Expressions = ParseInitExprDictBlock().ToList();
 			if (node.Expressions.Count == 0)
 				return null;
 
-			ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
+			Ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
 
 			return node;
 		}
@@ -1102,51 +1102,51 @@ namespace Lens.Parser
 		/// <summary>
 		/// init_expr_block                             = INDENT line_expr { NL line_expr } DEDENT
 		/// </summary>
-		private IEnumerable<NodeBase> parseInitExprBlock()
+		private IEnumerable<NodeBase> ParseInitExprBlock()
 		{
-			if(peek(LexemType.NewLine))
-				error(ParserMessages.InitializerIndentExprected);
+			if(Peek(LexemType.NewLine))
+				Error(ParserMessages.InitializerIndentExprected);
 
-			if (!check(LexemType.Indent))
+			if (!Check(LexemType.Indent))
 				yield break;
 
-			yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
+			yield return Ensure(ParseLineExpr, ParserMessages.InitExpressionExpected);
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				if(peekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose))
-					error(ParserMessages.ClosingBraceNewLine);
+				if(PeekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose))
+					Error(ParserMessages.ClosingBraceNewLine);
 
-				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
-				yield return ensure(parseLineExpr, ParserMessages.InitExpressionExpected);
+				Ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
+				yield return Ensure(ParseLineExpr, ParserMessages.InitExpressionExpected);
 			}
 		}
 
 		/// <summary>
 		/// init_expr_dict_block                        = INDENT init_dict_expr { NL init_dict_expr } DEDENT
 		/// </summary>
-		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictBlock()
+		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> ParseInitExprDictBlock()
 		{
-			if (!check(LexemType.Indent))
+			if (!Check(LexemType.Indent))
 				yield break;
 
-			yield return parseInitDictExpr();
+			yield return ParseInitDictExpr();
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
-				yield return parseInitDictExpr();
+				Ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
+				yield return ParseInitDictExpr();
 			}
 		}
 
 		/// <summary>
 		/// init_dict_expr                              = line_expr "=>" line_expr
 		/// </summary>
-		private KeyValuePair<NodeBase, NodeBase> parseInitDictExpr()
+		private KeyValuePair<NodeBase, NodeBase> ParseInitDictExpr()
 		{
-			var key = ensure(parseLineExpr, ParserMessages.DictionaryKeyExpected);
-			ensure(LexemType.FatArrow, ParserMessages.SymbolExpected, "=>");
-			var value = ensure(parseLineExpr, ParserMessages.DictionaryValueExpected);
+			var key = Ensure(ParseLineExpr, ParserMessages.DictionaryKeyExpected);
+			Ensure(LexemType.FatArrow, ParserMessages.SymbolExpected, "=>");
+			var value = Ensure(ParseLineExpr, ParserMessages.DictionaryValueExpected);
 
 			return new KeyValuePair<NodeBase, NodeBase>(key, value);
 		}
@@ -1154,13 +1154,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_object_block                            = type invoke_block_args
 		/// </summary>
-		private NewObjectNode parseNewObjectBlock()
+		private NewObjectNode ParseNewObjectBlock()
 		{
-			var type = attempt(parseType);
+			var type = Attempt(ParseType);
 			if (type == null)
 				return null;
 
-			var args = parseInvokeBlockArgs().ToList();
+			var args = ParseInvokeBlockArgs().ToList();
 			if (args.Count == 0)
 				return null;
 
@@ -1177,26 +1177,26 @@ namespace Lens.Parser
 		/// <summary>
 		/// invoke_block_expr                           = line_expr [ INDENT invoke_pass { NL invoke_pass } DEDENT ]
 		/// </summary>
-		private NodeBase parseInvokeBlockExpr()
+		private NodeBase ParseInvokeBlockExpr()
 		{
-			var expr = attempt(parseLineExpr);
+			var expr = Attempt(ParseLineExpr);
 			if (expr == null)
 				return null;
 
-			if (!check(LexemType.Indent))
+			if (!Check(LexemType.Indent))
 				return null;
 			
-			var pass = attempt(parseInvokePass);
+			var pass = Attempt(ParseInvokePass);
 			if (pass == null)
 				return null;
 
 			(pass.Expression as GetMemberNode).Expression = expr;
 			expr = pass;
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, ParserMessages.InvokePassSeparatorExpected);
-				pass = attempt(parseInvokePass);
+				Ensure(LexemType.NewLine, ParserMessages.InvokePassSeparatorExpected);
+				pass = Attempt(ParseInvokePass);
 				if (pass == null)
 					return expr;
 
@@ -1211,13 +1211,13 @@ namespace Lens.Parser
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		private InvocationNode parseInvokeBlockPassExpr()
+		private InvocationNode ParseInvokeBlockPassExpr()
 		{
-			var expr = attempt(parseLineExpr);
+			var expr = Attempt(ParseLineExpr);
 			if (expr == null)
 				return null;
 
-			var args = parseInvokeBlockArgs().ToList();
+			var args = ParseInvokeBlockArgs().ToList();
 			if (args.Count == 0)
 				return null;
 
@@ -1227,33 +1227,33 @@ namespace Lens.Parser
 		/// <summary>
 		/// invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
 		/// </summary>
-		private InvocationNode parseInvokePass()
+		private InvocationNode ParseInvokePass()
 		{
-			if (!check(LexemType.PassRight))
+			if (!Check(LexemType.PassRight))
 				return null;
 
 			var getter = new GetMemberNode();
 			var invoker = new InvocationNode { Expression = getter };
 
-			getter.MemberName = ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+			getter.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
-			var hints = attempt(parseTypeArgs);
+			var hints = Attempt(ParseTypeArgs);
 			if(hints != null)
 				getter.TypeHints = hints;
 
-			var lambda = attempt(parseLambdaLineExpr);
+			var lambda = Attempt(ParseLambdaLineExpr);
 			if (lambda != null)
 			{
 				invoker.Arguments = new List<NodeBase> { lambda };
 			}
 			else
 			{
-				invoker.Arguments = parseInvokeBlockArgs().ToList();
+				invoker.Arguments = ParseInvokeBlockArgs().ToList();
 				if (invoker.Arguments.Count == 0)
-					invoker.Arguments = parseInvokeLineArgs().ToList();
+					invoker.Arguments = ParseInvokeLineArgs().ToList();
 
 				if (invoker.Arguments.Count == 0)
-					error(ParserMessages.ArgumentsExpected);
+					Error(ParserMessages.ArgumentsExpected);
 			}
 
 			return invoker;
@@ -1262,23 +1262,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// invoke_block_args                           = INDENT invoke_block_arg { NL invoke_block_arg } DEDENT
 		/// </summary>
-		private IEnumerable<NodeBase> parseInvokeBlockArgs()
+		private IEnumerable<NodeBase> ParseInvokeBlockArgs()
 		{
-			if (!check(LexemType.Indent))
+			if (!Check(LexemType.Indent))
 				yield break;
 
-			var node = attempt(parseInvokeBlockArg);
+			var node = Attempt(ParseInvokeBlockArg);
 			if (node == null)
 				yield break;
 
 			yield return node;
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				if(!isStmtSeparator())
-					error("Argument passes must be separated by newlines!");
+				if(!IsStmtSeparator())
+					Error("Argument passes must be separated by newlines!");
 
-				node = attempt(parseInvokeBlockArg);
+				node = Attempt(ParseInvokeBlockArg);
 				if (node == null)
 					yield break;
 
@@ -1289,23 +1289,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// invoke_block_arg                            = "<|" ( ref_arg | expr )
 		/// </summary>
-		private NodeBase parseInvokeBlockArg()
+		private NodeBase ParseInvokeBlockArg()
 		{
-			if (!check(LexemType.PassLeft))
+			if (!Check(LexemType.PassLeft))
 				return null;
 
-			return attempt(parseRefArg)
-				   ?? ensure(parseExpr, ParserMessages.ExpressionExpected);
+			return Attempt(ParseRefArg)
+				   ?? Ensure(ParseExpr, ParserMessages.ExpressionExpected);
 		}
 		
 		/// <summary>
 		/// invoke_line_args                            = { invoke_line_arg }
 		/// </summary>
-		private IEnumerable<NodeBase> parseInvokeLineArgs()
+		private IEnumerable<NodeBase> ParseInvokeLineArgs()
 		{
 			while (true)
 			{
-				var curr = attempt(parseInvokeLineArg);
+				var curr = Attempt(ParseInvokeLineArg);
 				if (curr == null)
 					yield break;
 
@@ -1316,27 +1316,27 @@ namespace Lens.Parser
 		/// <summary>
 		/// invoke_line_arg                             = ref_arg | get_expr
 		/// </summary>
-		private NodeBase parseInvokeLineArg()
+		private NodeBase ParseInvokeLineArg()
 		{
-			return attempt(parseRefArg)
-				   ?? attempt(parseGetExpr);
+			return Attempt(ParseRefArg)
+				   ?? Attempt(ParseGetExpr);
 		}
 
 		/// <summary>
 		/// ref_arg                                     = "ref" lvalue_expr | "(" "ref" lvalue_expr ")"
 		/// </summary>
-		private NodeBase parseRefArg()
+		private NodeBase ParseRefArg()
 		{
-			var paren = check(LexemType.ParenOpen);
+			var paren = Check(LexemType.ParenOpen);
 
-			if (!check(LexemType.Ref))
+			if (!Check(LexemType.Ref))
 				return null;
 
-			var node = ensure(parseLvalueExpr, ParserMessages.RefLvalueExpected);
+			var node = Ensure(ParseLvalueExpr, ParserMessages.RefLvalueExpected);
 			(node as IPointerProvider).RefArgumentRequired = true;
 
 			if (paren)
-				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
+				Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 
 			return node;
 		}
@@ -1348,22 +1348,22 @@ namespace Lens.Parser
 		/// <summary>
 		/// match_block                                 = "match" line_expr "with" INDENT { match_stmt } DEDENT
 		/// </summary>
-		private MatchNode parseMatchBlock()
+		private MatchNode ParseMatchBlock()
 		{
-			if (!check(LexemType.Match))
+			if (!Check(LexemType.Match))
 				return null;
 
-			var node = new MatchNode { Expression = ensure(parseLineExpr, ParserMessages.MatchExpressionExpected) };
+			var node = new MatchNode { Expression = Ensure(ParseLineExpr, ParserMessages.MatchExpressionExpected) };
 
-			ensure(LexemType.With, ParserMessages.SymbolExpected, "with");
-			ensure(LexemType.Indent, ParserMessages.MatchIndentExpected);
+			Ensure(LexemType.With, ParserMessages.SymbolExpected, "with");
+			Ensure(LexemType.Indent, ParserMessages.MatchIndentExpected);
 
-			node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+			node.MatchStatements.Add(Ensure(ParseMatchStmt, ParserMessages.SymbolExpected, "case"));
 
-			while (!check(LexemType.Dedent))
+			while (!Check(LexemType.Dedent))
 			{
-				ensure(LexemType.NewLine, ParserMessages.NewlineSeparatorExpected);
-				node.MatchStatements.Add(ensure(parseMatchStmt, ParserMessages.SymbolExpected, "case"));
+				Ensure(LexemType.NewLine, ParserMessages.NewlineSeparatorExpected);
+				node.MatchStatements.Add(Ensure(ParseMatchStmt, ParserMessages.SymbolExpected, "case"));
 			}
 
 			return node;
@@ -1372,18 +1372,18 @@ namespace Lens.Parser
 		/// <summary>
 		/// match_stmt                                  = "case" match_rules [ "when" line_expr ] "then" block
 		/// </summary>
-		private MatchStatementNode parseMatchStmt()
+		private MatchStatementNode ParseMatchStmt()
 		{
-			ensure(LexemType.Case, ParserMessages.SymbolExpected, "case");
+			Ensure(LexemType.Case, ParserMessages.SymbolExpected, "case");
 
-			var node = new MatchStatementNode { MatchRules = parseMatchRules().ToList() };
+			var node = new MatchStatementNode { MatchRules = ParseMatchRules().ToList() };
 
-			if (check(LexemType.When))
-				node.Condition = ensure(parseLineExpr, ParserMessages.WhenGuardExpressionExpected);
+			if (Check(LexemType.When))
+				node.Condition = Ensure(ParseLineExpr, ParserMessages.WhenGuardExpressionExpected);
 
-			ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
+			Ensure(LexemType.Then, ParserMessages.SymbolExpected, "then");
 
-			node.Expression = ensure(parseBlock, ParserMessages.CodeBlockExpected);
+			node.Expression = Ensure(ParseBlock, ParserMessages.CodeBlockExpected);
 
 			return node;
 		}
@@ -1391,27 +1391,27 @@ namespace Lens.Parser
 		/// <summary>
 		/// match_rules                                 = match_rule { [ NL ] "|" match_rule }
 		/// </summary>
-		private IEnumerable<MatchRuleBase> parseMatchRules()
+		private IEnumerable<MatchRuleBase> ParseMatchRules()
 		{
-			yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+			yield return Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected);
 
 			while (true)
 			{
-				check(LexemType.NewLine);
-				if (!check(LexemType.BitOr))
+				Check(LexemType.NewLine);
+				if (!Check(LexemType.BitOr))
 					yield break;
 
-				yield return ensure(parseMatchRule, ParserMessages.MatchRuleExpected);
+				yield return Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected);
 			}
 		}
 
 		/// <summary>
 		/// match_rule                                  = rule_generic [ rule_keyvalue ]
 		/// </summary>
-		private MatchRuleBase parseMatchRule()
+		private MatchRuleBase ParseMatchRule()
 		{
-			var rule = parseRuleGeneric();
-			var keyValue = attempt(parseRuleKeyValue);
+			var rule = ParseRuleGeneric();
+			var keyValue = Attempt(ParseRuleKeyValue);
 
 			if (keyValue == null)
 				return rule;
@@ -1427,32 +1427,32 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_generic                                = rule_tuple | rule_array | rule_regex | rule_record | rule_type | rule_range | rule_literal | rule_name
 		/// </summary>
-		private MatchRuleBase parseRuleGeneric()
+		private MatchRuleBase ParseRuleGeneric()
 		{
-			return attempt(parseRuleTuple)
-			       ?? attempt(parseRuleArray)
-				   ?? attempt(parseRegex)
-			       ?? attempt(parseRuleRecord)
-			       ?? attempt(parseRuleType)
-			       ?? attempt(parseRuleRange)
-			       ?? attempt(parseRuleLiteral)
-				   ?? attempt(parseRuleName) as MatchRuleBase;
+			return Attempt(ParseRuleTuple)
+			       ?? Attempt(ParseRuleArray)
+				   ?? Attempt(ParseRegex)
+			       ?? Attempt(ParseRuleRecord)
+			       ?? Attempt(ParseRuleType)
+			       ?? Attempt(ParseRuleRange)
+			       ?? Attempt(ParseRuleLiteral)
+				   ?? Attempt(ParseRuleName) as MatchRuleBase;
 		}
 
 		/// <summary>
 		/// rule_tuple                                  = "(" match_rule { ";" match_rule } ")"
 		/// </summary>
-		private MatchTupleRule parseRuleTuple()
+		private MatchTupleRule ParseRuleTuple()
 		{
-			if (!check(LexemType.ParenOpen))
+			if (!Check(LexemType.ParenOpen))
 				return null;
 
 			var node = new MatchTupleRule();
-			node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
-			while(check(LexemType.Semicolon))
-				node.ElementRules.Add(ensure(parseMatchRule, ParserMessages.MatchRuleExpected));
+			node.ElementRules.Add(Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected));
+			while(Check(LexemType.Semicolon))
+				node.ElementRules.Add(Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected));
 
-			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+			Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
 
 			return node;
 		}
@@ -1460,20 +1460,20 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_array                                  = "[" [ rule_array_item { ";" rule_array_item } ] "]"
 		/// </summary>
-		private MatchRuleBase parseRuleArray()
+		private MatchRuleBase ParseRuleArray()
 		{
-			if (!check(LexemType.SquareOpen))
+			if (!Check(LexemType.SquareOpen))
 				return null;
 
 			var node = new MatchArrayRule();
-			if (!check(LexemType.SquareClose))
+			if (!Check(LexemType.SquareClose))
 			{
-				node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+				node.ElementRules.Add(Ensure(ParseRuleArrayItem, ParserMessages.MatchRuleExpected));
 
-				while (check(LexemType.Semicolon))
-					node.ElementRules.Add(ensure(parseRuleArrayItem, ParserMessages.MatchRuleExpected));
+				while (Check(LexemType.Semicolon))
+					node.ElementRules.Add(Ensure(ParseRuleArrayItem, ParserMessages.MatchRuleExpected));
 
-				ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+				Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 			}
 
 			return node;
@@ -1482,12 +1482,12 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_regex                                 = regex
 		/// </summary>
-		private MatchRegexNode parseRegex()
+		private MatchRegexNode ParseRegex()
 		{
-			if (!peek(LexemType.Regex))
+			if (!Peek(LexemType.Regex))
 				return null;
 
-			var raw = getValue();
+			var raw = GetValue();
 			var trailPos = raw.LastIndexOf('#');
 			var value = raw.Substring(1, trailPos - 1);
 			var mods = raw.Substring(trailPos + 1);
@@ -1497,29 +1497,29 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_array_item                             = rule_subsequence | match_rule
 		/// </summary>
-		private MatchRuleBase parseRuleArrayItem()
+		private MatchRuleBase ParseRuleArrayItem()
 		{
-			return attempt(parseRuleSubsequence)
-			       ?? attempt(parseMatchRule);
+			return Attempt(ParseRuleSubsequence)
+			       ?? Attempt(ParseMatchRule);
 		}
 
 		/// <summary>
 		/// rule_record                                 = identifier "(" rule_record_var { ";" rule_record_var } ")"
 		/// </summary>
-		private MatchRecordRule parseRuleRecord()
+		private MatchRecordRule ParseRuleRecord()
 		{
-			if (!peek(LexemType.Identifier, LexemType.ParenOpen))
+			if (!Peek(LexemType.Identifier, LexemType.ParenOpen))
 				return null;
 
-			var identifier = parseType();
-			skip();
+			var identifier = ParseType();
+			Skip();
 
 			var node = new MatchRecordRule { Identifier = identifier };
-			node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
-			while(check(LexemType.Semicolon))
-				node.FieldRules.Add(ensure(parseRuleRecordVar, ParserMessages.MatchRuleExpected));
+			node.FieldRules.Add(Ensure(ParseRuleRecordVar, ParserMessages.MatchRuleExpected));
+			while(Check(LexemType.Semicolon))
+				node.FieldRules.Add(Ensure(ParseRuleRecordVar, ParserMessages.MatchRuleExpected));
 
-			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+			Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
 
 			return node;
 		}
@@ -1527,64 +1527,64 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_record_var                             = identifier "=" match_rule
 		/// </summary>
-		private MatchRecordField parseRuleRecordVar()
+		private MatchRecordField ParseRuleRecordVar()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Assign))
+			if (!Peek(LexemType.Identifier, LexemType.Assign))
 				return null;
 
-			var identifier = parseType();
-			skip();
+			var identifier = ParseType();
+			Skip();
 
 			return new MatchRecordField
 			{
 				Name = identifier,
-				Rule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+				Rule = Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected)
 			};
 		}
 
 		/// <summary>
 		/// rule_type                                   = identifier "of" match_rule
 		/// </summary>
-		private MatchTypeRule parseRuleType()
+		private MatchTypeRule ParseRuleType()
 		{
-			if (!peek(LexemType.Identifier, LexemType.Of))
+			if (!Peek(LexemType.Identifier, LexemType.Of))
 				return null;
 
-			var identifier = parseType();
-			skip();
+			var identifier = ParseType();
+			Skip();
 
 			return new MatchTypeRule
 			{
 				Identifier = identifier,
-				LabelRule = ensure(parseMatchRule, ParserMessages.MatchRuleExpected)
+				LabelRule = Ensure(ParseMatchRule, ParserMessages.MatchRuleExpected)
 			};
 		}
 
 		/// <summary>
 		/// rule_range                                  = rule_literal ".." rule_literal
 		/// </summary>
-		private MatchRangeRule parseRuleRange()
+		private MatchRangeRule ParseRuleRange()
 		{
-			var start = attempt(parseRuleLiteral);
+			var start = Attempt(ParseRuleLiteral);
 			if (start == null)
 				return null;
 
-			if (!check(LexemType.DoubleDot))
+			if (!Check(LexemType.DoubleDot))
 				return null;
 
 			return new MatchRangeRule
 			{
 				RangeStartRule = start,
-				RangeEndRule = ensure(parseRuleLiteral, ParserMessages.MatchRuleExpected)
+				RangeEndRule = Ensure(ParseRuleLiteral, ParserMessages.MatchRuleExpected)
 			};
 		}
 
 		/// <summary>
 		/// rule_literal                                = literal
 		/// </summary>
-		private MatchLiteralRule parseRuleLiteral()
+		private MatchLiteralRule ParseRuleLiteral()
 		{
-			var literal = attempt(parseLiteral);
+			var literal = Attempt(ParseLiteral);
 			if (literal == null)
 				return null;
 
@@ -1594,14 +1594,14 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_name                                   = identifier [ ":" type ]
 		/// </summary>
-		private MatchNameRule parseRuleName()
+		private MatchNameRule ParseRuleName()
 		{
-			if (!peek(LexemType.Identifier))
+			if (!Peek(LexemType.Identifier))
 				return null;
 
-			var node = new MatchNameRule { Name = getValue() };
-			if (check(LexemType.Colon))
-				node.Type = ensure(parseType, ParserMessages.TypeSignatureExpected);
+			var node = new MatchNameRule { Name = GetValue() };
+			if (Check(LexemType.Colon))
+				node.Type = Ensure(ParseType, ParserMessages.TypeSignatureExpected);
 
 			return node;
 		}
@@ -1609,14 +1609,14 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_subsequence                            = "..." identifier
 		/// </summary>
-		private MatchNameRule parseRuleSubsequence()
+		private MatchNameRule ParseRuleSubsequence()
 		{
-			if (!check(LexemType.Ellipsis))
+			if (!Check(LexemType.Ellipsis))
 				return null;
 
 			return new MatchNameRule
 			{
-				Name = getValue(),
+				Name = GetValue(),
 				IsArraySubsequence = true
 			};
 		}
@@ -1624,13 +1624,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// rule_keyvalue                               = "=>" rule_generic
 		/// </summary>
-		private MatchKeyValueRule parseRuleKeyValue()
+		private MatchKeyValueRule ParseRuleKeyValue()
 		{
-			if (!check(LexemType.FatArrow))
+			if (!Check(LexemType.FatArrow))
 				return null;
 
 			// key is substituted in match_rule
-			return new MatchKeyValueRule { ValueRule = ensure(parseRuleGeneric, ParserMessages.MatchRuleExpected) };
+			return new MatchKeyValueRule { ValueRule = Ensure(ParseRuleGeneric, ParserMessages.MatchRuleExpected) };
 		}
 
 		#endregion
@@ -1640,68 +1640,68 @@ namespace Lens.Parser
 		/// <summary>
 		/// line_stmt                                   = set_stmt | line_expr
 		/// </summary>
-		private NodeBase parseLineStmt()
+		private NodeBase ParseLineStmt()
 		{
-			return attempt(parseSetStmt)
-				   ?? attempt(parseLineExpr);
+			return Attempt(ParseSetStmt)
+				   ?? Attempt(ParseLineExpr);
 		}
 
 		/// <summary>
 		/// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
 		/// </summary>
-		private NodeBase parseLineExpr()
+		private NodeBase ParseLineExpr()
 		{
-			return attempt(parseIfLine)
-				   ?? attempt(parseWhileLine)
-				   ?? attempt(parseForLine)
-				   ?? attempt(parseUsingLine)
-				   ?? attempt(parseThrowStmt)
-				   ?? attempt(parseNewObjectExpr)
-				   ?? attempt(parseTypeopExpr)
-				   ?? attempt(parseLineTypecheckExpr);
+			return Attempt(ParseIfLine)
+				   ?? Attempt(ParseWhileLine)
+				   ?? Attempt(ParseForLine)
+				   ?? Attempt(ParseUsingLine)
+				   ?? Attempt(ParseThrowStmt)
+				   ?? Attempt(ParseNewObjectExpr)
+				   ?? Attempt(ParseTypeopExpr)
+				   ?? Attempt(ParseLineTypecheckExpr);
 		}
 
 		/// <summary>
 		/// typeop_expr                                 = default_expr | typeof_expr
 		/// </summary>
-		private NodeBase parseTypeopExpr()
+		private NodeBase ParseTypeopExpr()
 		{
-			return attempt(parseDefaultExpr)
-				   ?? attempt(parseTypeofExpr) as NodeBase;
+			return Attempt(ParseDefaultExpr)
+				   ?? Attempt(ParseTypeofExpr) as NodeBase;
 		}
 
 		/// <summary>
 		/// default_expr                                = "default" type
 		/// </summary>
-		private DefaultOperatorNode parseDefaultExpr()
+		private DefaultOperatorNode ParseDefaultExpr()
 		{
-			if (!check(LexemType.Default))
+			if (!Check(LexemType.Default))
 				return null;
 
-			return new DefaultOperatorNode { TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
+			return new DefaultOperatorNode { TypeSignature = Ensure(ParseType, ParserMessages.TypeSignatureExpected) };
 		}
 
 		/// <summary>
 		/// typeof_expr                                 = "typeof" type
 		/// </summary>
-		private TypeofOperatorNode parseTypeofExpr()
+		private TypeofOperatorNode ParseTypeofExpr()
 		{
-			if (!check(LexemType.Typeof))
+			if (!Check(LexemType.Typeof))
 				return null;
 
-			return new TypeofOperatorNode {TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
+			return new TypeofOperatorNode {TypeSignature = Ensure(ParseType, ParserMessages.TypeSignatureExpected) };
 		}
 
 		/// <summary>
 		/// line_typecheck_expr                         = line_op_expr [ typecheck_op_expr ]
 		/// </summary>
-		private NodeBase parseLineTypecheckExpr()
+		private NodeBase ParseLineTypecheckExpr()
 		{
-			var node = attempt(parseLineOpExpr);
+			var node = Attempt(ParseLineOpExpr);
 			if (node == null)
 				return null;
 
-			var typeop = attempt(parseTypecheckOpExpr);
+			var typeop = Attempt(ParseTypecheckOpExpr);
 
 			var cast = typeop as CastOperatorNode;
 			if (cast != null)
@@ -1723,22 +1723,22 @@ namespace Lens.Parser
 		/// <summary>
 		/// line_op_expr                                = [ unary_op ] line_base_expr { binary_op line_base_expr }
 		/// </summary>
-		private NodeBase parseLineOpExpr()
+		private NodeBase ParseLineOpExpr()
 		{
 			// parser magic
-			return processOperator(parseLineBaseExpr);
+			return ProcessOperator(ParseLineBaseExpr);
 		}
 
 		/// <summary>
 		/// typecheck_op_expr                           = "as" type | "is" type
 		/// </summary>
-		private NodeBase parseTypecheckOpExpr()
+		private NodeBase ParseTypecheckOpExpr()
 		{
-			if (check(LexemType.Is))
-				return new IsOperatorNode {TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected)};
+			if (Check(LexemType.Is))
+				return new IsOperatorNode {TypeSignature = Ensure(ParseType, ParserMessages.TypeSignatureExpected)};
 
-			if (check(LexemType.As))
-				return new CastOperatorNode { TypeSignature = ensure(parseType, ParserMessages.TypeSignatureExpected) };
+			if (Check(LexemType.As))
+				return new CastOperatorNode { TypeSignature = Ensure(ParseType, ParserMessages.TypeSignatureExpected) };
 
 			return null;
 		}
@@ -1746,22 +1746,22 @@ namespace Lens.Parser
 		/// <summary>
 		/// line_base_expr                              = line_invoke_base_expr | get_expr
 		/// </summary>
-		private NodeBase parseLineBaseExpr()
+		private NodeBase ParseLineBaseExpr()
 		{
-			return attempt(parseLineInvokeBaseExpr)
-				   ?? attempt(parseGetExpr);
+			return Attempt(ParseLineInvokeBaseExpr)
+				   ?? Attempt(ParseGetExpr);
 		}
 
 		/// <summary>
 		/// line_invoke_base_expr                       = get_expr [ invoke_line_args ]
 		/// </summary>
-		private NodeBase parseLineInvokeBaseExpr()
+		private NodeBase ParseLineInvokeBaseExpr()
 		{
-			var expr = attempt(parseGetExpr);
+			var expr = Attempt(ParseGetExpr);
 			if (expr == null)
 				return null;
 
-			var args = parseInvokeLineArgs().ToList();
+			var args = ParseInvokeLineArgs().ToList();
 			if (args.Count == 0)
 				return expr;
 
@@ -1775,32 +1775,32 @@ namespace Lens.Parser
 		/// <summary>
 		/// atom                                        = literal | get_id_expr | get_stmbr_expr | new_collection_expr | paren_expr
 		/// </summary>
-		private NodeBase parseAtom()
+		private NodeBase ParseAtom()
 		{
-			return attempt(parseLiteral)
-				   ?? attempt(parseGetStmbrExpr)
-				   ?? attempt(parseGetIdExpr)
-				   ?? attempt(parseNewCollectionExpr)
-				   ?? attempt(parseParenExpr);
+			return Attempt(ParseLiteral)
+				   ?? Attempt(ParseGetStmbrExpr)
+				   ?? Attempt(ParseGetIdExpr)
+				   ?? Attempt(ParseNewCollectionExpr)
+				   ?? Attempt(ParseParenExpr);
 		}
 
 		/// <summary>
 		/// paren_expr                                  = "(" ( lambda_line_expr | line_expr ) ")"
 		/// </summary>
-		private NodeBase parseParenExpr()
+		private NodeBase ParseParenExpr()
 		{
-			if (!check(LexemType.ParenOpen))
+			if (!Check(LexemType.ParenOpen))
 				return null;
 
-			var expr = attempt(parseLambdaLineExpr)
-					   ?? ensure(parseLineStmt, ParserMessages.ExpressionExpected);
+			var expr = Attempt(ParseLambdaLineExpr)
+					   ?? Ensure(ParseLineStmt, ParserMessages.ExpressionExpected);
 
 			if (expr != null)
 			{
-				if (peek(LexemType.Colon))
+				if (Peek(LexemType.Colon))
 					return null;
 
-				ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
+				Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ')');
 			}
 
 			return expr;
@@ -1809,15 +1809,15 @@ namespace Lens.Parser
 		/// <summary>
 		/// lambda_line_expr                            = [ fun_args ] "->" line_expr
 		/// </summary>
-		private LambdaNode parseLambdaLineExpr()
+		private LambdaNode ParseLambdaLineExpr()
 		{
 			var node = new LambdaNode();
-			node.Arguments = attempt(() => parseFunArgs()) ?? new List<FunctionArgument>();
+			node.Arguments = Attempt(() => ParseFunArgs()) ?? new List<FunctionArgument>();
 			
-			if (!check(LexemType.Arrow))
+			if (!Check(LexemType.Arrow))
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, ParserMessages.FunctionBodyExpected));
+			node.Body.Add(Ensure(ParseLineStmt, ParserMessages.FunctionBodyExpected));
 			return node;
 		}
 
@@ -1828,15 +1828,15 @@ namespace Lens.Parser
 		/// <summary>
 		/// if_line                                     = if_header line_stmt [ "else" line_stmt ]
 		/// </summary>
-		private IfNode parseIfLine()
+		private IfNode ParseIfLine()
 		{
-			var node = attempt(parseIfHeader);
+			var node = Attempt(ParseIfHeader);
 			if (node == null)
 				return null;
 
-			node.TrueAction.Add(ensure(parseLineStmt, ParserMessages.ConditionExpressionExpected));
-			if ( check(LexemType.Else))
-				node.FalseAction = new CodeBlockNode { ensure(parseLineStmt, ParserMessages.ExpressionExpected) };
+			node.TrueAction.Add(Ensure(ParseLineStmt, ParserMessages.ConditionExpressionExpected));
+			if ( Check(LexemType.Else))
+				node.FalseAction = new CodeBlockNode { Ensure(ParseLineStmt, ParserMessages.ExpressionExpected) };
 
 			return node;
 		}
@@ -1844,52 +1844,52 @@ namespace Lens.Parser
 		/// <summary>
 		/// while_line                                  = while_header line_stmt
 		/// </summary>
-		private WhileNode parseWhileLine()
+		private WhileNode ParseWhileLine()
 		{
-			var node = attempt(parseWhileHeader);
+			var node = Attempt(ParseWhileHeader);
 			if (node == null)
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, ParserMessages.LoopExpressionExpected));
+			node.Body.Add(Ensure(ParseLineStmt, ParserMessages.LoopExpressionExpected));
 			return node;
 		}
 
 		/// <summary>
 		/// for_line                                    = for_header line_stmt
 		/// </summary>
-		private ForeachNode parseForLine()
+		private ForeachNode ParseForLine()
 		{
-			var node = attempt(parseForHeader);
+			var node = Attempt(ParseForHeader);
 			if (node == null)
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, ParserMessages.LoopExpressionExpected));
+			node.Body.Add(Ensure(ParseLineStmt, ParserMessages.LoopExpressionExpected));
 			return node;
 		}
 
 		/// <summary>
 		/// using_line                                  = using_header line_stmt
 		/// </summary>
-		private UsingNode parseUsingLine()
+		private UsingNode ParseUsingLine()
 		{
-			var node = attempt(parseUsingHeader);
+			var node = Attempt(ParseUsingHeader);
 			if (node == null)
 				return null;
 
-			node.Body.Add(ensure(parseLineStmt, ParserMessages.UsingExpressionExpected));
+			node.Body.Add(Ensure(ParseLineStmt, ParserMessages.UsingExpressionExpected));
 			return node;
 		}
 
 		/// <summary>
 		/// throw_stmt                                  = "throw" [ line_expr ]
 		/// </summary>
-		private ThrowNode parseThrowStmt()
+		private ThrowNode ParseThrowStmt()
 		{
-			if (!check(LexemType.Throw))
+			if (!Check(LexemType.Throw))
 				return null;
 
 			var node = new ThrowNode();
-			node.Expression = attempt(parseLineExpr);
+			node.Expression = Attempt(ParseLineExpr);
 			return node;
 		}
 		
@@ -1900,48 +1900,48 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_line_expr                               = "new" ( new_objarray_line | new_object_block )
 		/// </summary>
-		private NodeBase parseNewObjectExpr()
+		private NodeBase ParseNewObjectExpr()
 		{
-			if (!check(LexemType.New))
+			if (!Check(LexemType.New))
 				return null;
 
-			return attempt(parseNewObjArrayLine)
-				   ?? attempt(parseNewObjectLine) as NodeBase;
+			return Attempt(ParseNewObjArrayLine)
+				   ?? Attempt(ParseNewObjectLine) as NodeBase;
 		}
 
 		/// <summary>
 		/// new_collection_expr                        = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
 		/// </summary>
-		private NodeBase parseNewCollectionExpr()
+		private NodeBase ParseNewCollectionExpr()
 		{
-			if (!check(LexemType.New))
+			if (!Check(LexemType.New))
 				return null;
 
-			return attempt(parseNewTupleLine)
-				   ?? attempt(parseNewListLine)
-				   ?? attempt(parseNewArrayLine)
-				   ?? attempt(parseNewDictLine) as NodeBase;
+			return Attempt(ParseNewTupleLine)
+				   ?? Attempt(ParseNewListLine)
+				   ?? Attempt(ParseNewArrayLine)
+				   ?? Attempt(ParseNewDictLine) as NodeBase;
 		}
 
 		/// <summary>
 		/// new_tuple_line                             = "(" init_expr_line ")"
 		/// </summary>
-		private NewTupleNode parseNewTupleLine()
+		private NewTupleNode ParseNewTupleLine()
 		{
 			// todo: revise grammar, possibly eliminating the unit literal
-			if(check(LexemType.Unit))
-				error(ParserMessages.TupleItem);
+			if(Check(LexemType.Unit))
+				Error(ParserMessages.TupleItem);
 
-			if (!check(LexemType.ParenOpen))
+			if (!Check(LexemType.ParenOpen))
 				return null;
 
 			var node = new NewTupleNode();
-			node.Expressions = parseInitExprLine().ToList();
+			node.Expressions = ParseInitExprLine().ToList();
 
 			if (node.Expressions.Count == 0)
-				error(ParserMessages.TupleItem);
+				Error(ParserMessages.TupleItem);
 
-			ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
+			Ensure(LexemType.ParenClose, ParserMessages.SymbolExpected, ")");
 
 			return node;
 		}
@@ -1949,23 +1949,23 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_list_line                               = "[" "[" init_expr_block "]" "]"
 		/// </summary>
-		private NewListNode parseNewListLine()
+		private NewListNode ParseNewListLine()
 		{
-			if (!peek(LexemType.SquareOpen, LexemType.SquareOpen))
+			if (!Peek(LexemType.SquareOpen, LexemType.SquareOpen))
 				return null;
 
-			skip(2);
+			Skip(2);
 
 			var node = new NewListNode();
-			node.Expressions = parseInitExprLine().ToList();
+			node.Expressions = ParseInitExprLine().ToList();
 
 			if (node.Expressions.Count == 0)
-				error(ParserMessages.ListItem);
+				Error(ParserMessages.ListItem);
 
-			if (!peek(LexemType.SquareClose, LexemType.SquareClose))
-				error(ParserMessages.SymbolExpected, "]]");
+			if (!Peek(LexemType.SquareClose, LexemType.SquareClose))
+				Error(ParserMessages.SymbolExpected, "]]");
 
-			skip(2);
+			Skip(2);
 
 			return node;
 		}
@@ -1973,18 +1973,18 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_array_line                              = "[" init_expr_block "]"
 		/// </summary>
-		private NewArrayNode parseNewArrayLine()
+		private NewArrayNode ParseNewArrayLine()
 		{
-			if (!check(LexemType.SquareOpen))
+			if (!Check(LexemType.SquareOpen))
 				return null;
 
 			var node = new NewArrayNode();
-			node.Expressions = parseInitExprLine().ToList();
+			node.Expressions = ParseInitExprLine().ToList();
 
 			if (node.Expressions.Count == 0)
-				error(ParserMessages.ArrayItem);
+				Error(ParserMessages.ArrayItem);
 
-			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 
 			return node;
 		}
@@ -1992,18 +1992,18 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_dict_line                               = "{" init_dict_expr_block "}"
 		/// </summary>
-		private NewDictionaryNode parseNewDictLine()
+		private NewDictionaryNode ParseNewDictLine()
 		{
-			if (!check(LexemType.CurlyOpen))
+			if (!Check(LexemType.CurlyOpen))
 				return null;
 
 			var node = new NewDictionaryNode();
-			node.Expressions = parseInitExprDictLine().ToList();
+			node.Expressions = ParseInitExprDictLine().ToList();
 
 			if (node.Expressions.Count == 0)
-				error(ParserMessages.DictionaryItem);
+				Error(ParserMessages.DictionaryItem);
 
-			ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
+			Ensure(LexemType.CurlyClose, ParserMessages.SymbolExpected, "}");
 
 			return node;
 		}
@@ -2011,48 +2011,48 @@ namespace Lens.Parser
 		/// <summary>
 		/// init_expr_line                              = line_expr { ";" line_expr }
 		/// </summary>
-		private IEnumerable<NodeBase> parseInitExprLine()
+		private IEnumerable<NodeBase> ParseInitExprLine()
 		{
-			var node = attempt(parseLineExpr);
+			var node = Attempt(ParseLineExpr);
 			if(node == null)
 				yield break;
 
 			yield return node;
-			while (check(LexemType.Semicolon))
-				yield return ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+			while (Check(LexemType.Semicolon))
+				yield return Ensure(ParseLineExpr, ParserMessages.ExpressionExpected);
 		}
 
 		/// <summary>
 		/// init_expr_dict_line                         = init_dict_expr { ";" init_dict_expr }
 		/// </summary>
-		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> parseInitExprDictLine()
+		private IEnumerable<KeyValuePair<NodeBase, NodeBase>> ParseInitExprDictLine()
 		{
-			if (check(LexemType.CurlyClose))
+			if (Check(LexemType.CurlyClose))
 				yield break;
 
-			yield return parseInitDictExpr();
+			yield return ParseInitDictExpr();
 
-			while (check(LexemType.Semicolon))
-				yield return parseInitDictExpr();
+			while (Check(LexemType.Semicolon))
+				yield return ParseInitDictExpr();
 		}
 
 		/// <summary>
 		/// new_objarray_line                          = type "[" line_expr "]"
 		/// </summary>
-		private NewObjectArrayNode parseNewObjArrayLine()
+		private NewObjectArrayNode ParseNewObjArrayLine()
 		{
-			var type = attempt(parseType);
+			var type = Attempt(ParseType);
 			if (type == null)
 				return null;
 
-			if (!check(LexemType.SquareOpen))
+			if (!Check(LexemType.SquareOpen))
 				return null;
 
 			var node = new NewObjectArrayNode();
 			node.TypeSignature = type;
-			node.Size = ensure(parseLineExpr, ParserMessages.ExpressionExpected);
+			node.Size = Ensure(ParseLineExpr, ParserMessages.ExpressionExpected);
 
-			ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+			Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 
 			return node;
 		}
@@ -2060,13 +2060,13 @@ namespace Lens.Parser
 		/// <summary>
 		/// new_object_line                             = type invoke_line_args
 		/// </summary>
-		private NewObjectNode parseNewObjectLine()
+		private NewObjectNode ParseNewObjectLine()
 		{
-			var type = attempt(parseType);
+			var type = Attempt(ParseType);
 			if (type == null)
 				return null;
 
-			var args = parseInvokeLineArgs().ToList();
+			var args = ParseInvokeLineArgs().ToList();
 			if (args.Count == 0)
 				return null;
 
@@ -2083,137 +2083,137 @@ namespace Lens.Parser
 		/// <summary>
 		/// literal                                     = unit | null | bool | int | long | float | double | decimal | char | string
 		/// </summary>
-		private NodeBase parseLiteral()
+		private NodeBase ParseLiteral()
 		{
-			return attempt(parseUnit)
-				   ?? attempt(parseNull)
-				   ?? attempt(parseBool)
-				   ?? attempt(parseInt)
-				   ?? attempt(parseLong)
-				   ?? attempt(parseFloat)
-				   ?? attempt(parseDouble)
-				   ?? attempt(parseDecimal)
-				   ?? attempt(parseChar)
-				   ?? attempt(parseString) as NodeBase;
+			return Attempt(ParseUnit)
+				   ?? Attempt(ParseNull)
+				   ?? Attempt(ParseBool)
+				   ?? Attempt(ParseInt)
+				   ?? Attempt(ParseLong)
+				   ?? Attempt(ParseFloat)
+				   ?? Attempt(ParseDouble)
+				   ?? Attempt(ParseDecimal)
+				   ?? Attempt(ParseChar)
+				   ?? Attempt(ParseString) as NodeBase;
 		}
 
-		private UnitNode parseUnit()
+		private UnitNode ParseUnit()
 		{
-			return check(LexemType.Unit) ? new UnitNode() : null;
+			return Check(LexemType.Unit) ? new UnitNode() : null;
 		}
 
-		private NullNode parseNull()
+		private NullNode ParseNull()
 		{
-			return check(LexemType.Null) ? new NullNode() : null;
+			return Check(LexemType.Null) ? new NullNode() : null;
 		}
 
-		private BooleanNode parseBool()
+		private BooleanNode ParseBool()
 		{
-			if(check(LexemType.True))
+			if(Check(LexemType.True))
 				return new BooleanNode(true);
 
-			if (check(LexemType.False))
+			if (Check(LexemType.False))
 				return new BooleanNode();
 
 			return null;
 		}
 
-		private StringNode parseString()
+		private StringNode ParseString()
 		{
-			if (!peek(LexemType.String))
+			if (!Peek(LexemType.String))
 				return null;
 
-			return new StringNode(getValue());
+			return new StringNode(GetValue());
 		}
 
-		private IntNode parseInt()
+		private IntNode ParseInt()
 		{
-			if (!peek(LexemType.Int))
+			if (!Peek(LexemType.Int))
 				return null;
 
-			var value = getValue();
+			var value = GetValue();
 			try
 			{
 				return new IntNode(int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				error(ParserMessages.InvalidInteger, value);
+				Error(ParserMessages.InvalidInteger, value);
 				return null;
 			}
 		}
 
-		private LongNode parseLong()
+		private LongNode ParseLong()
 		{
-			if (!peek(LexemType.Long))
+			if (!Peek(LexemType.Long))
 				return null;
 
-			var value = getValue();
+			var value = GetValue();
 			try
 			{
 				return new LongNode(long.Parse(value.Substring(0, value.Length - 1), NumberStyles.Integer, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				error(ParserMessages.InvalidLong, value);
+				Error(ParserMessages.InvalidLong, value);
 				return null;
 			}
 		}
 
-		private FloatNode parseFloat()
+		private FloatNode ParseFloat()
 		{
-			if (!peek(LexemType.Float))
+			if (!Peek(LexemType.Float))
 				return null;
 
-			var value = getValue();
+			var value = GetValue();
 			try
 			{
 				return new FloatNode(float.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				error(ParserMessages.InvalidFloat, value);
+				Error(ParserMessages.InvalidFloat, value);
 				return null;
 			}
 		}
  
-		private DoubleNode parseDouble()
+		private DoubleNode ParseDouble()
 		{
-			if (!peek(LexemType.Double))
+			if (!Peek(LexemType.Double))
 				return null;
 
-			var value = getValue();
+			var value = GetValue();
 			try
 			{
 				return new DoubleNode(double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				error(ParserMessages.InvalidDouble, value);
+				Error(ParserMessages.InvalidDouble, value);
 				return null;
 			}
 		}
 
-		private DecimalNode parseDecimal()
+		private DecimalNode ParseDecimal()
 		{
-			if (!peek(LexemType.Decimal))
+			if (!Peek(LexemType.Decimal))
 				return null;
 
-			var value = getValue();
+			var value = GetValue();
 			try
 			{
 				return new DecimalNode(decimal.Parse(value.Substring(0, value.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture));
 			}
 			catch
 			{
-				error(ParserMessages.InvalidDecimal, value);
+				Error(ParserMessages.InvalidDecimal, value);
 				return null;
 			}
 		}
 
-		private CharNode parseChar()
+		private CharNode ParseChar()
 		{
-			return peek(LexemType.Char) ? new CharNode(getValue()[0]) : null;
+			return Peek(LexemType.Char) ? new CharNode(GetValue()[0]) : null;
 		}
 
 		#endregion

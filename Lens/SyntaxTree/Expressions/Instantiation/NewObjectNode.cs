@@ -38,19 +38,19 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		/// <summary>
 		/// Checks if constructor call may be replaced with 'default' initialization.
 		/// </summary>
-		private bool _IsDefault;
+		private bool _isDefault;
 
 		/// <summary>
 		/// Constructor wrapper.
 		/// </summary>
-		private ConstructorWrapper _Constructor;
+		private ConstructorWrapper _constructor;
 
 		/// <summary>
 		/// Generic wrapper for base class.
 		/// </summary>
-		protected override CallableWrapperBase _Wrapper { get { return _Constructor; } }
+		protected override CallableWrapperBase Wrapper => _constructor;
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
@@ -61,69 +61,69 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 			var type = Type ?? ctx.ResolveType(TypeSignature);
 
 			if (type.IsVoid())
-				error(CompilerMessages.VoidTypeDefault);
+				Error(CompilerMessages.VoidTypeDefault);
 
 			if (type.IsAbstract)
-				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
+				Error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
 			if (type.IsInterface)
-				error(CompilerMessages.TypeInterface, TypeSignature.FullSignature);
+				Error(CompilerMessages.TypeInterface, TypeSignature.FullSignature);
 
 			if (Arguments.Count == 0)
-				error(CompilerMessages.ParameterlessConstructorParens);
+				Error(CompilerMessages.ParameterlessConstructorParens);
 
 			try
 			{
-				_Constructor = ctx.ResolveConstructor(type, _ArgTypes);
+				_constructor = ctx.ResolveConstructor(type, ArgTypes);
 			}
 			catch (AmbiguousMatchException)
 			{
-				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+				Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
 			}
 			catch (KeyNotFoundException)
 			{
-				if (_ArgTypes.Length > 0 || !type.IsValueType)
-					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+				if (ArgTypes.Length > 0 || !type.IsValueType)
+					Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
-				_IsDefault = true;
+				_isDefault = true;
 				return type;
 			}
 
-			applyLambdaArgTypes(ctx);
+			ApplyLambdaArgTypes(ctx);
 
-			return resolvePartial(_Constructor, type, _ArgTypes);
+			return ResolvePartial(_constructor, type, ArgTypes);
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			if (_IsDefault)
+			if (_isDefault)
 				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			if(_Constructor != null)
+			if(_constructor != null)
 			{
-				if (_ArgTypes.Length > 0)
+				if (ArgTypes.Length > 0)
 				{
-					var destTypes = _Constructor.ArgumentTypes;
+					var destTypes = _constructor.ArgumentTypes;
 					for (var idx = 0; idx < Arguments.Count; idx++)
 						Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
 				}
 
-				gen.EmitCreateObject(_Constructor.ConstructorInfo);
+				gen.EmitCreateObject(_constructor.ConstructorInfo);
 			}
 			else
 			{
@@ -135,7 +135,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Helpers
 
-		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+		protected override InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
 		{
 			return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList() };
 		}

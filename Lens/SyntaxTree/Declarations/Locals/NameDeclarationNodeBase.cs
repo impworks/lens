@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 			if (Local == null)
 			{
 				if (Name == "_")
-					error(CompilerMessages.UnderscoreName);
+					Error(CompilerMessages.UnderscoreName);
 
 				try
 				{
@@ -89,12 +89,12 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Value, x => Value = x);
 		}
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var name = Local ?? ctx.Scope.FindLocal(Name);
 			if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)

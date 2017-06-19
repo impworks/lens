@@ -43,9 +43,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		public CodeBlockNode Body { get; set; }
 
-		private Type _VariableType;
-		private Type _EnumeratorType;
-		private PropertyWrapper _CurrentProperty;
+		private Type _variableType;
+		private Type _enumeratorType;
+		private PropertyWrapper _currentProperty;
 
 		#endregion
 
@@ -54,9 +54,9 @@ namespace Lens.SyntaxTree.ControlFlow
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
-				detectEnumerableType(ctx);
+				DetectEnumerableType(ctx);
 			else
-				detectRangeType(ctx);
+				DetectRangeType(ctx);
 
 			if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
 				throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			if (Local == null)
 			{
 				// variable must be defined: declare it in a temporary scope for pre-resolve state
-				var tmpVar = new Local(VariableName, _VariableType);
+				var tmpVar = new Local(VariableName, _variableType);
 				return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx, mustReturn), tmpVar);
 			}
 
@@ -76,21 +76,21 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (IterableExpression != null)
 			{
 				var type = IterableExpression.Resolve(ctx);
 				if (type.IsArray)
-					return expandArray(ctx);
+					return ExpandArray(ctx);
 				
-				return expandEnumerable(ctx, mustReturn);
+				return ExpandEnumerable(ctx, mustReturn);
 			}
 
-			return expandRange(ctx);
+			return ExpandRange(ctx);
 		}
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			if (IterableExpression != null)
 			{
@@ -108,11 +108,11 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Expands the foreach loop if it iterates over an IEnumerable`1.
 		/// </summary>
-		private NodeBase expandEnumerable(Context ctx, bool mustReturn)
+		private NodeBase ExpandEnumerable(Context ctx, bool mustReturn)
 		{
-			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
-			var enumerableType = _EnumeratorType.IsGenericType
-				? typeof (IEnumerable<>).MakeGenericType(_EnumeratorType.GetGenericArguments()[0])
+			var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _enumeratorType, false);
+			var enumerableType = _enumeratorType.IsGenericType
+				? typeof (IEnumerable<>).MakeGenericType(_enumeratorType.GetGenericArguments()[0])
 				: typeof (IEnumerable);
 
 			var init = Expr.Set(
@@ -126,12 +126,12 @@ namespace Lens.SyntaxTree.ControlFlow
 			var loop = Expr.While(
 				Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
 				Expr.Block(
-					getIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
+					GetIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
 					Body
 				)
 			);
 
-			if (_EnumeratorType.Implements(typeof (IDisposable), false))
+			if (_enumeratorType.Implements(typeof (IDisposable), false))
 			{
 				var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
 				var returnType = Resolve(ctx);
@@ -139,7 +139,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 				if (saveLast)
 				{
-					var resultVar = ctx.Scope.DeclareImplicit(ctx, _EnumeratorType, false);
+					var resultVar = ctx.Scope.DeclareImplicit(ctx, _enumeratorType, false);
 					return Expr.Block(
 						Expr.Try(
 							Expr.Block(
@@ -167,7 +167,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Expands the foreach loop if it iterates over T[].
 		/// </summary>
-		private NodeBase expandArray(Context ctx)
+		private NodeBase ExpandArray(Context ctx)
 		{
 			var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
 			var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
@@ -183,7 +183,7 @@ namespace Lens.SyntaxTree.ControlFlow
 						Expr.Get(lenVar)
 					),
 					Expr.Block(
-						getIndexAssignment(
+						GetIndexAssignment(
 							Expr.GetIdx(
 								Expr.Get(arrayVar),
 								Expr.Get(idxVar)
@@ -202,10 +202,10 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Expands the foreach loop if it iterates over a numeric range.
 		/// </summary>
-		private NodeBase expandRange(Context ctx)
+		private NodeBase ExpandRange(Context ctx)
 		{
-			var signVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
-			var idxVar = ctx.Scope.DeclareImplicit(ctx, _VariableType, false);
+			var signVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
+			var idxVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
 
 			return Expr.Block(
 				Expr.Set(idxVar, RangeStart),
@@ -220,7 +220,7 @@ namespace Lens.SyntaxTree.ControlFlow
 				Expr.While(
 					Expr.NotEqual(Expr.Get(idxVar), RangeEnd),
 					Expr.Block(
-						getIndexAssignment(Expr.Get(idxVar)),
+						GetIndexAssignment(Expr.Get(idxVar)),
 						Body,
 						Expr.Set(
 							idxVar,
@@ -241,12 +241,12 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// <summary>
 		/// Calculates the variable type and other required values for enumeration of an IEnumerable`1.
 		/// </summary>
-		private void detectEnumerableType(Context ctx)
+		private void DetectEnumerableType(Context ctx)
 		{
 			var seqType = IterableExpression.Resolve(ctx);
 			if (seqType.IsArray)
 			{
-				_VariableType = seqType.GetElementType();
+				_variableType = seqType.GetElementType();
 				return;
 			}
 
@@ -256,39 +256,39 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 			if (generic != null)
-				_EnumeratorType = typeof(IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
+				_enumeratorType = typeof(IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
 
 			else if (ifaces.Contains(typeof(IEnumerable)))
-				_EnumeratorType = typeof(IEnumerator);
+				_enumeratorType = typeof(IEnumerator);
 
 			else
-				error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
+				Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
-			_CurrentProperty = ctx.ResolveProperty(_EnumeratorType, "Current");
-			_VariableType = _CurrentProperty.PropertyType;
+			_currentProperty = ctx.ResolveProperty(_enumeratorType, "Current");
+			_variableType = _currentProperty.PropertyType;
 		}
 
 		/// <summary>
 		/// Calculates the variable type of a numeric range iteration.
 		/// </summary>
-		private void detectRangeType(Context ctx)
+		private void DetectRangeType(Context ctx)
 		{
 			var t1 = RangeStart.Resolve(ctx);
 			var t2 = RangeEnd.Resolve(ctx);
 
 			if (t1 != t2)
-				error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
+				Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
 			if (!t1.IsIntegerType())
-				error(CompilerMessages.ForeachRangeNotInteger, t1);
+				Error(CompilerMessages.ForeachRangeNotInteger, t1);
 
-			_VariableType = t1;
+			_variableType = t1;
 		}
 
 		/// <summary>
 		/// Gets the expression for saving the value at an index to a variable.
 		/// </summary>
-		private NodeBase getIndexAssignment(NodeBase indexGetter)
+		private NodeBase GetIndexAssignment(NodeBase indexGetter)
 		{
 			return Local == null
 				? Expr.Let(VariableName, indexGetter)

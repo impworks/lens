@@ -11,12 +11,12 @@ namespace Lens.Compiler
 		/// <summary>
 		/// The list of namespaces specified explicitly for safe mode.
 		/// </summary>
-		private Dictionary<string, bool> _ExplicitNamespaces;
+		private Dictionary<string, bool> _explicitNamespaces;
 
 		/// <summary>
 		/// The list of namespaces specified explicitly for safe mode.
 		/// </summary>
-		private Dictionary<string, bool> _ExplicitTypes;
+		private Dictionary<string, bool> _explicitTypes;
 
 		#endregion
 
@@ -30,11 +30,11 @@ namespace Lens.Compiler
 			if (Options.SafeMode == SafeMode.Disabled)
 				return;
 
-			Action<string> addNsp = nsp => _ExplicitNamespaces[nsp] = true;
-			Action<string> addType = type => _ExplicitTypes[type] = true;
+			Action<string> addNsp = nsp => _explicitNamespaces[nsp] = true;
+			Action<string> addType = type => _explicitTypes[type] = true;
 
-			_ExplicitNamespaces = Options.SafeModeExplicitNamespaces.ToDictionary(n => n, n => true);
-			_ExplicitTypes = Options.SafeModeExplicitTypes.ToDictionary(n => n, n => true);
+			_explicitNamespaces = Options.SafeModeExplicitNamespaces.ToDictionary(n => n, n => true);
+			_explicitTypes = Options.SafeModeExplicitTypes.ToDictionary(n => n, n => true);
 
 			if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Environment))
 			{
@@ -85,7 +85,7 @@ namespace Lens.Compiler
 			if (!genericChecks)
 				return false;
 
-			var exists = _ExplicitTypes.ContainsKey(type.FullName) || (type.Namespace != null && _ExplicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+			var exists = _explicitTypes.ContainsKey(type.FullName) || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
 			return exists ^ Options.SafeMode == SafeMode.Blacklist;
 		}
 

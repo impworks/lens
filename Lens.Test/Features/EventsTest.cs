@@ -6,7 +6,7 @@ namespace Lens.Test.Features
 {
 
 	[TestFixture]
-	class EventsTest: TestBase
+	internal class EventsTest: TestBase
 	{
 		[Test]
 		public void BasicEvent()

@@ -15,7 +15,7 @@ namespace Lens.Compiler
 		/// </summary>
 		public void RegisterAssembly(Assembly asm)
 		{
-			_AssemblyCache.ReferenceAssembly(asm);
+			AssemblyCache.ReferenceAssembly(asm);
 		}
 
 		/// <summary>
@@ -26,7 +26,7 @@ namespace Lens.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			if (_DefinedTypes.ContainsKey(name))
+			if (_definedTypes.ContainsKey(name))
 				Error(CompilerMessages.TypeDefined, name);
 
 			var te = new TypeEntity(this)
@@ -35,7 +35,7 @@ namespace Lens.Compiler
 				Kind = TypeEntityKind.Imported,
 				TypeInfo = type
 			};
-			_DefinedTypes.Add(name, te);
+			_definedTypes.Add(name, te);
 		}
 
 		/// <summary>
@@ -49,7 +49,7 @@ namespace Lens.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			importOverloads(type, name, newName ?? name, true);
+			ImportOverloads(type, name, newName ?? name, true);
 		}
 
 		/// <summary>
@@ -71,11 +71,11 @@ namespace Lens.Compiler
 			if (Options.AllowSave)
 				Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-			if (_DefinedProperties.ContainsKey(name))
+			if (_definedProperties.ContainsKey(name))
 				Error(CompilerMessages.PropertyImported, name);
 
 			var ent = GlobalPropertyHelper.RegisterProperty(ContextId, getter, setter);
-			_DefinedProperties.Add(name, ent);
+			_definedProperties.Add(name, ent);
 		}
 
 		#region Helpers
@@ -85,13 +85,13 @@ namespace Lens.Compiler
 		/// </summary>
 		private void importFunction(string name, MethodInfo method, bool check = false)
 		{
-			_DefinedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
+			_definedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
 		}
 
 		/// <summary>
 		/// Imports all overrides of a method into standard library.
 		/// </summary>
-		private void importOverloads(Type type, string name, string newName, bool check = false)
+		private void ImportOverloads(Type type, string name, string newName, bool check = false)
 		{
 			var overloads = type.GetMethods(BindingFlags.Static | BindingFlags.Public)
 								.Where(m => m.Name == name)

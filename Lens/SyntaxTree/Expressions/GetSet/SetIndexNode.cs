@@ -17,7 +17,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Wrapper for indexer method (if object is not an array and has a custom indexer defined).
 		/// </summary>
-		private MethodWrapper _Indexer;
+		private MethodWrapper _indexer;
 
 		/// <summary>
 		/// Value to be assigned.
@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			{
 				try
 				{
-					_Indexer = ReflectionHelper.ResolveIndexer(exprType, idxType, false);
+					_indexer = ReflectionHelper.ResolveIndexer(exprType, idxType, false);
 				}
 				catch (LensCompilerException ex)
 				{
@@ -46,16 +46,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				}
 			}
 
-			var idxDestType = exprType.IsArray ? typeof (int) : _Indexer.ArgumentTypes[0];
-			var valDestType = exprType.IsArray ? exprType.GetElementType() : _Indexer.ArgumentTypes[1];
+			var idxDestType = exprType.IsArray ? typeof (int) : _indexer.ArgumentTypes[0];
+			var valDestType = exprType.IsArray ? exprType.GetElementType() : _indexer.ArgumentTypes[1];
 
 			if(!idxDestType.IsExtendablyAssignableFrom(idxType))
-				error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
+				Error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
 
-			ensureLambdaInferred(ctx, Value, valDestType);
+			EnsureLambdaInferred(ctx, Value, valDestType);
 			var valType = Value.Resolve(ctx);
 			if (!valDestType.IsExtendablyAssignableFrom(valType))
-				error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
+				Error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
 
 			return base.resolve(ctx, mustReturn);
 		}
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			yield return new NodeChild(Index, x => Index = x);
@@ -75,18 +75,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
-			if (_Indexer == null)
-				emitSetArray(ctx);
+			if (_indexer == null)
+				EmitSetArray(ctx);
 			else
-				emitSetCustomIndexer(ctx);
+				EmitSetCustomIndexer(ctx);
 		}
 
 		/// <summary>
 		/// Saves the value to an array location.
 		/// </summary>
-		private void emitSetArray(Context ctx)
+		private void EmitSetArray(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -102,21 +102,21 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Invokes the object's custom indexer setter.
 		/// </summary>
-		private void emitSetCustomIndexer(Context ctx)
+		private void EmitSetCustomIndexer(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			try
 			{
-				var idxDest = _Indexer.ArgumentTypes[0];
-				var valDest = _Indexer.ArgumentTypes[1];
+				var idxDest = _indexer.ArgumentTypes[0];
+				var valDest = _indexer.ArgumentTypes[1];
 
 				Expression.Emit(ctx, true);
 
 				Expr.Cast(Index, idxDest).Emit(ctx, true);
 				Expr.Cast(Value, valDest).Emit(ctx, true);
 
-				gen.EmitCall(_Indexer.MethodInfo, _Indexer.IsVirtual);
+				gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
 			}
 			catch (LensCompilerException ex)
 			{

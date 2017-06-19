@@ -12,8 +12,8 @@ namespace GraphicScript.Objects
 
 		public Tuple<double, double> Position
 		{
-			get { return new Tuple<double, double>(X, Y); }
-			set { X = value.Item1; Y = value.Item2; }
+			get => new Tuple<double, double>(X, Y);
+		    set { X = value.Item1; Y = value.Item2; }
 		}
 
 		public Color Fill;
@@ -27,7 +27,7 @@ namespace GraphicScript.Objects
 		public Action Blur;
 		public Action Click;
 
-		private FigureManager m_Manager;
+		private FigureManager _manager;
 
 		public Figure()
 		{
@@ -38,20 +38,20 @@ namespace GraphicScript.Objects
 
 		public void Register(FigureManager manager)
 		{
-			m_Manager = manager;
+			_manager = manager;
 
-			Shape = createShape();
+			Shape = CreateShape();
 
 			Shape.MouseEnter += (s, e) => { if (Focus != null) Focus(); };
 			Shape.MouseLeave += (s, e) => { if (Blur != null) Blur(); };
 			Shape.MouseLeftButtonDown += (s, e) => { if (Click != null) Click(); };
 
-			m_Manager.Canvas.Children.Add(Shape);
+			_manager.Canvas.Children.Add(Shape);
 		}
 
 		public void Unregister()
 		{
-			m_Manager.Dispatcher.Invoke(new Action(() => m_Manager.Canvas.Children.Remove(Shape)));
+			_manager.Dispatcher.Invoke(new Action(() => _manager.Canvas.Children.Remove(Shape)));
 		}
 
 		public void UpdateObject()
@@ -59,10 +59,10 @@ namespace GraphicScript.Objects
 			if (Update != null)
 				Update();
 
-			m_Manager.Dispatcher.Invoke(
+			_manager.Dispatcher.Invoke(
 				new Action(() =>
 				{
-					updateShape();
+					UpdateShape();
 					Shape.Stroke = new SolidColorBrush(Outline);
 					Shape.Fill = new SolidColorBrush(Fill);
 					Shape.StrokeThickness = Thickness;
@@ -73,7 +73,7 @@ namespace GraphicScript.Objects
 			));
 		}
 
-		protected abstract Shape createShape();
-		protected abstract void updateShape();
+		protected abstract Shape CreateShape();
+		protected abstract void UpdateShape();
 	}
 }

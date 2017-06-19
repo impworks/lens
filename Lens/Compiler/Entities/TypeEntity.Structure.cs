@@ -39,10 +39,10 @@ namespace Lens.Compiler.Entities
 			}
 			else
 			{
-				if (_Methods.ContainsKey(name))
-					_Methods[name].Add(me);
+				if (_methods.ContainsKey(name))
+					_methods[name].Add(me);
 				else
-					_Methods.Add(name, new List<MethodEntity> { me });
+					_methods.Add(name, new List<MethodEntity> { me });
 			}
 		}
 
@@ -51,7 +51,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = true)
 		{
-			return createFieldCore(name, isStatic, prepare, fe => fe.TypeSignature = signature);
+			return CreateFieldCore(name, isStatic, prepare, fe => fe.TypeSignature = signature);
 		}
 
 		/// <summary>
@@ -59,7 +59,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = true)
 		{
-			return createFieldCore(name, isStatic, prepare, fe => fe.Type = type);
+			return CreateFieldCore(name, isStatic, prepare, fe => fe.Type = type);
 		}
 
 		/// <summary>
@@ -67,7 +67,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
 		{
-			return createMethodCore(name, isStatic, isVirtual, prepare, me =>
+			return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
 				{
 					me.ArgumentTypes = argTypes;
 					me.ReturnType = returnType;
@@ -92,7 +92,7 @@ namespace Lens.Compiler.Entities
 		/// </summary>
 		internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
 		{
-			return createMethodCore(name, isStatic, isVirtual, prepare, me =>
+			return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
 				{
 					me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
 					me.ReturnTypeSignature = returnType;
@@ -110,7 +110,7 @@ namespace Lens.Compiler.Entities
 				ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
 			};
 
-			_Constructors.Add(ce);
+			_constructors.Add(ce);
 			Context.UnprocessedMethods.Add(ce);
 
 			if (prepare)
@@ -138,10 +138,10 @@ namespace Lens.Compiler.Entities
 			}
 			catch (KeyNotFoundException)
 			{
-				if (!_Methods.ContainsKey(method.Name))
-					_Methods.Add(method.Name, new List<MethodEntity> { method });
+				if (!_methods.ContainsKey(method.Name))
+					_methods.Add(method.Name, new List<MethodEntity> { method });
 				else
-					_Methods[method.Name].Add(method);
+					_methods[method.Name].Add(method);
 			}
 		}
 
@@ -152,9 +152,9 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Create a field without setting type info.
 		/// </summary>
-		private FieldEntity createFieldCore(string name, bool isStatic, bool prepare, Action<FieldEntity> extraInit = null)
+		private FieldEntity CreateFieldCore(string name, bool isStatic, bool prepare, Action<FieldEntity> extraInit = null)
 		{
-			if (_Fields.ContainsKey(name))
+			if (_fields.ContainsKey(name))
 				Context.Error(CompilerMessages.FieldRedefinition, Name, name);
 
 			var fe = new FieldEntity(this)
@@ -163,7 +163,7 @@ namespace Lens.Compiler.Entities
 				IsStatic = isStatic,
 			};
 
-			_Fields.Add(name, fe);
+			_fields.Add(name, fe);
 
 			if (extraInit != null)
 				extraInit(fe);
@@ -179,7 +179,7 @@ namespace Lens.Compiler.Entities
 		/// <summary>
 		/// Creates a method without setting argument type info.
 		/// </summary>
-		private MethodEntity createMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, Action<MethodEntity> extraInit = null)
+		private MethodEntity CreateMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, Action<MethodEntity> extraInit = null)
 		{
 			var me = new MethodEntity(this)
 			{

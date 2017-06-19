@@ -23,9 +23,9 @@ namespace Lens.Compiler.Entities
 
 		#region Fields
 
-		public override bool IsVoid { get { return true; } }
+		public override bool IsVoid => true;
 
-		/// <summary>
+	    /// <summary>
 		/// Assembly-level constructor builder.
 		/// </summary>
 		public ConstructorBuilder ConstructorBuilder { get; private set; }
@@ -53,7 +53,7 @@ namespace Lens.Compiler.Entities
 					: Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
 			ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
-			Generator = ConstructorBuilder.GetILGenerator(Context.ILStreamSize);
+			Generator = ConstructorBuilder.GetILGenerator(Context.IlStreamSize);
 		}
 
 		#endregion
@@ -61,7 +61,7 @@ namespace Lens.Compiler.Entities
 		#region Extension points
 
 		// call default constructor
-		protected override void emitPrelude(Context ctx)
+		protected override void EmitPrelude(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var ctor = typeof(object).GetConstructor(Type.EmptyTypes);
@@ -69,7 +69,7 @@ namespace Lens.Compiler.Entities
 			gen.EmitLoadArgument(0);
 			gen.EmitCall(ctor);
 
-			base.emitPrelude(ctx);
+			base.EmitPrelude(ctx);
 		}
 
 		#endregion

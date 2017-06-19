@@ -19,14 +19,14 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
 			var exprType = Expression.Resolve(ctx);
 			var desiredType = Type ?? ctx.ResolveType(TypeSignature);
 
-			checkTypeInSafeMode(ctx, desiredType);
+			CheckTypeInSafeMode(ctx, desiredType);
 
 			// types are identical
 			if (exprType == desiredType)

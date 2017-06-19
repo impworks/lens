@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
@@ -27,9 +27,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Checks if numeric type casting checks should be applied to operands.
 		/// </summary>
-		protected virtual bool IsNumericOperator { get { return true; } }
+		protected virtual bool IsNumericOperator => true;
 
-		#endregion
+	    #endregion
 
 		#region Resolve
 
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			var leftType = LeftOperand.Resolve(ctx);
 			var rightType = RightOperand.Resolve(ctx);
 
-			var result = resolveOperatorType(ctx, leftType, rightType);
+			var result = ResolveOperatorType(ctx, leftType, rightType);
 			if (result != null)
 				return result;
 
@@ -46,20 +46,20 @@ namespace Lens.SyntaxTree.Operators.Binary
 			{
 				try
 				{
-					_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
+					OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
 				}
 				catch
 				{
 					try
 					{
-						_OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
+						OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
 					}
 					catch { }
 				}
 
 				// cannot be generic
-				if (_OverloadedMethod != null)
-					return _OverloadedMethod.ReturnType;
+				if (OverloadedMethod != null)
+					return OverloadedMethod.ReturnType;
 			}
 
 			if (IsNumericOperator)
@@ -71,7 +71,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
                     var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
                     if (commonNumericType == null)
-                        error(CompilerMessages.OperatorTypesSignednessMismatch);
+                        Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
                     return typeof(Nullable<>).MakeGenericType(commonNumericType);
 			    }
@@ -80,20 +80,20 @@ namespace Lens.SyntaxTree.Operators.Binary
 				{
 					var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
 					if (commonNumericType == null)
-						error(CompilerMessages.OperatorTypesSignednessMismatch);
+						Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
 					return commonNumericType;
 				}
 			}
 
-			error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+			Error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
 			return null;
 		}
 
 		/// <summary>
 		/// Resolves operator return type, in case it's not an overloaded method call.
 		/// </summary>
-		protected virtual Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected virtual Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			return null;
 		}
@@ -102,13 +102,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
 			yield return new NodeChild(RightOperand, x => RightOperand = x);
 		}
 
-	    protected override NodeBase expand(Context ctx, bool mustReturn)
+	    protected override NodeBase Expand(Context ctx, bool mustReturn)
 	    {
 	        if (Resolve(ctx).IsNullableType())
 	        {
@@ -122,7 +122,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                             Expr.GetMember(RightOperand, "HasValue")
                         ),
                         Expr.Block(
-                            recreateSelfWithArgs(
+                            RecreateSelfWithArgs(
                                 Expr.GetMember(LeftOperand, "Value"),
                                 Expr.GetMember(RightOperand, "Value")
                             )
@@ -136,7 +136,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 	                return Expr.If(
 	                    Expr.GetMember(LeftOperand, "HasValue"),
 	                    Expr.Block(
-	                        recreateSelfWithArgs(
+	                        RecreateSelfWithArgs(
 	                            Expr.GetMember(LeftOperand, "Value"),
 	                            RightOperand
 	                        )
@@ -150,7 +150,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                     return Expr.If(
                         Expr.GetMember(RightOperand, "HasValue"),
                         Expr.Block(
-                            recreateSelfWithArgs(
+                            RecreateSelfWithArgs(
                                 LeftOperand,
                                 Expr.GetMember(RightOperand, "Value")
                             )
@@ -160,34 +160,34 @@ namespace Lens.SyntaxTree.Operators.Binary
 	            }
 	        }
 
-	        return base.expand(ctx, mustReturn);
+	        return base.Expand(ctx, mustReturn);
 	    }
 
-	    protected abstract BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right);
+	    protected abstract BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right);
 
 	    #endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
-			if (_OverloadedMethod == null)
+			if (OverloadedMethod == null)
 			{
-				emitOperator(ctx);
+				EmitOperator(ctx);
 				return;
 			}
 
-			var ps = _OverloadedMethod.ArgumentTypes;
+			var ps = OverloadedMethod.ArgumentTypes;
 			Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
 			Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
-			gen.EmitCall(_OverloadedMethod.MethodInfo);
+			gen.EmitCall(OverloadedMethod.MethodInfo);
 		}
 
 		/// <summary>
 		/// Emits operator code, in case it's not an overloaded method call.
 		/// </summary>
-		protected abstract void emitOperator(Context ctx);
+		protected abstract void EmitOperator(Context ctx);
 
 		#endregion
 
@@ -196,7 +196,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Loads both arguments and converts them to the biggest common type.
 		/// </summary>
-		protected void loadAndConvertNumerics(Context ctx, Type type = null)
+		protected void LoadAndConvertNumerics(Context ctx, Type type = null)
 		{
 			var left = LeftOperand.Resolve(ctx);
 			var right = RightOperand.Resolve(ctx);
@@ -212,13 +212,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
-		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
+		public override bool IsConstant => RightOperand.IsConstant && LeftOperand.IsConstant;
+	    public override object ConstantValue => UnrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue);
 
-		/// <summary>
+	    /// <summary>
 		/// Calculates the constant value in compile time.
 		/// </summary>
-		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
+		protected abstract dynamic UnrollConstant(dynamic left, dynamic right);
 
 		#endregion
 

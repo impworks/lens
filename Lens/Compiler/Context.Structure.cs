@@ -18,7 +18,7 @@ namespace Lens.Compiler
 		/// </summary>
 		internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false, bool defaultCtor = true, bool prepare = true)
 		{
-			return createTypeCore(name, isSealed, defaultCtor, prepare, x => x.ParentSignature = parent);
+			return CreateTypeCore(name, isSealed, defaultCtor, prepare, x => x.ParentSignature = parent);
 		}
 
 		/// <summary>
@@ -26,7 +26,7 @@ namespace Lens.Compiler
 		/// </summary>
 		internal TypeEntity CreateType(string name, Type parent, bool isSealed = false, bool defaultCtor = true, bool prepare = true)
 		{
-			return createTypeCore(name, isSealed, defaultCtor, prepare, x => x.Parent = parent);
+			return CreateTypeCore(name, isSealed, defaultCtor, prepare, x => x.Parent = parent);
 		}
 
 		/// <summary>
@@ -56,9 +56,9 @@ namespace Lens.Compiler
 		/// <summary>
 		/// Create a type entry without setting its parent info.
 		/// </summary>
-		private TypeEntity createTypeCore(string name, bool isSealed, bool defaultCtor, bool prepare, Action<TypeEntity> extraInit = null)
+		private TypeEntity CreateTypeCore(string name, bool isSealed, bool defaultCtor, bool prepare, Action<TypeEntity> extraInit = null)
 		{
-			if (_DefinedTypes.ContainsKey(name))
+			if (_definedTypes.ContainsKey(name))
 				Error(CompilerMessages.TypeDefined, name);
 
 			var te = new TypeEntity(this)
@@ -66,7 +66,7 @@ namespace Lens.Compiler
 				Name = name,
 				IsSealed = isSealed,
 			};
-			_DefinedTypes.Add(name, te);
+			_definedTypes.Add(name, te);
 
 			if (extraInit != null)
 				extraInit(te);

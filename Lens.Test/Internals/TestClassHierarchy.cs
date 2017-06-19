@@ -6,7 +6,7 @@
 
 	internal interface IInterface { }
 
-	interface IDerivedInterface : IInterface { }
+    internal interface IDerivedInterface : IInterface { }
 
 	internal class InterfaceImplementer : IInterface { }
 

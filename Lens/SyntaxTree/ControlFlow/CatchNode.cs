@@ -38,13 +38,13 @@ namespace Lens.SyntaxTree.ControlFlow
 		/// </summary>
 		public CodeBlockNode Code { get; set; }
 
-		private Local _ExceptionVariable;
+		private Local _exceptionVariable;
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Code, null);
 		}
@@ -59,17 +59,17 @@ namespace Lens.SyntaxTree.ControlFlow
 
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
-				error(CompilerMessages.CatchTypeNotException, type);
+				Error(CompilerMessages.CatchTypeNotException, type);
 
 			if(!string.IsNullOrEmpty(ExceptionVariable))
-				_ExceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
+				_exceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -79,10 +79,10 @@ namespace Lens.SyntaxTree.ControlFlow
 			var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
 			gen.BeginCatchBlock(type);
 
-			if (_ExceptionVariable == null)
+			if (_exceptionVariable == null)
 				gen.EmitPop();
 			else
-				gen.EmitSaveLocal(_ExceptionVariable.LocalBuilder);
+				gen.EmitSaveLocal(_exceptionVariable.LocalBuilder);
 
 			Code.Emit(ctx, false);
 

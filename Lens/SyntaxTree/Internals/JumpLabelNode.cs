@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.Internals
 
 		public JumpLabelNode(Label label)
 		{
-			Label = label;
+			_label = label;
 		}
 
 		#endregion
@@ -23,17 +23,17 @@ namespace Lens.SyntaxTree.Internals
 		/// <summary>
 		/// The label to place at current location.
 		/// </summary>
-		private readonly Label Label;
+		private readonly Label _label;
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
-			gen.MarkLabel(Label);
+			gen.MarkLabel(_label);
 		}
 
 		#endregion

@@ -37,22 +37,22 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			var loopType = Resolve(ctx);
 			var saveLast = mustReturn && !loopType.IsVoid();
 
 			var condType = Condition.Resolve(ctx);
 			if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
-				error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+				Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
 			if (Condition.IsConstant && condType == typeof (bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
 				return saveLast ? (NodeBase)Expr.Default(loopType) : Expr.Unit();
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Condition, x => Condition = x);
 			yield return new NodeChild(Body, null);
@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var loopType = Resolve(ctx);

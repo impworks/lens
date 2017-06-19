@@ -11,7 +11,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 	/// <summary>
 	/// Checks if an expression is inside a range.
 	/// </summary>
-	class MatchRangeRule : MatchRuleBase
+	internal class MatchRangeRule : MatchRuleBase
 	{
 		#region Fields
 

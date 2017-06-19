@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 	{
 		#region Fields
 
-		private Type _ItemType;
+		private Type _itemType;
 
 		#endregion
 
@@ -24,20 +24,20 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Expressions.Count == 0)
-				error(CompilerMessages.ListEmpty);
+				Error(CompilerMessages.ListEmpty);
 
-			_ItemType = resolveItemType(Expressions, ctx);
-			if(_ItemType == typeof(NullType))
-				error(CompilerMessages.ListTypeUnknown);
+			_itemType = ResolveItemType(Expressions, ctx);
+			if(_itemType == typeof(NullType))
+				Error(CompilerMessages.ListTypeUnknown);
 
-			return typeof(List<>).MakeGenericType(_ItemType);
+			return typeof(List<>).MakeGenericType(_itemType);
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
@@ -46,14 +46,14 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 			
 			var listType = Resolve(ctx);
 			var ctor = ctx.ResolveConstructor(listType, new[] {typeof (int)});
-			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { _ItemType });
+			var addMethod = ctx.ResolveMethod(listType, "Add", new[] { _itemType });
 
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
@@ -66,8 +66,8 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 				ctx.CheckTypedExpression(curr, currType, true);
 
-				if (!_ItemType.IsExtendablyAssignableFrom(currType))
-					error(curr, CompilerMessages.ListElementTypeMismatch, currType, _ItemType);
+				if (!_itemType.IsExtendablyAssignableFrom(currType))
+					Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
 
 				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				

@@ -2,7 +2,7 @@
 {
 	internal enum LexemType
 	{
-		EOF,
+		Eof,
 		NewLine,
 
 		// Keywords

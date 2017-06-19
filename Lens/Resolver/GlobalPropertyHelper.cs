@@ -77,7 +77,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static T Get<T>(int contextId, int id)
 		{
-			validateId(contextId, id);
+			ValidateId(contextId, id);
 			var info = Properties[contextId][id];
 
 #if DEBUG
@@ -93,7 +93,7 @@ namespace Lens.Resolver
 		/// </summary>
 		public static void Set<T>(int contextId, int id, T value)
 		{
-			validateId(contextId, id);
+			ValidateId(contextId, id);
 			var info = Properties[contextId][id];
 
 #if DEBUG
@@ -109,7 +109,7 @@ namespace Lens.Resolver
 		#region Helpers
 
 		[Conditional("DEBUG")]
-		private static void validateId(int contextId, int id)
+		private static void ValidateId(int contextId, int id)
 		{
 			if (contextId < 0 || contextId > Properties.Count - 1)
 				throw new ArgumentException(string.Format(CompilerMessages.ContextNotFound, contextId));

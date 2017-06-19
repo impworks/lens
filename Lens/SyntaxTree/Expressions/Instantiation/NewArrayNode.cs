@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		/// <summary>
 		/// Common type for all collection items.
 		/// </summary>
-		private Type _ItemType;
+		private Type _itemType;
 
 		#endregion
 
@@ -27,21 +27,21 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Expressions.Count == 0)
-				error(CompilerMessages.ArrayEmpty);
+				Error(CompilerMessages.ArrayEmpty);
 
-			_ItemType = resolveItemType(Expressions, ctx);
+			_itemType = ResolveItemType(Expressions, ctx);
 
-			if(_ItemType == typeof(NullType))
-				error(CompilerMessages.ArrayTypeUnknown);
+			if(_itemType == typeof(NullType))
+				Error(CompilerMessages.ArrayTypeUnknown);
 
-			return _ItemType.MakeArrayType();
+			return _itemType.MakeArrayType();
 		}
 
 		#endregion
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
 		}
@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 			// create array
 			var count = Expressions.Count;
 			gen.EmitConstant(count);
-			gen.EmitCreateArray(_ItemType);
+			gen.EmitCreateArray(_itemType);
 			gen.EmitSaveLocal(tmpVar.LocalBuilder);
 
 			for (var idx = 0; idx < count; idx++)
@@ -67,24 +67,24 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
 				ctx.CheckTypedExpression(Expressions[idx], currType, true);
 
-				if (!_ItemType.IsExtendablyAssignableFrom(currType))
-					error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, _ItemType);
+				if (!_itemType.IsExtendablyAssignableFrom(currType))
+					Error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, _itemType);
 
 				gen.EmitLoadLocal(tmpVar.LocalBuilder);
 				gen.EmitConstant(idx);
 
-				var cast = Expr.Cast(Expressions[idx], _ItemType);
+				var cast = Expr.Cast(Expressions[idx], _itemType);
 
-				if (_ItemType.IsValueType)
+				if (_itemType.IsValueType)
 				{
-					gen.EmitLoadIndex(_ItemType, true);
+					gen.EmitLoadIndex(_itemType, true);
 					cast.Emit(ctx, true);
-					gen.EmitSaveObject(_ItemType);
+					gen.EmitSaveObject(_itemType);
 				}
 				else
 				{
 					cast.Emit(ctx, true);
-					gen.EmitSaveIndex(_ItemType);
+					gen.EmitSaveIndex(_itemType);
 				}
 			}
 

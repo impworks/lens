@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// List of names defined in the rule.
 		/// </summary>
-		private PatternNameBinding[] _BindingSet;
+		private PatternNameBinding[] _bindingSet;
 
 		#endregion
 
@@ -66,22 +66,22 @@ namespace Lens.SyntaxTree.PatternMatching
 			{
 				var duplicateName = bindingSets[idx].GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
 				if (duplicateName != null)
-					error(CompilerMessages.PatternNameDuplicated, duplicateName.Key);
+					Error(CompilerMessages.PatternNameDuplicated, duplicateName.Key);
 
 				if (idx > 0)
 				{
 					// do not compare binding set #0 with itself
-					validatePatternBindingSets(bindingSets[0], bindingSets[idx]);
-					validatePatternBindingSets(bindingSets[idx], bindingSets[0]);
+					ValidatePatternBindingSets(bindingSets[0], bindingSets[idx]);
+					ValidatePatternBindingSets(bindingSets[idx], bindingSets[0]);
 				}
 			}
 
-			_BindingSet = bindingSets[0];
+			_bindingSet = bindingSets[0];
 
-			if (_BindingSet.Length == 0)
+			if (_bindingSet.Length == 0)
 				return Expression.Resolve(ctx, mustReturn);
 
-			var locals = _BindingSet.Select(x => new Local(x.Name, x.Type)).ToArray();
+			var locals = _bindingSet.Select(x => new Local(x.Name, x.Type)).ToArray();
 			return Scope.WithTempLocals(ctx, () => Expression.Resolve(ctx, mustReturn), locals);
 		}
 
@@ -89,7 +89,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
 		#region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			yield return new NodeChild(Expression, x => Expression = x);
 			if(Condition != null)
@@ -108,7 +108,7 @@ namespace Lens.SyntaxTree.PatternMatching
 				return block;
 			
 			// declare variables
-			foreach (var binding in _BindingSet)
+			foreach (var binding in _bindingSet)
 				block.Add(Expr.Var(binding.Name, binding.Type.FullName));
 
 			foreach (var rule in MatchRules)
@@ -148,7 +148,7 @@ namespace Lens.SyntaxTree.PatternMatching
 		/// <summary>
 		/// Makes sure that pattern binding set 'B' contains all items from set 'A' and throws an error otherwise.
 		/// </summary>
-		private void validatePatternBindingSets(PatternNameBinding[] a, PatternNameBinding[] b)
+		private void ValidatePatternBindingSets(PatternNameBinding[] a, PatternNameBinding[] b)
 		{
 			// find at least one variable that does not strictly match
 			var extra = a.Except(b).FirstOrDefault();
@@ -158,9 +158,9 @@ namespace Lens.SyntaxTree.PatternMatching
 			// find a variable with the same name to check whether the error is in the name or in the type
 			var nameSake = b.FirstOrDefault(x => x.Name == extra.Name);
 			if(nameSake == null)
-				error(CompilerMessages.PatternNameSetMismatch, extra.Name);
+				Error(CompilerMessages.PatternNameSetMismatch, extra.Name);
 			else
-				error(CompilerMessages.PatternNameTypeMismatch, extra.Name, extra.Type, nameSake.Type);
+				Error(CompilerMessages.PatternNameTypeMismatch, extra.Name, extra.Type, nameSake.Type);
 		}
 
 		#endregion

@@ -102,15 +102,15 @@ namespace Lens.Resolver
 				var getter = genPty.GetGetMethod();
 				var setter = genPty.GetSetMethod();
 
-				var declType = resolveActualDeclaringType(type, genPty.DeclaringType);
+				var declType = ResolveActualDeclaringType(type, genPty.DeclaringType);
 
 				return new PropertyWrapper
 				{
 					Name = name,
 					Type = type,
 
-					Getter = getMethodVersionForType(declType, getter),
-					Setter = getMethodVersionForType(declType, setter),
+					Getter = GetMethodVersionForType(declType, getter),
+					Setter = GetMethodVersionForType(declType, setter),
 					IsStatic = (getter ?? setter).IsStatic,
 					PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
 				};
@@ -201,15 +201,15 @@ namespace Lens.Resolver
 				var adder = genEvt.GetAddMethod();
 				var remover = genEvt.GetRemoveMethod();
 
-				var declType = resolveActualDeclaringType(type, genEvt.DeclaringType);
+				var declType = ResolveActualDeclaringType(type, genEvt.DeclaringType);
 
 				return new EventWrapper
 				{
 					Name = name,
 					Type = type,
 
-					AddMethod = getMethodVersionForType(declType, adder),
-					RemoveMethod = getMethodVersionForType(declType, remover),
+					AddMethod = GetMethodVersionForType(declType, adder),
+					RemoveMethod = GetMethodVersionForType(declType, remover),
 					IsStatic = adder.IsStatic,
 					EventHandlerType = GenericHelper.ApplyGenericArguments(genEvt.EventHandlerType, type)
 				};
@@ -227,7 +227,7 @@ namespace Lens.Resolver
 			try
 			{
 				var method = ResolveMethodByArgs(
-					getMethodsByName(type, name),
+					GetMethodsByName(type, name),
 					m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
 					IsVariadic,
 					argTypes
@@ -245,7 +245,7 @@ namespace Lens.Resolver
 				}
 				else if (hints != null)
 				{
-					error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+					Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 				}
 
 				mw.MethodInfo = mInfo;
@@ -265,15 +265,15 @@ namespace Lens.Resolver
 
 				var genType = type.GetGenericTypeDefinition();
 				var genMethod = ResolveMethodByArgs(
-					getMethodsByName(genType, name),
+					GetMethodsByName(genType, name),
 					m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
 					IsVariadic,
 					argTypes
 				);
 
 				var mInfoOriginal = genMethod.Method;
-				var declType = resolveActualDeclaringType(type, mInfoOriginal.DeclaringType);
-				var mInfo = getMethodVersionForType(declType, mInfoOriginal);
+				var declType = ResolveActualDeclaringType(type, mInfoOriginal.DeclaringType);
+				var mInfo = GetMethodVersionForType(declType, mInfoOriginal);
 
 				if (mInfoOriginal.IsGenericMethod)
 				{
@@ -292,7 +292,7 @@ namespace Lens.Resolver
 				else
 				{
 					if (hints != null)
-						error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+						Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 
 					mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray();
 					mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
@@ -352,7 +352,7 @@ namespace Lens.Resolver
 			}
 			else if (hints != null)
 			{
-				error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+				Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 			}
 
 			return info;
@@ -366,7 +366,7 @@ namespace Lens.Resolver
 		{
 			try
 			{
-				return getMethodsByName(type, name).Where(m => !m.IsGenericMethod).Select(m => new MethodWrapper(m));
+				return GetMethodsByName(type, name).Where(m => !m.IsGenericMethod).Select(m => new MethodWrapper(m));
 			}
 			catch (NotSupportedException)
 			{
@@ -374,18 +374,18 @@ namespace Lens.Resolver
 					throw;
 
 				var genType = type.GetGenericTypeDefinition();
-				var genericMethods = getMethodsByName(genType, name).Where(m => !m.IsGenericMethod).ToArray();
+				var genericMethods = GetMethodsByName(genType, name).Where(m => !m.IsGenericMethod).ToArray();
 
 				return genericMethods.Select(
 					m =>
 					{
-						var declType = resolveActualDeclaringType(type, m.DeclaringType);
+						var declType = ResolveActualDeclaringType(type, m.DeclaringType);
 						return new MethodWrapper
 						{
 							Name = name,
 							Type = type,
 
-							MethodInfo = getMethodVersionForType(declType, m),
+							MethodInfo = GetMethodVersionForType(declType, m),
 							IsStatic = m.IsStatic,
 							IsVirtual = m.IsVirtual,
 							ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, declType)).ToArray(),
@@ -407,7 +407,7 @@ namespace Lens.Resolver
 
 			try
 			{
-				var indexer = resolveIndexerProperty(type, idxType, isGetter, p => p);
+				var indexer = ResolveIndexerProperty(type, idxType, isGetter, p => p);
 				return new MethodWrapper(indexer);
 			}
 			catch (NotSupportedException)
@@ -416,14 +416,14 @@ namespace Lens.Resolver
 					throw;
 
 				var genType = type.GetGenericTypeDefinition();
-				var indexer = resolveIndexerProperty(genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
-				var declType = resolveActualDeclaringType(type, indexer.DeclaringType);
+				var indexer = ResolveIndexerProperty(genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
+				var declType = ResolveActualDeclaringType(type, indexer.DeclaringType);
 
 				return new MethodWrapper
 				{
 					Type = type,
 
-					MethodInfo = getMethodVersionForType(declType, indexer),
+					MethodInfo = GetMethodVersionForType(declType, indexer),
 					IsStatic = false,
 					IsVirtual = indexer.IsVirtual,
 					ArgumentTypes = indexer.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
@@ -435,7 +435,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Finds a property that can work as an index.
 		/// </summary>
-		private static MethodInfo resolveIndexerProperty(Type type, Type idxType, bool isGetter, Func<Type, Type> typeProcessor)
+		private static MethodInfo ResolveIndexerProperty(Type type, Type idxType, bool isGetter, Func<Type, Type> typeProcessor)
 		{
 			var indexers = new List<Tuple<PropertyInfo, Type, int>>();
 
@@ -460,14 +460,14 @@ namespace Lens.Resolver
 			indexers.Sort((x, y) => x.Item3.CompareTo(y.Item3));
 
 			if (indexers.Count == 0 || indexers[0].Item3 == int.MaxValue)
-				error(
+				Error(
 					isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
 					type,
 					idxType
 				);
 
 			if (indexers.Count > 1 && indexers[0].Item3 == indexers[1].Item3)
-				error(
+				Error(
 					CompilerMessages.IndexAmbigious,
 					type,
 					indexers[0].Item2,
@@ -507,15 +507,15 @@ namespace Lens.Resolver
 
 		#region Interface resolver
 
-		private static readonly Dictionary<Type, Type[]> m_InterfaceCache = new Dictionary<Type, Type[]>();
+		private static readonly Dictionary<Type, Type[]> InterfaceCache = new Dictionary<Type, Type[]>();
 
 		/// <summary>
 		/// Get interfaces of a possibly generic type.
 		/// </summary>
 		public static Type[] ResolveInterfaces(this Type type)
 		{
-			if (m_InterfaceCache.ContainsKey(type))
-				return m_InterfaceCache[type].ToArray();
+			if (InterfaceCache.ContainsKey(type))
+				return InterfaceCache[type].ToArray();
 
 			Type[] ifaces;
 			try
@@ -555,7 +555,7 @@ namespace Lens.Resolver
 				}
 			}
 
-			m_InterfaceCache.Add(type, ifaces);
+			InterfaceCache.Add(type, ifaces);
 			return ifaces.ToArray();
 		}
 
@@ -668,7 +668,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Returns the list of methods by name, flattening interface hierarchy.
 		/// </summary>
-		private static IEnumerable<MethodInfo> getMethodsByName(Type type, string name)
+		private static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
 		{
 			const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
@@ -676,7 +676,7 @@ namespace Lens.Resolver
 			if (type.IsInterface && !result.Any())
 				result = type.GetInterfaces()
 							 .Select(x => x.IsGenericType ? x.GetGenericTypeDefinition() : x)
-							 .SelectMany(x => getMethodsByName(x, name))
+							 .SelectMany(x => GetMethodsByName(x, name))
 							 .ToArray();
 
 			return result;
@@ -687,7 +687,7 @@ namespace Lens.Resolver
 		/// </summary>
 		/// <param name="type">Actual type</param>
 		/// <param name="decl">Declaring generic type of method or property</param>
-		private static Type resolveActualDeclaringType(Type type, Type decl)
+		private static Type ResolveActualDeclaringType(Type type, Type decl)
 		{
 			if (type.IsInterface && type != decl)
 			{
@@ -705,7 +705,7 @@ namespace Lens.Resolver
 		/// <summary>
 		/// Creates a generic method version for a specific type.
 		/// </summary>
-		private static MethodInfo getMethodVersionForType(Type type, MethodInfo method)
+		private static MethodInfo GetMethodVersionForType(Type type, MethodInfo method)
 		{
 			if (method != null && type.IsGenericType)
 				return TypeBuilder.GetMethod(type, method);
@@ -718,7 +718,7 @@ namespace Lens.Resolver
 		/// </summary>
 		[ContractAnnotation("=> halt")]
 		[DebuggerStepThrough]
-		private static void error(string msg, params object[] args)
+		private static void Error(string msg, params object[] args)
 		{
 			throw new LensCompilerException(string.Format(msg, args));
 		}

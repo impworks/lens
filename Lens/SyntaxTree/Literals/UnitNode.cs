@@ -9,7 +9,7 @@ namespace Lens.SyntaxTree.Literals
 	{
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			// does nothing
 		}

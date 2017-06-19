@@ -15,17 +15,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 	{
 		#region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "+"; }
-		}
+		protected override string OperatorRepresentation => "+";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Addition"; }
-		}
+	    protected override string OverloadedMethodName => "op_Addition";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+	    protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
             return new AddOperatorNode { LeftOperand = left, RightOperand = right };
         }
@@ -34,7 +28,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
+		protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
 		{
 			var stringyTypes = new[] { typeof(string), typeof(char) };
 			if (leftType.IsAnyOf(stringyTypes) && rightType.IsAnyOf(stringyTypes))
@@ -63,35 +57,35 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
 			if (!IsConstant)
 			{
 				var type = Resolve(ctx);
 
 				if (type == typeof (string))
-					return stringExpand();
+					return StringExpand();
 
 				if (type.IsArray)
-					return arrayExpand(ctx);
+					return ArrayExpand(ctx);
 
 				if (type.IsAppliedVersionOf(typeof(IDictionary<,>)))
-					return dictExpand(ctx);
+					return DictExpand(ctx);
 
 				if (type == typeof (IEnumerable))
-					return seqExpand();
+					return SeqExpand();
 
 				if (type.IsAppliedVersionOf(typeof (IEnumerable<>)))
-					return typedSeqExpand();
+					return TypedSeqExpand();
 			}
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		/// <summary>
 		/// Returns the code to concatenate two strings.
 		/// </summary>
-		private NodeBase stringExpand()
+		private NodeBase StringExpand()
 		{
 			return Expr.Invoke("string", "Concat", LeftOperand, RightOperand);
 		}
@@ -99,7 +93,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Returns the code to concatenate two arrays.
 		/// </summary>
-		private NodeBase arrayExpand(Context ctx)
+		private NodeBase ArrayExpand(Context ctx)
 		{
 			var type = Resolve(ctx);
 
@@ -148,7 +142,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Returns the code to concatenate two untyped value sequences.
 		/// </summary>
-		private NodeBase seqExpand()
+		private NodeBase SeqExpand()
 		{
 			// a.OfType<object>().Concat(b.OfType<object>())
 			return Expr.Invoke(
@@ -176,7 +170,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Returns the code to concatenate two typed value sequences.
 		/// </summary>
-		private NodeBase typedSeqExpand()
+		private NodeBase TypedSeqExpand()
 		{
 			return Expr.Invoke("System.Linq.Enumerable", "Concat", LeftOperand, RightOperand);
 		}
@@ -184,7 +178,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 		/// <summary>
 		/// Returns the code to concatenate two dictionaries.
 		/// </summary>
-		private NodeBase dictExpand(Context ctx)
+		private NodeBase DictExpand(Context ctx)
 		{
 			var keyValueTypes = LeftOperand.Resolve(ctx).GetGenericArguments();
 			var dictType = typeof(Dictionary<,>).MakeGenericType(keyValueTypes);
@@ -228,9 +222,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Emit
 
-		protected override void emitOperator(Context ctx)
+		protected override void EmitOperator(Context ctx)
 		{
-			loadAndConvertNumerics(ctx);
+			LoadAndConvertNumerics(ctx);
 			ctx.CurrentMethod.Generator.EmitAdd();
 		}
 
@@ -238,7 +232,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
 		#region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
+		protected override dynamic UnrollConstant(dynamic left, dynamic right)
 		{
 			if (left is char && right is char)
 				return string.Concat(left, right);
@@ -249,7 +243,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 			}
 			catch (OverflowException)
 			{
-				error(CompilerMessages.ConstantOverflow);
+				Error(CompilerMessages.ConstantOverflow);
 				return null;
 			}
 		}

@@ -40,7 +40,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		/// <summary>
 		/// The actual type.
 		/// </summary>
-		private Type Type;
+		private Type _type;
 		
 		#endregion
 
@@ -52,9 +52,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 			if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
 				Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
-			Type = ctx.ResolveType(Identifier);
-			if (!Type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(Type))
-				Error(CompilerMessages.PatternTypeMatchImpossible, Type, expressionType);
+			_type = ctx.ResolveType(Identifier);
+			if (!_type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(_type))
+				Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
 			var duplicate = FieldRules.GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
 			if(duplicate != null)
@@ -85,14 +85,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 		{
 			yield return MakeJumpIf(
 				nextStatement,
-				Expr.Not(Expr.Is(expression, Type))
+				Expr.Not(Expr.Is(expression, _type))
 			);
 
 			foreach (var fieldRule in FieldRules)
 			{
 				var rules = fieldRule.Rule.Expand(
 					ctx,
-					Expr.GetMember(Expr.Cast(expression, Type), fieldRule.Name.FullSignature),
+					Expr.GetMember(Expr.Cast(expression, _type), fieldRule.Name.FullSignature),
 					nextStatement
 				);
 

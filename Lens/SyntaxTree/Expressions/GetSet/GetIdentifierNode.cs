@@ -23,10 +23,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Fields
 
-		private MethodEntity _Method;
-		private GlobalPropertyInfo _Property;
-		private Local _LocalConstant;
-		private TypeEntity _Type;
+		private MethodEntity _method;
+		private GlobalPropertyInfo _property;
+		private Local _localConstant;
+		private TypeEntity _type;
 
 		public bool PointerRequired { get; set; }
 		public bool RefArgumentRequired { get; set; }
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		protected override Type resolve(Context ctx, bool mustReturn)
 		{
 			if(Identifier == "_")
-				error(CompilerMessages.UnderscoreNameUsed);
+				Error(CompilerMessages.UnderscoreNameUsed);
 
 			// local variable
 			var local = Local ?? ctx.Scope.FindLocal(Identifier);
@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				// only local constants are cached
 				// because mutable variables could be closured later on
 				if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
-					_LocalConstant = local;
+					_localConstant = local;
 
 				return local.Type;
 			}
@@ -57,10 +57,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			{
 				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
 				if (methods.Length > 1)
-					error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
+					Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
-				_Method = methods[0];
-				return FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.GetArgumentTypes(ctx));
+				_method = methods[0];
+				return FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx));
 			}
 			catch (KeyNotFoundException) { }
 
@@ -71,8 +71,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				try
 				{
 					type.ResolveConstructor(new Type[0]);
-					_Type = type;
-					return _Type.TypeInfo;
+					_type = type;
+					return _type.TypeInfo;
 				}
 				catch (KeyNotFoundException) { }
 			}
@@ -80,12 +80,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			// global property
 			try
 			{
-				_Property = ctx.ResolveGlobalProperty(Identifier);
-				return _Property.PropertyType;
+				_property = ctx.ResolveGlobalProperty(Identifier);
+				return _property.PropertyType;
 			}
 			catch (KeyNotFoundException)
 			{
-				error(CompilerMessages.IdentifierNotFound, Identifier);
+				Error(CompilerMessages.IdentifierNotFound, Identifier);
 			}
 
 			return typeof (UnitType);
@@ -95,22 +95,22 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
 		#region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
+		protected override NodeBase Expand(Context ctx, bool mustReturn)
 		{
-			if (_Type != null)
-				return Expr.New(_Type.TypeInfo);
+			if (_type != null)
+				return Expr.New(_type.TypeInfo);
 
-			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
-				return Expr.Constant(_LocalConstant.ConstantValue);
+			if (_localConstant != null && !PointerRequired && !RefArgumentRequired)
+				return Expr.Constant(_localConstant.ConstantValue);
 
-			return base.expand(ctx, mustReturn);
+			return base.Expand(ctx, mustReturn);
 		}
 
 		#endregion
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			var resultType = Resolve(ctx);
 
@@ -122,46 +122,46 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 			if (local != null)
 			{
 				if(local.IsImmutable && RefArgumentRequired)
-					error(CompilerMessages.ConstantByRef);
+					Error(CompilerMessages.ConstantByRef);
 
 				if (local.IsClosured)
 				{
 					if (local.ClosureDistance == 0)
-						emitGetClosuredLocal(ctx, local);
+						EmitGetClosuredLocal(ctx, local);
 					else
-						emitGetClosuredRemote(ctx, local);
+						EmitGetClosuredRemote(ctx, local);
 				}
 				else
 				{
-					emitGetLocal(ctx, local);
+					EmitGetLocal(ctx, local);
 				}
 
 				return;
 			}
 
 			// load pointer to global function
-			if (_Method != null)
+			if (_method != null)
 			{
 				var ctor = ctx.ResolveConstructor(resultType, new[] {typeof (object), typeof (IntPtr)});
 
 				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(_Method.MethodInfo);
+				gen.EmitLoadFunctionPointer(_method.MethodInfo);
 				gen.EmitCreateObject(ctor.ConstructorInfo);
 
 				return;
 			}
 
 			// get a property value
-			if (_Property != null)
+			if (_property != null)
 			{
-				var id = _Property.PropertyId;
-				if(!_Property.HasGetter)
-					error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
+				var id = _property.PropertyId;
+				if(!_property.HasGetter)
+					Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
-				var type = _Property.PropertyType;
-				if (_Property.GetterMethod != null)
+				var type = _property.PropertyType;
+				if (_property.GetterMethod != null)
 				{
-					gen.EmitCall(_Property.GetterMethod.MethodInfo);
+					gen.EmitCall(_property.GetterMethod.MethodInfo);
 				}
 				else
 				{
@@ -173,13 +173,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 				return;
 			}
 
-			error(CompilerMessages.IdentifierNotFound, Identifier);
+			Error(CompilerMessages.IdentifierNotFound, Identifier);
 		}
 
 		/// <summary>
 		/// Gets a closured variable that has been declared in the current scope.
 		/// </summary>
-		private void emitGetClosuredLocal(Context ctx, Local name)
+		private void EmitGetClosuredLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -192,7 +192,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Gets a closured variable that has been imported from outer scopes.
 		/// </summary>
-		private void emitGetClosuredRemote(Context ctx, Local name)
+		private void EmitGetClosuredRemote(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -216,7 +216,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		/// <summary>
 		/// Gets a local variable from current scope.
 		/// </summary>
-		private void emitGetLocal(Context ctx, Local name)
+		private void EmitGetLocal(Context ctx, Local name)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 			var ptr = PointerRequired || RefArgumentRequired;
@@ -237,10 +237,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 		
 		#region Constant unroll
 
-		public override bool IsConstant { get { return _LocalConstant != null; } }
-		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
+		public override bool IsConstant => _localConstant != null;
+	    public override dynamic ConstantValue => _localConstant != null ? _localConstant.ConstantValue : base.ConstantValue;
 
-		#endregion
+	    #endregion
 
 		#region Debug
 

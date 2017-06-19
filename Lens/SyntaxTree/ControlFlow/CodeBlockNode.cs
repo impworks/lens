@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.ControlFlow
 		{
 			var last = Statements.LastOrDefault(x => !(x is IMetaNode));
 			if (last is VarNode || last is LetNode)
-				error(last, CompilerMessages.CodeBlockLastVar);
+				Error(last, CompilerMessages.CodeBlockLastVar);
 
 			ctx.EnterScope(Scope);
 
@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			ctx.ExitScope();
 		}
 
-		protected override IEnumerable<NodeChild> getChildren()
+		protected override IEnumerable<NodeChild> GetChildren()
 		{
 			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
 		}
@@ -98,19 +98,19 @@ namespace Lens.SyntaxTree.ControlFlow
 
 		#region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
+		protected override void EmitCode(Context ctx, bool mustReturn)
 		{
 			ctx.EnterScope(Scope);
 
 			if(Scope.ClosureType != null)
-				emitClosureSetup(ctx);
+				EmitClosureSetup(ctx);
 
-			emitStatements(ctx, mustReturn);
+			EmitStatements(ctx, mustReturn);
 
 			ctx.ExitScope();
 		}
 
-		private void emitClosureSetup(Context ctx)
+		private void EmitClosureSetup(Context ctx)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
@@ -149,7 +149,7 @@ namespace Lens.SyntaxTree.ControlFlow
 			}
 		}
 
-		private void emitStatements(Context ctx, bool mustReturn)
+		private void EmitStatements(Context ctx, bool mustReturn)
 		{
 			var gen = ctx.CurrentMethod.Generator;
 
