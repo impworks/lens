@@ -20,15 +20,21 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Fields
 
+        /// <summary>
+        /// Condition of the loop.
+        /// </summary>
         public NodeBase Condition { get; set; }
 
-        public CodeBlockNode Body { get; protected set; }
+        /// <summary>
+        /// Statements in the loop's body.
+        /// </summary>
+        public CodeBlockNode Body { get; }
 
         #endregion
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
         }
@@ -46,6 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
+            // condition is known to be false: do not emit the loop at all
             if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
                 return saveLast ? (NodeBase) Expr.Default(loopType) : Expr.Unit();
 
@@ -62,7 +69,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
             var loopType = Resolve(ctx);

@@ -59,7 +59,7 @@ namespace Lens.Compiler
             if (Options.AllowSave)
                 Error(CompilerMessages.ImportIntoSaveableAssembly);
 
-            importFunction(name, method, true);
+            ImportFunction(name, method, true);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Imports a method from a standard library.
         /// </summary>
-        private void importFunction(string name, MethodInfo method, bool check = false)
+        private void ImportFunction(string name, MethodInfo method, bool check)
         {
             _definedTypes[EntityNames.MainTypeName].ImportMethod(name, method, check);
         }
@@ -100,7 +100,7 @@ namespace Lens.Compiler
                 Error(CompilerMessages.NoOverloads, name, type.Name);
 
             foreach (var curr in overloads)
-                importFunction(newName, curr, check);
+                ImportFunction(newName, curr, check);
         }
 
         #endregion

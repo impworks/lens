@@ -67,7 +67,14 @@ namespace Lens.Compiler.Entities
 
         public override string ToString()
         {
-            return string.Format("{2} {0}.{1}", ContainerType.Name, Name, Type != null ? Type.ToString() : TypeSignature);
+            return string.Format(
+                "{2} {0}.{1}",
+                ContainerType.Name,
+                Name,
+                Type != null
+                    ? Type.ToString()
+                    : TypeSignature
+            );
         }
 
         #endregion

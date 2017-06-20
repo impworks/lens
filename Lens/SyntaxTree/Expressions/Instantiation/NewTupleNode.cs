@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.TupleNoArgs);
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var tupleType = Resolve(ctx);
 

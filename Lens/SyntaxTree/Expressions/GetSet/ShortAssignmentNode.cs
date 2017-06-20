@@ -41,7 +41,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         public NodeBase Expression;
 
-        private readonly static Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
+        /// <summary>
+        /// Map of lexems to corresponding node constructors (for expansion).
+        /// </summary>
+        private static readonly Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
         {
             {LexemType.And, Expr.And},
             {LexemType.Or, Expr.Or},

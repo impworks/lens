@@ -50,6 +50,7 @@ namespace Lens.SyntaxTree.PatternMatching
         /// </summary>
         private Label _defaultLabel;
 
+        /// <summary>
         /// A lookup for rule labels.
         /// </summary>
         private readonly List<Tuple<MatchRuleBase, Label>> _ruleLabels;
@@ -68,7 +69,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             ctx.CheckTypedExpression(Expression, allowNull: true);
 
@@ -151,6 +152,9 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Label handling
 
+        /// <summary>
+        /// Defines jump labels for all statements.
+        /// </summary>
         private void DefineLabels(Context ctx)
         {
             foreach (var stmt in MatchStatements)

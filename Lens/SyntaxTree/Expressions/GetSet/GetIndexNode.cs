@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
             if (exprType.IsArray)
@@ -59,18 +59,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             if (_getter == null)
-                CompileArray(ctx);
+                EmitArray(ctx);
             else
-                CompileCustom(ctx);
+                EmitCustom(ctx);
         }
 
         /// <summary>
         /// Emits the code for retrieving an array item by index.
         /// </summary>
-        private void CompileArray(Context ctx)
+        private void EmitArray(Context ctx)
         {
             var gen = ctx.CurrentMethod.Generator;
 
@@ -86,7 +86,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Emits the code for retrieving a value from an object by custom indexer.
         /// </summary>
-        private void CompileCustom(Context ctx)
+        private void EmitCustom(Context ctx)
         {
             var retType = _getter.ReturnType;
 

@@ -14,7 +14,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Random seed.
         /// </summary>
-        public static readonly Random _random = new Random();
+        private static readonly Random _random = new Random();
 
         #endregion
 
@@ -23,7 +23,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Gets a random floating point value between 0.0 and 1.0.
         /// </summary>
-        /// <returns></returns>
+        // ReSharper disable once UnusedMember.Global
         public static double Random()
         {
             return _random.NextDouble();
@@ -32,6 +32,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Gets a random integer value between 0 and MAX.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static int Random(int max)
         {
             return _random.Next(max);
@@ -40,6 +41,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Gets a random integer value between MIN and MAX.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static int Random(int min, int max)
         {
             return _random.Next(min, max);
@@ -48,6 +50,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Gets a random element from the list.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static T Random<T>(IList<T> src)
         {
             var max = src.Count - 1;
@@ -57,6 +60,7 @@ namespace Lens.Stdlib
         /// <summary>
         /// Gets a random element from the list using a weighter function.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static T Random<T>(IList<T> src, Func<T, double> weighter)
         {
             var rnd = _random.NextDouble();

@@ -11,7 +11,7 @@ namespace Lens.Compiler
         private void InitStdlib()
         {
             ImportOverloads(typeof(Utilities), "Times", "times");
-            importFunction("fail", typeof(Utilities).GetMethod("FailWith"));
+            ImportFunction("fail", typeof(Utilities).GetMethod("FailWith"), false);
 
             ImportOverloads(typeof(string), "Format", "fmt");
             ImportOverloads(typeof(Console), "Write", "print");
@@ -23,10 +23,10 @@ namespace Lens.Compiler
             ImportOverloads(typeof(Utilities), "Odd", "odd");
             ImportOverloads(typeof(Utilities), "Even", "even");
 
-            importFunction("read", typeof(Console).GetMethod("Read"));
-            importFunction("readln", typeof(Console).GetMethod("ReadLine"));
-            importFunction("readkey", typeof(ConsoleWrapper).GetMethod("ReadKey"));
-            importFunction("waitkey", typeof(ConsoleWrapper).GetMethod("WaitKey"));
+            ImportFunction("read", typeof(Console).GetMethod("Read"), false);
+            ImportFunction("readln", typeof(Console).GetMethod("ReadLine"), false);
+            ImportFunction("readkey", typeof(ConsoleWrapper).GetMethod("ReadKey"), false);
+            ImportFunction("waitkey", typeof(ConsoleWrapper).GetMethod("WaitKey"), false);
         }
     }
 }

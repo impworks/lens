@@ -49,9 +49,8 @@ namespace Lens.Compiler
             {
                 ExternalLookup = name =>
                 {
-                    TypeEntity ent;
-                    _definedTypes.TryGetValue(name, out ent);
-                    return ent == null ? null : ent.TypeBuilder;
+                    _definedTypes.TryGetValue(name, out var ent);
+                    return ent?.TypeBuilder;
                 }
             };
 
@@ -93,32 +92,32 @@ namespace Lens.Compiler
         /// <summary>
         /// Context ID for imported properties.
         /// </summary>
-        public int ContextId { get; set; }
+        public int ContextId { get; }
 
         /// <summary>
         /// Compiler options.
         /// </summary>
-        internal LensCompilerOptions Options { get; private set; }
+        internal LensCompilerOptions Options { get; }
 
         /// <summary>
         /// The assembly that's being currently built.
         /// </summary>
-        public AssemblyBuilder MainAssembly { get; private set; }
+        public AssemblyBuilder MainAssembly { get; }
 
         /// <summary>
         /// The main module of the current assembly.
         /// </summary>
-        public ModuleBuilder MainModule { get; private set; }
+        public ModuleBuilder MainModule { get; }
 
         /// <summary>
         /// The main type in which all "global" functions are stored.
         /// </summary>
-        internal TypeEntity MainType { get; private set; }
+        internal TypeEntity MainType { get; }
 
         /// <summary>
         /// The function that is the body of the script.
         /// </summary>
-        internal MethodEntity MainMethod { get; private set; }
+        internal MethodEntity MainMethod { get; }
 
         /// <summary>
         /// Type that is currently processed.

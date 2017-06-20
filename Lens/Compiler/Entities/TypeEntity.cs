@@ -21,8 +21,6 @@ namespace Lens.Compiler.Entities
             _fields = new Dictionary<string, FieldEntity>();
             _methods = new Dictionary<string, List<MethodEntity>>();
             _constructors = new List<ConstructorEntity>();
-
-            ClosureMethodId = 1;
         }
 
         #endregion
@@ -35,7 +33,14 @@ namespace Lens.Compiler.Entities
         private readonly Dictionary<string, List<MethodEntity>> _methods;
         private readonly List<ConstructorEntity> _constructors;
 
+        /// <summary>
+        /// Is true for classes that have been imported from the outer world by compiler configuration.
+        /// </summary>
         public bool IsImported => Kind == TypeEntityKind.Imported;
+
+        /// <summary>
+        /// Is true for types defined in the script (type, label, record).
+        /// </summary>
         public bool IsUserDefined => Kind == TypeEntityKind.Type || Kind == TypeEntityKind.TypeLabel || Kind == TypeEntityKind.Record;
 
         /// <summary>
@@ -71,7 +76,7 @@ namespace Lens.Compiler.Entities
             set
             {
                 if (!IsImported)
-                    throw new LensCompilerException(string.Format("Type '{0}' is not imported!", Name));
+                    throw new LensCompilerException($"Type '{Name}' is not imported!");
 
                 _typeInfo = value;
             }
@@ -81,11 +86,6 @@ namespace Lens.Compiler.Entities
         /// The typebuilder for current type.
         /// </summary>
         public TypeBuilder TypeBuilder { get; private set; }
-
-        /// <summary>
-        /// The current ID of closured methods (if the type entity is a closure backbone).
-        /// </summary>
-        public int ClosureMethodId;
 
         /// <summary>
         /// A kind of LENS type this entity represents.
@@ -166,12 +166,11 @@ namespace Lens.Compiler.Entities
         /// </summary>
         internal FieldEntity ResolveField(string name)
         {
-            FieldEntity fe;
-            if (!_fields.TryGetValue(name, out fe))
+            if (!_fields.TryGetValue(name, out var fe))
                 throw new KeyNotFoundException();
 
             if (fe.FieldBuilder == null)
-                throw new InvalidOperationException(string.Format("Type '{0}' must be prepared before its entities can be resolved.", Name));
+                throw new InvalidOperationException($"Type '{Name}' must be prepared before its entities can be resolved.");
 
             return fe;
         }
@@ -181,8 +180,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false)
         {
-            List<MethodEntity> group;
-            if (!_methods.TryGetValue(name, out group))
+            if (!_methods.TryGetValue(name, out var group))
                 throw new KeyNotFoundException();
 
             var info = ReflectionHelper.ResolveMethodByArgs(
@@ -203,8 +201,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         internal MethodEntity[] ResolveMethodGroup(string name)
         {
-            List<MethodEntity> group;
-            if (!_methods.TryGetValue(name, out group))
+            if (!_methods.TryGetValue(name, out var group))
                 throw new KeyNotFoundException();
 
             return group.ToArray();

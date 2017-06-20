@@ -10,7 +10,7 @@ namespace Lens.Compiler.Entities
     /// <summary>
     /// The base entity for a method and a constructor that allows lookup by argument types.
     /// </summary>
-    abstract internal class MethodEntityBase : TypeContentsBase
+    internal abstract class MethodEntityBase : TypeContentsBase
     {
         #region Constructor
 
@@ -149,7 +149,12 @@ namespace Lens.Compiler.Entities
 
         public override string ToString()
         {
-            return string.Format("{0}.{1}({2})", ContainerType.Name, Name, Arguments.Count);
+            return string.Format(
+                "{0}.{1}({2})",
+                ContainerType.Name,
+                Name,
+                Arguments.Count
+            );
         }
 
         #endregion

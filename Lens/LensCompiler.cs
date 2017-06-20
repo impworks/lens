@@ -41,7 +41,6 @@ namespace Lens
         /// <summary>
         /// Register an assembly to be used by the LENS script.
         /// </summary>
-        /// <param name="asm"></param>
         public void RegisterAssembly(Assembly asm)
         {
             _context.RegisterAssembly(asm);
@@ -61,7 +60,7 @@ namespace Lens
         public void RegisterType(string alias, Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
 
             _context.ImportType(alias, type);
         }
@@ -118,7 +117,7 @@ namespace Lens
         /// <summary>
         /// Compile the script for many invocations.
         /// </summary>
-        internal Func<object> Compile(IEnumerable<NodeBase> nodes)
+        private Func<object> Compile(IEnumerable<NodeBase> nodes)
         {
             var script = _context.Compile(nodes);
             return script.Run;

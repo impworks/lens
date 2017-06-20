@@ -5,6 +5,9 @@
     /// </summary>
     public interface IScript
     {
+        /// <summary>
+        /// Executes the compiled script.
+        /// </summary>
         object Run();
     }
 }

@@ -32,7 +32,7 @@ namespace Lens.Compiler
         /// <summary>
         /// List of available postfixes.
         /// </summary>
-        private static readonly string[] _postfixes = {"[]", "?", "~"};
+        private static readonly string[] Postfixes = {"[]", "?", "~"};
 
         #endregion
 
@@ -81,7 +81,7 @@ namespace Lens.Compiler
             if (signature[0] == ' ' || signature[signature.Length - 1] == ' ')
                 signature = signature.Trim();
 
-            foreach (var postfix in _postfixes)
+            foreach (var postfix in Postfixes)
                 if (signature.EndsWith(postfix))
                     return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
 
@@ -163,7 +163,7 @@ namespace Lens.Compiler
 
         #endregion
 
-        #region Debug
+        #region Equality
 
         protected bool Equals(TypeSignature other)
         {

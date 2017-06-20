@@ -2,6 +2,11 @@
 
 namespace Lens.SyntaxTree.ControlFlow
 {
+    /// <summary>
+    /// A namespace reference declaration.
+    /// 
+    /// This node is for parser only.
+    /// </summary>
     internal class UseNode : NodeBase
     {
         #region Fields
@@ -15,7 +20,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             // does nothing
             // all UseNodes are processed by Context.CreateFromNodes()
@@ -45,7 +50,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public override string ToString()
         {
-            return string.Format("use({0})", Namespace);
+            return $"use({Namespace})";
         }
 
         #endregion

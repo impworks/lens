@@ -16,7 +16,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         #region Fields
 
         /// <summary>
-        /// Common type for all collection items.
+        /// Common type inferred from all items' actual types.
         /// </summary>
         private Type _itemType;
 
@@ -24,7 +24,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.ArrayEmpty);
@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
             var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);

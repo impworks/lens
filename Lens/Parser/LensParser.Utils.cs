@@ -14,6 +14,10 @@ namespace Lens.Parser
     {
         #region Error reporting
 
+        /// <summary>
+        /// Throws an error bound to current lexem.
+        /// </summary>
+        [ContractAnnotation(" => halt")]
         [DebuggerStepThrough]
         private void Error(string msg, params object[] args)
         {
@@ -121,7 +125,8 @@ namespace Lens.Parser
         /// </summary>
         private bool IsStmtSeparator()
         {
-            return Check(LexemType.NewLine) || _lexems[_lexemId - 1].Type == LexemType.Dedent;
+            return Check(LexemType.NewLine)
+                || _lexems[_lexemId - 1].Type == LexemType.Dedent;
         }
 
         #endregion

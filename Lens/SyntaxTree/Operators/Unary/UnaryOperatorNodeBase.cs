@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Operand.Resolve(ctx);
 
@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

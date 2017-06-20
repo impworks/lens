@@ -14,8 +14,19 @@ namespace Lens.SyntaxTree.Expressions.GetSet
     {
         #region Fields
 
+        /// <summary>
+        /// Flag indicating that the accessible member is static.
+        /// </summary>
         private bool _isStatic;
+
+        /// <summary>
+        /// Cached property reference (if the member represents it).
+        /// </summary>
         private PropertyWrapper _property;
+
+        /// <summary>
+        /// Cached field reference (if the member represents it).
+        /// </summary>
         private FieldWrapper _field;
 
         /// <summary>
@@ -27,7 +38,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
@@ -95,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

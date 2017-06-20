@@ -85,17 +85,17 @@ namespace Lens.Compiler
         /// </summary>
         public static void EmitConstant(this ILGenerator gen, decimal value)
         {
-            if (value <= int.MaxValue && value >= int.MinValue && Decimal.Truncate(value) == value)
+            if (value <= int.MaxValue && value >= int.MinValue && decimal.Truncate(value) == value)
             {
-                var ctor = typeof(Decimal).GetConstructor(new[] {typeof(int)});
+                var ctor = typeof(decimal).GetConstructor(new[] {typeof(int)});
                 gen.EmitConstant((int) value);
                 gen.EmitCreateObject(ctor);
             }
             else
             {
-                var bits = Decimal.GetBits(value);
-                var ctor = typeof(Decimal).GetConstructor(new[] {typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)});
-                var sign = value < Decimal.Zero;
+                var bits = decimal.GetBits(value);
+                var ctor = typeof(decimal).GetConstructor(new[] {typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)});
+                var sign = value < decimal.Zero;
                 var scale = (bits[3] >> 16) & 0xFF;
 
                 gen.EmitConstant(bits[0]);
@@ -519,17 +519,6 @@ namespace Lens.Compiler
                 gen.Emit(OpCodes.Stelem_Ref);
             else
                 throw new InvalidOperationException("SaveIndex cannot be used on valuetype objects!");
-        }
-
-        /// <summary>
-        /// Loads the object from a given location in memory.
-        /// </summary>
-        public static void EmitLoadObject(this ILGenerator gen, Type itemType)
-        {
-            if (!itemType.IsValueType)
-                throw new InvalidOperationException("LoadObject can only be used on valuetype objects!");
-
-            gen.Emit(OpCodes.Ldobj, itemType);
         }
 
         /// <summary>

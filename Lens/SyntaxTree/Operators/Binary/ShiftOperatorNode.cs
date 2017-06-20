@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Extra hint for function composition.
         /// </summary>
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var leftType = LeftOperand.Resolve(ctx);
 
@@ -68,7 +68,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             // resolve as a possibly overloaded operator
-            return base.resolve(ctx, mustReturn);
+            return base.ResolveInternal(ctx, mustReturn);
         }
 
         protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)

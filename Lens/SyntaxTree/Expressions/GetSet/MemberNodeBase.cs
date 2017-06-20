@@ -5,7 +5,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
     /// <summary>
     /// The base node for member getters and setters.
     /// </summary>
-    abstract internal class MemberNodeBase : AccessorNodeBase
+    internal abstract class MemberNodeBase : AccessorNodeBase
     {
         #region Fields
 

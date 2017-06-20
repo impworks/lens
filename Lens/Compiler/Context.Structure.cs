@@ -21,14 +21,6 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Creates a new type entity with given name and a resolved type for parent.
-        /// </summary>
-        internal TypeEntity CreateType(string name, Type parent, bool isSealed = false, bool defaultCtor = true, bool prepare = true)
-        {
-            return CreateTypeCore(name, isSealed, defaultCtor, prepare, x => x.Parent = parent);
-        }
-
-        /// <summary>
         /// Checks if the expression returns a value and has a specified type.
         /// </summary>
         public void CheckTypedExpression(NodeBase node, Type calculatedType = null, bool allowNull = false)
@@ -67,8 +59,7 @@ namespace Lens.Compiler
             };
             _definedTypes.Add(name, te);
 
-            if (extraInit != null)
-                extraInit(te);
+            extraInit?.Invoke(te);
 
             if (prepare)
                 te.PrepareSelf();

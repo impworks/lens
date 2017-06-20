@@ -53,10 +53,10 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             // resolve _ArgTypes
-            base.resolve(ctx, mustReturn);
+            base.ResolveInternal(ctx, mustReturn);
 
             if (Expression is GetMemberNode)
                 ResolveGetMember(ctx, Expression as GetMemberNode);
@@ -296,7 +296,7 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

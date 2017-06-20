@@ -25,18 +25,26 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Fields
 
+        /// <summary>
+        /// Backing method reference.
+        /// </summary>
         private MethodEntity _method;
 
+        /// <summary>
+        /// Return type inferred from context.
+        /// </summary>
         private Type _inferredReturnType;
-        private Type _inferredDelegateType;
 
+        /// <summary>
+        /// Flag indicating that current lambda has arguments with omitted types and they must be resolved from the context.
+        /// </summary>
         public bool MustInferArgTypes { get; private set; }
 
         #endregion
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var argTypes = new List<Type>();
             foreach (var curr in Arguments)
@@ -57,15 +65,6 @@ namespace Lens.SyntaxTree.Declarations.Functions
             Body.Scope.RegisterArguments(ctx, false, Arguments);
 
             var retType = Body.Resolve(ctx);
-
-            if (_inferredDelegateType != null)
-            {
-                if (!_inferredReturnType.IsExtendablyAssignableFrom(retType))
-                    Error(CompilerMessages.LambdaReturnTypeMismatch, _inferredDelegateType.Name, retType.Name, _inferredReturnType.Name);
-
-                return _inferredDelegateType;
-            }
-
             return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
         }
 
@@ -103,12 +102,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 
             // find constructor
-            var type = _inferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _method.ArgumentTypes);
+            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _method.ArgumentTypes);
             var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
 
             var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
@@ -138,7 +137,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 #if DEBUG
                 var specified = Arguments[idx].Type;
                 if (specified != typeof(UnspecifiedType) && specified != inferred)
-                    throw new InvalidOperationException(string.Format("Argument type differs: specified '{0}', inferred '{1}'!", specified, inferred));
+                    throw new InvalidOperationException($"Argument type differs: specified '{specified}', inferred '{inferred}'!");
 #endif
 
                 Arguments[idx].Type = inferred;

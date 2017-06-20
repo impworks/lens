@@ -80,9 +80,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
         {
-            var args = argTypes == null
-                ? null
-                : argTypes.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
+            var args = argTypes?.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
 
             return CreateMethod(name, returnType, args, isStatic, isVirtual, prepare);
         }
@@ -107,7 +105,7 @@ namespace Lens.Compiler.Entities
         {
             var ce = new ConstructorEntity(this)
             {
-                ArgumentTypes = argTypes == null ? null : argTypes.Select(Context.ResolveType).ToArray(),
+                ArgumentTypes = argTypes?.Select(Context.ResolveType).ToArray(),
             };
 
             _constructors.Add(ce);
@@ -165,8 +163,7 @@ namespace Lens.Compiler.Entities
 
             _fields.Add(name, fe);
 
-            if (extraInit != null)
-                extraInit(fe);
+            extraInit?.Invoke(fe);
 
             if (prepare)
                 fe.PrepareSelf();
@@ -190,8 +187,7 @@ namespace Lens.Compiler.Entities
 
             Context.UnprocessedMethods.Add(me);
 
-            if (extraInit != null)
-                extraInit(me);
+            extraInit?.Invoke(me);
 
             if (prepare)
             {

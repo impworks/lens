@@ -87,7 +87,7 @@ namespace Lens.Compiler
 
         #endregion
 
-        #region Debug
+        #region Equality members
 
         protected bool Equals(FunctionArgument other)
         {

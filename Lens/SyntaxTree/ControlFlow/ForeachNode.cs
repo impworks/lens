@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (IterableExpression != null)
                 DetectEnumerableType(ctx);

@@ -6,6 +6,9 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Internals
 {
+    /// <summary>
+    /// A node that represents subscription/unsubscription of an event.
+    /// </summary>
     internal class EventNode : NodeBase
     {
         #region Constructor
@@ -55,14 +58,11 @@ namespace Lens.SyntaxTree.Internals
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            if (_node.Expression != null)
-            {
-                _node.Expression.EmitNodeForAccess(ctx);
-            }
+            _node.Expression?.EmitNodeForAccess(ctx);
 
             _callback.Emit(ctx, true);
 

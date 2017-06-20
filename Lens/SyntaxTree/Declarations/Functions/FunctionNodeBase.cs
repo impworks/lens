@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return Body.Resolve(ctx);
         }

@@ -107,13 +107,18 @@ namespace Lens.Compiler.Entities
                 var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
                 NodeBase expr;
                 if (fieldType.IsIntegerType())
+                {
                     expr = Expr.GetMember(Expr.This(), f.Name);
+                }
                 else if (fieldType.IsValueType)
+                {
                     expr = Expr.Invoke(
                         Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
                         "GetHashCode"
                     );
+                }
                 else
+                {
                     expr = Expr.If(
                         Expr.NotEqual(
                             Expr.GetMember(Expr.This(), f.Name),
@@ -127,6 +132,7 @@ namespace Lens.Compiler.Entities
                         ),
                         Expr.Block(Expr.Int(0))
                     );
+                }
 
                 if (id < _fields.Count - 1)
                     expr = Expr.Mult(expr, Expr.Int(397));
@@ -153,7 +159,9 @@ namespace Lens.Compiler.Entities
             var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
             pure.Body = method.Body;
 
-            var argCount = method.Arguments != null ? method.Arguments.Count : method.ArgumentTypes.Length;
+            var argCount = method.Arguments != null
+                ? method.Arguments.Count
+                : method.ArgumentTypes.Length;
 
             if (argCount >= 8)
                 Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);

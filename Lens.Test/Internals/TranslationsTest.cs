@@ -20,7 +20,7 @@ namespace Lens.Test.Internals
         }
 
         [Test]
-        [TestCaseSource("TranslationComponents")]
+        [TestCaseSource(nameof(TranslationComponents))]
         public void LocaleContentsIdentical(string component, string localeFrom, string localeTo)
         {
             var query = from locale in new[] {localeFrom, localeTo}
@@ -44,7 +44,7 @@ namespace Lens.Test.Internals
         }
 
         [Test]
-        [TestCaseSource("TranslationComponents")]
+        [TestCaseSource(nameof(TranslationComponents))]
         public void MessagePrefixCorrectness(string component, string localeFrom, string localeTo)
         {
             var query = from locale in new[] {localeFrom, localeTo}

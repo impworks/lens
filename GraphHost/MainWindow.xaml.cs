@@ -78,8 +78,7 @@ namespace GraphHost
 
         private double GetDouble(TextBox tb, double def)
         {
-            double val;
-            if (double.TryParse(tb.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+            if (double.TryParse(tb.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double val))
                 return val;
 
             tb.Text = def.ToString(CultureInfo.InvariantCulture);

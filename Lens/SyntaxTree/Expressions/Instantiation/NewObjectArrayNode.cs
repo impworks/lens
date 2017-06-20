@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Type == null)
                 Type = ctx.ResolveType(TypeSignature);
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var last = Statements.LastOrDefault(x => !(x is IMetaNode));
             if (last is VarNode || last is LetNode)
@@ -96,7 +96,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             ctx.EnterScope(Scope);
 
@@ -108,6 +108,10 @@ namespace Lens.SyntaxTree.ControlFlow
             ctx.ExitScope();
         }
 
+        /// <summary>
+        /// Emits code that initializes the scope variable for closures and lambdas to work.
+        /// </summary>
+        /// <param name="ctx"></param>
         private void EmitClosureSetup(Context ctx)
         {
             var gen = ctx.CurrentMethod.Generator;
@@ -147,6 +151,9 @@ namespace Lens.SyntaxTree.ControlFlow
             }
         }
 
+        /// <summary>
+        /// Emits the list of statements one by one.
+        /// </summary>
         private void EmitStatements(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;

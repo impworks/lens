@@ -8,7 +8,7 @@ using Lens.Utils;
 namespace Lens.SyntaxTree.Declarations
 {
     /// <summary>
-    /// A block that releases a resource.
+    /// A block that acquires and releases a resource.
     /// </summary>
     internal class UsingNode : NodeBase
     {
@@ -24,13 +24,16 @@ namespace Lens.SyntaxTree.Declarations
         /// </summary>
         public NodeBase Expression { get; set; }
 
+        /// <summary>
+        /// Statements in the block.
+        /// </summary>
         public CodeBlockNode Body { get; set; }
 
         #endregion
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx, mustReturn);
             if (!typeof(IDisposable).IsAssignableFrom(exprType))
@@ -79,7 +82,7 @@ namespace Lens.SyntaxTree.Declarations
 
         #endregion
 
-        #region Debug
+        #region IEquality
 
         protected bool Equals(UsingNode other)
         {

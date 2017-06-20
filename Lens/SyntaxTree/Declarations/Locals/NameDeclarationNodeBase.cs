@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
@@ -82,7 +82,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
                 }
             }
 
-            return base.resolve(ctx, mustReturn);
+            return base.ResolveInternal(ctx, mustReturn);
         }
 
         #endregion

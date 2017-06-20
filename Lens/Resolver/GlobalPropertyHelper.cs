@@ -64,7 +64,7 @@ namespace Lens.Resolver
         internal static GlobalPropertyInfo RegisterProperty<T>(int contextId, Func<T> getter, Action<T> setter = null)
         {
             if (getter == null && setter == null)
-                throw new ArgumentNullException("getter");
+                throw new ArgumentNullException(nameof(getter));
 
             Properties[contextId].Add(new GlobalPropertyEntity {Getter = getter, Setter = setter});
             var id = Properties[contextId].Count - 1;
@@ -75,6 +75,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets the value of a property.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static T Get<T>(int contextId, int id)
         {
             ValidateId(contextId, id);
@@ -91,6 +92,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Sets the value of a property.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static void Set<T>(int contextId, int id, T value)
         {
             ValidateId(contextId, id);

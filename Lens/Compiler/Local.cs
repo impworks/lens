@@ -11,6 +11,9 @@ namespace Lens.Compiler
     {
         #region Constructors
 
+        /// <summary>
+        /// Creates a new instance of the Local variable.
+        /// </summary>
         public Local(string name, Type type, bool isConst = false, bool isRefArg = false)
         {
             Name = name;
@@ -19,6 +22,9 @@ namespace Lens.Compiler
             IsRefArgument = isRefArg;
         }
 
+        /// <summary>
+        /// Copy constructor for closured versions of the local.
+        /// </summary>
         private Local(Local other, int dist = 0)
         {
             Name = other.Name;
@@ -117,12 +123,19 @@ namespace Lens.Compiler
         public override string ToString()
         {
             var entities = new List<string>();
+
             if (IsClosured) entities.Add("closured");
             if (IsRefArgument) entities.Add("ref");
             if (IsImmutable) entities.Add("immutable");
             if (IsConstant) entities.Add("const");
-            if (ArgumentId != null) entities.Add(string.Format("arg({0})", ArgumentId));
-            return string.Format("{0}:{1} ({2})", Name, Type.Name, string.Join(", ", entities));
+            if (ArgumentId != null) entities.Add($"arg({ArgumentId})");
+
+            return string.Format(
+                "{0}:{1} ({2})",
+                Name,
+                Type.Name,
+                string.Join(", ", entities)
+            );
         }
 
         #endregion

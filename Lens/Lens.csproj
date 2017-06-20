@@ -230,7 +230,6 @@
       <DependentUpon>ParserMessages.resx</DependentUpon>
     </Compile>
     <Compile Include="Utils\Annotations.cs" />
-    <Compile Include="Utils\DictionaryExtensions.cs" />
     <Compile Include="SyntaxTree\LocationEntity.cs" />
     <Compile Include="Compiler\TypeSignature.cs" />
     <Compile Include="Utils\EnumerableExtensions.cs" />

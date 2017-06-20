@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var prevTypes = new List<Type>();
 
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 prevTypes.Add(currType);
             }
 
-            return base.resolve(ctx, mustReturn);
+            return base.ResolveInternal(ctx, mustReturn);
         }
 
         #endregion
@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

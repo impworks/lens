@@ -141,7 +141,7 @@ namespace Lens.Compiler
             if (Scope == null)
             {
                 if (scope.OuterScope == null && scope.Kind != ScopeKind.FunctionRoot)
-                    throw new InvalidOperationException(string.Format("Scope of kind '{0}' must have a parent!", scope.Kind));
+                    throw new InvalidOperationException($"Scope of kind '{scope.Kind}' must have a parent!");
             }
             else
             {

@@ -23,9 +23,24 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Fields
 
+        /// <summary>
+        /// Cached method reference (if the identifier represents it).
+        /// </summary>
         private MethodEntity _method;
+
+        /// <summary>
+        /// Cached global property reference (if the identifier represents it).
+        /// </summary>
         private GlobalPropertyInfo _property;
+
+        /// <summary>
+        /// Cached local reference (if the identifier represents it and the local is a constant).
+        /// </summary>
         private Local _localConstant;
+
+        /// <summary>
+        /// Cached algebraic type reference (if the identifier represents it).
+        /// </summary>
         private TypeEntity _type;
 
         public bool PointerRequired { get; set; }
@@ -35,7 +50,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Identifier == "_")
                 Error(CompilerMessages.UnderscoreNameUsed);
@@ -114,7 +129,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var resultType = Resolve(ctx);
 
@@ -276,7 +291,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         public override string ToString()
         {
-            return string.Format("get({0})", Identifier);
+            return $"get({Identifier})";
         }
 
         #endregion

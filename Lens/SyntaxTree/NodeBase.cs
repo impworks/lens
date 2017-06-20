@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree
             {
                 try
                 {
-                    CachedExpressionType = resolve(ctx, mustReturn);
+                    CachedExpressionType = ResolveInternal(ctx, mustReturn);
                     CheckTypeInSafeMode(ctx, CachedExpressionType);
                 }
                 catch (LensCompilerException ex)
@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree
         /// Resolves the expression type.
         /// Must be overridden in child types if they represent a meaninful value.
         /// </summary>
-        protected virtual Type resolve(Context ctx, bool mustReturn)
+        protected virtual Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return typeof(UnitType);
         }
@@ -120,8 +120,7 @@ namespace Lens.SyntaxTree
         public virtual void ProcessClosures(Context ctx)
         {
             foreach (var child in GetChildren())
-                if (child != null && child.Node != null)
-                    child.Node.ProcessClosures(ctx);
+                child?.Node?.ProcessClosures(ctx);
         }
 
         #endregion
@@ -138,19 +137,16 @@ namespace Lens.SyntaxTree
             if (IsConstant && !mustReturn)
                 return;
 
-            EmitCode(ctx, mustReturn);
+            EmitInternal(ctx, mustReturn);
         }
 
         /// <summary>
         /// Emits the IL opcodes that represents the current node.
         /// </summary>
-        protected virtual void EmitCode(Context ctx, bool mustReturn)
+        protected virtual void EmitInternal(Context ctx, bool mustReturn)
         {
             throw new InvalidOperationException(
-                string.Format(
-                    "Node '{0}' neither has a body nor was expanded!",
-                    GetType()
-                )
+                $"Node '{GetType()}' neither has a body nor was expanded!"
             );
         }
 
@@ -187,6 +183,7 @@ namespace Lens.SyntaxTree
         /// <summary>
         /// Reports an error to the compiler.
         /// </summary>
+        /// <param name="entity">Location entity to which the error is bound.</param>
         /// <param name="message">Error message.</param>
         /// <param name="args">Optional error arguments.</param>
         [ContractAnnotation("=> halt")]

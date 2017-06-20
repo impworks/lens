@@ -16,6 +16,11 @@ namespace Lens.SyntaxTree.Literals
         /// </summary>
         protected T Value { get; set; }
 
+        /// <summary>
+        /// Underlying type.
+        /// </summary>
+        public Type LiteralType => typeof(T);
+
         #endregion
 
         #region Constant checkers
@@ -27,12 +32,10 @@ namespace Lens.SyntaxTree.Literals
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return typeof(T);
         }
-
-        public Type LiteralType => typeof(T);
 
         #endregion
 

@@ -10,7 +10,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
     {
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn = true)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
         {
             return typeof(bool);
         }
@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

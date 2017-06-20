@@ -7,6 +7,9 @@ namespace Lens.Resolver
 {
     internal static partial class GenericHelper
     {
+        /// <summary>
+        /// State class for the resolution of a single method's list of generic arguments.
+        /// </summary>
         private class GenericResolver
         {
             #region Constructor
@@ -72,8 +75,8 @@ namespace Lens.Resolver
             /// <param name="depth">Recursion depth for condition checks.</param>
             private void ResolveRecursive(Type[] expectedTypes, Type[] actualTypes, int depth)
             {
-                var exLen = expectedTypes != null ? expectedTypes.Length : 0;
-                var actLen = actualTypes != null ? actualTypes.Length : 0;
+                var exLen = expectedTypes?.Length ?? 0;
+                var actLen = actualTypes?.Length ?? 0;
 
                 if (exLen != actLen)
                     throw new ArgumentException(CompilerMessages.GenericArgCountMismatch);

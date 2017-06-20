@@ -53,7 +53,6 @@ namespace Lens.Resolver
         public MethodInfo MethodInfo;
 
         public bool IsVirtual;
-        public bool IsStatic;
 
         public Type ReturnType;
         public Type[] GenericArguments;

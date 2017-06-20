@@ -12,7 +12,7 @@ namespace Lens.SyntaxTree.Expressions
     /// <summary>
     /// A base class for various forms of method invocation that stores arguments.
     /// </summary>
-    abstract internal class InvocationNodeBase : NodeBase
+    internal abstract class InvocationNodeBase : NodeBase
     {
         #region Constructor
 
@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             Func<NodeBase, Type> typeGetter = arg =>
             {

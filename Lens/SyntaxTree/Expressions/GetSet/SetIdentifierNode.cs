@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Identifier == "_")
                 Error(CompilerMessages.UnderscoreNameUsed);
@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 );
             }
 
-            return base.resolve(ctx, mustReturn);
+            return base.ResolveInternal(ctx, mustReturn);
         }
 
         #endregion
@@ -101,7 +101,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
             var type = Value.Resolve(ctx);

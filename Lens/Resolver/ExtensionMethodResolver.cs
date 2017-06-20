@@ -29,8 +29,19 @@ namespace Lens.Resolver
 
         #region Fields
 
+        /// <summary>
+        /// Extension method cache for faster lookup.
+        /// </summary>
         private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> Cache;
+
+        /// <summary>
+        /// Namespaces where the types containing extension methods are looked for.
+        /// </summary>
         private readonly Dictionary<string, bool> _namespaces;
+
+        /// <summary>
+        /// List of referenced assemblies.
+        /// </summary>
         private readonly ReferencedAssemblyCache _asmCache;
 
         #endregion
@@ -71,7 +82,6 @@ namespace Lens.Resolver
         /// <summary>
         /// Returns the list of extension methods for given type.
         /// </summary>
-        /// <param name="forType"></param>
         private Dictionary<string, List<MethodInfo>> FindMethodsForType(Type forType)
         {
             var dict = new Dictionary<string, List<MethodInfo>>();

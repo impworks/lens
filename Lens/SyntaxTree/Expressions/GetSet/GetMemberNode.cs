@@ -25,11 +25,29 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Fields
 
+        /// <summary>
+        /// Type (for static member access).
+        /// </summary>
         private Type _type;
+
+        /// <summary>
+        /// Cached field reference (if the member resolves to it).
+        /// </summary>
         private FieldWrapper _field;
+
+        /// <summary>
+        /// Cached method reference (if the member resolves to it).
+        /// </summary>
         private MethodWrapper _method;
+
+        /// <summary>
+        /// Cached property reference (if the member resolves to it).
+        /// </summary>
         private PropertyWrapper _property;
 
+        /// <summary>
+        /// Flag indicating that the access is to a static member of the type.
+        /// </summary>
         private bool _isStatic;
 
         public bool PointerRequired { get; set; }
@@ -44,7 +62,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn = true)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
@@ -74,14 +92,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void ResolveSelf(Context ctx)
         {
-            Action check = () =>
+            void check()
             {
                 if (Expression == null && !_isStatic)
                     Error(CompilerMessages.DynamicMemberFromStaticContext, _type, MemberName);
 
                 if (_method == null && TypeHints.Count > 0)
                     Error(CompilerMessages.TypeArgumentsForNonMethod, _type, MemberName);
-            };
+            }
 
             _type = StaticType != null
                 ? ctx.ResolveType(StaticType)
@@ -177,7 +195,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

@@ -96,8 +96,7 @@ namespace Lens.Resolver
         /// </summary>
         public Type ResolveType(TypeSignature signature)
         {
-            Type cached;
-            if (_cache.TryGetValue(signature.FullSignature, out cached))
+            if (_cache.TryGetValue(signature.FullSignature, out var cached))
                 return cached;
 
             var type = ParseTypeSignature(signature);
@@ -178,8 +177,7 @@ namespace Lens.Resolver
                 var namespaces = checkNamespaces ? _namespaces.Keys : (IEnumerable<string>) new[] {string.Empty};
                 if (checkNamespaces)
                 {
-                    List<string> extras;
-                    if (Locations.TryGetValue(currAsm.GetName().Name, out extras))
+                    if (Locations.TryGetValue(currAsm.GetName().Name, out List<string> extras))
                         namespaces = namespaces.Union(extras);
                 }
 

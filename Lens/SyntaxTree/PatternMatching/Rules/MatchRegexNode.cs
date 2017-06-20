@@ -114,8 +114,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
             foreach (var mod in Modifiers)
             {
-                RegexOptions curr;
-                if (!AvailableModifiers.TryGetValue(mod, out curr))
+                if (!AvailableModifiers.TryGetValue(mod, out RegexOptions curr))
                     Error(CompilerMessages.RegexUnknownModifier, mod);
 
                 last |= curr;

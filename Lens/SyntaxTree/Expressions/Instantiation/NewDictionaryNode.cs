@@ -17,13 +17,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         #region Fields
 
         /// <summary>
-        /// Dictionary key types.
-        /// Key types are enforced to be strictly equal, no common type is being resolved.
+        /// Dictionary key type.
+        /// Actual types are enforced to be strictly equal, no common type is being resolved.
         /// </summary>
         private Type _keyType;
 
         /// <summary>
-        /// Common type for dictionary's values.
+        /// Common type inferred from all pair values' actual types.
         /// </summary>
         private Type _valueType;
 
@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.DictionaryEmpty);
@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
             var dictType = Resolve(ctx);

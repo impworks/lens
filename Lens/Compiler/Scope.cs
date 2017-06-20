@@ -56,10 +56,7 @@ namespace Lens.Compiler
         /// <summary>
         /// The nearest scope which contains a closure.
         /// </summary>
-        public Scope ActiveClosure
-        {
-            get { return FindScope(x => x.ClosureType != null); }
-        }
+        public Scope ActiveClosure => FindScope(x => x.ClosureType != null);
 
         #endregion
 
@@ -131,8 +128,7 @@ namespace Lens.Compiler
             while (scope != null)
             {
                 // try get the variable itself
-                Local local;
-                if (scope.Locals.TryGetValue(name, out local))
+                if (scope.Locals.TryGetValue(name, out Local local))
                     return local.GetClosuredCopy(dist);
 
                 if (scope.Kind == ScopeKind.LambdaRoot)
@@ -154,8 +150,7 @@ namespace Lens.Compiler
             var isClosured = false;
             while (scope != null)
             {
-                Local local;
-                if (scope.Locals.TryGetValue(name, out local))
+                if (scope.Locals.TryGetValue(name, out var local))
                 {
                     if (isClosured)
                     {
@@ -290,7 +285,13 @@ namespace Lens.Compiler
 
         public override string ToString()
         {
-            return string.Format("{0}({1})", Kind, Locals.Count > 0 ? string.Join(", ", Locals.Keys) : "none");
+            return string.Format(
+                "{0}({1})",
+                Kind,
+                Locals.Count > 0
+                    ? string.Join(", ", Locals.Keys) 
+                    : "none"
+            );
         }
 
         #endregion

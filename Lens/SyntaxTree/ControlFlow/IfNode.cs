@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (!mustReturn || FalseAction == null)
                 return typeof(UnitType);
@@ -71,7 +71,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 
@@ -81,6 +81,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
             if (Condition.IsConstant && ctx.Options.UnrollConstants)
             {
+                // result is known at compile time: just emit the corresponding branch's code
                 var node = Condition.ConstantValue ? (NodeBase) TrueAction : FalseAction;
                 if (node != null)
                 {
@@ -103,6 +104,7 @@ namespace Lens.SyntaxTree.ControlFlow
             Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
             if (FalseAction == null)
             {
+                // if (...) { ... }
                 gen.EmitBranchFalse(endLabel);
                 TrueAction.Emit(ctx, mustReturn);
                 if (!TrueAction.Resolve(ctx).IsVoid())
@@ -112,6 +114,7 @@ namespace Lens.SyntaxTree.ControlFlow
             }
             else
             {
+                // if (...) { ... } else { ... }
                 gen.EmitBranchFalse(falseLabel);
                 EmitBranch(ctx, TrueAction, mustReturn);
                 gen.EmitJump(endLabel);
@@ -123,6 +126,9 @@ namespace Lens.SyntaxTree.ControlFlow
             }
         }
 
+        /// <summary>
+        /// Emits one branch of the condition (true or false).
+        /// </summary>
         private void EmitBranch(Context ctx, NodeBase branch, bool mustReturn)
         {
             var desiredType = Resolve(ctx);

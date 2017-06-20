@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
             var idxType = Index.Resolve(ctx);
@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (!valDestType.IsExtendablyAssignableFrom(valType))
                 Error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
 
-            return base.resolve(ctx, mustReturn);
+            return base.ResolveInternal(ctx, mustReturn);
         }
 
         #endregion
@@ -75,18 +75,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             if (_indexer == null)
-                EmitSetArray(ctx);
+                EmitArray(ctx);
             else
-                EmitSetCustomIndexer(ctx);
+                EmitCustom(ctx);
         }
 
         /// <summary>
         /// Saves the value to an array location.
         /// </summary>
-        private void EmitSetArray(Context ctx)
+        private void EmitArray(Context ctx)
         {
             var gen = ctx.CurrentMethod.Generator;
 
@@ -102,7 +102,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Invokes the object's custom indexer setter.
         /// </summary>
-        private void EmitSetCustomIndexer(Context ctx)
+        private void EmitCustom(Context ctx)
         {
             var gen = ctx.CurrentMethod.Generator;
 

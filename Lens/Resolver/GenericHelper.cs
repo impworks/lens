@@ -27,7 +27,6 @@ namespace Lens.Resolver
         /// 2. Already resolved list of types
         /// Return value is the inferred type of lambda return.
         /// </param>
-        /// <returns></returns>
         public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, LambdaResolver lambdaResolver = null)
         {
             if (hints != null && hints.Length != genericDefs.Length)
@@ -42,6 +41,7 @@ namespace Lens.Resolver
         /// </summary>
         /// <param name="type">Type to process.</param>
         /// <param name="source">Type that contains the processed type as a generic parameter.</param>
+        /// <param name="throwNotFound">Flag indicating that the error must be thrown if the generic parameter cannot be resolved.</param>
         public static Type ApplyGenericArguments(Type type, Type source, bool throwNotFound = true)
         {
             if (source.IsGenericType)
@@ -73,6 +73,7 @@ namespace Lens.Resolver
         /// <param name="type">Type to process.</param>
         /// <param name="generics">Generic parameters that can be used in the type.</param>
         /// <param name="values">Actual values of generic parameters.</param>
+        /// <param name="throwNotFound">Flag indicating that the error must be thrown if the generic parameter cannot be resolved.</param>
         public static Type ApplyGenericArguments(Type type, Type[] generics, Type[] values, bool throwNotFound = true)
         {
             if (type.IsArray || type.IsByRef)
@@ -121,7 +122,7 @@ namespace Lens.Resolver
 
             var args = type.GetGenericArguments();
             if (args.Length != values.Length)
-                throw new ArgumentOutOfRangeException("values");
+                throw new ArgumentOutOfRangeException(nameof(values));
 
             for (var idx = 0; idx < args.Length; idx++)
             {
@@ -151,12 +152,11 @@ namespace Lens.Resolver
         #endregion
     }
 
+    /// <summary>
+    /// Exception thrown when generic resolver fails to resolve a type.
+    /// </summary>
     public class TypeMatchException : Exception
     {
-        public TypeMatchException()
-        {
-        }
-
         public TypeMatchException(string msg) : base(msg)
         {
         }

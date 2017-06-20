@@ -4,6 +4,9 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Internals
 {
+    /// <summary>
+    /// Emits the enum value as a number.
+    /// </summary>
     internal class RawEnumNode : NodeBase
     {
         #region Fields
@@ -22,7 +25,7 @@ namespace Lens.SyntaxTree.Internals
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return EnumType;
         }
@@ -31,7 +34,7 @@ namespace Lens.SyntaxTree.Internals
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
 

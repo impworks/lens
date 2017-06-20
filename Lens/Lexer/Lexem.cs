@@ -21,12 +21,19 @@ namespace Lens.Lexer
 
         #region Fields
 
+        /// <summary>
+        /// The type of current lexem.
+        /// </summary>
         public readonly LexemType Type;
+
+        /// <summary>
+        /// The actual value (for some lexem types, like numbers or identifiers).
+        /// </summary>
         public readonly string Value;
 
         #endregion
 
-        #region Debug
+        #region Equality
 
         public override bool Equals(object obj)
         {

@@ -28,11 +28,11 @@ namespace Lens.SyntaxTree.Declarations.Types
         /// <summary>
         /// The entries of the type node.
         /// </summary>
-        public List<T> Entries { get; private set; }
+        public List<T> Entries { get; }
 
         #endregion
 
-        #region Debug
+        #region IEquality
 
         protected bool Equals(TypeDefinitionNodeBase<T> other)
         {

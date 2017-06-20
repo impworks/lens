@@ -461,7 +461,9 @@ namespace Lens.Resolver
 
             if (indexers.Count == 0 || indexers[0].Item3 == int.MaxValue)
                 Error(
-                    isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
+                    isGetter
+                        ? CompilerMessages.IndexGetterNotFound
+                        : CompilerMessages.IndexSetterNotFound,
                     type,
                     idxType
                 );
@@ -477,7 +479,9 @@ namespace Lens.Resolver
 
             var it = indexers[0];
 
-            return isGetter ? it.Item1.GetGetMethod() : it.Item1.GetSetMethod();
+            return isGetter 
+                ? it.Item1.GetGetMethod()
+                : it.Item1.GetSetMethod();
         }
 
         /// <summary>
@@ -621,18 +625,6 @@ namespace Lens.Resolver
         public static bool IsPartiallyApplied(Type[] argTypes)
         {
             return argTypes.Contains(typeof(UnspecifiedType));
-        }
-
-        /// <summary>
-        /// Checks if the list of argument types contains a lambda expression with unresolved argument types.
-        /// </summary>
-        public static bool IsPartiallyResolved(Type[] argTypes)
-        {
-            for (var idx = 0; idx < argTypes.Length; idx++)
-                if (argTypes[idx].IsLambdaType())
-                    return true;
-
-            return false;
         }
 
         /// <summary>

@@ -18,7 +18,7 @@
 
     /// <summary>
     /// Marks a node that is only inserted into the script by the compiler itself.
-    /// Putting the node after an expression does not make the containing block discard the expression's value.
+    /// When resolving a block's expression type, meta nodes are ignored.
     /// </summary>
     internal interface IMetaNode
     {

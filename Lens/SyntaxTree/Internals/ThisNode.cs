@@ -4,14 +4,15 @@ using Lens.Compiler;
 namespace Lens.SyntaxTree.Internals
 {
     /// <summary>
-    /// A node that represents the `this` pointer.
+    /// Emits a pointer to current object.
     /// </summary>
     internal class ThisNode : NodeBase
     {
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
+            // sic! compiler error, no need to localize
             if (ctx.CurrentMethod.IsStatic)
                 Error("Cannot access self-reference in static context!");
 
@@ -22,7 +23,7 @@ namespace Lens.SyntaxTree.Internals
 
         #region Emit
 
-        protected override void EmitCode(Context ctx, bool mustReturn)
+        protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
             gen.EmitLoadArgument(0);

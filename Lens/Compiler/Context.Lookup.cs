@@ -16,8 +16,7 @@ namespace Lens.Compiler
         /// </summary>
         public TypeEntity FindType(string name)
         {
-            TypeEntity declared;
-            _definedTypes.TryGetValue(name, out declared);
+            _definedTypes.TryGetValue(name, out TypeEntity declared);
             return declared;
         }
 
@@ -189,8 +188,8 @@ namespace Lens.Compiler
         /// </summary>
         public MethodWrapper ResolveConvertorToType(Type from, Type to)
         {
-            return ResolveMethodGroup(@from, "op_Explicit").FirstOrDefault(x => x.ReturnType == to)
-                   ?? ResolveMethodGroup(@from, "op_Implicit").FirstOrDefault(x => x.ReturnType == to);
+            return ResolveMethodGroup(from, "op_Explicit").FirstOrDefault(x => x.ReturnType == to)
+                   ?? ResolveMethodGroup(from, "op_Implicit").FirstOrDefault(x => x.ReturnType == to);
         }
 
         /// <summary>
@@ -198,8 +197,7 @@ namespace Lens.Compiler
         /// </summary>
         internal GlobalPropertyInfo ResolveGlobalProperty(string name)
         {
-            GlobalPropertyInfo ent;
-            if (!_definedProperties.TryGetValue(name, out ent))
+            if (!_definedProperties.TryGetValue(name, out var ent))
                 throw new KeyNotFoundException();
 
             return ent;

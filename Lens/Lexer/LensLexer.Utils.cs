@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Lens.SyntaxTree;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.Lexer
 {
@@ -8,7 +9,7 @@ namespace Lens.Lexer
     {
         #region Lexem definition tables
 
-        private readonly static StaticLexemDefinition[] Keywords =
+        private static readonly StaticLexemDefinition[] Keywords =
         {
             new StaticLexemDefinition("typeof", LexemType.Typeof),
             new StaticLexemDefinition("default", LexemType.Default),
@@ -49,7 +50,7 @@ namespace Lens.Lexer
             new StaticLexemDefinition("null", LexemType.Null),
         };
 
-        private readonly static StaticLexemDefinition[] Operators =
+        private static readonly StaticLexemDefinition[] Operators =
         {
             new StaticLexemDefinition("()", LexemType.Unit),
 
@@ -100,7 +101,7 @@ namespace Lens.Lexer
             new StaticLexemDefinition("~", LexemType.Tilde)
         };
 
-        private readonly static RegexLexemDefinition[] RegexLexems =
+        private static readonly RegexLexemDefinition[] RegexLexems =
         {
             new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Ff]", LexemType.Float),
             new RegexLexemDefinition(@"(0|[1-9][0-9]*)(\.[0-9]+)?[Mm]", LexemType.Decimal),
@@ -138,12 +139,20 @@ namespace Lens.Lexer
             return _source[pos];
         }
 
+        /// <summary>
+        /// Throws a new exception bound to the specified location entity.
+        /// </summary>
+        [ContractAnnotation("=> halt")]
         [DebuggerStepThrough]
         private void Error(LocationEntity loc, string src, params object[] args)
         {
             throw new LensCompilerException(string.Format(src, args), loc);
         }
 
+        /// <summary>
+        /// Throws a new exception bound to current location in the parsed text.
+        /// </summary>
+        [ContractAnnotation("=> halt")]
         [DebuggerStepThrough]
         private void Error(string src, params object[] args)
         {

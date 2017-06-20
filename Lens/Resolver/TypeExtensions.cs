@@ -221,8 +221,7 @@ namespace Lens.Resolver
             if (varType.IsGenericType && exprType.IsGenericType)
                 return GenericDistance(varType, exprType);
 
-            int result;
-            if (IsDerivedFrom(exprType, varType, out result))
+            if (IsDerivedFrom(exprType, varType, out int result))
                 return result;
 
             if (varType.IsArray && exprType.IsArray)
@@ -413,7 +412,7 @@ namespace Lens.Resolver
                 if (type.IsVoid())
                     throw new LensCompilerException(CompilerMessages.NoCommonType);
 
-                curr = getMostCommonType(curr, type);
+                curr = GetMostCommonType(curr, type);
                 if (curr == typeof(object))
                     break;
             }
@@ -435,10 +434,11 @@ namespace Lens.Resolver
                 return curr;
 
             // try to get common interfaces
-            var ifaces = types[0].GetInterfaces().AsEnumerable();
+            var ifaces = types[0].GetInterfaces().AsEnumerable().ToList();
             for (var idx = 1; idx < types.Length; idx++)
             {
-                ifaces = ifaces.Intersect(types[idx].IsInterface ? new[] {types[idx]} : types[idx].GetInterfaces());
+                var newIfaces = types[idx].IsInterface ? new[] {types[idx]} : types[idx].GetInterfaces();
+                ifaces = ifaces.Intersect(newIfaces).ToList();
                 if (!ifaces.Any())
                     break;
             }
@@ -450,7 +450,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets the most common type between two.
         /// </summary>
-        private static Type getMostCommonType(Type left, Type right)
+        private static Type GetMostCommonType(Type left, Type right)
         {
             // corner case
             if (left == null || left == right)
@@ -484,7 +484,7 @@ namespace Lens.Resolver
                 var rightElem = right.GetElementType();
                 return leftElem.IsValueType || rightElem.IsValueType
                     ? typeof(object)
-                    : getMostCommonType(leftElem, rightElem).MakeArrayType();
+                    : GetMostCommonType(leftElem, rightElem).MakeArrayType();
             }
 
             // inheritance
@@ -506,6 +506,9 @@ namespace Lens.Resolver
             return typeof(object);
         }
 
+        /// <summary>
+        /// Finds the most specific interface from that contains all others.
+        /// </summary>
         private static Type GetMostSpecificInterface(IEnumerable<Type> ifaces)
         {
             var remaining = ifaces.ToDictionary(i => i, i => true);

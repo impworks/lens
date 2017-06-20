@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Resolve
 
-        protected override Type resolve(Context ctx, bool mustReturn)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = ParentNode.Expression.Resolve(ctx);
 
