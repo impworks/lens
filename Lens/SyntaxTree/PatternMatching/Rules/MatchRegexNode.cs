@@ -127,7 +127,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #endregion
 
-        #region Expand
+        #region Transform
 
         public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
         {
@@ -229,6 +229,31 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             {
                 Error(msg, args);
                 return default(T);
+            }
+        }
+
+        #endregion
+
+        #region Equality members
+
+        protected bool Equals(MatchRegexNode other)
+        {
+            return string.Equals(Value, other.Value) && string.Equals(Modifiers, other.Modifiers);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchRegexNode) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Value != null ? Value.GetHashCode() : 0) * 397) ^ (Modifiers != null ? Modifiers.GetHashCode() : 0);
             }
         }
 

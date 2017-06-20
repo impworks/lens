@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #endregion
 
-        #region Expand
+        #region Transform
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {

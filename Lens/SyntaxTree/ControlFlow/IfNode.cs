@@ -147,7 +147,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected bool Equals(IfNode other)
         {
-            return Equals(Condition, other.Condition) && Equals(TrueAction, other.TrueAction) && Equals(FalseAction, other.FalseAction);
+            return Equals(Condition, other.Condition)
+                && Equals(TrueAction, other.TrueAction)
+                && Equals(FalseAction, other.FalseAction);
         }
 
         public override bool Equals(object obj)

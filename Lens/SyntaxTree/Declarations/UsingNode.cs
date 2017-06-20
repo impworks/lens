@@ -82,7 +82,7 @@ namespace Lens.SyntaxTree.Declarations
 
         #endregion
 
-        #region IEquality
+        #region Debug
 
         protected bool Equals(UsingNode other)
         {
@@ -106,6 +106,11 @@ namespace Lens.SyntaxTree.Declarations
                 hashCode = (hashCode * 397) ^ (Body != null ? Body.GetHashCode() : 0);
                 return hashCode;
             }
+        }
+
+        public override string ToString()
+        {
+            return $"using(var = ({VariableName}), expr = ({Expression}), body = ({Body}))"
         }
 
         #endregion

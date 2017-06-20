@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree
 
         #endregion
 
-        #region Transform & Expand
+        #region Transform
 
         /// <summary>
         /// Enables recursive children resolution & expansion.

@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #endregion
 
-        #region Expand
+        #region Transform
 
         public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
         {
@@ -101,6 +101,31 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         }
 
         #endregion
+
+        #region Equality members
+
+        protected bool Equals(MatchRecordRule other)
+        {
+            return Equals(Identifier, other.Identifier) && FieldRules.SequenceEqual(other.FieldRules);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchRecordRule) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Identifier != null ? Identifier.GetHashCode() : 0) * 397) ^ (FieldRules != null ? FieldRules.GetHashCode() : 0);
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -117,5 +142,30 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// Rule to apply to field's value.
         /// </summary>
         public MatchRuleBase Rule;
+
+        #region Equality members
+
+        protected bool Equals(MatchRecordField other)
+        {
+            return Equals(Name, other.Name) && Equals(Rule, other.Rule);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchRecordField) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (Rule != null ? Rule.GetHashCode() : 0);
+            }
+        }
+
+        #endregion
     }
 }

@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #endregion
 
-        #region Expand
+        #region Transform
 
         public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
         {
@@ -71,6 +71,34 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (!IsWildcard)
             {
                 yield return Expr.Set(Name, expression);
+            }
+        }
+
+        #endregion
+
+        #region Equality members
+
+        protected bool Equals(MatchNameRule other)
+        {
+            return string.Equals(Name, other.Name) && Equals(Type, other.Type) && IsArraySubsequence == other.IsArraySubsequence;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchNameRule) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (Name != null ? Name.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsArraySubsequence.GetHashCode();
+                return hashCode;
             }
         }
 

@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #endregion
 
-        #region Expand
+        #region Transform
 
         public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
         {
@@ -52,6 +52,28 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     Expr.JumpTo(nextStatement)
                 )
             );
+        }
+
+        #endregion
+
+        #region Equality members
+
+        protected bool Equals(MatchLiteralRule other)
+        {
+            return Equals(Literal, other.Literal);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchLiteralRule) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (Literal != null ? Literal.GetHashCode() : 0);
         }
 
         #endregion

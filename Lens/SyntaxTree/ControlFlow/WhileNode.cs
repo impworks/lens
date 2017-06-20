@@ -109,7 +109,8 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected bool Equals(WhileNode other)
         {
-            return Equals(Condition, other.Condition) && Equals(Body, other.Body);
+            return Equals(Condition, other.Condition)
+                && Equals(Body, other.Body);
         }
 
         public override bool Equals(object obj)

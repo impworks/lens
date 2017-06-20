@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Declarations.Types
 
         #endregion
 
-        #region IEquality
+        #region Debug
 
         protected bool Equals(TypeLabel other)
         {

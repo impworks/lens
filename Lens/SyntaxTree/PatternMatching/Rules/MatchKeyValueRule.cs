@@ -60,5 +60,30 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         }
 
         #endregion
+
+        #region Debug
+
+        protected bool Equals(MatchKeyValueRule other)
+        {
+            return Equals(KeyRule, other.KeyRule) && Equals(ValueRule, other.ValueRule);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MatchKeyValueRule) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((KeyRule != null ? KeyRule.GetHashCode() : 0) * 397) ^ (ValueRule != null ? ValueRule.GetHashCode() : 0);
+            }
+        }
+
+        #endregion
     }
 }
