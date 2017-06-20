@@ -3,5 +3,6 @@ bin
 obj
 *.suo
 *.user
+.vs
 
 TestResults
