@@ -110,7 +110,7 @@ namespace Lens.SyntaxTree.Declarations
 
         public override string ToString()
         {
-            return $"using(var = ({VariableName}), expr = ({Expression}), body = ({Body}))"
+            return $"using(var = ({VariableName}), expr = ({Expression}), body = ({Body}))";
         }
 
         #endregion
