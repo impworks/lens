@@ -7,143 +7,143 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
-	/// <summary>
-	/// A node representing a read-access to an array or list's value.
-	/// </summary>
-	internal class GetIndexNode : IndexNodeBase, IPointerProvider
-	{
-		#region Fields
+    /// <summary>
+    /// A node representing a read-access to an array or list's value.
+    /// </summary>
+    internal class GetIndexNode : IndexNodeBase, IPointerProvider
+    {
+        #region Fields
 
-		/// <summary>
-		/// Cached property information.
-		/// </summary>
-		private MethodWrapper _Getter;
+        /// <summary>
+        /// Cached property information.
+        /// </summary>
+        private MethodWrapper _getter;
 
-		public bool PointerRequired { get; set; }
-		public bool RefArgumentRequired { get; set; }
+        public bool PointerRequired { get; set; }
+        public bool RefArgumentRequired { get; set; }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var exprType = Expression.Resolve(ctx);
-			if (exprType.IsArray)
-				return exprType.GetElementType();
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var exprType = Expression.Resolve(ctx);
+            if (exprType.IsArray)
+                return exprType.GetElementType();
 
-			var idxType = Index.Resolve(ctx);
-			try
-			{
-				_Getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
-				return _Getter.ReturnType;
-			}
-			catch (LensCompilerException ex)
-			{
-				ex.BindToLocation(this);
-				throw;
-			}
-		}
+            var idxType = Index.Resolve(ctx);
+            try
+            {
+                _getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
+                return _getter.ReturnType;
+            }
+            catch (LensCompilerException ex)
+            {
+                ex.BindToLocation(this);
+                throw;
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Expression, x => Expression = x);
-			yield return new NodeChild(Index, x => Index = x);
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(Expression, x => Expression = x);
+            yield return new NodeChild(Index, x => Index = x);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			if (_Getter == null)
-				compileArray(ctx);
-			else
-				compileCustom(ctx);
-		}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            if (_getter == null)
+                EmitArray(ctx);
+            else
+                EmitCustom(ctx);
+        }
 
-		/// <summary>
-		/// Emits the code for retrieving an array item by index.
-		/// </summary>
-		private void compileArray(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        /// <summary>
+        /// Emits the code for retrieving an array item by index.
+        /// </summary>
+        private void EmitArray(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			var exprType = Expression.Resolve(ctx);
-			var itemType = exprType.GetElementType();
+            var exprType = Expression.Resolve(ctx);
+            var itemType = exprType.GetElementType();
 
-			Expression.Emit(ctx, true);
-			Expr.Cast(Index, typeof(int)).Emit(ctx, true);
+            Expression.Emit(ctx, true);
+            Expr.Cast(Index, typeof(int)).Emit(ctx, true);
 
-			gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
-		}
+            gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
+        }
 
-		/// <summary>
-		/// Emits the code for retrieving a value from an object by custom indexer.
-		/// </summary>
-		private void compileCustom(Context ctx)
-		{
-			var retType = _Getter.ReturnType;
+        /// <summary>
+        /// Emits the code for retrieving a value from an object by custom indexer.
+        /// </summary>
+        private void EmitCustom(Context ctx)
+        {
+            var retType = _getter.ReturnType;
 
-			if(RefArgumentRequired && retType.IsValueType)
-				error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
+            if (RefArgumentRequired && retType.IsValueType)
+                Error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
 
-			var gen = ctx.CurrentMethod.Generator;
+            var gen = ctx.CurrentMethod.Generator;
 
-			var ptrExpr = Expression as IPointerProvider;
-			if (ptrExpr != null)
-			{
-				ptrExpr.PointerRequired = PointerRequired;
-				ptrExpr.RefArgumentRequired = RefArgumentRequired;
-			}
+            var ptrExpr = Expression as IPointerProvider;
+            if (ptrExpr != null)
+            {
+                ptrExpr.PointerRequired = PointerRequired;
+                ptrExpr.RefArgumentRequired = RefArgumentRequired;
+            }
 
-			Expression.Emit(ctx, true);
+            Expression.Emit(ctx, true);
 
-			Expr.Cast(Index, _Getter.ArgumentTypes[0]).Emit(ctx, true);
+            Expr.Cast(Index, _getter.ArgumentTypes[0]).Emit(ctx, true);
 
-			gen.EmitCall(_Getter.MethodInfo, _Getter.IsVirtual);
-		}
+            gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(GetIndexNode other)
-		{
-			return base.Equals(other)
-				   && RefArgumentRequired.Equals(other.RefArgumentRequired)
-				   && PointerRequired.Equals(other.PointerRequired);
-		}
+        protected bool Equals(GetIndexNode other)
+        {
+            return base.Equals(other)
+                   && RefArgumentRequired.Equals(other.RefArgumentRequired)
+                   && PointerRequired.Equals(other.PointerRequired);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((GetIndexNode)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((GetIndexNode) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				var hash = base.GetHashCode();
-				hash = (hash * 397) ^ PointerRequired.GetHashCode();
-				hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
-				return hash;
-			}
-		}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = base.GetHashCode();
+                hash = (hash * 397) ^ PointerRequired.GetHashCode();
+                hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
+                return hash;
+            }
+        }
 
-		public override string ToString()
-		{
-			return string.Format("getidx({0} of {1})", Index, Expression);
-		}
+        public override string ToString()
+        {
+            return string.Format("getidx({0} of {1})", Index, Expression);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

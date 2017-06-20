@@ -9,143 +9,137 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	internal class ShiftOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Fields
+    internal class ShiftOperatorNode : BinaryOperatorNodeBase
+    {
+        #region Fields
 
-		/// <summary>
-		/// Indicates the direction of the shift: left or right.
-		/// </summary>
-		public bool IsLeft;
+        /// <summary>
+        /// Indicates the direction of the shift: left or right.
+        /// </summary>
+        public bool IsLeft;
 
-		#endregion
+        #endregion
 
-		#region Operator basics
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return IsLeft ? "<:" : ":>"; }
-		}
+        protected override string OperatorRepresentation => IsLeft ? "<:" : ":>";
 
-		protected override string OverloadedMethodName
-		{
-			get { return IsLeft ? "op_LeftShift" : "op_RightShift"; }
-		}
+        protected override string OverloadedMethodName => IsLeft ? "op_LeftShift" : "op_RightShift";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
-            return new ShiftOperatorNode { IsLeft = IsLeft, LeftOperand = left, RightOperand = right };
+            return new ShiftOperatorNode {IsLeft = IsLeft, LeftOperand = left, RightOperand = right};
         }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		/// <summary>
-		/// Extra hint for function composition.
-		/// </summary>
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var leftType = LeftOperand.Resolve(ctx);
+        /// <summary>
+        /// Extra hint for function composition.
+        /// </summary>
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var leftType = LeftOperand.Resolve(ctx);
 
-			// check if the shift operator is used for function composition
-			if (leftType.IsCallableType())
-			{
-				// add left operand's return type as hint to right operand
-				var leftDelegate = ReflectionHelper.WrapDelegate(leftType);
-				if (RightOperand is GetMemberNode)
-				{
-					var mbr = RightOperand as GetMemberNode;
-					if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
-						mbr.TypeHints = new List<TypeSignature> {leftDelegate.ReturnType.FullName};
-				}
-				else if(RightOperand is LambdaNode)
-				{
-					var lambda = RightOperand as LambdaNode;
-					lambda.Resolve(ctx);
-					if (lambda.MustInferArgTypes)
-						lambda.SetInferredArgumentTypes(new[] {leftDelegate.ReturnType});
-				}
+            // check if the shift operator is used for function composition
+            if (leftType.IsCallableType())
+            {
+                // add left operand's return type as hint to right operand
+                var leftDelegate = ReflectionHelper.WrapDelegate(leftType);
+                if (RightOperand is GetMemberNode)
+                {
+                    var mbr = RightOperand as GetMemberNode;
+                    if (mbr.TypeHints == null || mbr.TypeHints.Count == 0)
+                        mbr.TypeHints = new List<TypeSignature> {leftDelegate.ReturnType.FullName};
+                }
+                else if (RightOperand is LambdaNode)
+                {
+                    var lambda = RightOperand as LambdaNode;
+                    lambda.Resolve(ctx);
+                    if (lambda.MustInferArgTypes)
+                        lambda.SetInferredArgumentTypes(new[] {leftDelegate.ReturnType});
+                }
 
-				var rightType = RightOperand.Resolve(ctx);
+                var rightType = RightOperand.Resolve(ctx);
 
-				if (!ReflectionHelper.CanCombineDelegates(leftType, rightType))
-					error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
-			}
+                if (!ReflectionHelper.CanCombineDelegates(leftType, rightType))
+                    Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
+            }
 
-			// resolve as a possibly overloaded operator
-			return base.resolve(ctx, mustReturn);
-		}
+            // resolve as a possibly overloaded operator
+            return base.ResolveInternal(ctx, mustReturn);
+        }
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			if (leftType.IsAnyOf(typeof (int), typeof (long)) && rightType == typeof (int))
-				return leftType;
+        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        {
+            if (leftType.IsAnyOf(typeof(int), typeof(long)) && rightType == typeof(int))
+                return leftType;
 
-			if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
-				return ReflectionHelper.CombineDelegates(leftType, rightType);
+            if (!IsLeft && ReflectionHelper.CanCombineDelegates(leftType, rightType))
+                return ReflectionHelper.CombineDelegates(leftType, rightType);
 
-			return null;
-		}
+            return null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			var leftType = LeftOperand.Resolve(ctx, mustReturn);
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            var leftType = LeftOperand.Resolve(ctx, mustReturn);
 
-			// create a lambda expression that passes the result of left function to the right one
-			if (leftType.IsCallableType())
-			{
-				var leftVar = ctx.Unique.TempVariableName();
-				var rightVar = ctx.Unique.TempVariableName();
-				var delegateType = ReflectionHelper.WrapDelegate(leftType);
-				var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
+            // create a lambda expression that passes the result of left function to the right one
+            if (leftType.IsCallableType())
+            {
+                var leftVar = ctx.Unique.TempVariableName();
+                var rightVar = ctx.Unique.TempVariableName();
+                var delegateType = ReflectionHelper.WrapDelegate(leftType);
+                var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
-				return Expr.Lambda(
-					argDefs,
-					Expr.Block(
-						Expr.Let(leftVar, LeftOperand),
-						Expr.Let(rightVar, RightOperand),
-						Expr.Invoke(
-							Expr.Get(rightVar),
-							Expr.Invoke(
-								Expr.Get(leftVar),
-								argDefs.Select(x => Expr.Get(x.Name)).ToArray()
-							)
-						)
-					)
-				);
-			}
+                return Expr.Lambda(
+                    argDefs,
+                    Expr.Block(
+                        Expr.Let(leftVar, LeftOperand),
+                        Expr.Let(rightVar, RightOperand),
+                        Expr.Invoke(
+                            Expr.Get(rightVar),
+                            Expr.Invoke(
+                                Expr.Get(leftVar),
+                                argDefs.Select(x => Expr.Get(x.Name)).ToArray()
+                            )
+                        )
+                    )
+                );
+            }
 
-			return base.expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitOperator(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			LeftOperand.Emit(ctx, true);
-			RightOperand.Emit(ctx, true);
+            LeftOperand.Emit(ctx, true);
+            RightOperand.Emit(ctx, true);
 
-			gen.EmitShift(IsLeft);
-		}
+            gen.EmitShift(IsLeft);
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			return IsLeft ? left << right : left >> right;
-		}
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            return IsLeft ? left << right : left >> right;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

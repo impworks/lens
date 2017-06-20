@@ -8,7 +8,7 @@ namespace Lens.Test.Features
     /// </summary>
     [Ignore]
     [TestFixture]
-    internal class KnownIssues: TestBase
+    internal class KnownIssues : TestBase
     {
         /// <summary>
         /// https://github.com/impworks/lens/issues/180

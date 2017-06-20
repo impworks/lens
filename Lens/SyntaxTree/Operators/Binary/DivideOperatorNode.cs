@@ -4,65 +4,59 @@ using Lens.Translations;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	/// <summary>
-	/// An operator node that divides one value by another value.
-	/// </summary>
-	internal class DivideOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// An operator node that divides one value by another value.
+    /// </summary>
+    internal class DivideOperatorNode : BinaryOperatorNodeBase
+    {
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "/"; }
-		}
+        protected override string OperatorRepresentation => "/";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Division"; }
-		}
+        protected override string OverloadedMethodName => "op_Division";
 
-	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
-	    {
-	        return new DivideOperatorNode {LeftOperand = left, RightOperand = right};
-	    }
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new DivideOperatorNode {LeftOperand = left, RightOperand = right};
+        }
 
-	    #endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
-				return LeftOperand;
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (RightOperand.IsConstant && RightOperand.ConstantValue == 1)
+                return LeftOperand;
 
-			return base.expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			loadAndConvertNumerics(ctx);
-			ctx.CurrentMethod.Generator.EmitDivide();
-		}
+        protected override void EmitOperator(Context ctx)
+        {
+            LoadAndConvertNumerics(ctx);
+            ctx.CurrentMethod.Generator.EmitDivide();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			var leftType = left.GetType();
-			var rightType = right.GetType();
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            var leftType = left.GetType();
+            var rightType = right.GetType();
 
-			if(TypeExtensions.IsIntegerType(leftType) && TypeExtensions.IsIntegerType(rightType) && right == 0)
-				error(CompilerMessages.ConstantDivisionByZero);
+            if (TypeExtensions.IsIntegerType(leftType) && TypeExtensions.IsIntegerType(rightType) && right == 0)
+                Error(CompilerMessages.ConstantDivisionByZero);
 
-			return left/right;
-		}
+            return left / right;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

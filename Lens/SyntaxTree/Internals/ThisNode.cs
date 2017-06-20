@@ -3,31 +3,32 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Internals
 {
-	/// <summary>
-	/// A node that represents the `this` pointer.
-	/// </summary>
-	internal class ThisNode : NodeBase
-	{
-		#region Resolve
+    /// <summary>
+    /// Emits a pointer to current object.
+    /// </summary>
+    internal class ThisNode : NodeBase
+    {
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			if(ctx.CurrentMethod.IsStatic)
-				error("Cannot access self-reference in static context!");
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            // sic! compiler error, no need to localize
+            if (ctx.CurrentMethod.IsStatic)
+                Error("Cannot access self-reference in static context!");
 
-			return ctx.CurrentType.TypeBuilder;
-		}
+            return ctx.CurrentType.TypeBuilder;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			gen.EmitLoadArgument(0);
-		}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            gen.EmitLoadArgument(0);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

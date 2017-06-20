@@ -9,167 +9,167 @@ using Lens.Translations;
 
 namespace Lens.SyntaxTree.Expressions.Instantiation
 {
-	/// <summary>
-	/// A node representing a new object creation.
-	/// </summary>
-	internal class NewObjectNode : InvocationNodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing a new object creation.
+    /// </summary>
+    internal class NewObjectNode : InvocationNodeBase
+    {
+        #region Constructor
 
-		public NewObjectNode(string type = null)
-		{
-			TypeSignature = type;
-		}
+        public NewObjectNode(string type = null)
+        {
+            TypeSignature = type;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The type of the object to create.
-		/// </summary>
-		public Type Type;
+        /// <summary>
+        /// The type of the object to create.
+        /// </summary>
+        public Type Type;
 
-		/// <summary>
-		/// The type signature of the object to create.
-		/// </summary>
-		public TypeSignature TypeSignature;
+        /// <summary>
+        /// The type signature of the object to create.
+        /// </summary>
+        public TypeSignature TypeSignature;
 
-		/// <summary>
-		/// Checks if constructor call may be replaced with 'default' initialization.
-		/// </summary>
-		private bool _IsDefault;
+        /// <summary>
+        /// Checks if constructor call may be replaced with 'default' initialization.
+        /// </summary>
+        private bool _isDefault;
 
-		/// <summary>
-		/// Constructor wrapper.
-		/// </summary>
-		private ConstructorWrapper _Constructor;
+        /// <summary>
+        /// Constructor wrapper.
+        /// </summary>
+        private ConstructorWrapper _constructor;
 
-		/// <summary>
-		/// Generic wrapper for base class.
-		/// </summary>
-		protected override CallableWrapperBase _Wrapper { get { return _Constructor; } }
+        /// <summary>
+        /// Generic wrapper for base class.
+        /// </summary>
+        protected override CallableWrapperBase Wrapper => _constructor;
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			base.resolve(ctx, true);
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            base.ResolveInternal(ctx, true);
 
-			var type = Type ?? ctx.ResolveType(TypeSignature);
+            var type = Type ?? ctx.ResolveType(TypeSignature);
 
-			if (type.IsVoid())
-				error(CompilerMessages.VoidTypeDefault);
+            if (type.IsVoid())
+                Error(CompilerMessages.VoidTypeDefault);
 
-			if (type.IsAbstract)
-				error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
+            if (type.IsAbstract)
+                Error(CompilerMessages.TypeAbstract, TypeSignature.FullSignature);
 
-			if (type.IsInterface)
-				error(CompilerMessages.TypeInterface, TypeSignature.FullSignature);
+            if (type.IsInterface)
+                Error(CompilerMessages.TypeInterface, TypeSignature.FullSignature);
 
-			if (Arguments.Count == 0)
-				error(CompilerMessages.ParameterlessConstructorParens);
+            if (Arguments.Count == 0)
+                Error(CompilerMessages.ParameterlessConstructorParens);
 
-			try
-			{
-				_Constructor = ctx.ResolveConstructor(type, _ArgTypes);
-			}
-			catch (AmbiguousMatchException)
-			{
-				error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
-			}
-			catch (KeyNotFoundException)
-			{
-				if (_ArgTypes.Length > 0 || !type.IsValueType)
-					error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
+            try
+            {
+                _constructor = ctx.ResolveConstructor(type, ArgTypes);
+            }
+            catch (AmbiguousMatchException)
+            {
+                Error(CompilerMessages.TypeConstructorAmbiguos, TypeSignature.FullSignature);
+            }
+            catch (KeyNotFoundException)
+            {
+                if (ArgTypes.Length > 0 || !type.IsValueType)
+                    Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
-				_IsDefault = true;
-				return type;
-			}
+                _isDefault = true;
+                return type;
+            }
 
-			applyLambdaArgTypes(ctx);
+            ApplyLambdaArgTypes(ctx);
 
-			return resolvePartial(_Constructor, type, _ArgTypes);
-		}
+            return ResolvePartial(_constructor, type, ArgTypes);
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			if (_IsDefault)
-				return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (_isDefault)
+                return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
-			return base.expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if(_Constructor != null)
-			{
-				if (_ArgTypes.Length > 0)
-				{
-					var destTypes = _Constructor.ArgumentTypes;
-					for (var idx = 0; idx < Arguments.Count; idx++)
-						Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
-				}
+            if (_constructor != null)
+            {
+                if (ArgTypes.Length > 0)
+                {
+                    var destTypes = _constructor.ArgumentTypes;
+                    for (var idx = 0; idx < Arguments.Count; idx++)
+                        Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
+                }
 
-				gen.EmitCreateObject(_Constructor.ConstructorInfo);
-			}
-			else
-			{
-				Expr.Default(TypeSignature).Emit(ctx, true);
-			}
-		}
+                gen.EmitCreateObject(_constructor.ConstructorInfo);
+            }
+            else
+            {
+                Expr.Default(TypeSignature).Emit(ctx, true);
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Helpers
+        #region Helpers
 
-		protected override InvocationNodeBase recreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
-		{
-			return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList() };
-		}
+        protected override InvocationNodeBase RecreateSelfWithArgs(IEnumerable<NodeBase> newArgs)
+        {
+            return new NewObjectNode {Type = Type, TypeSignature = TypeSignature, Arguments = newArgs.ToList()};
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(NewObjectNode other)
-		{
-			return base.Equals(other) && Equals(TypeSignature, other.TypeSignature);
-		}
+        protected bool Equals(NewObjectNode other)
+        {
+            return base.Equals(other) && Equals(TypeSignature, other.TypeSignature);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((NewObjectNode)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((NewObjectNode) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return (base.GetHashCode() * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
-			}
-		}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (TypeSignature != null ? TypeSignature.GetHashCode() : 0);
+            }
+        }
 
-		public override string ToString()
-		{
-			return string.Format("new({0}, args: {1})", TypeSignature.FullSignature, string.Join(";", Arguments));
-		}
+        public override string ToString()
+        {
+            return string.Format("new({0}, args: {1})", TypeSignature.FullSignature, string.Join(";", Arguments));
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

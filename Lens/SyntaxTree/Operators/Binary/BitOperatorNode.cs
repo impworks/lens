@@ -1,98 +1,90 @@
 ﻿using System;
 using Lens.Compiler;
 using Lens.Resolver;
+using Lens.Translations;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-    using Lens.Translations;
-
-
     internal class BitOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Constructor
+    {
+        #region Constructor
 
-		public BitOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
-		{
-			Kind = kind;
-		}
+        public BitOperatorNode(LogicalOperatorKind kind = default(LogicalOperatorKind))
+        {
+            Kind = kind;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The kind of boolean operator.
-		/// </summary>
-		public LogicalOperatorKind Kind { get; set; }
+        /// <summary>
+        /// The kind of boolean operator.
+        /// </summary>
+        public LogicalOperatorKind Kind { get; set; }
 
-		#endregion
+        #endregion
 
-		#region Operator basics
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return Kind == LogicalOperatorKind.And ? "&" : (Kind == LogicalOperatorKind.Or ? "|" : "^"); }
-		}
+        protected override string OperatorRepresentation => Kind == LogicalOperatorKind.And ? "&" : (Kind == LogicalOperatorKind.Or ? "|" : "^");
 
-		protected override string OverloadedMethodName
-		{
-			get { return Kind == LogicalOperatorKind.And ? "op_BinaryAnd" : (Kind == LogicalOperatorKind.Or ? "op_BinaryOr" : "op_ExclusiveOr"); }
-		}
+        protected override string OverloadedMethodName => Kind == LogicalOperatorKind.And ? "op_BinaryAnd" : (Kind == LogicalOperatorKind.Or ? "op_BinaryOr" : "op_ExclusiveOr");
 
-	    protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
-	    {
-	        return new BitOperatorNode(Kind) {LeftOperand = left, RightOperand = right};
-	    }
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
+        {
+            return new BitOperatorNode(Kind) {LeftOperand = left, RightOperand = right};
+        }
 
-	    #endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-		    if (leftType == rightType)
-		    {
-		        if (leftType.IsIntegerType() || leftType.IsEnum)
-		            return leftType;
-		    }
+        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        {
+            if (leftType == rightType)
+            {
+                if (leftType.IsIntegerType() || leftType.IsEnum)
+                    return leftType;
+            }
 
-			error(CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
-		    return null;
-		}
+            Error(CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+            return null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitOperator(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			LeftOperand.Emit(ctx, true);
-			RightOperand.Emit(ctx, true);
+            LeftOperand.Emit(ctx, true);
+            RightOperand.Emit(ctx, true);
 
-			if(Kind == LogicalOperatorKind.And)
-				gen.EmitAnd();
-			else if (Kind == LogicalOperatorKind.Or)
-				gen.EmitOr();
-			else
-				gen.EmitXor();
-		}
+            if (Kind == LogicalOperatorKind.And)
+                gen.EmitAnd();
+            else if (Kind == LogicalOperatorKind.Or)
+                gen.EmitOr();
+            else
+                gen.EmitXor();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			return Kind == LogicalOperatorKind.And
-				? left & right
-				: (Kind == LogicalOperatorKind.Or
-					? left | right
-					: left ^ right
-				  );
-		}
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            return Kind == LogicalOperatorKind.And
+                ? left & right
+                : (Kind == LogicalOperatorKind.Or
+                    ? left | right
+                    : left ^ right
+                );
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

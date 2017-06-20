@@ -9,125 +9,126 @@ using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
-	/// <summary>
-	/// An assembly-level method.
-	/// </summary>
-	internal class MethodEntity : MethodEntityBase
-	{
-		#region Constructor
+    /// <summary>
+    /// An assembly-level method.
+    /// </summary>
+    internal class MethodEntity : MethodEntityBase
+    {
+        #region Constructor
 
-		public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
-		{
-			var scopeKind = type.Kind == TypeEntityKind.Closure
-				? ScopeKind.LambdaRoot
-				: ScopeKind.FunctionRoot;
+        public MethodEntity(TypeEntity type, bool isImported = false) : base(type, isImported)
+        {
+            var scopeKind = type.Kind == TypeEntityKind.Closure
+                ? ScopeKind.LambdaRoot
+                : ScopeKind.FunctionRoot;
 
-			Body = new CodeBlockNode(scopeKind);
-		}
+            Body = new CodeBlockNode(scopeKind);
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		public bool IsVirtual;
-		public bool IsPure;
-		public bool IsVariadic;
+        public bool IsVirtual;
+        public bool IsPure;
+        public bool IsVariadic;
 
-		public override bool IsVoid { get { return ReturnType.IsVoid(); } }
+        public override bool IsVoid => ReturnType.IsVoid();
 
-		/// <summary>
-		/// The signature of method's return type.
-		/// </summary>
-		public TypeSignature ReturnTypeSignature;
+        /// <summary>
+        /// The signature of method's return type.
+        /// </summary>
+        public TypeSignature ReturnTypeSignature;
 
-		/// <summary>
-		/// Compiled return type.
-		/// </summary>
-		public Type ReturnType;
+        /// <summary>
+        /// Compiled return type.
+        /// </summary>
+        public Type ReturnType;
 
-		/// <summary>
-		/// Assembly-level method builder.
-		/// </summary>
-		public MethodBuilder MethodBuilder { get; private set; }
+        /// <summary>
+        /// Assembly-level method builder.
+        /// </summary>
+        public MethodBuilder MethodBuilder { get; private set; }
 
-		private MethodInfo _MethodInfo;
-		public MethodInfo MethodInfo
-		{
-			get { return IsImported ? _MethodInfo : MethodBuilder; }
-			set { _MethodInfo = value; }
-		}
+        private MethodInfo _methodInfo;
 
-		#endregion
+        public MethodInfo MethodInfo
+        {
+            get => IsImported ? _methodInfo : MethodBuilder;
+            set => _methodInfo = value;
+        }
 
-		#region Methods
+        #endregion
 
-		/// <summary>
-		/// Creates a MethodBuilder for current method entity.
-		/// </summary>
-		public override void PrepareSelf()
-		{
-			if (MethodBuilder != null || IsImported)
-				return;
+        #region Methods
 
-			var ctx = ContainerType.Context;
+        /// <summary>
+        /// Creates a MethodBuilder for current method entity.
+        /// </summary>
+        public override void PrepareSelf()
+        {
+            if (MethodBuilder != null || IsImported)
+                return;
 
-			var attrs = MethodAttributes.Public;
-			if(IsStatic)
-				attrs |= MethodAttributes.Static;
-			if(IsVirtual)
-				attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
+            var ctx = ContainerType.Context;
 
-			if (ReturnType == null)
-				ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-					? typeof(UnitType)
-					: ctx.ResolveType(ReturnTypeSignature);
+            var attrs = MethodAttributes.Public;
+            if (IsStatic)
+                attrs |= MethodAttributes.Static;
+            if (IsVirtual)
+                attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
-			if (ArgumentTypes == null)
-				ArgumentTypes = Arguments == null
-					? new Type[0]
-					: Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
+            if (ReturnType == null)
+                ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
+                    ? typeof(UnitType)
+                    : ctx.ResolveType(ReturnTypeSignature);
 
-			MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
-			Generator = MethodBuilder.GetILGenerator(Context.ILStreamSize);
+            if (ArgumentTypes == null)
+                ArgumentTypes = Arguments == null
+                    ? new Type[0]
+                    : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
-			if (Arguments != null)
-			{
-				var idx = 1;
-				foreach (var param in Arguments.Values)
-				{
-					param.ParameterBuilder = MethodBuilder.DefineParameter(idx, ParameterAttributes.None, param.Name);
-					idx++;
-				}
-			}
+            MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
+            Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
 
-			// an empty script is allowed and it's return is null
-			if (this == ctx.MainMethod && Body.Statements.Count == 0)
-				Body.Statements.Add(new UnitNode());
-		}
+            if (Arguments != null)
+            {
+                var idx = 1;
+                foreach (var param in Arguments.Values)
+                {
+                    param.ParameterBuilder = MethodBuilder.DefineParameter(idx, ParameterAttributes.None, param.Name);
+                    idx++;
+                }
+            }
 
-		#endregion
+            // an empty script is allowed and it's return is null
+            if (this == ctx.MainMethod && Body.Statements.Count == 0)
+                Body.Statements.Add(new UnitNode());
+        }
 
-		#region Extension points
+        #endregion
 
-		protected override void emitTrailer(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var actualType = Body.Resolve(ctx);
+        #region Extension points
 
-			if (!ReturnType.IsVoid() || !actualType.IsVoid())
-			{
-				if (!ReturnType.IsExtendablyAssignableFrom(actualType))
-					Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
-			}
+        protected override void EmitTrailer(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var actualType = Body.Resolve(ctx);
 
-			if (ReturnType == typeof(object) && actualType.IsValueType && !actualType.IsVoid())
-				gen.EmitBox(actualType);
+            if (!ReturnType.IsVoid() || !actualType.IsVoid())
+            {
+                if (!ReturnType.IsExtendablyAssignableFrom(actualType))
+                    Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
+            }
 
-			// special hack: if the main method's implicit type is Unit, it should still return null
-			if (this == ctx.MainMethod && actualType.IsVoid())
-				gen.EmitNull();
-		}
+            if (ReturnType == typeof(object) && actualType.IsValueType && !actualType.IsVoid())
+                gen.EmitBox(actualType);
 
-		#endregion
-	}
+            // special hack: if the main method's implicit type is Unit, it should still return null
+            if (this == ctx.MainMethod && actualType.IsVoid())
+                gen.EmitNull();
+        }
+
+        #endregion
+    }
 }

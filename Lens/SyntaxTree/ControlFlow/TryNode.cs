@@ -9,144 +9,144 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	/// <summary>
-	/// The try node.
-	/// </summary>
-	internal class TryNode : NodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// The try node.
+    /// </summary>
+    internal class TryNode : NodeBase
+    {
+        #region Constructor
 
-		public TryNode()
-		{
-			Code = new CodeBlockNode();
-			CatchClauses = new List<CatchNode>();
-		}
+        public TryNode()
+        {
+            Code = new CodeBlockNode();
+            CatchClauses = new List<CatchNode>();
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The body of the Try block.
-		/// </summary>
-		public CodeBlockNode Code { get; set; }
+        /// <summary>
+        /// The body of the Try block.
+        /// </summary>
+        public CodeBlockNode Code { get; set; }
 
-		/// <summary>
-		/// The optional list of Catch clauses.
-		/// </summary>
-		public List<CatchNode> CatchClauses { get; set; }
+        /// <summary>
+        /// The optional list of Catch clauses.
+        /// </summary>
+        public List<CatchNode> CatchClauses { get; set; }
 
-		/// <summary>
-		/// The optional Finally clause.
-		/// </summary>
-		public CodeBlockNode Finally { get; set; }
+        /// <summary>
+        /// The optional Finally clause.
+        /// </summary>
+        public CodeBlockNode Finally { get; set; }
 
-		/// <summary>
-		/// Label to jump to when there's no exception.
-		/// </summary>
-		public Label EndLabel { get; private set; }
+        /// <summary>
+        /// Label to jump to when there's no exception.
+        /// </summary>
+        public Label EndLabel { get; private set; }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var prevTypes = new List<Type>();
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var prevTypes = new List<Type>();
 
-			foreach(var curr in CatchClauses)
-			{
-				var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof(Exception);
+            foreach (var curr in CatchClauses)
+            {
+                var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof(Exception);
 
-				foreach (var prevType in prevTypes)
-				{
-					if(currType == prevType)
-						error(curr, CompilerMessages.CatchTypeDuplicate, currType);
-					else if(prevType.IsExtendablyAssignableFrom(currType))
-						error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
-				}
+                foreach (var prevType in prevTypes)
+                {
+                    if (currType == prevType)
+                        Error(curr, CompilerMessages.CatchTypeDuplicate, currType);
+                    else if (prevType.IsExtendablyAssignableFrom(currType))
+                        Error(curr, CompilerMessages.CatchClauseUnreachable, currType, prevType);
+                }
 
-				prevTypes.Add(currType);
-			}
+                prevTypes.Add(currType);
+            }
 
-			return base.resolve(ctx, mustReturn);
-		}
+            return base.ResolveInternal(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Code, null);
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(Code, null);
 
-			foreach(var curr in CatchClauses)
-				yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
+            foreach (var curr in CatchClauses)
+                yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
 
-			if(Finally != null)
-				yield return new NodeChild(Finally, null);
-		}
+            if (Finally != null)
+                yield return new NodeChild(Finally, null);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			var backup = ctx.CurrentTryBlock;
-			ctx.CurrentTryBlock = this;
+            var backup = ctx.CurrentTryBlock;
+            ctx.CurrentTryBlock = this;
 
-			EndLabel = gen.BeginExceptionBlock();
+            EndLabel = gen.BeginExceptionBlock();
 
-			Code.Emit(ctx, false);
-			gen.EmitLeave(EndLabel);
+            Code.Emit(ctx, false);
+            gen.EmitLeave(EndLabel);
 
-			foreach (var curr in CatchClauses)
-				curr.Emit(ctx, false);
+            foreach (var curr in CatchClauses)
+                curr.Emit(ctx, false);
 
-			if (Finally != null)
-			{
-				gen.BeginFinallyBlock();
-				Finally.Emit(ctx, false);
-			}
+            if (Finally != null)
+            {
+                gen.BeginFinallyBlock();
+                Finally.Emit(ctx, false);
+            }
 
-			gen.EndExceptionBlock();
+            gen.EndExceptionBlock();
 
-			ctx.CurrentTryBlock = backup;
-		}
+            ctx.CurrentTryBlock = backup;
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(TryNode other)
-		{
-			return Equals(Code, other.Code)
-			       && CatchClauses.SequenceEqual(other.CatchClauses)
-			       && Equals(Finally, other.Finally);
-		}
+        protected bool Equals(TryNode other)
+        {
+            return Equals(Code, other.Code)
+                   && CatchClauses.SequenceEqual(other.CatchClauses)
+                   && Equals(Finally, other.Finally);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((TryNode)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((TryNode) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				int hashCode = (Code != null ? Code.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (CatchClauses != null ? CatchClauses.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (Finally != null ? Finally.GetHashCode() : 0);
-				return hashCode;
-			}
-		}
-		
-		#endregion
-	}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (Code != null ? Code.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (CatchClauses != null ? CatchClauses.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Finally != null ? Finally.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
+        #endregion
+    }
 }

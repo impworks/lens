@@ -2,63 +2,70 @@
 
 namespace Lens.Lexer
 {
-	/// <summary>
-	/// A single lexem parsed from the source by lexer.
-	/// </summary>
-	internal class Lexem : LocationEntity
-	{
-		#region Constructor
+    /// <summary>
+    /// A single lexem parsed from the source by lexer.
+    /// </summary>
+    internal class Lexem : LocationEntity
+    {
+        #region Constructor
 
-		public Lexem(LexemType type, LexemLocation start, LexemLocation end, string value = null)
-		{
-			Type = type;
-			Value = value;
-			StartLocation = start;
-			EndLocation = end;
-		}
+        public Lexem(LexemType type, LexemLocation start, LexemLocation end, string value = null)
+        {
+            Type = type;
+            Value = value;
+            StartLocation = start;
+            EndLocation = end;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		public readonly LexemType Type;
-		public readonly string Value;
+        /// <summary>
+        /// The type of current lexem.
+        /// </summary>
+        public readonly LexemType Type;
 
-		#endregion
+        /// <summary>
+        /// The actual value (for some lexem types, like numbers or identifiers).
+        /// </summary>
+        public readonly string Value;
 
-		#region Debug
+        #endregion
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((Lexem)obj);
-		}
+        #region Equality
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return (Type.GetHashCode() * 397) ^ (Value != null ? Value.GetHashCode() : 0);
-			}
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((Lexem) obj);
+        }
 
-		private bool Equals(Lexem other)
-		{
-			return Type.Equals(other.Type) && string.Equals(Value, other.Value);
-		}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Type.GetHashCode() * 397) ^ (Value != null ? Value.GetHashCode() : 0);
+            }
+        }
 
-		#endregion
+        private bool Equals(Lexem other)
+        {
+            return Type.Equals(other.Type) && string.Equals(Value, other.Value);
+        }
 
-		#region Debug
+        #endregion
 
-		public override string ToString()
-		{
-			var format = string.IsNullOrEmpty(Value) ? "{0}" : "{0}({1})";
-			return string.Format(format, Type, Value);
-		}
+        #region Debug
 
-		#endregion
-	}
+        public override string ToString()
+        {
+            var format = string.IsNullOrEmpty(Value) ? "{0}" : "{0}({1})";
+            return string.Format(format, Type, Value);
+        }
+
+        #endregion
+    }
 }

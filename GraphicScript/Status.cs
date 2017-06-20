@@ -1,10 +1,10 @@
 ﻿namespace GraphicScript
 {
-	public enum Status
-	{
-		Ready,
-		Success,
-		Compiling,
-		Error
-	}
+    public enum Status
+    {
+        Ready,
+        Success,
+        Compiling,
+        Error
+    }
 }

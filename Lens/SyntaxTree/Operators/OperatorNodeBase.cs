@@ -3,41 +3,41 @@ using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators
 {
-	/// <summary>
-	/// A base node for all operators.
-	/// </summary>
-	internal abstract class OperatorNodeBase : NodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// A base node for all operators.
+    /// </summary>
+    internal abstract class OperatorNodeBase : NodeBase
+    {
+        #region Operator basics
 
-		/// <summary>
-		/// A textual operator representation for error reporting.
-		/// </summary>
-		protected abstract string OperatorRepresentation { get; }
+        /// <summary>
+        /// A textual operator representation for error reporting.
+        /// </summary>
+        protected abstract string OperatorRepresentation { get; }
 
-		/// <summary>
-		/// The name of the method that C# compiler uses for method overloading.
-		/// </summary>
-		protected virtual string OverloadedMethodName { get { return null; } }
+        /// <summary>
+        /// The name of the method that C# compiler uses for method overloading.
+        /// </summary>
+        protected virtual string OverloadedMethodName => null;
 
-		/// <summary>
-		/// The pointer to overloaded version of the operator.
-		/// </summary>
-		protected MethodWrapper _OverloadedMethod;
+        /// <summary>
+        /// The pointer to overloaded version of the operator.
+        /// </summary>
+        protected MethodWrapper OverloadedMethod;
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			var result = IsConstant && ctx.Options.UnrollConstants
-				? Expr.Constant(ConstantValue)
-				: null;
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            var result = IsConstant && ctx.Options.UnrollConstants
+                ? Expr.Constant(ConstantValue)
+                : null;
 
-			return result;
-		}
+            return result;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

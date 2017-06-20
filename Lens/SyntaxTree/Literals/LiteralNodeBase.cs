@@ -4,74 +4,74 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// The base class for literal nodes.
-	/// </summary>
-	internal abstract class LiteralNodeBase<T> : NodeBase, ILiteralNode
-	{
-		#region Fields
+    /// <summary>
+    /// The base class for literal nodes.
+    /// </summary>
+    internal abstract class LiteralNodeBase<T> : NodeBase, ILiteralNode
+    {
+        #region Fields
 
-		/// <summary>
-		/// The literal value.
-		/// </summary>
-		protected T Value { get; set; }
+        /// <summary>
+        /// The literal value.
+        /// </summary>
+        protected T Value { get; set; }
 
-		#endregion
+        /// <summary>
+        /// Underlying type.
+        /// </summary>
+        public Type LiteralType => typeof(T);
 
-		#region Constant checkers
+        #endregion
 
-		public override bool IsConstant { get { return true; } }
-		public override object ConstantValue { get { return Value; } }
+        #region Constant checkers
 
-		#endregion
+        public override bool IsConstant => true;
+        public override object ConstantValue => Value;
 
-		#region Resolve
+        #endregion
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			return typeof (T);
-		}
+        #region Resolve
 
-		public Type LiteralType
-		{
-			get { return typeof (T); }
-		}
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            return typeof(T);
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(LiteralNodeBase<T> other)
-		{
-			return EqualityComparer<T>.Default.Equals(Value, other.Value);
-		}
+        protected bool Equals(LiteralNodeBase<T> other)
+        {
+            return EqualityComparer<T>.Default.Equals(Value, other.Value);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((LiteralNodeBase<T>)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((LiteralNodeBase<T>) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			return EqualityComparer<T>.Default.GetHashCode(Value);
-		}
+        public override int GetHashCode()
+        {
+            return EqualityComparer<T>.Default.GetHashCode(Value);
+        }
 
-		public override string ToString()
-		{
-			return string.Format("{0}({1})", typeof (T).Name, Value);
-		}
+        public override string ToString()
+        {
+            return string.Format("{0}({1})", typeof(T).Name, Value);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 
-	/// <summary>
-	/// Marker interface for all literal expressions.
-	/// </summary>
-	internal interface ILiteralNode
-	{
-		Type LiteralType { get; }
-	}
+    /// <summary>
+    /// Marker interface for all literal expressions.
+    /// </summary>
+    internal interface ILiteralNode
+    {
+        Type LiteralType { get; }
+    }
 }

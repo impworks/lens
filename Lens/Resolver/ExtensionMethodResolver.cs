@@ -7,132 +7,142 @@ using System.Runtime.CompilerServices;
 
 namespace Lens.Resolver
 {
-	/// <summary>
-	/// Finds a list of possible extension methods for a given type.
-	/// </summary>
-	internal class ExtensionMethodResolver
-	{
-		#region Constructors
+    /// <summary>
+    /// Finds a list of possible extension methods for a given type.
+    /// </summary>
+    internal class ExtensionMethodResolver
+    {
+        #region Constructors
 
-		static ExtensionMethodResolver()
-		{
-			_Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
-		}
+        static ExtensionMethodResolver()
+        {
+            Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
+        }
 
-		public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
-		{
-			_Namespaces = namespaces;
-			_AsmCache = asmCache;
-		}
+        public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
+        {
+            _namespaces = namespaces;
+            _asmCache = asmCache;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _Cache;
-		private readonly Dictionary<string, bool> _Namespaces;
-		private readonly ReferencedAssemblyCache _AsmCache;
+        /// <summary>
+        /// Extension method cache for faster lookup.
+        /// </summary>
+        private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> Cache;
 
-		#endregion
+        /// <summary>
+        /// Namespaces where the types containing extension methods are looked for.
+        /// </summary>
+        private readonly Dictionary<string, bool> _namespaces;
 
-		#region Methods
+        /// <summary>
+        /// List of referenced assemblies.
+        /// </summary>
+        private readonly ReferencedAssemblyCache _asmCache;
 
-		/// <summary>
-		/// Gets an extension method by given arguments.
-		/// </summary>
-		public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
-		{
-			if (!_Cache.ContainsKey(type))
-				_Cache.Add(type, findMethodsForType(type));
+        #endregion
 
-			if(!_Cache[type].ContainsKey(name))
-				throw new KeyNotFoundException();
+        #region Methods
 
-			var methods = _Cache[type][name];
-			var result = methods.Where(m => m.Name == name)
-								.Select(mi => new { Method = mi, Distance = getExtensionDistance(mi, type, args) })
-								.OrderBy(p => p.Distance)
-								.Take(2)
-								.ToArray();
+        /// <summary>
+        /// Gets an extension method by given arguments.
+        /// </summary>
+        public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
+        {
+            if (!Cache.ContainsKey(type))
+                Cache.Add(type, FindMethodsForType(type));
 
-			if (result.Length == 0 || result[0].Distance == int.MaxValue)
-				throw new KeyNotFoundException();
+            if (!Cache[type].ContainsKey(name))
+                throw new KeyNotFoundException();
 
-			if (result.Length > 1 && result[0].Distance == result[1].Distance)
-				throw new AmbiguousMatchException();
+            var methods = Cache[type][name];
+            var result = methods.Where(m => m.Name == name)
+                                .Select(mi => new {Method = mi, Distance = GetExtensionDistance(mi, type, args)})
+                                .OrderBy(p => p.Distance)
+                                .Take(2)
+                                .ToArray();
 
-			return result[0].Method;
-		}
+            if (result.Length == 0 || result[0].Distance == int.MaxValue)
+                throw new KeyNotFoundException();
 
-		#endregion
+            if (result.Length > 1 && result[0].Distance == result[1].Distance)
+                throw new AmbiguousMatchException();
 
-		#region Helpers
+            return result[0].Method;
+        }
 
-		/// <summary>
-		/// Returns the list of extension methods for given type.
-		/// </summary>
-		/// <param name="forType"></param>
-		private Dictionary<string, List<MethodInfo>> findMethodsForType(Type forType)
-		{
-			var dict = new Dictionary<string, List<MethodInfo>>();
+        #endregion
 
-			foreach (var asm in _AsmCache.Assemblies)
-			{
-				if (asm.IsDynamic)
-					continue;
+        #region Helpers
 
-				try
-				{
-					var types = asm.GetExportedTypes();
-					foreach (var type in types)
-					{
-						if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof (ExtensionAttribute), false))
-							continue;
+        /// <summary>
+        /// Returns the list of extension methods for given type.
+        /// </summary>
+        private Dictionary<string, List<MethodInfo>> FindMethodsForType(Type forType)
+        {
+            var dict = new Dictionary<string, List<MethodInfo>>();
 
-						if (type.Namespace == null || !_Namespaces.ContainsKey(type.Namespace))
-							continue;
+            foreach (var asm in _asmCache.Assemblies)
+            {
+                if (asm.IsDynamic)
+                    continue;
 
-						var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-						foreach (var method in methods)
-						{
-							if (!method.IsDefined(typeof (ExtensionAttribute), false))
-								continue;
+                try
+                {
+                    var types = asm.GetExportedTypes();
+                    foreach (var type in types)
+                    {
+                        if (!type.IsSealed || type.IsGenericType || !type.IsDefined(typeof(ExtensionAttribute), false))
+                            continue;
 
-							var argType = method.GetParameters()[0].ParameterType;
-							if (!argType.IsExtendablyAssignableFrom(forType))
-								continue;
+                        if (type.Namespace == null || !_namespaces.ContainsKey(type.Namespace))
+                            continue;
 
-							if (!dict.ContainsKey(method.Name))
-								dict[method.Name] = new List<MethodInfo>();
+                        var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
+                        foreach (var method in methods)
+                        {
+                            if (!method.IsDefined(typeof(ExtensionAttribute), false))
+                                continue;
 
-							dict[method.Name].Add(method);
-						}
-					}
-				}
-				catch(Exception ex)
-				{
-					Debug.WriteLine(ex);
-				}
-			}
+                            var argType = method.GetParameters()[0].ParameterType;
+                            if (!argType.IsExtendablyAssignableFrom(forType))
+                                continue;
 
-			return dict;
-		}
+                            if (!dict.ContainsKey(method.Name))
+                                dict[method.Name] = new List<MethodInfo>();
 
-		/// <summary>
-		/// Calculates the total distance for a list of arguments of an extension method.
-		/// </summary>
-		private static int getExtensionDistance(MethodInfo method, Type type, Type[] args)
-		{
-			var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-			var baseDist = methodArgs.First().DistanceFrom(type);
-			var argsDist = TypeExtensions.TypeListDistance(args, methodArgs.Skip(1));
+                            dict[method.Name].Add(method);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
+            }
 
-			if(baseDist == int.MaxValue || argsDist == int.MaxValue)
-				return int.MaxValue;
+            return dict;
+        }
 
-			return baseDist + argsDist;
-		}
+        /// <summary>
+        /// Calculates the total distance for a list of arguments of an extension method.
+        /// </summary>
+        private static int GetExtensionDistance(MethodInfo method, Type type, Type[] args)
+        {
+            var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
+            var baseDist = methodArgs.First().DistanceFrom(type);
+            var argsDist = TypeExtensions.TypeListDistance(args, methodArgs.Skip(1));
 
-		#endregion
-	}
+            if (baseDist == int.MaxValue || argsDist == int.MaxValue)
+                return int.MaxValue;
+
+            return baseDist + argsDist;
+        }
+
+        #endregion
+    }
 }

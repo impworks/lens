@@ -7,374 +7,374 @@ using Lens.Utils;
 
 namespace Lens.Lexer
 {
-	/// <summary>
-	/// Parses the given string into a sequence of lexems.
-	/// </summary>
-	internal partial class LensLexer
-	{
-		#region Constructor
+    /// <summary>
+    /// Parses the given string into a sequence of lexems.
+    /// </summary>
+    internal partial class LensLexer
+    {
+        #region Constructor
 
-		public LensLexer(string src)
-		{
-			_Position = 0;
-			_Offset = 1;
-			_Line = 1;
-			_NewLine = true;
+        public LensLexer(string src)
+        {
+            _position = 0;
+            _offset = 1;
+            _line = 1;
+            _newLine = true;
 
-			_IndentLookup = new Stack<int>();
-			Lexems = new List<Lexem>();
+            _indentLookup = new Stack<int>();
+            Lexems = new List<Lexem>();
 
-			_Source = src;
+            _source = src;
 
-			parse();
-			filterNewlines();
-		}
+            Parse();
+            FilterNewlines();
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// Source code as single string.
-		/// </summary>
-		private readonly string _Source;
+        /// <summary>
+        /// Source code as single string.
+        /// </summary>
+        private readonly string _source;
 
-		/// <summary>
-		/// Generated list of lexems.
-		/// </summary>
-		public List<Lexem> Lexems { get; private set; }
+        /// <summary>
+        /// Generated list of lexems.
+        /// </summary>
+        public List<Lexem> Lexems { get; private set; }
 
-		/// <summary>
-		/// Current position in the entire source string.
-		/// </summary>
-		private int _Position;
+        /// <summary>
+        /// Current position in the entire source string.
+        /// </summary>
+        private int _position;
 
-		/// <summary>
-		/// Current line in source.
-		/// </summary>
-		private int _Line;
+        /// <summary>
+        /// Current line in source.
+        /// </summary>
+        private int _line;
 
-		/// <summary>
-		/// Horizontal offset in current line.
-		/// </summary>
-		private int _Offset;
+        /// <summary>
+        /// Horizontal offset in current line.
+        /// </summary>
+        private int _offset;
 
-		/// <summary>
-		/// Flag indicating the line has just started.
-		/// </summary>
-		private bool _NewLine;
+        /// <summary>
+        /// Flag indicating the line has just started.
+        /// </summary>
+        private bool _newLine;
 
-		/// <summary>
-		/// Lookup of identation levels.
-		/// </summary>
-		private readonly Stack<int> _IndentLookup;
+        /// <summary>
+        /// Lookup of identation levels.
+        /// </summary>
+        private readonly Stack<int> _indentLookup;
 
-		#endregion
+        #endregion
 
-		#region Private methods
+        #region Private methods
 
-		/// <summary>
-		/// Processes the input string into a list of lexems.
-		/// </summary>
-		private void parse()
-		{
-			while (inBounds())
-			{
-				if (_NewLine)
-				{
-					processIndent();
-					_NewLine = false;
-				}
+        /// <summary>
+        /// Processes the input string into a list of lexems.
+        /// </summary>
+        private void Parse()
+        {
+            while (InBounds())
+            {
+                if (_newLine)
+                {
+                    ProcessIndent();
+                    _newLine = false;
+                }
 
-				if (processNewLine())
-					continue;
+                if (ProcessNewLine())
+                    continue;
 
-				if (currChar() == '"' || (currChar() == '@' && nextChar() == '"'))
-				{
-					processStringLiteral();
-					if (!inBounds())
-						break;
-				}
-				else if (isComment())
-				{
-					while (inBounds() && currChar() != '\r' && currChar() != '\n')
-						_Position++;
-				}
-				else if (currChar() == '\t')
-				{
-					error(LexerMessages.TabChar);
-				}
-				else
-				{
-					var lex = processStaticLexem() ?? processRegexLexem();
-					if (lex == null)
-						error(LexerMessages.UnknownLexem);
+                if (CurrChar() == '"' || (CurrChar() == '@' && NextChar() == '"'))
+                {
+                    ProcessStringLiteral();
+                    if (!InBounds())
+                        break;
+                }
+                else if (IsComment())
+                {
+                    while (InBounds() && CurrChar() != '\r' && CurrChar() != '\n')
+                        _position++;
+                }
+                else if (CurrChar() == '\t')
+                {
+                    Error(LexerMessages.TabChar);
+                }
+                else
+                {
+                    var lex = ProcessStaticLexem() ?? ProcessRegexLexem();
+                    if (lex == null)
+                        Error(LexerMessages.UnknownLexem);
 
-					if (lex.Type == LexemType.Char)
-						lex = transformCharLiteral(lex);
-					else if (lex.Type == LexemType.Regex)
-						lex = transformRegexLiteral(lex);
+                    if (lex.Type == LexemType.Char)
+                        lex = TransformCharLiteral(lex);
+                    else if (lex.Type == LexemType.Regex)
+                        lex = TransformRegexLiteral(lex);
 
-					Lexems.Add(lex);
-				}
+                    Lexems.Add(lex);
+                }
 
-				skipSpaces();
-			}
+                SkipSpaces();
+            }
 
-			if(Lexems[Lexems.Count - 1].Type != LexemType.NewLine)
-				addLexem(LexemType.NewLine, getPosition());
+            if (Lexems[Lexems.Count - 1].Type != LexemType.NewLine)
+                AddLexem(LexemType.NewLine, GetPosition());
 
-			while (_IndentLookup.Count > 1)
-			{
-				addLexem(LexemType.Dedent, getPosition());
-				_IndentLookup.Pop();
-			}
+            while (_indentLookup.Count > 1)
+            {
+                AddLexem(LexemType.Dedent, GetPosition());
+                _indentLookup.Pop();
+            }
 
-			if(Lexems[Lexems.Count-1].Type == LexemType.NewLine)
-				Lexems.RemoveAt(Lexems.Count-1);
+            if (Lexems[Lexems.Count - 1].Type == LexemType.NewLine)
+                Lexems.RemoveAt(Lexems.Count - 1);
 
-			addLexem(LexemType.EOF, getPosition());
-		}
+            AddLexem(LexemType.Eof, GetPosition());
+        }
 
-		/// <summary>
-		/// Detects indentation changes.
-		/// </summary>
-		private void processIndent()
-		{
-			var currIndent = 0;
-			while (currChar() == ' ')
-			{
-				skip();
-				currIndent++;
-			}
+        /// <summary>
+        /// Detects indentation changes.
+        /// </summary>
+        private void ProcessIndent()
+        {
+            var currIndent = 0;
+            while (CurrChar() == ' ')
+            {
+                Skip();
+                currIndent++;
+            }
 
-			// empty line?
-			if (currChar() == '\n' || currChar() == '\r')
-				return;
+            // empty line?
+            if (CurrChar() == '\n' || CurrChar() == '\r')
+                return;
 
-			// first line?
-			if (_IndentLookup.Count == 0)
-				_IndentLookup.Push(currIndent);
+            // first line?
+            if (_indentLookup.Count == 0)
+                _indentLookup.Push(currIndent);
 
-				// indent increased
-			else if (currIndent > _IndentLookup.Peek())
-			{
-				_IndentLookup.Push(currIndent);
-				addLexem(LexemType.Indent, getPosition());
-			}
+            // indent increased
+            else if (currIndent > _indentLookup.Peek())
+            {
+                _indentLookup.Push(currIndent);
+                AddLexem(LexemType.Indent, GetPosition());
+            }
 
-				// indent decreased
-			else if (currIndent < _IndentLookup.Peek())
-			{
-				while (true)
-				{
-					if (_IndentLookup.Count > 0)
-						_IndentLookup.Pop();
-					else
-						error(LexerMessages.InconsistentIdentation);
+            // indent decreased
+            else if (currIndent < _indentLookup.Peek())
+            {
+                while (true)
+                {
+                    if (_indentLookup.Count > 0)
+                        _indentLookup.Pop();
+                    else
+                        Error(LexerMessages.InconsistentIdentation);
 
-					addLexem(LexemType.Dedent, getPosition());
+                    AddLexem(LexemType.Dedent, GetPosition());
 
-					if (currIndent == _IndentLookup.Peek())
-						break;
-				}
-			}
-		}
+                    if (currIndent == _indentLookup.Peek())
+                        break;
+                }
+            }
+        }
 
-		/// <summary>
-		/// Moves the cursor forward to the first non-space character.
-		/// </summary>
-		private void skipSpaces()
-		{
-			while (inBounds() && _Source[_Position] == ' ')
-				skip();
-		}
+        /// <summary>
+        /// Moves the cursor forward to the first non-space character.
+        /// </summary>
+        private void SkipSpaces()
+        {
+            while (InBounds() && _source[_position] == ' ')
+                Skip();
+        }
 
-		/// <summary>
-		/// Parses a string out of the source code.
-		/// </summary>
-		private void processStringLiteral()
-		{
-			var start = getPosition();
+        /// <summary>
+        /// Parses a string out of the source code.
+        /// </summary>
+        private void ProcessStringLiteral()
+        {
+            var start = GetPosition();
 
-		    var isVerbatim = currChar() == '@';
-            skip(isVerbatim ? 2 : 1);
+            var isVerbatim = CurrChar() == '@';
+            Skip(isVerbatim ? 2 : 1);
 
-		    var startPos = getPosition();
-			var sb = new StringBuilder();
-			var isEscaped = false;
+            var startPos = GetPosition();
+            var sb = new StringBuilder();
+            var isEscaped = false;
 
-			while (inBounds())
-			{
-				var ch = currChar();
+            while (InBounds())
+            {
+                var ch = CurrChar();
 
-			    if (!isEscaped && !isVerbatim && ch == '\\')
-			    {
-			        isEscaped = true;
-			        continue;
-			    }
+                if (!isEscaped && !isVerbatim && ch == '\\')
+                {
+                    isEscaped = true;
+                    continue;
+                }
 
-			    if (isEscaped)
-				{
-					sb.Append(escapeChar(nextChar().Value));
-					skip(2);
-					isEscaped = false;
-					continue;
-				}
+                if (isEscaped)
+                {
+                    sb.Append(EscapeChar(NextChar().Value));
+                    Skip(2);
+                    isEscaped = false;
+                    continue;
+                }
 
-				if (ch == '"')
-				{
-				    if (isVerbatim && nextChar() == '"')
-				    {
-				        sb.Append('"');
-				        skip(2);
-				        continue;
-				    }
-				    else
-				    {
-				        skip();
-				        Lexems.Add(new Lexem(LexemType.String, startPos, getPosition(), sb.ToString()));
-				        return;
+                if (ch == '"')
+                {
+                    if (isVerbatim && NextChar() == '"')
+                    {
+                        sb.Append('"');
+                        Skip(2);
+                        continue;
                     }
-				}
+                    else
+                    {
+                        Skip();
+                        Lexems.Add(new Lexem(LexemType.String, startPos, GetPosition(), sb.ToString()));
+                        return;
+                    }
+                }
 
-				if (ch == '\n')
-				{
-					_Offset = 1;
-					_Line++;
-				}
+                if (ch == '\n')
+                {
+                    _offset = 1;
+                    _line++;
+                }
 
-				sb.Append(ch);
-				skip();
-			}
+                sb.Append(ch);
+                Skip();
+            }
 
-			var end = getPosition();
-			throw new LensCompilerException(LexerMessages.UnclosedString).BindToLocation(start, end);
-		}
+            var end = GetPosition();
+            throw new LensCompilerException(LexerMessages.UnclosedString).BindToLocation(start, end);
+        }
 
-		/// <summary>
-		/// Attempts to find a keyword or operator at the current position in the file.
-		/// </summary>
-		private Lexem processStaticLexem()
-		{
-			return processLexemList(Keywords, ch => ch != '_' && !char.IsLetterOrDigit(ch))
-			       ?? processLexemList(Operators);
-		}
+        /// <summary>
+        /// Attempts to find a keyword or operator at the current position in the file.
+        /// </summary>
+        private Lexem ProcessStaticLexem()
+        {
+            return ProcessLexemList(Keywords, ch => ch != '_' && !char.IsLetterOrDigit(ch))
+                   ?? ProcessLexemList(Operators);
+        }
 
-		/// <summary>
-		/// Attempts to find any of the given lexems at the current position in the string.
-		/// </summary>
-		private Lexem processLexemList(StaticLexemDefinition[] lexems, Func<char, bool> nextChecker = null)
-		{
-			foreach (var curr in lexems)
-			{
-				var rep = curr.Representation;
-				var len = rep.Length;
-				if (_Position + len > _Source.Length || _Source.Substring(_Position, len) != rep)
-					continue;
+        /// <summary>
+        /// Attempts to find any of the given lexems at the current position in the string.
+        /// </summary>
+        private Lexem ProcessLexemList(StaticLexemDefinition[] lexems, Func<char, bool> nextChecker = null)
+        {
+            foreach (var curr in lexems)
+            {
+                var rep = curr.Representation;
+                var len = rep.Length;
+                if (_position + len > _source.Length || _source.Substring(_position, len) != rep)
+                    continue;
 
-				if (_Position + len < _Source.Length)
-				{
-					var nextCh = _Source[_Position + len];
-					if (nextChecker != null && !nextChecker(nextCh))
-						continue;
-				}
+                if (_position + len < _source.Length)
+                {
+                    var nextCh = _source[_position + len];
+                    if (nextChecker != null && !nextChecker(nextCh))
+                        continue;
+                }
 
-				var start = getPosition();
-				skip(len);
-				var end = getPosition();
-				return new Lexem(curr.Type, start, end);
-			}
+                var start = GetPosition();
+                Skip(len);
+                var end = GetPosition();
+                return new Lexem(curr.Type, start, end);
+            }
 
-			return null;
-		}
+            return null;
+        }
 
-		/// <summary>
-		/// Attempts to find any of the given regex-defined lexems at the current position in the string.
-		/// </summary>
-		private Lexem processRegexLexem()
-		{
-			foreach (var curr in RegexLexems)
-			{
-				var match = curr.Regex.Match(_Source, _Position);
-				if (!match.Success)
-					continue;
+        /// <summary>
+        /// Attempts to find any of the given regex-defined lexems at the current position in the string.
+        /// </summary>
+        private Lexem ProcessRegexLexem()
+        {
+            foreach (var curr in RegexLexems)
+            {
+                var match = curr.Regex.Match(_source, _position);
+                if (!match.Success)
+                    continue;
 
-				var start = getPosition();
-				skip(match.Length);
-				var end = getPosition();
-				return new Lexem(curr.Type, start, end, match.Value);
-			}
+                var start = GetPosition();
+                Skip(match.Length);
+                var end = GetPosition();
+                return new Lexem(curr.Type, start, end, match.Value);
+            }
 
-			return null;
-		}
+            return null;
+        }
 
-		/// <summary>
-		/// Removes redundant newlines from the list.
-		/// </summary>
-		private void filterNewlines()
-		{
-			var eaters = new[] {LexemType.Indent, LexemType.Dedent, LexemType.EOF};
-			var result = new List<Lexem>(Lexems.Count);
+        /// <summary>
+        /// Removes redundant newlines from the list.
+        /// </summary>
+        private void FilterNewlines()
+        {
+            var eaters = new[] {LexemType.Indent, LexemType.Dedent, LexemType.Eof};
+            var result = new List<Lexem>(Lexems.Count);
 
-			var isStart = true;
-			Lexem nl = null;
-			foreach (var curr in Lexems)
-			{
-				if (curr.Type == LexemType.NewLine)
-				{
-					if (!isStart)
-						nl = curr;
-				}
-				else
-				{
-					if (nl != null)
-					{
-						if (!curr.Type.IsAnyOf(eaters))
-							result.Add(nl);
+            var isStart = true;
+            Lexem nl = null;
+            foreach (var curr in Lexems)
+            {
+                if (curr.Type == LexemType.NewLine)
+                {
+                    if (!isStart)
+                        nl = curr;
+                }
+                else
+                {
+                    if (nl != null)
+                    {
+                        if (!curr.Type.IsAnyOf(eaters))
+                            result.Add(nl);
 
-						nl = null;
-					}
+                        nl = null;
+                    }
 
-					isStart = false;
-					result.Add(curr);
-				}
-			}
+                    isStart = false;
+                    result.Add(curr);
+                }
+            }
 
-			Lexems = result;
-		}
+            Lexems = result;
+        }
 
-		/// <summary>
-		/// Checks if the current position contains a newline character.
-		/// </summary>
-		private bool processNewLine()
-		{
-			if (inBounds() && currChar() == '\r')
-				skip();
+        /// <summary>
+        /// Checks if the current position contains a newline character.
+        /// </summary>
+        private bool ProcessNewLine()
+        {
+            if (InBounds() && CurrChar() == '\r')
+                Skip();
 
-			if (inBounds() && currChar() == '\n')
-			{
-				addLexem(LexemType.NewLine, getPosition());
+            if (InBounds() && CurrChar() == '\n')
+            {
+                AddLexem(LexemType.NewLine, GetPosition());
 
-				skip();
-				_Offset = 1;
-				_Line++;
-				_NewLine = true;
+                Skip();
+                _offset = 1;
+                _line++;
+                _newLine = true;
 
-				return true;
-			}
+                return true;
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		/// <summary>
-		/// Appends a new lexem to the list.
-		/// </summary>
-		private void addLexem(LexemType type, LexemLocation loc)
-		{
-			Lexems.Add(new Lexem(type, loc, default(LexemLocation)));
-		}
+        /// <summary>
+        /// Appends a new lexem to the list.
+        /// </summary>
+        private void AddLexem(LexemType type, LexemLocation loc)
+        {
+            Lexems.Add(new Lexem(type, loc, default(LexemLocation)));
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

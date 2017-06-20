@@ -2,29 +2,29 @@
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// A node representing a decimal floating point literal.
-	/// </summary>
-	internal class DecimalNode : LiteralNodeBase<decimal>
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing a decimal floating point literal.
+    /// </summary>
+    internal class DecimalNode : LiteralNodeBase<decimal>
+    {
+        #region Constructor
 
-		public DecimalNode(decimal value = 0)
-		{
-			Value = value;
-		}
+        public DecimalNode(decimal value = 0)
+        {
+            Value = value;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitConstant(Value);
-		}
+            gen.EmitConstant(Value);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -3,42 +3,42 @@ using Lens.SyntaxTree;
 
 namespace Lens.Utils
 {
-	/// <summary>
-	/// A single sub-node.
-	/// </summary>
-	internal class NodeChild
-	{
-		#region Constructor
+    /// <summary>
+    /// A single sub-node.
+    /// </summary>
+    internal class NodeChild
+    {
+        #region Constructor
 
-		public NodeChild(NodeBase node, Action<NodeBase> setter)
-		{
-			Node = node;
-			Setter = setter;
-		}
+        public NodeChild(NodeBase node, Action<NodeBase> setter)
+        {
+            Node = node;
+            Setter = setter;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// The child node itself.
-		/// </summary>
-		public readonly NodeBase Node;
+        /// <summary>
+        /// The child node itself.
+        /// </summary>
+        public readonly NodeBase Node;
 
-		/// <summary>
-		/// A setter that replaces the current node in its parent.
-		/// </summary>
-		public readonly Action<NodeBase> Setter;
+        /// <summary>
+        /// A setter that replaces the current node in its parent.
+        /// </summary>
+        public readonly Action<NodeBase> Setter;
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		public override string ToString()
-		{
-			return Node.ToString();
-		}
+        public override string ToString()
+        {
+            return Node.ToString();
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

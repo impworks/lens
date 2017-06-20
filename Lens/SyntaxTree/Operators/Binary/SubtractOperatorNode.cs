@@ -3,74 +3,68 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	/// <summary>
-	/// An operator node that subtracts a value from another value.
-	/// </summary>
-	internal class SubtractOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// An operator node that subtracts a value from another value.
+    /// </summary>
+    internal class SubtractOperatorNode : BinaryOperatorNodeBase
+    {
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "-"; }
-		}
+        protected override string OperatorRepresentation => "-";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Subtraction"; }
-		}
+        protected override string OverloadedMethodName => "op_Subtraction";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
-            return new SubtractOperatorNode { LeftOperand = left, RightOperand = right };
+            return new SubtractOperatorNode {LeftOperand = left, RightOperand = right};
         }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
-		}
+        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        {
+            return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			if (!IsConstant)
-			{
-				if (Resolve(ctx) == typeof (string))
-					return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
-			}
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (!IsConstant)
+            {
+                if (Resolve(ctx) == typeof(string))
+                    return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
+            }
 
-			return base.expand(ctx, mustReturn);
-		}
+            return base.Expand(ctx, mustReturn);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			loadAndConvertNumerics(ctx);
-			ctx.CurrentMethod.Generator.EmitSubtract();
-		}
+        protected override void EmitOperator(Context ctx)
+        {
+            LoadAndConvertNumerics(ctx);
+            ctx.CurrentMethod.Generator.EmitSubtract();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			if (left is string && right is string)
-				return left.Replace(right, "");
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            if (left is string && right is string)
+                return left.Replace(right, "");
 
-			return left - right;
-		}
+            return left - right;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -7,81 +7,81 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	/// <summary>
-	/// A node representing the exception being thrown or rethrown.
-	/// </summary>
-	internal class ThrowNode : NodeBase
-	{
-		#region Fields
+    /// <summary>
+    /// A node representing the exception being thrown or rethrown.
+    /// </summary>
+    internal class ThrowNode : NodeBase
+    {
+        #region Fields
 
-		/// <summary>
-		/// The exception expression to be thrown.
-		/// </summary>
-		public NodeBase Expression { get; set; }
+        /// <summary>
+        /// The exception expression to be thrown.
+        /// </summary>
+        public NodeBase Expression { get; set; }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(Expression, x => Expression = x);
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(Expression, x => Expression = x);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if (Expression == null)
-			{
-				if(ctx.CurrentCatchBlock == null)
-					error(CompilerMessages.ThrowArgumentExpected);
+            if (Expression == null)
+            {
+                if (ctx.CurrentCatchBlock == null)
+                    Error(CompilerMessages.ThrowArgumentExpected);
 
-				gen.EmitRethrow();
-			}
-			else
-			{
-				var type = Expression.Resolve(ctx);
+                gen.EmitRethrow();
+            }
+            else
+            {
+                var type = Expression.Resolve(ctx);
 
-				if (!typeof (Exception).IsExtendablyAssignableFrom(type))
-					error(Expression, CompilerMessages.ThrowTypeNotException, type);
+                if (!typeof(Exception).IsExtendablyAssignableFrom(type))
+                    Error(Expression, CompilerMessages.ThrowTypeNotException, type);
 
-				Expression.Emit(ctx, true);
-				gen.EmitThrow();
-			}
-		}
+                Expression.Emit(ctx, true);
+                gen.EmitThrow();
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(ThrowNode other)
-		{
-			return Equals(Expression, other.Expression);
-		}
+        protected bool Equals(ThrowNode other)
+        {
+            return Equals(Expression, other.Expression);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((ThrowNode)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((ThrowNode) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			return (Expression != null ? Expression.GetHashCode() : 0);
-		}
+        public override int GetHashCode()
+        {
+            return (Expression != null ? Expression.GetHashCode() : 0);
+        }
 
-		public override string ToString()
-		{
-			return string.Format("throw({0})", Expression);
-		}
+        public override string ToString()
+        {
+            return string.Format("throw({0})", Expression);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

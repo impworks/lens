@@ -3,30 +3,30 @@ using Lens.Stdlib;
 
 namespace Lens.Compiler
 {
-	internal partial class Context
-	{
-		/// <summary>
-		/// Initializes the standard library.
-		/// </summary>
-		private void initStdlib()
-		{
-			importOverloads(typeof(Utilities), "Times", "times");
-			importFunction("fail", typeof(Utilities).GetMethod("FailWith"));
+    internal partial class Context
+    {
+        /// <summary>
+        /// Initializes the standard library.
+        /// </summary>
+        private void InitStdlib()
+        {
+            ImportOverloads(typeof(Utilities), "Times", "times");
+            ImportFunction("fail", typeof(Utilities).GetMethod("FailWith"), false);
 
-			importOverloads(typeof(string), "Format", "fmt");
-			importOverloads(typeof(Console), "Write", "print");
-			importOverloads(typeof(Console), "WriteLine", "println");
+            ImportOverloads(typeof(string), "Format", "fmt");
+            ImportOverloads(typeof(Console), "Write", "print");
+            ImportOverloads(typeof(Console), "WriteLine", "println");
 
-			importOverloads(typeof(Randomizer), "Random", "rand");
-			importOverloads(typeof(Utilities), "Range", "to");
-			importOverloads(typeof(Utilities), "Clamp", "clamp");
-			importOverloads(typeof(Utilities), "Odd", "odd");
-			importOverloads(typeof(Utilities), "Even", "even");
+            ImportOverloads(typeof(Randomizer), "Random", "rand");
+            ImportOverloads(typeof(Utilities), "Range", "to");
+            ImportOverloads(typeof(Utilities), "Clamp", "clamp");
+            ImportOverloads(typeof(Utilities), "Odd", "odd");
+            ImportOverloads(typeof(Utilities), "Even", "even");
 
-			importFunction("read", typeof(Console).GetMethod("Read"));
-			importFunction("readln", typeof(Console).GetMethod("ReadLine"));
-			importFunction("readkey", typeof(ConsoleWrapper).GetMethod("ReadKey"));
-			importFunction("waitkey", typeof(ConsoleWrapper).GetMethod("WaitKey"));
-		}
-	}
+            ImportFunction("read", typeof(Console).GetMethod("Read"), false);
+            ImportFunction("readln", typeof(Console).GetMethod("ReadLine"), false);
+            ImportFunction("readkey", typeof(ConsoleWrapper).GetMethod("ReadKey"), false);
+            ImportFunction("waitkey", typeof(ConsoleWrapper).GetMethod("WaitKey"), false);
+        }
+    }
 }

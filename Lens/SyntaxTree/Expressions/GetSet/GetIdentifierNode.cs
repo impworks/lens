@@ -7,274 +7,293 @@ using Lens.Translations;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
-	/// <summary>
-	/// A node representing read access to a local variable or a function.
-	/// </summary>
-	internal class GetIdentifierNode : IdentifierNodeBase, IPointerProvider
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing read access to a local variable or a function.
+    /// </summary>
+    internal class GetIdentifierNode : IdentifierNodeBase, IPointerProvider
+    {
+        #region Constructor
 
-		public GetIdentifierNode(string identifier = null)
-		{
-			Identifier = identifier;
-		}
+        public GetIdentifierNode(string identifier = null)
+        {
+            Identifier = identifier;
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		private MethodEntity _Method;
-		private GlobalPropertyInfo _Property;
-		private Local _LocalConstant;
-		private TypeEntity _Type;
+        /// <summary>
+        /// Cached method reference (if the identifier represents it).
+        /// </summary>
+        private MethodEntity _method;
 
-		public bool PointerRequired { get; set; }
-		public bool RefArgumentRequired { get; set; }
+        /// <summary>
+        /// Cached global property reference (if the identifier represents it).
+        /// </summary>
+        private GlobalPropertyInfo _property;
 
-		#endregion
+        /// <summary>
+        /// Cached local reference (if the identifier represents it and the local is a constant).
+        /// </summary>
+        private Local _localConstant;
 
-		#region Resolve
-		
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			if(Identifier == "_")
-				error(CompilerMessages.UnderscoreNameUsed);
+        /// <summary>
+        /// Cached algebraic type reference (if the identifier represents it).
+        /// </summary>
+        private TypeEntity _type;
 
-			// local variable
-			var local = Local ?? ctx.Scope.FindLocal(Identifier);
-			if (local != null)
-			{
-				// only local constants are cached
-				// because mutable variables could be closured later on
-				if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
-					_LocalConstant = local;
+        public bool PointerRequired { get; set; }
+        public bool RefArgumentRequired { get; set; }
 
-				return local.Type;
-			}
+        #endregion
 
-			// static function declared in the script
-			try
-			{
-				var methods = ctx.MainType.ResolveMethodGroup(Identifier);
-				if (methods.Length > 1)
-					error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
+        #region Resolve
 
-				_Method = methods[0];
-				return FunctionalHelper.CreateFuncType(_Method.ReturnType, _Method.GetArgumentTypes(ctx));
-			}
-			catch (KeyNotFoundException) { }
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            if (Identifier == "_")
+                Error(CompilerMessages.UnderscoreNameUsed);
 
-			// algebraic type without a constructor
-			var type = ctx.FindType(Identifier);
-			if (type != null && type.Kind == TypeEntityKind.TypeLabel)
-			{
-				try
-				{
-					type.ResolveConstructor(new Type[0]);
-					_Type = type;
-					return _Type.TypeInfo;
-				}
-				catch (KeyNotFoundException) { }
-			}
+            // local variable
+            var local = Local ?? ctx.Scope.FindLocal(Identifier);
+            if (local != null)
+            {
+                // only local constants are cached
+                // because mutable variables could be closured later on
+                if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
+                    _localConstant = local;
 
-			// global property
-			try
-			{
-				_Property = ctx.ResolveGlobalProperty(Identifier);
-				return _Property.PropertyType;
-			}
-			catch (KeyNotFoundException)
-			{
-				error(CompilerMessages.IdentifierNotFound, Identifier);
-			}
+                return local.Type;
+            }
 
-			return typeof (UnitType);
-		}
+            // static function declared in the script
+            try
+            {
+                var methods = ctx.MainType.ResolveMethodGroup(Identifier);
+                if (methods.Length > 1)
+                    Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
-		#endregion
+                _method = methods[0];
+                return FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx));
+            }
+            catch (KeyNotFoundException)
+            {
+            }
 
-		#region Transform
+            // algebraic type without a constructor
+            var type = ctx.FindType(Identifier);
+            if (type != null && type.Kind == TypeEntityKind.TypeLabel)
+            {
+                try
+                {
+                    type.ResolveConstructor(new Type[0]);
+                    _type = type;
+                    return _type.TypeInfo;
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+            }
 
-		protected override NodeBase expand(Context ctx, bool mustReturn)
-		{
-			if (_Type != null)
-				return Expr.New(_Type.TypeInfo);
+            // global property
+            try
+            {
+                _property = ctx.ResolveGlobalProperty(Identifier);
+                return _property.PropertyType;
+            }
+            catch (KeyNotFoundException)
+            {
+                Error(CompilerMessages.IdentifierNotFound, Identifier);
+            }
 
-			if (_LocalConstant != null && !PointerRequired && !RefArgumentRequired)
-				return Expr.Constant(_LocalConstant.ConstantValue);
+            return typeof(UnitType);
+        }
 
-			return base.expand(ctx, mustReturn);
-		}
+        #endregion
 
-		#endregion
+        #region Transform
 
-		#region Emit
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (_type != null)
+                return Expr.New(_type.TypeInfo);
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var resultType = Resolve(ctx);
+            if (_localConstant != null && !PointerRequired && !RefArgumentRequired)
+                return Expr.Constant(_localConstant.ConstantValue);
 
-			var gen = ctx.CurrentMethod.Generator;
+            return base.Expand(ctx, mustReturn);
+        }
 
-			// local name is not cached because it can be closured.
-			// if the identifier is actually a local constant, the 'compile' method is not invoked at all
-			var local = Local ?? ctx.Scope.FindLocal(Identifier);
-			if (local != null)
-			{
-				if(local.IsImmutable && RefArgumentRequired)
-					error(CompilerMessages.ConstantByRef);
+        #endregion
 
-				if (local.IsClosured)
-				{
-					if (local.ClosureDistance == 0)
-						emitGetClosuredLocal(ctx, local);
-					else
-						emitGetClosuredRemote(ctx, local);
-				}
-				else
-				{
-					emitGetLocal(ctx, local);
-				}
+        #region Emit
 
-				return;
-			}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var resultType = Resolve(ctx);
 
-			// load pointer to global function
-			if (_Method != null)
-			{
-				var ctor = ctx.ResolveConstructor(resultType, new[] {typeof (object), typeof (IntPtr)});
+            var gen = ctx.CurrentMethod.Generator;
 
-				gen.EmitNull();
-				gen.EmitLoadFunctionPointer(_Method.MethodInfo);
-				gen.EmitCreateObject(ctor.ConstructorInfo);
+            // local name is not cached because it can be closured.
+            // if the identifier is actually a local constant, the 'compile' method is not invoked at all
+            var local = Local ?? ctx.Scope.FindLocal(Identifier);
+            if (local != null)
+            {
+                if (local.IsImmutable && RefArgumentRequired)
+                    Error(CompilerMessages.ConstantByRef);
 
-				return;
-			}
+                if (local.IsClosured)
+                {
+                    if (local.ClosureDistance == 0)
+                        EmitGetClosuredLocal(ctx, local);
+                    else
+                        EmitGetClosuredRemote(ctx, local);
+                }
+                else
+                {
+                    EmitGetLocal(ctx, local);
+                }
 
-			// get a property value
-			if (_Property != null)
-			{
-				var id = _Property.PropertyId;
-				if(!_Property.HasGetter)
-					error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
+                return;
+            }
 
-				var type = _Property.PropertyType;
-				if (_Property.GetterMethod != null)
-				{
-					gen.EmitCall(_Property.GetterMethod.MethodInfo);
-				}
-				else
-				{
-					var method = typeof (GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
-					gen.EmitConstant(ctx.ContextId);
-					gen.EmitConstant(id);
-					gen.EmitCall(method);
-				}
-				return;
-			}
+            // load pointer to global function
+            if (_method != null)
+            {
+                var ctor = ctx.ResolveConstructor(resultType, new[] {typeof(object), typeof(IntPtr)});
 
-			error(CompilerMessages.IdentifierNotFound, Identifier);
-		}
+                gen.EmitNull();
+                gen.EmitLoadFunctionPointer(_method.MethodInfo);
+                gen.EmitCreateObject(ctor.ConstructorInfo);
 
-		/// <summary>
-		/// Gets a closured variable that has been declared in the current scope.
-		/// </summary>
-		private void emitGetClosuredLocal(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+                return;
+            }
 
-			gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
+            // get a property value
+            if (_property != null)
+            {
+                var id = _property.PropertyId;
+                if (!_property.HasGetter)
+                    Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
 
-			var clsField = ctx.Scope.ActiveClosure.ClosureType.ResolveField(name.ClosureFieldName);
-			gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
-		}
+                var type = _property.PropertyType;
+                if (_property.GetterMethod != null)
+                {
+                    gen.EmitCall(_property.GetterMethod.MethodInfo);
+                }
+                else
+                {
+                    var method = typeof(GlobalPropertyHelper).GetMethod("Get").MakeGenericMethod(type);
+                    gen.EmitConstant(ctx.ContextId);
+                    gen.EmitConstant(id);
+                    gen.EmitCall(method);
+                }
+                return;
+            }
 
-		/// <summary>
-		/// Gets a closured variable that has been imported from outer scopes.
-		/// </summary>
-		private void emitGetClosuredRemote(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+            Error(CompilerMessages.IdentifierNotFound, Identifier);
+        }
 
-			gen.EmitLoadArgument(0);
+        /// <summary>
+        /// Gets a closured variable that has been declared in the current scope.
+        /// </summary>
+        private void EmitGetClosuredLocal(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			var dist = name.ClosureDistance;
-			var type = (Type)ctx.CurrentType.TypeBuilder;
-			while (dist > 1)
-			{
-				var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
-				gen.EmitLoadField(rootField.FieldInfo);
+            gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
 
-				type = rootField.FieldType;
-				dist--;
-			}
+            var clsField = ctx.Scope.ActiveClosure.ClosureType.ResolveField(name.ClosureFieldName);
+            gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
+        }
 
-			var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-			gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
-		}
+        /// <summary>
+        /// Gets a closured variable that has been imported from outer scopes.
+        /// </summary>
+        private void EmitGetClosuredRemote(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-		/// <summary>
-		/// Gets a local variable from current scope.
-		/// </summary>
-		private void emitGetLocal(Context ctx, Local name)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			var ptr = PointerRequired || RefArgumentRequired;
+            gen.EmitLoadArgument(0);
 
-			if (name.ArgumentId.HasValue)
-			{
-				gen.EmitLoadArgument(name.ArgumentId.Value, ptr);
-				if(name.IsRefArgument && !ptr)
-					gen.EmitLoadFromPointer(name.Type);
-			}
-			else
-			{
-				gen.EmitLoadLocal(name.LocalBuilder, ptr);
-			}
-		}
+            var dist = name.ClosureDistance;
+            var type = (Type) ctx.CurrentType.TypeBuilder;
+            while (dist > 1)
+            {
+                var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
+                gen.EmitLoadField(rootField.FieldInfo);
 
-		#endregion
-		
-		#region Constant unroll
+                type = rootField.FieldType;
+                dist--;
+            }
 
-		public override bool IsConstant { get { return _LocalConstant != null; } }
-		public override dynamic ConstantValue { get { return _LocalConstant != null ? _LocalConstant.ConstantValue : base.ConstantValue; } }
+            var clsField = ctx.ResolveField(type, name.ClosureFieldName);
+            gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
+        }
 
-		#endregion
+        /// <summary>
+        /// Gets a local variable from current scope.
+        /// </summary>
+        private void EmitGetLocal(Context ctx, Local name)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var ptr = PointerRequired || RefArgumentRequired;
 
-		#region Debug
+            if (name.ArgumentId.HasValue)
+            {
+                gen.EmitLoadArgument(name.ArgumentId.Value, ptr);
+                if (name.IsRefArgument && !ptr)
+                    gen.EmitLoadFromPointer(name.Type);
+            }
+            else
+            {
+                gen.EmitLoadLocal(name.LocalBuilder, ptr);
+            }
+        }
 
-		protected bool Equals(GetIdentifierNode other)
-		{
-			return base.Equals(other)
-				   && RefArgumentRequired.Equals(other.RefArgumentRequired)
-				   && PointerRequired.Equals(other.PointerRequired);
-		}
+        #endregion
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((GetIdentifierNode)obj);
-		}
+        #region Constant unroll
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				var hash = base.GetHashCode();
-				hash = (hash * 397) ^ PointerRequired.GetHashCode();
-				hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
-				return hash;
-			}
-		}
+        public override bool IsConstant => _localConstant != null;
+        public override dynamic ConstantValue => _localConstant != null ? _localConstant.ConstantValue : base.ConstantValue;
 
-		public override string ToString()
-		{
-			return string.Format("get({0})", Identifier);
-		}
+        #endregion
 
-		#endregion
-	}
+        #region Debug
+
+        protected bool Equals(GetIdentifierNode other)
+        {
+            return base.Equals(other)
+                   && RefArgumentRequired.Equals(other.RefArgumentRequired)
+                   && PointerRequired.Equals(other.PointerRequired);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((GetIdentifierNode) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = base.GetHashCode();
+                hash = (hash * 397) ^ PointerRequired.GetHashCode();
+                hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
+                return hash;
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"get({Identifier})";
+        }
+
+        #endregion
+    }
 }

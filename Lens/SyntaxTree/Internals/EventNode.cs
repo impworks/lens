@@ -6,70 +6,70 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Internals
 {
-	internal class EventNode : NodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A node that represents subscription/unsubscription of an event.
+    /// </summary>
+    internal class EventNode : NodeBase
+    {
+        #region Constructor
 
-		public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
-		{
-			_Event = evt;
-			_IsSubscription = isSubscription;
-			_Node = node;
-			_Callback = Expr.CastTransparent(node.Value, _Event.EventHandlerType);
-		}
+        public EventNode(EventWrapper evt, SetMemberNode node, bool isSubscription)
+        {
+            _event = evt;
+            _isSubscription = isSubscription;
+            _node = node;
+            _callback = Expr.CastTransparent(node.Value, _event.EventHandlerType);
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		/// <summary>
-		/// Node containing the event expression and name.
-		/// </summary>
-		private readonly SetMemberNode _Node;
+        /// <summary>
+        /// Node containing the event expression and name.
+        /// </summary>
+        private readonly SetMemberNode _node;
 
-		/// <summary>
-		/// Callback expression to bind to event.
-		/// </summary>
-		private NodeBase _Callback;
+        /// <summary>
+        /// Callback expression to bind to event.
+        /// </summary>
+        private NodeBase _callback;
 
-		/// <summary>
-		/// Flag indicating that the 
-		/// </summary>
-		private readonly bool _IsSubscription;
+        /// <summary>
+        /// Flag indicating that the 
+        /// </summary>
+        private readonly bool _isSubscription;
 
-		/// <summary>
-		/// The event entity.
-		/// </summary>
-		private readonly EventWrapper _Event;
+        /// <summary>
+        /// The event entity.
+        /// </summary>
+        private readonly EventWrapper _event;
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(_Callback, x => _Callback = x);
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(_callback, x => _callback = x);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if (_Node.Expression != null)
-			{
-				_Node.Expression.EmitNodeForAccess(ctx);
-			}
+            _node.Expression?.EmitNodeForAccess(ctx);
 
-			_Callback.Emit(ctx, true);
+            _callback.Emit(ctx, true);
 
-			var method = _IsSubscription ? _Event.AddMethod : _Event.RemoveMethod;
-			gen.EmitCall(method, true);
-		}
+            var method = _isSubscription ? _event.AddMethod : _event.RemoveMethod;
+            gen.EmitCall(method, true);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

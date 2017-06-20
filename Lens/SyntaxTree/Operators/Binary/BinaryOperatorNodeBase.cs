@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
@@ -7,249 +7,251 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	/// <summary>
-	/// The base for all binary operators.
-	/// </summary>
-	internal abstract class BinaryOperatorNodeBase : OperatorNodeBase
-	{
-		#region Fields
+    /// <summary>
+    /// The base for all binary operators.
+    /// </summary>
+    internal abstract class BinaryOperatorNodeBase : OperatorNodeBase
+    {
+        #region Fields
 
-		/// <summary>
-		/// The operand to the left side.
-		/// </summary>
-		public NodeBase LeftOperand { get; set; }
-		
-		/// <summary>
-		/// The operand to the right side.
-		/// </summary>
-		public NodeBase RightOperand { get; set; }
+        /// <summary>
+        /// The operand to the left side.
+        /// </summary>
+        public NodeBase LeftOperand { get; set; }
 
-		/// <summary>
-		/// Checks if numeric type casting checks should be applied to operands.
-		/// </summary>
-		protected virtual bool IsNumericOperator { get { return true; } }
+        /// <summary>
+        /// The operand to the right side.
+        /// </summary>
+        public NodeBase RightOperand { get; set; }
 
-		#endregion
+        /// <summary>
+        /// Checks if numeric type casting checks should be applied to operands.
+        /// </summary>
+        protected virtual bool IsNumericOperator => true;
 
-		#region Resolve
+        #endregion
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var leftType = LeftOperand.Resolve(ctx);
-			var rightType = RightOperand.Resolve(ctx);
+        #region Resolve
 
-			var result = resolveOperatorType(ctx, leftType, rightType);
-			if (result != null)
-				return result;
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var leftType = LeftOperand.Resolve(ctx);
+            var rightType = RightOperand.Resolve(ctx);
 
-			if (OverloadedMethodName != null)
-			{
-				try
-				{
-					_OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] { leftType, rightType });
-				}
-				catch
-				{
-					try
-					{
-						_OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] { leftType, rightType });
-					}
-					catch { }
-				}
+            var result = ResolveOperatorType(ctx, leftType, rightType);
+            if (result != null)
+                return result;
 
-				// cannot be generic
-				if (_OverloadedMethod != null)
-					return _OverloadedMethod.ReturnType;
-			}
+            if (OverloadedMethodName != null)
+            {
+                try
+                {
+                    OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] {leftType, rightType});
+                }
+                catch
+                {
+                    try
+                    {
+                        OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] {leftType, rightType});
+                    }
+                    catch
+                    {
+                    }
+                }
 
-			if (IsNumericOperator)
-			{
-			    if (leftType.IsNullableType() || rightType.IsNullableType())
-			    {
-			        var leftNullable = leftType.IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
+                // cannot be generic
+                if (OverloadedMethod != null)
+                    return OverloadedMethod.ReturnType;
+            }
+
+            if (IsNumericOperator)
+            {
+                if (leftType.IsNullableType() || rightType.IsNullableType())
+                {
+                    var leftNullable = leftType.IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
                     var rightNullable = rightType.IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
 
                     var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
                     if (commonNumericType == null)
-                        error(CompilerMessages.OperatorTypesSignednessMismatch);
+                        Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
                     return typeof(Nullable<>).MakeGenericType(commonNumericType);
-			    }
+                }
 
-				if (leftType.IsNumericType() && rightType.IsNumericType())
-				{
-					var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
-					if (commonNumericType == null)
-						error(CompilerMessages.OperatorTypesSignednessMismatch);
+                if (leftType.IsNumericType() && rightType.IsNumericType())
+                {
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
+                    if (commonNumericType == null)
+                        Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-					return commonNumericType;
-				}
-			}
+                    return commonNumericType;
+                }
+            }
 
-			error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
-			return null;
-		}
+            Error(this, CompilerMessages.OperatorBinaryTypesMismatch, OperatorRepresentation, leftType, rightType);
+            return null;
+        }
 
-		/// <summary>
-		/// Resolves operator return type, in case it's not an overloaded method call.
-		/// </summary>
-		protected virtual Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			return null;
-		}
+        /// <summary>
+        /// Resolves operator return type, in case it's not an overloaded method call.
+        /// </summary>
+        protected virtual Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        {
+            return null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Transform
+        #region Transform
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			yield return new NodeChild(LeftOperand, x => LeftOperand = x);
-			yield return new NodeChild(RightOperand, x => RightOperand = x);
-		}
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(LeftOperand, x => LeftOperand = x);
+            yield return new NodeChild(RightOperand, x => RightOperand = x);
+        }
 
-	    protected override NodeBase expand(Context ctx, bool mustReturn)
-	    {
-	        if (Resolve(ctx).IsNullableType())
-	        {
-	            var leftNullable = LeftOperand.Resolve(ctx).IsNullableType();
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (Resolve(ctx).IsNullableType())
+            {
+                var leftNullable = LeftOperand.Resolve(ctx).IsNullableType();
                 var rightNullable = RightOperand.Resolve(ctx).IsNullableType();
-	            if (leftNullable && rightNullable)
-	            {
-	                return Expr.If(
+                if (leftNullable && rightNullable)
+                {
+                    return Expr.If(
                         Expr.And(
                             Expr.GetMember(LeftOperand, "HasValue"),
                             Expr.GetMember(RightOperand, "HasValue")
                         ),
                         Expr.Block(
-                            recreateSelfWithArgs(
+                            RecreateSelfWithArgs(
                                 Expr.GetMember(LeftOperand, "Value"),
                                 Expr.GetMember(RightOperand, "Value")
                             )
                         ),
                         Expr.Block(Expr.Null())
-	                );
-	            }
+                    );
+                }
 
-	            if (leftNullable)
-	            {
-	                return Expr.If(
-	                    Expr.GetMember(LeftOperand, "HasValue"),
-	                    Expr.Block(
-	                        recreateSelfWithArgs(
-	                            Expr.GetMember(LeftOperand, "Value"),
-	                            RightOperand
-	                        )
-	                    ),
-	                    Expr.Block(Expr.Null())
-	                );
-	            }
+                if (leftNullable)
+                {
+                    return Expr.If(
+                        Expr.GetMember(LeftOperand, "HasValue"),
+                        Expr.Block(
+                            RecreateSelfWithArgs(
+                                Expr.GetMember(LeftOperand, "Value"),
+                                RightOperand
+                            )
+                        ),
+                        Expr.Block(Expr.Null())
+                    );
+                }
 
-	            if (rightNullable)
-	            {
+                if (rightNullable)
+                {
                     return Expr.If(
                         Expr.GetMember(RightOperand, "HasValue"),
                         Expr.Block(
-                            recreateSelfWithArgs(
+                            RecreateSelfWithArgs(
                                 LeftOperand,
                                 Expr.GetMember(RightOperand, "Value")
                             )
                         ),
                         Expr.Block(Expr.Null())
                     );
-	            }
-	        }
+                }
+            }
 
-	        return base.expand(ctx, mustReturn);
-	    }
+            return base.Expand(ctx, mustReturn);
+        }
 
-	    protected abstract BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right);
+        protected abstract BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right);
 
-	    #endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			if (_OverloadedMethod == null)
-			{
-				emitOperator(ctx);
-				return;
-			}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            if (OverloadedMethod == null)
+            {
+                EmitOperator(ctx);
+                return;
+            }
 
-			var ps = _OverloadedMethod.ArgumentTypes;
-			Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
-			Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
-			gen.EmitCall(_OverloadedMethod.MethodInfo);
-		}
+            var ps = OverloadedMethod.ArgumentTypes;
+            Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
+            Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
+            gen.EmitCall(OverloadedMethod.MethodInfo);
+        }
 
-		/// <summary>
-		/// Emits operator code, in case it's not an overloaded method call.
-		/// </summary>
-		protected abstract void emitOperator(Context ctx);
+        /// <summary>
+        /// Emits operator code, in case it's not an overloaded method call.
+        /// </summary>
+        protected abstract void EmitOperator(Context ctx);
 
-		#endregion
+        #endregion
 
-		#region Helper methods
+        #region Helper methods
 
-		/// <summary>
-		/// Loads both arguments and converts them to the biggest common type.
-		/// </summary>
-		protected void loadAndConvertNumerics(Context ctx, Type type = null)
-		{
-			var left = LeftOperand.Resolve(ctx);
-			var right = RightOperand.Resolve(ctx);
+        /// <summary>
+        /// Loads both arguments and converts them to the biggest common type.
+        /// </summary>
+        protected void LoadAndConvertNumerics(Context ctx, Type type = null)
+        {
+            var left = LeftOperand.Resolve(ctx);
+            var right = RightOperand.Resolve(ctx);
 
-			if(type == null)
-				type = TypeExtensions.GetNumericOperationType(left, right);
+            if (type == null)
+                type = TypeExtensions.GetNumericOperationType(left, right);
 
-			Expr.Cast(LeftOperand, type).Emit(ctx, true);
-			Expr.Cast(RightOperand, type).Emit(ctx, true);
-		}
+            Expr.Cast(LeftOperand, type).Emit(ctx, true);
+            Expr.Cast(RightOperand, type).Emit(ctx, true);
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		public override bool IsConstant { get { return RightOperand.IsConstant && LeftOperand.IsConstant; } }
-		public override object ConstantValue { get { return unrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue); } }
+        public override bool IsConstant => RightOperand.IsConstant && LeftOperand.IsConstant;
+        public override object ConstantValue => UnrollConstant(LeftOperand.ConstantValue, RightOperand.ConstantValue);
 
-		/// <summary>
-		/// Calculates the constant value in compile time.
-		/// </summary>
-		protected abstract dynamic unrollConstant(dynamic left, dynamic right);
+        /// <summary>
+        /// Calculates the constant value in compile time.
+        /// </summary>
+        protected abstract dynamic UnrollConstant(dynamic left, dynamic right);
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		protected bool Equals(BinaryOperatorNodeBase other)
-		{
-			return Equals(LeftOperand, other.LeftOperand) && Equals(RightOperand, other.RightOperand);
-		}
+        protected bool Equals(BinaryOperatorNodeBase other)
+        {
+            return Equals(LeftOperand, other.LeftOperand) && Equals(RightOperand, other.RightOperand);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((BinaryOperatorNodeBase)obj);
-		}
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((BinaryOperatorNodeBase) obj);
+        }
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return ((LeftOperand != null ? LeftOperand.GetHashCode() : 0) * 397) ^ (RightOperand != null ? RightOperand.GetHashCode() : 0);
-			}
-		}
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((LeftOperand != null ? LeftOperand.GetHashCode() : 0) * 397) ^ (RightOperand != null ? RightOperand.GetHashCode() : 0);
+            }
+        }
 
-		public override string ToString()
-		{
-			return string.Format("op{0}({1}, {2})", OperatorRepresentation, LeftOperand, RightOperand);
-		}
+        public override string ToString()
+        {
+            return string.Format("op{0}({1}, {2})", OperatorRepresentation, LeftOperand, RightOperand);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

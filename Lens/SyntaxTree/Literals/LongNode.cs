@@ -2,28 +2,28 @@
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// A node representing a long literal.
-	/// </summary>
-	internal class LongNode : LiteralNodeBase<long>
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing a long literal.
+    /// </summary>
+    internal class LongNode : LiteralNodeBase<long>
+    {
+        #region Constructor
 
-		public LongNode(long value = 0)
-		{
-			Value = value;
-		}
+        public LongNode(long value = 0)
+        {
+            Value = value;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			gen.EmitConstant(Value);
-		}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            gen.EmitConstant(Value);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

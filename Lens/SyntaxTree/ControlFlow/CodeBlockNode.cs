@@ -6,244 +6,249 @@ using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
 using Lens.SyntaxTree.Declarations.Locals;
+using Lens.SyntaxTree.Internals;
 using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.ControlFlow
 {
-	using Lens.SyntaxTree.Internals;
+    /// <summary>
+    /// A set of consecutive code statements.
+    /// </summary>
+    internal class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
+    {
+        #region Constructor
 
+        public CodeBlockNode(ScopeKind scopeKind = ScopeKind.Unclosured)
+        {
+            Statements = new List<NodeBase>();
+            Scope = new Scope(scopeKind);
+        }
 
-	/// <summary>
-	/// A set of consecutive code statements.
-	/// </summary>
-	internal class CodeBlockNode : NodeBase, IEnumerable<NodeBase>
-	{
-		#region Constructor
+        #endregion
 
-		public CodeBlockNode(ScopeKind scopeKind = ScopeKind.Unclosured)
-		{
-			Statements = new List<NodeBase>();	
-			Scope = new Scope(scopeKind);
-		}
+        #region Fields
 
-		#endregion
+        /// <summary>
+        /// The scope frame corresponding to current code block.
+        /// </summary>
+        public Scope Scope { get; private set; }
 
-		#region Fields
+        /// <summary>
+        /// The statements to execute.
+        /// </summary>
+        public List<NodeBase> Statements { get; set; }
 
-		/// <summary>
-		/// The scope frame corresponding to current code block.
-		/// </summary>
-		public Scope Scope { get; private set; }
+        #endregion
 
-		/// <summary>
-		/// The statements to execute.
-		/// </summary>
-		public List<NodeBase> Statements { get; set; }
+        #region Resolve
 
-		#endregion
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var last = Statements.LastOrDefault(x => !(x is IMetaNode));
+            if (last is VarNode || last is LetNode)
+                Error(last, CompilerMessages.CodeBlockLastVar);
 
-		#region Resolve
+            ctx.EnterScope(Scope);
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var last = Statements.LastOrDefault(x => !(x is IMetaNode));
-			if (last is VarNode || last is LetNode)
-				error(last, CompilerMessages.CodeBlockLastVar);
+            var result = typeof(UnitType);
+            foreach (var curr in Statements)
+            {
+                if (!(curr is IMetaNode))
+                    result = curr.Resolve(ctx);
+            }
 
-			ctx.EnterScope(Scope);
+            ctx.ExitScope();
 
-			var result = typeof(UnitType);
-			foreach (var curr in Statements)
-			{
-				if(!(curr is IMetaNode))
-					result = curr.Resolve(ctx);
-			}
+            return result;
+        }
 
-			ctx.ExitScope();
+        #endregion
 
-			return result;
-		}
+        #region Transform
 
-		#endregion
+        public override void Transform(Context ctx, bool mustReturn)
+        {
+            ctx.EnterScope(Scope);
 
-		#region Transform
+            base.Transform(ctx, mustReturn);
 
-		public override void Transform(Context ctx, bool mustReturn)
-		{
-			ctx.EnterScope(Scope);
+            ctx.ExitScope();
+        }
 
-			base.Transform(ctx, mustReturn);
+        protected override IEnumerable<NodeChild> GetChildren()
+        {
+            return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
+        }
 
-			ctx.ExitScope();
-		}
+        #endregion
 
-		protected override IEnumerable<NodeChild> getChildren()
-		{
-			return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
-		}
+        #region Process closures
 
-		#endregion
+        public override void ProcessClosures(Context ctx)
+        {
+            ctx.EnterScope(Scope);
+            base.ProcessClosures(ctx);
+            ctx.ExitScope().FinalizeSelf(ctx);
+        }
 
-		#region Process closures
+        #endregion
 
-		public override void ProcessClosures(Context ctx)
-		{
-			ctx.EnterScope(Scope);
-			base.ProcessClosures(ctx);
-			ctx.ExitScope().FinalizeSelf(ctx);
-		}
+        #region Emit
 
-		#endregion
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            ctx.EnterScope(Scope);
 
-		#region Emit
+            if (Scope.ClosureType != null)
+                EmitClosureSetup(ctx);
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			ctx.EnterScope(Scope);
+            EmitStatements(ctx, mustReturn);
 
-			if(Scope.ClosureType != null)
-				emitClosureSetup(ctx);
+            ctx.ExitScope();
+        }
 
-			emitStatements(ctx, mustReturn);
+        /// <summary>
+        /// Emits code that initializes the scope variable for closures and lambdas to work.
+        /// </summary>
+        /// <param name="ctx"></param>
+        private void EmitClosureSetup(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			ctx.ExitScope();
-		}
+            var type = Scope.ClosureType;
+            var loc = Scope.ClosureVariable;
 
-		private void emitClosureSetup(Context ctx)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+            // create closure instance
+            var closureCtor = type.ResolveConstructor(new Type[0]).ConstructorBuilder;
+            gen.EmitCreateObject(closureCtor);
+            gen.EmitSaveLocal(loc);
 
-			var type = Scope.ClosureType;
-			var loc = Scope.ClosureVariable;
+            // affix to parent
+            if (Scope.ClosureReferencesOuter)
+            {
+                gen.EmitLoadLocal(loc);
 
-			// create closure instance
-			var closureCtor = type.ResolveConstructor(new Type[0]).ConstructorBuilder;
-			gen.EmitCreateObject(closureCtor);
-			gen.EmitSaveLocal(loc);
+                if (Scope.Kind == ScopeKind.Loop)
+                    gen.EmitLoadLocal(Scope.OuterScope.ClosureVariable);
+                else if (Scope.Kind == ScopeKind.LambdaRoot)
+                    gen.EmitLoadArgument(0);
+                else
+                    throw new InvalidOperationException("Incorrect scope parent!");
 
-			// affix to parent
-			if (Scope.ClosureReferencesOuter)
-			{
-				gen.EmitLoadLocal(loc);
+                gen.EmitSaveField(type.ResolveField(EntityNames.ParentScopeFieldName).FieldBuilder);
+            }
 
-				if (Scope.Kind == ScopeKind.Loop)
-					gen.EmitLoadLocal(Scope.OuterScope.ClosureVariable);
-				else if (Scope.Kind == ScopeKind.LambdaRoot)
-					gen.EmitLoadArgument(0);
-				else
-					throw new InvalidOperationException("Incorrect scope parent!");
+            // save arguments into closure
+            foreach (var curr in Scope.Locals.Values)
+            {
+                if (!curr.IsClosured || curr.ArgumentId == null)
+                    continue;
 
-				gen.EmitSaveField(type.ResolveField(EntityNames.ParentScopeFieldName).FieldBuilder);
-			}
+                gen.EmitLoadLocal(loc);
+                gen.EmitLoadArgument(curr.ArgumentId.Value);
+                gen.EmitSaveField(type.ResolveField(curr.ClosureFieldName).FieldBuilder);
+            }
+        }
 
-			// save arguments into closure
-			foreach (var curr in Scope.Locals.Values)
-			{
-				if (!curr.IsClosured || curr.ArgumentId == null)
-					continue;
+        /// <summary>
+        /// Emits the list of statements one by one.
+        /// </summary>
+        private void EmitStatements(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-				gen.EmitLoadLocal(loc);
-				gen.EmitLoadArgument(curr.ArgumentId.Value);
-				gen.EmitSaveField(type.ResolveField(curr.ClosureFieldName).FieldBuilder);
-			}
-		}
+            var lastExpressionIdx = Statements.FindLastIndex(x => !(x is JumpNode) && !(x is JumpLabelNode));
 
-		private void emitStatements(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+            for (var idx = 0; idx < Statements.Count; idx++)
+            {
+                var subReturn = mustReturn && (idx == lastExpressionIdx || Scope.Kind == ScopeKind.MatchRoot);
+                var curr = Statements[idx];
 
-			var lastExpressionIdx = Statements.FindLastIndex(x => !(x is JumpNode) && !(x is JumpLabelNode));
+                var retType = curr.Resolve(ctx, subReturn);
 
-			for (var idx = 0; idx < Statements.Count; idx++)
-			{
-				var subReturn = mustReturn && (idx == lastExpressionIdx || Scope.Kind == ScopeKind.MatchRoot);
-				var curr = Statements[idx];
+                if (!subReturn && curr.IsConstant)
+                    continue;
 
-				var retType = curr.Resolve(ctx, subReturn);
+                curr.Emit(ctx, subReturn);
 
-				if (!subReturn && curr.IsConstant)
-					continue;
+                if (!subReturn && !retType.IsVoid())
+                {
+                    // nested code block nodes take care of themselves
+                    if (!(curr is CodeBlockNode))
+                        gen.EmitPop();
+                }
+            }
+        }
 
-				curr.Emit(ctx, subReturn);
+        #endregion
 
-				if (!subReturn && !retType.IsVoid())
-				{
-					// nested code block nodes take care of themselves
-					if(!(curr is CodeBlockNode))
-						gen.EmitPop();
-				}
-			}
-		}
+        #region Debug
 
-		#endregion
+        protected bool Equals(CodeBlockNode other)
+        {
+            return Statements.SequenceEqual(other.Statements);
+        }
 
-		#region Debug
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((CodeBlockNode) obj);
+        }
 
-		protected bool Equals(CodeBlockNode other)
-		{
-			return Statements.SequenceEqual(other.Statements);
-		}
+        public override int GetHashCode()
+        {
+            return (Statements != null ? Statements.GetHashCode() : 0);
+        }
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((CodeBlockNode)obj);
-		}
+        #endregion
 
-		public override int GetHashCode()
-		{
-			return (Statements != null ? Statements.GetHashCode() : 0);
-		}
+        #region IEnumerable<NodeBase> implementation
 
-		#endregion
+        public IEnumerator<NodeBase> GetEnumerator()
+        {
+            return Statements.GetEnumerator();
+        }
 
-		#region IEnumerable<NodeBase> implementation
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
-		public IEnumerator<NodeBase> GetEnumerator()
-		{
-			return Statements.GetEnumerator();
-		}
+        public void Add(NodeBase node)
+        {
+            Statements.Add(node);
+        }
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+        public void AddRange(params NodeBase[] nodes)
+        {
+            Statements.AddRange(nodes);
+        }
 
-		public void Add(NodeBase node)
-		{
-			Statements.Add(node);
-		}
+        public void AddRange(IEnumerable<NodeBase> nodes)
+        {
+            Statements.AddRange(nodes);
+        }
 
-		public void AddRange(params NodeBase[] nodes)
-		{
-			Statements.AddRange(nodes);
-		}
+        public void Insert(NodeBase node)
+        {
+            Statements.Insert(0, node);
+        }
 
-		public void AddRange(IEnumerable<NodeBase> nodes)
-		{
-			Statements.AddRange(nodes);
-		}
+        #endregion
 
-		public void Insert(NodeBase node)
-		{
-			Statements.Insert(0, node);
-		}
+        #region Additional methods
 
-		#endregion
+        /// <summary>
+        /// Loads nodes from other block.
+        /// </summary>
+        public void LoadFrom(CodeBlockNode other)
+        {
+            Statements = other.Statements;
+        }
 
-		#region Additional methods
-
-		/// <summary>
-		/// Loads nodes from other block.
-		/// </summary>
-		public void LoadFrom(CodeBlockNode other)
-		{
-			Statements = other.Statements;
-		}
-
-		#endregion
-	}
+        #endregion
+    }
 }

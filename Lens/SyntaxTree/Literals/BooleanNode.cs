@@ -2,28 +2,28 @@
 
 namespace Lens.SyntaxTree.Literals
 {
-	/// <summary>
-	/// A node representing "true" or "false" literals.
-	/// </summary>
-	internal class BooleanNode : LiteralNodeBase<bool>
-	{
-		#region Constructor
+    /// <summary>
+    /// A node representing "true" or "false" literals.
+    /// </summary>
+    internal class BooleanNode : LiteralNodeBase<bool>
+    {
+        #region Constructor
 
-		public BooleanNode(bool value = false)
-		{
-			Value = value;
-		}
+        public BooleanNode(bool value = false)
+        {
+            Value = value;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
-			gen.EmitConstant(Value);
-		}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            gen.EmitConstant(Value);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

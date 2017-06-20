@@ -5,94 +5,91 @@ using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	/// <summary>
-	/// An operator node that raises one value to the power of another value.
-	/// </summary>
-	internal class PowOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Constants
+    /// <summary>
+    /// An operator node that raises one value to the power of another value.
+    /// </summary>
+    internal class PowOperatorNode : BinaryOperatorNodeBase
+    {
+        #region Constants
 
-		private static readonly MethodInfo _PowMethod = typeof(Math).GetMethod("Pow", new[] { typeof(double), typeof(double) });
+        private static readonly MethodInfo PowMethod = typeof(Math).GetMethod("Pow", new[] {typeof(double), typeof(double)});
 
-		#endregion
+        #endregion
 
-		#region Operator basics
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "**"; }
-		}
+        protected override string OperatorRepresentation => "**";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
-            return new PowOperatorNode { LeftOperand = left, RightOperand = right };
+            return new PowOperatorNode {LeftOperand = left, RightOperand = right};
         }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolveOperatorType(Context ctx, Type leftType, Type rightType)
-		{
-			return leftType.IsNumericType() && rightType.IsNumericType() ? typeof (double) : null;
-		}
+        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        {
+            return leftType.IsNumericType() && rightType.IsNumericType() ? typeof(double) : null;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			if (RightOperand.IsConstant && RightOperand.ConstantValue is int)
-			{
-				var constPower = (int)RightOperand.ConstantValue;
-				if(constPower > 0 && constPower <= 10)
-				{
-					var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitOperator(Context ctx)
+        {
+            if (RightOperand.IsConstant && RightOperand.ConstantValue is int)
+            {
+                var constPower = (int) RightOperand.ConstantValue;
+                if (constPower > 0 && constPower <= 10)
+                {
+                    var gen = ctx.CurrentMethod.Generator;
 
-					// detect maximum power of 2 inside current power
-					var squareCount = 0;
-					var powerOf2 = 1;
-					while (constPower - powerOf2 >= powerOf2)
-					{
-						powerOf2 *= 2;
-						squareCount ++;
-					}
+                    // detect maximum power of 2 inside current power
+                    var squareCount = 0;
+                    var powerOf2 = 1;
+                    while (constPower - powerOf2 >= powerOf2)
+                    {
+                        powerOf2 *= 2;
+                        squareCount++;
+                    }
 
-					var multCount = constPower - powerOf2;
+                    var multCount = constPower - powerOf2;
 
-					LeftOperand.Emit(ctx, true);
-					gen.EmitConvert(typeof(double));
+                    LeftOperand.Emit(ctx, true);
+                    gen.EmitConvert(typeof(double));
 
-					for (var i = 0; i < multCount; i++)
-						gen.EmitDup();
+                    for (var i = 0; i < multCount; i++)
+                        gen.EmitDup();
 
-					for (var i = 0; i < squareCount; i++)
-					{
-						gen.EmitDup();
-						gen.EmitMultiply();
-					}
+                    for (var i = 0; i < squareCount; i++)
+                    {
+                        gen.EmitDup();
+                        gen.EmitMultiply();
+                    }
 
-					for (var i = 0; i < multCount; i++)
-						gen.EmitMultiply();
+                    for (var i = 0; i < multCount; i++)
+                        gen.EmitMultiply();
 
-					return;
-				}
-			}
+                    return;
+                }
+            }
 
-			loadAndConvertNumerics(ctx, typeof(double));
-			ctx.CurrentMethod.Generator.EmitCall(_PowMethod);
-		}
+            LoadAndConvertNumerics(ctx, typeof(double));
+            ctx.CurrentMethod.Generator.EmitCall(PowMethod);
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			return Math.Pow(left, right);
-		}
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            return Math.Pow(left, right);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -4,43 +4,46 @@ using Lens.Utils;
 
 namespace Lens.SyntaxTree.Internals
 {
-	internal class RawEnumNode : NodeBase
-	{
-		#region Fields
+    /// <summary>
+    /// Emits the enum value as a number.
+    /// </summary>
+    internal class RawEnumNode : NodeBase
+    {
+        #region Fields
 
-		/// <summary>
-		/// The enum type.
-		/// </summary>
-		public Type EnumType;
+        /// <summary>
+        /// The enum type.
+        /// </summary>
+        public Type EnumType;
 
-		/// <summary>
-		/// The actual value of the enum.
-		/// </summary>
-		public long Value;
+        /// <summary>
+        /// The actual value of the enum.
+        /// </summary>
+        public long Value;
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			return EnumType;
-		}
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            return EnumType;
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-			if(Enum.GetUnderlyingType(EnumType).IsAnyOf(typeof(long), typeof(ulong)))
-				gen.EmitConstant(Value);
-			else
-				gen.EmitConstant((int)Value);
-		}
+            if (Enum.GetUnderlyingType(EnumType).IsAnyOf(typeof(long), typeof(ulong)))
+                gen.EmitConstant(Value);
+            else
+                gen.EmitConstant((int) Value);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

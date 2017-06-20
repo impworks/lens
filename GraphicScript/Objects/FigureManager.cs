@@ -6,85 +6,85 @@ using System.Windows.Threading;
 
 namespace GraphicScript.Objects
 {
-	public class FigureManager
-	{
-		public FigureManager(Canvas cvs, Dispatcher disp)
-		{
-			Canvas = cvs;
-			Dispatcher = disp;
-			m_Figures = new List<Figure>();
-			m_Continuations = new List<Action>();
-		}
+    public class FigureManager
+    {
+        public FigureManager(Canvas cvs, Dispatcher disp)
+        {
+            Canvas = cvs;
+            Dispatcher = disp;
+            _figures = new List<Figure>();
+            _continuations = new List<Action>();
+        }
 
-		private bool m_IsActive;
-		public Canvas Canvas { get; private set; }
-		public Dispatcher Dispatcher { get; private set; }
+        private bool _isActive;
+        public Canvas Canvas { get; private set; }
+        public Dispatcher Dispatcher { get; private set; }
 
-		private List<Figure> m_Figures;
-		private List<Action> m_Continuations;
+        private List<Figure> _figures;
+        private readonly List<Action> _continuations;
 
-		public void Add(Figure fig)
-		{
-			m_Continuations.Add(() =>
-				{
-					fig.Register(this);
-					m_Figures.Add(fig);
-				}
-			);
-		}
+        public void Add(Figure fig)
+        {
+            _continuations.Add(() =>
+                {
+                    fig.Register(this);
+                    _figures.Add(fig);
+                }
+            );
+        }
 
-		public void Remove(Figure fig)
-		{
-			m_Continuations.Add(() =>
-				{
-					fig.Unregister();
-					m_Figures.Remove(fig);
-				}
-			);
-		}
+        public void Remove(Figure fig)
+        {
+            _continuations.Add(() =>
+                {
+                    fig.Unregister();
+                    _figures.Remove(fig);
+                }
+            );
+        }
 
-		public void Add(IEnumerable<Figure> figs)
-		{
-			foreach(var curr in figs)
-				Add(curr);
-		}
+        public void Add(IEnumerable<Figure> figs)
+        {
+            foreach (var curr in figs)
+                Add(curr);
+        }
 
-		public void Draw()
-		{
-			m_IsActive = true;
-			new Thread(drawLoop).Start();
-		}
+        public void Draw()
+        {
+            _isActive = true;
+            new Thread(DrawLoop).Start();
+        }
 
-		public void StopDrawing()
-		{
-			if (!m_IsActive)
-				return;
+        public void StopDrawing()
+        {
+            if (!_isActive)
+                return;
 
-			Canvas.Children.Clear();
-			m_Figures = new List<Figure>();
-			m_IsActive = false;
-		}
+            Canvas.Children.Clear();
+            _figures = new List<Figure>();
+            _isActive = false;
+        }
 
-		private void drawLoop()
-		{
-			while (m_IsActive)
-			{
-				foreach (var curr in m_Figures)
-				{
-					if (!m_IsActive) return;
-					curr.UpdateObject();
-				}
+        private void DrawLoop()
+        {
+            while (_isActive)
+            {
+                foreach (var curr in _figures)
+                {
+                    if (!_isActive) return;
+                    curr.UpdateObject();
+                }
 
-				if (m_Continuations.Count > 0)
-				{
-					foreach (var curr in m_Continuations)
-						Dispatcher.Invoke(curr);
+                if (_continuations.Count > 0)
+                {
+                    foreach (var curr in _continuations)
+                        Dispatcher.Invoke(curr);
 
-					m_Continuations.Clear();
-				}
+                    _continuations.Clear();
+                }
 
-				Thread.Sleep(10);
-			}
-		}
-	}
+                Thread.Sleep(10);
+            }
+        }
+    }
 }

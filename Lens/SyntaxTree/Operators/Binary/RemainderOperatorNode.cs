@@ -2,47 +2,41 @@
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
-	/// <summary>
-	/// An operator node that divides one value by another value.
-	/// </summary>
-	internal class RemainderOperatorNode : BinaryOperatorNodeBase
-	{
-		#region Operator basics
+    /// <summary>
+    /// An operator node that divides one value by another value.
+    /// </summary>
+    internal class RemainderOperatorNode : BinaryOperatorNodeBase
+    {
+        #region Operator basics
 
-		protected override string OperatorRepresentation
-		{
-			get { return "%"; }
-		}
+        protected override string OperatorRepresentation => "%";
 
-		protected override string OverloadedMethodName
-		{
-			get { return "op_Modulus"; }
-		}
+        protected override string OverloadedMethodName => "op_Modulus";
 
-        protected override BinaryOperatorNodeBase recreateSelfWithArgs(NodeBase left, NodeBase right)
+        protected override BinaryOperatorNodeBase RecreateSelfWithArgs(NodeBase left, NodeBase right)
         {
-            return new RemainderOperatorNode { LeftOperand = left, RightOperand = right };
+            return new RemainderOperatorNode {LeftOperand = left, RightOperand = right};
         }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitOperator(Context ctx)
-		{
-			loadAndConvertNumerics(ctx);
-			ctx.CurrentMethod.Generator.EmitRemainder();
-		}
+        protected override void EmitOperator(Context ctx)
+        {
+            LoadAndConvertNumerics(ctx);
+            ctx.CurrentMethod.Generator.EmitRemainder();
+        }
 
-		#endregion
+        #endregion
 
-		#region Constant unroll
+        #region Constant unroll
 
-		protected override dynamic unrollConstant(dynamic left, dynamic right)
-		{
-			return left % right;
-		}
+        protected override dynamic UnrollConstant(dynamic left, dynamic right)
+        {
+            return left % right;
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

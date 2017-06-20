@@ -9,159 +9,158 @@ using Lens.Translations;
 
 namespace Lens.SyntaxTree.Declarations.Functions
 {
-	/// <summary>
-	/// A node that represents the lambda function.
-	/// </summary>
-	internal class LambdaNode : FunctionNodeBase
-	{
-		#region Constructor
+    /// <summary>
+    /// A node that represents the lambda function.
+    /// </summary>
+    internal class LambdaNode : FunctionNodeBase
+    {
+        #region Constructor
 
-		public LambdaNode()
-		{
-			Body = new CodeBlockNode(ScopeKind.LambdaRoot);
-		}
+        public LambdaNode()
+        {
+            Body = new CodeBlockNode(ScopeKind.LambdaRoot);
+        }
 
-		#endregion
+        #endregion
 
-		#region Fields
+        #region Fields
 
-		private MethodEntity _Method;
+        /// <summary>
+        /// Backing method reference.
+        /// </summary>
+        private MethodEntity _method;
 
-		private Type _InferredReturnType;
-		private Type _InferredDelegateType;
+        /// <summary>
+        /// Return type inferred from context.
+        /// </summary>
+        private Type _inferredReturnType;
 
-		public bool MustInferArgTypes { get; private set; }
+        /// <summary>
+        /// Flag indicating that current lambda has arguments with omitted types and they must be resolved from the context.
+        /// </summary>
+        public bool MustInferArgTypes { get; private set; }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn)
-		{
-			var argTypes = new List<Type>();
-			foreach (var curr in Arguments)
-			{
-				if (curr.IsVariadic)
-					error(CompilerMessages.VariadicArgumentLambda);
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var argTypes = new List<Type>();
+            foreach (var curr in Arguments)
+            {
+                if (curr.IsVariadic)
+                    Error(CompilerMessages.VariadicArgumentLambda);
 
-				var type = curr.GetArgumentType(ctx);
-				argTypes.Add(type);
+                var type = curr.GetArgumentType(ctx);
+                argTypes.Add(type);
 
-				if (type == typeof (UnspecifiedType))
-					MustInferArgTypes = true;
-			}
+                if (type == typeof(UnspecifiedType))
+                    MustInferArgTypes = true;
+            }
 
-			if (MustInferArgTypes)
-				return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
+            if (MustInferArgTypes)
+                return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
 
-			Body.Scope.RegisterArguments(ctx, false, Arguments);
+            Body.Scope.RegisterArguments(ctx, false, Arguments);
 
-			var retType = Body.Resolve(ctx);
+            var retType = Body.Resolve(ctx);
+            return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
+        }
 
-			if (_InferredDelegateType != null)
-			{
-				if(!_InferredReturnType.IsExtendablyAssignableFrom(retType))
-					error(CompilerMessages.LambdaReturnTypeMismatch, _InferredDelegateType.Name, retType.Name, _InferredReturnType.Name);
+        #endregion
 
-				return _InferredDelegateType;
-			}
+        #region Process closures
 
-			return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
-		}
+        public override void ProcessClosures(Context ctx)
+        {
+            if (MustInferArgTypes)
+            {
+                var name = Arguments.First(a => a.Type == typeof(UnspecifiedType)).Name;
+                Error(CompilerMessages.LambdaArgTypeUnknown, name);
+            }
 
-		#endregion
+            // get evaluated return type
+            var retType = _inferredReturnType ?? Body.Resolve(ctx);
+            if (retType == typeof(NullType))
+                Error(CompilerMessages.LambdaReturnTypeUnknown);
+            if (retType.IsVoid())
+                retType = typeof(void);
 
-		#region Process closures
+            _method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
+            _method.Body = Body;
 
-		public override void ProcessClosures(Context ctx)
-		{
-			if (MustInferArgTypes)
-			{
-				var name = Arguments.First(a => a.Type == typeof (UnspecifiedType)).Name;
-				error(CompilerMessages.LambdaArgTypeUnknown, name);
-			}
+            var outerMethod = ctx.CurrentMethod;
+            ctx.CurrentMethod = _method;
 
-			// get evaluated return type
-			var retType = _InferredReturnType ?? Body.Resolve(ctx);
-			if (retType == typeof(NullType))
-				error(CompilerMessages.LambdaReturnTypeUnknown);
-			if (retType.IsVoid())
-				retType = typeof (void);
+            _method.Body.ProcessClosures(ctx);
 
-			_Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
-			_Method.Body = Body;
+            ctx.CurrentMethod = outerMethod;
+        }
 
-			var outerMethod = ctx.CurrentMethod;
-			ctx.CurrentMethod = _Method;
+        #endregion
 
-			_Method.Body.ProcessClosures(ctx);
+        #region Emit
 
-			ctx.CurrentMethod = outerMethod;
-		}
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var gen = ctx.CurrentMethod.Generator;
 
-		#endregion
+            // find constructor
+            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _method.ArgumentTypes);
+            var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
 
-		#region Emit
+            var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
+            gen.EmitLoadLocal(closureInstance);
+            gen.EmitLoadFunctionPointer(_method.MethodBuilder);
+            gen.EmitCreateObject(ctor.ConstructorInfo);
+        }
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var gen = ctx.CurrentMethod.Generator;
+        #endregion
 
-			// find constructor
-			var type = _InferredDelegateType ?? FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _Method.ArgumentTypes);
-			var ctor = ctx.ResolveConstructor(type, new[] {typeof (object), typeof (IntPtr)});
+        #region Argument type detection
 
-			var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
-			gen.EmitLoadLocal(closureInstance);
-			gen.EmitLoadFunctionPointer(_Method.MethodBuilder);
-			gen.EmitCreateObject(ctor.ConstructorInfo);
-		}
+        /// <summary>
+        /// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
+        /// </summary>
+        public void SetInferredArgumentTypes(Type[] argTypes)
+        {
+            if (Arguments.Count != argTypes.Length)
+                Error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
 
-		#endregion
-
-		#region Argument type detection
-
-		/// <summary>
-		/// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
-		/// </summary>
-		public void SetInferredArgumentTypes(Type[] argTypes)
-		{
-			if(Arguments.Count != argTypes.Length)
-				error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
-
-			for (var idx = 0; idx < argTypes.Length; idx++)
-			{
-				var inferred = argTypes[idx];
-				if (inferred == typeof(UnspecifiedType))
-					error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
+            for (var idx = 0; idx < argTypes.Length; idx++)
+            {
+                var inferred = argTypes[idx];
+                if (inferred == typeof(UnspecifiedType))
+                    Error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
-				var specified = Arguments[idx].Type;
-				if (specified != typeof(UnspecifiedType) && specified != inferred)
-					throw new InvalidOperationException(string.Format("Argument type differs: specified '{0}', inferred '{1}'!", specified, inferred));
+                var specified = Arguments[idx].Type;
+                if (specified != typeof(UnspecifiedType) && specified != inferred)
+                    throw new InvalidOperationException($"Argument type differs: specified '{specified}', inferred '{inferred}'!");
 #endif
 
-				Arguments[idx].Type = inferred;
-			}
+                Arguments[idx].Type = inferred;
+            }
 
-			MustInferArgTypes = false;
-			_CachedExpressionType = null;
-		}
+            MustInferArgTypes = false;
+            CachedExpressionType = null;
+        }
 
-		/// <summary>
-		/// Interprets the lambda as a particular delegate with given arg & return types.
-		/// </summary>
-		public void SetInferredReturnType(Type type)
-		{
-			_InferredReturnType = type;
-		}
+        /// <summary>
+        /// Interprets the lambda as a particular delegate with given arg & return types.
+        /// </summary>
+        public void SetInferredReturnType(Type type)
+        {
+            _inferredReturnType = type;
+        }
 
-		#endregion
+        #endregion
 
-		public override string ToString()
-		{
-			var arglist = Arguments.Select(x => string.Format("{0}:{1}", x.Name, x.Type != null ? x.Type.Name : x.TypeSignature));
-			return string.Format("lambda({0})", string.Join(", ", arglist));
-		}
-	}
+        public override string ToString()
+        {
+            var arglist = Arguments.Select(x => string.Format("{0}:{1}", x.Name, x.Type != null ? x.Type.Name : x.TypeSignature));
+            return string.Format("lambda({0})", string.Join(", ", arglist));
+        }
+    }
 }

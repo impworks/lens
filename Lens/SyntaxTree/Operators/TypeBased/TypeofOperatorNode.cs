@@ -4,55 +4,55 @@ using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Operators.TypeBased
 {
-	/// <summary>
-	/// A node representing the typeof operator.
-	/// </summary>
-	internal class TypeofOperatorNode : TypeOperatorNodeBase
-	{
-		#region Constants
+    /// <summary>
+    /// A node representing the typeof operator.
+    /// </summary>
+    internal class TypeofOperatorNode : TypeOperatorNodeBase
+    {
+        #region Constants
 
-		private static readonly MethodInfo _HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] { typeof(RuntimeTypeHandle) });
+        private static readonly MethodInfo HandleMethod = typeof(Type).GetMethod("GetTypeFromHandle", new[] {typeof(RuntimeTypeHandle)});
 
-		#endregion
+        #endregion
 
-		#region Constructor
+        #region Constructor
 
-		public TypeofOperatorNode(string type = null)
-		{
-			TypeSignature = type;
-		}
+        public TypeofOperatorNode(string type = null)
+        {
+            TypeSignature = type;
+        }
 
-		#endregion
+        #endregion
 
-		#region Resolve
+        #region Resolve
 
-		protected override Type resolve(Context ctx, bool mustReturn = true)
-		{
-			return typeof (Type);
-		}
+        protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
+        {
+            return typeof(Type);
+        }
 
-		#endregion
+        #endregion
 
-		#region Emit
+        #region Emit
 
-		protected override void emitCode(Context ctx, bool mustReturn)
-		{
-			var type = Type ?? ctx.ResolveType(TypeSignature);
-			var gen = ctx.CurrentMethod.Generator;
+        protected override void EmitInternal(Context ctx, bool mustReturn)
+        {
+            var type = Type ?? ctx.ResolveType(TypeSignature);
+            var gen = ctx.CurrentMethod.Generator;
 
-			gen.EmitConstant(type);
-			gen.EmitCall(_HandleMethod);
-		}
+            gen.EmitConstant(type);
+            gen.EmitCall(HandleMethod);
+        }
 
-		#endregion
+        #endregion
 
-		#region Debug
+        #region Debug
 
-		public override string ToString()
-		{
-			return string.Format("typeof({0})", Type != null ? Type.Name : TypeSignature);
-		}
+        public override string ToString()
+        {
+            return string.Format("typeof({0})", Type != null ? Type.Name : TypeSignature);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -2,69 +2,63 @@
 
 namespace Lens.Test.Features
 {
-	[TestFixture]
-	internal class GlobalProperties: TestBase
-	{
-		[Test]
-		public void Getter()
-		{
-			TestConfigured(
-				ctx =>
-				{
-					ctx.RegisterProperty("half", HalfValue);
-				},
-				"half * 2",
-				42
-			);
-		}
+    [TestFixture]
+    internal class GlobalProperties : TestBase
+    {
+        [Test]
+        public void Getter()
+        {
+            TestConfigured(
+                ctx => { ctx.RegisterProperty("half", HalfValue); },
+                "half * 2",
+                42
+            );
+        }
 
-		[Test]
-		public void Statics()
-		{
-			SetX(1337);
-			TestConfigured(
-				ctx =>
-				{
-					ctx.RegisterProperty("x", GetX);
-					ctx.RegisterProperty("y", GetY, SetY);
-				},
-				"y = x - 337",
-				null
-			);
+        [Test]
+        public void Statics()
+        {
+            SetX(1337);
+            TestConfigured(
+                ctx =>
+                {
+                    ctx.RegisterProperty("x", GetX);
+                    ctx.RegisterProperty("y", GetY, SetY);
+                },
+                "y = x - 337",
+                null
+            );
 
-			Assert.AreEqual(1000, m_Y);
-		}
+            Assert.AreEqual(1000, _y);
+        }
 
-		[Test]
-		public void Lambdas()
-		{
-			var x = 10;
-			var y = 0;
-			TestConfigured(
-				ctx =>
-				{
-					ctx.RegisterProperty("x", () => x, nx => x = nx);
-					ctx.RegisterProperty("y", () => y, ny => y = ny);
-				},
-				"y = x + 32",
-				null
-			);
+        [Test]
+        public void Lambdas()
+        {
+            var x = 10;
+            var y = 0;
+            TestConfigured(
+                ctx =>
+                {
+                    ctx.RegisterProperty("x", () => x, nx => x = nx);
+                    ctx.RegisterProperty("y", () => y, ny => y = ny);
+                },
+                "y = x + 32",
+                null
+            );
 
-			Assert.AreEqual(42, y);
-		}
-		
-		public static int HalfValue()
-		{
-			return 21;
-		}
+            Assert.AreEqual(42, y);
+        }
 
-		private static int m_X;
-		private static int m_Y;
+        public static int HalfValue() => 21;
 
-		public static int GetX() { return m_X; }
-		public static void SetX(int x) { m_X = x; }
+        private static int _x;
+        private static int _y;
 
-		public static int GetY() { return m_Y; }
-		public static void SetY(int y) { m_Y = y; }
-	}
+        public static int GetX() => _x;
+        public static void SetX(int x) => _x = x;
+
+        public static int GetY() => _y;
+        public static void SetY(int y) => _y = y;
+    }
 }
