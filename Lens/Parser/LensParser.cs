@@ -472,12 +472,10 @@ namespace Lens.Parser
 
             var node = new VarNode();
             node.Name = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
-            if (Check(LexemType.Colon))
-                node.Type = Ensure(ParseType, ParserMessages.VarTypeExpected);
-            else if (Check(LexemType.Assign))
-                node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
-            else
-                Error(ParserMessages.InitExpressionOrTypeExpected);
+
+            Ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
+
+            node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
 
             return node;
         }
