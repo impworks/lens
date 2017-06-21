@@ -74,6 +74,15 @@ namespace Lens
         }
 
         /// <summary>
+        /// Registers a delegate as a method to be used by LENS script.
+        /// </summary>
+        public void RegisterFunction<T>(string name, T @delegate)
+            where T: class
+        {
+            _context.ImportFunction(name, @delegate);
+        }
+
+        /// <summary>
         /// Registers a list of overloaded methods to be used by LENS script.
         /// </summary>
         /// <param name="type">Source type.</param>

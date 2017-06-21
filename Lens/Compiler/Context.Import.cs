@@ -63,6 +63,18 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// Imports a delegate as a function.
+        /// </summary>
+        public void ImportFunction<T>(string name, T @delegate)
+            where T: class
+        {
+            if(!(@delegate is Delegate))
+                throw new ArgumentException(nameof(@delegate));
+
+            ImportProperty(name, () => @delegate);
+        }
+
+        /// <summary>
         /// Imports a property registered in GlobalPropertyHelper into the lookup.
         /// </summary>
         public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)

@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
@@ -48,6 +49,20 @@ namespace Lens.Test.Features
             );
 
             Assert.AreEqual(42, y);
+        }
+
+        [Test]
+        public void ImportFunction()
+        {
+            Func<int, int> doubler = x => x * 2;
+            TestConfigured(
+                ctx =>
+                {
+                    ctx.RegisterFunction("doubler", doubler);
+                },
+                "doubler 21",
+                42
+            );
         }
 
         public static int HalfValue() => 21;

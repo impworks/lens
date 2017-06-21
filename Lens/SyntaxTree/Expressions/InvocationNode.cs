@@ -190,6 +190,7 @@ namespace Lens.SyntaxTree.Expressions
         /// </summary>
         private void ResolveGetIdentifier(Context ctx, GetIdentifierNode node)
         {
+            // local
             var nameInfo = ctx.Scope.FindLocal(node.Identifier);
             if (nameInfo != null)
             {
@@ -197,6 +198,7 @@ namespace Lens.SyntaxTree.Expressions
                 return;
             }
 
+            // function
             try
             {
                 _method = ctx.ResolveMethod(
@@ -211,14 +213,26 @@ namespace Lens.SyntaxTree.Expressions
 
                 if (ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
                     Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
-            }
-            catch (KeyNotFoundException)
-            {
-                Error(CompilerMessages.FunctionNotFound, node.Identifier);
+
+                return;
             }
             catch (AmbiguousMatchException)
             {
                 Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
+            }
+            catch (KeyNotFoundException)
+            {
+            }
+
+            // global property with a delegate
+            try
+            {
+                ctx.ResolveGlobalProperty(node.Identifier);
+                ResolveExpression(ctx, node);
+            }
+            catch (KeyNotFoundException)
+            {
+                Error(CompilerMessages.FunctionNotFound, node.Identifier);
             }
         }
 
