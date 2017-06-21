@@ -2,10 +2,12 @@
 using Lens.Compiler;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations.Locals;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.SyntaxTree.Operators.Binary;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Parsers
@@ -1335,7 +1337,7 @@ var a : int
 a = 1";
             var result = new NodeBase[]
             {
-                Expr.Var("a", "int"),
+                Expr.MultiVar(new [] { "a" }, "int"),
                 Expr.Set("a", Expr.Int(1))
             };
 
@@ -1488,6 +1490,21 @@ let y = 2
             };
 
             TestParser(src, result);
+        }
+
+        [Test]
+        public void MultiDefinition()
+        {
+            var src = @"var a, b, c: int";
+            var result = Expr.MultiVar(new[] {"a", "b", "c"}, "int");
+            TestParser(src, result);
+        }
+
+        [Test]
+        public void MultiDefinitionError()
+        {
+            var src = @"var a, b, c = 1";
+            TestError(src, ParserMessages.SymbolExpected);
         }
     }
 }

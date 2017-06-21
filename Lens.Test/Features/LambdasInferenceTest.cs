@@ -164,7 +164,18 @@ Array::FindAll data fx
         }
 
         [Test]
-        public void LambdaReturnValueCast()
+        public void MultiDefinitionInference()
+        {
+            var src = @"
+var a, b: Func<int, int>
+a = x -> x + 2
+a 10
+";
+            Test(src, 12);
+        }
+
+        [Test]
+        public void LambdaReturnValueCastError()
         {
             // Currently lambda objects are strictly typed.
             // Additional code is not emitted to convert an in-place instance of Func<int> to Func<object>
@@ -181,7 +192,7 @@ test (-> 1)
         }
 
         [Test]
-        public void LambdaReturnValueCastError()
+        public void LambdaReturnValueUncastableError()
         {
             var src = @"
 fun test:string (x:Func<int, int>) ->
@@ -194,7 +205,7 @@ test (x -> true)
         }
 
         [Test]
-        public void LambdaUninferred()
+        public void LambdaUninferredError()
         {
             var src = @"
 var test = (a b) -> a + b
@@ -204,7 +215,7 @@ test 1 2
         }
 
         [Test]
-        public void LambdaArgsTypeMismatch()
+        public void LambdaArgsTypeMismatchError()
         {
             var src = @"
 fun invoker:string (act:Func<int,int,int>) ->
@@ -216,7 +227,7 @@ invoker ((x y) -> x + y)
         }
 
         [Test]
-        public void LambdaArgsCountMismatch()
+        public void LambdaArgsCountMismatchError()
         {
             var src = @"
 fun invoker:string (act:Func<int,int>) ->
@@ -226,5 +237,6 @@ invoker (x -> x + 1)
 ";
             TestError(src, CompilerMessages.DelegateArgumentsCountMismatch);
         }
+
     }
 }

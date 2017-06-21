@@ -381,6 +381,38 @@ using x = new Lens.Test.Features.SampleDisposable (-> x = 2) do
 ";
             TestError(src, CompilerMessages.VariableDefined);
         }
+
+        [Test]
+        public void MultiDefinition()
+        {
+            var src = @"
+var a, b: int
+a = 2
+b = 21
+a * b
+";
+            Test(src, 42);
+        }
+
+        [Test]
+        public void MultiDefinitionError1()
+        {
+            var src = @"
+var a, a: int
+a = 2
+";
+            TestError(src, CompilerMessages.VariableDefined);
+        }
+
+        [Test]
+        public void MultiDefinitionError2()
+        {
+            var src = @"
+var a, _: int
+a = 2
+";
+            TestError(src, CompilerMessages.UnderscoreName);
+        }
     }
 
     public class SampleDisposable : IDisposable

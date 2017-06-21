@@ -425,16 +425,45 @@ namespace Lens.Parser
         #region Let & var
 
         /// <summary>
-        /// name_def_stmt                               = var_stmt | let_stmt
+        /// name_def_stmt                               = var_multi_stmt | var_stmt | let_stmt
         /// </summary>
-        private NameDeclarationNodeBase ParseNameDefStmt()
+        private NodeBase ParseNameDefStmt()
         {
-            return Attempt(ParseVarStmt)
-                   ?? Attempt(ParseLetStmt) as NameDeclarationNodeBase;
+            return Attempt(ParseMultiVarStmt)
+                   ?? Attempt(ParseVarStmt)
+                   ?? Attempt(ParseLetStmt) as NodeBase;
         }
 
         /// <summary>
-        /// var_stmt                                    = "var" identifier ( "=" expr | ":" type )
+        /// var_multi_stmt                              = "var" identifier [ { "," identifier } ] ":" type
+        /// </summary>
+        private MultiVarNode ParseMultiVarStmt()
+        {
+            if (!Check(LexemType.Var))
+                return null;
+
+            var names = new List<string>();
+            names.Add(Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value);
+
+            while (Check(LexemType.Comma))
+                names.Add(Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value);
+
+            // fall back to var_stmt
+            if (names.Count == 1 && Check(LexemType.Assign))
+                return null;
+
+            Ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+            var type = Ensure(ParseType, ParserMessages.VarTypeExpected);
+
+            return new MultiVarNode
+            {
+                Names = names.ToArray(),
+                Type = type
+            };
+        }
+
+        /// <summary>
+        /// var_stmt                                    = "var" identifier "=" expr
         /// </summary>
         private VarNode ParseVarStmt()
         {
@@ -443,12 +472,10 @@ namespace Lens.Parser
 
             var node = new VarNode();
             node.Name = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
-            if (Check(LexemType.Colon))
-                node.Type = Ensure(ParseType, ParserMessages.VarTypeExpected);
-            else if (Check(LexemType.Assign))
-                node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
-            else
-                Error(ParserMessages.InitExpressionOrTypeExpected);
+
+            Ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
+
+            node.Value = Ensure(ParseExpr, ParserMessages.InitExpressionExpected);
 
             return node;
         }
