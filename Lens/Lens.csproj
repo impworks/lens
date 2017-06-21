@@ -123,6 +123,7 @@
     <Compile Include="Stdlib\Utilities.cs" />
     <Compile Include="Stdlib\Randomizer.cs" />
     <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
+    <Compile Include="SyntaxTree\Declarations\Locals\MultiVarNode.cs" />
     <Compile Include="SyntaxTree\Declarations\UsingNode.cs" />
     <Compile Include="SyntaxTree\Expressions\Instantiation\NewObjectArrayNode.cs" />
     <Compile Include="SyntaxTree\Expressions\GetSet\ShortAssignmentNode.cs" />

@@ -484,9 +484,14 @@ namespace Lens.SyntaxTree
             return new VarNode(name) {Type = type};
         }
 
-        public static VarNode Var(Local name, NodeBase expr)
+        public static VarNode Var(Local name, TypeSignature type)
         {
-            return new VarNode {Local = name, Value = expr};
+            return new VarNode {Local = name, Type = type};
+        }
+
+        public static MultiVarNode MultiVar(string[] names, TypeSignature type)
+        {
+            return new MultiVarNode {Names = names, Type = type};
         }
 
         public static LetNode Let(string name, NodeBase expr)
