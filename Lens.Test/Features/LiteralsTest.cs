@@ -27,15 +27,25 @@ namespace Lens.Test.Features
         }
 
         [Test]
-        public void CharEscapedLiteral()
+        public void CharLiteralEscapes()
         {
-            Test("'\n'", '\n');
+            Test(@"'\t'", '\t');
+            Test(@"'\n'", '\n');
+            Test(@"'\r'", '\r');
+            Test(@"'\''", '\'');
         }
 
         [Test]
         public void CharLiteralError()
         {
             TestError("'abc'", LexerMessages.IncorrectCharLiteral);
+            TestError("''", LexerMessages.IncorrectCharLiteral);
+        }
+
+        [Test]
+        public void CharLiteralEscapeError()
+        {
+            TestError(@"'\x'", LexerMessages.UnknownEscape);
         }
 
         [Test]
@@ -45,8 +55,12 @@ namespace Lens.Test.Features
         }
 
         [Test]
-        public void StringEscapedLiteral()
+        public void StringLiteralEscapes()
         {
+            Test(@"""\n""", "\n");
+            Test(@"""\t""", "\t");
+            Test(@"""\r""", "\r");
+            Test(@"""\""""", "\"");
             Test(@"""a\nb""", "a\nb");
         }
 

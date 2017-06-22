@@ -156,15 +156,15 @@ bool <BoolNode>                             = "true" | "false"
 
 // specials
 unary_op                                    = "-" | "not"
-binary_op                                   = "|" | "&" | "^" | "&&" | "||" | "^^" | "<:" | ":>" | "==" | "<>" | ">" | "<" | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" | "**"
+binary_op                                   = "|" | "&" | "^" | "&&" | "||" | "^^" | "<:" | ":>" | "==" | "<>" | ">" | "<" | "<=" | ">=" | "+" | "-" | "*" | "/" | "%" | "**" | "??"
 
 // value literals
-string <StringNode>                         = "([^"]|\\["ntr\\])*"
+string <StringNode>                         = "([^"\\]|\\[^"]|(?<!\\)\\")*" | @"([^"]|"")*"
 long <LongNode>                             = [1-9][0-9]*L
 int <IntNode>                               = [1-9][0-9]*+
 decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
 float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
 double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
-char <CharNode>                             = '([^']|\\['ntr\\])'
-regex                                       = /.+?(?<!\\)/[imsc]*
+char <CharNode>                             = '([^'\\]|\\[^']|(?<!\\)\\')*'
+regex                                       = #([^#]|##)*#[a-zA-Z]*
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

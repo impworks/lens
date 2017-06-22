@@ -352,6 +352,17 @@ new [""ABC""; ""123""; ""hello""].Select describe";
         }
 
         [Test]
+        public void RegexEscape()
+        {
+            var src = @"
+match ""a#b"" with
+    case #(?<one>[a-z])##(?<two>[a-z])# then two + one
+    case _ then ""oops""
+";
+            Test(src, "ba");
+        }
+
+        [Test]
         public void RuleTypeMismatchError()
         {
             var src = @"
