@@ -573,4 +573,10 @@
   <data name="NoOverloads" xml:space="preserve">
     <value>LE3051: No static public methods named '{0}' found in type '{1}'!</value>
   </data>
+  <data name="CoalesceOperatorLeftNotNull" xml:space="preserve">
+    <value>LE3151: Expression has type '{0}', which is not nullable!</value>
+  </data>
+  <data name="CoalesceOperatorTypeMismatch" xml:space="preserve">
+    <value>LE3152: Type '{0}' is not compatible with '{1}'!</value>
+  </data>
 </root>

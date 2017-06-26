@@ -135,6 +135,14 @@ namespace Lens.Resolver
             return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof(bool));
         }
 
+        /// <summary>
+        /// Returns T for Nullable&lt;T&gt;, or null if the type is not Nullable.
+        /// </summary>
+        public static Type GetNullableUnderlyingType(this Type type)
+        {
+            return type.IsNullableType() ? type.GetGenericArguments()[0] : null;
+        }
+
         #endregion
 
         #region Type distance

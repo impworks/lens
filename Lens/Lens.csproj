@@ -136,6 +136,7 @@
     <Compile Include="SyntaxTree\Literals\FloatNode.cs" />
     <Compile Include="SyntaxTree\Literals\LongNode.cs" />
     <Compile Include="SyntaxTree\Operators\Binary\BitOperatorNode.cs" />
+    <Compile Include="SyntaxTree\Operators\Binary\CoalesceOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\Binary\ShiftOperatorNode.cs" />
     <Compile Include="SyntaxTree\Operators\Binary\XorOperatorNode.cs" />
     <Compile Include="SyntaxTree\PatternMatching\MatchNode.cs" />

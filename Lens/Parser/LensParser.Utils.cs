@@ -334,6 +334,7 @@ namespace Lens.Parser
             {
                 {LexemType.ShiftLeft, Expr.ShiftLeft},
                 {LexemType.ShiftRight, Expr.ShiftRight},
+                {LexemType.DoubleQuestionMark, Expr.Coalesce }
             },
 
             new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>

@@ -346,6 +346,62 @@ x + y";
         }
 
         [Test]
+        public void NullCoalesce1()
+        {
+            Test("null ?? null", null);
+            Test("null ?? 1", 1);
+            Test("null ?? \"hello\"", "hello");
+
+            Test("(null as int?) ?? 2.3", 2.3);
+            Test("(null as double?) ?? 3", 3.0);
+
+            Test("(4 as int?) ?? 2", 4);
+            Test("(5 as int?) ?? 2.3", 5.0);
+            Test("(6.1 as double?) ?? 1", 6.1);
+            Test("(7.1 as double?) ?? 5.0", 7.1);
+
+            Test("(8 as int?) ?? (1 as int?)", 8);
+            Test("(9 as int?) ?? (1 as double?)", 9);
+
+            Test("\"hello\" ?? \"world\"", "hello");
+
+            Test("null ?? null ?? 10", 10);
+        }
+
+        [Test]
+        public void NullCoalescePriority()
+        {
+            Test("null ?? 1 == 1", true);
+        }
+
+        [Test]
+        public void NullCoalesceCache()
+        {
+            var src = @"
+fun inc:int? (x: ref int) ->
+    x += 1
+    null
+
+var count = 0
+let value = (inc ref count) ?? 42
+new [count; value]
+";
+            Test(src, new [] { 1, 42 });
+        }
+
+        [Test]
+        public void NullCoalesceError1()
+        {
+            TestError("1 ?? 2", CompilerMessages.CoalesceOperatorLeftNotNull);
+        }
+
+        [Test]
+        public void NullCoalesceError2()
+        {
+            TestError("\"string\" ?? 1", CompilerMessages.CoalesceOperatorTypeMismatch);
+        }
+
+        [Test]
         public void MissingOperandError()
         {
             TestError("/1", ParserMessages.UnknownStatement);

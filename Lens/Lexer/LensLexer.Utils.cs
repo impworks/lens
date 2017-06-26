@@ -97,6 +97,7 @@ namespace Lens.Lexer
             new StaticLexemDefinition("..", LexemType.DoubleDot),
             new StaticLexemDefinition(".", LexemType.Dot),
             new StaticLexemDefinition(";", LexemType.Semicolon),
+            new StaticLexemDefinition("??", LexemType.DoubleQuestionMark),
             new StaticLexemDefinition("?", LexemType.QuestionMark),
             new StaticLexemDefinition("~", LexemType.Tilde)
         };
