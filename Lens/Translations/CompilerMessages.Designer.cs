@@ -196,6 +196,24 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3151: Expression has type &apos;{0}&apos;, which is not nullable!.
+        /// </summary>
+        public static string CoalesceOperatorLeftNotNull {
+            get {
+                return ResourceManager.GetString("CoalesceOperatorLeftNotNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3152: Type &apos;{0}&apos; is not compatible with &apos;{1}&apos;!.
+        /// </summary>
+        public static string CoalesceOperatorTypeMismatch {
+            get {
+                return ResourceManager.GetString("CoalesceOperatorTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3016: Code block contains no statements!.
         /// </summary>
         public static string CodeBlockEmpty {

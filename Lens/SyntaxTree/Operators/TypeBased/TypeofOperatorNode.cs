@@ -26,7 +26,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
+        protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             return typeof(Type);
         }

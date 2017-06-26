@@ -278,6 +278,11 @@ namespace Lens.SyntaxTree
             return new ComparisonOperatorNode {Kind = ComparisonOperatorKind.GreaterEquals, LeftOperand = left, RightOperand = right};
         }
 
+        public static CoalesceOperatorNode Coalesce(NodeBase left, NodeBase right)
+        {
+            return new CoalesceOperatorNode {LeftOperand = left, RightOperand = right};
+        }
+
         private static T Op<T>(NodeBase left, NodeBase right) where T : BinaryOperatorNodeBase, new()
         {
             return new T {LeftOperand = left, RightOperand = right};

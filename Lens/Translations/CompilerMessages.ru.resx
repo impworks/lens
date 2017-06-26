@@ -573,4 +573,10 @@
   <data name="NoOverloads" xml:space="preserve">
     <value>LE3051: В типе '{1}' не найдено публичных статических методов с названием '{0}'!</value>
   </data>
+  <data name="CoalesceOperatorLeftNotNull" xml:space="preserve">
+    <value>LE3151: Выражение имеет тип '{0}', который не может принимать значение null!</value>
+  </data>
+  <data name="CoalesceOperatorTypeMismatch" xml:space="preserve">
+    <value>LE3152: Тип '{0}' несовместим с типом '{1}'!</value>
+  </data>
 </root>
