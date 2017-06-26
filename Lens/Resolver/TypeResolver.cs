@@ -133,7 +133,7 @@ namespace Lens.Resolver
                     ? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(ParseTypeSignature).ToArray())
                     : type;
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
                 throw new LensCompilerException(ex.Message, signature);
             }

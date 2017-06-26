@@ -84,7 +84,7 @@ namespace Lens.Test.Internals
         {
             Test<int?>("int?");
             Test<bool?>("bool?");
-            Assert.Throws<TypeMatchException>(() => Resolver.ResolveType("string?"));
+            Assert.Throws<LensCompilerException>(() => Resolver.ResolveType("string?"));
         }
 
         [Test]
