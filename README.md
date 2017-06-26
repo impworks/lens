@@ -27,9 +27,9 @@ println "blastoff!"
 LINQ queries:
 
 ```csharp
-let squareSum = range 1 100
-    |> Where (x -> x.even())
-    |> Select (x -> x ** 2)
+let squareSum = 1.to 100
+    |> Where x -> x.even()
+    |> Select x -> x ** 2
     |> Sum ()
 ```
 
@@ -70,8 +70,6 @@ Partial application and function composition:
 ```csharp
 let multiplier = (x:int y:int) -> x * y
 let inv = (a:string b:string) -> b + a
-
-// partially apply multiplier
 let doubler = multiplier 2 _
 
 // compose functions together
@@ -131,10 +129,15 @@ The code above creates the compiler and registers local variables `x`, `y`, and 
 There are many cases in which your application can benefit from an embeddable scripting language:
 
 * **Tasks automation**
+
     Write scripts to execute tasks automatically within the application, like processing a batch of images in a graphical editor, backing up databases.
+    
 * **Formulas support**
+
     Enable Excel-like formulas in your application, with functions and all kinds of cool features.
+    
 * **Easy tweaking**
+
     Embeddable scripting is a much more powerful alternative to config files. Scripts can contain some logic which can be altered without recompiling the entire application. Especially useful in game engines!
 
 ### What features does the language support?
@@ -155,13 +158,7 @@ The compiler already supports the following features:
 * Basic optimizations like constant unrolling
 * Safe mode: certain types or namespaces can be disabled for security reasons
 
-Some cool features are on the way:
-
-* Generic function definition
-* Object initializers
-* Attributes
-
-The complete list of expected features (in russian) can be found in the Issues tab.
+Please refer to the [Wiki](https://github.com/impworks/lens/wiki) for the complete list of features.
 
 Contributions are always welcome - especially if you would like to help create a text editor with code suggestions and syntax highlighting!
 
