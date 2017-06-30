@@ -472,5 +472,66 @@ funcs
 ";
             Test(src, new[] {2, 6, 6, 12, 10});
         }
+
+        [Test]
+        public void SafeMember()
+        {
+            Test(@"(null as string)?.Length", null);
+            Test(@"""test""?.Length", 4);
+        }
+
+        [Test]
+        public void SafeMember2()
+        {
+            var src = @"
+(null as string)
+    ? |> Trim ()";
+
+            Test(src, null);
+        }
+
+        [Test]
+        public void SafeMember3()
+        {
+            var src = @"
+"" hello ""
+    ? |> Trim ()";
+
+            Test(src, "hello");
+        }
+
+        [Test]
+        public void SafeIndex()
+        {
+            Test(@"(null as int[])?[0]", null);
+            Test(@"(new [1; 2])?[0]", 1);
+        }
+
+        [Test]
+        public void SafeInvokeExtension1()
+        {
+            var src = @"
+var x : IEnumerable<int>
+x?.Select (a -> a * 2)
+";
+            Test(src, null);
+        }
+
+        [Test]
+        public void SafeInvokeExtension2()
+        {
+            var src = @"
+let x = new [2; 3] as IEnumerable<int>
+x?.Select (a -> a * 2)
+";
+            Test(src, new [] { 4, 6 });
+        }
+
+        [Test]
+        [Ignore]
+        public void SafeLongChain1()
+        {
+            Test(@"(null as string)?.Length.ToString ()", null);
+        }
     }
 }

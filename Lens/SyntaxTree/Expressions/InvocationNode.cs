@@ -49,6 +49,12 @@ namespace Lens.SyntaxTree.Expressions
         /// </summary>
         private Type[] _typeHints;
 
+        /// <summary>
+        /// The flag indicating that current method has been resolved as static,
+        /// accepting the base object as first parameter.
+        /// </summary>
+        private bool _isExtensionMethod;
+
         #endregion
 
         #region Resolve
@@ -149,6 +155,7 @@ namespace Lens.SyntaxTree.Expressions
                         resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
                     );
 
+                    _isExtensionMethod = true;
                     return;
                 }
                 catch (KeyNotFoundException)
@@ -169,6 +176,8 @@ namespace Lens.SyntaxTree.Expressions
                         _typeHints,
                         (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
                     );
+
+                    _isExtensionMethod = true;
                 }
                 catch (KeyNotFoundException)
                 {
@@ -300,7 +309,9 @@ namespace Lens.SyntaxTree.Expressions
             if (getMember?.IsSafeNavigation == true)
             {
                 var type = Resolve(ctx, mustReturn);
-                var local = ctx.Scope.DeclareImplicit(ctx, Expression.Resolve(ctx), false);
+                var local = ctx.Scope.DeclareImplicit(ctx, getMember.Expression.Resolve(ctx), false);
+                var args = Arguments.AsEnumerable();
+                if (_isExtensionMethod) args = args.Skip(1);
 
                 return Expr.Block(
                     Expr.Set(local, getMember.Expression),
@@ -320,7 +331,7 @@ namespace Lens.SyntaxTree.Expressions
                                         getMember.MemberName,
                                         getMember.TypeHints.ToArray()
                                     ),
-                                    Arguments.ToArray()
+                                    args.ToArray()
                                 ),
                                 type
                             )

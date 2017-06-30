@@ -28,21 +28,31 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
+            Type result;
+
             var exprType = Expression.Resolve(ctx);
             if (exprType.IsArray)
-                return exprType.GetElementType();
+            {
+                result = exprType.GetElementType();
+            }
+            else
+            {
+                var idxType = Index.Resolve(ctx);
+                try
+                {
+                    _getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
+                    result = _getter.ReturnType;
+                }
+                catch (LensCompilerException ex)
+                {
+                    ex.BindToLocation(this);
+                    throw;
+                }
+            }
 
-            var idxType = Index.Resolve(ctx);
-            try
-            {
-                _getter = ReflectionHelper.ResolveIndexer(exprType, idxType, true);
-                return _getter.ReturnType;
-            }
-            catch (LensCompilerException ex)
-            {
-                ex.BindToLocation(this);
-                throw;
-            }
+            return IsSafeNavigation && result.IsValueType && !result.IsNullableType()
+                ? result.MakeNullableType()
+                : result;
         }
 
         #endregion
