@@ -69,18 +69,25 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_type != null)
                 CheckTypeInSafeMode(ctx, _type);
 
+            Type result;
+
             if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
-                return typeof(int);
+                result = typeof(int);
 
-            if (_field != null)
-                return _field.FieldType;
+            else if (_field != null)
+                result = _field.FieldType;
 
-            if (_property != null)
-                return _property.PropertyType;
+            else if (_property != null)
+                result = _property.PropertyType;
 
-            return _method.ReturnType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
-                : FunctionalHelper.CreateFuncType(_method.ReturnType, _method.ArgumentTypes);
+            else
+                result = _method.ReturnType.IsVoid()
+                    ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
+                    : FunctionalHelper.CreateFuncType(_method.ReturnType, _method.ArgumentTypes);
+
+            return IsSafeNavigation && result.IsValueType && !result.IsNullableType()
+                   ? result.MakeNullableType()
+                   : result;
         }
 
         /// <summary>
@@ -189,6 +196,42 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Expression, x => Expression = x);
+        }
+
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (IsSafeNavigation)
+            {
+                if (Expression == null)
+                    throw new ArgumentNullException(nameof(Expression));
+
+                var type = Resolve(ctx, mustReturn);
+                var local = ctx.Scope.DeclareImplicit(ctx, Expression.Resolve(ctx), false);
+                return Expr.Block(
+                    Expr.Set(local, Expression),
+                    Expr.If(
+                        Expr.Equal(
+                            Expr.Get(local),
+                            Expr.Null()
+                        ),
+                        Expr.Block(
+                            Expr.Default(type)
+                        ),
+                        Expr.Block(
+                            Expr.Cast(
+                                Expr.GetMember(
+                                    Expr.Get(local),
+                                    MemberName,
+                                    TypeHints.ToArray()
+                                ),
+                                type
+                            )
+                        )
+                    )
+                );
+            }
+
+            return base.Expand(ctx, mustReturn);
         }
 
         #endregion

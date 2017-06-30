@@ -55,6 +55,41 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Index, x => Index = x);
         }
 
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            if (IsSafeNavigation)
+            {
+                if (Expression == null)
+                    throw new ArgumentNullException(nameof(Expression));
+
+                var type = Resolve(ctx, mustReturn);
+                var local = ctx.Scope.DeclareImplicit(ctx, Expression.Resolve(ctx), false);
+                return Expr.Block(
+                    Expr.Set(local, Expression),
+                    Expr.If(
+                        Expr.Equal(
+                            Expr.Get(local),
+                            Expr.Null()
+                        ),
+                        Expr.Block(
+                            Expr.Default(type)
+                        ),
+                        Expr.Block(
+                            Expr.Cast(
+                                Expr.GetIdx(
+                                    Expr.Get(local),
+                                    Index
+                                ),
+                                type
+                            )
+                        )
+                    )
+                );
+            }
+
+            return base.Expand(ctx, mustReturn);
+        }
+
         #endregion
 
         #region Emit

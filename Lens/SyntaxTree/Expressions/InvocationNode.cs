@@ -294,6 +294,44 @@ namespace Lens.SyntaxTree.Expressions
                 yield return curr;
         }
 
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            var getMember = Expression as GetMemberNode;
+            if (getMember?.IsSafeNavigation == true)
+            {
+                var type = Resolve(ctx, mustReturn);
+                var local = ctx.Scope.DeclareImplicit(ctx, Expression.Resolve(ctx), false);
+
+                return Expr.Block(
+                    Expr.Set(local, getMember.Expression),
+                    Expr.If(
+                        Expr.Equal(
+                            Expr.Get(local),
+                            Expr.Null()
+                        ),
+                        Expr.Block(
+                            Expr.Default(type)
+                        ),
+                        Expr.Block(
+                            Expr.Cast(
+                                Expr.Invoke(
+                                    Expr.GetMember(
+                                        Expr.Get(local),
+                                        getMember.MemberName,
+                                        getMember.TypeHints.ToArray()
+                                    ),
+                                    Arguments.ToArray()
+                                ),
+                                type
+                            )
+                        )
+                    )
+                );
+            }
+
+            return base.Expand(ctx, mustReturn);
+        }
+
         #endregion
 
         #region Process closures

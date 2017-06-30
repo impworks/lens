@@ -9,5 +9,10 @@
         /// Expression to access a dynamic member.
         /// </summary>
         public NodeBase Expression { get; set; }
+
+        /// <summary>
+        /// Flag indicating that null check must be performed before accessing the member.
+        /// </summary>
+        public bool IsSafeNavigation { get; set; }
     }
 }
