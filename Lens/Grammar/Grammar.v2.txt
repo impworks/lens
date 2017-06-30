@@ -49,8 +49,8 @@ get_expr <NodeBase>                         = atom { accessor }
 get_id_expr <GetIdentifierNode>             = identifier [ type_args ]
 get_stmbr_expr <GetMemberNode>              = type "::" identifier [ type_args ]
 accessor <NodeBase>                         = accessor_idx | accessor_mbr
-accessor_idx <GetIndexNode>                 = "[" line_expr "]"
-accessor_mbr <GetMemberNode>                = "." identifier [ type_args ]
+accessor_idx <GetIndexNode>                 = [ "?" ] "[" line_expr "]"
+accessor_mbr <GetMemberNode>                = [ "?" ] "." identifier [ type_args ]
 
 // expression root
 expr <NodeBase>                             = block_expr | line_expr
@@ -86,7 +86,7 @@ new_object_block <NewObjectNode>            = type invoke_block_args
 
 // block invocations
 invoke_block_expr                           = line_expr { invoke_pass }
-invoke_pass                                 = "|>" identifier [ type_args ] ( lambda_line_expr | invoke_block_args | invoke_line_args )
+invoke_pass                                 = [ "?" ] "|>" identifier [ type_args ] ( lambda_line_expr | invoke_block_args | invoke_line_args )
 invoke_block_args <~NodeBase>               = INDENT { invoke_block_arg } DEDENT
 invoke_block_arg <NodeBase>                 = "<|" ( ref_arg | expr )
 invoke_line_args <~NodeBase>                = { invoke_line_arg }

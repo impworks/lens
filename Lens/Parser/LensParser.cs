@@ -748,29 +748,35 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// accessor_idx                                = "[" line_expr "]"
+        /// accessor_idx                                = [ "?" ] "[" line_expr "]"
         /// </summary>
         private GetIndexNode ParseAccessorIdx()
         {
+            var isSafe = Check(LexemType.QuestionMark);
+
             if (!Check(LexemType.SquareOpen))
                 return null;
 
             var node = new GetIndexNode();
             node.Index = Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected);
+            node.IsSafeNavigation = isSafe;
             Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
             return node;
         }
 
         /// <summary>
-        /// accessor_mbr                                = "." identifier [ type_args ]
+        /// accessor_mbr                                = [ "?" ] "." identifier [ type_args ]
         /// </summary>
         private GetMemberNode ParseAccessorMbr()
         {
+            var isSafe = Check(LexemType.QuestionMark);
+
             if (!Check(LexemType.Dot))
                 return null;
 
             var node = new GetMemberNode();
             node.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+            node.IsSafeNavigation = isSafe;
 
             var args = Attempt(ParseTypeArgs);
             if (args != null)
@@ -1232,7 +1238,6 @@ namespace Lens.Parser
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
         private InvocationNode ParseInvokeBlockPassExpr()
         {
             var expr = Attempt(ParseLineExpr);
@@ -1247,10 +1252,12 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// invoke_pass                                 = "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
+        /// invoke_pass                                 = [ "?" ] "|>" identifier [ type_args ] ( invoke_block_args | invoke_line_args )
         /// </summary>
         private InvocationNode ParseInvokePass()
         {
+            var isSafe = Check(LexemType.QuestionMark);
+
             if (!Check(LexemType.PassRight))
                 return null;
 
@@ -1258,6 +1265,7 @@ namespace Lens.Parser
             var invoker = new InvocationNode {Expression = getter};
 
             getter.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
+            getter.IsSafeNavigation = isSafe;
 
             var hints = Attempt(ParseTypeArgs);
             if (hints != null)
