@@ -259,7 +259,7 @@
     <value>LE3050: Type '{0}' cannot be used as value for generic argument '{1}' of type '{2}' because it does not implement class or interface '{3}'!</value>
   </data>
   <data name="GenericInterfaceMultipleImplementations" xml:space="preserve">
-    <value>LE3051: Cannot infer argument types of '{0}': type '{1}' implements multiple overrides!</value>
+    <value>LE3051: Cannot infer argument types of '{0}': type '{1}' implements multiple matching overrides!</value>
   </data>
   <data name="GenericInterfaceNotImplemented" xml:space="preserve">
     <value>LE3052: Type '{0}' does not implement any kind of interface '{1}'!</value>

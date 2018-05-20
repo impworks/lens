@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Translations;
@@ -195,10 +195,16 @@ namespace Lens.Resolver
                 // is interface
                 if (desired.IsInterface)
                 {
-                    var matching = actual.ResolveInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic).Take(2).ToArray();
-                    if (matching.Length == 0)
+                    var matching = actual.ResolveInterfaces()
+                                         .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic)
+                                         .Where(i => i.DistanceFrom(desired) != int.MaxValue)
+                                         .Take(2)
+                                         .ToList();
+
+                    if (matching.Count == 0)
                         throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceNotImplemented, actual, generic));
-                    if (matching.Length > 1)
+
+                    if (matching.Count > 1)
                         throw new TypeMatchException(string.Format(CompilerMessages.GenericInterfaceMultipleImplementations, generic, actual));
 
                     return matching[0];

@@ -68,4 +68,21 @@ namespace Lens.Test.Internals
 
         public virtual string VirtualValue { get; set; }
     }
+
+    public interface IRestriction<T> { }
+
+    public class RestrictionTest: IRestriction<int>, IRestriction<KeyValuePair<int, int>> { }
+
+    public class RestrictionAcceptor
+    {
+        public int AcceptInstance<T>(IRestriction<KeyValuePair<int, T>> rst)
+        {
+            return 1;
+        }
+
+        public static int AcceptStatic<T>(IRestriction<KeyValuePair<int, T>> rst)
+        {
+            return 2;
+        }
+    }
 }

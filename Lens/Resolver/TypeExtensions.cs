@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -335,6 +335,11 @@ namespace Lens.Resolver
 
                     // dist(X<out T1>, X<out T2>) = dist(T1, T2)
                     conversionResult = argument1.DistanceFrom(argument2, exactly);
+                }
+                else if (argument1.IsGenericType && argument2.IsGenericType)
+                {
+                    // nested generic types
+                    conversionResult = GenericDistance(argument1, argument2, exactly);
                 }
                 else
                 {

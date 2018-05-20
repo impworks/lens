@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
+using Lens.Test.Internals;
 using Lens.Translations;
 using NUnit.Framework;
 
@@ -471,6 +472,43 @@ funcs
     |> Select x -> x ()
 ";
             Test(src, new[] {2, 6, 6, 12, 10});
+        }
+
+        [Test]
+        public void ComplexGenericResolution1()
+        {
+            var src = @"
+let x = new RestrictionTest ()
+let acc = new RestrictionAcceptor ()
+acc.AcceptInstance x
+";
+            TestConfigured(
+                x =>
+                {
+                    x.RegisterType(typeof(RestrictionTest));
+                    x.RegisterType(typeof(RestrictionAcceptor));
+                },
+                src,
+                1
+            );
+        }
+
+        [Test]
+        public void ComplexGenericResolution2()
+        {
+            var src = @"
+let x = new RestrictionTest ()
+RestrictionAcceptor::AcceptStatic x
+";
+            TestConfigured(
+                x =>
+                {
+                    x.RegisterType(typeof(RestrictionTest));
+                    x.RegisterType(typeof(RestrictionAcceptor));
+                },
+                src,
+                2
+            );
         }
     }
 }
