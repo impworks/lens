@@ -211,13 +211,9 @@ namespace Lens.Resolver
 
             if (varType.IsInterface)
             {
-                if (exprType.IsInterface)
-                    return InterfaceDistance(varType, new[] {exprType}.Union(exprType.ResolveInterfaces()));
-
-                // casting expression to interface takes 1 step
-                var dist = InterfaceDistance(varType, exprType.ResolveInterfaces());
-                if (dist < int.MaxValue)
-                    return dist + 1;
+                var idist = InterfaceDistance(varType, exprType.ResolveInterfaces());
+                if (idist != int.MaxValue)
+                    return idist;
             }
 
             if (varType.IsGenericParameter || exprType.IsGenericParameter)
@@ -255,7 +251,7 @@ namespace Lens.Resolver
             foreach (var iface in ifaces)
             {
                 if (iface == interfaceType)
-                    return 0;
+                    return 1;
 
                 if (interfaceType.IsGenericType && iface.IsGenericType)
                 {
@@ -366,9 +362,11 @@ namespace Lens.Resolver
         {
             // generic parameter is on the same level of inheritance as the expression
             // therefore getting its parent type does not take a step
-            return varType.IsGenericParameter
+            var dist =  varType.IsGenericParameter
                 ? DistanceFrom(varType.BaseType, exprType, exactly)
                 : DistanceFrom(exprType.BaseType, varType, exactly);
+
+            return dist == int.MaxValue ? dist : dist + 1;
         }
 
         /// <summary>

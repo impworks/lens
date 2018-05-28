@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,7 +13,14 @@ namespace Lens.Test
     {
         protected static void Test(string src, object value, bool testConstants = false)
         {
-            Assert.AreEqual(value, Compile(src, new LensCompilerOptions {UnrollConstants = true, AllowSave = true}));
+            var opts = new LensCompilerOptions
+            {
+                UnrollConstants = true,
+                #if NET_CLASSIC
+                AllowSave = true
+                #endif
+            };
+            Assert.AreEqual(value, Compile(src, opts));
             if (testConstants)
                 Assert.AreEqual(value, Compile(src));
         }
@@ -51,7 +58,7 @@ namespace Lens.Test
 
         protected void TestConfigured(Action<LensCompiler> setup, string src, object value)
         {
-            var compiler = CreateCompiler(new LensCompilerOptions {AllowSave = false});
+            var compiler = CreateCompiler(new LensCompilerOptions());
             setup(compiler);
 
             var actualValue = compiler.Run(src);
@@ -60,7 +67,7 @@ namespace Lens.Test
 
         protected void TestErrorConfigured(Action<LensCompiler> setup, string src, string msg)
         {
-            var compiler = CreateCompiler(new LensCompilerOptions {AllowSave = false});
+            var compiler = CreateCompiler(new LensCompilerOptions());
             var exception = Assert.Throws<LensCompilerException>(() =>
             {
                 setup(compiler);
@@ -102,7 +109,12 @@ namespace Lens.Test
 
         protected static LensCompiler CreateCompiler(LensCompilerOptions opts)
         {
-            var compiler = new LensCompiler(opts ?? new LensCompilerOptions {AllowSave = true});
+            var compiler = new LensCompiler(opts ?? new LensCompilerOptions
+            {
+                #if NET_CLASSIC
+                AllowSave = true
+                #endif
+            });
             compiler.RegisterAssembly(Assembly.Load("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));
             return compiler;
         }

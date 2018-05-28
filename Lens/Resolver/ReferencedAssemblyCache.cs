@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Lens.Resolver
@@ -28,8 +29,8 @@ namespace Lens.Resolver
                     }
                 }
 
-                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                    _assemblies.Add(asm);
+                foreach (var asm in GetLoadedAssemblies())
+                    ReferenceAssembly(asm);
             }
         }
 
@@ -75,6 +76,15 @@ namespace Lens.Resolver
         public void ReferenceAssembly(Assembly asm)
         {
             _assemblies.Add(asm);
+        }
+
+        /// <summary>
+        /// Returns the loaded assemblies.
+        /// </summary>
+        private IEnumerable<Assembly> GetLoadedAssemblies()
+        {
+            var asms =  AppDomain.CurrentDomain.GetAssemblies();
+            return asms.Where(x => !x.FullName.StartsWith("System.Private."));
         }
 
         #endregion

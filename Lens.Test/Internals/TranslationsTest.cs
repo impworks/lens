@@ -16,7 +16,8 @@ namespace Lens.Test.Internals
             get
             {
                 var currFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                return Path.Combine(currFolder, @"..\..\..\Lens\Translations\");
+                var folder = Path.Combine(currFolder, @"..\..\..\..\Lens\Translations\");
+                return folder;
             }
         }
 
