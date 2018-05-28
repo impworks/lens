@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 using NUnit.Framework;
 
@@ -14,7 +15,7 @@ namespace Lens.Test.Internals
         {
             get
             {
-                var currFolder = Environment.CurrentDirectory;
+                var currFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 return Path.Combine(currFolder, @"..\..\..\Lens\Translations\");
             }
         }

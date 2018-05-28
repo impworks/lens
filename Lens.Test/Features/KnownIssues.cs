@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 
 namespace Lens.Test.Features
 {
@@ -6,7 +6,7 @@ namespace Lens.Test.Features
     /// These tests contain descriptions of known problems which are not yet fixed.
     /// Corresponding Github issues are also mentioned.
     /// </summary>
-    [Ignore]
+    [Ignore("To be fixed later")]
     [TestFixture]
     internal class KnownIssues : TestBase
     {

@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens", "Lens\Lens.csproj", "{7987774D-17A7-4E76-AE13-C03F2CC31B9C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.Test", "Lens.Test\Lens.Test.csproj", "{479CB258-AA55-402F-B082-4F8E95783B2D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleHost", "ConsoleHost\ConsoleHost.csproj", "{C3116F85-F88A-4FAF-B124-C586F067383B}"
@@ -12,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphHost", "GraphHost\GraphHost.csproj", "{9426E1AE-8C99-44F7-900E-FF7EFAF432AD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphicScript", "GraphicScript\GraphicScript.csproj", "{DBA03C5F-486A-426C-8000-BD0FAEFA8B52}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens", "Lens\Lens.csproj", "{73D3070E-E549-46A7-8DE8-480971886B0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,18 +23,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|Mono.ActiveCfg = Debug|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|Mono.Build.0 = Debug|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|x86.ActiveCfg = Debug|x86
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Debug|x86.Build.0 = Debug|x86
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|Mono.ActiveCfg = Release|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|Mono.Build.0 = Release|Any CPU
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|x86.ActiveCfg = Release|x86
-		{7987774D-17A7-4E76-AE13-C03F2CC31B9C}.Release|x86.Build.0 = Release|x86
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{479CB258-AA55-402F-B082-4F8E95783B2D}.Debug|Mono.ActiveCfg = Debug|Any CPU
@@ -79,8 +67,23 @@ Global
 		{DBA03C5F-486A-426C-8000-BD0FAEFA8B52}.Release|Mono.ActiveCfg = Release|Any CPU
 		{DBA03C5F-486A-426C-8000-BD0FAEFA8B52}.Release|x86.ActiveCfg = Release|x86
 		{DBA03C5F-486A-426C-8000-BD0FAEFA8B52}.Release|x86.Build.0 = Release|x86
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|Mono.ActiveCfg = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|Mono.Build.0 = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Debug|x86.Build.0 = Debug|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|Mono.ActiveCfg = Release|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|Mono.Build.0 = Release|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|x86.ActiveCfg = Release|Any CPU
+		{73D3070E-E549-46A7-8DE8-480971886B0B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB989D5C-EE92-4465-815C-69AF16A9E1A1}
 	EndGlobalSection
 EndGlobal
