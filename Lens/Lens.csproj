@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net45;net451;net452;net46;net461;net462;net47;netcoreapp2.0</TargetFrameworks>
+        <TargetFrameworks>net45;netcoreapp2.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>4.2.0</Version>
+        <Version>4.2.1</Version>
         <Authors>LENS authors</Authors>
         <PackageId>LENS</PackageId>
         <Description>Language for Embeddable .NET Scripting</Description>

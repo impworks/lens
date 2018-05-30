@@ -119,7 +119,7 @@ namespace Lens.Compiler
                 if (!curr.Value.IsImported)
                     curr.Value.TypeBuilder.CreateType();
 
-#if !NET_CORE
+#if NET_CLASSIC
             if (Options.AllowSave)
             {
                 if (Options.SaveAsExe)
