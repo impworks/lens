@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>net45;net451;net452;net46;net461;net462;net47;netcoreapp2.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>4.1.0</Version>
+        <Version>4.2.0</Version>
         <Authors>LENS authors</Authors>
         <PackageId>LENS</PackageId>
         <Description>Language for Embeddable .NET Scripting</Description>
@@ -13,13 +13,25 @@
         <Copyright>Copyright 2018</Copyright>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
-        <DefineConstants>NET_CORE</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(TargetFramework)' != 'netcoreapp2.0'">
-        <DefineConstants>NET_CLASSIC</DefineConstants>
-    </PropertyGroup>
+    <Choose>
+        <When Condition="$(TargetFramework.StartsWith('netcoreapp'))">
+            <PropertyGroup>
+                <DefineConstants>NET_CORE</DefineConstants>
+            </PropertyGroup>
+            <ItemGroup>
+                <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+                <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
+            </ItemGroup>
+        </When>
+        <Otherwise>
+            <PropertyGroup>
+                <DefineConstants>NET_CLASSIC</DefineConstants>
+            </PropertyGroup>
+            <ItemGroup>
+                <Reference Include="Microsoft.CSharp" />
+            </ItemGroup>
+        </Otherwise>
+    </Choose>
 
     <ItemGroup>
         <Compile Update="Translations\CompilerMessages.Designer.cs">
@@ -55,11 +67,6 @@
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
         </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
-        <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
     </ItemGroup>
 
 </Project>
