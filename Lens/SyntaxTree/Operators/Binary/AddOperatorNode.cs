@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Lens.Compiler;
@@ -194,7 +194,10 @@ namespace Lens.SyntaxTree.Operators.Binary
                     tmpDict,
                     Expr.New(
                         dictType,
-                        LeftOperand
+                        Expr.Cast(
+                            LeftOperand,
+                            typeof(IDictionary<,>).MakeGenericType(keyValueTypes)
+                        )
                     )
                 ),
                 Expr.For(

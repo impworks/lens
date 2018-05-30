@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Lens.Compiler;
 
 namespace Lens
@@ -8,11 +8,14 @@ namespace Lens
     /// </summary>
     public class LensCompilerOptions
     {
+
+#if NET_CLASSIC
         /// <summary>
         /// Checks whether the generated assembly can be saved to disk.
         /// Default = false.
         /// </summary>
         public bool AllowSave = false;
+#endif
 
         /// <summary>
         /// Checks whether the compiler should auto-include default assemblies for type and extension method resolvers.

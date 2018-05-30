@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -60,8 +60,10 @@ namespace Lens.Compiler
         /// </summary>
         private void CreateInitialEntities()
         {
+#if NET_CLASSIC
             if (Options.AllowSave && Options.SaveAsExe)
                 CreateEntryPoint();
+#endif
 
             PrepareEntities(false);
 
@@ -117,6 +119,7 @@ namespace Lens.Compiler
                 if (!curr.Value.IsImported)
                     curr.Value.TypeBuilder.CreateType();
 
+#if NET_CLASSIC
             if (Options.AllowSave)
             {
                 if (Options.SaveAsExe)
@@ -127,6 +130,7 @@ namespace Lens.Compiler
 
                 MainAssembly.Save(Options.FileName);
             }
+#endif
         }
 
         #endregion

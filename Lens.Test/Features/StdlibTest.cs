@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using NUnit.Framework;
 
@@ -67,7 +67,7 @@ string::Join ""-"" r
         public void RandTest1()
         {
             var src = "rand ()";
-            var opts = new LensCompilerOptions {AllowSave = true};
+            var opts = new LensCompilerOptions();
             var fx = new LensCompiler(opts).Compile(src);
 
             for (var idx = 0; idx < 1000; idx++)
@@ -81,7 +81,7 @@ string::Join ""-"" r
         public void RandTest2()
         {
             var src = "rand 1 1000";
-            var opts = new LensCompilerOptions {AllowSave = true};
+            var opts = new LensCompilerOptions();
             var fx = new LensCompiler(opts).Compile(src);
 
             for (var idx = 0; idx < 1000; idx++)
@@ -95,7 +95,7 @@ string::Join ""-"" r
         public void RandTest3()
         {
             var src = "rand (new [1; 2; 3; 4; 5])";
-            var opts = new LensCompilerOptions {AllowSave = true};
+            var opts = new LensCompilerOptions();
             var fx = new LensCompiler(opts).Compile(src);
 
             for (var idx = 0; idx < 100; idx++)

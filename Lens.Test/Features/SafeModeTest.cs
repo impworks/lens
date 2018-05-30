@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
@@ -125,14 +125,14 @@ GC::Collect ()
         [Test]
         public void BlacklistEnvironment2()
         {
-            var src = @"Environment::StackTrace";
+            var src = @"System.Environment::StackTrace";
             TestSubsystem(typeof(Environment), SafeModeSubsystem.Environment, src);
         }
 
         [Test]
         public void BlacklistEnvironment3()
         {
-            var src = @"AppDomain::CurrentDomain.IsFullyTrusted";
+            var src = @"System.AppDomain::CurrentDomain.IsFullyTrusted";
             TestSubsystem(typeof(AppDomain), SafeModeSubsystem.Environment, src);
         }
 

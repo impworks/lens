@@ -1,4 +1,4 @@
-﻿using Lens.Translations;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -150,8 +150,8 @@ fx1 :> fx2
         public void Wildcards1()
         {
             var src = @"
-let fx1 = string::Join <_, string[]> as object
-let fx2 = string::Join <_, _, _, _> as object
+let fx1 = string::Format <_, object[]> as object
+let fx2 = string::Join <string, _, _, _> as object
 let fx3 = int::Parse <_> as object
 new [fx1; fx2; fx3]
     |> Where x -> x <> null

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler.Entities;
@@ -22,8 +22,7 @@ namespace Lens.Compiler
         /// </summary>
         public void ImportType(string name, Type type)
         {
-            if (Options.AllowSave)
-                Error(CompilerMessages.ImportIntoSaveableAssembly);
+            EnsureNotSaving();
 
             if (_definedTypes.ContainsKey(name))
                 Error(CompilerMessages.TypeDefined, name);
@@ -45,8 +44,7 @@ namespace Lens.Compiler
         /// <param name="newName">New name for overloaded functions.</param>
         public void ImportFunctionOverloads(Type type, string name, string newName = null)
         {
-            if (Options.AllowSave)
-                Error(CompilerMessages.ImportIntoSaveableAssembly);
+            EnsureNotSaving();
 
             ImportOverloads(type, name, newName ?? name, true);
         }
@@ -56,8 +54,7 @@ namespace Lens.Compiler
         /// </summary>
         public void ImportFunction(string name, MethodInfo method)
         {
-            if (Options.AllowSave)
-                Error(CompilerMessages.ImportIntoSaveableAssembly);
+            EnsureNotSaving();
 
             ImportFunction(name, method, true);
         }
@@ -79,8 +76,7 @@ namespace Lens.Compiler
         /// </summary>
         public void ImportProperty<T>(string name, Func<T> getter, Action<T> setter = null)
         {
-            if (Options.AllowSave)
-                Error(CompilerMessages.ImportIntoSaveableAssembly);
+            EnsureNotSaving();
 
             if (_definedProperties.ContainsKey(name))
                 Error(CompilerMessages.PropertyImported, name);
@@ -90,6 +86,17 @@ namespace Lens.Compiler
         }
 
         #region Helpers
+
+        /// <summary>
+        /// Throws an error if the assembly is marked as requiring save-to-disk.
+        /// </summary>
+        private void EnsureNotSaving()
+        {
+#if NET_CLASSIC
+            if (Options.AllowSave)
+                Error(CompilerMessages.ImportIntoSaveableAssembly);
+#endif
+        }
 
         /// <summary>
         /// Imports a method from a standard library.

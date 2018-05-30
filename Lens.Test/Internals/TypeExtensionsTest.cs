@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -205,8 +205,8 @@ namespace Lens.Test.Internals
 
             var to = typeof(Array).GetMethod("FindAll").GetParameters().Select(p => p.ParameterType).ToArray();
 
-            Assert.AreEqual(1, to[0].DistanceFrom(from1));
-            Assert.AreEqual(1, to[1].DistanceFrom(from2));
+            Assert.AreEqual(2, to[0].DistanceFrom(from1));
+            Assert.AreEqual(2, to[1].DistanceFrom(from2));
         }
 
         [Test]
@@ -225,6 +225,12 @@ namespace Lens.Test.Internals
         {
             TestDistanceFrom<object, IEnumerable<int>>(1);
             TestDistanceFrom<object, IEnumerable<DerivedClass>>(1);
+        }
+
+        [Test]
+        public void InterfaceImplementation()
+        {
+            TestDistanceFrom<IEnumerable<KeyValuePair<int, string>>, IDictionary<int, string>>(1);
         }
 
         [Test]

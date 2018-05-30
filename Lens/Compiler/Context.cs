@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -58,6 +58,7 @@ namespace Lens.Compiler
             lock (typeof(Context))
                 an = new AssemblyName(Unique.AssemblyName());
 
+#if NET_CLASSIC
             if (Options.AllowSave)
             {
                 if (string.IsNullOrEmpty(Options.FileName))
@@ -71,6 +72,10 @@ namespace Lens.Compiler
                 MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
                 MainModule = MainAssembly.DefineDynamicModule(an.Name);
             }
+#else
+            MainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+            MainModule = MainAssembly.DefineDynamicModule(an.Name);
+#endif
 
             ContextId = GlobalPropertyHelper.RegisterContext();
 

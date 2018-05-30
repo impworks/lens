@@ -1,281 +1,72 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7987774D-17A7-4E76-AE13-C03F2CC31B9C}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lens</RootNamespace>
-    <AssemblyName>Lens</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Debug\Lens.SyntaxTree.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Release\Lens.SyntaxTree.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Compiler\Entities\TypeContentsKind.cs" />
-    <Compile Include="Compiler\SpecialTypes.cs" />
-    <Compile Include="Resolver\GenericHelper.Resolver.cs" />
-    <Compile Include="Resolver\ReferencedAssemblyCache.cs" />
-    <Compile Include="Resolver\ReflectionHelper.cs" />
-    <Compile Include="Compiler\Scope.cs" />
-    <Compile Include="Compiler\UniqueNameGenerator.cs" />
-    <Compile Include="Compiler\Context.Compilation.cs" />
-    <Compile Include="Compiler\Context.Import.cs" />
-    <Compile Include="Compiler\Context.SafeMode.cs" />
-    <Compile Include="Compiler\Context.Stdlib.cs" />
-    <Compile Include="Compiler\Entities\EntityNames.cs" />
-    <Compile Include="Compiler\Entities\TypeEntity.Autogeneration.cs" />
-    <Compile Include="Compiler\Entities\TypeEntity.Structure.cs" />
-    <Compile Include="Compiler\Entities\TypeEntityKind.cs" />
-    <Compile Include="Compiler\SafeMode.cs" />
-    <Compile Include="Compiler\SafeModeSubsystem.cs" />
-    <Compile Include="LensCompiler.cs" />
-    <Compile Include="LensCompilerOptions.cs" />
-    <Compile Include="Compiler\Entities\ConstructorEntity.cs" />
-    <Compile Include="Compiler\Context.cs" />
-    <Compile Include="Compiler\Context.Lookup.cs" />
-    <Compile Include="Compiler\Context.Structure.cs" />
-    <Compile Include="Resolver\GlobalPropertyHelper.cs" />
-    <Compile Include="Compiler\EmitterExtensions.cs" />
-    <Compile Include="Resolver\ExtensionMethodResolver.cs" />
-    <Compile Include="Compiler\Entities\FieldEntity.cs" />
-    <Compile Include="Resolver\GenericHelper.cs" />
-    <Compile Include="Compiler\Entities\MethodEntityBase.cs" />
-    <Compile Include="Compiler\Entities\MethodEntity.cs" />
-    <Compile Include="Compiler\Entities\TypeContentsBase.cs" />
-    <Compile Include="Compiler\Entities\TypeEntity.cs" />
-    <Compile Include="Resolver\TypeResolver.cs" />
-    <Compile Include="Resolver\Wrappers.cs" />
-    <Compile Include="IScript.cs" />
-    <Compile Include="LensCompilerException.cs" />
-    <Compile Include="Lexer\LensLexer.cs" />
-    <Compile Include="Lexer\LensLexer.Utils.cs" />
-    <Compile Include="Lexer\Lexem.cs" />
-    <Compile Include="Lexer\LexemType.cs" />
-    <Compile Include="Lexer\RegexLexemDefinition.cs" />
-    <Compile Include="Lexer\StaticLexemDefinition.cs" />
-    <Compile Include="Parser\LensParser.cs" />
-    <Compile Include="Parser\LensParser.Utils.cs" />
-    <Compile Include="Stdlib\ConsoleWrapper.cs" />
-    <Compile Include="Stdlib\Utilities.cs" />
-    <Compile Include="Stdlib\Randomizer.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\ForeachNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Locals\MultiVarNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\UsingNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewObjectArrayNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\ShortAssignmentNode.cs" />
-    <Compile Include="SyntaxTree\Internals\EventNode.cs" />
-    <Compile Include="SyntaxTree\Internals\JumpLabelNode.cs" />
-    <Compile Include="SyntaxTree\Internals\JumpNode.cs" />
-    <Compile Include="SyntaxTree\Internals\RawEnumNode.cs" />
-    <Compile Include="SyntaxTree\Literals\CharLiteral.cs" />
-    <Compile Include="SyntaxTree\Literals\DecimalNode.cs" />
-    <Compile Include="SyntaxTree\Literals\FloatNode.cs" />
-    <Compile Include="SyntaxTree\Literals\LongNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\BitOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\CoalesceOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\ShiftOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\XorOperatorNode.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\MatchNode.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchArrayRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchKeyValueRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchNameRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRangeRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRecordRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRegexNode.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchRuleBase.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\MatchStatementNode.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchLiteralRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchTupleRule.cs" />
-    <Compile Include="SyntaxTree\PatternMatching\Rules\MatchTypeRule.cs" />
-    <Compile Include="Translations\CompilerMessages.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>CompilerMessages.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\CatchNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\CodeBlockNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\IfNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Functions\LambdaNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Types\RecordDefinitionNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\ThrowNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Types\TypeDefinitionNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Types\TypeDefinitionNodeBase.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\UseNode.cs" />
-    <Compile Include="SyntaxTree\Expr.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\GetIdentifierNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\GetIndexNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\GetMemberNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\IdentifierNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\IndexNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\InvocationNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\MemberNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\SetIdentifierNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\SetIndexNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\SetMemberNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\CollectionNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\GetSet\AccessorNodeBase.cs" />
-    <Compile Include="SyntaxTree\Literals\NullNode.cs" />
-    <Compile Include="SyntaxTree\Interfaces.cs" />
-    <Compile Include="SyntaxTree\Internals\ThisNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\AddOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\BooleanOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeBased\CastOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeBased\DefaultOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\DivideOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\ComparisonOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Unary\InversionOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeBased\IsOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Unary\NegationOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\MultiplyOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\OperatorNodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\PowOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\RemainderOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\SubtractOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeBased\TypeofOperatorNode.cs" />
-    <Compile Include="SyntaxTree\Operators\TypeBased\TypeOperatorNodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\Unary\UnaryOperatorNodeBase.cs" />
-    <Compile Include="Compiler\FunctionArgument.cs" />
-    <Compile Include="SyntaxTree\Declarations\Functions\FunctionNodeBase.cs" />
-    <Compile Include="SyntaxTree\Declarations\Functions\FunctionNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Locals\LetNode.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\WhileNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Locals\NameDeclarationNodeBase.cs" />
-    <Compile Include="SyntaxTree\ControlFlow\TryNode.cs" />
-    <Compile Include="SyntaxTree\Declarations\Locals\VarNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\InvocationNodeBase.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewArrayNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewDictionaryNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewListNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewObjectNode.cs" />
-    <Compile Include="SyntaxTree\Expressions\Instantiation\NewTupleNode.cs" />
-    <Compile Include="SyntaxTree\Literals\BooleanNode.cs" />
-    <Compile Include="SyntaxTree\Literals\DoubleNode.cs" />
-    <Compile Include="SyntaxTree\Literals\IntNode.cs" />
-    <Compile Include="SyntaxTree\Literals\LiteralNodeBase.cs" />
-    <Compile Include="SyntaxTree\Literals\StringNode.cs" />
-    <Compile Include="SyntaxTree\Literals\UnitNode.cs" />
-    <Compile Include="SyntaxTree\NodeBase.cs" />
-    <Compile Include="SyntaxTree\Operators\Binary\BinaryOperatorNodeBase.cs" />
-    <Compile Include="Translations\LexerMessages.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>LexerMessages.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Translations\ParserMessages.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ParserMessages.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Utils\Annotations.cs" />
-    <Compile Include="SyntaxTree\LocationEntity.cs" />
-    <Compile Include="Compiler\TypeSignature.cs" />
-    <Compile Include="Utils\EnumerableExtensions.cs" />
-    <Compile Include="Resolver\FunctionalHelper.cs" />
-    <Compile Include="Utils\HashList.cs" />
-    <Compile Include="SyntaxTree\LexemLocation.cs" />
-    <Compile Include="Resolver\MethodLookupResult.cs" />
-    <Compile Include="Compiler\Local.cs" />
-    <Compile Include="Utils\NodeChild.cs" />
-    <Compile Include="Resolver\TypeExtensions.cs" />
-    <Compile Include="Utils\NodeExtensions.cs" />
-    <Compile Include="Utils\PatternNameBinding.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Grammar\Grammar.v2.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Translations\CompilerMessages.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Translations\CompilerMessages.ru.resx" />
-    <EmbeddedResource Include="Translations\LexerMessages.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>LexerMessages.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Translations\LexerMessages.ru.resx" />
-    <EmbeddedResource Include="Translations\ParserMessages.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Translations\ParserMessages.ru.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Lens.nuspec" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net45;netcoreapp2.0</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>4.2.1</Version>
+        <Authors>LENS authors</Authors>
+        <PackageId>LENS</PackageId>
+        <Description>Language for Embeddable .NET Scripting</Description>
+        <PackageTags>lens embeddable script</PackageTags>
+        <PackageLicenseUrl>https://github.com/impworks/lens/blob/master/LICENSE.md</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/impworks/lens</PackageProjectUrl>
+        <Copyright>Copyright 2018</Copyright>
+    </PropertyGroup>
+
+    <Choose>
+        <When Condition="$(TargetFramework.StartsWith('netcoreapp'))">
+            <PropertyGroup>
+                <DefineConstants>NET_CORE</DefineConstants>
+            </PropertyGroup>
+            <ItemGroup>
+                <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
+                <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
+            </ItemGroup>
+        </When>
+        <Otherwise>
+            <PropertyGroup>
+                <DefineConstants>NET_CLASSIC</DefineConstants>
+            </PropertyGroup>
+            <ItemGroup>
+                <Reference Include="Microsoft.CSharp" />
+            </ItemGroup>
+        </Otherwise>
+    </Choose>
+
+    <ItemGroup>
+        <Compile Update="Translations\CompilerMessages.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>CompilerMessages.resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Update="Translations\CompilerMessages.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>CompilerMessages.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Translations\LexerMessages.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>LexerMessages.resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Update="Translations\LexerMessages.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>LexerMessages.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Translations\ParserMessages.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>ParserMessages.resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Update="Translations\ParserMessages.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
 </Project>
