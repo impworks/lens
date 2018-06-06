@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,6 +16,7 @@ namespace ConsoleHost
         private static void Main()
         {
             PrintPreamble();
+            WarmUp();
 
             var timer = false;
             while (RequestInput(out var source, ref timer))
@@ -225,7 +226,7 @@ namespace ConsoleHost
             {
                 Console.WriteLine();
                 Console.WriteLine("====================================");
-                Console.WriteLine("=        LENS Compiler v4.0        =");
+                Console.WriteLine("=        LENS Compiler v4.2        =");
                 Console.WriteLine("= https://github.com/impworks/lens =");
                 Console.WriteLine("====================================");
                 Console.WriteLine();
@@ -282,16 +283,27 @@ namespace ConsoleHost
             if (obj is IDictionary)
             {
                 var list = new List<string>();
+                var count = 0;
 
                 foreach (var currKey in obj.Keys)
                 {
-                    list.Add(
-                        string.Format(
-                            "{0} => {1}",
-                            GetStringRepresentation(currKey),
-                            GetStringRepresentation(obj[currKey])
-                        )
-                    );
+                    if (count < 50)
+                    {
+                        list.Add(
+                            string.Format(
+                                "{0} => {1}",
+                                GetStringRepresentation(currKey),
+                                GetStringRepresentation(obj[currKey])
+                            )
+                        );
+                    }
+                    else
+                    {
+                        list.Add("...");
+                        break;
+                    }
+
+                    count++;
                 }
 
                 return string.Format("{{ {0} }}", string.Join("; ", list));
@@ -300,9 +312,22 @@ namespace ConsoleHost
             if (obj is IEnumerable)
             {
                 var list = new List<string>();
+                var count = 0;
 
                 foreach (var curr in obj)
-                    list.Add(GetStringRepresentation(curr));
+                {
+                    if (count < 50)
+                    {
+                        list.Add(GetStringRepresentation(curr));
+                    }
+                    else
+                    {
+                        list.Add("...");
+                        break;
+                    }
+
+                    count++;
+                }
 
                 return string.Format("[ {0} ]", string.Join("; ", list));
             }
@@ -339,6 +364,12 @@ namespace ConsoleHost
         {
             var trim = line.Trim();
             return trim.EndsWith("->") || LineFeeds.Any(curr => curr.IsMatch(trim));
+        }
+
+        private static void WarmUp()
+        {
+            var compiler = new LensCompiler(new LensCompilerOptions());
+            compiler.Run("1 + 2");
         }
     }
 }

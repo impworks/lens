@@ -1,13 +1,18 @@
-fun maker:Rect (x:int y:int) ->
-    let r = new Rect ()
-    r.X = (x + 1) * 50
-    r.Y = (y + 1) * 50
-    r.Focus = ->
-        r.Fill = System.Windows.Media.Color::FromRgb
-            <| (rand 100 255) as byte
-            <| (rand 100 255) as byte
-            <| (rand 100 255) as byte
-    r
+use System.Windows.Media
 
-new (10; 10)
-    |> times (x y) -> Screen.Add (maker x y)
+fun rnd:byte -> (rand 100 255) as byte
+
+fun maker:Rect (x:int y:int) ->
+    let rect = new Rect ()
+    rect.X = (x + 1) * 50
+    rect.Y = (y + 1) * 50
+    rect.Focus = ->
+        let r = rnd ()
+        let g = rnd ()
+        let b = rnd ()
+        rect.Fill = Color::FromRgb r g b
+    rect
+
+for x in 1.to 10 do
+    for y in 1.to 10 do
+        Screen.Add (maker x y)
