@@ -326,6 +326,7 @@ match ""[23-19]"" with
         }
 
         [Test]
+        [SetCulture("ru-RU")]
         public void RegexNamedGroupsTryParseNoThrow()
         {
             var src = @"
