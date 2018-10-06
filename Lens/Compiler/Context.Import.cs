@@ -63,11 +63,8 @@ namespace Lens.Compiler
         /// Imports a delegate as a function.
         /// </summary>
         public void ImportFunction<T>(string name, T @delegate)
-            where T: class
+            where T: Delegate
         {
-            if(!(@delegate is Delegate))
-                throw new ArgumentException(nameof(@delegate));
-
             ImportProperty(name, () => @delegate);
         }
 
