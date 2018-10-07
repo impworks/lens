@@ -77,7 +77,7 @@ namespace Lens
         /// Registers a delegate as a method to be used by LENS script.
         /// </summary>
         public void RegisterFunction<T>(string name, T @delegate)
-            where T: class
+            where T: Delegate
         {
             _context.ImportFunction(name, @delegate);
         }
