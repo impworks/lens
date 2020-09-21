@@ -8,7 +8,7 @@
         <PackageId>LENS</PackageId>
         <Description>Language for Embeddable .NET Scripting</Description>
         <PackageTags>lens embeddable script</PackageTags>
-        <PackageLicenseUrl>https://github.com/impworks/lens/blob/master/LICENSE.md</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/impworks/lens</PackageProjectUrl>
         <Copyright>Copyright 2018</Copyright>
         <LangVersion>7.3</LangVersion>
