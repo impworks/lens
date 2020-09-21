@@ -1,11 +1,10 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using Lens;
-using Microsoft.Research.DynamicDataDisplay;
-using Microsoft.Research.DynamicDataDisplay.DataSources;
 
 namespace GraphHost
 {
@@ -14,8 +13,6 @@ namespace GraphHost
     /// </summary>
     public partial class MainWindow
     {
-        private LineGraph _previousGraph;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -43,27 +40,25 @@ namespace GraphHost
             var currY = 0.0;
             var step = GetDouble(Step, 0.1);
 
-            var obs = new ObservableDataSource<Point>();
-            obs.SetXYMapping(p => p);
-
-            if (_previousGraph != null)
-                _previousGraph.Remove();
-
-            _previousGraph = Chart.AddLineGraph(obs, Colors.Green, 2, "Graph");
-
             lens.RegisterProperty("x", () => currX);
             lens.RegisterProperty("y", () => currY, y => currY = y);
 
-            try
+            IEnumerable<(double x, double y)> GenerateValues()
             {
                 var fx = lens.Compile(Func.Text);
 
                 while (currX < endX)
                 {
                     fx();
-                    obs.AppendAsync(Chart.Dispatcher, new Point(currX, currY));
+                    yield return (currX, currY);
                     currX += step;
                 }
+            }
+
+            try
+            {
+                var values = GenerateValues().ToList();
+                Graph.Plot(values.Select(v => v.x), values.Select(v => v.y));
             }
             catch (LensCompilerException ex)
             {
