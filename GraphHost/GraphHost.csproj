@@ -1,17 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net452</TargetFramework>
     <UseWpf>true</UseWpf>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DynamicDataDisplay">
-      <HintPath>Libs\DynamicDataDisplay.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <ProjectReference Include="..\Lens\Lens.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" />
+    <PackageReference Include="InteractiveDataDisplay.WPF" Version="1.0.0" />
   </ItemGroup>
 </Project>
