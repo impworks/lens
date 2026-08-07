@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
-using Lens.Compiler.Entities;
 using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
@@ -130,16 +129,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 if (nameInfo != null)
                 {
                     if (nameInfo.IsClosured)
-                    {
-                        if (nameInfo.ClosureDistance == 0)
-                            EmitSetClosuredLocal(ctx, nameInfo);
-                        else
-                            EmitSetClosuredRemote(ctx, nameInfo);
-                    }
+                        EmitSetClosured(ctx, nameInfo);
                     else
-                    {
                         EmitSetLocal(ctx, nameInfo);
-                    }
                 }
             }
         }
@@ -170,45 +162,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         }
 
         /// <summary>
-        /// Assigns a closured variable that is declared in current scope.
+        /// Assigns a closured variable in the closure it has been declared in.
         /// </summary>
-        private void EmitSetClosuredLocal(Context ctx, Local name)
+        private void EmitSetClosured(Context ctx, Local name)
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
+            ctx.Scope.EmitClosureInstance(ctx, name);
 
             Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-            var clsType = ctx.Scope.ActiveClosure.ClosureType.TypeInfo;
-            var clsField = ctx.ResolveField(clsType, name.ClosureFieldName);
-            gen.EmitSaveField(clsField.FieldInfo);
-        }
-
-        /// <summary>
-        /// Assigns a closured variable that has been imported from outer scopes.
-        /// </summary>
-        private void EmitSetClosuredRemote(Context ctx, Local name)
-        {
-            var gen = ctx.CurrentMethod.Generator;
-
-            gen.EmitLoadArgument(0);
-
-            var dist = name.ClosureDistance;
-            var type = (Type) ctx.CurrentType.TypeBuilder;
-            while (dist > 1)
-            {
-                var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
-                gen.EmitLoadField(rootField.FieldInfo);
-
-                type = rootField.FieldType;
-                dist--;
-            }
-
-            Expr.Cast(Value, name.Type).Emit(ctx, true);
-
-            var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-            gen.EmitSaveField(clsField.FieldInfo);
+            var clsField = name.ClosureScope.ClosureType.ResolveField(name.ClosureFieldName);
+            gen.EmitSaveField(clsField.FieldBuilder);
         }
 
         #endregion

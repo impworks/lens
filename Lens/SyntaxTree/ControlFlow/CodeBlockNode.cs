@@ -125,16 +125,14 @@ namespace Lens.SyntaxTree.ControlFlow
             gen.EmitSaveLocal(loc);
 
             // affix to parent
-            if (Scope.ClosureReferencesOuter)
+            if (Scope.ClosureParent != null)
             {
                 gen.EmitLoadLocal(loc);
 
-                if (Scope.Kind == ScopeKind.Loop)
-                    gen.EmitLoadLocal(Scope.OuterScope.ClosureVariable);
-                else if (Scope.Kind == ScopeKind.LambdaRoot)
+                if (Scope.ClosureParentIsRemote)
                     gen.EmitLoadArgument(0);
                 else
-                    throw new InvalidOperationException("Incorrect scope parent!");
+                    gen.EmitLoadLocal(Scope.ClosureParent.ClosureVariable);
 
                 gen.EmitSaveField(type.ResolveField(EntityNames.ParentScopeFieldName).FieldBuilder);
             }

@@ -46,6 +46,51 @@ result";
             Test(src, 14);
         }
 
+        /// <summary>
+        /// https://github.com/impworks/lens/issues/180
+        /// </summary>
+        [Test]
+        public void Closure3()
+        {
+            var src = @"
+var sum = 0
+var x = 0
+while x < 5 do
+    (-> sum = sum + x) ()
+    x = x + 1
+sum";
+            Test(src, 10);
+        }
+
+        [Test]
+        public void ClosureInLoop1()
+        {
+            var src = @"
+var mult = 10
+var funcs = new List<Func<int>> ()
+for x in 1..4 do
+    funcs.Add (-> x * mult)
+
+funcs
+    |> Select f -> f ()";
+            Test(src, new[] {10, 20, 30});
+        }
+
+        [Test]
+        public void ClosureInLoop2()
+        {
+            var src = @"
+var mult = 10
+var funcs = new List<Func<int>> ()
+for x in 1..3 do
+    for y in 1..3 do
+        funcs.Add (-> (-> x * mult + y) ())
+
+funcs
+    |> Select f -> f ()";
+            Test(src, new[] {11, 12, 21, 22});
+        }
+
         [Test]
         public void ClosureError1()
         {

@@ -23,9 +23,9 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Copy constructor for closured versions of the local.
+        /// Copy constructor.
         /// </summary>
-        private Local(Local other, int dist = 0)
+        private Local(Local other)
         {
             Name = other.Name;
             Type = other.Type;
@@ -34,14 +34,13 @@ namespace Lens.Compiler
 
             IsClosured = other.IsClosured;
             ClosureFieldName = other.ClosureFieldName;
+            ClosureScope = other.ClosureScope;
 
             IsConstant = other.IsConstant;
             ConstantValue = other.ConstantValue;
 
             LocalBuilder = other.LocalBuilder;
             ArgumentId = other.ArgumentId;
-
-            ClosureDistance = dist;
         }
 
         #endregion
@@ -79,14 +78,14 @@ namespace Lens.Compiler
         public bool IsClosured;
 
         /// <summary>
-        /// The distance between the current scope and the scope that owns this variable.
-        /// </summary>
-        public int? ClosureDistance;
-
-        /// <summary>
         /// The name of the field in closured class.
         /// </summary>
         public string ClosureFieldName;
+
+        /// <summary>
+        /// The scope that owns the closure type in which the variable's field is declared.
+        /// </summary>
+        public Scope ClosureScope;
 
         /// <summary>
         /// The local builder identifier.
@@ -109,11 +108,11 @@ namespace Lens.Compiler
         #region Methods
 
         /// <summary>
-        /// Create a copy of the name information and bind it to the distance.
+        /// Creates a copy of the name information.
         /// </summary>
-        public Local GetClosuredCopy(int distance)
+        public Local GetCopy()
         {
-            return new Local(this, distance);
+            return new Local(this);
         }
 
         #endregion

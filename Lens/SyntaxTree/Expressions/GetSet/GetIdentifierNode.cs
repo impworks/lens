@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
@@ -144,16 +144,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.ConstantByRef);
 
                 if (local.IsClosured)
-                {
-                    if (local.ClosureDistance == 0)
-                        EmitGetClosuredLocal(ctx, local);
-                    else
-                        EmitGetClosuredRemote(ctx, local);
-                }
+                    EmitGetClosured(ctx, local);
                 else
-                {
                     EmitGetLocal(ctx, local);
-                }
 
                 return;
             }
@@ -196,40 +189,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         }
 
         /// <summary>
-        /// Gets a closured variable that has been declared in the current scope.
+        /// Gets a closured variable from the closure it has been declared in.
         /// </summary>
-        private void EmitGetClosuredLocal(Context ctx, Local name)
+        private void EmitGetClosured(Context ctx, Local name)
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            gen.EmitLoadLocal(ctx.Scope.ActiveClosure.ClosureVariable);
+            ctx.Scope.EmitClosureInstance(ctx, name);
 
-            var clsField = ctx.Scope.ActiveClosure.ClosureType.ResolveField(name.ClosureFieldName);
+            var clsField = name.ClosureScope.ClosureType.ResolveField(name.ClosureFieldName);
             gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
-        }
-
-        /// <summary>
-        /// Gets a closured variable that has been imported from outer scopes.
-        /// </summary>
-        private void EmitGetClosuredRemote(Context ctx, Local name)
-        {
-            var gen = ctx.CurrentMethod.Generator;
-
-            gen.EmitLoadArgument(0);
-
-            var dist = name.ClosureDistance;
-            var type = (Type) ctx.CurrentType.TypeBuilder;
-            while (dist > 1)
-            {
-                var rootField = ctx.ResolveField(type, EntityNames.ParentScopeFieldName);
-                gen.EmitLoadField(rootField.FieldInfo);
-
-                type = rootField.FieldType;
-                dist--;
-            }
-
-            var clsField = ctx.ResolveField(type, name.ClosureFieldName);
-            gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
         }
 
         /// <summary>

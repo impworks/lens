@@ -49,9 +49,16 @@ namespace Lens.Compiler
         public LocalBuilder ClosureVariable { get; private set; }
 
         /// <summary>
-        /// Checks if the current closure type must contain a reference to parent closure to reach some of the variables.
+        /// The closest scope that owns the closure which contains current closure.
+        /// Is null when the current closure is the outermost one in its method.
         /// </summary>
-        public bool ClosureReferencesOuter { get; private set; }
+        public Scope ClosureParent { get; private set; }
+
+        /// <summary>
+        /// Checks if the parent closure belongs to an outer method and therefore
+        /// must be loaded from the 'this' pointer rather than from a local variable.
+        /// </summary>
+        public bool ClosureParentIsRemote { get; private set; }
 
         /// <summary>
         /// The nearest scope which contains a closure.
@@ -124,15 +131,11 @@ namespace Lens.Compiler
         public Local FindLocal(string name)
         {
             var scope = this;
-            var dist = 0;
             while (scope != null)
             {
                 // try get the variable itself
                 if (scope.Locals.TryGetValue(name, out Local local))
-                    return local.GetClosuredCopy(dist);
-
-                if (scope.Kind == ScopeKind.LambdaRoot)
-                    dist++;
+                    return local.GetCopy();
 
                 scope = scope.OuterScope;
             }
@@ -165,12 +168,7 @@ namespace Lens.Compiler
                 }
 
                 if (scope.Kind == ScopeKind.LambdaRoot)
-                {
-                    if (!isClosured)
-                        isClosured = true;
-                    else
-                        scope.ClosureReferencesOuter = true;
-                }
+                    isClosured = true;
 
                 scope = scope.OuterScope;
             }
@@ -195,6 +193,7 @@ namespace Lens.Compiler
                 if (curr.IsClosured)
                 {
                     curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
+                    curr.ClosureScope = closure;
                     var field = closure.ClosureType.CreateField(curr.ClosureFieldName, curr.Type);
                     field.Kind = TypeContentsKind.Closure;
                 }
@@ -206,15 +205,56 @@ namespace Lens.Compiler
 
             if (ClosureType != null)
             {
-                if (ClosureReferencesOuter)
+                DetectClosureParent();
+
+                if (ClosureParent != null)
                 {
                     // create "Parent" field in the closure type
-                    var parentType = FindScope(s => s.ClosureType != null, OuterScope).ClosureType;
+                    var parentType = ClosureParent.ClosureType;
                     ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType.TypeInfo);
                 }
 
                 ClosureVariable = ctx.CurrentMethod.Generator.DeclareLocal(ClosureType.TypeInfo);
             }
+        }
+
+        /// <summary>
+        /// Emits the code that loads the closure instance which contains the given local variable.
+        /// </summary>
+        public void EmitClosureInstance(Context ctx, Local local)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+            var closure = local.ClosureScope;
+
+            // find the closure within current method: it is stored in a local variable
+            var scope = this;
+            while (scope != null && scope != closure && scope.Kind != ScopeKind.LambdaRoot)
+                scope = scope.OuterScope;
+
+            if (scope == closure)
+            {
+                gen.EmitLoadLocal(closure.ClosureVariable);
+                return;
+            }
+
+            if (scope == null)
+                throw new InvalidOperationException($"Closure for variable '{local.Name}' is not found!");
+
+            // the variable belongs to an outer method:
+            // start from the closure passed as 'this' pointer and follow the parent references
+            gen.EmitLoadArgument(0);
+
+            var curr = FindScope(s => s.ClosureType != null, scope.OuterScope);
+            while (curr != null && curr != closure)
+            {
+                var parentField = curr.ClosureType.ResolveField(EntityNames.ParentScopeFieldName);
+                gen.EmitLoadField(parentField.FieldBuilder);
+
+                curr = curr.ClosureParent;
+            }
+
+            if (curr == null)
+                throw new InvalidOperationException($"Closure for variable '{local.Name}' is not found!");
         }
 
         /// <summary>
@@ -263,6 +303,36 @@ namespace Lens.Compiler
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Finds the closure that contains the current one, if any.
+        /// Note that closures do not map to methods one-to-one: a loop within a method
+        /// creates a closure of its own, so that each iteration gets a fresh set of variables.
+        /// </summary>
+        private void DetectClosureParent()
+        {
+            var scope = this;
+            var isRemote = false;
+
+            while (true)
+            {
+                // the current method's boundary has been crossed:
+                // the parent closure is only reachable via the 'this' pointer
+                if (scope.Kind == ScopeKind.LambdaRoot)
+                    isRemote = true;
+
+                scope = scope.OuterScope;
+                if (scope == null)
+                    return;
+
+                if (scope.ClosureType != null)
+                {
+                    ClosureParent = scope;
+                    ClosureParentIsRemote = isRemote;
+                    return;
+                }
+            }
         }
 
         /// <summary>
