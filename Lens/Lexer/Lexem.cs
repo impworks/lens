@@ -17,6 +17,12 @@ namespace Lens.Lexer
             EndLocation = end;
         }
 
+        public Lexem(LexemType type, LexemLocation start, LexemLocation end, InterpolatedStringPart[] parts)
+            : this(type, start, end)
+        {
+            InterpolationParts = parts;
+        }
+
         #endregion
 
         #region Fields
@@ -30,6 +36,12 @@ namespace Lens.Lexer
         /// The actual value (for some lexem types, like numbers or identifiers).
         /// </summary>
         public readonly string Value;
+
+        /// <summary>
+        /// Segments of an interpolated string literal.
+        /// Only set for lexems of the InterpolatedString type.
+        /// </summary>
+        public readonly InterpolatedStringPart[] InterpolationParts;
 
         #endregion
 

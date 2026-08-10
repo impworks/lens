@@ -680,5 +680,23 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("WhenGuardExpressionExpected", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2070: An interpolated string hole must contain exactly one expression!.
+        /// </summary>
+        public static string InterpolationHoleExpressionExpected {
+            get {
+                return ResourceManager.GetString("InterpolationHoleExpressionExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2071: Null-safe accessors (&apos;?.&apos; and &apos;?[&apos;) cannot be used as an assignment target or a &apos;ref&apos; argument!.
+        /// </summary>
+        public static string NullSafeAccessorNotAllowed {
+            get {
+                return ResourceManager.GetString("NullSafeAccessorNotAllowed", resourceCulture);
+            }
+        }
     }
 }

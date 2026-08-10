@@ -27,7 +27,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             return Equals(Expression, other.Expression)
                    && string.Equals(MemberName, other.MemberName)
-                   && Equals(StaticType, other.StaticType);
+                   && Equals(StaticType, other.StaticType)
+                   && IsNullSafe == other.IsNullSafe;
         }
 
         public override bool Equals(object obj)
@@ -45,6 +46,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 int hashCode = (Expression != null ? Expression.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (MemberName != null ? MemberName.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (StaticType != null ? StaticType.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsNullSafe.GetHashCode();
                 return hashCode;
             }
         }

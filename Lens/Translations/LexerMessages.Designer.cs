@@ -61,6 +61,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE1008: An interpolated string hole must contain an expression!.
+        /// </summary>
+        public static string EmptyInterpolationHole {
+            get {
+                return ResourceManager.GetString("EmptyInterpolationHole", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to LE1001: Inconsistent identation!.
         /// </summary>
         public static string InconsistentIdentation {
@@ -88,6 +97,15 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE1007: Unclosed interpolated string hole!.
+        /// </summary>
+        public static string UnclosedInterpolationHole {
+            get {
+                return ResourceManager.GetString("UnclosedInterpolationHole", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to LE1003: Unclosed string literal!.
         /// </summary>
         public static string UnclosedString {
@@ -95,7 +113,16 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("UnclosedString", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE1009: A closing brace in an interpolated string must be escaped as &apos;}}&apos;!.
+        /// </summary>
+        public static string UnescapedInterpolationBrace {
+            get {
+                return ResourceManager.GetString("UnescapedInterpolationBrace", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to LE1004: Unknown escape sequence: \{0}.
         /// </summary>

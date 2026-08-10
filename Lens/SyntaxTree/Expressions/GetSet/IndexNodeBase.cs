@@ -18,7 +18,9 @@
 
         protected bool Equals(IndexNodeBase other)
         {
-            return Equals(Expression, other.Expression) && Equals(Index, other.Index);
+            return Equals(Expression, other.Expression)
+                   && Equals(Index, other.Index)
+                   && IsNullSafe == other.IsNullSafe;
         }
 
         public override bool Equals(object obj)
@@ -33,7 +35,10 @@
         {
             unchecked
             {
-                return ((Expression != null ? Expression.GetHashCode() : 0) * 397) ^ (Index != null ? Index.GetHashCode() : 0);
+                var hashCode = (Expression != null ? Expression.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Index != null ? Index.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsNullSafe.GetHashCode();
+                return hashCode;
             }
         }
 

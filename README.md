@@ -154,6 +154,8 @@ The compiler already supports the following features:
 * Local type inference
 * [Anonymous functions](https://github.com/impworks/lens/wiki/Lambda-expressions) with closures
 * [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
+* String interpolation: `$"a{expr}b"`, `$@"..."`, and format specifiers
+* Safe navigation: `?.` and `?[`, short-circuiting the whole accessor chain
 * Overloaded operators support
 * [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)
 * Pattern matching (with [awesome regex support](https://github.com/impworks/lens/wiki/Pattern-Matching#9-regex-rule))

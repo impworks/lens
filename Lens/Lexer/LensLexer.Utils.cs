@@ -98,6 +98,8 @@ namespace Lens.Lexer
             new StaticLexemDefinition(".", LexemType.Dot),
             new StaticLexemDefinition(";", LexemType.Semicolon),
             new StaticLexemDefinition("??", LexemType.DoubleQuestionMark),
+            new StaticLexemDefinition("?.", LexemType.NullSafeDot),
+            new StaticLexemDefinition("?[", LexemType.NullSafeSquareOpen),
             new StaticLexemDefinition("?", LexemType.QuestionMark),
             new StaticLexemDefinition("~", LexemType.Tilde)
         };

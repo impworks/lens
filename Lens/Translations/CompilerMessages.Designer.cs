@@ -1445,5 +1445,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("VoidTypeDefault", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3153: Cannot apply a null-safe accessor to an expression of type &apos;{0}&apos;, because it can never be null!.
+        /// </summary>
+        public static string NullSafeOperatorValueType {
+            get {
+                return ResourceManager.GetString("NullSafeOperatorValueType", resourceCulture);
+            }
+        }
     }
 }

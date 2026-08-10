@@ -49,8 +49,8 @@ get_expr <NodeBase>                         = atom { accessor }
 get_id_expr <GetIdentifierNode>             = identifier [ type_args ]
 get_stmbr_expr <GetMemberNode>              = type "::" identifier [ type_args ]
 accessor <NodeBase>                         = accessor_idx | accessor_mbr
-accessor_idx <GetIndexNode>                 = "[" line_expr "]"
-accessor_mbr <GetMemberNode>                = "." identifier [ type_args ]
+accessor_idx <GetIndexNode>                 = ( "[" | "?[" ) line_expr "]"
+accessor_mbr <GetMemberNode>                = ( "." | "?." ) identifier [ type_args ]
 
 // expression root
 expr <NodeBase>                             = block_expr | line_expr
@@ -125,7 +125,7 @@ line_op_expr <NodeBase>                     = [ unary_op ] line_base_expr { bina
 typecheck_op_expr <NodeBase>                = "as" type | "is" type
 line_base_expr <NodeBase>                   = line_invoke_base_expr | get_expr
 line_invoke_base_expr <NodeBase>            = get_expr [ invoke_line_args ]
-atom <NodeBase>                             = literal | get_stmbr_expr | get_id_expr | new_collection_expr | paren_expr
+atom <NodeBase>                             = interpolated_string | literal | get_stmbr_expr | get_id_expr | new_collection_expr | paren_expr
 paren_expr <NodeBase>                       = "(" ( line_expr | lambda_line_expr ) ")"
 lambda_line_expr <LambdaNode>               = [ fun_args ] "->" line_stmt
 
@@ -150,6 +150,8 @@ init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_exp
 
 // literals
 literal <NodeBase>                          = unit | null | bool | string | long | int | decimal | float | double | char
+interpolated_string <NodeBase>              = "$" [ "@" ] '"' { interpolated_text | interpolated_hole } '"'
+interpolated_hole                           = "{" line_expr [ ":" interpolated_format ] "}"
 unit <UnitNode>                             = "()"
 null <NullNode>                             = "null"
 bool <BoolNode>                             = "true" | "false"
@@ -166,5 +168,7 @@ decimal <DecimalNode>                       = (0|[1-9][0-9]*)(\.[0-9]+)?[Mm]
 float <FloatNode>                           = (0|[1-9][0-9]*)(\.[0-9]+)?[Ff]
 double <DoubleNode>                         = (0|[1-9][0-9]*)\.[0-9]+
 char <CharNode>                             = '([^'\\]|\\[^']|(?<!\\)\\')*'
+interpolated_text                           = any text, where "{{" and "}}" denote literal braces
+interpolated_format                         = any text up to the hole's closing brace
 regex                                       = #([^#]|##)*#[a-zA-Z]*
 identifier                                  = [a-zA-Z_][0-9a-zA-Z_]*

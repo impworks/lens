@@ -1506,5 +1506,72 @@ let y = 2
             var src = @"var a, b, c = 1";
             TestError(src, ParserMessages.SymbolExpected);
         }
+
+        [Test]
+        public void InterpolatedStringWithoutHoles()
+        {
+            TestParser(@"$""a{{b}}c""", Expr.Str("a{b}c"));
+        }
+
+        [Test]
+        public void InterpolatedStringWithOneHole()
+        {
+            TestParser(
+                @"$""a{1}""",
+                Expr.Invoke(
+                    Expr.GetMember("System.String", "Format"),
+                    Expr.Str("a{0}"),
+                    Expr.Int(1)
+                )
+            );
+        }
+
+        [Test]
+        public void InterpolatedStringWithManyHoles()
+        {
+            TestParser(
+                @"$""{1}-{2}{{!}}""",
+                Expr.Invoke(
+                    Expr.GetMember("System.String", "Format"),
+                    Expr.Str("{0}-{1}{{!}}"),
+                    Expr.Int(1),
+                    Expr.Int(2)
+                )
+            );
+        }
+
+        [Test]
+        public void InterpolatedStringWithFormatSpecifier()
+        {
+            TestParser(
+                @"$""{1:D2}""",
+                Expr.Invoke(
+                    Expr.GetMember("System.String", "Format"),
+                    Expr.Str("{0:D2}"),
+                    Expr.Int(1)
+                )
+            );
+        }
+
+        [Test]
+        public void NullSafeChainWrapsTheWholeChain()
+        {
+            var chain = Expr.GetMember(Expr.GetMember(Expr.Get("a"), "b"), "c");
+            ((GetMemberNode) ((GetMemberNode) chain).Expression).IsNullSafe = true;
+
+            TestParser("a?.b.c", new NullSafeChainNode {Chain = chain});
+        }
+
+        [Test]
+        public void NullSafeChainWrapsTheInvocation()
+        {
+            var getter = Expr.GetMember(Expr.Get("a"), "b");
+            getter.IsNullSafe = true;
+
+            TestParser(
+                "a?.b 1",
+                new NullSafeChainNode {Chain = Expr.Invoke(getter, Expr.Int(1))}
+            );
+        }
     }
 }

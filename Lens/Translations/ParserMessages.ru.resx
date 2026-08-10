@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -323,5 +323,11 @@
   </data>
   <data name="WhenGuardExpressionExpected" xml:space="preserve">
     <value>LE2067: Ожидается проверочное выражение!</value>
+  </data>
+  <data name="InterpolationHoleExpressionExpected" xml:space="preserve">
+    <value>LE2070: Вставка в интерполированной строке должна содержать ровно одно выражение!</value>
+  </data>
+  <data name="NullSafeAccessorNotAllowed" xml:space="preserve">
+    <value>LE2071: Безопасные обращения ('?.' и '?[') нельзя использовать в левой части присваивания или в качестве аргумента 'ref'!</value>
   </data>
 </root>

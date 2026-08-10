@@ -50,6 +50,7 @@
         Decimal,
         Char,
         String,
+        InterpolatedString,
         Identifier,
         Regex,
 
@@ -98,6 +99,8 @@
         Tilde,
         DoubleQuestionMark,
         QuestionMark,
+        NullSafeDot,
+        NullSafeSquareOpen,
         Ellipsis,
 
         Indent,

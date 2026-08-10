@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="EmptyInterpolationHole" xml:space="preserve">
+    <value>LE1008: Вставка в интерполированной строке должна содержать выражение!</value>
+  </data>
   <data name="InconsistentIdentation" xml:space="preserve">
     <value>LE1001: Неожиданный уровень блока!</value>
   </data>
@@ -126,8 +129,14 @@
   <data name="TabChar" xml:space="preserve">
     <value>LE1002: Символы табуляции недопустимы в исходном коде! Используйте пробелы для выделения блоков кода.</value>
   </data>
+  <data name="UnclosedInterpolationHole" xml:space="preserve">
+    <value>LE1007: Вставка в интерполированной строке не закрыта!</value>
+  </data>
   <data name="UnclosedString" xml:space="preserve">
     <value>LE1003: Строка не закрыта!</value>
+  </data>
+  <data name="UnescapedInterpolationBrace" xml:space="preserve">
+    <value>LE1009: Закрывающая фигурная скобка в интерполированной строке должна быть записана как '}}'!</value>
   </data>
   <data name="UnknownEscape" xml:space="preserve">
     <value>LE1004: Неизвестная экранированная последовательность: \{0}!</value>

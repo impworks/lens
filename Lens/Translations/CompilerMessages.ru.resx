@@ -579,4 +579,7 @@
   <data name="CoalesceOperatorTypeMismatch" xml:space="preserve">
     <value>LE3152: Тип '{0}' несовместим с типом '{1}'!</value>
   </data>
+  <data name="NullSafeOperatorValueType" xml:space="preserve">
+    <value>LE3153: Безопасное обращение нельзя применить к выражению типа '{0}', так как оно не может быть null!</value>
+  </data>
 </root>

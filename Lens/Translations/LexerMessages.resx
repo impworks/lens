@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="EmptyInterpolationHole" xml:space="preserve">
+    <value>LE1008: An interpolated string hole must contain an expression!</value>
+  </data>
   <data name="InconsistentIdentation" xml:space="preserve">
     <value>LE1001: Inconsistent identation!</value>
   </data>
@@ -126,8 +129,14 @@
   <data name="TabChar" xml:space="preserve">
     <value>LE1002: Tabulation is not allowed in source code! Use spaces to indent code blocks.</value>
   </data>
+  <data name="UnclosedInterpolationHole" xml:space="preserve">
+    <value>LE1007: Unclosed interpolated string hole!</value>
+  </data>
   <data name="UnclosedString" xml:space="preserve">
     <value>LE1003: Unclosed string literal!</value>
+  </data>
+  <data name="UnescapedInterpolationBrace" xml:space="preserve">
+    <value>LE1009: A closing brace in an interpolated string must be escaped as '}}'!</value>
   </data>
   <data name="UnknownEscape" xml:space="preserve">
     <value>LE1004: Unknown escape sequence: \{0}</value>

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree;
+using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
@@ -295,6 +296,37 @@ namespace Lens.Parser
                 throw new InvalidOperationException(string.Format("Node {0} is not an accessor!", accessor.GetType()));
 
             return accessor;
+        }
+
+        /// <summary>
+        /// Creates an invocation of an expression.
+        /// A null-safe chain keeps the invocation inside itself, so that a null receiver
+        /// short-circuits the call rather than producing a null delegate.
+        /// </summary>
+        private static NodeBase MakeInvocation(NodeBase expr, List<NodeBase> args)
+        {
+            if (expr is NullSafeChainNode chain)
+            {
+                chain.Chain = new InvocationNode {Expression = chain.Chain, Arguments = args};
+                return chain;
+            }
+
+            return new InvocationNode {Expression = expr, Arguments = args};
+        }
+
+        /// <summary>
+        /// Throws an error if the given accessor chain contains a null-safe accessor.
+        /// </summary>
+        private static void EnsureNoNullSafeAccessor(NodeBase node)
+        {
+            var curr = node as AccessorNodeBase;
+            while (curr != null)
+            {
+                if (curr.IsNullSafe)
+                    throw new LensCompilerException(ParserMessages.NullSafeAccessorNotAllowed, curr);
+
+                curr = curr.Expression as AccessorNodeBase;
+            }
         }
 
         #endregion

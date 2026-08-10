@@ -140,6 +140,13 @@ namespace Lens.Parser
                     Skip(2);
                 }
 
+                // "?[" lexes as a null-safe indexer, but in a type signature it starts an array of nullables
+                else if (Peek(LexemType.NullSafeSquareOpen, LexemType.SquareClose))
+                {
+                    node = new TypeSignature(null, "[]", new TypeSignature(null, "?", node));
+                    Skip(2);
+                }
+
                 else if (Check(LexemType.Tilde))
                     node = new TypeSignature(null, "~", node);
 
@@ -582,12 +589,14 @@ namespace Lens.Parser
 
             if (Check(LexemType.Assign))
             {
+                EnsureNoNullSafeAccessor(node);
                 var expr = Ensure(ParseExpr, ParserMessages.AssignExpressionExpected);
                 return MakeSetter(node, expr);
             }
 
             if (PeekAny(BinaryOperators) && Peek(1, LexemType.Assign))
             {
+                EnsureNoNullSafeAccessor(node);
                 var opType = _lexems[_lexemId].Type;
                 Skip(2);
                 var expr = Ensure(ParseExpr, ParserMessages.AssignExpressionExpected);
@@ -701,14 +710,21 @@ namespace Lens.Parser
             if (node == null)
                 return null;
 
+            var isNullSafe = false;
             while (true)
             {
                 var acc = Attempt(ParseAccessor);
                 if (acc == null)
-                    return node;
+                    break;
 
+                isNullSafe |= ((AccessorNodeBase) acc).IsNullSafe;
                 node = AttachAccessor(node, acc);
             }
+
+            // the whole chain short-circuits, so the null checks belong to the chain rather than to a link
+            return isNullSafe
+                ? new NullSafeChainNode {Chain = node}
+                : node;
         }
 
         /// <summary>
@@ -748,28 +764,30 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// accessor_idx                                = "[" line_expr "]"
+        /// accessor_idx                                = ( "[" | "?[" ) line_expr "]"
         /// </summary>
         private GetIndexNode ParseAccessorIdx()
         {
-            if (!Check(LexemType.SquareOpen))
+            var isNullSafe = Check(LexemType.NullSafeSquareOpen);
+            if (!isNullSafe && !Check(LexemType.SquareOpen))
                 return null;
 
-            var node = new GetIndexNode();
+            var node = new GetIndexNode {IsNullSafe = isNullSafe};
             node.Index = Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected);
             Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
             return node;
         }
 
         /// <summary>
-        /// accessor_mbr                                = "." identifier [ type_args ]
+        /// accessor_mbr                                = ( "." | "?." ) identifier [ type_args ]
         /// </summary>
         private GetMemberNode ParseAccessorMbr()
         {
-            if (!Check(LexemType.Dot))
+            var isNullSafe = Check(LexemType.NullSafeDot);
+            if (!isNullSafe && !Check(LexemType.Dot))
                 return null;
 
-            var node = new GetMemberNode();
+            var node = new GetMemberNode {IsNullSafe = isNullSafe};
             node.MemberName = Ensure(LexemType.Identifier, ParserMessages.MemberNameExpected).Value;
 
             var args = Attempt(ParseTypeArgs);
@@ -1233,7 +1251,7 @@ namespace Lens.Parser
         /// 
         /// </summary>
         /// <returns></returns>
-        private InvocationNode ParseInvokeBlockPassExpr()
+        private NodeBase ParseInvokeBlockPassExpr()
         {
             var expr = Attempt(ParseLineExpr);
             if (expr == null)
@@ -1243,7 +1261,7 @@ namespace Lens.Parser
             if (args.Count == 0)
                 return null;
 
-            return new InvocationNode {Expression = expr, Arguments = args};
+            return MakeInvocation(expr, args);
         }
 
         /// <summary>
@@ -1355,6 +1373,10 @@ namespace Lens.Parser
                 return null;
 
             var node = Ensure(ParseLvalueExpr, ParserMessages.RefLvalueExpected);
+
+            // there is no address to take when the receiver of a null-safe accessor is null
+            EnsureNoNullSafeAccessor(node);
+
             (node as IPointerProvider).RefArgumentRequired = true;
 
             if (paren)
@@ -1787,19 +1809,17 @@ namespace Lens.Parser
             if (args.Count == 0)
                 return expr;
 
-            var node = new InvocationNode();
-            node.Expression = expr;
-            node.Arguments = args;
-            return node;
+            return MakeInvocation(expr, args);
         }
 
 
         /// <summary>
-        /// atom                                        = literal | get_id_expr | get_stmbr_expr | new_collection_expr | paren_expr
+        /// atom                                        = interpolated_string | literal | get_id_expr | get_stmbr_expr | new_collection_expr | paren_expr
         /// </summary>
         private NodeBase ParseAtom()
         {
-            return Attempt(ParseLiteral)
+            return Attempt(ParseInterpolatedString)
+                   ?? Attempt(ParseLiteral)
                    ?? Attempt(ParseGetStmbrExpr)
                    ?? Attempt(ParseGetIdExpr)
                    ?? Attempt(ParseNewCollectionExpr)

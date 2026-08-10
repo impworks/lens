@@ -89,7 +89,13 @@ namespace Lens.Lexer
                 if (ProcessNewLine())
                     continue;
 
-                if (CurrChar() == '"' || (CurrChar() == '@' && NextChar() == '"'))
+                if (IsInterpolatedStringStart())
+                {
+                    ProcessInterpolatedStringLiteral();
+                    if (!InBounds())
+                        break;
+                }
+                else if (CurrChar() == '"' || (CurrChar() == '@' && NextChar() == '"'))
                 {
                     ProcessStringLiteral();
                     if (!InBounds())
