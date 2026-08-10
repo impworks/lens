@@ -1,38 +1,44 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net45;netcoreapp2.0</TargetFrameworks>
+        <TargetFrameworks>net47;netstandard2.0;net8.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>4.2.1</Version>
+        <Version>5.0.0</Version>
         <Authors>LENS authors</Authors>
         <PackageId>LENS</PackageId>
         <Description>Language for Embeddable .NET Scripting</Description>
         <PackageTags>lens embeddable script</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/impworks/lens</PackageProjectUrl>
-        <Copyright>Copyright 2018</Copyright>
-        <LangVersion>7.3</LangVersion>
+        <Copyright>Copyright 2026</Copyright>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <Choose>
-        <When Condition="$(TargetFramework.StartsWith('netcoreapp'))">
-            <PropertyGroup>
-                <DefineConstants>NET_CORE</DefineConstants>
-            </PropertyGroup>
-            <ItemGroup>
-                <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
-                <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
-            </ItemGroup>
-        </When>
-        <Otherwise>
+        <When Condition="'$(TargetFramework)' == 'net47'">
             <PropertyGroup>
                 <DefineConstants>NET_CLASSIC</DefineConstants>
             </PropertyGroup>
             <ItemGroup>
                 <Reference Include="Microsoft.CSharp" />
-                <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" />
+                <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
             </ItemGroup>
-        </Otherwise>
+        </When>
+        <When Condition="'$(TargetFramework)' == 'netstandard2.0'">
+            <PropertyGroup>
+                <DefineConstants>NET_CORE</DefineConstants>
+            </PropertyGroup>
+            <ItemGroup>
+                <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+                <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+                <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+            </ItemGroup>
+        </When>
+        <When Condition="'$(TargetFramework)' == 'net8.0'">
+            <PropertyGroup>
+                <DefineConstants>NET_CORE</DefineConstants>
+            </PropertyGroup>
+        </When>
     </Choose>
 
     <ItemGroup>

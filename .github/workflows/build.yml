@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+    branches: [master, v5]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # the .NET Framework legs and the WPF hosts need Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore Lens.sln
+
+      - name: Build
+        run: dotnet build Lens.sln --configuration Release --no-restore
+
+      - name: Test (net47)
+        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net47 --logger "console;verbosity=normal"
+
+      - name: Test (net8.0)
+        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net8.0 --logger "console;verbosity=normal"

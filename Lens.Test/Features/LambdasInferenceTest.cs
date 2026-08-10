@@ -1,4 +1,4 @@
-﻿using Lens.Translations;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features

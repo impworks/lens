@@ -113,6 +113,7 @@ namespace Lens.Resolver
                     Setter = GetMethodVersionForType(declType, setter),
                     IsStatic = (getter ?? setter).IsStatic,
                     PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
+                    IsVirtual = (getter ?? setter).IsVirtual
                 };
             }
         }

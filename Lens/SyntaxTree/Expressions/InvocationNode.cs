@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -314,10 +314,7 @@ namespace Lens.SyntaxTree.Expressions
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            if (_invocationSource != null)
-            {
-                _invocationSource.EmitNodeForAccess(ctx);
-            }
+            _invocationSource?.EmitNodeForAccess(ctx);
 
             if (ArgTypes.Length > 0)
             {
@@ -341,7 +338,8 @@ namespace Lens.SyntaxTree.Expressions
                 }
             }
 
-            var isVirt = _invocationSource != null && _invocationSource.Resolve(ctx).IsClass;
+            var sourceType = _invocationSource?.Resolve(ctx);
+            var isVirt = sourceType is { IsValueType: false };
             gen.EmitCall(_method.MethodInfo, isVirt);
         }
 

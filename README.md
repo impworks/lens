@@ -90,6 +90,10 @@ fun desribe:string (arr:object[]) ->
         case [x; y; ...z] then fmt "array with {0}, {1} and {2} more items" x y z.Length
 ```
 
+### Supported frameworks
+
+LENS targets `net47`, `netstandard2.0`, and `net8.0`.
+
 ### Why another language?
 
 LENS provides an easy way to compile and execute a script within your application, and manages the interconnection between the app and the script. The language has a light, conscise, and type-safe syntax with rich functional features.

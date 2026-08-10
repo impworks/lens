@@ -117,7 +117,7 @@ namespace Lens.Compiler
         {
             foreach (var curr in _definedTypes)
                 if (!curr.Value.IsImported)
-                    curr.Value.TypeBuilder.CreateType();
+                    curr.Value.TypeBuilder.CreateTypeInfo();
 
 #if NET_CLASSIC
             if (Options.AllowSave)

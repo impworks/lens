@@ -6,7 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+#if NET_CLASSIC
 using System.Windows.Forms;
+#endif
 using Lens;
 
 namespace ConsoleHost
@@ -24,7 +26,13 @@ namespace ConsoleHost
                 Console.WriteLine();
                 try
                 {
-                    var lc = new LensCompiler(new LensCompilerOptions {AllowSave = true, MeasureTime = timer});
+                    var lc = new LensCompiler(new LensCompilerOptions
+                    {
+#if NET_CLASSIC
+                        AllowSave = true,
+#endif
+                        MeasureTime = timer
+                    });
                     var res = lc.Run(source);
                     PrintObject(res);
 
@@ -51,8 +59,11 @@ namespace ConsoleHost
             {
                 Console.Write("> ");
 
+#if NET_CLASSIC
+                // pre-fills the input buffer with the auto-indent; there is no equivalent outside WinForms
                 for (var idx = 0; idx < prefix; idx++)
                     SendKeys.SendWait(" ");
+#endif
 
                 var line = Console.ReadLine();
                 if (line == null)
@@ -226,7 +237,7 @@ namespace ConsoleHost
             {
                 Console.WriteLine();
                 Console.WriteLine("====================================");
-                Console.WriteLine("=        LENS Compiler v4.2        =");
+                Console.WriteLine("=        LENS Compiler v5.0        =");
                 Console.WriteLine("= https://github.com/impworks/lens =");
                 Console.WriteLine("====================================");
                 Console.WriteLine();

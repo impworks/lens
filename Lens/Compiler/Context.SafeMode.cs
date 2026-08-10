@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -60,6 +60,7 @@ namespace Lens.Compiler
             if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Reflection))
             {
                 addNsp("System.Reflection");
+                addNsp("System.Runtime.Loader");
 
                 addType("System.AppDomain");
                 addType("System.AppDomainManager");

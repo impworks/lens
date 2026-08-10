@@ -202,6 +202,22 @@ System.Threading.ThreadPool::GetAvailableThreads (ref workThreads) (ref cpThread
             TestSubsystem(typeof(Type), SafeModeSubsystem.Reflection, src);
         }
 
+        /// <summary>
+        /// AssemblyLoadContext is the modern .NET replacement for the AppDomain-based loading tricks
+        /// the Reflection subsystem exists to block, so it must be covered too.
+        /// </summary>
+        [Test]
+        public void BlacklistReflection4()
+        {
+            // referenced by name because the type does not exist on .NET Framework
+            var type = Type.GetType("System.Runtime.Loader.AssemblyLoadContext, System.Runtime.Loader");
+            if (type == null)
+                Assert.Ignore("AssemblyLoadContext is a modern .NET API.");
+
+            var src = @"System.Runtime.Loader.AssemblyLoadContext::Default";
+            TestSubsystem(type, SafeModeSubsystem.Reflection, src);
+        }
+
         [Test]
         public void BlacklistNetwork1()
         {
