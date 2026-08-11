@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Internals
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(_callback, x => _callback = x);
+            yield return new NodeChild(_callback);
         }
 
         #endregion

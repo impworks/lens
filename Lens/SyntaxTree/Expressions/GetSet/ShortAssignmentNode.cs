@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
+            yield return new NodeChild(Expression);
         }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)

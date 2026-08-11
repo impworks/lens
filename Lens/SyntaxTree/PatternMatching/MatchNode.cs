@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.PatternMatching
         /// <summary>
         /// Checks if the current node has been resolved as a value-returning context.
         /// </summary>
-        private bool MustReturnValue => !CachedExpressionType.IsVoid();
+        private bool MustReturnValue(Context ctx) => !ctx.FindExpressionType(this).IsVoid();
 
         #endregion
 
@@ -106,9 +106,9 @@ namespace Lens.SyntaxTree.PatternMatching
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
+            yield return new NodeChild(Expression);
             foreach (var stmt in MatchStatements)
-                yield return new NodeChild(stmt, null);
+                yield return new NodeChild(stmt);
         }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
@@ -133,12 +133,12 @@ namespace Lens.SyntaxTree.PatternMatching
             foreach (var stmt in MatchStatements)
                 block.Add(stmt.ExpandRules(ctx, exprGetter, _expressionLabels[stmt]));
 
-            if (MustReturnValue)
+            if (MustReturnValue(ctx))
             {
                 block.Add(
                     Expr.Block(
                         Expr.JumpLabel(_defaultLabel),
-                        Expr.Default(CachedExpressionType)
+                        Expr.Default(ctx.FindExpressionType(this))
                     )
                 );
             }
@@ -167,14 +167,14 @@ namespace Lens.SyntaxTree.PatternMatching
 
             EndLabel = ctx.CurrentMethod.Generator.DefineLabel();
 
-            if (MustReturnValue)
+            if (MustReturnValue(ctx))
                 _defaultLabel = ctx.CurrentMethod.Generator.DefineLabel();
         }
 
         /// <summary>
         /// Returns the current and the next labels for a match rule.
         /// </summary>
-        public MatchRuleLabelSet GetRuleLabels(MatchRuleBase rule)
+        public MatchRuleLabelSet GetRuleLabels(Context ctx, MatchRuleBase rule)
         {
             var currIndex = _ruleLabels.FindIndex(x => x.Item1 == rule);
             if (currIndex == -1)
@@ -182,7 +182,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
             var next = currIndex < _ruleLabels.Count - 1
                 ? _ruleLabels[currIndex + 1].Item2
-                : (MustReturnValue ? _defaultLabel : EndLabel);
+                : (MustReturnValue(ctx) ? _defaultLabel : EndLabel);
 
 
             return new MatchRuleLabelSet

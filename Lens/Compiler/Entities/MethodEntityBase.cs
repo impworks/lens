@@ -64,7 +64,7 @@ namespace Lens.Compiler.Entities
         {
             WithContext(ctx =>
                 {
-                    Body.Scope.RegisterArguments(ctx, IsStatic, Arguments.Values);
+                    ctx.ScopeOf(Body).RegisterArguments(ctx, IsStatic, Arguments.Values);
                     Body.Transform(ctx, !IsVoid);
                 }
             );

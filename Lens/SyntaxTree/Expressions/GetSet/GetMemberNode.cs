@@ -50,7 +50,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private bool _isStatic;
 
-        public bool PointerRequired { get; set; }
         public bool RefArgumentRequired { get; set; }
 
         /// <summary>
@@ -189,7 +188,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
+            yield return new NodeChild(Expression);
         }
 
         #endregion
@@ -212,7 +211,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             if (_field != null)
-                EmitField(gen);
+                EmitField(ctx, gen);
 
             else if (_property != null)
                 EmitProperty(ctx, gen);
@@ -224,7 +223,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Emits code for loading a field (possibly constant).
         /// </summary>
-        private void EmitField(ILGenerator gen)
+        private void EmitField(Context ctx, ILGenerator gen)
         {
             if (_field.IsLiteral)
             {
@@ -262,7 +261,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
             else
             {
-                gen.EmitLoadField(_field.FieldInfo, PointerRequired || RefArgumentRequired);
+                gen.EmitLoadField(_field.FieldInfo, ctx.IsPointerRequired(this) || RefArgumentRequired);
             }
         }
 
@@ -276,7 +275,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             gen.EmitCall(_property.Getter, _property.IsVirtual);
 
-            if (PointerRequired)
+            if (ctx.IsPointerRequired(this))
             {
                 var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType, false);
                 gen.EmitSaveLocal(tmpVar.LocalBuilder);
@@ -312,7 +311,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected bool Equals(GetMemberNode other)
         {
             return base.Equals(other)
-                   && PointerRequired.Equals(other.PointerRequired)
                    && RefArgumentRequired.Equals(other.RefArgumentRequired)
                    && TypeHints.SequenceEqual(other.TypeHints);
         }
@@ -330,7 +328,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             unchecked
             {
                 int hashCode = base.GetHashCode();
-                hashCode = (hashCode * 397) ^ PointerRequired.GetHashCode();
                 hashCode = (hashCode * 397) ^ RefArgumentRequired.GetHashCode();
                 hashCode = (hashCode * 397) ^ (TypeHints != null ? TypeHints.GetHashCode() : 0);
                 return hashCode;

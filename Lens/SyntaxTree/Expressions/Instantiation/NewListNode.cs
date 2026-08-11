@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            return Expressions.Select((expr, i) => new NodeChild(expr, x => Expressions[i] = x));
+            return Expressions.Select((expr, i) => new NodeChild(expr));
         }
 
         #endregion

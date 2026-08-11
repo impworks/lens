@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Code, null);
+            yield return new NodeChild(Code);
         }
 
         #endregion

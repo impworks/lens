@@ -78,13 +78,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Code, null);
+            yield return new NodeChild(Code);
 
             foreach (var curr in CatchClauses)
-                yield return new NodeChild(curr, null); // sic! catch clause cannot be replaced
+                yield return new NodeChild(curr); // sic! catch clause cannot be replaced
 
             if (Finally != null)
-                yield return new NodeChild(Finally, null);
+                yield return new NodeChild(Finally);
         }
 
         #endregion

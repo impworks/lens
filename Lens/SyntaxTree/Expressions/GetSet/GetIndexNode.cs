@@ -19,7 +19,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private MethodWrapper _getter;
 
-        public bool PointerRequired { get; set; }
         public bool RefArgumentRequired { get; set; }
 
         #endregion
@@ -51,8 +50,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
-            yield return new NodeChild(Index, x => Index = x);
+            yield return new NodeChild(Expression);
+            yield return new NodeChild(Index);
         }
 
         #endregion
@@ -80,7 +79,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             Expression.Emit(ctx, true);
             Expr.Cast(Index, typeof(int)).Emit(ctx, true);
 
-            gen.EmitLoadIndex(itemType, RefArgumentRequired || PointerRequired);
+            gen.EmitLoadIndex(itemType, RefArgumentRequired || ctx.IsPointerRequired(this));
         }
 
         /// <summary>
@@ -98,7 +97,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var ptrExpr = Expression as IPointerProvider;
             if (ptrExpr != null)
             {
-                ptrExpr.PointerRequired = PointerRequired;
+                if (ctx.IsPointerRequired(this))
+                    ctx.RequirePointer(ptrExpr);
+
                 ptrExpr.RefArgumentRequired = RefArgumentRequired;
             }
 
@@ -116,8 +117,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected bool Equals(GetIndexNode other)
         {
             return base.Equals(other)
-                   && RefArgumentRequired.Equals(other.RefArgumentRequired)
-                   && PointerRequired.Equals(other.PointerRequired);
+                   && RefArgumentRequired.Equals(other.RefArgumentRequired);
         }
 
         public override bool Equals(object obj)
@@ -133,7 +133,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             unchecked
             {
                 var hash = base.GetHashCode();
-                hash = (hash * 397) ^ PointerRequired.GetHashCode();
                 hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
                 return hash;
             }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
@@ -23,22 +23,46 @@ namespace Lens.SyntaxTree.Expressions
 
         #endregion
 
+        #region Binding
+
+        /// <summary>
+        /// What binding learned about an invocation. Lives in a side table on the context, so that
+        /// the node itself remains a description of the source and nothing else.
+        /// </summary>
+        protected class InvocationBinding
+        {
+            /// <summary>
+            /// The argument expressions binding settled on.
+            ///
+            /// Equals the node's own argument list, except when a method call turns out to be an
+            /// extension method call: the receiver then becomes argument zero.
+            /// </summary>
+            public List<NodeBase> Arguments;
+
+            /// <summary>
+            /// The resolved types of those arguments.
+            /// </summary>
+            public Type[] ArgTypes;
+        }
+
+        /// <summary>
+        /// Returns this invocation's binding record.
+        /// </summary>
+        protected abstract InvocationBinding GetBinding(Context ctx);
+
+        /// <summary>
+        /// Returns the callable that binding resolved this invocation to.
+        /// </summary>
+        protected abstract CallableWrapperBase GetWrapper(Context ctx);
+
+        #endregion
+
         #region Fields
 
         /// <summary>
-        /// Passed argument expressions.
+        /// Passed argument expressions, exactly as they were parsed.
         /// </summary>
         public List<NodeBase> Arguments { get; set; }
-
-        /// <summary>
-        /// Cached callable entity wrapper.
-        /// </summary>
-        protected abstract CallableWrapperBase Wrapper { get; }
-
-        /// <summary>
-        /// Cached list of argument expression types.
-        /// </summary>
-        protected Type[] ArgTypes;
 
         #endregion
 
@@ -46,20 +70,22 @@ namespace Lens.SyntaxTree.Expressions
 
         protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
-            Func<NodeBase, Type> typeGetter = arg =>
+            Type TypeOf(NodeBase arg)
             {
                 var gin = arg as GetIdentifierNode;
                 if (gin != null && gin.Identifier == "_")
                     return typeof(UnspecifiedType);
 
                 return arg.Resolve(ctx);
-            };
+            }
 
-            ArgTypes = Arguments.Select(typeGetter).ToArray();
+            var binding = GetBinding(ctx);
+            binding.Arguments = Arguments;
+            binding.ArgTypes = Arguments.Select(TypeOf).ToArray();
 
             // discard 'unit' pseudoargument
-            if (ArgTypes.Length == 1 && ArgTypes[0] == typeof(UnitType))
-                ArgTypes = Type.EmptyTypes;
+            if (binding.ArgTypes.Length == 1 && binding.ArgTypes[0] == typeof(UnitType))
+                binding.ArgTypes = Type.EmptyTypes;
 
             // prepares arguments only
             return null;
@@ -73,44 +99,46 @@ namespace Lens.SyntaxTree.Expressions
         {
             for (var idx = 0; idx < Arguments.Count; idx++)
             {
-                var id = idx;
-                var identifier = Arguments[id] as GetIdentifierNode;
+                var identifier = Arguments[idx] as GetIdentifierNode;
                 var isPartialArg = identifier != null && identifier.Identifier == "_";
                 if (!isPartialArg)
-                    yield return new NodeChild(Arguments[id], x => Arguments[id] = x);
+                    yield return new NodeChild(Arguments[idx]);
             }
         }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (Wrapper.IsPartiallyApplied)
+            var binding = GetBinding(ctx);
+            var wrapper = GetWrapper(ctx);
+
+            if (wrapper.IsPartiallyApplied)
             {
                 // (expr) _ a b _
                 // is transformed into
                 // (pa0:T1 pa1:T2) -> (expr) (pa0) (a) (b) (pa1)
                 var argDefs = new List<FunctionArgument>();
                 var argExprs = new List<NodeBase>();
-                for (var idx = 0; idx < ArgTypes.Length; idx++)
+                for (var idx = 0; idx < binding.ArgTypes.Length; idx++)
                 {
-                    if (ArgTypes[idx] == typeof(UnspecifiedType))
+                    if (binding.ArgTypes[idx] == typeof(UnspecifiedType))
                     {
                         var argName = ctx.Unique.AnonymousArgName();
-                        argDefs.Add(Expr.Arg(argName, Wrapper.ArgumentTypes[idx].FullName));
+                        argDefs.Add(Expr.Arg(argName, wrapper.ArgumentTypes[idx].FullName));
                         argExprs.Add(Expr.Get(argName));
                     }
                     else
                     {
-                        argExprs.Add(Arguments[idx]);
+                        argExprs.Add(binding.Arguments[idx]);
                     }
                 }
 
                 return Expr.Lambda(argDefs, RecreateSelfWithArgs(argExprs));
             }
 
-            if (Wrapper.IsVariadic)
+            if (wrapper.IsVariadic)
             {
-                var srcTypes = ArgTypes;
-                var dstTypes = Wrapper.ArgumentTypes;
+                var srcTypes = binding.ArgTypes;
+                var dstTypes = wrapper.ArgumentTypes;
                 var lastDst = dstTypes[dstTypes.Length - 1];
                 var lastSrc = srcTypes[srcTypes.Length - 1];
 
@@ -121,8 +149,8 @@ namespace Lens.SyntaxTree.Expressions
                 if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
                 {
                     var elemType = lastDst.GetElementType();
-                    var simpleArgs = Arguments.Take(dstTypes.Length - 1);
-                    var combined = Expr.Array(Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
+                    var simpleArgs = binding.Arguments.Take(dstTypes.Length - 1);
+                    var combined = Expr.Array(binding.Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
                     return RecreateSelfWithArgs(simpleArgs.Union(new[] {combined}));
                 }
             }
@@ -162,16 +190,18 @@ namespace Lens.SyntaxTree.Expressions
         /// </summary>
         protected void ApplyLambdaArgTypes(Context ctx)
         {
-            for (var idx = 0; idx < ArgTypes.Length; idx++)
+            var binding = GetBinding(ctx);
+
+            for (var idx = 0; idx < binding.ArgTypes.Length; idx++)
             {
-                if (!ArgTypes[idx].IsLambdaType())
+                if (!binding.ArgTypes[idx].IsLambdaType())
                     continue;
 
-                var lambda = (LambdaNode) Arguments[idx];
+                var lambda = (LambdaNode) binding.Arguments[idx];
                 if (lambda.MustInferArgTypes)
                 {
-                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, Wrapper.ArgumentTypes[idx]);
-                    lambda.SetInferredArgumentTypes(actualWrapper.ArgumentTypes);
+                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx]);
+                    lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
                     lambda.Resolve(ctx);
                 }
             }

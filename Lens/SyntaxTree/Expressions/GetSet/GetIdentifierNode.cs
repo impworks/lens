@@ -49,7 +49,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         public List<TypeSignature> TypeHints { get; set; }
 
-        public bool PointerRequired { get; set; }
         public bool RefArgumentRequired { get; set; }
 
         #endregion
@@ -143,7 +142,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_labelType != null)
                 return Expr.New(_labelType);
 
-            if (_localConstant != null && !PointerRequired && !RefArgumentRequired)
+            if (_localConstant != null && !ctx.IsPointerRequired(this) && !RefArgumentRequired)
                 return Expr.Constant(_localConstant.ConstantValue);
 
             return base.Expand(ctx, mustReturn);
@@ -222,7 +221,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var closureType = ctx.Scope.EmitClosureInstance(ctx, name);
 
             var clsField = ctx.ResolveField(closureType, name.ClosureFieldName);
-            gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
+            gen.EmitLoadField(clsField.FieldInfo, ctx.IsPointerRequired(this) || RefArgumentRequired);
         }
 
         /// <summary>
@@ -231,7 +230,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private void EmitGetLocal(Context ctx, Local name)
         {
             var gen = ctx.CurrentMethod.Generator;
-            var ptr = PointerRequired || RefArgumentRequired;
+            var ptr = ctx.IsPointerRequired(this) || RefArgumentRequired;
 
             if (name.ArgumentId.HasValue)
             {
@@ -259,8 +258,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected bool Equals(GetIdentifierNode other)
         {
             return base.Equals(other)
-                   && RefArgumentRequired.Equals(other.RefArgumentRequired)
-                   && PointerRequired.Equals(other.PointerRequired);
+                   && RefArgumentRequired.Equals(other.RefArgumentRequired);
         }
 
         public override bool Equals(object obj)
@@ -276,7 +274,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             unchecked
             {
                 var hash = base.GetHashCode();
-                hash = (hash * 397) ^ PointerRequired.GetHashCode();
                 hash = (hash * 397) ^ RefArgumentRequired.GetHashCode();
                 return hash;
             }

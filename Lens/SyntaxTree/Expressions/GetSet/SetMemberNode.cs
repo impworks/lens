@@ -99,8 +99,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
-            yield return new NodeChild(Value, x => Value = x);
+            yield return new NodeChild(Expression);
+            yield return new NodeChild(Value);
         }
 
         #endregion
@@ -116,8 +116,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (!_isStatic)
             {
                 var exprType = Expression.Resolve(ctx);
-                if (Expression is IPointerProvider && exprType.IsStruct())
-                    (Expression as IPointerProvider).PointerRequired = true;
+                if (Expression is IPointerProvider provider && exprType.IsStruct())
+                    ctx.RequirePointer(provider);
 
                 Expression.Emit(ctx, true);
             }

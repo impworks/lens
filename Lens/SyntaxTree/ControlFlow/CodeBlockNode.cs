@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.ControlFlow
         public CodeBlockNode(ScopeKind scopeKind = ScopeKind.Unclosured)
         {
             Statements = new List<NodeBase>();
-            Scope = new Scope(scopeKind);
+            ScopeKind = scopeKind;
         }
 
         #endregion
@@ -30,9 +30,10 @@ namespace Lens.SyntaxTree.ControlFlow
         #region Fields
 
         /// <summary>
-        /// The scope frame corresponding to current code block.
+        /// What kind of frame this block opens. The frame itself is a binding result and belongs to
+        /// the context - see Context.ScopeOf.
         /// </summary>
-        public Scope Scope { get; private set; }
+        public ScopeKind ScopeKind { get; }
 
         /// <summary>
         /// The statements to execute.
@@ -49,7 +50,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if (last is VarNode || last is LetNode)
                 Error(last, CompilerMessages.CodeBlockLastVar);
 
-            ctx.EnterScope(Scope);
+            ctx.EnterScope(ctx.ScopeOf(this));
 
             var result = typeof(UnitType);
             foreach (var curr in Statements)
@@ -69,7 +70,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public override void Transform(Context ctx, bool mustReturn)
         {
-            ctx.EnterScope(Scope);
+            ctx.EnterScope(ctx.ScopeOf(this));
 
             // a statement is the unit of error recovery: a broken statement must not hide the
             // problems in the ones that follow it
@@ -81,7 +82,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            return Statements.Select((stmt, i) => new NodeChild(stmt, x => Statements[i] = x));
+            return Statements.Select((stmt, i) => new NodeChild(stmt));
         }
 
         #endregion
@@ -90,7 +91,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public override void ProcessClosures(Context ctx)
         {
-            ctx.EnterScope(Scope);
+            ctx.EnterScope(ctx.ScopeOf(this));
             base.ProcessClosures(ctx);
             ctx.ExitScope().FinalizeSelf(ctx);
         }
@@ -101,10 +102,11 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
-            ctx.EnterScope(Scope);
+            var scope = ctx.ScopeOf(this);
+            ctx.EnterScope(scope);
 
-            if (Scope.ClosureType != null)
-                EmitClosureSetup(ctx);
+            if (scope.ClosureType != null)
+                EmitClosureSetup(ctx, scope);
 
             EmitStatements(ctx, mustReturn);
 
@@ -114,13 +116,12 @@ namespace Lens.SyntaxTree.ControlFlow
         /// <summary>
         /// Emits code that initializes the scope variable for closures and lambdas to work.
         /// </summary>
-        /// <param name="ctx"></param>
-        private void EmitClosureSetup(Context ctx)
+        private void EmitClosureSetup(Context ctx, Scope scope)
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var type = Scope.ClosureInstanceType;
-            var loc = Scope.ClosureVariable;
+            var type = scope.ClosureInstanceType;
+            var loc = scope.ClosureVariable;
 
             // create closure instance
             var closureCtor = ctx.ResolveConstructor(type, Type.EmptyTypes);
@@ -128,20 +129,20 @@ namespace Lens.SyntaxTree.ControlFlow
             gen.EmitSaveLocal(loc);
 
             // affix to parent
-            if (Scope.ClosureParent != null)
+            if (scope.ClosureParent != null)
             {
                 gen.EmitLoadLocal(loc);
 
-                if (Scope.ClosureParentIsRemote)
+                if (scope.ClosureParentIsRemote)
                     gen.EmitLoadArgument(0);
                 else
-                    gen.EmitLoadLocal(Scope.ClosureParent.ClosureVariable);
+                    gen.EmitLoadLocal(scope.ClosureParent.ClosureVariable);
 
                 gen.EmitSaveField(ctx.ResolveField(type, EntityNames.ParentScopeFieldName).FieldInfo);
             }
 
             // save arguments into closure
-            foreach (var curr in Scope.Locals.Values)
+            foreach (var curr in scope.Locals.Values)
             {
                 if (!curr.IsClosured || curr.ArgumentId == null)
                     continue;
@@ -163,8 +164,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
             for (var idx = 0; idx < Statements.Count; idx++)
             {
-                var subReturn = mustReturn && (idx == lastExpressionIdx || Scope.Kind == ScopeKind.MatchRoot);
-                var curr = Statements[idx];
+                var subReturn = mustReturn && (idx == lastExpressionIdx || ScopeKind == ScopeKind.MatchRoot);
+
+                // the statement that gets compiled is the one binding expanded this one into
+                var curr = ctx.Expanded(Statements[idx]);
 
                 var retType = curr.Resolve(ctx, subReturn);
 

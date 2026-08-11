@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             if (MustInferArgTypes)
                 return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
 
-            Body.Scope.RegisterArguments(ctx, false, Arguments);
+            ctx.ScopeOf(Body).RegisterArguments(ctx, false, Arguments);
 
             var retType = Body.Resolve(ctx);
             return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
@@ -127,7 +127,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
         /// </summary>
-        public void SetInferredArgumentTypes(Type[] argTypes)
+        public void SetInferredArgumentTypes(Context ctx, Type[] argTypes)
         {
             if (Arguments.Count != argTypes.Length)
                 Error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
@@ -148,7 +148,10 @@ namespace Lens.SyntaxTree.Declarations.Functions
             }
 
             MustInferArgTypes = false;
-            CachedExpressionType = null;
+
+            // the lambda was bound before its argument types were known, so that binding has to
+            // be discarded and redone
+            ctx.ResetExpressionType(this);
         }
 
         /// <summary>

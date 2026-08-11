@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Size, x => Size = x);
+            yield return new NodeChild(Size);
         }
 
         #endregion

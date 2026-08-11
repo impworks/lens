@@ -35,25 +35,40 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// </summary>
         public TypeSignature TypeSignature;
 
-        /// <summary>
-        /// Checks if constructor call may be replaced with 'default' initialization.
-        /// </summary>
-        private bool _isDefault;
+        #endregion
+
+        #region Binding
 
         /// <summary>
-        /// Constructor wrapper.
+        /// What binding learned about this object creation.
         /// </summary>
-        private ConstructorWrapper _constructor;
+        private class Binding : InvocationBinding
+        {
+            /// <summary>
+            /// The constructor the creation resolved to.
+            /// </summary>
+            public ConstructorWrapper Constructor;
 
-        /// <summary>
-        /// Checks if the created type is a generic parameter with the 'new' constraint.
-        /// </summary>
-        private bool _isTypeParameter;
+            /// <summary>
+            /// Indicates the constructor call may be replaced with 'default' initialization.
+            /// </summary>
+            public bool IsDefault;
 
-        /// <summary>
-        /// Generic wrapper for base class.
-        /// </summary>
-        protected override CallableWrapperBase Wrapper => _constructor;
+            /// <summary>
+            /// Indicates the created type is a generic parameter with the 'new' constraint.
+            /// </summary>
+            public bool IsTypeParameter;
+        }
+
+        protected override InvocationBinding GetBinding(Context ctx)
+        {
+            return ctx.BindingOf<Binding>(this);
+        }
+
+        protected override CallableWrapperBase GetWrapper(Context ctx)
+        {
+            return ctx.BindingOf<Binding>(this).Constructor;
+        }
 
         #endregion
 
@@ -63,6 +78,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         {
             base.ResolveInternal(ctx, true);
 
+            var binding = ctx.BindingOf<Binding>(this);
             var type = Type;
 
             try
@@ -91,16 +107,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (type.IsGenericParameter)
             {
                 var constraints = ctx.Resolver.FindConstraints(type);
-                if (ArgTypes.Length > 0 || constraints == null || !constraints.RequiresDefaultCtor)
+                if (binding.ArgTypes.Length > 0 || constraints == null || !constraints.RequiresDefaultCtor)
                     Error(CompilerMessages.TypeConstructorNotFound, type);
 
-                _isTypeParameter = true;
+                binding.IsTypeParameter = true;
                 return type;
             }
 
             try
             {
-                _constructor = ctx.ResolveConstructor(type, ArgTypes);
+                binding.Constructor = ctx.ResolveConstructor(type, binding.ArgTypes);
             }
             catch (TypeMatchException ex)
             {
@@ -112,16 +128,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             }
             catch (KeyNotFoundException)
             {
-                if (ArgTypes.Length > 0 || !type.IsValueType)
+                if (binding.ArgTypes.Length > 0 || !type.IsValueType)
                     Error(CompilerMessages.TypeConstructorNotFound, TypeSignature.FullSignature);
 
-                _isDefault = true;
+                binding.IsDefault = true;
                 return type;
             }
 
             ApplyLambdaArgTypes(ctx);
 
-            return ResolvePartial(_constructor, type, ArgTypes);
+            return ResolvePartial(binding.Constructor, type, binding.ArgTypes);
         }
 
         #endregion
@@ -130,11 +146,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
+            var binding = ctx.BindingOf<Binding>(this);
+
             // there is no constructor wrapper to partially apply
-            if (_isTypeParameter)
+            if (binding.IsTypeParameter)
                 return null;
 
-            if (_isDefault)
+            if (binding.IsDefault)
                 return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
             return base.Expand(ctx, mustReturn);
@@ -147,8 +165,9 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
+            var binding = ctx.BindingOf<Binding>(this);
 
-            if (_isTypeParameter)
+            if (binding.IsTypeParameter)
             {
                 var type = Type ?? ctx.ResolveType(TypeSignature);
                 var creator = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes).MakeGenericMethod(type);
@@ -156,16 +175,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
                 return;
             }
 
-            if (_constructor != null)
+            if (binding.Constructor != null)
             {
-                if (ArgTypes.Length > 0)
+                if (binding.ArgTypes.Length > 0)
                 {
-                    var destTypes = _constructor.ArgumentTypes;
-                    for (var idx = 0; idx < Arguments.Count; idx++)
-                        Expr.Cast(Arguments[idx], destTypes[idx]).Emit(ctx, true);
+                    var destTypes = binding.Constructor.ArgumentTypes;
+                    for (var idx = 0; idx < binding.Arguments.Count; idx++)
+                        Expr.Cast(binding.Arguments[idx], destTypes[idx]).Emit(ctx, true);
                 }
 
-                gen.EmitCreateObject(_constructor.ConstructorInfo);
+                gen.EmitCreateObject(binding.Constructor.ConstructorInfo);
             }
             else
             {

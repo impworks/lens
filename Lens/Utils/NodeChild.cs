@@ -10,10 +10,9 @@ namespace Lens.Utils
     {
         #region Constructor
 
-        public NodeChild(NodeBase node, Action<NodeBase> setter)
+        public NodeChild(NodeBase node)
         {
             Node = node;
-            Setter = setter;
         }
 
         #endregion
@@ -22,13 +21,12 @@ namespace Lens.Utils
 
         /// <summary>
         /// The child node itself.
+        ///
+        /// There is deliberately no setter here. A child used to be replaceable, so that binding
+        /// could overwrite a node with its expansion; expansions now live in a side table on the
+        /// context and the parse tree is never written to after parsing.
         /// </summary>
         public readonly NodeBase Node;
-
-        /// <summary>
-        /// A setter that replaces the current node in its parent.
-        /// </summary>
-        public readonly Action<NodeBase> Setter;
 
         #endregion
 

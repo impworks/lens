@@ -6,12 +6,9 @@
     internal interface IPointerProvider
     {
         /// <summary>
-        /// Indicates that the pointer to the value is required.
-        /// </summary>
-        bool PointerRequired { get; set; }
-
-        /// <summary>
         /// Indicates that the argument is passed by reference.
+        /// This one comes from the source ('ref x'), unlike the request for a pointer, which is a
+        /// binding result and lives in Context.IsPointerRequired.
         /// </summary>
         bool RefArgumentRequired { get; set; }
     }

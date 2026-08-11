@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Body, null);
+            yield return new NodeChild(Body);
         }
 
         #endregion

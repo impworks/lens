@@ -15,40 +15,34 @@ namespace Lens.SyntaxTree
     /// </summary>
     internal abstract class NodeBase : LocationEntity
     {
-        #region Fields
-
-        /// <summary>
-        /// The cached expression type.
-        /// </summary>
-        protected Type CachedExpressionType;
-
-        #endregion
-
         #region Resolve
 
         /// <summary>
         /// Returns or resolves the type of expression represented by current node.
+        /// The result is memoized in the context rather than in the node, so that the same tree
+        /// can be bound more than once.
         /// </summary>
         [DebuggerStepThrough]
         public Type Resolve(Context ctx, bool mustReturn = true)
         {
-            if (CachedExpressionType == null)
+            var cached = ctx.FindExpressionType(this);
+            if (cached != null)
+                return cached;
+
+            try
             {
-                try
-                {
-                    CachedExpressionType = ResolveInternal(ctx, mustReturn);
-                    CheckTypeInSafeMode(ctx, CachedExpressionType);
-                }
-                catch (LensCompilerException ex)
-                {
-                    if (ex.EndLocation == null || ex.StartLocation == null)
-                        ex.BindToLocation(this);
-
-                    throw;
-                }
+                var type = ResolveInternal(ctx, mustReturn);
+                CheckTypeInSafeMode(ctx, type);
+                ctx.SetExpressionType(this, type);
+                return type;
             }
+            catch (LensCompilerException ex)
+            {
+                if (ex.EndLocation == null || ex.StartLocation == null)
+                    ex.BindToLocation(this);
 
-            return CachedExpressionType;
+                throw;
+            }
         }
 
         /// <summary>
@@ -86,7 +80,9 @@ namespace Lens.SyntaxTree
             var sub = child.Node.Expand(ctx, mustReturn);
             if (sub != null)
             {
-                child.Setter(sub);
+                // the parse tree is left alone: the expansion is recorded on the side and
+                // emission picks it up from there
+                ctx.SetExpansion(child.Node, sub);
                 sub.Resolve(ctx, mustReturn);
                 sub.Transform(ctx, mustReturn);
             }
@@ -125,8 +121,9 @@ namespace Lens.SyntaxTree
         /// </summary>
         public virtual void ProcessClosures(Context ctx)
         {
+            // only the expansion is ever emitted, so only the expansion's captures matter
             foreach (var child in GetChildren())
-                child?.Node?.ProcessClosures(ctx);
+                ctx.Expanded(child?.Node)?.ProcessClosures(ctx);
         }
 
         #endregion
@@ -140,10 +137,13 @@ namespace Lens.SyntaxTree
         /// <param name="mustReturn">Flag indicating the node should return a value.</param>
         public void Emit(Context ctx, bool mustReturn)
         {
-            if (IsConstant && !mustReturn)
+            // a node that binding expanded is compiled as its expansion
+            var target = ctx.Expanded(this);
+
+            if (target.IsConstant && !mustReturn)
                 return;
 
-            EmitInternal(ctx, mustReturn);
+            target.EmitInternal(ctx, mustReturn);
         }
 
         /// <summary>
@@ -225,7 +225,7 @@ namespace Lens.SyntaxTree
             lambda.Resolve(ctx);
 
             if (lambda.MustInferArgTypes)
-                lambda.SetInferredArgumentTypes(wrapper.ArgumentTypes);
+                lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes);
         }
 
         #endregion

@@ -66,9 +66,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
-            yield return new NodeChild(Index, x => Index = x);
-            yield return new NodeChild(Value, x => Value = x);
+            yield return new NodeChild(Expression);
+            yield return new NodeChild(Index);
+            yield return new NodeChild(Value);
         }
 
         #endregion

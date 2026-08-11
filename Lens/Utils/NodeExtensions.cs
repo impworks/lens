@@ -10,6 +10,10 @@ namespace Lens.Utils
         /// </summary>
         public static void EmitNodeForAccess(this NodeBase node, Context ctx)
         {
+            // the invocation source is captured while binding, before it is known whether the node
+            // expands into something else
+            node = ctx.Expanded(node);
+
             var type = node.Resolve(ctx);
 
             // a type parameter may be substituted with a value type or with a reference type, and
@@ -24,9 +28,9 @@ namespace Lens.Utils
 
             if (type.IsValueType)
             {
-                if (node is IPointerProvider)
+                if (node is IPointerProvider provider)
                 {
-                    (node as IPointerProvider).PointerRequired = true;
+                    ctx.RequirePointer(provider);
                     node.Emit(ctx, true);
                 }
                 else

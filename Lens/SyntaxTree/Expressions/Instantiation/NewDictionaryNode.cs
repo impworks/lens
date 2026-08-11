@@ -58,8 +58,8 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             {
                 var id = idx;
                 var curr = Expressions[idx];
-                yield return new NodeChild(curr.Key, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(x, curr.Value));
-                yield return new NodeChild(curr.Value, x => Expressions[id] = new KeyValuePair<NodeBase, NodeBase>(curr.Key, x));
+                yield return new NodeChild(curr.Key);
+                yield return new NodeChild(curr.Value);
             }
         }
 

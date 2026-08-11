@@ -94,15 +94,15 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             if (IterableExpression != null)
             {
-                yield return new NodeChild(IterableExpression, x => IterableExpression = x);
+                yield return new NodeChild(IterableExpression);
             }
             else
             {
-                yield return new NodeChild(RangeStart, x => RangeStart = x);
-                yield return new NodeChild(RangeEnd, x => RangeEnd = x);
+                yield return new NodeChild(RangeStart);
+                yield return new NodeChild(RangeEnd);
             }
 
-            yield return new NodeChild(Body, null);
+            yield return new NodeChild(Body);
         }
 
         /// <summary>

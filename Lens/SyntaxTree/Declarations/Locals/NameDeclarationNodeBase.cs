@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Value, x => Value = x);
+            yield return new NodeChild(Value);
         }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)

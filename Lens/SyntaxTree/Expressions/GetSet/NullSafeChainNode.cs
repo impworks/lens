@@ -168,7 +168,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Chain, x => Chain = x);
+            yield return new NodeChild(Chain);
         }
 
         #endregion

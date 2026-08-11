@@ -61,10 +61,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Condition, x => Condition = x);
-            yield return new NodeChild(TrueAction, null);
+            yield return new NodeChild(Condition);
+            yield return new NodeChild(TrueAction);
             if (FalseAction != null)
-                yield return new NodeChild(FalseAction, null);
+                yield return new NodeChild(FalseAction);
         }
 
         #endregion

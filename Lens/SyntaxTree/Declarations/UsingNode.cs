@@ -76,8 +76,8 @@ namespace Lens.SyntaxTree.Declarations
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
-            yield return new NodeChild(Body, null);
+            yield return new NodeChild(Expression);
+            yield return new NodeChild(Body);
         }
 
         #endregion

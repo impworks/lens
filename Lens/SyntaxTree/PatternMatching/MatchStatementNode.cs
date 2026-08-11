@@ -90,9 +90,9 @@ namespace Lens.SyntaxTree.PatternMatching
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Expression, x => Expression = x);
+            yield return new NodeChild(Expression);
             if (Condition != null)
-                yield return new NodeChild(Condition, x => Condition = x);
+                yield return new NodeChild(Condition);
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Lens.SyntaxTree.PatternMatching
             foreach (var rule in MatchRules)
             {
                 // current and next labels for each rule
-                var ruleLabels = ParentNode.GetRuleLabels(rule);
+                var ruleLabels = ParentNode.GetRuleLabels(ctx, rule);
 
                 block.Add(Expr.JumpLabel(ruleLabels.CurrentRule));
                 block.AddRange(rule.Expand(ctx, expression, ruleLabels.NextRule));

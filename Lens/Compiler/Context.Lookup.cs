@@ -471,7 +471,7 @@ namespace Lens.Compiler
         /// </summary>
         public Type ResolveLambda(LambdaNode lambda, Type[] argTypes)
         {
-            lambda.SetInferredArgumentTypes(argTypes);
+            lambda.SetInferredArgumentTypes(this, argTypes);
             var delegateType = lambda.Resolve(this);
             return ReflectionHelper.WrapDelegate(Resolver, delegateType).ReturnType;
         }

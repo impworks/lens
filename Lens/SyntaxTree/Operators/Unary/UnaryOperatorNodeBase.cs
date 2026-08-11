@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Operand, x => Operand = x);
+            yield return new NodeChild(Operand);
         }
 
         #endregion

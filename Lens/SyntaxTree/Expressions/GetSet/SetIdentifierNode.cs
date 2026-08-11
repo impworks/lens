@@ -93,7 +93,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Value, x => Value = x);
+            yield return new NodeChild(Value);
         }
 
         #endregion

@@ -106,8 +106,8 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(LeftOperand, x => LeftOperand = x);
-            yield return new NodeChild(RightOperand, x => RightOperand = x);
+            yield return new NodeChild(LeftOperand);
+            yield return new NodeChild(RightOperand);
         }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
