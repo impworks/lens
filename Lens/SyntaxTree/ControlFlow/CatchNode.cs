@@ -62,7 +62,10 @@ namespace Lens.SyntaxTree.ControlFlow
                 Error(CompilerMessages.CatchTypeNotException, type);
 
             if (!string.IsNullOrEmpty(ExceptionVariable))
+            {
                 _exceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
+                _exceptionVariable.Declaration = this;
+            }
         }
 
         #endregion

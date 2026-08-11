@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using Lens.SyntaxTree;
 
 namespace Lens.Compiler
 {
@@ -20,27 +21,6 @@ namespace Lens.Compiler
             Type = type;
             IsImmutable = isConst;
             IsRefArgument = isRefArg;
-        }
-
-        /// <summary>
-        /// Copy constructor.
-        /// </summary>
-        private Local(Local other)
-        {
-            Name = other.Name;
-            Type = other.Type;
-            IsImmutable = other.IsImmutable;
-            IsRefArgument = other.IsRefArgument;
-
-            IsClosured = other.IsClosured;
-            ClosureFieldName = other.ClosureFieldName;
-            ClosureScope = other.ClosureScope;
-
-            IsConstant = other.IsConstant;
-            ConstantValue = other.ConstantValue;
-
-            LocalBuilder = other.LocalBuilder;
-            ArgumentId = other.ArgumentId;
         }
 
         #endregion
@@ -105,14 +85,40 @@ namespace Lens.Compiler
 
         #endregion
 
-        #region Methods
+        #region Symbol identity
 
         /// <summary>
-        /// Creates a copy of the name information.
+        /// Where the variable was declared. Null for the variables the compiler invents.
         /// </summary>
-        public Local GetCopy()
+        public LocationEntity Declaration;
+
+        /// <summary>
+        /// Every place in the source that names this variable, in the order binding met them.
+        ///
+        /// This is what turns "some local called x" into "the variable x declared on line 12", and
+        /// it is the difference between a rename that works and a text search.
+        /// </summary>
+        public readonly List<LocationEntity> References = new List<LocationEntity>();
+
+        /// <summary>
+        /// Records a place that names this variable.
+        /// </summary>
+        public void Reference(LocationEntity entity)
         {
-            return new Local(this);
+            // only the source names a variable: the nodes the compiler synthesises while expanding
+            // carry no location and are not somewhere anyone can navigate to
+            if (entity == null || (entity.StartLocation.Line == 0 && entity.StartLocation.Offset == 0))
+                return;
+
+            // by identity, not by Equals: syntax tree nodes compare structurally, so the two
+            // mentions of 'n' in 'n + n' are equal to each other and are still two references
+            foreach (var curr in References)
+            {
+                if (ReferenceEquals(curr, entity))
+                    return;
+            }
+
+            References.Add(entity);
         }
 
         #endregion

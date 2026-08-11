@@ -64,6 +64,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var local = Local ?? ctx.Scope.FindLocal(Identifier);
             if (local != null)
             {
+                // record the use, so that the declaration knows every place that names it
+                if (Identifier != null)
+                    local.Reference(this);
+
                 // only local constants are cached
                 // because mutable variables could be closured later on
                 if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)

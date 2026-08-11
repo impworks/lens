@@ -75,6 +75,8 @@ namespace Lens.SyntaxTree.Declarations.Locals
                 try
                 {
                     var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
+                    name.Declaration = this;
+
                     if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
                     {
                         name.IsConstant = true;

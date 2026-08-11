@@ -51,6 +51,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var nameInfo = Local ?? ctx.Scope.FindLocal(Identifier);
             if (nameInfo != null)
             {
+                // an assignment names the variable just as a read does
+                if (Identifier != null)
+                    nameInfo.Reference(this);
+
                 if (nameInfo.IsImmutable && !IsInitialization)
                     Error(CompilerMessages.IdentifierIsConstant, Identifier);
             }

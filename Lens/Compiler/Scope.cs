@@ -107,7 +107,12 @@ namespace Lens.Compiler
                 if (argType.IsByRef)
                     argType = argType.GetElementType();
 
-                var local = new Local(arg.Name, argType, false, arg.IsRefArgument) {ArgumentId = idx};
+                var local = new Local(arg.Name, argType, false, arg.IsRefArgument)
+                {
+                    ArgumentId = idx,
+                    Declaration = arg
+                };
+
                 DeclareLocal(local);
 
                 idx++;
@@ -147,15 +152,17 @@ namespace Lens.Compiler
 
         /// <summary>
         /// Finds a local name in current or any parent scopes.
+        ///
+        /// Returns the declaration itself, not a copy of it: "the variable x declared on line 12"
+        /// has to be one object with one identity, or nothing can point at it.
         /// </summary>
         public Local FindLocal(string name)
         {
             var scope = this;
             while (scope != null)
             {
-                // try get the variable itself
                 if (scope.Locals.TryGetValue(name, out Local local))
-                    return local.GetCopy();
+                    return local;
 
                 scope = scope.OuterScope;
             }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
@@ -52,6 +53,12 @@ namespace Lens.Compiler
         #endregion
 
         #region Scopes
+
+        /// <summary>
+        /// Every local variable binding has declared, across every scope of the script.
+        /// Each one carries where it was declared and every place that names it.
+        /// </summary>
+        public IEnumerable<Local> LocalSymbols => _scopes.Values.SelectMany(x => x.Locals.Values);
 
         /// <summary>
         /// Returns the scope frame of a code block, creating it on first request.
