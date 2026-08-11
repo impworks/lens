@@ -47,7 +47,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (Type != null)
             {
                 var specifiedType = ctx.ResolveType(Type);
-                if (!TypeEntryCache.Of(specifiedType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(specifiedType)))
+                if (!specifiedType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, specifiedType))
                     Error(CompilerMessages.PatternTypeMatchImpossible, specifiedType, expressionType);
             }
         }

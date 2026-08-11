@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Type == null)
-                Type = ctx.ResolveType(TypeSignature);
+                Type = ctx.ResolveType(TypeSignature).Materialize();
 
             var idxType = Size.Resolve(ctx);
             if (!TypeEntryCache.Of<int>().IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(idxType)))

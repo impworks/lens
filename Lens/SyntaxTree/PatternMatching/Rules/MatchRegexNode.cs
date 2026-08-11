@@ -87,7 +87,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 }
 
                 var actualType = WrapError(
-                    () => ctx.ResolveType(type),
+                    () => ctx.ResolveType(type).Materialize(),
                     CompilerMessages.RegexConverterTypeNotFound, type
                 );
 

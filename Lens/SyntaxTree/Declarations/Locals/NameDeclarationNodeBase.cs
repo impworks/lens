@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
-                : ResolvedType ?? ctx.ResolveType(Type);
+                : ResolvedType ?? ctx.ResolveType(Type).Materialize();
 
             ctx.CheckTypedExpression(Value, type);
 

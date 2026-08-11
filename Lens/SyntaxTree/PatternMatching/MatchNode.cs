@@ -74,7 +74,7 @@ namespace Lens.SyntaxTree.PatternMatching
             ctx.CheckTypedExpression(Expression, allowNull: true);
 
             var stmtTypes = new List<Type>(MatchStatements.Count);
-            Type commonType = null;
+            TypeEntry commonType = null;
             foreach (var stmt in MatchStatements)
             {
                 stmt.ParentNode = this;
@@ -86,8 +86,8 @@ namespace Lens.SyntaxTree.PatternMatching
                     // detect catch-all expression for a type
                     if (nameRule != null && stmt.Condition == null)
                     {
-                        var nameType = nameRule.Type == null ? typeof(object) : ctx.ResolveType(nameRule.Type);
-                        if (commonType != null && TypeEntryCache.Of(commonType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(nameType)))
+                        var nameType = nameRule.Type == null ? TypeEntryCache.Of<object>() : ctx.ResolveType(nameRule.Type);
+                        if (commonType != null && commonType.IsExtendablyAssignableFrom(ctx.Resolver, nameType))
                             Error(CompilerMessages.PatternUnreachable);
 
                         commonType = nameType;

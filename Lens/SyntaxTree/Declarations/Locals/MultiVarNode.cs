@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
-            var type = ctx.ResolveType(Type);
+            var type = ctx.ResolveType(Type).Materialize();
             CheckTypeInSafeMode(ctx, type);
 
             _locals = new Local[Names.Length];

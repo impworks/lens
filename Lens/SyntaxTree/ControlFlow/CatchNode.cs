@@ -57,7 +57,7 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             base.AnalyzeClosures(ctx);
 
-            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
+            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType).Materialize() : typeof(Exception);
             if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
                 Error(CompilerMessages.CatchTypeNotException, type);
 
@@ -79,7 +79,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var backup = ctx.CurrentCatchBlock;
             ctx.CurrentCatchBlock = this;
 
-            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
+            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType).Materialize() : typeof(Exception);
             gen.BeginCatchBlock(type);
 
             if (_exceptionVariable == null)

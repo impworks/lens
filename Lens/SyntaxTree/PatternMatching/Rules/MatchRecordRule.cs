@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
                 Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
-            _type = ctx.ResolvePatternType(typeEntity, expressionType);
+            _type = ctx.ResolvePatternType(typeEntity, TypeEntryCache.Of(expressionType)).Materialize();
             if (!TypeEntryCache.Of(_type).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(_type)))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 

@@ -25,7 +25,7 @@ namespace Lens.Compiler
         /// Resolves a type by its string signature.
         /// Warning: this method might return a TypeBuilder as well as a Type, if the signature points to an inner type.
         /// </summary>
-        public Type ResolveType(string signature)
+        public TypeEntry ResolveType(string signature)
         {
             return ResolveType(TypeSignature.Parse(signature));
         }
@@ -33,7 +33,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Resolves a type by its signature.
         /// </summary>
-        public Type ResolveType(TypeSignature signature, bool allowUnspecified = false)
+        public TypeEntry ResolveType(TypeSignature signature, bool allowUnspecified = false)
         {
             if (allowUnspecified && signature.FullSignature == "_")
                 return null;
@@ -43,7 +43,7 @@ namespace Lens.Compiler
             {
                 var typeParam = Resolver.FindTypeParameter(signature.Name);
                 if (typeParam?.Builder != null)
-                    return typeParam.Builder;
+                    return TypeEntryCache.Of(typeParam.Builder);
             }
 
             var declared = FindType(signature.FullSignature);
@@ -52,7 +52,7 @@ namespace Lens.Compiler
                 if (declared.GenericParameterCount > 0)
                     Error(signature, CompilerMessages.GenericTypeArgCountMismatch, declared.Name, declared.GenericParameterCount, 0);
 
-                return declared.TypeInfo;
+                return TypeEntryCache.Of(declared.TypeInfo);
             }
 
             // a locally declared generic type: the arity-mangled name is only used in the assembly,
@@ -66,11 +66,11 @@ namespace Lens.Compiler
                         Error(signature, CompilerMessages.GenericTypeArgCountMismatch, genericDeclared.Name, genericDeclared.GenericParameterCount, signature.Arguments.Length);
 
                     var args = signature.Arguments.Select(x => ResolveType(x)).ToArray();
-                    return GenericHelper.MakeGenericTypeChecked(Resolver, genericDeclared.TypeInfo, args);
+                    return TypeEntryCache.Of(GenericHelper.MakeGenericTypeChecked(Resolver, genericDeclared.TypeInfo, TypeEntry.Materialize(args)));
                 }
             }
 
-            return _typeResolver.ResolveType(signature);
+            return TypeEntryCache.Of(_typeResolver.ResolveType(signature));
         }
 
         /// <summary>
@@ -81,29 +81,29 @@ namespace Lens.Compiler
         /// arguments of a generic one are taken from the scrutinee: a label of a generic algebraic
         /// type is generic in exactly the parameters of the type itself, in the same order.
         /// </summary>
-        public Type ResolvePatternType(TypeEntity entity, Type expressionType)
+        public TypeEntry ResolvePatternType(TypeEntity entity, TypeEntry expressionType)
         {
             if (!entity.IsGeneric)
-                return entity.TypeInfo;
+                return TypeEntryCache.Of(entity.TypeInfo);
 
             var arguments = FindTypeArguments(expressionType, entity.GenericParameterCount);
             if (arguments == null)
                 Error(CompilerMessages.GenericTypeArgCountMismatch, entity.Name, entity.GenericParameterCount, 0);
 
-            return Resolver.MakeGenericType(entity.TypeBuilder, arguments);
+            return TypeEntryCache.Of(Resolver.MakeGenericType(entity.TypeBuilder, TypeEntry.Materialize(arguments)));
         }
 
         /// <summary>
         /// Looks for the type arguments of the matched value, walking up its inheritance chain.
         /// </summary>
-        private static Type[] FindTypeArguments(Type type, int count)
+        private static TypeEntry[] FindTypeArguments(TypeEntry type, int count)
         {
             var curr = type;
             while (curr != null)
             {
                 if (curr.IsGenericType)
                 {
-                    var args = curr.GetGenericArguments();
+                    var args = curr.GenericArguments;
                     if (args.Length == count)
                         return args;
                 }

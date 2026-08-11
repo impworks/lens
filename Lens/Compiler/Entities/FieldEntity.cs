@@ -56,7 +56,7 @@ namespace Lens.Compiler.Entities
                 attrs |= FieldAttributes.Static;
 
             if (Type == null)
-                Type = ContainerType.Context.ResolveType(TypeSignature);
+                Type = ContainerType.Context.ResolveType(TypeSignature).Materialize();
 
             FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
         }

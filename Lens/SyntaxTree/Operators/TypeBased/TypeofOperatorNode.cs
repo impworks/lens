@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
-            var type = Type ?? ctx.ResolveType(TypeSignature);
+            var type = Type ?? ctx.ResolveType(TypeSignature).Materialize();
             var gen = ctx.CurrentMethod.Generator;
 
             gen.EmitConstant(type);

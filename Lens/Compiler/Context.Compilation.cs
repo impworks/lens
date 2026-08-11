@@ -38,7 +38,7 @@ namespace Lens.Compiler
             EmitCode();
             FinalizeAssembly();
 
-            var inst = Activator.CreateInstance(ResolveType(EntityNames.MainTypeName));
+            var inst = Activator.CreateInstance(ResolveType(EntityNames.MainTypeName).Materialize());
             return inst as IScript;
         }
 
@@ -159,7 +159,7 @@ namespace Lens.Compiler
             {
                 if (Options.SaveAsExe)
                 {
-                    var ep = ResolveMethod(ResolveType(EntityNames.MainTypeName), EntityNames.EntryPointMethodName);
+                    var ep = ResolveMethod(ResolveType(EntityNames.MainTypeName).Materialize(), EntityNames.EntryPointMethodName);
                     MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
                 }
 

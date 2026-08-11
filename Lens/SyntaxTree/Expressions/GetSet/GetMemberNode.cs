@@ -102,7 +102,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             _type = StaticTypeInfo
                     ?? (StaticType != null
-                        ? ctx.ResolveType(StaticType)
+                        ? ctx.ResolveType(StaticType).Materialize()
                         : Expression.Resolve(ctx));
 
             // special case: array length
@@ -153,7 +153,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             // find method
-            var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
+            var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t).Materialize()).ToArray();
             var methods = ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
 
             if (methods.Length == 0)

@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override Type ResolveInternal(Context ctx, bool mustReturn)
         {
-            var type = Type ?? ctx.ResolveType(TypeSignature);
+            var type = Type ?? ctx.ResolveType(TypeSignature).Materialize();
             EnsureLambdaInferred(ctx, Expression, type);
             return type;
         }

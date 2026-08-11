@@ -118,7 +118,7 @@ namespace Lens.Compiler.Entities
         {
             var ce = new ConstructorEntity(this)
             {
-                ArgumentTypes = argTypes?.Select(Context.ResolveType).ToArray(),
+                ArgumentTypes = argTypes?.Select(x => Context.ResolveType(x).Materialize()).ToArray(),
             };
 
             _constructors.Add(ce);

@@ -156,7 +156,7 @@ namespace Lens.Compiler.Entities
                 Context.WithGenericScope(GenericParameters, () =>
                     {
                         if (Parent == null && ParentSignature != null)
-                            Parent = Context.ResolveType(ParentSignature);
+                            Parent = Context.ResolveType(ParentSignature).Materialize();
                     }
                 );
 
@@ -166,7 +166,7 @@ namespace Lens.Compiler.Entities
             else
             {
                 if (Parent == null && ParentSignature != null)
-                    Parent = Context.ResolveType(ParentSignature);
+                    Parent = Context.ResolveType(ParentSignature).Materialize();
 
                 TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
             }

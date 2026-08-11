@@ -48,7 +48,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         private Type FieldTypeOf(FieldEntity field)
         {
-            return field.Type ?? (field.Type = Context.ResolveType(field.TypeSignature));
+            return field.Type ?? (field.Type = Context.ResolveType(field.TypeSignature).Materialize());
         }
 
         /// <summary>

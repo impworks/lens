@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var type = StaticTypeInfo
                        ?? (StaticType != null
-                           ? ctx.ResolveType(StaticType)
+                           ? ctx.ResolveType(StaticType).Materialize()
                            : Expression.Resolve(ctx));
 
             CheckTypeInSafeMode(ctx, type);

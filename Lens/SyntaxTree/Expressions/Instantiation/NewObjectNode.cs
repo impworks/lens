@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             try
             {
-                type ??= ctx.ResolveType(TypeSignature);
+                type ??= ctx.ResolveType(TypeSignature).Materialize();
             }
             catch (TypeMatchException ex)
             {
@@ -169,7 +169,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             if (binding.IsTypeParameter)
             {
-                var type = Type ?? ctx.ResolveType(TypeSignature);
+                var type = Type ?? ctx.ResolveType(TypeSignature).Materialize();
                 var creator = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes).MakeGenericMethod(type);
                 gen.EmitCall(creator);
                 return;

@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
         {
-            return Type ?? ctx.ResolveType(TypeSignature);
+            return Type ?? ctx.ResolveType(TypeSignature).Materialize();
         }
 
         #endregion

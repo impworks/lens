@@ -74,7 +74,7 @@ namespace Lens.Compiler
         {
             if (Type == null)
             {
-                Type = ctx.ResolveType(TypeSignature);
+                Type = ctx.ResolveType(TypeSignature).Materialize();
 
                 if (IsRefArgument)
                     Type = Type.MakeByRefType();

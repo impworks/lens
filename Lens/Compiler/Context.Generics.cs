@@ -118,7 +118,7 @@ namespace Lens.Compiler
         {
             foreach (var signature in entity.TypeConstraintSignatures)
             {
-                var type = ResolveType(signature);
+                var type = ResolveType(signature).Materialize();
 
                 if (type.IsInterface)
                 {

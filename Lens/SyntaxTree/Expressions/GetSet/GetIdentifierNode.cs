@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                         if (hints.Count == 0 || hints.Any(x => x.FullSignature == "_"))
                             Error(CompilerMessages.GenericLabelTypeArgsRequired, type.Name, type.ParentSignature.Name);
 
-                        _labelType = ctx.ResolveType(new TypeSignature(Identifier, hints.ToArray()));
+                        _labelType = ctx.ResolveType(new TypeSignature(Identifier, hints.ToArray())).Materialize();
                     }
                     else
                     {

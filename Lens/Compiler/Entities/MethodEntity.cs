@@ -146,7 +146,7 @@ namespace Lens.Compiler.Entities
             if (ReturnType == null)
                 ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
                     ? typeof(UnitType)
-                    : ctx.ResolveType(ReturnTypeSignature);
+                    : ctx.ResolveType(ReturnTypeSignature).Materialize();
 
             if (ArgumentTypes == null)
                 ArgumentTypes = Arguments == null

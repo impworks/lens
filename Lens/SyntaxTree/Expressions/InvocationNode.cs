@@ -94,12 +94,12 @@ namespace Lens.SyntaxTree.Expressions
             binding.InvocationSource = node.Expression;
             var type = binding.InvocationSource != null
                 ? binding.InvocationSource.Resolve(ctx)
-                : ctx.ResolveType(node.StaticType);
+                : ctx.ResolveType(node.StaticType).Materialize();
 
             CheckTypeInSafeMode(ctx, type);
 
             if (node.TypeHints != null && node.TypeHints.Count > 0)
-                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
+                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)?.Materialize()).ToArray();
 
             try
             {
@@ -217,7 +217,7 @@ namespace Lens.SyntaxTree.Expressions
             }
 
             if (node.TypeHints != null && node.TypeHints.Count > 0)
-                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
+                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)?.Materialize()).ToArray();
 
             // function
             try

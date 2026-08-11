@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 return null;
 
             var type = node.StaticType != null
-                ? ctx.ResolveType(node.StaticType)
+                ? ctx.ResolveType(node.StaticType).Materialize()
                 : node.Expression.Resolve(ctx);
 
             try
