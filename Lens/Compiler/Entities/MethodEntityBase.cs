@@ -71,11 +71,19 @@ namespace Lens.Compiler.Entities
         }
 
         /// <summary>
-        /// Process closures.
+        /// Works out which locals this method's body captures.
         /// </summary>
-        public void ProcessClosures()
+        public void AnalyzeClosures()
         {
-            WithContext(ctx => Body.ProcessClosures(ctx));
+            WithContext(ctx => Body.AnalyzeClosures(ctx));
+        }
+
+        /// <summary>
+        /// Creates the closure classes, backing methods and IL locals that the analysis called for.
+        /// </summary>
+        public void EmitClosureEntities()
+        {
+            WithContext(ctx => Body.EmitClosureEntities(ctx));
         }
 
         /// <summary>

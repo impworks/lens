@@ -51,11 +51,11 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #endregion
 
-        #region Process closures
+        #region Closures
 
-        public override void ProcessClosures(Context ctx)
+        public override void AnalyzeClosures(Context ctx)
         {
-            base.ProcessClosures(ctx);
+            base.AnalyzeClosures(ctx);
 
             var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : typeof(Exception);
             if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))

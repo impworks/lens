@@ -114,16 +114,31 @@ namespace Lens.SyntaxTree
 
         #endregion
 
-        #region Process closures
+        #region Closures
 
         /// <summary>
-        /// Processes closures for node and its children.
+        /// Works out which locals are captured, by which lambda, and which scopes will therefore
+        /// have to own a closure.
+        ///
+        /// This is analysis: it reads the bound model and writes only to the scope tree. No IL is
+        /// generated and no assembly entity is created, which is what lets Phase 4 merge the
+        /// hoisting a state machine does with the hoisting a closure does.
         /// </summary>
-        public virtual void ProcessClosures(Context ctx)
+        public virtual void AnalyzeClosures(Context ctx)
         {
             // only the expansion is ever emitted, so only the expansion's captures matter
             foreach (var child in GetChildren())
-                ctx.Expanded(child?.Node)?.ProcessClosures(ctx);
+                ctx.Expanded(child?.Node)?.AnalyzeClosures(ctx);
+        }
+
+        /// <summary>
+        /// Creates the assembly entities that the closure analysis called for: the closure classes,
+        /// their fields, the backing methods of lambdas, and the IL locals.
+        /// </summary>
+        public virtual void EmitClosureEntities(Context ctx)
+        {
+            foreach (var child in GetChildren())
+                ctx.Expanded(child?.Node)?.EmitClosureEntities(ctx);
         }
 
         #endregion
@@ -220,7 +235,7 @@ namespace Lens.SyntaxTree
 
             var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType);
             if (!wrapper.ReturnType.IsGenericParameter)
-                lambda.SetInferredReturnType(wrapper.ReturnType);
+                lambda.SetInferredReturnType(ctx, wrapper.ReturnType);
 
             lambda.Resolve(ctx);
 

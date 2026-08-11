@@ -23,11 +23,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Process closures
 
-        public override void ProcessClosures(Context ctx)
+        public override void AnalyzeClosures(Context ctx)
         {
-            base.ProcessClosures(ctx);
+            base.AnalyzeClosures(ctx);
 
-            ctx.Scope.ReferenceLocal(ctx, Identifier ?? Local.Name);
+            ctx.Scope.ReferenceLocal(Identifier ?? Local.Name);
         }
 
         #endregion

@@ -321,14 +321,25 @@ namespace Lens.SyntaxTree.Expressions
 
         #endregion
 
-        #region Process closures
+        #region Closures
 
-        public override void ProcessClosures(Context ctx)
+        // the invokable expression is not among this node's children when it is an identifier or a
+        // member access, so it has to be walked explicitly or the name it mentions goes unnoticed
+
+        public override void AnalyzeClosures(Context ctx)
         {
             if (Expression is GetIdentifierNode || Expression is GetMemberNode)
-                Expression.ProcessClosures(ctx);
+                Expression.AnalyzeClosures(ctx);
 
-            base.ProcessClosures(ctx);
+            base.AnalyzeClosures(ctx);
+        }
+
+        public override void EmitClosureEntities(Context ctx)
+        {
+            if (Expression is GetIdentifierNode || Expression is GetMemberNode)
+                Expression.EmitClosureEntities(ctx);
+
+            base.EmitClosureEntities(ctx);
         }
 
         #endregion

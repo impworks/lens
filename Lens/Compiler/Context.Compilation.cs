@@ -98,24 +98,37 @@ namespace Lens.Compiler
                 var methods = UnprocessedMethods.OrderByDescending(x => x.IsImported).ToArray();
                 UnprocessedMethods.Clear();
 
-                foreach (var curr in methods)
-                {
-                    // closure method's body has been processed as contents of lambda function
-                    // no need to process it twice
-                    if (curr.Kind == TypeContentsKind.Closure)
-                        continue;
+                // closure method bodies have been processed as contents of their lambda
+                // no need to process them twice
+                var pending = methods.Where(x => x.Kind != TypeContentsKind.Closure).ToArray();
+                var analysed = new List<MethodEntityBase>();
 
+                foreach (var curr in pending)
+                {
                     var diagnosticsBefore = Diagnostics.Count;
                     WithRecovery(curr.TransformBody);
 
                     // closure analysis assumes the transform above has completed: walking a
                     // half-transformed body only produces follow-up noise
+                    if (Diagnostics.Count != diagnosticsBefore)
+                        continue;
+
+                    WithRecovery(curr.AnalyzeClosures);
+
                     if (Diagnostics.Count == diagnosticsBefore)
-                        WithRecovery(curr.ProcessClosures);
+                        analysed.Add(curr);
                 }
 
                 // the entities declared by this round cannot be prepared once anything has
                 // failed, so gather the round's diagnostics and stop here
+                if (Diagnostics.HasErrors)
+                    break;
+
+                // a separate pass, and deliberately so: everything above decided what has to be
+                // captured, everything below creates the assembly artefacts that implement it
+                foreach (var curr in analysed)
+                    WithRecovery(curr.EmitClosureEntities);
+
                 if (Diagnostics.HasErrors)
                     break;
 

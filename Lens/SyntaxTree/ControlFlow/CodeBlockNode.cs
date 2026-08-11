@@ -87,13 +87,20 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #endregion
 
-        #region Process closures
+        #region Closures
 
-        public override void ProcessClosures(Context ctx)
+        public override void AnalyzeClosures(Context ctx)
         {
             ctx.EnterScope(ctx.ScopeOf(this));
-            base.ProcessClosures(ctx);
-            ctx.ExitScope().FinalizeSelf(ctx);
+            base.AnalyzeClosures(ctx);
+            ctx.ExitScope().AnalyzeSelf(ctx);
+        }
+
+        public override void EmitClosureEntities(Context ctx)
+        {
+            ctx.EnterScope(ctx.ScopeOf(this));
+            base.EmitClosureEntities(ctx);
+            ctx.ExitScope().EmitSelf(ctx);
         }
 
         #endregion

@@ -23,17 +23,27 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #endregion
 
+        #region Binding
+
+        /// <summary>
+        /// What binding learned about this lambda.
+        /// </summary>
+        private class Binding
+        {
+            /// <summary>
+            /// The method of the closure class that the lambda body was compiled into.
+            /// </summary>
+            public MethodEntity Method;
+
+            /// <summary>
+            /// The return type the surrounding context demands, when it demands one.
+            /// </summary>
+            public Type InferredReturnType;
+        }
+
+        #endregion
+
         #region Fields
-
-        /// <summary>
-        /// Backing method reference.
-        /// </summary>
-        private MethodEntity _method;
-
-        /// <summary>
-        /// Return type inferred from context.
-        /// </summary>
-        private Type _inferredReturnType;
 
         /// <summary>
         /// Flag indicating that current lambda has arguments with omitted types and they must be resolved from the context.
@@ -70,9 +80,37 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #endregion
 
-        #region Process closures
+        #region Closures
 
-        public override void ProcessClosures(Context ctx)
+        public override void AnalyzeClosures(Context ctx)
+        {
+            // validating the signature belongs here rather than in the emission half: the answer
+            // does not depend on anything an assembly holds
+            ResolveClosureReturnType(ctx);
+
+            Body.AnalyzeClosures(ctx);
+        }
+
+        public override void EmitClosureEntities(Context ctx)
+        {
+            var binding = ctx.BindingOf<Binding>(this);
+
+            binding.Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, ResolveClosureReturnType(ctx));
+            binding.Method.Body = Body;
+
+            // the locals of the body belong to the closure method's frame, not to the enclosing one
+            var outerMethod = ctx.CurrentMethod;
+            ctx.CurrentMethod = binding.Method;
+
+            Body.EmitClosureEntities(ctx);
+
+            ctx.CurrentMethod = outerMethod;
+        }
+
+        /// <summary>
+        /// Works out the return type of the method the lambda will be compiled into.
+        /// </summary>
+        private Type ResolveClosureReturnType(Context ctx)
         {
             if (MustInferArgTypes)
             {
@@ -80,22 +118,11 @@ namespace Lens.SyntaxTree.Declarations.Functions
                 Error(CompilerMessages.LambdaArgTypeUnknown, name);
             }
 
-            // get evaluated return type
-            var retType = _inferredReturnType ?? Body.Resolve(ctx);
+            var retType = ctx.BindingOf<Binding>(this).InferredReturnType ?? Body.Resolve(ctx);
             if (retType == typeof(NullType))
                 Error(CompilerMessages.LambdaReturnTypeUnknown);
-            if (retType.IsVoid())
-                retType = typeof(void);
 
-            _method = ctx.Scope.CreateClosureMethod(ctx, Arguments, retType);
-            _method.Body = Body;
-
-            var outerMethod = ctx.CurrentMethod;
-            ctx.CurrentMethod = _method;
-
-            _method.Body.ProcessClosures(ctx);
-
-            ctx.CurrentMethod = outerMethod;
+            return retType.IsVoid() ? typeof(void) : retType;
         }
 
         #endregion
@@ -113,7 +140,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
 
             var closure = ctx.Scope.ActiveClosure;
-            var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, _method.Name).Single();
+            var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, ctx.BindingOf<Binding>(this).Method.Name).Single();
 
             gen.EmitLoadLocal(closure.ClosureVariable);
             gen.EmitLoadFunctionPointer(closureMethod.MethodInfo);
@@ -157,9 +184,9 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Interprets the lambda as a particular delegate with given arg & return types.
         /// </summary>
-        public void SetInferredReturnType(Type type)
+        public void SetInferredReturnType(Context ctx, Type type)
         {
-            _inferredReturnType = type;
+            ctx.BindingOf<Binding>(this).InferredReturnType = type;
         }
 
         #endregion

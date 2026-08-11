@@ -41,6 +41,15 @@ namespace Lens.Compiler
         public readonly ScopeKind Kind;
 
         /// <summary>
+        /// Whether this scope has to own a closure: something declared at or below it is captured,
+        /// or a lambda declared in it needs a class to live in.
+        ///
+        /// This is the analysis answer, decided without an ILGenerator or a TypeEntity in sight.
+        /// The closure class that implements it is created later, by EmitSelf.
+        /// </summary>
+        public bool NeedsClosure { get; private set; }
+
+        /// <summary>
         /// The type entity that represents current closure.
         /// </summary>
         public TypeEntity ClosureType { get; private set; }
@@ -172,9 +181,13 @@ namespace Lens.Compiler
 
         /// <summary>
         /// Registers a name being referenced during closure detection.
+        ///
+        /// Pure analysis: it decides that a variable is captured and which scope will have to hold
+        /// it, and creates nothing. There is deliberately no Context parameter - if this method
+        /// could reach the context it could reach the assembly being built.
         /// </summary>
         /// <returns>True if the local name has been found. Otherwise false.</returns>
-        public bool ReferenceLocal(Context ctx, string name)
+        public bool ReferenceLocal(string name)
         {
             var scope = this;
             var isClosured = false;
@@ -187,8 +200,9 @@ namespace Lens.Compiler
                         if (local.IsRefArgument)
                             Context.Error(CompilerMessages.ClosureRef, local.Name);
 
-                        CreateClosureType(ctx, scope);
                         local.IsClosured = true;
+                        local.ClosureScope = scope.ClosureOwner();
+                        local.ClosureScope.NeedsClosure = true;
                     }
 
                     return true;
@@ -204,23 +218,41 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Creates entities for current scope when it has been left.
+        /// Records what the analysis of this scope concluded, once the whole scope has been walked.
+        /// Names the closure fields but does not create them.
         /// </summary>
-        public void FinalizeSelf(Context ctx)
+        public void AnalyzeSelf(Context ctx)
         {
-            var gen = ctx.CurrentMethod.Generator;
-            var closure = FindScope(s => s.ClosureType != null);
-
-            // create entities for variables to be excluded
             foreach (var curr in Locals.Values)
             {
-                if (curr.IsConstant && curr.IsImmutable && ctx.Options.UnrollConstants)
+                if (IsUnrolledConstant(ctx, curr))
+                    continue;
+
+                if (curr.IsClosured && curr.ClosureFieldName == null)
+                    curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
+            }
+        }
+
+        /// <summary>
+        /// Creates the entities that the analysis of this scope called for: the closure class and
+        /// its fields, and an IL local for everything that stayed on the stack frame.
+        /// </summary>
+        public void EmitSelf(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+
+            foreach (var curr in Locals.Values)
+            {
+                if (IsUnrolledConstant(ctx, curr))
                     continue;
 
                 if (curr.IsClosured)
                 {
-                    curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
-                    curr.ClosureScope = closure;
+                    // the owner may sit further out than this scope, and its own EmitSelf runs
+                    // later, so its class has to be brought into being here
+                    var closure = curr.ClosureScope;
+                    closure.EnsureClosureType(ctx);
+
                     var field = closure.ClosureType.CreateField(curr.ClosureFieldName, closure.SubstituteIntoClosure(curr.Type));
                     field.Kind = TypeContentsKind.Closure;
                 }
@@ -230,8 +262,9 @@ namespace Lens.Compiler
                 }
             }
 
-            if (ClosureType != null)
+            if (NeedsClosure)
             {
+                EnsureClosureType(ctx);
                 DetectClosureParent();
 
                 if (ClosureParent != null)
@@ -239,6 +272,8 @@ namespace Lens.Compiler
                     // create "Parent" field in the closure type.
                     // both closure types forward the same set of enclosing parameters, so the
                     // parent is referred to through this closure's own ones
+                    ClosureParent.EnsureClosureType(ctx);
+
                     var parentType = _closureOwnParameters == null
                         ? ClosureParent.ClosureType.TypeInfo
                         : ctx.Resolver.MakeGenericType(ClosureParent.ClosureType.TypeBuilder, _closureOwnParameters);
@@ -246,8 +281,17 @@ namespace Lens.Compiler
                     ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType);
                 }
 
-                ClosureVariable = ctx.CurrentMethod.Generator.DeclareLocal(ClosureInstanceType);
+                ClosureVariable = gen.DeclareLocal(ClosureInstanceType);
             }
+        }
+
+        /// <summary>
+        /// Checks whether a name is a constant that gets substituted at its use sites, and so needs
+        /// no storage at all.
+        /// </summary>
+        private static bool IsUnrolledConstant(Context ctx, Local local)
+        {
+            return local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants;
         }
 
         /// <summary>
@@ -302,8 +346,9 @@ namespace Lens.Compiler
         /// </summary>
         public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
         {
-            var closure = CreateClosureType(ctx);
-            var scope = FindScope(s => s.ClosureType == closure) ?? this;
+            var scope = ClosureOwner();
+            scope.NeedsClosure = true;
+            var closure = scope.EnsureClosureType(ctx);
 
             // the signature belongs to the closure class, so it must be spelled in terms of that
             // class's own generic parameters rather than the enclosing method's
@@ -379,7 +424,7 @@ namespace Lens.Compiler
                 if (scope == null)
                     return;
 
-                if (scope.ClosureType != null)
+                if (scope.NeedsClosure)
                 {
                     ClosureParent = scope;
                     ClosureParentIsRemote = isRemote;
@@ -389,36 +434,48 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Creates a closure type in the closest appropriate scope.
+        /// The scope that would own a closure holding the names of this one: an Unclosured scope
+        /// shares its enclosing frame's closure rather than getting one of its own.
+        ///
+        /// A LambdaRoot and a FunctionRoot are both closured kinds, so the search never leaves the
+        /// method it started in.
         /// </summary>
-        private TypeEntity CreateClosureType(Context ctx, Scope scope = null)
+        private Scope ClosureOwner()
         {
-            var cscope = FindScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
-            if (cscope.ClosureType == null)
+            return FindScope(s => s.Kind != ScopeKind.Unclosured);
+        }
+
+        /// <summary>
+        /// Creates the closure class of this scope, unless it already has one.
+        /// This is the emission half: everything it touches is an assembly artefact.
+        /// </summary>
+        private TypeEntity EnsureClosureType(Context ctx)
+        {
+            if (ClosureType != null)
+                return ClosureType;
+
+            var name = ctx.Unique.ClosureName();
+
+            // a closure inside a generic declaration holds values whose types mention its
+            // parameters, so the closure class must be generic in them as well
+            var enclosing = ctx.EnclosingGenericParameters();
+            var forwarded = ctx.CloneGenericParameters(enclosing, name);
+
+            ClosureType = ctx.CreateType(name, genericParameters: forwarded);
+            ClosureType.Kind = TypeEntityKind.Closure;
+
+            if (forwarded != null)
             {
-                var name = ctx.Unique.ClosureName();
-
-                // a closure inside a generic declaration holds values whose types mention its
-                // parameters, so the closure class must be generic in them as well
-                var enclosing = ctx.EnclosingGenericParameters();
-                var forwarded = ctx.CloneGenericParameters(enclosing, name);
-
-                cscope.ClosureType = ctx.CreateType(name, genericParameters: forwarded);
-                cscope.ClosureType.Kind = TypeEntityKind.Closure;
-
-                if (forwarded != null)
-                {
-                    cscope._closureSourceParameters = enclosing.Select(x => (Type) x.Builder).ToArray();
-                    cscope._closureOwnParameters = forwarded.Select(x => (Type) x.Builder).ToArray();
-                    cscope.ClosureInstanceType = ctx.Resolver.MakeGenericType(cscope.ClosureType.TypeBuilder, cscope._closureSourceParameters);
-                }
-                else
-                {
-                    cscope.ClosureInstanceType = cscope.ClosureType.TypeInfo;
-                }
+                _closureSourceParameters = enclosing.Select(x => (Type) x.Builder).ToArray();
+                _closureOwnParameters = forwarded.Select(x => (Type) x.Builder).ToArray();
+                ClosureInstanceType = ctx.Resolver.MakeGenericType(ClosureType.TypeBuilder, _closureSourceParameters);
+            }
+            else
+            {
+                ClosureInstanceType = ClosureType.TypeInfo;
             }
 
-            return cscope.ClosureType;
+            return ClosureType;
         }
 
         /// <summary>
