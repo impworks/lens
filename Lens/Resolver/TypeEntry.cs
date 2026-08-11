@@ -41,6 +41,7 @@ namespace Lens.Resolver
         #region Classification
 
         public abstract bool IsValueType { get; }
+        public abstract bool IsClass { get; }
         public abstract bool IsInterface { get; }
         public abstract bool IsAbstract { get; }
         public abstract bool IsSealed { get; }
@@ -107,6 +108,56 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Generic parameters
+
+        /// <summary>
+        /// The keyword constraints of a generic parameter: class, struct, new().
+        ///
+        /// A <see cref="System.Reflection.Emit.GenericTypeParameterBuilder"/> refuses to report
+        /// these until its owner is created, which is why the compiler carries a constraint model of
+        /// its own. For a declared parameter that model is the answer.
+        /// </summary>
+        public virtual System.Reflection.GenericParameterAttributes GenericParameterAttributes =>
+            System.Reflection.GenericParameterAttributes.None;
+
+        /// <summary>
+        /// The type constraints of a generic parameter, base type first if there is one.
+        /// </summary>
+        public virtual TypeEntry[] GenericParameterConstraints => EmptyEntries;
+
+        #endregion
+
+        #region Assignability
+
+        /// <summary>
+        /// Whether a value of the given type can be stored in a location of this type without any
+        /// conversion. This is CLR assignability, not LENS assignability - the widening and lambda
+        /// rules live in TypeExtensions.
+        /// </summary>
+        public abstract bool IsAssignableFrom(TypeResolutionContext resolver, TypeEntry other);
+
+        /// <summary>
+        /// Whether this type inherits from the given one, directly or transitively.
+        /// </summary>
+        public bool IsSubclassOf(TypeEntry other)
+        {
+            if (ReferenceEquals(other, null))
+                return false;
+
+            var curr = BaseType;
+            while (!ReferenceEquals(curr, null))
+            {
+                if (Same(curr, other))
+                    return true;
+
+                curr = curr.BaseType;
+            }
+
+            return false;
+        }
+
+        #endregion
+
         #region Construction
 
         /// <summary>
@@ -142,6 +193,39 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Equality
+
+        // the compiler compares types constantly, and the overwhelming majority of those
+        // comparisons are spelled '=='. Leaving that as reference comparison would work only for as
+        // long as every entry is canonical, and an instantiation assembled from parts is not, so
+        // the operators are wired to Equals rather than left to their default.
+
+        // WARNING for anything written inside this class hierarchy: 'entry == null' calls the
+        // operator below, so testing an entry against null with == here is infinite recursion.
+        // Use ReferenceEquals(entry, null) internally. Callers outside the hierarchy are fine.
+
+        public static bool operator ==(TypeEntry left, TypeEntry right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+
+            if (ReferenceEquals(left, null) || ReferenceEquals(right, null))
+                return false;
+
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(TypeEntry left, TypeEntry right)
+        {
+            return !(left == right);
+        }
+
+        public abstract override bool Equals(object obj);
+
+        public abstract override int GetHashCode();
+
+        #endregion
+
         #region Helpers
 
         protected static readonly TypeEntry[] EmptyEntries = new TypeEntry[0];
@@ -152,7 +236,7 @@ namespace Lens.Resolver
         public IEnumerable<TypeEntry> SelfAndBaseTypes()
         {
             var curr = this;
-            while (curr != null)
+            while (!ReferenceEquals(curr, null))
             {
                 yield return curr;
                 curr = curr.BaseType;
@@ -164,13 +248,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool Same(TypeEntry left, TypeEntry right)
         {
-            if (ReferenceEquals(left, right))
-                return true;
-
-            if (left == null || right == null)
-                return false;
-
-            return left.Equals(right);
+            return left == right;
         }
 
         /// <summary>
@@ -181,7 +259,7 @@ namespace Lens.Resolver
             if (ReferenceEquals(left, right))
                 return true;
 
-            if (left == null || right == null || left.Length != right.Length)
+            if (left is null || right is null || left.Length != right.Length)
                 return false;
 
             return !left.Where((x, idx) => !Same(x, right[idx])).Any();

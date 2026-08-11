@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 
 namespace Lens.Resolver
 {
@@ -40,6 +41,7 @@ namespace Lens.Resolver
         #region Classification
 
         public override bool IsValueType => _type.IsValueType;
+        public override bool IsClass => _type.IsClass;
         public override bool IsInterface => _type.IsInterface;
         public override bool IsAbstract => _type.IsAbstract;
         public override bool IsSealed => _type.IsSealed;
@@ -120,6 +122,89 @@ namespace Lens.Resolver
         public override TypeEntry[] GetInterfaces(TypeResolutionContext resolver)
         {
             return resolver.ResolveInterfaces(_type).Select(TypeEntryCache.Of).ToArray();
+        }
+
+        #endregion
+
+        #region Generic parameters
+
+        public override GenericParameterAttributes GenericParameterAttributes
+        {
+            get
+            {
+                if (!_type.IsGenericParameter)
+                    return GenericParameterAttributes.None;
+
+                try
+                {
+                    return _type.GenericParameterAttributes;
+                }
+                catch (NotSupportedException)
+                {
+                    // a parameter of a declaration that is still being built cannot report them
+                    return GenericParameterAttributes.None;
+                }
+                catch (InvalidOperationException)
+                {
+                    return GenericParameterAttributes.None;
+                }
+            }
+        }
+
+        public override TypeEntry[] GenericParameterConstraints
+        {
+            get
+            {
+                if (!_type.IsGenericParameter)
+                    return EmptyEntries;
+
+                try
+                {
+                    return _type.GetGenericParameterConstraints().Select(TypeEntryCache.Of).ToArray();
+                }
+                catch (NotSupportedException)
+                {
+                    return EmptyEntries;
+                }
+                catch (InvalidOperationException)
+                {
+                    return EmptyEntries;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Assignability
+
+        public override bool IsAssignableFrom(TypeResolutionContext resolver, TypeEntry other)
+        {
+            if (ReferenceEquals(other, null))
+                return false;
+
+            if (Same(this, other))
+                return true;
+
+            // a declared type is never assignable to a host type except through its base chain and
+            // interfaces, both of which the entry model answers without touching reflection
+            if (other.IsDeclared)
+            {
+                if (other.SelfAndBaseTypes().Any(x => Same(x, this)))
+                    return true;
+
+                return IsInterface && other.GetInterfaces(resolver).Any(x => Same(x, this));
+            }
+
+            var otherType = other.Materialize();
+            try
+            {
+                return _type.IsAssignableFrom(otherType);
+            }
+            catch (NotSupportedException)
+            {
+                return otherType.IsSubclassOf(_type)
+                       || (IsInterface && other.GetInterfaces(resolver).Any(x => Same(x, this)));
+            }
         }
 
         #endregion
