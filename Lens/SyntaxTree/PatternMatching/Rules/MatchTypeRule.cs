@@ -29,28 +29,28 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The actual type.
         /// </summary>
-        private Type _type;
+        private TypeEntry _type;
 
         #endregion
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             var typeEntity = ctx.FindType(Identifier.FullSignature);
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Type, TypeEntityKind.TypeLabel)))
                 Error(Identifier, CompilerMessages.PatternNotValidType, Identifier.FullSignature);
 
-            _type = ctx.ResolvePatternType(typeEntity, TypeEntryCache.Of(expressionType)).Materialize();
-            if (!TypeEntryCache.Of(_type).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(_type)))
+            _type = ctx.ResolvePatternType(typeEntity, expressionType);
+            if (!_type.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, _type))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
             try
             {
                 // the tag of a generic label is typed in terms of the label's own parameters,
                 // so it is read off the constructed type rather than off the definition
-                var field = ctx.ResolveField(_type, "Tag");
-                return LabelRule.Resolve(ctx, field.FieldType.Materialize());
+                var field = ctx.ResolveField(_type.Materialize(), "Tag");
+                return LabelRule.Resolve(ctx, field.FieldType);
             }
             catch (KeyNotFoundException)
             {
@@ -69,14 +69,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             yield return MakeJumpIf(
                 nextStatement,
                 Expr.Not(
-                    Expr.Is(expression, _type)
+                    Expr.Is(expression, _type.Materialize())
                 )
             );
 
             var rules = LabelRule.Expand(
                 ctx,
                 Expr.GetMember(
-                    Expr.Cast(expression, _type),
+                    Expr.Cast(expression, _type.Materialize()),
                     "Tag"
                 ),
                 nextStatement

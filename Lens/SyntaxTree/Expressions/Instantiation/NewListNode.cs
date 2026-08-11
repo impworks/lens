@@ -18,22 +18,22 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// Common type inferred from all items' actual types.
         /// </summary>
-        private Type _itemType;
+        private TypeEntry _itemType;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.ListEmpty);
 
             _itemType = ResolveItemType(Expressions, ctx);
-            if (_itemType == typeof(NullType))
+            if (_itemType.Is<NullType>())
                 Error(CompilerMessages.ListTypeUnknown);
 
-            return typeof(List<>).MakeGenericType(_itemType);
+            return TypeEntryCache.Of(typeof(List<>)).MakeGeneric(ctx.Resolver, new[] {_itemType});
         }
 
         #endregion
@@ -52,11 +52,11 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx).Materialize(), true);
 
             var listType = Resolve(ctx);
-            var ctor = ctx.ResolveConstructor(listType, new[] {typeof(int)});
-            var addMethod = ctx.ResolveMethod(listType, "Add", new[] {_itemType});
+            var ctor = ctx.ResolveConstructor(listType.Materialize(), new[] {typeof(int)});
+            var addMethod = ctx.ResolveMethod(listType.Materialize(), "Add", new[] {_itemType.Materialize()});
 
             var count = Expressions.Count;
             gen.EmitConstant(count);
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
                 ctx.CheckTypedExpression(curr, currType, true);
 
-                if (!TypeEntryCache.Of(_itemType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(currType)))
+                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
                     Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);

@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Operand.Resolve(ctx);
 
@@ -35,11 +35,11 @@ namespace Lens.SyntaxTree.Operators.Unary
             {
                 try
                 {
-                    OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] {type});
+                    OverloadedMethod = ctx.ResolveMethod(type.Materialize(), OverloadedMethodName, new[] {type.Materialize()});
 
                     // cannot be generic
                     if (OverloadedMethod != null)
-                        return OverloadedMethod.ReturnType.Materialize();
+                        return OverloadedMethod.ReturnType;
                 }
                 catch
                 {
@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.Operators.Unary
         /// <summary>
         /// Overridable resolver for unary operators.
         /// </summary>
-        protected virtual Type ResolveOperatorType(Context ctx)
+        protected virtual TypeEntry ResolveOperatorType(Context ctx)
         {
             return null;
         }

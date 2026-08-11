@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
@@ -16,7 +17,7 @@ namespace Lens.Compiler
         /// This used to be a field on the node itself, which meant a parse tree could only ever be
         /// bound once. Keeping it here instead is what lets the same tree be analysed repeatedly.
         /// </summary>
-        private readonly Dictionary<NodeBase, System.Type> _expressionTypes = new Dictionary<NodeBase, System.Type>(ReferenceEqualityComparer<NodeBase>.Instance);
+        private readonly Dictionary<NodeBase, TypeEntry> _expressionTypes = new Dictionary<NodeBase, TypeEntry>(ReferenceEqualityComparer<NodeBase>.Instance);
 
         /// <summary>
         /// The node each expanded node is to be compiled as.
@@ -119,7 +120,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Returns the bound type of an expression, or null if it has not been bound yet.
         /// </summary>
-        public System.Type FindExpressionType(NodeBase node)
+        public TypeEntry FindExpressionType(NodeBase node)
         {
             return _expressionTypes.TryGetValue(node, out var type) ? type : null;
         }
@@ -127,7 +128,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Records the bound type of an expression.
         /// </summary>
-        public void SetExpressionType(NodeBase node, System.Type type)
+        public void SetExpressionType(NodeBase node, TypeEntry type)
         {
             _expressionTypes[node] = type;
         }

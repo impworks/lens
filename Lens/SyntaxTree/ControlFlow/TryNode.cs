@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var prevTypes = new List<TypeEntry>();
 

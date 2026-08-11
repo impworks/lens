@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         /// <summary>
         /// Types that are equal to i4.0 in bytecode (according to C# compiler)
         /// </summary>
-        private static readonly Type[] I4Types =
+        private static readonly TypeEntry[] I4Types = TypeEntryCache.Of(new[]
         {
             typeof(bool),
             typeof(byte),
@@ -34,15 +34,15 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             typeof(ushort),
             typeof(int),
             typeof(uint)
-        };
+        });
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn = true)
         {
-            return Type ?? ctx.ResolveType(TypeSignature).Materialize();
+            return Type != null ? TypeEntryCache.Of(Type) : ctx.ResolveType(TypeSignature);
         }
 
         #endregion
@@ -54,22 +54,22 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var gen = ctx.CurrentMethod.Generator;
             var type = Resolve(ctx);
 
-            if (TypeEntryCache.Of(type).IsVoid())
+            if (type.IsVoid())
                 Error(CompilerMessages.VoidTypeDefault);
 
             if (I4Types.Contains(type))
                 gen.EmitConstant(0);
 
-            else if (type == typeof(long) || type == typeof(ulong))
+            else if (type.Is<long>() || type.Is<ulong>())
                 gen.EmitConstant(0L);
 
-            else if (type == typeof(float))
+            else if (type.Is<float>())
                 gen.EmitConstant(0.0f);
 
-            else if (type == typeof(double))
+            else if (type.Is<double>())
                 gen.EmitConstant(0.0);
 
-            else if (type == typeof(decimal))
+            else if (type.Is<decimal>())
             {
                 gen.EmitConstant(0);
                 gen.EmitCreateObject(typeof(decimal).GetConstructor(new[] {typeof(int)}));
@@ -80,10 +80,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
             else
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx).Materialize(), true);
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-                gen.EmitInitObject(type);
+                gen.EmitInitObject(type.Materialize());
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
             }
         }

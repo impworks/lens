@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var leftType = LeftOperand.Resolve(ctx);
             var rightType = RightOperand.Resolve(ctx);
@@ -46,13 +46,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 try
                 {
-                    OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] {leftType, rightType});
+                    OverloadedMethod = ctx.ResolveMethod(leftType.Materialize(), OverloadedMethodName, new[] {leftType.Materialize(), rightType.Materialize()});
                 }
                 catch
                 {
                     try
                     {
-                        OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] {leftType, rightType});
+                        OverloadedMethod = ctx.ResolveMethod(rightType.Materialize(), OverloadedMethodName, new[] {leftType.Materialize(), rightType.Materialize()});
                     }
                     catch
                     {
@@ -61,30 +61,30 @@ namespace Lens.SyntaxTree.Operators.Binary
 
                 // cannot be generic
                 if (OverloadedMethod != null)
-                    return OverloadedMethod.ReturnType.Materialize();
+                    return OverloadedMethod.ReturnType;
             }
 
             if (IsNumericOperator)
             {
-                if (TypeEntryCache.Of(leftType).IsNullableType() || TypeEntryCache.Of(rightType).IsNullableType())
+                if (leftType.IsNullableType() || rightType.IsNullableType())
                 {
-                    var leftNullable = TypeEntryCache.Of(leftType).IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
-                    var rightNullable = TypeEntryCache.Of(rightType).IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
+                    var leftNullable = leftType.IsNullableType() ? leftType.GenericArguments[0] : leftType;
+                    var rightNullable = rightType.IsNullableType() ? rightType.GenericArguments[0] : rightType;
 
-                    var commonNumericType = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(leftNullable), TypeEntryCache.Of(rightNullable));
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
                     if (commonNumericType == null)
                         Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-                    return typeof(Nullable<>).MakeGenericType(commonNumericType.Materialize());
+                    return TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {commonNumericType});
                 }
 
-                if (TypeEntryCache.Of(leftType).IsNumericType() && TypeEntryCache.Of(rightType).IsNumericType())
+                if (leftType.IsNumericType() && rightType.IsNumericType())
                 {
-                    var commonNumericType = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
                     if (commonNumericType == null)
                         Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-                    return commonNumericType.Materialize();
+                    return commonNumericType;
                 }
             }
 
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Resolves operator return type, in case it's not an overloaded method call.
         /// </summary>
-        protected virtual Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected virtual TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
             return null;
         }
@@ -112,10 +112,10 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (TypeEntryCache.Of(Resolve(ctx)).IsNullableType())
+            if (Resolve(ctx).IsNullableType())
             {
-                var leftNullable = TypeEntryCache.Of(LeftOperand.Resolve(ctx)).IsNullableType();
-                var rightNullable = TypeEntryCache.Of(RightOperand.Resolve(ctx)).IsNullableType();
+                var leftNullable = LeftOperand.Resolve(ctx).IsNullableType();
+                var rightNullable = RightOperand.Resolve(ctx).IsNullableType();
                 if (leftNullable && rightNullable)
                 {
                     return Expr.If(
@@ -204,7 +204,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var right = RightOperand.Resolve(ctx);
 
             if (type == null)
-                type = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(left), TypeEntryCache.Of(right))?.Materialize();
+                type = TypeExtensions.GetNumericOperationType(left, right)?.Materialize();
 
             Expr.Cast(LeftOperand, type).Emit(ctx, true);
             Expr.Cast(RightOperand, type).Emit(ctx, true);

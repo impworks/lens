@@ -39,15 +39,15 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             if (!IsWildcard)
-                yield return new PatternNameBinding(Name, expressionType);
+                yield return new PatternNameBinding(Name, expressionType.Materialize());
 
             if (Type != null)
             {
                 var specifiedType = ctx.ResolveType(Type);
-                if (!specifiedType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, specifiedType))
+                if (!specifiedType.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, specifiedType))
                     Error(CompilerMessages.PatternTypeMatchImpossible, specifiedType, expressionType);
             }
         }

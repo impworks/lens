@@ -33,16 +33,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Type == null)
                 Type = ctx.ResolveType(TypeSignature).Materialize();
 
             var idxType = Size.Resolve(ctx);
-            if (!TypeEntryCache.Of<int>().IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(idxType)))
+            if (!TypeEntryCache.Of<int>().IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Size, CompilerMessages.ArraySizeNotInt, idxType);
 
-            return Type.MakeArrayType();
+            return TypeEntryCache.Of(Type.MakeArrayType());
         }
 
         #endregion

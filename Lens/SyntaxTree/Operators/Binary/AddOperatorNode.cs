@@ -28,27 +28,27 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            var stringyTypes = new[] {typeof(string), typeof(char)};
+            var stringyTypes = new[] {TypeEntryCache.Of<string>(), TypeEntryCache.Of<char>()};
             if (leftType.IsAnyOf(stringyTypes) && rightType.IsAnyOf(stringyTypes))
-                return typeof(string);
+                return TypeEntryCache.Of<string>();
 
             if (leftType == rightType)
             {
-                if (leftType.IsArray || TypeEntryCache.Of(leftType).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Dictionary<,>))))
+                if (leftType.IsArray || leftType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Dictionary<,>))))
                     return leftType;
             }
 
-            var dictType = TypeEntryCache.Of(typeof(IDictionary<,>)).ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
+            var dictType = TypeEntryCache.Of(typeof(IDictionary<,>)).ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType);
             if (dictType != null)
-                return dictType.Materialize();
+                return dictType;
 
-            var enumerableType = TypeEntryCache.Of(typeof(IEnumerable<>)).ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType))
-                                 ?? TypeEntryCache.Of<IEnumerable>().ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
+            var enumerableType = TypeEntryCache.Of(typeof(IEnumerable<>)).ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType)
+                                 ?? TypeEntryCache.Of<IEnumerable>().ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType);
 
             if (enumerableType != null)
-                return enumerableType.Materialize();
+                return enumerableType;
 
             return null;
         }
@@ -63,19 +63,19 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 var type = Resolve(ctx);
 
-                if (type == typeof(string))
+                if (type.Is<string>())
                     return StringExpand();
 
                 if (type.IsArray)
                     return ArrayExpand(ctx);
 
-                if (TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IDictionary<,>))))
+                if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IDictionary<,>))))
                     return DictExpand(ctx);
 
-                if (type == typeof(IEnumerable))
+                if (type.Is<IEnumerable>())
                     return SeqExpand();
 
-                if (TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
+                if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
                     return TypedSeqExpand();
             }
 
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase ArrayExpand(Context ctx)
         {
-            var type = Resolve(ctx);
+            var type = Resolve(ctx).Materialize();
 
             var tmpArray = ctx.Scope.DeclareImplicit(ctx, type, false);
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, type, false);
@@ -180,7 +180,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase DictExpand(Context ctx)
         {
-            var keyValueTypes = LeftOperand.Resolve(ctx).GetGenericArguments();
+            var keyValueTypes = TypeEntry.Materialize(LeftOperand.Resolve(ctx).GenericArguments);
             var dictType = typeof(Dictionary<,>).MakeGenericType(keyValueTypes);
             var currType = typeof(KeyValuePair<,>).MakeGenericType(keyValueTypes);
             var tmpDict = ctx.Scope.DeclareImplicit(ctx, dictType, false);

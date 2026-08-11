@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -50,9 +51,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
-            if (expressionType != typeof(string))
+            if (!expressionType.Is<string>())
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(string));
 
             ParseValue(ctx);

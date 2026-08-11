@@ -29,18 +29,18 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The cached types of key and value.
         /// </summary>
-        private Type[] _types;
+        private TypeEntry[] _types;
 
         #endregion
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
-            if (!TypeEntryCache.Of(expressionType).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(KeyValuePair<,>))))
+            if (!expressionType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(KeyValuePair<,>))))
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(KeyValuePair<,>));
 
-            _types = expressionType.GetGenericArguments();
+            _types = expressionType.GenericArguments;
 
             return KeyRule.Resolve(ctx, _types[0])
                           .Concat(ValueRule.Resolve(ctx, _types[1]));

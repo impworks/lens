@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (IterableExpression != null)
                 DetectEnumerableType(ctx);
@@ -135,7 +135,7 @@ namespace Lens.SyntaxTree.ControlFlow
             {
                 var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
                 var returnType = Resolve(ctx);
-                var saveLast = mustReturn && !TypeEntryCache.Of(returnType).IsVoid();
+                var saveLast = mustReturn && !returnType.IsVoid();
 
                 if (saveLast)
                 {
@@ -169,7 +169,7 @@ namespace Lens.SyntaxTree.ControlFlow
         /// </summary>
         private NodeBase ExpandArray(Context ctx)
         {
-            var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
+            var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx).Materialize(), false);
             var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
             var lenVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
 
@@ -243,7 +243,7 @@ namespace Lens.SyntaxTree.ControlFlow
         /// </summary>
         private void DetectEnumerableType(Context ctx)
         {
-            var seqType = IterableExpression.Resolve(ctx);
+            var seqType = IterableExpression.Resolve(ctx).Materialize();
             if (seqType.IsArray)
             {
                 _variableType = seqType.GetElementType();
@@ -279,10 +279,10 @@ namespace Lens.SyntaxTree.ControlFlow
             if (t1 != t2)
                 Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
-            if (!TypeEntryCache.Of(t1).IsIntegerType())
+            if (!t1.IsIntegerType())
                 Error(CompilerMessages.ForeachRangeNotInteger, t1);
 
-            _variableType = t1;
+            _variableType = t1.Materialize();
         }
 
         /// <summary>

@@ -39,20 +39,20 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The actual type.
         /// </summary>
-        private Type _type;
+        private TypeEntry _type;
 
         #endregion
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             var typeEntity = ctx.FindType(Identifier.FullSignature);
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
                 Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
-            _type = ctx.ResolvePatternType(typeEntity, TypeEntryCache.Of(expressionType)).Materialize();
-            if (!TypeEntryCache.Of(_type).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(_type)))
+            _type = ctx.ResolvePatternType(typeEntity, expressionType);
+            if (!_type.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, _type))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
             var duplicate = FieldRules.GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
@@ -64,8 +64,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             {
                 try
                 {
-                    var field = ctx.ResolveField(_type, fieldRule.Name.FullSignature);
-                    subBindings.AddRange(fieldRule.Rule.Resolve(ctx, field.FieldType.Materialize()));
+                    var field = ctx.ResolveField(_type.Materialize(), fieldRule.Name.FullSignature);
+                    subBindings.AddRange(fieldRule.Rule.Resolve(ctx, field.FieldType));
                 }
                 catch (KeyNotFoundException)
                 {
@@ -84,14 +84,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         {
             yield return MakeJumpIf(
                 nextStatement,
-                Expr.Not(Expr.Is(expression, _type))
+                Expr.Not(Expr.Is(expression, _type.Materialize()))
             );
 
             foreach (var fieldRule in FieldRules)
             {
                 var rules = fieldRule.Rule.Expand(
                     ctx,
-                    Expr.GetMember(Expr.Cast(expression, _type), fieldRule.Name.FullSignature),
+                    Expr.GetMember(Expr.Cast(expression, _type.Materialize()), fieldRule.Name.FullSignature),
                     nextStatement
                 );
 

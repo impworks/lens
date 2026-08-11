@@ -34,9 +34,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
+            return mustReturn ? Body.Resolve(ctx) : TypeEntryCache.Of<UnitType>();
         }
 
         #endregion
@@ -46,15 +46,15 @@ namespace Lens.SyntaxTree.ControlFlow
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var loopType = Resolve(ctx);
-            var saveLast = mustReturn && !TypeEntryCache.Of(loopType).IsVoid();
+            var saveLast = mustReturn && !loopType.IsVoid();
 
             var condType = Condition.Resolve(ctx);
-            if (!TypeEntryCache.Of(condType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             // condition is known to be false: do not emit the loop at all
-            if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
-                return saveLast ? (NodeBase) Expr.Default(loopType) : Expr.Unit();
+            if (Condition.IsConstant && condType.Is<bool>() && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+                return saveLast ? (NodeBase) Expr.Default(loopType.Materialize()) : Expr.Unit();
 
             return base.Expand(ctx, mustReturn);
         }
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             var gen = ctx.CurrentMethod.Generator;
             var loopType = Resolve(ctx);
-            var saveLast = mustReturn && !TypeEntryCache.Of(loopType).IsVoid();
+            var saveLast = mustReturn && !loopType.IsVoid();
 
             var beginLabel = gen.DefineLabel();
             var endLabel = gen.DefineLabel();
@@ -81,8 +81,8 @@ namespace Lens.SyntaxTree.ControlFlow
             Local tmpVar = null;
             if (saveLast)
             {
-                tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType, false);
-                Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
+                tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType.Materialize(), false);
+                Expr.Set(tmpVar, Expr.Default(loopType.Materialize())).Emit(ctx, false);
             }
 
             gen.MarkLabel(beginLabel);

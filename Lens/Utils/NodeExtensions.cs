@@ -19,10 +19,10 @@ namespace Lens.Utils
             // a type parameter may be substituted with a value type or with a reference type, and
             // only the members of its constraints can be invoked on it. Boxing is valid for both
             // kinds and lets a single call site serve every instantiation.
-            if (ctx.Resolver.IsDeclaredTypeParameter(type))
+            if (ctx.Resolver.IsDeclaredTypeParameter(type.Materialize()))
             {
                 node.Emit(ctx, true);
-                ctx.CurrentMethod.Generator.EmitBox(type);
+                ctx.CurrentMethod.Generator.EmitBox(type.Materialize());
                 return;
             }
 
@@ -37,11 +37,11 @@ namespace Lens.Utils
                 {
                     var gen = ctx.CurrentMethod.Generator;
 
-                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, type, true);
+                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, type.Materialize(), true);
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 
                     node.Emit(ctx, true);
-                    gen.EmitSaveObject(type);
+                    gen.EmitSaveObject(type.Materialize());
 
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
                 }

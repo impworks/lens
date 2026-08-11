@@ -28,26 +28,26 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            if (rightType == typeof(int))
+            if (rightType.Is<int>())
             {
                 // string repetition
-                if (leftType == typeof(string))
-                    return typeof(string);
+                if (leftType.Is<string>())
+                    return TypeEntryCache.Of<string>();
 
                 // array repetition
                 if (leftType.IsArray)
                     return leftType;
 
                 // typed sequence repetition
-                var enumerable = TypeEntryCache.Of(leftType).ResolveImplementationOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));
+                var enumerable = leftType.ResolveImplementationOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));
                 if (enumerable != null)
-                    return enumerable.Materialize();
+                    return enumerable;
 
                 // untyped sequence repetition
-                if (TypeEntryCache.Of(leftType).Implements(ctx.Resolver, TypeEntryCache.Of<IEnumerable>(), false))
-                    return typeof(IEnumerable);
+                if (leftType.Implements(ctx.Resolver, TypeEntryCache.Of<IEnumerable>(), false))
+                    return TypeEntryCache.Of<IEnumerable>();
             }
 
             return null;
@@ -63,13 +63,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 var type = Resolve(ctx);
 
-                if (type == typeof(string))
+                if (type.Is<string>())
                     return StringExpand(ctx);
 
                 if (type.IsArray)
                     return ArrayExpand(ctx);
 
-                if (type == typeof(IEnumerable) || TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
+                if (type.Is<IEnumerable>() || type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
                     return SeqExpand(ctx);
             }
 
@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             var tmpString = ctx.Scope.DeclareImplicit(ctx, typeof(string), false);
             var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof(StringBuilder), false);
-            var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx), false);
+            var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx).Materialize(), false);
 
             // var sb = new StringBuilder();
             // for _ in 1..N do
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase ArrayExpand(Context ctx)
         {
-            var arrayType = LeftOperand.Resolve(ctx);
+            var arrayType = LeftOperand.Resolve(ctx).Materialize();
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
             var tmpResult = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
             var tmpRight = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
@@ -185,7 +185,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase SeqExpand(Context ctx)
         {
-            var seqType = LeftOperand.Resolve(ctx);
+            var seqType = LeftOperand.Resolve(ctx).Materialize();
 
             NodeBase leftWrapper;
             if (seqType == typeof(IEnumerable))

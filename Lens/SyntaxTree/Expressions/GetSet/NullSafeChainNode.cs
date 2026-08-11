@@ -35,23 +35,23 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// The type of the chain's value when none of the checks trip.
         /// </summary>
-        private Type _chainType;
+        private TypeEntry _chainType;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             PrepareChain(ctx);
 
             // "foo?.DoStuff ()" is a no-op rather than a value
-            if (TypeEntryCache.Of(_chainType).IsVoid())
-                return typeof(UnitType);
+            if (_chainType.IsVoid())
+                return TypeEntryCache.Of<UnitType>();
 
             // a value type gains a null state by being lifted into Nullable<T>, but only once
-            return _chainType.IsValueType && !TypeEntryCache.Of(_chainType).IsNullableType()
-                ? typeof(Nullable<>).MakeGenericType(_chainType)
+            return _chainType.IsValueType && !_chainType.IsNullableType()
+                ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {_chainType})
                 : _chainType;
         }
 
@@ -77,7 +77,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
                 var receiver = links[idx - 1];
                 var receiverType = receiver.Resolve(ctx);
-                var isNullable = TypeEntryCache.Of(receiverType).IsNullableType();
+                var isNullable = receiverType.IsNullableType();
 
                 if (receiverType.IsValueType && !isNullable)
                     Error(receiver, CompilerMessages.NullSafeOperatorValueType, receiverType.FullName);
@@ -139,18 +139,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var resultType = Resolve(ctx);
-            var isUnit = TypeEntryCache.Of(resultType).IsVoid();
+            var isUnit = resultType.IsVoid();
 
             // each checked receiver is evaluated once, into a local the rest of the chain reads from
             foreach (var check in _checks)
             {
-                check.Local = ctx.Scope.DeclareImplicit(ctx, check.ReceiverType, false);
+                check.Local = ctx.Scope.DeclareImplicit(ctx, check.ReceiverType.Materialize(), false);
                 check.Holder.Expression = Expr.Get(check.Local);
             }
 
             var body = isUnit || _chainType == resultType
                 ? Chain
-                : Expr.Cast(Chain, resultType);
+                : Expr.Cast(Chain, resultType.Materialize());
 
             for (var idx = _checks.Count - 1; idx >= 0; idx--)
             {
@@ -159,7 +159,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Expr.Set(check.Local, check.Receiver),
                     isUnit
                         ? Expr.If(IsNotNull(check), Expr.Block(body))
-                        : Expr.If(IsNull(check), Expr.Block(Expr.Default(resultType)), Expr.Block(body))
+                        : Expr.If(IsNull(check), Expr.Block(Expr.Default(resultType.Materialize())), Expr.Block(body))
                 );
             }
 
@@ -214,7 +214,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             /// <summary>
             /// The type of the checked value.
             /// </summary>
-            public Type ReceiverType;
+            public TypeEntry ReceiverType;
 
             /// <summary>
             /// Flag indicating that the checked value is a Nullable&lt;T&gt;.

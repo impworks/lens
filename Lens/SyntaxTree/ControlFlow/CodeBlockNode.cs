@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var last = Statements.LastOrDefault(x => !(x is IMetaNode));
             if (last is VarNode || last is LetNode)
@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
             ctx.EnterScope(ctx.ScopeOf(this));
 
-            var result = typeof(UnitType);
+            var result = TypeEntryCache.Of<UnitType>();
             foreach (var curr in Statements)
             {
                 if (!(curr is IMetaNode))
@@ -183,7 +183,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
                 curr.Emit(ctx, subReturn);
 
-                if (!subReturn && !TypeEntryCache.Of(retType).IsVoid())
+                if (!subReturn && !retType.IsVoid())
                 {
                     // nested code block nodes take care of themselves
                     if (!(curr is CodeBlockNode))

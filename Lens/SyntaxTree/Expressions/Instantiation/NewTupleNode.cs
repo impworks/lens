@@ -18,13 +18,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// List of tuple item types.
         /// </summary>
-        private Type[] _types;
+        private TypeEntry[] _types;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.TupleNoArgs);
@@ -32,7 +32,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (Expressions.Count > 8)
                 Error(CompilerMessages.TupleTooManyArgs);
 
-            var types = new List<Type>();
+            var types = new List<TypeEntry>();
             foreach (var curr in Expressions)
             {
                 var type = curr.Resolve(ctx);
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             }
 
             _types = types.ToArray();
-            return FunctionalHelper.CreateTupleType(_types);
+            return TypeEntryCache.Of(FunctionalHelper.CreateTupleType(TypeEntry.Materialize(_types)));
         }
 
         #endregion
@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             foreach (var curr in Expressions)
                 curr.Emit(ctx, true);
 
-            var ctor = ctx.ResolveConstructor(tupleType, _types);
+            var ctor = ctx.ResolveConstructor(tupleType.Materialize(), TypeEntry.Materialize(_types));
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }
 

@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
             var idxType = Index.Resolve(ctx);
@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType, idxType, false);
+                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType.Materialize(), idxType.Materialize(), false);
                 }
                 catch (LensCompilerException ex)
                 {
@@ -46,15 +46,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var idxDestType = exprType.IsArray ? typeof(int) : _indexer.ArgumentTypes[0].Materialize();
-            var valDestType = exprType.IsArray ? exprType.GetElementType() : _indexer.ArgumentTypes[1].Materialize();
+            var idxDestType = exprType.IsArray ? TypeEntryCache.Of<int>() : _indexer.ArgumentTypes[0];
+            var valDestType = exprType.IsArray ? exprType.ElementType : _indexer.ArgumentTypes[1];
 
-            if (!TypeEntryCache.Of(idxDestType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(idxType)))
+            if (!idxDestType.IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
 
             EnsureLambdaInferred(ctx, Value, valDestType);
             var valType = Value.Resolve(ctx);
-            if (!TypeEntryCache.Of(valDestType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(valType)))
+            if (!valDestType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
 
             return base.ResolveInternal(ctx, mustReturn);
@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var gen = ctx.CurrentMethod.Generator;
 
             var exprType = Expression.Resolve(ctx);
-            var itemType = exprType.GetElementType();
+            var itemType = exprType.ElementType.Materialize();
 
             Expression.Emit(ctx, true);
             Expr.Cast(Index, typeof(int)).Emit(ctx, true);

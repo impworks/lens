@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ctx.CheckTypedExpression(LeftOperand, allowNull: true);
             ctx.CheckTypedExpression(RightOperand, allowNull: true);
@@ -39,32 +39,32 @@ namespace Lens.SyntaxTree.Operators.Binary
             var right = RightOperand.Resolve(ctx);
 
             // no types inferrable
-            if (left == typeof(NullType) && right == typeof(NullType))
+            if (left.Is<NullType>() && right.Is<NullType>())
                 return left;
 
             // only one type known
-            if (right == typeof(NullType))
+            if (right.Is<NullType>())
                 return left;
 
-            if (left == typeof(NullType))
+            if (left.Is<NullType>())
                 return right.IsValueType
-                    ? typeof(Nullable<>).MakeGenericType(right)
+                    ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {right})
                     : right;
 
 
-            if (left.IsValueType && !TypeEntryCache.Of(left).IsNullableType())
+            if (left.IsValueType && !left.IsNullableType())
                 Error(LeftOperand, CompilerMessages.CoalesceOperatorLeftNotNull, left.FullName);
 
-            var baseLeft = TypeEntryCache.Of(left).GetNullableUnderlyingType()?.Materialize() ?? left;
-            var baseRight = TypeEntryCache.Of(right).GetNullableUnderlyingType()?.Materialize() ?? right;
+            var baseLeft = left.GetNullableUnderlyingType() ?? left;
+            var baseRight = right.GetNullableUnderlyingType() ?? right;
 
             // do not accept combinations like "nullable<int>" and "string"
             if(baseLeft.IsValueType != baseRight.IsValueType)
                 Error(CompilerMessages.CoalesceOperatorTypeMismatch, left.FullName, right.FullName);
 
-            var common = new[] {TypeEntryCache.Of(baseLeft), TypeEntryCache.Of(baseRight)}.GetMostCommonType(ctx.Resolver).Materialize();
-            return TypeEntryCache.Of(right).IsNullableType()
-                ? typeof(Nullable<>).MakeGenericType(common)
+            var common = new[] {baseLeft, baseRight}.GetMostCommonType(ctx.Resolver);
+            return right.IsNullableType()
+                ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {common})
                 : common;
         }
 
@@ -83,17 +83,17 @@ namespace Lens.SyntaxTree.Operators.Binary
             var leftAccessor = LeftOperand;
             if (!(LeftOperand is GetIdentifierNode))
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, left, false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, left.Materialize(), false);
                 body.Add(Expr.Set(tmpVar, LeftOperand));
                 leftAccessor = Expr.Get(tmpVar);
             }
 
             var condition = Expr.Compare(ComparisonOperatorKind.Equals, leftAccessor, Expr.Null());
-            var leftResult = TypeEntryCache.Of(left).IsNullableType() && left != right
+            var leftResult = left.IsNullableType() && left != right
                 ? Expr.GetMember(leftAccessor, nameof(Nullable<int>.Value))
                 : leftAccessor;
 
-            var rightResult = TypeEntryCache.Of(right).IsNullableType() && left != right
+            var rightResult = right.IsNullableType() && left != right
                 ? Expr.GetMember(RightOperand, nameof(Nullable<int>.Value))
                 : RightOperand;
 
@@ -101,10 +101,10 @@ namespace Lens.SyntaxTree.Operators.Binary
                 Expr.If(
                     condition,
                     Expr.Block(
-                        Expr.Cast(rightResult, common)
+                        Expr.Cast(rightResult, common.Materialize())
                     ),
                     Expr.Block(
-                        Expr.Cast(leftResult, common)
+                        Expr.Cast(leftResult, common.Materialize())
                     )
                 )
             );

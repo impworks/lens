@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             /// <summary>
             /// The return type the surrounding context demands, when it demands one.
             /// </summary>
-            public Type InferredReturnType;
+            public TypeEntry InferredReturnType;
         }
 
         #endregion
@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var argTypes = new List<Type>();
             foreach (var curr in Arguments)
@@ -70,12 +70,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
             }
 
             if (MustInferArgTypes)
-                return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
+                return TypeEntryCache.Of(FunctionalHelper.CreateLambdaType(argTypes.ToArray()));
 
             ctx.ScopeOf(Body).RegisterArguments(ctx, false, Arguments);
 
             var retType = Body.Resolve(ctx);
-            return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
+            return TypeEntryCache.Of(FunctionalHelper.CreateDelegateType(retType.Materialize(), argTypes.ToArray()));
         }
 
         #endregion
@@ -119,10 +119,10 @@ namespace Lens.SyntaxTree.Declarations.Functions
             }
 
             var retType = ctx.BindingOf<Binding>(this).InferredReturnType ?? Body.Resolve(ctx);
-            if (retType == typeof(NullType))
+            if (retType.Is<NullType>())
                 Error(CompilerMessages.LambdaReturnTypeUnknown);
 
-            return TypeEntryCache.Of(retType).IsVoid() ? typeof(void) : retType;
+            return retType.IsVoid() ? typeof(void) : retType.Materialize();
         }
 
         #endregion
@@ -136,7 +136,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             // the delegate type is expressed in the terms of the enclosing method, while the
             // backing method belongs to the closure class and may be generic in its parameters
             var argTypes = Arguments.Select(x => x.GetArgumentType(ctx)).ToArray();
-            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), argTypes);
+            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx).Materialize(), argTypes);
             var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
 
             var closure = ctx.Scope.ActiveClosure;
@@ -184,7 +184,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Interprets the lambda as a particular delegate with given arg & return types.
         /// </summary>
-        public void SetInferredReturnType(Context ctx, Type type)
+        public void SetInferredReturnType(Context ctx, TypeEntry type)
         {
             ctx.BindingOf<Binding>(this).InferredReturnType = type;
         }

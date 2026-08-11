@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Resolver;
 
 namespace Lens.Compiler
 {
@@ -77,12 +78,12 @@ namespace Lens.Compiler
         /// <summary>
         /// Checks if the type is allowed according to the safe mode restrictions.
         /// </summary>
-        public bool IsTypeAllowed(Type type)
+        public bool IsTypeAllowed(TypeEntry type)
         {
             if (Options.SafeMode == SafeMode.Disabled)
                 return true;
 
-            var genericChecks = !type.IsGenericType || type.GetGenericArguments().All(IsTypeAllowed);
+            var genericChecks = !type.IsGenericType || type.GenericArguments.All(IsTypeAllowed);
             if (!genericChecks)
                 return false;
 

@@ -33,13 +33,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The cached list of tuple item types.
         /// </summary>
-        private Type[] _itemTypes;
+        private TypeEntry[] _itemTypes;
 
         #endregion
 
         #region Resovle
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             if (ElementRules.Count < 1)
                 Error(CompilerMessages.PatternTupleTooFewArgs);
@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (!expressionType.IsTupleType())
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 
-            _itemTypes = expressionType.GetGenericArguments();
+            _itemTypes = expressionType.GenericArguments;
             if (_itemTypes.Length != ElementRules.Count)
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, string.Format("Tuple`{0}", ElementRules.Count));
 

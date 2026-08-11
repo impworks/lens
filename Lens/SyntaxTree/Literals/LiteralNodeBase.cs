@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Literals
 {
@@ -32,9 +33,9 @@ namespace Lens.SyntaxTree.Literals
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            return typeof(T);
+            return TypeEntryCache.Of<T>();
         }
 
         #endregion

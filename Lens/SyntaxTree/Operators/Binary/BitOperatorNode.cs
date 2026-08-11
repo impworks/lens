@@ -40,11 +40,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
             if (leftType == rightType)
             {
-                if (TypeEntryCache.Of(leftType).IsIntegerType() || leftType.IsEnum)
+                if (leftType.IsIntegerType() || leftType.IsEnum)
                     return leftType;
             }
 

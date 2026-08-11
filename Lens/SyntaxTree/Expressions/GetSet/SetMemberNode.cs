@@ -38,11 +38,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
-            return typeof(UnitType);
+            return TypeEntryCache.Of<UnitType>();
         }
 
         /// <summary>
@@ -50,9 +50,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void ResolveSelf(Context ctx)
         {
-            var type = StaticTypeInfo
-                       ?? (StaticType != null
-                           ? ctx.ResolveType(StaticType).Materialize()
+            var type = StaticTypeInfo != null
+                       ? TypeEntryCache.Of(StaticTypeInfo)
+                       : (StaticType != null
+                           ? ctx.ResolveType(StaticType)
                            : Expression.Resolve(ctx));
 
             CheckTypeInSafeMode(ctx, type);
@@ -60,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for field
             try
             {
-                _field = ctx.ResolveField(type, MemberName);
+                _field = ctx.ResolveField(type.Materialize(), MemberName);
                 _isStatic = _field.IsStatic;
                 if (Expression == null && !_isStatic)
                     Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
@@ -69,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _property = ctx.ResolveProperty(type, MemberName);
+                    _property = ctx.ResolveProperty(type.Materialize(), MemberName);
                     if (!_property.CanSet)
                         Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
@@ -84,12 +85,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             var destType = _field != null ? _field.FieldType : _property.PropertyType;
-            EnsureLambdaInferred(ctx, Value, destType.Materialize());
+            EnsureLambdaInferred(ctx, Value, destType);
 
             var valType = Value.Resolve(ctx);
             ctx.CheckTypedExpression(Value, valType, true);
 
-            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(valType)))
+            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
         }
 
@@ -116,7 +117,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (!_isStatic)
             {
                 var exprType = Expression.Resolve(ctx);
-                if (Expression is IPointerProvider provider && TypeEntryCache.Of(exprType).IsStruct())
+                if (Expression is IPointerProvider provider && exprType.IsStruct())
                     ctx.RequirePointer(provider);
 
                 Expression.Emit(ctx, true);

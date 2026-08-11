@@ -29,9 +29,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            return TypeEntryCache.Of(leftType).IsNumericType() && TypeEntryCache.Of(rightType).IsNumericType() ? typeof(double) : null;
+            return leftType.IsNumericType() && rightType.IsNumericType() ? TypeEntryCache.Of<double>() : null;
         }
 
         #endregion

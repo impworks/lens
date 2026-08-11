@@ -474,7 +474,7 @@ namespace Lens.Compiler
         {
             lambda.SetInferredArgumentTypes(this, argTypes);
             var delegateType = lambda.Resolve(this);
-            return ReflectionHelper.WrapDelegate(Resolver, delegateType).ReturnType.Materialize();
+            return ReflectionHelper.WrapDelegate(Resolver, delegateType.Materialize()).ReturnType.Materialize();
         }
 
         /// <summary>

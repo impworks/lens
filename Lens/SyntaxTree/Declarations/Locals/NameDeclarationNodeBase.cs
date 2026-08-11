@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
@@ -59,11 +60,11 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
-                : ResolvedType ?? ctx.ResolveType(Type).Materialize();
+                : (ResolvedType != null ? TypeEntryCache.Of(ResolvedType) : ctx.ResolveType(Type));
 
             ctx.CheckTypedExpression(Value, type);
 
@@ -74,7 +75,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
                 try
                 {
-                    var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
+                    var name = ctx.Scope.DeclareLocal(Name, type.Materialize(), IsImmutable);
                     name.Declaration = this;
 
                     if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)

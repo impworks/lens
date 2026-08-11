@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Type (for static member access).
         /// </summary>
-        private Type _type;
+        private TypeEntry _type;
 
         /// <summary>
         /// Cached field reference (if the member resolves to it).
@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
@@ -69,17 +69,17 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 CheckTypeInSafeMode(ctx, _type);
 
             if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
-                return typeof(int);
+                return TypeEntryCache.Of<int>();
 
             if (_field != null)
-                return _field.FieldType.Materialize();
+                return _field.FieldType;
 
             if (_property != null)
-                return _property.PropertyType.Materialize();
+                return _property.PropertyType;
 
             return _method.ReturnType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
-                : FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
+                ? TypeEntryCache.Of(FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray()))
+                : TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray()));
         }
 
         /// <summary>
@@ -100,9 +100,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.TypeArgumentsForNonMethod, _type, MemberName);
             }
 
-            _type = StaticTypeInfo
-                    ?? (StaticType != null
-                        ? ctx.ResolveType(StaticType).Materialize()
+            _type = StaticTypeInfo != null
+                    ? TypeEntryCache.Of(StaticTypeInfo)
+                    : (StaticType != null
+                        ? ctx.ResolveType(StaticType)
                         : Expression.Resolve(ctx));
 
             // special case: array length
@@ -115,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for field
             try
             {
-                _field = ctx.ResolveField(_type, MemberName);
+                _field = ctx.ResolveField(_type.Materialize(), MemberName);
                 _isStatic = _field.IsStatic;
 
                 check();
@@ -128,7 +129,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for property
             try
             {
-                _property = ctx.ResolveProperty(_type, MemberName);
+                _property = ctx.ResolveProperty(_type.Materialize(), MemberName);
 
                 if (!_property.CanGet)
                     Error(CompilerMessages.PropertyNoGetter, _type, MemberName);
@@ -145,7 +146,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for event: events are only allowed at the left side of += and -=
             try
             {
-                ctx.ResolveEvent(_type, MemberName);
+                ctx.ResolveEvent(_type.Materialize(), MemberName);
                 Error(CompilerMessages.EventAsExpr);
             }
             catch (KeyNotFoundException)
@@ -153,8 +154,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             // find method
-            var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t).Materialize()).ToArray();
-            var methods = ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
+            var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
+            var methods = ctx.ResolveMethodGroup(_type.Materialize(), MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
 
             if (methods.Length == 0)
                 Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, _type.Name, MemberName);
@@ -171,7 +172,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             check();
         }
 
-        private static bool CheckMethodArgs(Type[] argTypes, MethodWrapper method)
+        private static bool CheckMethodArgs(TypeEntry[] argTypes, MethodWrapper method)
         {
             if (argTypes.Length == 0)
                 return true;
@@ -179,7 +180,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (method.ArgumentTypes.Length != argTypes.Length)
                 return false;
 
-            return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != TypeEntryCache.Of(argTypes[idx])).Any();
+            return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
         }
 
         #endregion

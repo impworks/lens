@@ -31,12 +31,12 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected Type ResolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
+        protected TypeEntry ResolveItemType(IEnumerable<NodeBase> nodes, Context ctx)
         {
             try
             {
-                var types = nodes.Select(n => TypeEntryCache.Of(n.Resolve(ctx))).ToArray();
-                return types.GetMostCommonType(ctx.Resolver).Materialize();
+                var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
+                return types.GetMostCommonType(ctx.Resolver);
             }
             catch (LensCompilerException ex)
             {

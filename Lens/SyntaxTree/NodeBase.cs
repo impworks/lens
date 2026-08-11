@@ -23,7 +23,7 @@ namespace Lens.SyntaxTree
         /// can be bound more than once.
         /// </summary>
         [DebuggerStepThrough]
-        public Type Resolve(Context ctx, bool mustReturn = true)
+        public TypeEntry Resolve(Context ctx, bool mustReturn = true)
         {
             var cached = ctx.FindExpressionType(this);
             if (cached != null)
@@ -49,9 +49,9 @@ namespace Lens.SyntaxTree
         /// Resolves the expression type.
         /// Must be overridden in child types if they represent a meaninful value.
         /// </summary>
-        protected virtual Type ResolveInternal(Context ctx, bool mustReturn)
+        protected virtual TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            return typeof(UnitType);
+            return TypeEntryCache.Of<UnitType>();
         }
 
         #endregion
@@ -218,7 +218,7 @@ namespace Lens.SyntaxTree
         /// <summary>
         /// Throws an error that the current type is not alowed in safe mode.
         /// </summary>
-        protected void CheckTypeInSafeMode(Context ctx, Type type)
+        protected void CheckTypeInSafeMode(Context ctx, TypeEntry type)
         {
             if (!ctx.IsTypeAllowed(type))
                 Error(CompilerMessages.SafeModeIllegalType, type.FullName);
@@ -227,15 +227,15 @@ namespace Lens.SyntaxTree
         /// <summary>
         /// Re-infers the lambda if argument types were not specified before.
         /// </summary>
-        protected static void EnsureLambdaInferred(Context ctx, NodeBase canBeLambda, Type delegateType)
+        protected static void EnsureLambdaInferred(Context ctx, NodeBase canBeLambda, TypeEntry delegateType)
         {
             var lambda = canBeLambda as LambdaNode;
             if (lambda == null)
                 return;
 
-            var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType);
+            var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType.Materialize());
             if (!wrapper.ReturnType.IsGenericParameter)
-                lambda.SetInferredReturnType(ctx, wrapper.ReturnType.Materialize());
+                lambda.SetInferredReturnType(ctx, wrapper.ReturnType);
 
             lambda.Resolve(ctx);
 

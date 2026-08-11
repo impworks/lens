@@ -17,9 +17,9 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx)
+        protected override TypeEntry ResolveOperatorType(Context ctx)
         {
-            return TypeEntryCache.Of(Operand.Resolve(ctx)).IsImplicitlyBoolean() ? typeof(bool) : null;
+            return Operand.Resolve(ctx).IsImplicitlyBoolean() ? TypeEntryCache.Of<bool>() : null;
         }
 
         #endregion

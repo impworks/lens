@@ -63,17 +63,17 @@ namespace Lens.SyntaxTree.PatternMatching
         /// <summary>
         /// Checks if the current node has been resolved as a value-returning context.
         /// </summary>
-        private bool MustReturnValue(Context ctx) => !TypeEntryCache.Of(ctx.FindExpressionType(this)).IsVoid();
+        private bool MustReturnValue(Context ctx) => !ctx.FindExpressionType(this).IsVoid();
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ctx.CheckTypedExpression(Expression, allowNull: true);
 
-            var stmtTypes = new List<Type>(MatchStatements.Count);
+            var stmtTypes = new List<TypeEntry>(MatchStatements.Count);
             TypeEntry commonType = null;
             foreach (var stmt in MatchStatements)
             {
@@ -95,9 +95,9 @@ namespace Lens.SyntaxTree.PatternMatching
                 }
             }
 
-            return stmtTypes.Any(x => TypeEntryCache.Of(x).IsVoid())
-                ? typeof(UnitType)
-                : stmtTypes.Select(TypeEntryCache.Of).ToArray().GetMostCommonType(ctx.Resolver).Materialize();
+            return stmtTypes.Any(x => x.IsVoid())
+                ? TypeEntryCache.Of<UnitType>()
+                : stmtTypes.ToArray().GetMostCommonType(ctx.Resolver);
         }
 
         #endregion
@@ -125,7 +125,7 @@ namespace Lens.SyntaxTree.PatternMatching
             }
             else
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType.Materialize(), false);
                 exprGetter = Expr.Get(tmpVar);
                 block.Add(Expr.Set(tmpVar, Expression));
             }
@@ -138,7 +138,7 @@ namespace Lens.SyntaxTree.PatternMatching
                 block.Add(
                     Expr.Block(
                         Expr.JumpLabel(_defaultLabel),
-                        Expr.Default(ctx.FindExpressionType(this))
+                        Expr.Default(ctx.FindExpressionType(this).Materialize())
                     )
                 );
             }

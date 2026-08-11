@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Identifier == "_")
                 Error(CompilerMessages.UnderscoreNameUsed);
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
                     _localConstant = local;
 
-                return local.Type;
+                return TypeEntryCache.Of(local.Type);
             }
 
             // static function declared in the script
@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
                 _method = methods[0];
-                return FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx));
+                return TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx)));
             }
             catch (KeyNotFoundException)
             {
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                         _labelType = type.TypeInfo;
                     }
 
-                    return _labelType;
+                    return TypeEntryCache.Of(_labelType);
                 }
                 catch (KeyNotFoundException)
                 {
@@ -127,14 +127,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             try
             {
                 _property = ctx.ResolveGlobalProperty(Identifier);
-                return _property.PropertyType;
+                return TypeEntryCache.Of(_property.PropertyType);
             }
             catch (KeyNotFoundException)
             {
                 Error(CompilerMessages.IdentifierNotFound, Identifier);
             }
 
-            return typeof(UnitType);
+            return TypeEntryCache.Of<UnitType>();
         }
 
         #endregion
@@ -181,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // load pointer to global function
             if (_method != null)
             {
-                var ctor = ctx.ResolveConstructor(resultType, new[] {typeof(object), typeof(IntPtr)});
+                var ctor = ctx.ResolveConstructor(resultType.Materialize(), new[] {typeof(object), typeof(IntPtr)});
 
                 gen.EmitNull();
                 gen.EmitLoadFunctionPointer(_method.MethodInfo);

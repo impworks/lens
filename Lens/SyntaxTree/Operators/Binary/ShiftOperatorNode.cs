@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Extra hint for function composition.
         /// </summary>
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var leftType = LeftOperand.Resolve(ctx);
 
@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             if (leftType.IsCallableType())
             {
                 // add left operand's return type as hint to right operand
-                var leftDelegate = ReflectionHelper.WrapDelegate(ctx.Resolver, leftType);
+                var leftDelegate = ReflectionHelper.WrapDelegate(ctx.Resolver, leftType.Materialize());
                 if (RightOperand is GetMemberNode)
                 {
                     var mbr = RightOperand as GetMemberNode;
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
                 var rightType = RightOperand.Resolve(ctx);
 
-                if (!ReflectionHelper.CanCombineDelegates(ctx.Resolver, leftType, rightType))
+                if (!ReflectionHelper.CanCombineDelegates(ctx.Resolver, leftType.Materialize(), rightType.Materialize()))
                     Error(Translations.CompilerMessages.DelegatesNotCombinable, leftType, rightType);
             }
 
@@ -71,13 +71,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             return base.ResolveInternal(ctx, mustReturn);
         }
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            if (leftType.IsAnyOf(typeof(int), typeof(long)) && rightType == typeof(int))
+            if (leftType.IsAnyOf(TypeEntryCache.Of<int>(), TypeEntryCache.Of<long>()) && rightType.Is<int>())
                 return leftType;
 
-            if (!IsLeft && ReflectionHelper.CanCombineDelegates(ctx.Resolver, leftType, rightType))
-                return ReflectionHelper.CombineDelegates(ctx.Resolver, leftType, rightType);
+            if (!IsLeft && ReflectionHelper.CanCombineDelegates(ctx.Resolver, leftType.Materialize(), rightType.Materialize()))
+                return TypeEntryCache.Of(ReflectionHelper.CombineDelegates(ctx.Resolver, leftType.Materialize(), rightType.Materialize()));
 
             return null;
         }
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 var leftVar = ctx.Unique.TempVariableName();
                 var rightVar = ctx.Unique.TempVariableName();
-                var delegateType = ReflectionHelper.WrapDelegate(ctx.Resolver, leftType);
+                var delegateType = ReflectionHelper.WrapDelegate(ctx.Resolver, leftType.Materialize());
                 var argDefs = delegateType.ArgumentTypes.Select(x => Expr.Arg(ctx.Unique.AnonymousArgName(), x.FullName)).ToArray();
 
                 return Expr.Lambda(

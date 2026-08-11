@@ -19,10 +19,10 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx)
+        protected override TypeEntry ResolveOperatorType(Context ctx)
         {
             var type = Operand.Resolve(ctx);
-            return TypeEntryCache.Of(type).IsNumericType() ? type : null;
+            return type.IsNumericType() ? type : null;
         }
 
         #endregion

@@ -29,14 +29,14 @@ namespace Lens.Compiler
         /// <summary>
         /// Checks if the expression returns a value and has a specified type.
         /// </summary>
-        public void CheckTypedExpression(NodeBase node, Type calculatedType = null, bool allowNull = false)
+        public void CheckTypedExpression(NodeBase node, TypeEntry calculatedType = null, bool allowNull = false)
         {
             var type = calculatedType ?? node.Resolve(this);
 
-            if (!allowNull && type == typeof(NullType))
+            if (!allowNull && type.Is<NullType>())
                 Error(node, CompilerMessages.ExpressionNull);
 
-            if (TypeEntryCache.Of(type).IsVoid())
+            if (type.IsVoid())
                 Error(node, CompilerMessages.ExpressionVoid);
 
             if (type.IsLambdaType())

@@ -20,18 +20,18 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// Dictionary key type.
         /// Actual types are enforced to be strictly equal, no common type is being resolved.
         /// </summary>
-        private Type _keyType;
+        private TypeEntry _keyType;
 
         /// <summary>
         /// Common type inferred from all pair values' actual types.
         /// </summary>
-        private Type _valueType;
+        private TypeEntry _valueType;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.DictionaryEmpty);
@@ -39,13 +39,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             _keyType = Expressions[0].Key.Resolve(ctx);
             _valueType = ResolveItemType(Expressions.Select(exp => exp.Value), ctx);
 
-            if (_valueType == typeof(NullType) || _keyType == typeof(NullType))
+            if (_valueType.Is<NullType>() || _keyType.Is<NullType>())
                 Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
             ctx.CheckTypedExpression(Expressions[0].Key, _keyType);
             ctx.CheckTypedExpression(Expressions[0].Value, _valueType, true);
 
-            return typeof(Dictionary<,>).MakeGenericType(_keyType, _valueType);
+            return TypeEntryCache.Of(typeof(Dictionary<,>)).MakeGeneric(ctx.Resolver, new[] {_keyType, _valueType});
         }
 
         #endregion
@@ -72,10 +72,10 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             var gen = ctx.CurrentMethod.Generator;
             var dictType = Resolve(ctx);
 
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType, true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType.Materialize(), true);
 
-            var ctor = ctx.ResolveConstructor(dictType, new[] {typeof(int)});
-            var addMethod = ctx.ResolveMethod(dictType, "Add", new[] {_keyType, _valueType});
+            var ctor = ctx.ResolveConstructor(dictType.Materialize(), new[] {typeof(int)});
+            var addMethod = ctx.ResolveMethod(dictType.Materialize(), "Add", new[] {_keyType.Materialize(), _valueType.Materialize()});
 
             var count = Expressions.Count;
             gen.EmitConstant(count);
@@ -93,13 +93,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
                 if (currKeyType != _keyType)
                     Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);
 
-                if (!TypeEntryCache.Of(_valueType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(currValType)))
+                if (!_valueType.IsExtendablyAssignableFrom(ctx.Resolver, currValType))
                     Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _keyType, _valueType);
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
                 curr.Key.Emit(ctx, true);
-                Expr.Cast(curr.Value, _valueType).Emit(ctx, true);
+                Expr.Cast(curr.Value, _valueType.Materialize()).Emit(ctx, true);
 
                 gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
             }

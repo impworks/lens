@@ -74,23 +74,23 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             base.ResolveInternal(ctx, true);
 
             var binding = ctx.BindingOf<Binding>(this);
-            var type = Type;
+            var type = Type != null ? TypeEntryCache.Of(Type) : null;
 
             try
             {
-                type ??= ctx.ResolveType(TypeSignature).Materialize();
+                type ??= ctx.ResolveType(TypeSignature);
             }
             catch (TypeMatchException ex)
             {
                 Error(ex.Message, TypeSignature.FullSignature);
             }
 
-            if (TypeEntryCache.Of(type).IsVoid())
+            if (type.IsVoid())
                 Error(CompilerMessages.VoidTypeDefault);
 
             if (type.IsAbstract)
@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             // parameterless one, and the CLI reaches it through Activator.CreateInstance<T>
             if (type.IsGenericParameter)
             {
-                var constraints = ctx.Resolver.FindConstraints(type);
+                var constraints = ctx.Resolver.FindConstraints(type.Materialize());
                 if (binding.ArgTypes.Length > 0 || constraints == null || !constraints.RequiresDefaultCtor)
                     Error(CompilerMessages.TypeConstructorNotFound, type);
 
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             try
             {
-                binding.Constructor = ctx.ResolveConstructor(type, binding.ArgTypes);
+                binding.Constructor = ctx.ResolveConstructor(type.Materialize(), TypeEntry.Materialize(binding.ArgTypes));
             }
             catch (TypeMatchException ex)
             {

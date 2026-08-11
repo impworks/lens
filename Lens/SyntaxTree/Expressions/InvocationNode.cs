@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Expressions
             /// <summary>
             /// The resolved type hints of a generic method or delegate, if any were given.
             /// </summary>
-            public Type[] TypeHints;
+            public TypeEntry[] TypeHints;
         }
 
         protected override InvocationBinding GetBinding(Context ctx)
@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             // resolve the argument types
             base.ResolveInternal(ctx, mustReturn);
@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.Expressions
 
             ApplyLambdaArgTypes(ctx);
 
-            return ResolvePartial(binding.Method, binding.Method.ReturnType.Materialize(), binding.ArgTypes);
+            return ResolvePartial(binding.Method, binding.Method.ReturnType, binding.ArgTypes);
         }
 
         /// <summary>
@@ -94,12 +94,12 @@ namespace Lens.SyntaxTree.Expressions
             binding.InvocationSource = node.Expression;
             var type = binding.InvocationSource != null
                 ? binding.InvocationSource.Resolve(ctx)
-                : ctx.ResolveType(node.StaticType).Materialize();
+                : ctx.ResolveType(node.StaticType);
 
             CheckTypeInSafeMode(ctx, type);
 
             if (node.TypeHints != null && node.TypeHints.Count > 0)
-                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)?.Materialize()).ToArray();
+                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
 
             try
             {
@@ -107,10 +107,10 @@ namespace Lens.SyntaxTree.Expressions
                 try
                 {
                     binding.Method = ctx.ResolveMethod(
-                        type,
+                        type.Materialize(),
                         node.MemberName,
-                        binding.ArgTypes,
-                        binding.TypeHints,
+                        TypeEntry.Materialize(binding.ArgTypes),
+                        TypeEntry.Materialize(binding.TypeHints),
                         (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                     );
 
@@ -128,7 +128,7 @@ namespace Lens.SyntaxTree.Expressions
                 // resolve a callable field
                 try
                 {
-                    ctx.ResolveField(type, node.MemberName);
+                    ctx.ResolveField(type.Materialize(), node.MemberName);
                     ResolveExpression(ctx, binding, node);
                     return;
                 }
@@ -139,7 +139,7 @@ namespace Lens.SyntaxTree.Expressions
                 // resolve a callable property
                 try
                 {
-                    ctx.ResolveProperty(type, node.MemberName);
+                    ctx.ResolveProperty(type.Materialize(), node.MemberName);
                     ResolveExpression(ctx, binding, node);
                     return;
                 }
@@ -163,7 +163,7 @@ namespace Lens.SyntaxTree.Expressions
                     binding.Method = ctx.ResolveMethod(
                         ctx.MainType.TypeInfo,
                         node.MemberName,
-                        binding.ArgTypes,
+                        TypeEntry.Materialize(binding.ArgTypes),
                         resolver: (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                     );
 
@@ -181,10 +181,10 @@ namespace Lens.SyntaxTree.Expressions
                         throw new KeyNotFoundException();
 
                     binding.Method = ctx.ResolveExtensionMethod(
-                        type,
+                        type.Materialize(),
                         node.MemberName,
-                        oldArgTypes,
-                        binding.TypeHints,
+                        TypeEntry.Materialize(oldArgTypes),
+                        TypeEntry.Materialize(binding.TypeHints),
                         (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                     );
                 }
@@ -217,7 +217,7 @@ namespace Lens.SyntaxTree.Expressions
             }
 
             if (node.TypeHints != null && node.TypeHints.Count > 0)
-                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)?.Materialize()).ToArray();
+                binding.TypeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
 
             // function
             try
@@ -225,8 +225,8 @@ namespace Lens.SyntaxTree.Expressions
                 binding.Method = ctx.ResolveMethod(
                     ctx.MainType.TypeInfo,
                     node.Identifier,
-                    binding.ArgTypes,
-                    binding.TypeHints,
+                    TypeEntry.Materialize(binding.ArgTypes),
+                    TypeEntry.Materialize(binding.TypeHints),
                     (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                 );
 
@@ -274,13 +274,13 @@ namespace Lens.SyntaxTree.Expressions
             try
             {
                 // argtypes are required for partial application
-                binding.Method = ctx.ResolveMethod(exprType, "Invoke", binding.ArgTypes);
+                binding.Method = ctx.ResolveMethod(exprType.Materialize(), "Invoke", TypeEntry.Materialize(binding.ArgTypes));
             }
             catch (KeyNotFoundException)
             {
                 // delegate argument types are mismatched:
                 // infer whatever method there is and detect actual error
-                binding.Method = ctx.ResolveMethod(exprType, "Invoke");
+                binding.Method = ctx.ResolveMethod(exprType.Materialize(), "Invoke");
 
                 var argTypes = binding.Method.ArgumentTypes;
                 if (argTypes.Length != binding.ArgTypes.Length)
@@ -290,7 +290,7 @@ namespace Lens.SyntaxTree.Expressions
                 {
                     var fromType = binding.ArgTypes[idx];
                     var toType = argTypes[idx];
-                    if (!toType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(fromType)))
+                    if (!toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
                         Error(binding.Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
                 }
             }
