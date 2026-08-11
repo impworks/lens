@@ -146,9 +146,9 @@ namespace Lens.SyntaxTree.Expressions
                 //     fx a b c d
                 // becomes
                 //     fx a b (new[ c as X; d as X ])
-                if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
+                if (dstTypes.Length > srcTypes.Length || lastDst != TypeEntryCache.Of(lastSrc))
                 {
-                    var elemType = lastDst.GetElementType();
+                    var elemType = lastDst.ElementType.Materialize();
                     var simpleArgs = binding.Arguments.Take(dstTypes.Length - 1);
                     var combined = Expr.Array(binding.Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
                     return RecreateSelfWithArgs(simpleArgs.Union(new[] {combined}));
@@ -179,7 +179,7 @@ namespace Lens.SyntaxTree.Expressions
             for (var idx = 0; idx < argTypes.Length; idx++)
             {
                 if (argTypes[idx] == typeof(UnspecifiedType))
-                    lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
+                    lambdaArgTypes.Add(wrapper.ArgumentTypes[idx].Materialize());
             }
 
             return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
@@ -200,8 +200,8 @@ namespace Lens.SyntaxTree.Expressions
                 var lambda = (LambdaNode) binding.Arguments[idx];
                 if (lambda.MustInferArgTypes)
                 {
-                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx]);
-                    lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
+                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx].Materialize());
+                    lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes.Select(x => x.Materialize()).ToArray());
                     lambda.Resolve(ctx);
                 }
             }

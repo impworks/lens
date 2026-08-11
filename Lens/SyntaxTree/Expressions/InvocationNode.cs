@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.Expressions
 
             ApplyLambdaArgTypes(ctx);
 
-            return ResolvePartial(binding.Method, binding.Method.ReturnType, binding.ArgTypes);
+            return ResolvePartial(binding.Method, binding.Method.ReturnType.Materialize(), binding.ArgTypes);
         }
 
         /// <summary>
@@ -290,7 +290,7 @@ namespace Lens.SyntaxTree.Expressions
                 {
                     var fromType = binding.ArgTypes[idx];
                     var toType = argTypes[idx];
-                    if (!toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
+                    if (!toType.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, fromType))
                         Error(binding.Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
                 }
             }
@@ -367,10 +367,10 @@ namespace Lens.SyntaxTree.Expressions
                         if (argRef)
                             Error(arg, CompilerMessages.ReferenceArgUnexpected);
                         else
-                            Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+                            Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].Materialize().GetElementType());
                     }
 
-                    var expr = argRef ? arg : Expr.Cast(arg, destTypes[idx]);
+                    var expr = argRef ? arg : Expr.Cast(arg, destTypes[idx].Materialize());
                     expr.Emit(ctx, true);
                 }
             }

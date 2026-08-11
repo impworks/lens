@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                     var lambda = RightOperand as LambdaNode;
                     lambda.Resolve(ctx);
                     if (lambda.MustInferArgTypes)
-                        lambda.SetInferredArgumentTypes(ctx, new[] {leftDelegate.ReturnType});
+                        lambda.SetInferredArgumentTypes(ctx, new[] {leftDelegate.ReturnType.Materialize()});
                 }
 
                 var rightType = RightOperand.Resolve(ctx);

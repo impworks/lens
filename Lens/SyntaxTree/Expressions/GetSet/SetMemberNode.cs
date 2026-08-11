@@ -84,12 +84,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             var destType = _field != null ? _field.FieldType : _property.PropertyType;
-            EnsureLambdaInferred(ctx, Value, destType);
+            EnsureLambdaInferred(ctx, Value, destType.Materialize());
 
             var valType = Value.Resolve(ctx);
             ctx.CheckTypedExpression(Value, valType, true);
 
-            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
+            if (!destType.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
         }
 
@@ -122,7 +122,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 Expression.Emit(ctx, true);
             }
 
-            Expr.Cast(Value, destType).Emit(ctx, true);
+            Expr.Cast(Value, destType.Materialize()).Emit(ctx, true);
 
             if (_field != null)
                 gen.EmitSaveField(_field.FieldInfo);

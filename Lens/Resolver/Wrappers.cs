@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -10,7 +10,11 @@ namespace Lens.Resolver
     internal class WrapperBase
     {
         public string Name;
-        public Type Type;
+
+        /// <summary>
+        /// The type that declares the member.
+        /// </summary>
+        public TypeEntry DeclaringType;
 
         public bool IsStatic;
     }
@@ -23,7 +27,7 @@ namespace Lens.Resolver
         public bool IsPartiallyApplied;
         public bool IsPartiallyResolved;
         public bool IsVariadic;
-        public Type[] ArgumentTypes;
+        public TypeEntry[] ArgumentTypes;
     }
 
     /// <summary>
@@ -38,15 +42,15 @@ namespace Lens.Resolver
         public MethodWrapper(MethodInfo info)
         {
             Name = info.Name;
-            Type = info.DeclaringType;
+            DeclaringType = TypeEntryCache.Of(info.DeclaringType);
 
             MethodInfo = info;
             IsVirtual = info.IsVirtual;
             IsStatic = info.IsStatic;
-            ReturnType = info.ReturnType;
+            ReturnType = TypeEntryCache.Of(info.ReturnType);
 
             var args = info.GetParameters();
-            ArgumentTypes = args.Select(p => p.ParameterType).ToArray();
+            ArgumentTypes = args.Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray();
             IsVariadic = args.Length > 0 && args[args.Length - 1].IsDefined(typeof(ParamArrayAttribute), true);
         }
 
@@ -54,8 +58,8 @@ namespace Lens.Resolver
 
         public bool IsVirtual;
 
-        public Type ReturnType;
-        public Type[] GenericArguments;
+        public TypeEntry ReturnType;
+        public TypeEntry[] GenericArguments;
 
         public bool IsGeneric => GenericArguments != null;
     }
@@ -78,7 +82,7 @@ namespace Lens.Resolver
 
         public bool IsLiteral;
 
-        public Type FieldType;
+        public TypeEntry FieldType;
     }
 
     /// <summary>
@@ -86,7 +90,7 @@ namespace Lens.Resolver
     /// </summary>
     internal class PropertyWrapper : WrapperBase
     {
-        public Type PropertyType;
+        public TypeEntry PropertyType;
         public MethodInfo Getter;
         public MethodInfo Setter;
         public bool IsVirtual;
@@ -100,7 +104,7 @@ namespace Lens.Resolver
     /// </summary>
     internal class EventWrapper : WrapperBase
     {
-        public Type EventHandlerType;
+        public TypeEntry EventHandlerType;
 
         public MethodInfo AddMethod;
         public MethodInfo RemoveMethod;

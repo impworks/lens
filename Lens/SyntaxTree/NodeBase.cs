@@ -235,12 +235,12 @@ namespace Lens.SyntaxTree
 
             var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType);
             if (!wrapper.ReturnType.IsGenericParameter)
-                lambda.SetInferredReturnType(ctx, wrapper.ReturnType);
+                lambda.SetInferredReturnType(ctx, wrapper.ReturnType.Materialize());
 
             lambda.Resolve(ctx);
 
             if (lambda.MustInferArgTypes)
-                lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes);
+                lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes.Select(x => x.Materialize()).ToArray());
         }
 
         #endregion

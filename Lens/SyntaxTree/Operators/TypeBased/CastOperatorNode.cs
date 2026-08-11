@@ -170,11 +170,11 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromArgs = fromMethod.ArgumentTypes;
             var toArgs = toMethod.ArgumentTypes;
 
-            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
+            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id].Materialize(), true)).Any(x => x))
                 Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
-            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
-                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
+            if (!toMethod.ReturnType.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType.Materialize(), true))
+                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
 
             if (fromMethod.IsStatic)
                 gen.EmitNull();

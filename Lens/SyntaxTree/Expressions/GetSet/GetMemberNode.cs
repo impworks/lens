@@ -72,14 +72,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 return typeof(int);
 
             if (_field != null)
-                return _field.FieldType;
+                return _field.FieldType.Materialize();
 
             if (_property != null)
-                return _property.PropertyType;
+                return _property.PropertyType.Materialize();
 
-            return _method.ReturnType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
-                : FunctionalHelper.CreateFuncType(_method.ReturnType, _method.ArgumentTypes);
+            return _method.ReturnType.Materialize().IsVoid()
+                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
+                : FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (method.ArgumentTypes.Length != argTypes.Length)
                 return false;
 
-            return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != argTypes[idx]).Any();
+            return !method.ArgumentTypes.Where((p, idx) => argTypes[idx] != null && p != TypeEntryCache.Of(argTypes[idx])).Any();
         }
 
         #endregion
@@ -228,7 +228,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_field.IsLiteral)
             {
                 var fieldType = _field.FieldType;
-                var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
+                var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType.Materialize()) : fieldType.Materialize();
 
                 var value = _field.FieldInfo.GetValue(null);
 
@@ -271,13 +271,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private void EmitProperty(Context ctx, ILGenerator gen)
         {
             if (_property.PropertyType.IsValueType && RefArgumentRequired)
-                Error(CompilerMessages.PropertyValuetypeRef, _property.Type, MemberName, _property.PropertyType);
+                Error(CompilerMessages.PropertyValuetypeRef, _property.DeclaringType.Materialize(), MemberName, _property.PropertyType.Materialize());
 
             gen.EmitCall(_property.Getter, _property.IsVirtual);
 
             if (ctx.IsPointerRequired(this))
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType, false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType.Materialize(), false);
                 gen.EmitSaveLocal(tmpVar.LocalBuilder);
                 gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
             }
@@ -295,9 +295,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 gen.EmitNull();
 
             var retType = _method.ReturnType;
-            var type = retType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
-                : FunctionalHelper.CreateFuncType(retType, _method.ArgumentTypes);
+            var type = retType.Materialize().IsVoid()
+                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
+                : FunctionalHelper.CreateFuncType(retType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
 
             var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
             gen.EmitLoadFunctionPointer(_method.MethodInfo);

@@ -238,6 +238,18 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Debug
+
+        // diagnostics interpolate types into their messages, and Type.ToString() does not agree
+        // with FullName for a generic instantiation. Deferring to the wrapped type keeps every
+        // existing message byte-identical as more of the compiler starts handling entries.
+        public override string ToString()
+        {
+            return _type.ToString();
+        }
+
+        #endregion
+
         #region Equality
 
         // reflection hands out canonical objects for runtime types, and TypeResolutionContext hands

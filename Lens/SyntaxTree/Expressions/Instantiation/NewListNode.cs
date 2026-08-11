@@ -74,7 +74,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
-                Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
+                Expr.Cast(curr, addMethod.ArgumentTypes[0].Materialize()).Emit(ctx, true);
                 gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
             }
 

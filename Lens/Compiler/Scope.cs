@@ -330,7 +330,7 @@ namespace Lens.Compiler
                 // instantiated over the right generic arguments
                 var parentField = ctx.ResolveField(currentType, EntityNames.ParentScopeFieldName);
                 gen.EmitLoadField(parentField.FieldInfo);
-                currentType = parentField.FieldType;
+                currentType = parentField.FieldType.Materialize();
 
                 curr = curr.ClosureParent;
             }

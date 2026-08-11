@@ -31,12 +31,12 @@ namespace Lens.Resolver
                 return new FieldWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     FieldInfo = field,
                     IsStatic = field.IsStatic,
                     IsLiteral = field.IsLiteral,
-                    FieldType = field.FieldType
+                    FieldType = TypeEntryCache.Of(field.FieldType)
                 };
             }
             catch (NotSupportedException)
@@ -53,12 +53,12 @@ namespace Lens.Resolver
                 return new FieldWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     FieldInfo = TypeBuilder.GetField(type, genField),
                     IsStatic = genField.IsStatic,
                     IsLiteral = genField.IsLiteral,
-                    FieldType = GenericHelper.ApplyGenericArguments(genField.FieldType, type)
+                    FieldType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(genField.FieldType, type))
                 };
             }
         }
@@ -79,12 +79,12 @@ namespace Lens.Resolver
                 return new PropertyWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     Getter = getter,
                     Setter = setter,
                     IsStatic = (getter ?? setter).IsStatic,
-                    PropertyType = pty.PropertyType,
+                    PropertyType = TypeEntryCache.Of(pty.PropertyType),
                     IsVirtual = (getter ?? setter).IsVirtual
                 };
             }
@@ -107,12 +107,12 @@ namespace Lens.Resolver
                 return new PropertyWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     Getter = GetMethodVersionForType(declType, getter),
                     Setter = GetMethodVersionForType(declType, setter),
                     IsStatic = (getter ?? setter).IsStatic,
-                    PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
+                    PropertyType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(genPty.PropertyType, type)),
                     IsVirtual = (getter ?? setter).IsVirtual
                 };
             }
@@ -135,9 +135,9 @@ namespace Lens.Resolver
 
                 return new ConstructorWrapper
                 {
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
                     ConstructorInfo = ctor.Method,
-                    ArgumentTypes = ctor.ArgumentTypes,
+                    ArgumentTypes = ctor.ArgumentTypes.Select(TypeEntryCache.Of).ToArray(),
                     IsPartiallyApplied = IsPartiallyApplied(argTypes),
                     IsVariadic = IsVariadic(ctor.Method)
                 };
@@ -158,9 +158,9 @@ namespace Lens.Resolver
 
                 return new ConstructorWrapper
                 {
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
                     ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
-                    ArgumentTypes = genCtor.ArgumentTypes,
+                    ArgumentTypes = genCtor.ArgumentTypes.Select(TypeEntryCache.Of).ToArray(),
                     IsPartiallyApplied = IsPartiallyApplied(argTypes),
                     IsVariadic = IsVariadic(genCtor.Method)
                 };
@@ -181,13 +181,13 @@ namespace Lens.Resolver
                 return new EventWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     IsStatic = evt.GetRemoveMethod().IsStatic,
 
                     AddMethod = evt.GetAddMethod(),
                     RemoveMethod = evt.GetRemoveMethod(),
-                    EventHandlerType = evt.EventHandlerType
+                    EventHandlerType = TypeEntryCache.Of(evt.EventHandlerType)
                 };
             }
             catch (NotSupportedException)
@@ -209,12 +209,12 @@ namespace Lens.Resolver
                 return new EventWrapper
                 {
                     Name = name,
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     AddMethod = GetMethodVersionForType(declType, adder),
                     RemoveMethod = GetMethodVersionForType(declType, remover),
                     IsStatic = adder.IsStatic,
-                    EventHandlerType = GenericHelper.ApplyGenericArguments(genEvt.EventHandlerType, type)
+                    EventHandlerType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(genEvt.EventHandlerType, type))
                 };
             }
         }
@@ -225,7 +225,7 @@ namespace Lens.Resolver
         /// </summary>
         public static MethodWrapper ResolveMethod(TypeResolutionContext ctx, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
         {
-            var mw = new MethodWrapper {Name = name, Type = type};
+            var mw = new MethodWrapper {Name = name, DeclaringType = TypeEntryCache.Of(type)};
 
             try
             {
@@ -245,7 +245,7 @@ namespace Lens.Resolver
                     var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, method.ArgumentTypes, argTypes, genericDefs, hints);
 
                     mInfo = mInfo.MakeGenericMethod(genericValues);
-                    mw.GenericArguments = genericValues;
+                    mw.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
                 }
                 else if (hints != null)
                 {
@@ -255,8 +255,8 @@ namespace Lens.Resolver
                 mw.MethodInfo = mInfo;
                 mw.IsStatic = mInfo.IsStatic;
                 mw.IsVirtual = mInfo.IsVirtual;
-                mw.ArgumentTypes = method.ArgumentTypes;
-                mw.ReturnType = mInfo.ReturnType;
+                mw.ArgumentTypes = method.ArgumentTypes.Select(TypeEntryCache.Of).ToArray();
+                mw.ReturnType = TypeEntryCache.Of(mInfo.ReturnType);
                 mw.IsPartiallyApplied = IsPartiallyApplied(argTypes);
                 mw.IsVariadic = IsVariadic(mInfo);
 
@@ -290,17 +290,17 @@ namespace Lens.Resolver
                     var totalGenericDefs = genericDefs.Union(genType.GetGenericTypeDefinition().GetGenericArguments()).ToArray();
                     var totalGenericValues = genericValues.Union(type.GetGenericArguments()).ToArray();
 
-                    mw.GenericArguments = genericValues;
-                    mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, totalGenericDefs, totalGenericValues);
-                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, totalGenericDefs, totalGenericValues)).ToArray();
+                    mw.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
+                    mw.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, totalGenericDefs, totalGenericValues));
+                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, totalGenericDefs, totalGenericValues))).ToArray();
                 }
                 else
                 {
                     if (hints != null)
                         Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
 
-                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray();
-                    mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
+                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, type))).ToArray();
+                    mw.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false));
                 }
 
                 mw.MethodInfo = mInfo;
@@ -323,13 +323,13 @@ namespace Lens.Resolver
             var info = new MethodWrapper
             {
                 Name = name,
-                Type = method.DeclaringType,
+                DeclaringType = TypeEntryCache.Of(method.DeclaringType),
 
                 MethodInfo = method,
                 IsStatic = true,
                 IsVirtual = false,
-                ReturnType = method.ReturnType,
-                ArgumentTypes = args.Select(p => p.ParameterType).ToArray(),
+                ReturnType = TypeEntryCache.Of(method.ReturnType),
+                ArgumentTypes = args.Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray(),
                 IsPartiallyApplied = IsPartiallyApplied(argTypes),
                 IsVariadic = IsVariadic(method),
             };
@@ -351,10 +351,10 @@ namespace Lens.Resolver
                     lambdaResolver
                 );
 
-                info.GenericArguments = genericValues;
+                info.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
                 info.MethodInfo = info.MethodInfo.MakeGenericMethod(genericValues);
-                info.ReturnType = GenericHelper.ApplyGenericArguments(info.ReturnType, genericDefs, genericValues);
-                info.ArgumentTypes = expectedTypes.Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
+                info.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(info.ReturnType.Materialize(), genericDefs, genericValues));
+                info.ArgumentTypes = expectedTypes.Select(t => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues))).ToArray();
             }
             else if (hints != null)
             {
@@ -389,13 +389,13 @@ namespace Lens.Resolver
                         return new MethodWrapper
                         {
                             Name = name,
-                            Type = type,
+                            DeclaringType = TypeEntryCache.Of(type),
 
                             MethodInfo = GetMethodVersionForType(declType, m),
                             IsStatic = m.IsStatic,
                             IsVirtual = m.IsVirtual,
-                            ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, declType)).ToArray(),
-                            ReturnType = GenericHelper.ApplyGenericArguments(m.ReturnType, declType)
+                            ArgumentTypes = m.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, declType))).ToArray(),
+                            ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(m.ReturnType, declType))
                         };
                     }
                 );
@@ -427,13 +427,13 @@ namespace Lens.Resolver
 
                 return new MethodWrapper
                 {
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     MethodInfo = GetMethodVersionForType(declType, indexer),
                     IsStatic = false,
                     IsVirtual = indexer.IsVirtual,
-                    ArgumentTypes = indexer.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
-                    ReturnType = GenericHelper.ApplyGenericArguments(indexer.ReturnType, type)
+                    ArgumentTypes = indexer.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, type))).ToArray(),
+                    ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(indexer.ReturnType, type))
                 };
             }
         }
@@ -539,7 +539,7 @@ namespace Lens.Resolver
             var rt = WrapDelegate(ctx, left).ReturnType;
             var args = WrapDelegate(ctx, right).ArgumentTypes;
 
-            return args.Count() == 1 && args[0].IsAssignableFrom(rt);
+            return args.Count() == 1 && args[0].Materialize().IsAssignableFrom(rt.Materialize());
         }
 
         /// <summary>
@@ -553,7 +553,7 @@ namespace Lens.Resolver
             var args = WrapDelegate(ctx, left).ArgumentTypes;
             var rt = WrapDelegate(ctx, right).ReturnType;
 
-            return FunctionalHelper.CreateDelegateType(rt, args);
+            return FunctionalHelper.CreateDelegateType(rt.Materialize(), args.Select(x => x.Materialize()).ToArray());
         }
 
         #endregion

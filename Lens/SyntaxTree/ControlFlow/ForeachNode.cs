@@ -265,7 +265,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);
 
             _currentProperty = ctx.ResolveProperty(_enumeratorType, "Current");
-            _variableType = _currentProperty.PropertyType;
+            _variableType = _currentProperty.PropertyType.Materialize();
         }
 
         /// <summary>

@@ -476,7 +476,7 @@ namespace Lens.Resolver
                 var currVar = varWrapper.ArgumentTypes[idx];
                 var currExpr = exprWrapper.ArgumentTypes[idx];
 
-                var dist = currVar.DistanceFrom(ctx, currExpr);
+                var dist = currVar.Materialize().DistanceFrom(ctx, currExpr.Materialize());
                 if (dist == int.MaxValue)
                     return int.MaxValue;
 

@@ -181,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
                 {
                     var destTypes = binding.Constructor.ArgumentTypes;
                     for (var idx = 0; idx < binding.Arguments.Count; idx++)
-                        Expr.Cast(binding.Arguments[idx], destTypes[idx]).Emit(ctx, true);
+                        Expr.Cast(binding.Arguments[idx], destTypes[idx].Materialize()).Emit(ctx, true);
                 }
 
                 gen.EmitCreateObject(binding.Constructor.ConstructorInfo);

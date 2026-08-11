@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             try
             {
                 _getter = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType, idxType, true);
-                return _getter.ReturnType;
+                return _getter.ReturnType.Materialize();
             }
             catch (LensCompilerException ex)
             {
@@ -105,7 +105,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             Expression.Emit(ctx, true);
 
-            Expr.Cast(Index, _getter.ArgumentTypes[0]).Emit(ctx, true);
+            Expr.Cast(Index, _getter.ArgumentTypes[0].Materialize()).Emit(ctx, true);
 
             gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
         }

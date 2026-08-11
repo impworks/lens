@@ -50,7 +50,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 // the tag of a generic label is typed in terms of the label's own parameters,
                 // so it is read off the constructed type rather than off the definition
                 var field = ctx.ResolveField(_type, "Tag");
-                return LabelRule.Resolve(ctx, field.FieldType);
+                return LabelRule.Resolve(ctx, field.FieldType.Materialize());
             }
             catch (KeyNotFoundException)
             {

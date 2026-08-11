@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -38,7 +39,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
                     // cannot be generic
                     if (OverloadedMethod != null)
-                        return OverloadedMethod.ReturnType;
+                        return OverloadedMethod.ReturnType.Materialize();
                 }
                 catch
                 {
@@ -81,7 +82,7 @@ namespace Lens.SyntaxTree.Operators.Unary
             }
 
             var ps = OverloadedMethod.ArgumentTypes;
-            Expr.Cast(Operand, ps[0]).Emit(ctx, true);
+            Expr.Cast(Operand, ps[0].Materialize()).Emit(ctx, true);
             gen.EmitCall(OverloadedMethod.MethodInfo);
         }
 

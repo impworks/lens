@@ -18,7 +18,7 @@ namespace Lens.SyntaxTree.Internals
             _event = evt;
             _isSubscription = isSubscription;
             _node = node;
-            _callback = Expr.CastTransparent(node.Value, _event.EventHandlerType);
+            _callback = Expr.CastTransparent(node.Value, _event.EventHandlerType.Materialize());
         }
 
         #endregion
