@@ -34,6 +34,8 @@ namespace Lens.Compiler
             _definedTypes = new Dictionary<string, TypeEntity>();
             _definedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
+            Resolver = new TypeResolutionContext();
+
             Unique = new UniqueNameGenerator();
 
             if (Options.UseDefaultNamespaces)
@@ -45,13 +47,9 @@ namespace Lens.Compiler
 
             AssemblyCache = new ReferencedAssemblyCache(Options.UseDefaultAssemblies);
             _extensionResolver = new ExtensionMethodResolver(Namespaces, AssemblyCache);
-            _typeResolver = new TypeResolver(Namespaces, AssemblyCache)
+            _typeResolver = new TypeResolver(Resolver, Namespaces, AssemblyCache)
             {
-                ExternalLookup = name =>
-                {
-                    _definedTypes.TryGetValue(name, out var ent);
-                    return ent?.TypeBuilder;
-                }
+                ExternalLookup = LookupTypeForResolver
             };
 
             AssemblyName an;
@@ -103,6 +101,12 @@ namespace Lens.Compiler
         /// Compiler options.
         /// </summary>
         internal LensCompilerOptions Options { get; }
+
+        /// <summary>
+        /// The state of type resolution for the current compilation:
+        /// memoization caches and the generic parameters that are currently in scope.
+        /// </summary>
+        internal TypeResolutionContext Resolver { get; }
 
         /// <summary>
         /// The assembly that's being currently built.
@@ -201,6 +205,39 @@ namespace Lens.Compiler
         /// The list of assemblies referenced by current script.
         /// </summary>
         internal readonly ReferencedAssemblyCache AssemblyCache;
+
+        #endregion
+
+        #region Type lookup for the signature resolver
+
+        /// <summary>
+        /// Resolves a bare type name for the built-in type resolver: a generic parameter that is
+        /// currently in scope, or a type declared in the script.
+        /// Locally declared generic types are emitted under an arity-mangled name, but LENS refers
+        /// to them by their plain name, so both spellings are accepted here.
+        /// </summary>
+        private Type LookupTypeForResolver(string name)
+        {
+            var typeParam = Resolver.FindTypeParameter(name);
+            if (typeParam?.Builder != null)
+                return typeParam.Builder;
+
+            var lensName = name;
+            var arity = 0;
+
+            var tick = name.IndexOf('`');
+            if (tick >= 0)
+            {
+                lensName = name.Substring(0, tick);
+                if (!int.TryParse(name.Substring(tick + 1), out arity))
+                    return null;
+            }
+
+            if (!_definedTypes.TryGetValue(lensName, out var ent))
+                return null;
+
+            return ent.GenericParameterCount == arity ? ent.TypeBuilder : null;
+        }
 
         #endregion
 

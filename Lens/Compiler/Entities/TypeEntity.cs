@@ -59,6 +59,27 @@ namespace Lens.Compiler.Entities
         public string Name;
 
         /// <summary>
+        /// The generic parameters of the type, or null if the type is not generic.
+        /// </summary>
+        public List<GenericParameterEntity> GenericParameters;
+
+        /// <summary>
+        /// The number of generic parameters the type declares.
+        /// </summary>
+        public int GenericParameterCount => GenericParameters?.Count ?? 0;
+
+        /// <summary>
+        /// Checks if the type declares generic parameters.
+        /// </summary>
+        public bool IsGeneric => GenericParameterCount > 0;
+
+        /// <summary>
+        /// The name under which the type is emitted. The CLR requires generic type names
+        /// to carry their arity, while LENS keeps referring to the type by its plain name.
+        /// </summary>
+        public string MangledName => IsGeneric ? Name + "`" + GenericParameterCount : Name;
+
+        /// <summary>
         /// A signature for parent type that might be declared later.
         /// </summary>
         public TypeSignature ParentSignature;
@@ -87,6 +108,15 @@ namespace Lens.Compiler.Entities
         /// </summary>
         public TypeBuilder TypeBuilder { get; private set; }
 
+        private Type _selfType;
+
+        /// <summary>
+        /// The type as it must be spelled in a signature that refers to this very type:
+        /// for a generic type this is the definition constructed over its own parameters
+        /// (KeyValue&lt;K, V&gt;), because open generic types cannot appear in metadata.
+        /// </summary>
+        public Type SelfType => _selfType ?? TypeInfo;
+
         /// <summary>
         /// A kind of LENS type this entity represents.
         /// </summary>
@@ -108,10 +138,38 @@ namespace Lens.Compiler.Entities
             if (IsSealed)
                 attrs |= TypeAttributes.Sealed;
 
-            if (Parent == null && ParentSignature != null)
-                Parent = Context.ResolveType(ParentSignature);
+            // a generic type's parent may be expressed in terms of the type's own parameters,
+            // so the parameters must exist before the parent is resolved:
+            // DefineType -> DefineGenericParameters -> constraints -> SetParent
+            if (IsGeneric)
+            {
+                TypeBuilder = Context.MainModule.DefineType(MangledName, attrs);
 
-            TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
+                var builders = TypeBuilder.DefineGenericParameters(GenericParameters.Select(p => p.Name).ToArray());
+                for (var idx = 0; idx < builders.Length; idx++)
+                    GenericParameters[idx].Builder = builders[idx];
+
+                _selfType = Context.Resolver.MakeGenericType(TypeBuilder, builders.Cast<Type>().ToArray());
+
+                Context.ResolveGenericParameters(GenericParameters);
+
+                Context.WithGenericScope(GenericParameters, () =>
+                    {
+                        if (Parent == null && ParentSignature != null)
+                            Parent = Context.ResolveType(ParentSignature);
+                    }
+                );
+
+                if (Parent != null)
+                    TypeBuilder.SetParent(Parent);
+            }
+            else
+            {
+                if (Parent == null && ParentSignature != null)
+                    Parent = Context.ResolveType(ParentSignature);
+
+                TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
+            }
 
             if (Interfaces != null)
                 foreach (var iface in Interfaces)
@@ -178,14 +236,15 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Resolves a method assembly entity.
         /// </summary>
-        internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false)
+        internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false, Type instantiation = null)
         {
             if (!_methods.TryGetValue(name, out var group))
                 throw new KeyNotFoundException();
 
             var info = ReflectionHelper.ResolveMethodByArgs(
+                Context.Resolver,
                 group,
-                m => m.GetArgumentTypes(Context),
+                m => Substitute(m.GetArgumentTypes(Context), instantiation),
                 m => m.IsVariadic,
                 args
             );
@@ -210,16 +269,29 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Resolves a method assembly entity.
         /// </summary>
-        internal ConstructorEntity ResolveConstructor(Type[] args)
+        internal ConstructorEntity ResolveConstructor(Type[] args, Type instantiation = null)
         {
             var info = ReflectionHelper.ResolveMethodByArgs(
+                Context.Resolver,
                 _constructors,
-                c => c.GetArgumentTypes(Context),
+                c => Substitute(c.GetArgumentTypes(Context), instantiation),
                 c => false,
                 args
             );
 
             return info.Method;
+        }
+
+        /// <summary>
+        /// Rewrites the declared signature of a member in terms of the actual type arguments,
+        /// so that overload resolution compares like with like.
+        /// </summary>
+        private static Type[] Substitute(Type[] types, Type instantiation)
+        {
+            if (instantiation == null)
+                return types;
+
+            return types.Select(x => GenericHelper.ApplyGenericArguments(x, instantiation, false)).ToArray();
         }
 
         #endregion

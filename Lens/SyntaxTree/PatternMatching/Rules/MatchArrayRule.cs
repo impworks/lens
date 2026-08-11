@@ -66,13 +66,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (expressionType.IsArray)
                 _elementType = expressionType.GetElementType();
 
-            else if (new[] {typeof(IEnumerable<>), typeof(IList<>)}.Any(expressionType.IsAppliedVersionOf))
+            else if (new[] {typeof(IEnumerable<>), typeof(IList<>)}.Any(t => expressionType.IsAppliedVersionOf(ctx.Resolver, t)))
                 _elementType = expressionType.GetGenericArguments()[0];
 
             else
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, "IEnumerable<T>");
 
-            _isIndexable = !expressionType.IsAppliedVersionOf(typeof(IEnumerable<>));
+            _isIndexable = !expressionType.IsAppliedVersionOf(ctx.Resolver, typeof(IEnumerable<>));
 
             for (var idx = 0; idx < ElementRules.Count; idx++)
             {

@@ -52,6 +52,7 @@ namespace Lens.Test.Internals
             var method = typeof(GenericHelperTestExample).GetMethods().Single(m => m.Name == name);
             var defs = method.GetGenericArguments();
             var values = GenericHelper.ResolveMethodGenericsByArgs(
+                new TypeResolutionContext(),
                 method.GetParameters().Select(p => p.ParameterType).ToArray(),
                 args,
                 defs,

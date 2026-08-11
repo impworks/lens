@@ -101,9 +101,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.TypeArgumentsForNonMethod, _type, MemberName);
             }
 
-            _type = StaticType != null
-                ? ctx.ResolveType(StaticType)
-                : Expression.Resolve(ctx);
+            _type = StaticTypeInfo
+                    ?? (StaticType != null
+                        ? ctx.ResolveType(StaticType)
+                        : Expression.Resolve(ctx));
 
             // special case: array length
             if (_type.IsArray && MemberName == "Length")

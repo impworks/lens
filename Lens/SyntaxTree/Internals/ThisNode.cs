@@ -16,7 +16,9 @@ namespace Lens.SyntaxTree.Internals
             if (ctx.CurrentMethod.IsStatic)
                 Error("Cannot access self-reference in static context!");
 
-            return ctx.CurrentType.TypeBuilder;
+            // for a generic type this is the definition applied to its own parameters,
+            // because an open generic type cannot appear in a signature
+            return ctx.CurrentType.SelfType;
         }
 
         #endregion

@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var saveLast = mustReturn && !loopType.IsVoid();
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             // condition is known to be false: do not emit the loop at all

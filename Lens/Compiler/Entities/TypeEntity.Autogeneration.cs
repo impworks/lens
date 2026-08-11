@@ -16,7 +16,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         private void CreateSpecificEquals()
         {
-            var eq = CreateMethod("Equals", "bool", new[] {Expr.Arg("other", Name)});
+            var eq = CreateMethod("Equals", "bool", new[] {Expr.Arg("other", SelfType)});
 
             // var result = true
             eq.Body.Add(Expr.Var("result", Expr.True()));
@@ -26,10 +26,11 @@ namespace Lens.Compiler.Entities
                 var left = Expr.GetMember(Expr.This(), f.Name);
                 var right = Expr.GetMember(Expr.Get("other"), f.Name);
 
-                var isSeq = f.Type.IsGenericType && f.Type.Implements(typeof(IEnumerable<>), true);
+                var fieldType = FieldTypeOf(f);
+                var isSeq = fieldType.IsGenericType && fieldType.Implements(Context.Resolver, typeof(IEnumerable<>), true);
                 var expr = isSeq
                     ? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
-                    : Expr.Invoke(Expr.This(), "Equals", Expr.Cast(left, "object"), Expr.Cast(right, "object"));
+                    : Expr.Invoke(DefaultComparerOf(fieldType), "Equals", left, right);
 
                 eq.Body.Add(
                     Expr.Set(
@@ -40,6 +41,27 @@ namespace Lens.Compiler.Entities
             }
 
             eq.Body.Add(Expr.Get("result"));
+        }
+
+        /// <summary>
+        /// Returns the type of a field, resolving its signature if that has not happened yet.
+        /// </summary>
+        private Type FieldTypeOf(FieldEntity field)
+        {
+            return field.Type ?? (field.Type = Context.ResolveType(field.TypeSignature));
+        }
+
+        /// <summary>
+        /// Builds an expression for EqualityComparer&lt;T&gt;.Default.
+        ///
+        /// A field whose type is a type parameter may end up being a value type, a reference type
+        /// or a Nullable&lt;&gt;, and the correct comparison differs in each case. This is the same
+        /// reason C# routes generated equality through the default comparer.
+        /// </summary>
+        private NodeBase DefaultComparerOf(Type fieldType)
+        {
+            var comparerType = Context.Resolver.MakeGenericType(typeof(EqualityComparer<>), new[] {fieldType});
+            return Expr.GetMember(comparerType, "Default");
         }
 
         /// <summary>
@@ -75,7 +97,7 @@ namespace Lens.Compiler.Entities
                                 Expr.Invoke(
                                     Expr.This(),
                                     "Equals",
-                                    Expr.Cast(Expr.Get("obj"), Name)
+                                    Expr.Cast(Expr.Get("obj"), SelfType)
                                 )
                             )
                         )
@@ -100,37 +122,24 @@ namespace Lens.Compiler.Entities
             // var result = 0
             ghc.Body.Add(Expr.Var("result", Expr.Int(0)));
 
-            // result ^= (<field> != null ? field.GetHashCode() : 0) * 397
+            // result ^= comparer.GetHashCode(<field>) * 397
             var id = 0;
             foreach (var f in _fields.Values)
             {
-                var fieldType = f.Type ?? Context.ResolveType(f.TypeSignature);
+                var fieldType = FieldTypeOf(f);
                 NodeBase expr;
                 if (fieldType.IsIntegerType())
                 {
                     expr = Expr.GetMember(Expr.This(), f.Name);
                 }
-                else if (fieldType.IsValueType)
-                {
-                    expr = Expr.Invoke(
-                        Expr.Cast(Expr.GetMember(Expr.This(), f.Name), typeof(object)),
-                        "GetHashCode"
-                    );
-                }
                 else
                 {
-                    expr = Expr.If(
-                        Expr.NotEqual(
-                            Expr.GetMember(Expr.This(), f.Name),
-                            Expr.Null()
-                        ),
-                        Expr.Block(
-                            Expr.Invoke(
-                                Expr.GetMember(Expr.This(), f.Name),
-                                "GetHashCode"
-                            )
-                        ),
-                        Expr.Block(Expr.Int(0))
+                    // the default comparer knows how to hash a null, a boxed value type
+                    // and a Nullable<> alike, which a bare GetHashCode call does not
+                    expr = Expr.Invoke(
+                        DefaultComparerOf(fieldType),
+                        "GetHashCode",
+                        Expr.GetMember(Expr.This(), f.Name)
                     );
                 }
 
@@ -156,7 +165,16 @@ namespace Lens.Compiler.Entities
                 Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
 
             var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
-            var pure = CreateMethod(pureName, method.ReturnTypeSignature, method.Arguments.Values, true);
+
+            // the internal method repeats the signature of the wrapper, so a generic one needs
+            // generic parameters of its own. Its signature is therefore rebuilt from the source
+            // signatures, which resolve against whichever parameters are in scope at the time.
+            var pureArgs = method.Arguments?.Values
+                                 .Select(x => new FunctionArgument(x.Name, x.TypeSignature, x.IsRefArgument))
+                                 .ToArray();
+
+            var pure = CreateMethod(pureName, method.ReturnTypeSignature, pureArgs, true, prepare: !method.IsGeneric);
+            pure.GenericParameters = Context.CloneGenericParameters(method.GenericParameters, pureName);
             pure.Body = method.Body;
 
             var argCount = method.Arguments != null
@@ -166,58 +184,166 @@ namespace Lens.Compiler.Entities
             if (argCount >= 8)
                 Context.Error(CompilerMessages.PureFunctionTooManyArgs, method.Name);
 
+            var cache = new PureCache(this, method);
+
             if (argCount == 0)
-                CreatePureWrapper0(method, pureName);
+                CreatePureWrapper0(cache, method, pureName);
             else if (argCount == 1)
-                CreatePureWrapper1(method, pureName);
+                CreatePureWrapper1(cache, method, pureName);
             else
-                CreatePureWrapperMany(method, pureName);
+                CreatePureWrapperMany(cache, method, pureName);
+        }
+
+        /// <summary>
+        /// The place where a pure function's memoized values live.
+        ///
+        /// For an ordinary function that is a set of static fields on the main type. A generic
+        /// function cannot use those: a method's type parameters may not appear in the type of a
+        /// field of an unrelated class, and the cache has to be per-instantiation anyway. Such a
+        /// function gets a holder class generic in its own parameters instead, which is what C#
+        /// does for exactly the same problem.
+        /// </summary>
+        private class PureCache
+        {
+            #region Constructor
+
+            public PureCache(TypeEntity mainType, MethodEntity method)
+            {
+                _owner = mainType;
+
+                if (!method.IsGeneric)
+                    return;
+
+                // the internal method has generic parameters of its own that appear nowhere but in
+                // its signature, so an unreferenced one could never be inferred: the wrapper always
+                // passes its own parameters through explicitly
+                _typeHints = method.GenericParameters.Select(x => (TypeSignature) x.Name).ToArray();
+
+                var name = string.Format(EntityNames.PureMethodCacheTypeNameTemplate, method.Name);
+                var ctx = mainType.Context;
+
+                var parameters = ctx.CloneGenericParameters(method.GenericParameters, name);
+                _owner = ctx.CreateType(name, genericParameters: parameters);
+                _owner.Kind = TypeEntityKind.Closure;
+
+                _sourceParameters = method.GenericParameters.Select(x => (Type) x.Builder).ToArray();
+                _ownParameters = parameters.Select(x => (Type) x.Builder).ToArray();
+
+                _ownerType = ctx.Resolver.MakeGenericType(_owner.TypeBuilder, _sourceParameters);
+            }
+
+            #endregion
+
+            #region Fields
+
+            private readonly TypeEntity _owner;
+            private readonly Type _ownerType;
+            private readonly Type[] _sourceParameters;
+            private readonly Type[] _ownParameters;
+            private readonly TypeSignature[] _typeHints;
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Declares a cache field, rewriting its type into the terms of the holder class.
+            /// </summary>
+            public void CreateField(string name, Type type)
+            {
+                _owner.CreateField(name, Substitute(type), true);
+            }
+
+            /// <summary>
+            /// Builds an invocation of the internal method that actually computes the value.
+            /// </summary>
+            public NodeBase Invoke(string pureName, params NodeBase[] args)
+            {
+                return _typeHints == null
+                    ? Expr.Invoke(EntityNames.MainTypeName, pureName, args)
+                    : Expr.Invoke(Expr.GetMember(EntityNames.MainTypeName, pureName, _typeHints), args);
+            }
+
+            /// <summary>
+            /// Builds an expression that reads a cache field.
+            /// </summary>
+            public NodeBase Get(string name)
+            {
+                return _ownerType == null
+                    ? Expr.GetMember(EntityNames.MainTypeName, name)
+                    : Expr.GetMember(_ownerType, name);
+            }
+
+            /// <summary>
+            /// Builds an expression that writes a cache field.
+            /// </summary>
+            public NodeBase Set(string name, NodeBase value)
+            {
+                return _ownerType == null
+                    ? Expr.SetMember(EntityNames.MainTypeName, name, value)
+                    : Expr.SetMember(_ownerType, name, value);
+            }
+
+            #endregion
+
+            #region Helpers
+
+            /// <summary>
+            /// Rewrites a type expressed in the function's parameters into the holder's own ones.
+            /// </summary>
+            private Type Substitute(Type type)
+            {
+                return _sourceParameters == null
+                    ? type
+                    : GenericHelper.ApplyGenericArguments(type, _sourceParameters, _ownParameters, false);
+            }
+
+            #endregion
         }
 
         /// <summary>
         /// Creates a pure wrapper for parameterless function.
         /// </summary>
-        private void CreatePureWrapper0(MethodEntity wrapper, string pureName)
+        private void CreatePureWrapper0(PureCache cache, MethodEntity wrapper, string pureName)
         {
             var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
             var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
 
-            CreateField(fieldName, wrapper.ReturnTypeSignature, true);
-            CreateField(flagName, typeof(bool), true);
+            cache.CreateField(fieldName, wrapper.ReturnType);
+            cache.CreateField(flagName, typeof(bool));
 
             wrapper.Body = Expr.Block(
                 ScopeKind.FunctionRoot,
 
                 // if (not $flag) $cache = $internal (); $flag = true
                 Expr.If(
-                    Expr.Not(Expr.GetMember(EntityNames.MainTypeName, flagName)),
+                    Expr.Not(cache.Get(flagName)),
                     Expr.Block(
-                        Expr.SetMember(
-                            EntityNames.MainTypeName,
+                        cache.Set(
                             fieldName,
-                            Expr.Invoke(EntityNames.MainTypeName, pureName)
+                            cache.Invoke(pureName)
                         ),
-                        Expr.SetMember(EntityNames.MainTypeName, flagName, Expr.True())
+                        cache.Set(flagName, Expr.True())
                     )
                 ),
 
                 // $cache
-                Expr.GetMember(EntityNames.MainTypeName, fieldName)
+                cache.Get(fieldName)
             );
         }
 
         /// <summary>
         /// Creates a pure wrapper for function with 1 argument.
         /// </summary>
-        private void CreatePureWrapper1(MethodEntity wrapper, string pureName)
+        private void CreatePureWrapper1(PureCache cache, MethodEntity wrapper, string pureName)
         {
             var args = wrapper.GetArgumentTypes(Context);
             var argName = wrapper.Arguments[0].Name;
 
             var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-            var fieldType = typeof(Dictionary<,>).MakeGenericType(args[0], wrapper.ReturnType);
+            var fieldType = Context.Resolver.MakeGenericType(typeof(Dictionary<,>), new[] {args[0], wrapper.ReturnType});
 
-            CreateField(fieldName, fieldType, true);
+            cache.CreateField(fieldName, fieldType);
 
             wrapper.Body = Expr.Block(
                 ScopeKind.FunctionRoot,
@@ -225,12 +351,12 @@ namespace Lens.Compiler.Entities
                 // if ($dict == null) $dict = new Dictionary<$argType, $valueType> ()
                 Expr.If(
                     Expr.Equal(
-                        Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                        cache.Get(fieldName),
                         Expr.Null()
                     ),
                     Expr.Block(
-                        Expr.SetMember(
-                            EntityNames.MainTypeName, fieldName,
+                        cache.Set(
+                            fieldName,
                             Expr.New(fieldType)
                         )
                     )
@@ -240,24 +366,24 @@ namespace Lens.Compiler.Entities
                 Expr.If(
                     Expr.Not(
                         Expr.Invoke(
-                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            cache.Get(fieldName),
                             "ContainsKey",
                             Expr.Get(argName)
                         )
                     ),
                     Expr.Block(
                         Expr.Invoke(
-                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            cache.Get(fieldName),
                             "Add",
                             Expr.Get(argName),
-                            Expr.Invoke(EntityNames.MainTypeName, pureName, Expr.Get(argName))
+                            cache.Invoke(pureName, Expr.Get(argName))
                         )
                     )
                 ),
 
                 // $dict[arg]
                 Expr.GetIdx(
-                    Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                    cache.Get(fieldName),
                     Expr.Get(argName)
                 )
             );
@@ -266,15 +392,15 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a pure wrapper for function with 2 and more arguments.
         /// </summary>
-        private void CreatePureWrapperMany(MethodEntity wrapper, string pureName)
+        private void CreatePureWrapperMany(PureCache cache, MethodEntity wrapper, string pureName)
         {
             var args = wrapper.GetArgumentTypes(Context);
 
             var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
             var tupleType = FunctionalHelper.CreateTupleType(args);
-            var fieldType = typeof(Dictionary<,>).MakeGenericType(tupleType, wrapper.ReturnType);
+            var fieldType = Context.Resolver.MakeGenericType(typeof(Dictionary<,>), new[] {tupleType, wrapper.ReturnType});
 
-            CreateField(fieldName, fieldType, true);
+            cache.CreateField(fieldName, fieldType);
 
             var argGetters = wrapper.Arguments.Select(a => (NodeBase) Expr.Get(a)).ToArray();
             var tupleName = "<args>";
@@ -288,12 +414,12 @@ namespace Lens.Compiler.Entities
                 // if ($dict == null) $dict = new Dictionary<$tupleType, $valueType> ()
                 Expr.If(
                     Expr.Equal(
-                        Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                        cache.Get(fieldName),
                         Expr.Null()
                     ),
                     Expr.Block(
-                        Expr.SetMember(
-                            EntityNames.MainTypeName, fieldName,
+                        cache.Set(
+                            fieldName,
                             Expr.New(fieldType)
                         )
                     )
@@ -303,24 +429,24 @@ namespace Lens.Compiler.Entities
                 Expr.If(
                     Expr.Not(
                         Expr.Invoke(
-                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            cache.Get(fieldName),
                             "ContainsKey",
                             Expr.Get(tupleName)
                         )
                     ),
                     Expr.Block(
                         Expr.Invoke(
-                            Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                            cache.Get(fieldName),
                             "Add",
                             Expr.Get(tupleName),
-                            Expr.Invoke(EntityNames.MainTypeName, pureName, argGetters)
+                            cache.Invoke(pureName, argGetters)
                         )
                     )
                 ),
 
                 // $dict[arg]
                 Expr.GetIdx(
-                    Expr.GetMember(EntityNames.MainTypeName, fieldName),
+                    cache.Get(fieldName),
                     Expr.Get(tupleName)
                 )
             );

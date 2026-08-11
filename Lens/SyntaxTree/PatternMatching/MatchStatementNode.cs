@@ -108,7 +108,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
             // declare variables
             foreach (var binding in _bindingSet)
-                block.Add(Expr.Var(binding.Name, binding.Type.FullName));
+                block.Add(Expr.Var(binding.Name, binding.Type));
 
             foreach (var rule in MatchRules)
             {

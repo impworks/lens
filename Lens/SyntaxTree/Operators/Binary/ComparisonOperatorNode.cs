@@ -80,13 +80,13 @@ namespace Lens.SyntaxTree.Operators.Binary
         protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
         {
             var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
-            return CanCompare(leftType, rightType, isEquality) ? typeof(bool) : null;
+            return CanCompare(ctx, leftType, rightType, isEquality) ? typeof(bool) : null;
         }
 
         /// <summary>
         /// Checks if two types can be compared.
         /// </summary>
-        private bool CanCompare(Type left, Type right, bool equalityOnly)
+        private bool CanCompare(Context ctx, Type left, Type right, bool equalityOnly)
         {
             // there's an overridden method
             if (OverloadedMethod != null)
@@ -113,7 +113,8 @@ namespace Lens.SyntaxTree.Operators.Binary
                 if ((right == typeof(NullType) && !left.IsValueType) || (left == typeof(NullType) && !right.IsValueType))
                     return true;
 
-                if (left is TypeBuilder && left == right)
+                // a type declared in the script always has a generated Equals
+                if (left == right && ctx.IsDeclaredType(left))
                     return true;
 
                 if (left == right)
@@ -133,7 +134,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var rightType = RightOperand.Resolve(ctx);
             var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
 
-            if (!CanCompare(leftType, rightType, isEquality))
+            if (!CanCompare(ctx, leftType, rightType, isEquality))
                 Error(CompilerMessages.TypesIncomparable, leftType, rightType);
 
             if (isEquality)
@@ -219,7 +220,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 return;
             }
 
-            if (left is TypeBuilder && left == right)
+            if (left == right && ctx.IsDeclaredType(left))
             {
                 var equals = ctx.ResolveMethod(left, "Equals", new[] {typeof(object)});
 

@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _indexer = ReflectionHelper.ResolveIndexer(exprType, idxType, false);
+                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType, idxType, false);
                 }
                 catch (LensCompilerException ex)
                 {
@@ -49,12 +49,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var idxDestType = exprType.IsArray ? typeof(int) : _indexer.ArgumentTypes[0];
             var valDestType = exprType.IsArray ? exprType.GetElementType() : _indexer.ArgumentTypes[1];
 
-            if (!idxDestType.IsExtendablyAssignableFrom(idxType))
+            if (!idxDestType.IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
 
             EnsureLambdaInferred(ctx, Value, valDestType);
             var valType = Value.Resolve(ctx);
-            if (!valDestType.IsExtendablyAssignableFrom(valType))
+            if (!valDestType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
 
             return base.ResolveInternal(ctx, mustReturn);

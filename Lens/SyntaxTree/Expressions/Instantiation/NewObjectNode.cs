@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -46,6 +46,11 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         private ConstructorWrapper _constructor;
 
         /// <summary>
+        /// Checks if the created type is a generic parameter with the 'new' constraint.
+        /// </summary>
+        private bool _isTypeParameter;
+
+        /// <summary>
         /// Generic wrapper for base class.
         /// </summary>
         protected override CallableWrapperBase Wrapper => _constructor;
@@ -58,7 +63,16 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         {
             base.ResolveInternal(ctx, true);
 
-            var type = Type ?? ctx.ResolveType(TypeSignature);
+            var type = Type;
+
+            try
+            {
+                type ??= ctx.ResolveType(TypeSignature);
+            }
+            catch (TypeMatchException ex)
+            {
+                Error(ex.Message, TypeSignature.FullSignature);
+            }
 
             if (type.IsVoid())
                 Error(CompilerMessages.VoidTypeDefault);
@@ -72,9 +86,25 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (Arguments.Count == 0)
                 Error(CompilerMessages.ParameterlessConstructorParens);
 
+            // a type parameter has no constructors of its own: the 'new' constraint promises a
+            // parameterless one, and the CLI reaches it through Activator.CreateInstance<T>
+            if (type.IsGenericParameter)
+            {
+                var constraints = ctx.Resolver.FindConstraints(type);
+                if (ArgTypes.Length > 0 || constraints == null || !constraints.RequiresDefaultCtor)
+                    Error(CompilerMessages.TypeConstructorNotFound, type);
+
+                _isTypeParameter = true;
+                return type;
+            }
+
             try
             {
                 _constructor = ctx.ResolveConstructor(type, ArgTypes);
+            }
+            catch (TypeMatchException ex)
+            {
+                Error(ex.Message, TypeSignature.FullSignature);
             }
             catch (AmbiguousMatchException)
             {
@@ -100,6 +130,10 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
+            // there is no constructor wrapper to partially apply
+            if (_isTypeParameter)
+                return null;
+
             if (_isDefault)
                 return new DefaultOperatorNode {Type = Type, TypeSignature = TypeSignature};
 
@@ -113,6 +147,14 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
+
+            if (_isTypeParameter)
+            {
+                var type = Type ?? ctx.ResolveType(TypeSignature);
+                var creator = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes).MakeGenericMethod(type);
+                gen.EmitCall(creator);
+                return;
+            }
 
             if (_constructor != null)
             {

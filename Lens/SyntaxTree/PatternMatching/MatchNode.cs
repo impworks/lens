@@ -87,7 +87,7 @@ namespace Lens.SyntaxTree.PatternMatching
                     if (nameRule != null && stmt.Condition == null)
                     {
                         var nameType = nameRule.Type == null ? typeof(object) : ctx.ResolveType(nameRule.Type);
-                        if (commonType != null && commonType.IsExtendablyAssignableFrom(nameType))
+                        if (commonType != null && commonType.IsExtendablyAssignableFrom(ctx.Resolver, nameType))
                             Error(CompilerMessages.PatternUnreachable);
 
                         commonType = nameType;
@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
             return stmtTypes.Any(x => x.IsVoid())
                 ? typeof(UnitType)
-                : stmtTypes.ToArray().GetMostCommonType();
+                : stmtTypes.ToArray().GetMostCommonType(ctx.Resolver);
         }
 
         #endregion

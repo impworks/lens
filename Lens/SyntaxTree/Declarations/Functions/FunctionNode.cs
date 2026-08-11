@@ -1,4 +1,5 @@
-﻿using Lens.Compiler;
+﻿using System.Collections.Generic;
+using Lens.Compiler;
 using Lens.SyntaxTree.ControlFlow;
 
 namespace Lens.SyntaxTree.Declarations.Functions
@@ -35,6 +36,11 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// Checks whether the function can be memoized.
         /// </summary>
         public bool IsPure { get; set; }
+
+        /// <summary>
+        /// The generic parameters of the function, if any.
+        /// </summary>
+        public List<TypeParameterDefinition> TypeParameters { get; set; }
 
         #endregion
 

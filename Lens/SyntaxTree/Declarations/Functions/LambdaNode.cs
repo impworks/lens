@@ -106,13 +106,17 @@ namespace Lens.SyntaxTree.Declarations.Functions
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            // find constructor
-            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), _method.ArgumentTypes);
+            // the delegate type is expressed in the terms of the enclosing method, while the
+            // backing method belongs to the closure class and may be generic in its parameters
+            var argTypes = Arguments.Select(x => x.GetArgumentType(ctx)).ToArray();
+            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), argTypes);
             var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
 
-            var closureInstance = ctx.Scope.ActiveClosure.ClosureVariable;
-            gen.EmitLoadLocal(closureInstance);
-            gen.EmitLoadFunctionPointer(_method.MethodBuilder);
+            var closure = ctx.Scope.ActiveClosure;
+            var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, _method.Name).Single();
+
+            gen.EmitLoadLocal(closure.ClosureVariable);
+            gen.EmitLoadFunctionPointer(closureMethod.MethodInfo);
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }
 

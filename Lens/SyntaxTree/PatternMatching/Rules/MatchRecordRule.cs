@@ -51,8 +51,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
                 Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
-            _type = ctx.ResolveType(Identifier);
-            if (!_type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(_type))
+            _type = ctx.ResolvePatternType(typeEntity, expressionType);
+            if (!_type.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, _type))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
             var duplicate = FieldRules.GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);
@@ -64,8 +64,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             {
                 try
                 {
-                    var field = typeEntity.ResolveField(fieldRule.Name.FullSignature);
-                    subBindings.AddRange(fieldRule.Rule.Resolve(ctx, field.Type));
+                    var field = ctx.ResolveField(_type, fieldRule.Name.FullSignature);
+                    subBindings.AddRange(fieldRule.Rule.Resolve(ctx, field.FieldType));
                 }
                 catch (KeyNotFoundException)
                 {

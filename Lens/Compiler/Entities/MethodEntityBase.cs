@@ -119,7 +119,12 @@ namespace Lens.Compiler.Entities
             CurrentTryBlock = null;
             CurrentCatchBlock = null;
 
-            act(ctx);
+            // the body of a generic member may name the type parameters of the declaring
+            // type as well as those of the member itself
+            ctx.WithGenericScope(
+                ContainerType.GenericParameters,
+                () => ctx.WithGenericScope((this as MethodEntity)?.GenericParameters, () => act(ctx))
+            );
 
             ctx.CurrentMethod = oldMethod;
             ctx.CurrentType = oldType;

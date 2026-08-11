@@ -6,14 +6,18 @@ stmt <NodeBase>                             = use | record_def | type_def | fun_
 namespace <TypeSignature>                   = identifier { "." identifier }
 type <TypeSignature>                        = namespace [ type_args ] { "[]" | "?" | "~" }
 type_args                                   = "<" type { "," type } ">"
+type_params <~TypeParameterDefinition>      = "<" type_param { "," type_param } ">"
+type_param <TypeParameterDefinition>        = identifier [ "=" type_constraints ]
+type_constraints                            = type_constraint { "&" type_constraint }
+type_constraint                             = "class" | "struct" | "new" | type
 
 // structures
 use <UseNode>                               = "use" namespace
-record_def <RecordDefinitionNode>           = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
+record_def <RecordDefinitionNode>           = "record" identifier [ type_params ] INDENT record_stmt { NL record_stmt } DEDENT
 record_stmt <RecordField>                   = identifier ":" type
-type_def <TypeDefinitionNode>               = "type" identifier INDENT type_stmt { NL type_stmt } DEDENT
+type_def <TypeDefinitionNode>               = "type" identifier [ type_params ] INDENT type_stmt { NL type_stmt } DEDENT
 type_stmt <TypeLabel>                       = identifier [ "of" type ]
-fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
+fun_def <FunctionNode>                      = [ "pure" ] "fun" identifier [ type_params ] [ ":" type ] fun_args "->" block
 fun_args <~FunctionArgument>                = fun_arg | fun_arg_list
 fun_arg <FunctionArgument>                  = identifier [ ":" [ "ref" ] type [ "..." ] ]
 fun_arg_list <~FunctionArgument>            = "(" { fun_arg } ")"

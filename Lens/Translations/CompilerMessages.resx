@@ -582,4 +582,40 @@
   <data name="NullSafeOperatorValueType" xml:space="preserve">
     <value>LE3153: Cannot apply a null-safe accessor to an expression of type '{0}', because it can never be null!</value>
   </data>
+  <data name="GenericConstraintClassAndStruct" xml:space="preserve">
+    <value>LE3154: Type parameter '{0}' of '{1}' cannot have both the 'class' and the 'struct' constraint!</value>
+  </data>
+  <data name="GenericConstraintStructAndNew" xml:space="preserve">
+    <value>LE3155: Type parameter '{0}' of '{1}' cannot have both the 'struct' and the 'new' constraint, because 'struct' already implies a default constructor!</value>
+  </data>
+  <data name="GenericConstraintBaseTypeAndKeyword" xml:space="preserve">
+    <value>LE3156: Type parameter '{0}' of '{1}' cannot have the base type constraint '{2}' together with the '{3}' constraint!</value>
+  </data>
+  <data name="GenericConstraintMultipleBaseTypes" xml:space="preserve">
+    <value>LE3157: Type parameter '{0}' of '{1}' cannot have more than one base type constraint ('{2}' and '{3}')!</value>
+  </data>
+  <data name="GenericConstraintInvalidBaseType" xml:space="preserve">
+    <value>LE3158: Type '{0}' cannot be used as a base type constraint for type parameter '{1}' of '{2}'!</value>
+  </data>
+  <data name="GenericConstraintDuplicateInterface" xml:space="preserve">
+    <value>LE3159: Interface '{0}' is specified more than once as a constraint for type parameter '{1}' of '{2}'!</value>
+  </data>
+  <data name="GenericConstraintCircular" xml:space="preserve">
+    <value>LE3160: Type parameter '{0}' of '{1}' has a circular constraint dependency!</value>
+  </data>
+  <data name="GenericConstraintDuplicateKeyword" xml:space="preserve">
+    <value>LE3161: Constraint '{0}' is specified more than once for type parameter '{1}' of '{2}'!</value>
+  </data>
+  <data name="TypeParameterRedefinition" xml:space="preserve">
+    <value>LE3162: Type parameter '{0}' is declared more than once in '{1}'!</value>
+  </data>
+  <data name="GenericTypeArgCountMismatch" xml:space="preserve">
+    <value>LE3163: Type '{0}' expects {1} type argument(s), but {2} were given!</value>
+  </data>
+  <data name="GenericLabelTypeArgsRequired" xml:space="preserve">
+    <value>LE3164: Label '{0}' carries no value, so the type arguments of '{1}' cannot be inferred; specify them explicitly!</value>
+  </data>
+  <data name="GenericArityOverloading" xml:space="preserve">
+    <value>LE3165: '{0}' is already declared with a different number of type parameters; LENS does not allow overloading by generic arity!</value>
+  </data>
 </root>

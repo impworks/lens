@@ -46,9 +46,10 @@ namespace Lens.Resolver
             };
         }
 
-        public TypeResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
+        public TypeResolver(TypeResolutionContext resolutionContext, Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
         {
             _cache = new Dictionary<string, Type>();
+            _resolutionContext = resolutionContext;
             _namespaces = namespaces;
             _asmCache = asmCache;
         }
@@ -66,6 +67,11 @@ namespace Lens.Resolver
         /// List of known type short names (like 'int' = 'System.Int32').
         /// </summary>
         private static readonly Dictionary<string, Type> TypeAliases;
+
+        /// <summary>
+        /// The resolution context of the current compilation.
+        /// </summary>
+        private readonly TypeResolutionContext _resolutionContext;
 
         /// <summary>
         /// Cached list of already resolved types.
@@ -100,7 +106,10 @@ namespace Lens.Resolver
                 return cached;
 
             var type = ParseTypeSignature(signature);
-            if (type != null)
+
+            // a type parameter means different things in different declarations and an unfinished
+            // builder can still change shape, so neither may be memoized by name
+            if (type != null && TypeResolutionContext.IsStable(type))
                 _cache.Add(signature.FullSignature, type);
 
             return type;
@@ -130,7 +139,7 @@ namespace Lens.Resolver
 
                 var type = FindType(name);
                 return hasArgs
-                    ? GenericHelper.MakeGenericTypeChecked(type, signature.Arguments.Select(ParseTypeSignature).ToArray())
+                    ? GenericHelper.MakeGenericTypeChecked(_resolutionContext, type, signature.Arguments.Select(ParseTypeSignature).ToArray())
                     : type;
             }
             catch (Exception ex)
@@ -142,16 +151,16 @@ namespace Lens.Resolver
         /// <summary>
         /// Wraps a type into a specific postfix.
         /// </summary>
-        private static Type ProcessPostfix(Type type, string postfix)
+        private Type ProcessPostfix(Type type, string postfix)
         {
             if (postfix == "[]")
                 return type.MakeArrayType();
 
             if (postfix == "~")
-                return GenericHelper.MakeGenericTypeChecked(typeof(IEnumerable<>), type);
+                return GenericHelper.MakeGenericTypeChecked(_resolutionContext, typeof(IEnumerable<>), type);
 
             if (postfix == "?")
-                return GenericHelper.MakeGenericTypeChecked(typeof(Nullable<>), type);
+                return GenericHelper.MakeGenericTypeChecked(_resolutionContext, typeof(Nullable<>), type);
 
             throw new ArgumentException(string.Format("Unknown postfix '{0}'!", postfix));
         }

@@ -46,7 +46,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromType = Expression.Resolve(ctx);
             var toType = Resolve(ctx);
 
-            if (toType.IsExtendablyAssignableFrom(fromType, true))
+            if (ctx.Resolver.IsDeclaredTypeParameter(fromType) || ctx.Resolver.IsDeclaredTypeParameter(toType))
+                CastGenericParameter(ctx, fromType, toType);
+
+            else if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType, true))
                 Expression.Emit(ctx, true);
 
             else if (fromType.IsNumericType() && toType.IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
@@ -86,7 +89,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 gen.EmitCreateObject(ctor);
             }
 
-            else if (toType.IsExtendablyAssignableFrom(fromType))
+            else if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
             {
                 Expression.Emit(ctx, true);
 
@@ -104,7 +107,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 }
             }
 
-            else if (fromType.IsExtendablyAssignableFrom(toType))
+            else if (fromType.IsExtendablyAssignableFrom(ctx.Resolver, toType))
             {
                 Expression.Emit(ctx, true);
 
@@ -130,6 +133,32 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 Error(fromType, toType);
         }
 
+        /// <summary>
+        /// Casts to or from a generic parameter.
+        ///
+        /// A parameter is neither a reference type nor a value type until it is substituted, so
+        /// the usual box / castclass / unbox decision cannot be made from its properties.
+        /// 'box' and 'unbox.any' are valid for both kinds and therefore work for every
+        /// instantiation of the enclosing declaration.
+        /// </summary>
+        private void CastGenericParameter(Context ctx, Type from, Type to)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+
+            Expression.Emit(ctx, true);
+
+            if (from == to)
+                return;
+
+            if (from.IsGenericParameter || from.IsValueType)
+                gen.EmitBox(from);
+
+            if (to.IsGenericParameter || to.IsValueType)
+                gen.EmitUnbox(to);
+            else if (to != typeof(object))
+                gen.EmitCast(to);
+        }
+
         private void CastDelegate(Context ctx, Type from, Type to)
         {
             var gen = ctx.CurrentMethod.Generator;
@@ -141,10 +170,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromArgs = fromMethod.ArgumentTypes;
             var toArgs = toMethod.ArgumentTypes;
 
-            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(fromArgs[id], true)).Any(x => x))
+            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
                 Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
-            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(fromMethod.ReturnType, true))
+            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
                 Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
 
             if (fromMethod.IsStatic)

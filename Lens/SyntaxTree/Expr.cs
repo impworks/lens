@@ -379,6 +379,16 @@ namespace Lens.SyntaxTree
             return new GetMemberNode {StaticType = type, MemberName = name, TypeHints = hints.ToList()};
         }
 
+        public static GetMemberNode GetMember(Type type, string name, params TypeSignature[] hints)
+        {
+            return new GetMemberNode {StaticTypeInfo = type, MemberName = name, TypeHints = hints.ToList()};
+        }
+
+        public static SetMemberNode SetMember(Type type, string name, NodeBase value)
+        {
+            return new SetMemberNode {StaticTypeInfo = type, MemberName = name, Value = value};
+        }
+
         public static SetMemberNode SetMember(NodeBase expr, string name, NodeBase value)
         {
             return new SetMemberNode {Expression = expr, MemberName = name, Value = value};
@@ -487,6 +497,11 @@ namespace Lens.SyntaxTree
         public static VarNode Var(string name, TypeSignature type)
         {
             return new VarNode(name) {Type = type};
+        }
+
+        public static VarNode Var(string name, Type type)
+        {
+            return new VarNode(name) {ResolvedType = type};
         }
 
         public static VarNode Var(Local name, TypeSignature type)
@@ -664,6 +679,11 @@ namespace Lens.SyntaxTree
         public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
         {
             return new FunctionArgument {Name = name, TypeSignature = type, IsRefArgument = isRef};
+        }
+
+        public static FunctionArgument Arg(string name, Type type, bool isRef = false)
+        {
+            return new FunctionArgument {Name = name, Type = type, IsRefArgument = isRef};
         }
 
         public static FunctionArgument Arg<T>(string name, bool isRef = false)

@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
             return type.IsVoid() || otherType.IsVoid()
                 ? typeof(UnitType)
-                : new[] {type, otherType}.GetMostCommonType();
+                : new[] {type, otherType}.GetMostCommonType(ctx.Resolver);
         }
 
         #endregion
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var gen = ctx.CurrentMethod.Generator;
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(typeof(bool)))
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             if (Condition.IsConstant && ctx.Options.UnrollConstants)

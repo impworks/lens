@@ -59,6 +59,11 @@
         public const string PureMethodCacheNameTemplate = "<pc_{0}>";
 
         /// <summary>
+        /// The template for a holder class that keeps the cache of a generic pure function.
+        /// </summary>
+        public const string PureMethodCacheTypeNameTemplate = "<pct_{0}>";
+
+        /// <summary>
         /// The template for a field name which is used to store the flag indicating the pure function's result has been calculated.
         /// </summary>
         public const string PureMethodCacheFlagNameTemplate = "<pcf_{0}>";

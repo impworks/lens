@@ -12,6 +12,16 @@ namespace Lens.Utils
         {
             var type = node.Resolve(ctx);
 
+            // a type parameter may be substituted with a value type or with a reference type, and
+            // only the members of its constraints can be invoked on it. Boxing is valid for both
+            // kinds and lets a single call site serve every instantiation.
+            if (ctx.Resolver.IsDeclaredTypeParameter(type))
+            {
+                node.Emit(ctx, true);
+                ctx.CurrentMethod.Generator.EmitBox(type);
+                return;
+            }
+
             if (type.IsValueType)
             {
                 if (node is IPointerProvider)

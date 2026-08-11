@@ -11,6 +11,8 @@ namespace Lens.Test.Internals
     [TestFixture]
     public class TypeExtensionsTest
     {
+        private static readonly TypeResolutionContext Ctx = new TypeResolutionContext();
+
         [Test]
         public void SelfEquality()
         {
@@ -185,7 +187,7 @@ namespace Lens.Test.Internals
         {
             var from = typeof(bool[]);
             var to = typeof(IEnumerable<>);
-            Assert.AreEqual(2, to.DistanceFrom(from));
+            Assert.AreEqual(2, to.DistanceFrom(Ctx, from));
         }
 
         [Test]
@@ -205,8 +207,8 @@ namespace Lens.Test.Internals
 
             var to = typeof(Array).GetMethod("FindAll").GetParameters().Select(p => p.ParameterType).ToArray();
 
-            Assert.AreEqual(2, to[0].DistanceFrom(from1));
-            Assert.AreEqual(2, to[1].DistanceFrom(from2));
+            Assert.AreEqual(2, to[0].DistanceFrom(Ctx, from1));
+            Assert.AreEqual(2, to[1].DistanceFrom(Ctx, from2));
         }
 
         [Test]
@@ -214,10 +216,10 @@ namespace Lens.Test.Internals
         {
             var types = new[] {typeof(object), typeof(float), typeof(int), typeof(string)};
             foreach (var type in types)
-                Assert.AreEqual(0, type.MakeByRefType().DistanceFrom(type));
+                Assert.AreEqual(0, type.MakeByRefType().DistanceFrom(Ctx, type));
 
-            Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(typeof(float)));
-            Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(typeof(int)));
+            Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(Ctx, typeof(float)));
+            Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(Ctx, typeof(int)));
         }
 
         [Test]
@@ -297,7 +299,7 @@ namespace Lens.Test.Internals
         {
             var from = typeof(IOrderedEnumerable<int>);
             var to = typeof(IEnumerable<>);
-            Assert.IsTrue(to.DistanceFrom(from) < int.MaxValue);
+            Assert.IsTrue(to.DistanceFrom(Ctx, from) < int.MaxValue);
         }
 
         /// <summary>
@@ -308,7 +310,7 @@ namespace Lens.Test.Internals
         /// <param name="expected">Expected distance between types.</param>
         private static void TestDistanceFrom<T1, T2>(int expected)
         {
-            var result = typeof(T1).DistanceFrom(typeof(T2));
+            var result = typeof(T1).DistanceFrom(Ctx, typeof(T2));
             Assert.AreEqual(expected, result);
         }
 
@@ -324,7 +326,7 @@ namespace Lens.Test.Internals
 
         private static void TestCommonType<T>(params Type[] types)
         {
-            Assert.AreEqual(typeof(T), types.GetMostCommonType());
+            Assert.AreEqual(typeof(T), types.GetMostCommonType(Ctx));
         }
     }
 }

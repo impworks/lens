@@ -36,7 +36,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             try
             {
                 var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
-                return types.GetMostCommonType();
+                return types.GetMostCommonType(ctx.Resolver);
             }
             catch (LensCompilerException ex)
             {

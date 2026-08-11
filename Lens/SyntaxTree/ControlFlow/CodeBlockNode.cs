@@ -116,12 +116,12 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var type = Scope.ClosureType;
+            var type = Scope.ClosureInstanceType;
             var loc = Scope.ClosureVariable;
 
             // create closure instance
-            var closureCtor = type.ResolveConstructor(new Type[0]).ConstructorBuilder;
-            gen.EmitCreateObject(closureCtor);
+            var closureCtor = ctx.ResolveConstructor(type, Type.EmptyTypes);
+            gen.EmitCreateObject(closureCtor.ConstructorInfo);
             gen.EmitSaveLocal(loc);
 
             // affix to parent
@@ -134,7 +134,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 else
                     gen.EmitLoadLocal(Scope.ClosureParent.ClosureVariable);
 
-                gen.EmitSaveField(type.ResolveField(EntityNames.ParentScopeFieldName).FieldBuilder);
+                gen.EmitSaveField(ctx.ResolveField(type, EntityNames.ParentScopeFieldName).FieldInfo);
             }
 
             // save arguments into closure
@@ -145,7 +145,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
                 gen.EmitLoadLocal(loc);
                 gen.EmitLoadArgument(curr.ArgumentId.Value);
-                gen.EmitSaveField(type.ResolveField(curr.ClosureFieldName).FieldBuilder);
+                gen.EmitSaveField(ctx.ResolveField(type, curr.ClosureFieldName).FieldInfo);
             }
         }
 

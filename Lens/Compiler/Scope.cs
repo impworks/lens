@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.Translations;
 
 namespace Lens.Compiler
@@ -42,6 +44,24 @@ namespace Lens.Compiler
         /// The type entity that represents current closure.
         /// </summary>
         public TypeEntity ClosureType { get; private set; }
+
+        /// <summary>
+        /// The closure type as it is referred to from the method that owns the closure.
+        /// A closure declared inside a generic function is generic in that function's parameters,
+        /// so it must be instantiated over them before it can be mentioned in a signature.
+        /// </summary>
+        public Type ClosureInstanceType { get; private set; }
+
+        /// <summary>
+        /// The generic parameters that the closure type forwards, in the terms of the method
+        /// that owns the closure.
+        /// </summary>
+        private Type[] _closureSourceParameters;
+
+        /// <summary>
+        /// The generic parameters of the closure type itself.
+        /// </summary>
+        private Type[] _closureOwnParameters;
 
         /// <summary>
         /// The local variable in which the closure is saved.
@@ -194,7 +214,7 @@ namespace Lens.Compiler
                 {
                     curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
                     curr.ClosureScope = closure;
-                    var field = closure.ClosureType.CreateField(curr.ClosureFieldName, curr.Type);
+                    var field = closure.ClosureType.CreateField(curr.ClosureFieldName, closure.SubstituteIntoClosure(curr.Type));
                     field.Kind = TypeContentsKind.Closure;
                 }
                 else
@@ -209,19 +229,25 @@ namespace Lens.Compiler
 
                 if (ClosureParent != null)
                 {
-                    // create "Parent" field in the closure type
-                    var parentType = ClosureParent.ClosureType;
-                    ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType.TypeInfo);
+                    // create "Parent" field in the closure type.
+                    // both closure types forward the same set of enclosing parameters, so the
+                    // parent is referred to through this closure's own ones
+                    var parentType = _closureOwnParameters == null
+                        ? ClosureParent.ClosureType.TypeInfo
+                        : ctx.Resolver.MakeGenericType(ClosureParent.ClosureType.TypeBuilder, _closureOwnParameters);
+
+                    ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType);
                 }
 
-                ClosureVariable = ctx.CurrentMethod.Generator.DeclareLocal(ClosureType.TypeInfo);
+                ClosureVariable = ctx.CurrentMethod.Generator.DeclareLocal(ClosureInstanceType);
             }
         }
 
         /// <summary>
         /// Emits the code that loads the closure instance which contains the given local variable.
         /// </summary>
-        public void EmitClosureInstance(Context ctx, Local local)
+        /// <returns>The type of the closure instance that has been pushed onto the stack.</returns>
+        public Type EmitClosureInstance(Context ctx, Local local)
         {
             var gen = ctx.CurrentMethod.Generator;
             var closure = local.ClosureScope;
@@ -234,7 +260,7 @@ namespace Lens.Compiler
             if (scope == closure)
             {
                 gen.EmitLoadLocal(closure.ClosureVariable);
-                return;
+                return closure.ClosureInstanceType;
             }
 
             if (scope == null)
@@ -244,17 +270,24 @@ namespace Lens.Compiler
             // start from the closure passed as 'this' pointer and follow the parent references
             gen.EmitLoadArgument(0);
 
+            var currentType = ctx.CurrentType.SelfType;
+
             var curr = FindScope(s => s.ClosureType != null, scope.OuterScope);
             while (curr != null && curr != closure)
             {
-                var parentField = curr.ClosureType.ResolveField(EntityNames.ParentScopeFieldName);
-                gen.EmitLoadField(parentField.FieldBuilder);
+                // the parent's type is read off the field, so that each step of the chain stays
+                // instantiated over the right generic arguments
+                var parentField = ctx.ResolveField(currentType, EntityNames.ParentScopeFieldName);
+                gen.EmitLoadField(parentField.FieldInfo);
+                currentType = parentField.FieldType;
 
                 curr = curr.ClosureParent;
             }
 
             if (curr == null)
                 throw new InvalidOperationException($"Closure for variable '{local.Name}' is not found!");
+
+            return currentType;
         }
 
         /// <summary>
@@ -263,7 +296,20 @@ namespace Lens.Compiler
         public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
         {
             var closure = CreateClosureType(ctx);
-            var method = closure.CreateMethod(ctx.Unique.ClosureMethodName(ctx.CurrentMethod.Name), returnType.FullName, args);
+            var scope = FindScope(s => s.ClosureType == closure) ?? this;
+
+            // the signature belongs to the closure class, so it must be spelled in terms of that
+            // class's own generic parameters rather than the enclosing method's
+            var closureArgs = args?.Select(
+                x => new FunctionArgument(x.Name, scope.SubstituteIntoClosure(x.GetArgumentType(ctx)), x.IsRefArgument)
+            );
+
+            var method = closure.CreateMethod(
+                ctx.Unique.ClosureMethodName(ctx.CurrentMethod.Name),
+                scope.SubstituteIntoClosure(returnType),
+                closureArgs
+            );
+
             method.Kind = TypeContentsKind.Closure;
             return method;
         }
@@ -343,10 +389,42 @@ namespace Lens.Compiler
             var cscope = FindScope(s => s.Kind != ScopeKind.Unclosured, scope ?? this);
             if (cscope.ClosureType == null)
             {
-                cscope.ClosureType = ctx.CreateType(ctx.Unique.ClosureName());
+                var name = ctx.Unique.ClosureName();
+
+                // a closure inside a generic declaration holds values whose types mention its
+                // parameters, so the closure class must be generic in them as well
+                var enclosing = ctx.EnclosingGenericParameters();
+                var forwarded = ctx.CloneGenericParameters(enclosing, name);
+
+                cscope.ClosureType = ctx.CreateType(name, genericParameters: forwarded);
                 cscope.ClosureType.Kind = TypeEntityKind.Closure;
+
+                if (forwarded != null)
+                {
+                    cscope._closureSourceParameters = enclosing.Select(x => (Type) x.Builder).ToArray();
+                    cscope._closureOwnParameters = forwarded.Select(x => (Type) x.Builder).ToArray();
+                    cscope.ClosureInstanceType = ctx.Resolver.MakeGenericType(cscope.ClosureType.TypeBuilder, cscope._closureSourceParameters);
+                }
+                else
+                {
+                    cscope.ClosureInstanceType = cscope.ClosureType.TypeInfo;
+                }
             }
+
             return cscope.ClosureType;
+        }
+
+        /// <summary>
+        /// Rewrites a type expressed in the terms of the enclosing method's generic parameters
+        /// into the terms of the closure type's own parameters, which is how the members of the
+        /// closure class must be declared.
+        /// </summary>
+        private Type SubstituteIntoClosure(Type type)
+        {
+            if (_closureSourceParameters == null)
+                return type;
+
+            return GenericHelper.ApplyGenericArguments(type, _closureSourceParameters, _closureOwnParameters, false);
         }
 
         #endregion

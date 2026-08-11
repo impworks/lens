@@ -40,6 +40,12 @@ namespace Lens.SyntaxTree.Declarations.Locals
         public TypeSignature Type { get; set; }
 
         /// <summary>
+        /// Already resolved type for non-initialized variables, used by auto-generated code where
+        /// the type has no printable signature - a generic parameter, for instance.
+        /// </summary>
+        public Type ResolvedType { get; set; }
+
+        /// <summary>
         /// The value to assign to the variable.
         /// </summary>
         public NodeBase Value { get; set; }
@@ -57,7 +63,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
-                : ctx.ResolveType(Type);
+                : ResolvedType ?? ctx.ResolveType(Type);
 
             ctx.CheckTypedExpression(Value, type);
 
@@ -104,7 +110,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
             {
                 Identifier = Name,
                 Local = Local,
-                Value = Value ?? Expr.Default(Type),
+                Value = Value ?? (ResolvedType != null ? Expr.Default(ResolvedType) : Expr.Default(Type)),
                 IsInitialization = true,
             };
         }

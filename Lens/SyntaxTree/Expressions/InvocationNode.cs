@@ -198,6 +198,9 @@ namespace Lens.SyntaxTree.Expressions
                 return;
             }
 
+            if (node.TypeHints != null && node.TypeHints.Count > 0)
+                _typeHints = node.TypeHints.Select(x => ctx.ResolveType(x, true)).ToArray();
+
             // function
             try
             {
@@ -205,7 +208,8 @@ namespace Lens.SyntaxTree.Expressions
                     ctx.MainType.TypeInfo,
                     node.Identifier,
                     ArgTypes,
-                    resolver: (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
+                    _typeHints,
+                    (idx, types) => ctx.ResolveLambda(Arguments[idx] as LambdaNode, types)
                 );
 
                 if (_method == null)
@@ -219,6 +223,10 @@ namespace Lens.SyntaxTree.Expressions
             catch (AmbiguousMatchException)
             {
                 Error(CompilerMessages.FunctionInvocationAmbiguous, node.Identifier);
+            }
+            catch (TypeMatchException ex)
+            {
+                Error(ex.Message, node);
             }
             catch (KeyNotFoundException)
             {
@@ -264,7 +272,7 @@ namespace Lens.SyntaxTree.Expressions
                 {
                     var fromType = ArgTypes[idx];
                     var toType = argTypes[idx];
-                    if (!toType.IsExtendablyAssignableFrom(fromType))
+                    if (!toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
                         Error(Arguments[idx], CompilerMessages.ArgumentTypeMismatch, fromType, toType);
                 }
             }

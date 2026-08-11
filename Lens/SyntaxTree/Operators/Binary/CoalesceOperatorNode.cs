@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             if(baseLeft.IsValueType != baseRight.IsValueType)
                 Error(CompilerMessages.CoalesceOperatorTypeMismatch, left.FullName, right.FullName);
 
-            var common = new[] {baseLeft, baseRight}.GetMostCommonType();
+            var common = new[] {baseLeft, baseRight}.GetMostCommonType(ctx.Resolver);
             return right.IsNullableType()
                 ? typeof(Nullable<>).MakeGenericType(common)
                 : common;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
@@ -37,10 +38,87 @@ namespace Lens.Compiler
             if (allowUnspecified && signature.FullSignature == "_")
                 return null;
 
+            // a generic parameter of the enclosing declaration wins over anything else
+            if (signature.Arguments == null && string.IsNullOrEmpty(signature.Postfix))
+            {
+                var typeParam = Resolver.FindTypeParameter(signature.Name);
+                if (typeParam?.Builder != null)
+                    return typeParam.Builder;
+            }
+
             var declared = FindType(signature.FullSignature);
-            return declared != null
-                ? declared.TypeInfo
-                : _typeResolver.ResolveType(signature);
+            if (declared != null)
+            {
+                if (declared.GenericParameterCount > 0)
+                    Error(signature, CompilerMessages.GenericTypeArgCountMismatch, declared.Name, declared.GenericParameterCount, 0);
+
+                return declared.TypeInfo;
+            }
+
+            // a locally declared generic type: the arity-mangled name is only used in the assembly,
+            // so the signature is matched against the LENS name and instantiated here
+            if (signature.Arguments != null && string.IsNullOrEmpty(signature.Postfix))
+            {
+                var genericDeclared = FindType(signature.Name);
+                if (genericDeclared != null)
+                {
+                    if (genericDeclared.GenericParameterCount != signature.Arguments.Length)
+                        Error(signature, CompilerMessages.GenericTypeArgCountMismatch, genericDeclared.Name, genericDeclared.GenericParameterCount, signature.Arguments.Length);
+
+                    var args = signature.Arguments.Select(x => ResolveType(x)).ToArray();
+                    return GenericHelper.MakeGenericTypeChecked(Resolver, genericDeclared.TypeInfo, args);
+                }
+            }
+
+            return _typeResolver.ResolveType(signature);
+        }
+
+        /// <summary>
+        /// Resolves the type a pattern names, substituting the type arguments of the value being
+        /// matched into it.
+        ///
+        /// A pattern spells only the name of a record or of a label ("Some", "Pair"), so the
+        /// arguments of a generic one are taken from the scrutinee: a label of a generic algebraic
+        /// type is generic in exactly the parameters of the type itself, in the same order.
+        /// </summary>
+        public Type ResolvePatternType(TypeEntity entity, Type expressionType)
+        {
+            if (!entity.IsGeneric)
+                return entity.TypeInfo;
+
+            var arguments = FindTypeArguments(expressionType, entity.GenericParameterCount);
+            if (arguments == null)
+                Error(CompilerMessages.GenericTypeArgCountMismatch, entity.Name, entity.GenericParameterCount, 0);
+
+            return Resolver.MakeGenericType(entity.TypeBuilder, arguments);
+        }
+
+        /// <summary>
+        /// Looks for the type arguments of the matched value, walking up its inheritance chain.
+        /// </summary>
+        private static Type[] FindTypeArguments(Type type, int count)
+        {
+            var curr = type;
+            while (curr != null)
+            {
+                if (curr.IsGenericType)
+                {
+                    var args = curr.GetGenericArguments();
+                    if (args.Length == count)
+                        return args;
+                }
+
+                try
+                {
+                    curr = curr.BaseType;
+                }
+                catch (NotSupportedException)
+                {
+                    return null;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -48,19 +126,19 @@ namespace Lens.Compiler
         /// </summary>
         public FieldWrapper ResolveField(Type type, string name)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveField(type, name);
+            var declared = FindDeclaredType(type);
+            if (declared == null)
+                return ReflectionHelper.ResolveField(Resolver, type, name);
 
-            var typeEntity = _definedTypes[type.Name];
-            var fi = typeEntity.ResolveField(name);
+            var fi = declared.Entity.ResolveField(name);
             return new FieldWrapper
             {
                 Name = name,
                 Type = type,
 
-                FieldInfo = fi.FieldBuilder,
+                FieldInfo = declared.MemberOf(fi.FieldBuilder),
                 IsStatic = fi.IsStatic,
-                FieldType = fi.FieldBuilder.FieldType
+                FieldType = declared.Substitute(fi.FieldBuilder.FieldType)
             };
         }
 
@@ -69,8 +147,8 @@ namespace Lens.Compiler
         /// </summary>
         public PropertyWrapper ResolveProperty(Type type, string name)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveProperty(type, name);
+            if (FindDeclaredType(type) == null)
+                return ReflectionHelper.ResolveProperty(Resolver, type, name);
 
             // no internal properties
             throw new KeyNotFoundException();
@@ -81,8 +159,8 @@ namespace Lens.Compiler
         /// </summary>
         public EventWrapper ResolveEvent(Type type, string name)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveEvent(type, name);
+            if (FindDeclaredType(type) == null)
+                return ReflectionHelper.ResolveEvent(Resolver, type, name);
 
             // no internal events
             throw new KeyNotFoundException();
@@ -93,17 +171,17 @@ namespace Lens.Compiler
         /// </summary>
         public ConstructorWrapper ResolveConstructor(Type type, Type[] argTypes)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveConstructor(type, argTypes);
+            var declared = FindDeclaredType(type);
+            if (declared == null)
+                return ReflectionHelper.ResolveConstructor(Resolver, type, argTypes);
 
-            var typeEntity = _definedTypes[type.Name];
-            var ctor = typeEntity.ResolveConstructor(argTypes);
+            var ctor = declared.Entity.ResolveConstructor(argTypes, declared.Instantiation);
 
             return new ConstructorWrapper
             {
                 Type = type,
-                ConstructorInfo = ctor.ConstructorBuilder,
-                ArgumentTypes = ctor.GetArgumentTypes(this),
+                ConstructorInfo = declared.MemberOf(ctor.ConstructorBuilder),
+                ArgumentTypes = ctor.GetArgumentTypes(this).Select(declared.Substitute).ToArray(),
 
                 IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
                 IsVariadic = false // built-in ctors can't do that
@@ -116,26 +194,46 @@ namespace Lens.Compiler
         /// </summary>
         public MethodWrapper ResolveMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver resolver = null)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveMethod(type, name, argTypes, hints, resolver);
+            // only the members of a parameter's constraints are available on it
+            if (type.IsGenericParameter)
+            {
+                foreach (var constraint in ResolveConstraintsOf(type))
+                {
+                    try
+                    {
+                        return ResolveMethod(constraint, name, argTypes, hints, resolver);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                    }
+                }
 
-            var typeEntity = _definedTypes[type.Name];
+                throw new KeyNotFoundException();
+            }
+
+            var declared = FindDeclaredType(type);
+            if (declared == null)
+                return ReflectionHelper.ResolveMethod(Resolver, type, name, argTypes, hints, resolver);
+
             try
             {
-                var method = typeEntity.ResolveMethod(name, argTypes);
-                var mw = WrapMethod(method, ReflectionHelper.IsPartiallyApplied(argTypes));
+                var method = declared.Entity.ResolveMethod(name, argTypes, instantiation: declared.Instantiation);
+                var mw = WrapMethod(declared, method, ReflectionHelper.IsPartiallyApplied(argTypes));
 
-                var isGeneric = method.IsImported && method.MethodInfo.IsGenericMethod;
-                if (isGeneric)
+                if (method.IsImported && method.MethodInfo.IsGenericMethod)
                 {
                     var argTypeDefs = method.MethodInfo.GetParameters().Select(p => p.ParameterType).ToArray();
                     var genericDefs = method.MethodInfo.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(argTypeDefs, argTypes, genericDefs, hints, resolver);
+                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(Resolver, argTypeDefs, argTypes, genericDefs, hints, resolver);
 
                     mw.MethodInfo = method.MethodInfo.MakeGenericMethod(genericValues);
                     mw.ArgumentTypes = method.GetArgumentTypes(this).Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
                     mw.GenericArguments = genericValues;
                     mw.ReturnType = GenericHelper.ApplyGenericArguments(method.MethodInfo.ReturnType, genericDefs, genericValues);
+                }
+                else if (method.IsGeneric)
+                {
+                    InstantiateGenericMethod(mw, method, argTypes, hints, resolver);
                 }
                 else
                 {
@@ -147,8 +245,30 @@ namespace Lens.Compiler
             }
             catch (KeyNotFoundException)
             {
-                return ResolveMethod(type.BaseType, name, argTypes, hints);
+                return ResolveMethod(declared.BaseType, name, argTypes, hints, resolver);
             }
+        }
+
+        /// <summary>
+        /// Infers the generic arguments of a LENS-declared generic function from the call site
+        /// and rewrites the wrapper to point at the instantiated method.
+        /// </summary>
+        private void InstantiateGenericMethod(MethodWrapper mw, MethodEntity method, Type[] argTypes, Type[] hints, LambdaResolver resolver)
+        {
+            var genericDefs = method.GenericParameters.Select(p => (Type) p.Builder).ToArray();
+
+            if (hints != null && hints.Length != genericDefs.Length)
+                Error(CompilerMessages.GenericArgCountMismatch);
+
+            var argTypeDefs = method.GetArgumentTypes(this);
+            var genericValues = GenericHelper.ResolveMethodGenericsByArgs(Resolver, argTypeDefs, argTypes, genericDefs, hints, resolver);
+
+            GenericHelper.CheckConstraints(Resolver, method.GenericParameters, genericValues);
+
+            mw.MethodInfo = method.MethodBuilder.MakeGenericMethod(genericValues);
+            mw.ArgumentTypes = argTypeDefs.Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
+            mw.GenericArguments = genericValues;
+            mw.ReturnType = GenericHelper.ApplyGenericArguments(method.ReturnType, genericDefs, genericValues);
         }
 
         /// <summary>
@@ -167,7 +287,7 @@ namespace Lens.Compiler
         /// </summary>
         public MethodWrapper ResolveExtensionMethod(Type type, string name, Type[] argTypes, Type[] hints = null, LambdaResolver lambdaResolver = null)
         {
-            return ReflectionHelper.ResolveExtensionMethod(_extensionResolver, type, name, argTypes, hints, lambdaResolver);
+            return ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type, name, argTypes, hints, lambdaResolver);
         }
 
         /// <summary>
@@ -176,11 +296,27 @@ namespace Lens.Compiler
         /// </summary>
         public IEnumerable<MethodWrapper> ResolveMethodGroup(Type type, string name)
         {
-            if (!(type is TypeBuilder))
-                return ReflectionHelper.ResolveMethodGroup(type, name);
+            if (type.IsGenericParameter)
+            {
+                foreach (var constraint in ResolveConstraintsOf(type))
+                {
+                    try
+                    {
+                        return ResolveMethodGroup(constraint, name);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                    }
+                }
 
-            var typeEntity = _definedTypes[type.Name];
-            return typeEntity.ResolveMethodGroup(name).Select(x => WrapMethod(x));
+                throw new KeyNotFoundException();
+            }
+
+            var declared = FindDeclaredType(type);
+            if (declared == null)
+                return ReflectionHelper.ResolveMethodGroup(Resolver, type, name);
+
+            return declared.Entity.ResolveMethodGroup(name).Select(x => WrapMethod(declared, x));
         }
 
         /// <summary>
@@ -203,6 +339,131 @@ namespace Lens.Compiler
             return ent;
         }
 
+        #region Declared type references
+
+        /// <summary>
+        /// A reference to a type declared in the script, which may be a constructed instantiation
+        /// of a generic one. This is the single place that knows how to reach a member of a
+        /// constructed generic type whose definition is still a TypeBuilder: calling GetField or
+        /// GetMethod on such a type throws, and the static TypeBuilder helpers must be used instead.
+        /// </summary>
+        private class DeclaredTypeReference
+        {
+            public TypeEntity Entity;
+
+            /// <summary>
+            /// The constructed generic type, or null when the reference is to the definition itself.
+            /// </summary>
+            public Type Instantiation;
+
+            /// <summary>
+            /// The type as it is referred to at the use site.
+            /// </summary>
+            public Type Type => Instantiation ?? Entity.TypeInfo;
+
+            /// <summary>
+            /// The base type of the reference, with the instantiation applied.
+            /// </summary>
+            public Type BaseType => Substitute(Entity.Parent ?? typeof(object));
+
+            /// <summary>
+            /// Rewrites a type that may mention the definition's parameters in terms of the
+            /// actual type arguments.
+            /// </summary>
+            public Type Substitute(Type type)
+            {
+                return Instantiation == null ? type : GenericHelper.ApplyGenericArguments(type, Instantiation, false);
+            }
+
+            /// <summary>
+            /// Returns the version of a field that belongs to the constructed type.
+            /// </summary>
+            public FieldInfo MemberOf(FieldBuilder field)
+            {
+                return Instantiation == null ? (FieldInfo) field : TypeBuilder.GetField(Instantiation, field);
+            }
+
+            /// <summary>
+            /// Returns the version of a constructor that belongs to the constructed type.
+            /// </summary>
+            public ConstructorInfo MemberOf(ConstructorBuilder ctor)
+            {
+                return Instantiation == null ? (ConstructorInfo) ctor : TypeBuilder.GetConstructor(Instantiation, ctor);
+            }
+
+            /// <summary>
+            /// Returns the version of a method that belongs to the constructed type.
+            /// </summary>
+            public MethodInfo MemberOf(MethodInfo method)
+            {
+                return Instantiation == null || !(method is MethodBuilder)
+                    ? method
+                    : TypeBuilder.GetMethod(Instantiation, (MethodBuilder) method);
+            }
+        }
+
+        /// <summary>
+        /// Checks whether a type is declared in the script, possibly as an instantiation of a
+        /// declared generic type.
+        /// </summary>
+        public bool IsDeclaredType(Type type)
+        {
+            return FindDeclaredType(type) != null;
+        }
+
+        /// <summary>
+        /// Checks whether a type is declared in the script, and if so, whether it is a constructed
+        /// instantiation of a declared generic type.
+        /// </summary>
+        private DeclaredTypeReference FindDeclaredType(Type type)
+        {
+            if (type == null)
+                return null;
+
+            if (type is TypeBuilder)
+            {
+                var entity = FindTypeByEmittedName(type.Name);
+                return entity == null ? null : new DeclaredTypeReference {Entity = entity};
+            }
+
+            if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() is TypeBuilder definition)
+            {
+                var entity = FindTypeByEmittedName(definition.Name);
+                if (entity != null)
+                    return new DeclaredTypeReference {Entity = entity, Instantiation = type};
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the types whose members are reachable through a generic parameter:
+        /// its interface constraints, its base type constraint, and finally object.
+        /// </summary>
+        private IEnumerable<Type> ResolveConstraintsOf(Type typeParameter)
+        {
+            foreach (var iface in Resolver.ResolveInterfaces(typeParameter))
+                yield return iface;
+
+            var entity = Resolver.FindConstraints(typeParameter);
+            if (entity?.BaseType != null && !entity.BaseType.IsGenericParameter)
+                yield return entity.BaseType;
+
+            yield return typeof(object);
+        }
+
+        /// <summary>
+        /// Finds a declared type by the name it is emitted under, which for a generic type
+        /// carries the arity suffix that LENS itself never uses.
+        /// </summary>
+        private TypeEntity FindTypeByEmittedName(string name)
+        {
+            var tick = name.IndexOf('`');
+            return FindType(tick < 0 ? name : name.Substring(0, tick));
+        }
+
+        #endregion
+
         #region Helpers
 
         /// <summary>
@@ -212,27 +473,27 @@ namespace Lens.Compiler
         {
             lambda.SetInferredArgumentTypes(argTypes);
             var delegateType = lambda.Resolve(this);
-            return ReflectionHelper.WrapDelegate(delegateType).ReturnType;
+            return ReflectionHelper.WrapDelegate(Resolver, delegateType).ReturnType;
         }
 
         /// <summary>
         /// Creates a wrapper from a method entity.
         /// </summary>
-        private MethodWrapper WrapMethod(MethodEntity method, bool isPartial = false)
+        private MethodWrapper WrapMethod(DeclaredTypeReference declared, MethodEntity method, bool isPartial = false)
         {
             return new MethodWrapper
             {
                 Name = method.Name,
-                Type = method.ContainerType.TypeInfo,
+                Type = declared.Type,
 
                 IsStatic = method.IsStatic,
                 IsVirtual = method.IsVirtual,
                 IsPartiallyApplied = isPartial,
                 IsVariadic = method.IsVariadic,
 
-                MethodInfo = method.MethodInfo,
-                ArgumentTypes = method.GetArgumentTypes(this),
-                ReturnType = method.ReturnType
+                MethodInfo = declared.MemberOf(method.MethodInfo),
+                ArgumentTypes = method.GetArgumentTypes(this).Select(declared.Substitute).ToArray(),
+                ReturnType = declared.Substitute(method.ReturnType)
             };
         }
 

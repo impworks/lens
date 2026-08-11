@@ -14,13 +14,9 @@ namespace Lens.Resolver
     {
         #region Constructors
 
-        static ExtensionMethodResolver()
-        {
-            Cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
-        }
-
         public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
         {
+            _cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
             _namespaces = namespaces;
             _asmCache = asmCache;
         }
@@ -31,8 +27,9 @@ namespace Lens.Resolver
 
         /// <summary>
         /// Extension method cache for faster lookup.
+        /// It is scoped to the current compilation, because the set of namespaces it depends on is.
         /// </summary>
-        private static readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> Cache;
+        private readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _cache;
 
         /// <summary>
         /// Namespaces where the types containing extension methods are looked for.
@@ -51,17 +48,17 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets an extension method by given arguments.
         /// </summary>
-        public MethodInfo ResolveExtensionMethod(Type type, string name, Type[] args)
+        public MethodInfo ResolveExtensionMethod(TypeResolutionContext ctx, Type type, string name, Type[] args)
         {
-            if (!Cache.ContainsKey(type))
-                Cache.Add(type, FindMethodsForType(type));
+            if (!_cache.ContainsKey(type))
+                _cache.Add(type, FindMethodsForType(ctx, type));
 
-            if (!Cache[type].ContainsKey(name))
+            if (!_cache[type].ContainsKey(name))
                 throw new KeyNotFoundException();
 
-            var methods = Cache[type][name];
+            var methods = _cache[type][name];
             var result = methods.Where(m => m.Name == name)
-                                .Select(mi => new {Method = mi, Distance = GetExtensionDistance(mi, type, args)})
+                                .Select(mi => new {Method = mi, Distance = GetExtensionDistance(ctx, mi, type, args)})
                                 .OrderBy(p => p.Distance)
                                 .Take(2)
                                 .ToArray();
@@ -82,7 +79,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Returns the list of extension methods for given type.
         /// </summary>
-        private Dictionary<string, List<MethodInfo>> FindMethodsForType(Type forType)
+        private Dictionary<string, List<MethodInfo>> FindMethodsForType(TypeResolutionContext ctx, Type forType)
         {
             var dict = new Dictionary<string, List<MethodInfo>>();
 
@@ -109,7 +106,7 @@ namespace Lens.Resolver
                                 continue;
 
                             var argType = method.GetParameters()[0].ParameterType;
-                            if (!argType.IsExtendablyAssignableFrom(forType))
+                            if (!argType.IsExtendablyAssignableFrom(ctx, forType))
                                 continue;
 
                             if (!dict.ContainsKey(method.Name))
@@ -131,11 +128,11 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the total distance for a list of arguments of an extension method.
         /// </summary>
-        private static int GetExtensionDistance(MethodInfo method, Type type, Type[] args)
+        private static int GetExtensionDistance(TypeResolutionContext ctx, MethodInfo method, Type type, Type[] args)
         {
             var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-            var baseDist = methodArgs.First().DistanceFrom(type);
-            var argsDist = TypeExtensions.TypeListDistance(args, methodArgs.Skip(1));
+            var baseDist = methodArgs.First().DistanceFrom(ctx, type);
+            var argsDist = TypeExtensions.TypeListDistance(ctx, args, methodArgs.Skip(1));
 
             if (baseDist == int.MaxValue || argsDist == int.MaxValue)
                 return int.MaxValue;

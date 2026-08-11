@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -32,6 +33,21 @@ namespace Lens.Compiler.Entities
         public bool IsVirtual;
         public bool IsPure;
         public bool IsVariadic;
+
+        /// <summary>
+        /// The generic parameters of the method, or null if the method is not generic.
+        /// </summary>
+        public List<GenericParameterEntity> GenericParameters;
+
+        /// <summary>
+        /// The number of generic parameters the method declares.
+        /// </summary>
+        public int GenericParameterCount => GenericParameters?.Count ?? 0;
+
+        /// <summary>
+        /// Checks if the method declares generic parameters.
+        /// </summary>
+        public bool IsGeneric => GenericParameterCount > 0;
 
         public override bool IsVoid => ReturnType.IsVoid();
 
@@ -78,17 +94,31 @@ namespace Lens.Compiler.Entities
             if (IsVirtual)
                 attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
 
-            if (ReturnType == null)
-                ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-                    ? typeof(UnitType)
-                    : ctx.ResolveType(ReturnTypeSignature);
+            if (IsGeneric)
+            {
+                // the generic parameters are the very types the signature refers to, so they must
+                // be defined before the signature is resolved:
+                // DefineMethod -> DefineGenericParameters -> constraints -> SetParameters/SetReturnType
+                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs);
 
-            if (ArgumentTypes == null)
-                ArgumentTypes = Arguments == null
-                    ? new Type[0]
-                    : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
+                var builders = MethodBuilder.DefineGenericParameters(GenericParameters.Select(p => p.Name).ToArray());
+                for (var idx = 0; idx < builders.Length; idx++)
+                    GenericParameters[idx].Builder = builders[idx];
 
-            MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
+                ctx.ResolveGenericParameters(GenericParameters);
+
+                ctx.WithGenericScope(GenericParameters, ResolveSignature);
+
+                MethodBuilder.SetParameters(ArgumentTypes);
+                MethodBuilder.SetReturnType(ReturnType.IsVoid() ? typeof(void) : ReturnType);
+            }
+            else
+            {
+                ResolveSignature();
+
+                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
+            }
+
             Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
 
             if (Arguments != null)
@@ -106,6 +136,24 @@ namespace Lens.Compiler.Entities
                 Body.Statements.Add(new UnitNode());
         }
 
+        /// <summary>
+        /// Resolves the return type and the argument types of the method.
+        /// </summary>
+        private void ResolveSignature()
+        {
+            var ctx = ContainerType.Context;
+
+            if (ReturnType == null)
+                ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
+                    ? typeof(UnitType)
+                    : ctx.ResolveType(ReturnTypeSignature);
+
+            if (ArgumentTypes == null)
+                ArgumentTypes = Arguments == null
+                    ? new Type[0]
+                    : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
+        }
+
         #endregion
 
         #region Extension points
@@ -117,7 +165,7 @@ namespace Lens.Compiler.Entities
 
             if (!ReturnType.IsVoid() || !actualType.IsVoid())
             {
-                if (!ReturnType.IsExtendablyAssignableFrom(actualType))
+                if (!ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, actualType))
                     Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
             }
 

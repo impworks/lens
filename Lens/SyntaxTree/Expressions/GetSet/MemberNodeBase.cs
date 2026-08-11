@@ -1,4 +1,5 @@
-﻿using Lens.Compiler;
+﻿using System;
+using Lens.Compiler;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
@@ -13,6 +14,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// Type signature to access a static type.
         /// </summary>
         public TypeSignature StaticType { get; set; }
+
+        /// <summary>
+        /// Already resolved type (for static member access from auto-generated code).
+        /// </summary>
+        public Type StaticTypeInfo { get; set; }
 
         /// <summary>
         /// The name of the member to access.

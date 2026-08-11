@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
@@ -41,7 +42,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Cached algebraic type reference (if the identifier represents it).
         /// </summary>
-        private TypeEntity _type;
+        private Type _labelType;
+
+        /// <summary>
+        /// Explicit type arguments for a generic function or an untagged generic label, if any.
+        /// </summary>
+        public List<TypeSignature> TypeHints { get; set; }
 
         public bool PointerRequired { get; set; }
         public bool RefArgumentRequired { get; set; }
@@ -88,8 +94,26 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 try
                 {
                     type.ResolveConstructor(new Type[0]);
-                    _type = type;
-                    return _type.TypeInfo;
+
+                    var hints = TypeHints ?? new List<TypeSignature>();
+                    if (type.IsGeneric)
+                    {
+                        // an untagged label carries no value from which the type arguments could be
+                        // inferred, so they have to be spelled out: None<int>
+                        if (hints.Count == 0 || hints.Any(x => x.FullSignature == "_"))
+                            Error(CompilerMessages.GenericLabelTypeArgsRequired, type.Name, type.ParentSignature.Name);
+
+                        _labelType = ctx.ResolveType(new TypeSignature(Identifier, hints.ToArray()));
+                    }
+                    else
+                    {
+                        if (hints.Count > 0)
+                            Error(CompilerMessages.GenericTypeArgCountMismatch, type.Name, 0, hints.Count);
+
+                        _labelType = type.TypeInfo;
+                    }
+
+                    return _labelType;
                 }
                 catch (KeyNotFoundException)
                 {
@@ -116,8 +140,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (_type != null)
-                return Expr.New(_type.TypeInfo);
+            if (_labelType != null)
+                return Expr.New(_labelType);
 
             if (_localConstant != null && !PointerRequired && !RefArgumentRequired)
                 return Expr.Constant(_localConstant.ConstantValue);
@@ -195,10 +219,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            ctx.Scope.EmitClosureInstance(ctx, name);
+            var closureType = ctx.Scope.EmitClosureInstance(ctx, name);
 
-            var clsField = name.ClosureScope.ClosureType.ResolveField(name.ClosureFieldName);
-            gen.EmitLoadField(clsField.FieldBuilder, PointerRequired || RefArgumentRequired);
+            var clsField = ctx.ResolveField(closureType, name.ClosureFieldName);
+            gen.EmitLoadField(clsField.FieldInfo, PointerRequired || RefArgumentRequired);
         }
 
         /// <summary>

@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
         {
-            if (!expressionType.IsAppliedVersionOf(typeof(KeyValuePair<,>)))
+            if (!expressionType.IsAppliedVersionOf(ctx.Resolver, typeof(KeyValuePair<,>)))
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(KeyValuePair<,>));
 
             _types = expressionType.GetGenericArguments();

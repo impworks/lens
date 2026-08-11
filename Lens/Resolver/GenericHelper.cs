@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.Compiler.Entities;
 using Lens.Translations;
 
 namespace Lens.Resolver
@@ -27,12 +29,12 @@ namespace Lens.Resolver
         /// 2. Already resolved list of types
         /// Return value is the inferred type of lambda return.
         /// </param>
-        public static Type[] ResolveMethodGenericsByArgs(Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, LambdaResolver lambdaResolver = null)
+        public static Type[] ResolveMethodGenericsByArgs(TypeResolutionContext ctx, Type[] expectedTypes, Type[] actualTypes, Type[] genericDefs, Type[] hints = null, LambdaResolver lambdaResolver = null)
         {
             if (hints != null && hints.Length != genericDefs.Length)
                 throw new ArgumentException("hints");
 
-            var resolver = new GenericResolver(genericDefs, hints, lambdaResolver);
+            var resolver = new GenericResolver(ctx, genericDefs, hints, lambdaResolver);
             return resolver.Resolve(expectedTypes, actualTypes);
         }
 
@@ -115,7 +117,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Ensures that actual arguments can be applied to corresponding placeholders.
         /// </summary>
-        public static Type MakeGenericTypeChecked(Type type, params Type[] values)
+        public static Type MakeGenericTypeChecked(TypeResolutionContext ctx, Type type, params Type[] values)
         {
             if (!type.IsGenericTypeDefinition)
                 return type;
@@ -125,28 +127,72 @@ namespace Lens.Resolver
                 throw new ArgumentOutOfRangeException(nameof(values));
 
             for (var idx = 0; idx < args.Length; idx++)
+                CheckConstraint(ctx, args[idx], values[idx], type);
+
+            return ctx.MakeGenericType(type, values);
+        }
+
+        /// <summary>
+        /// Ensures that inferred or explicitly given arguments satisfy the constraints of a
+        /// LENS-declared generic function.
+        /// </summary>
+        public static void CheckConstraints(TypeResolutionContext ctx, IList<GenericParameterEntity> parameters, Type[] values)
+        {
+            for (var idx = 0; idx < parameters.Count; idx++)
+                CheckEntityConstraint(ctx, parameters[idx], values[idx], parameters[idx].DeclarationName);
+        }
+
+        /// <summary>
+        /// Ensures that a single type argument satisfies the constraints of its placeholder.
+        /// </summary>
+        private static void CheckConstraint(TypeResolutionContext ctx, Type arg, Type value, object owner)
+        {
+            // constraints of a LENS-declared parameter cannot be read back from an unfinished
+            // builder, so the compiler's own model is the only reliable source for them
+            var entity = ctx.FindConstraints(arg);
+            if (entity != null)
             {
-                var arg = args[idx];
-                var constr = arg.GenericParameterAttributes;
-                var value = values[idx];
-
-                if (constr.HasFlag(GenericParameterAttributes.ReferenceTypeConstraint) && value.IsValueType)
-                    throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, arg, type));
-
-                if (constr.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
-                    if (!value.IsValueType || (value.IsGenericType && value.GetGenericTypeDefinition() == typeof(Nullable<>)))
-                        throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, arg, type));
-
-                if (constr.HasFlag(GenericParameterAttributes.DefaultConstructorConstraint) && !value.HasDefaultConstructor())
-                    throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, arg, type));
-
-                var bases = arg.GetGenericParameterConstraints();
-                foreach (var currBase in bases)
-                    if (!currBase.IsExtendablyAssignableFrom(value, true))
-                        throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, arg, type, currBase));
+                CheckEntityConstraint(ctx, entity, value, owner);
+                return;
             }
 
-            return type.MakeGenericType(values);
+            var constr = arg.GenericParameterAttributes;
+
+            if (constr.HasFlag(GenericParameterAttributes.ReferenceTypeConstraint) && value.IsValueType)
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, arg, owner));
+
+            if (constr.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
+                if (!value.IsValueType || value.IsNullableType())
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, arg, owner));
+
+            if (constr.HasFlag(GenericParameterAttributes.DefaultConstructorConstraint) && !value.HasDefaultConstructor())
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, arg, owner));
+
+            foreach (var currBase in arg.GetGenericParameterConstraints())
+                if (!currBase.IsExtendablyAssignableFrom(ctx, value, true))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, arg, owner, currBase));
+        }
+
+        /// <summary>
+        /// Ensures that a type argument satisfies the constraints recorded in the compiler's model.
+        /// </summary>
+        private static void CheckEntityConstraint(TypeResolutionContext ctx, GenericParameterEntity entity, Type value, object owner)
+        {
+            if (entity.IsReferenceType && value.IsValueType)
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, entity.Name, owner));
+
+            if (entity.IsValueType && (!value.IsValueType || value.IsNullableType()))
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, entity.Name, owner));
+
+            if (entity.RequiresDefaultCtor && !value.HasDefaultConstructor())
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, entity.Name, owner));
+
+            if (entity.BaseType != null && !entity.BaseType.IsExtendablyAssignableFrom(ctx, value, true))
+                throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, entity.BaseType));
+
+            foreach (var iface in entity.Interfaces)
+                if (!iface.IsExtendablyAssignableFrom(ctx, value, true))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, iface));
         }
 
         #endregion

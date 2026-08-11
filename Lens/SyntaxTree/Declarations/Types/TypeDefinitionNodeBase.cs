@@ -30,6 +30,11 @@ namespace Lens.SyntaxTree.Declarations.Types
         /// </summary>
         public List<T> Entries { get; }
 
+        /// <summary>
+        /// The generic parameters of the type, if any.
+        /// </summary>
+        public List<TypeParameterDefinition> TypeParameters { get; set; }
+
         #endregion
 
         #region Debug

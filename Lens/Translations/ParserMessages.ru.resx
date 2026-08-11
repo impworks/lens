@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -329,5 +329,11 @@
   </data>
   <data name="NullSafeAccessorNotAllowed" xml:space="preserve">
     <value>LE2071: Безопасные обращения ('?.' и '?[') нельзя использовать в левой части присваивания или в качестве аргумента 'ref'!</value>
+  </data>
+  <data name="TypeParameterExpected" xml:space="preserve">
+    <value>LE2072: Имя параметра типа должно быть идентификатором!</value>
+  </data>
+  <data name="TypeConstraintExpected" xml:space="preserve">
+    <value>LE2073: Ожидается ограничение параметра типа!</value>
   </data>
 </root>

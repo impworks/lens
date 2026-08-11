@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using Lens.Compiler;
 using Lens.Translations;
 using Lens.Utils;
@@ -40,8 +41,6 @@ namespace Lens.Resolver
                 typeof(double),
                 typeof(decimal)
             };
-
-            DistanceCache = new Dictionary<Tuple<Type, Type, bool>, int>();
         }
 
         #endregion
@@ -51,8 +50,6 @@ namespace Lens.Resolver
         public static readonly Type[] SignedIntegerTypes;
         public static readonly Type[] UnsignedIntegerTypes;
         public static readonly Type[] FloatTypes;
-
-        private static readonly Dictionary<Tuple<Type, Type, bool>, int> DistanceCache;
 
         #endregion
 
@@ -154,29 +151,24 @@ namespace Lens.Resolver
         /// <param name="exprType">Type of assignment source (ex. expression)</param>
         /// <param name="exactly">Checks whether types must be compatible as-is, or additional code may be implicitly issued by the compiler.</param>
         /// <returns></returns>
-        public static bool IsExtendablyAssignableFrom(this Type varType, Type exprType, bool exactly = false)
+        public static bool IsExtendablyAssignableFrom(this Type varType, TypeResolutionContext ctx, Type exprType, bool exactly = false)
         {
-            return varType.DistanceFrom(exprType, exactly) < int.MaxValue;
+            return varType.DistanceFrom(ctx, exprType, exactly) < int.MaxValue;
         }
 
         /// <summary>
         /// Gets distance between two types.
-        /// This method is memoized.
+        /// This method is memoized within the current compilation.
         /// </summary>
-        public static int DistanceFrom(this Type varType, Type exprType, bool exactly = false)
+        public static int DistanceFrom(this Type varType, TypeResolutionContext ctx, Type exprType, bool exactly = false)
         {
-            var key = new Tuple<Type, Type, bool>(varType, exprType, exactly);
-
-            if (!DistanceCache.ContainsKey(key))
-                DistanceCache.Add(key, distanceFrom(varType, exprType, exactly));
-
-            return DistanceCache[key];
+            return ctx.CachedDistance(varType, exprType, exactly, () => distanceFrom(ctx, varType, exprType, exactly));
         }
 
         /// <summary>
         /// Calculates the distance between two types.
         /// </summary>
-        private static int distanceFrom(Type varType, Type exprType, bool exactly = false)
+        private static int distanceFrom(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
         {
             if (varType == exprType)
                 return 0;
@@ -211,19 +203,49 @@ namespace Lens.Resolver
 
             if (varType.IsInterface)
             {
-                var idist = InterfaceDistance(varType, exprType.ResolveInterfaces());
+                var idist = InterfaceDistance(ctx, varType, ctx.ResolveInterfaces(exprType));
                 if (idist != int.MaxValue)
                     return idist;
             }
 
             if (varType.IsGenericParameter || exprType.IsGenericParameter)
-                return GenericParameterDistance(varType, exprType);
+                return GenericParameterDistance(ctx, varType, exprType);
 
             if (exprType.IsLambdaType())
-                return LambdaDistance(varType, exprType);
+                return LambdaDistance(ctx, varType, exprType);
 
             if (varType.IsGenericType && exprType.IsGenericType)
-                return GenericDistance(varType, exprType);
+            {
+                // note that 'exactly' is deliberately not forwarded: the arguments of a generic
+                // type have always been compared leniently
+                var genericDistance = GenericDistance(ctx, varType, exprType);
+                if (genericDistance != int.MaxValue)
+                    return genericDistance;
+
+                // a label of a generic algebraic type is related to the type itself through
+                // inheritance and instantiation at once, so the chain has to be searched for an
+                // ancestor that matches by instantiation.
+                //
+                // This only applies to types declared in the script: for imported generics the
+                // long-standing behaviour of stopping right here is preserved.
+                if (IsDeclaredGeneric(varType))
+                {
+                    var current = GetBaseType(exprType);
+                    var steps = 1;
+                    while (current != null)
+                    {
+                        if (current.IsGenericType)
+                        {
+                            genericDistance = GenericDistance(ctx, varType, current);
+                            if (genericDistance != int.MaxValue)
+                                return steps + genericDistance;
+                        }
+
+                        current = GetBaseType(current);
+                        steps++;
+                    }
+                }
+            }
 
             if (IsDerivedFrom(exprType, varType, out int result))
                 return result;
@@ -236,7 +258,7 @@ namespace Lens.Resolver
                 var areRefs = !varElType.IsValueType && !exprElType.IsValueType;
                 var generic = varElType.IsGenericParameter || exprElType.IsGenericParameter;
                 if (areRefs || generic)
-                    return varElType.DistanceFrom(exprElType, exactly);
+                    return varElType.DistanceFrom(ctx, exprElType, exactly);
             }
 
             return int.MaxValue;
@@ -245,7 +267,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the distance to any of given interfaces.
         /// </summary>
-        private static int InterfaceDistance(Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
+        private static int InterfaceDistance(TypeResolutionContext ctx, Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
         {
             var min = int.MaxValue;
             foreach (var iface in ifaces)
@@ -255,7 +277,7 @@ namespace Lens.Resolver
 
                 if (interfaceType.IsGenericType && iface.IsGenericType)
                 {
-                    var dist = GenericDistance(interfaceType, iface, exactly);
+                    var dist = GenericDistance(ctx, interfaceType, iface, exactly);
                     if (dist < min)
                         min = dist;
                 }
@@ -273,7 +295,7 @@ namespace Lens.Resolver
             var current = derivedType;
             while (current != null && current != baseType)
             {
-                current = current.BaseType;
+                current = GetBaseType(current);
                 ++distance;
             }
 
@@ -281,9 +303,32 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// Checks if a constructed generic type was declared in the script.
+        /// </summary>
+        private static bool IsDeclaredGeneric(Type type)
+        {
+            return !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() is TypeBuilder;
+        }
+
+        /// <summary>
+        /// Gets the base type of a type, tolerating entities that are still being built.
+        /// </summary>
+        private static Type GetBaseType(Type type)
+        {
+            try
+            {
+                return type.BaseType;
+            }
+            catch (NotSupportedException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Calculates compound distance of two generic types' arguments if applicable.
         /// </summary>
-        private static int GenericDistance(Type varType, Type exprType, bool exactly = false)
+        private static int GenericDistance(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
         {
             var definition = varType.GetGenericTypeDefinition();
             if (definition != exprType.GetGenericTypeDefinition())
@@ -302,18 +347,18 @@ namespace Lens.Resolver
                     continue;
 
                 var argument = arguments[i];
-                var attributes = argument.GenericParameterAttributes;
+                var attributes = GetGenericParameterAttributes(argument);
 
                 int conversionResult;
                 if (argument1.IsGenericParameter)
                 {
                     // generic parameter may be substituted with anything
                     // including value types
-                    conversionResult = GenericParameterDistance(argument1, argument2, exactly);
+                    conversionResult = GenericParameterDistance(ctx, argument1, argument2, exactly);
                 }
                 else if (argument2.IsGenericParameter)
                 {
-                    conversionResult = GenericParameterDistance(argument2, argument1, exactly);
+                    conversionResult = GenericParameterDistance(ctx, argument2, argument1, exactly);
                 }
                 else if (attributes.HasFlag(GenericParameterAttributes.Contravariant))
                 {
@@ -322,7 +367,7 @@ namespace Lens.Resolver
                         return int.MaxValue;
 
                     // dist(X<in T1>, X<in T2>) = dist(T2, T1)
-                    conversionResult = argument2.DistanceFrom(argument1, exactly);
+                    conversionResult = argument2.DistanceFrom(ctx, argument1, exactly);
                 }
                 else if (attributes.HasFlag(GenericParameterAttributes.Covariant))
                 {
@@ -330,12 +375,12 @@ namespace Lens.Resolver
                         return int.MaxValue;
 
                     // dist(X<out T1>, X<out T2>) = dist(T1, T2)
-                    conversionResult = argument1.DistanceFrom(argument2, exactly);
+                    conversionResult = argument1.DistanceFrom(ctx, argument2, exactly);
                 }
                 else if (argument1.IsGenericType && argument2.IsGenericType)
                 {
                     // nested generic types
-                    conversionResult = GenericDistance(argument1, argument2, exactly);
+                    conversionResult = GenericDistance(ctx, argument1, argument2, exactly);
                 }
                 else
                 {
@@ -358,27 +403,67 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type can be used as a substitute for a generic parameter.
         /// </summary>
-        private static int GenericParameterDistance(Type varType, Type exprType, bool exactly = false)
+        private static int GenericParameterDistance(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
         {
             // generic parameter is on the same level of inheritance as the expression
             // therefore getting its parent type does not take a step
-            var dist =  varType.IsGenericParameter
-                ? DistanceFrom(varType.BaseType, exprType, exactly)
-                : DistanceFrom(exprType.BaseType, varType, exactly);
+            var dist = varType.IsGenericParameter
+                // a value is being stored into the parameter: whether it actually fits is decided
+                // by constraint checking, which produces a far better diagnostic than silently
+                // dropping the candidate from overload resolution
+                ? DistanceFrom(GetGenericParameterBase(ctx, varType, true), ctx, exprType, exactly)
+                : DistanceFrom(GetGenericParameterBase(ctx, exprType, false), ctx, varType, exactly);
 
             return dist == int.MaxValue ? dist : dist + 1;
         }
 
         /// <summary>
+        /// Gets the effective base type of a generic parameter.
+        /// For LENS-declared parameters the constraint model is used, because the constraints
+        /// cannot be read back from an unfinished builder.
+        /// </summary>
+        private static Type GetGenericParameterBase(TypeResolutionContext ctx, Type type, bool ignoreConstraints)
+        {
+            var entity = ctx.FindConstraints(type);
+            if (entity != null)
+            {
+                return ignoreConstraints
+                    ? typeof(object)
+                    : entity.BaseType ?? (entity.IsValueType ? typeof(ValueType) : typeof(object));
+            }
+
+            return GetBaseType(type) ?? typeof(object);
+        }
+
+        /// <summary>
+        /// Reads the attributes of a generic parameter, tolerating unfinished builders.
+        /// </summary>
+        private static GenericParameterAttributes GetGenericParameterAttributes(Type type)
+        {
+            try
+            {
+                return type.GenericParameterAttributes;
+            }
+            catch (NotSupportedException)
+            {
+                return GenericParameterAttributes.None;
+            }
+            catch (InvalidOperationException)
+            {
+                return GenericParameterAttributes.None;
+            }
+        }
+
+        /// <summary>
         /// Checks if a lambda signature matches a delegate.
         /// </summary>
-        private static int LambdaDistance(Type varType, Type exprType)
+        private static int LambdaDistance(TypeResolutionContext ctx, Type varType, Type exprType)
         {
             if (!varType.IsCallableType())
                 return int.MaxValue;
 
-            var varWrapper = ReflectionHelper.WrapDelegate(varType);
-            var exprWrapper = ReflectionHelper.WrapDelegate(exprType);
+            var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType);
+            var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType);
 
             if (varWrapper.ArgumentTypes.Length != exprWrapper.ArgumentTypes.Length)
                 return int.MaxValue;
@@ -391,7 +476,7 @@ namespace Lens.Resolver
                 var currVar = varWrapper.ArgumentTypes[idx];
                 var currExpr = exprWrapper.ArgumentTypes[idx];
 
-                var dist = currVar.DistanceFrom(currExpr);
+                var dist = currVar.DistanceFrom(ctx, currExpr);
                 if (dist == int.MaxValue)
                     return int.MaxValue;
 
@@ -408,7 +493,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets the most common type that all the given types would fit into.
         /// </summary>
-        public static Type GetMostCommonType(this Type[] types)
+        public static Type GetMostCommonType(this Type[] types, TypeResolutionContext ctx)
         {
             if (types.Length == 0)
                 return null;
@@ -434,7 +519,7 @@ namespace Lens.Resolver
             // but int -> Nullable<double> is currently forbidden
             foreach (var type in types)
             {
-                if (!curr.IsExtendablyAssignableFrom(type))
+                if (!curr.IsExtendablyAssignableFrom(ctx, type))
                 {
                     curr = typeof(object);
                     break;
@@ -445,10 +530,10 @@ namespace Lens.Resolver
                 return curr;
 
             // try to get common interfaces
-            var ifaces = types[0].GetInterfaces().AsEnumerable().ToList();
+            var ifaces = ctx.ResolveInterfaces(types[0]).AsEnumerable().ToList();
             for (var idx = 1; idx < types.Length; idx++)
             {
-                var newIfaces = types[idx].IsInterface ? new[] {types[idx]} : types[idx].GetInterfaces();
+                var newIfaces = types[idx].IsInterface ? new[] {types[idx]} : ctx.ResolveInterfaces(types[idx]);
                 ifaces = ifaces.Intersect(newIfaces).ToList();
                 if (!ifaces.Any())
                     break;
@@ -687,15 +772,15 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets total distance between two sets of argument types.
         /// </summary>
-        public static MethodLookupResult<T> ArgumentDistance<T>(IEnumerable<Type> passedTypes, Type[] actualTypes, T method, bool isVariadic)
+        public static MethodLookupResult<T> ArgumentDistance<T>(TypeResolutionContext ctx, IEnumerable<Type> passedTypes, Type[] actualTypes, T method, bool isVariadic)
         {
             if (!isVariadic)
-                return new MethodLookupResult<T>(method, TypeListDistance(passedTypes, actualTypes), actualTypes);
+                return new MethodLookupResult<T>(method, TypeListDistance(ctx, passedTypes, actualTypes), actualTypes);
 
             var simpleCount = actualTypes.Length - 1;
 
-            var simpleDistance = TypeListDistance(passedTypes.Take(simpleCount), actualTypes.Take(simpleCount));
-            var variadicDistance = VariadicArgumentDistance(passedTypes.Skip(simpleCount), actualTypes[simpleCount]);
+            var simpleDistance = TypeListDistance(ctx, passedTypes.Take(simpleCount), actualTypes.Take(simpleCount));
+            var variadicDistance = VariadicArgumentDistance(ctx, passedTypes.Skip(simpleCount), actualTypes[simpleCount]);
             var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
             return new MethodLookupResult<T>(method, distance, actualTypes);
         }
@@ -703,7 +788,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets total distance between two sequence of types.
         /// </summary>
-        public static int TypeListDistance(IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
+        public static int TypeListDistance(TypeResolutionContext ctx, IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
         {
             var passedIter = passedArgs.GetEnumerator();
             var calleeIter = calleeArgs.GetEnumerator();
@@ -722,7 +807,7 @@ namespace Lens.Resolver
                 if (!calleeOk)
                     return totalDist;
 
-                var dist = calleeIter.Current.DistanceFrom(passedIter.Current);
+                var dist = calleeIter.Current.DistanceFrom(ctx, passedIter.Current);
                 if (dist == int.MaxValue)
                     return int.MaxValue;
 
@@ -733,7 +818,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the compound distance of a list of arguments packed into a param array.
         /// </summary>
-        private static int VariadicArgumentDistance(IEnumerable<Type> passedArgs, Type variadicArg)
+        private static int VariadicArgumentDistance(TypeResolutionContext ctx, IEnumerable<Type> passedArgs, Type variadicArg)
         {
             var args = passedArgs.ToArray();
 
@@ -746,7 +831,7 @@ namespace Lens.Resolver
 
             foreach (var curr in args)
             {
-                var currDist = elemType.DistanceFrom(curr);
+                var currDist = elemType.DistanceFrom(ctx, curr);
                 if (currDist == int.MaxValue)
                     return int.MaxValue;
 
@@ -768,9 +853,9 @@ namespace Lens.Resolver
         /// <param name="type">Type to check.</param>
         /// <param name="iface">Desired interface.</param>
         /// <param name="unwindGenerics">A flag indicating that generic arguments should be discarded from both the type and the interface.</param>
-        public static bool Implements(this Type type, Type iface, bool unwindGenerics)
+        public static bool Implements(this Type type, TypeResolutionContext ctx, Type iface, bool unwindGenerics)
         {
-            var ifaces = type.ResolveInterfaces();
+            var ifaces = ctx.ResolveInterfaces(type);
             if (type.IsInterface)
                 ifaces = ifaces.Union(new[] {type}).ToArray();
 
@@ -796,12 +881,12 @@ namespace Lens.Resolver
         /// <param name="type">Type to find the implementation in.</param>
         /// <param name="iface">Desirrable interface.</param>
         /// <returns>Implementation of the generic interface or null if none.</returns>
-        public static Type ResolveImplementationOf(this Type type, Type iface)
+        public static Type ResolveImplementationOf(this Type type, TypeResolutionContext ctx, Type iface)
         {
             if (iface.IsGenericType && !iface.IsGenericTypeDefinition)
                 iface = iface.GetGenericTypeDefinition();
 
-            var ifaces = type.ResolveInterfaces();
+            var ifaces = ctx.ResolveInterfaces(type);
             if (type.IsInterface)
                 ifaces = ifaces.Union(new[] {type}).ToArray();
 
@@ -817,10 +902,10 @@ namespace Lens.Resolver
         /// <param name="type1">First type to examine.</param>
         /// <param name="type2">First type to examine.</param>
         /// <returns>Common implementation of an interface, or null if none.</returns>
-        public static Type ResolveCommonImplementationFor(this Type iface, Type type1, Type type2)
+        public static Type ResolveCommonImplementationFor(this Type iface, TypeResolutionContext ctx, Type type1, Type type2)
         {
-            var impl1 = type1.ResolveImplementationOf(iface);
-            var impl2 = type2.ResolveImplementationOf(iface);
+            var impl1 = type1.ResolveImplementationOf(ctx, iface);
+            var impl2 = type2.ResolveImplementationOf(ctx, iface);
             return impl1 == impl2 ? impl1 : null;
         }
 
@@ -830,7 +915,7 @@ namespace Lens.Resolver
         /// </summary>
         /// <param name="type">Closed type to test.</param>
         /// <param name="genericType">Generic type.</param>
-        public static bool IsAppliedVersionOf(this Type type, Type genericType)
+        public static bool IsAppliedVersionOf(this Type type, TypeResolutionContext ctx, Type genericType)
         {
             if (type.IsInterface && !genericType.IsInterface)
                 throw new ArgumentException(string.Format("Interface {0} cannot implement a type! ({1} given).", type.FullName, genericType.FullName));
@@ -839,7 +924,7 @@ namespace Lens.Resolver
                 return false;
 
             return genericType.IsInterface
-                ? type.Implements(genericType, true)
+                ? type.Implements(ctx, genericType, true)
                 : type.GetGenericTypeDefinition() == genericType.GetGenericTypeDefinition();
         }
 

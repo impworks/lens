@@ -50,9 +50,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void ResolveSelf(Context ctx)
         {
-            var type = StaticType != null
-                ? ctx.ResolveType(StaticType)
-                : Expression.Resolve(ctx);
+            var type = StaticTypeInfo
+                       ?? (StaticType != null
+                           ? ctx.ResolveType(StaticType)
+                           : Expression.Resolve(ctx));
 
             CheckTypeInSafeMode(ctx, type);
 
@@ -88,7 +89,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var valType = Value.Resolve(ctx);
             ctx.CheckTypedExpression(Value, valType, true);
 
-            if (!destType.IsExtendablyAssignableFrom(valType))
+            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
         }
 

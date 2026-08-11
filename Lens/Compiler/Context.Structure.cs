@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
@@ -15,9 +16,14 @@ namespace Lens.Compiler
         /// <summary>
         /// Creates a new type entity with given name.
         /// </summary>
-        internal TypeEntity CreateType(string name, string parent = null, bool isSealed = false, bool defaultCtor = true, bool prepare = true)
+        internal TypeEntity CreateType(string name, TypeSignature parent = null, bool isSealed = false, bool defaultCtor = true, bool prepare = true, List<GenericParameterEntity> genericParameters = null)
         {
-            return CreateTypeCore(name, isSealed, defaultCtor, prepare, x => x.ParentSignature = parent);
+            return CreateTypeCore(name, isSealed, defaultCtor, prepare, x =>
+                {
+                    x.ParentSignature = parent;
+                    x.GenericParameters = genericParameters;
+                }
+            );
         }
 
         /// <summary>

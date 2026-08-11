@@ -75,7 +75,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var exprType = Value.Resolve(ctx);
             ctx.CheckTypedExpression(Value, exprType, true);
 
-            if (!destType.IsExtendablyAssignableFrom(exprType))
+            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, exprType))
             {
                 Error(
                     nameInfo != null ? CompilerMessages.IdentifierTypeMismatch : CompilerMessages.GlobalPropertyTypeMismatch,
@@ -168,12 +168,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            ctx.Scope.EmitClosureInstance(ctx, name);
+            var closureType = ctx.Scope.EmitClosureInstance(ctx, name);
 
             Expr.Cast(Value, name.Type).Emit(ctx, true);
 
-            var clsField = name.ClosureScope.ClosureType.ResolveField(name.ClosureFieldName);
-            gen.EmitSaveField(clsField.FieldBuilder);
+            var clsField = ctx.ResolveField(closureType, name.ClosureFieldName);
+            gen.EmitSaveField(clsField.FieldInfo);
         }
 
         #endregion

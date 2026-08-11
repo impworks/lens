@@ -99,6 +99,19 @@ namespace Lens.Compiler.Entities
         }
 
         /// <summary>
+        /// Creates a new method with a resolved return type and argument types given by function arguments.
+        /// </summary>
+        internal MethodEntity CreateMethod(string name, Type returnType, IEnumerable<FunctionArgument> args, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        {
+            return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
+                {
+                    me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
+                    me.ReturnType = returnType;
+                }
+            );
+        }
+
+        /// <summary>
         /// Creates a new constructor with the given argument types.
         /// </summary>
         internal ConstructorEntity CreateConstructor(string[] argTypes = null, bool prepare = true)
@@ -124,6 +137,8 @@ namespace Lens.Compiler.Entities
         /// </summary>
         public void CheckMethod(MethodEntity method)
         {
+            CheckGenericArity(method);
+
             try
             {
                 // exception is good
@@ -140,6 +155,25 @@ namespace Lens.Compiler.Entities
                     _methods.Add(method.Name, new List<MethodEntity> {method});
                 else
                     _methods[method.Name].Add(method);
+            }
+        }
+
+        /// <summary>
+        /// Forbids one name from being declared both generic and non-generic, or generic with two
+        /// different arities. C# permits it; LENS does not, because it buys nothing for glue code
+        /// and makes lookup and error messages materially worse.
+        /// </summary>
+        private void CheckGenericArity(MethodEntity method)
+        {
+            if (!_methods.TryGetValue(method.Name, out var group))
+                return;
+
+            var argCount = method.GetArgumentTypes(Context).Length;
+
+            foreach (var curr in group)
+            {
+                if (curr.GetArgumentTypes(Context).Length == argCount && curr.GenericParameterCount != method.GenericParameterCount)
+                    Context.Error(CompilerMessages.GenericArityOverloading, method.Name);
             }
         }
 

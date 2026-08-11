@@ -698,5 +698,23 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("NullSafeAccessorNotAllowed", resourceCulture);
             }
         }
+            
+        /// <summary>
+        ///   Looks up a localized string similar to LE2072: Type parameter name must be an identifier!.
+        /// </summary>
+        public static string TypeParameterExpected {
+            get {
+                return ResourceManager.GetString("TypeParameterExpected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE2073: Type parameter constraint is expected!.
+        /// </summary>
+        public static string TypeConstraintExpected {
+            get {
+                return ResourceManager.GetString("TypeConstraintExpected", resourceCulture);
+            }
+        }
     }
 }

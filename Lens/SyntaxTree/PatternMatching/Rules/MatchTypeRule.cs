@@ -41,14 +41,16 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Type, TypeEntityKind.TypeLabel)))
                 Error(Identifier, CompilerMessages.PatternNotValidType, Identifier.FullSignature);
 
-            _type = ctx.ResolveType(Identifier);
-            if (!_type.IsExtendablyAssignableFrom(expressionType) && !expressionType.IsExtendablyAssignableFrom(_type))
+            _type = ctx.ResolvePatternType(typeEntity, expressionType);
+            if (!_type.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, _type))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
             try
             {
-                var field = typeEntity.ResolveField("Tag");
-                return LabelRule.Resolve(ctx, field.Type);
+                // the tag of a generic label is typed in terms of the label's own parameters,
+                // so it is read off the constructed type rather than off the definition
+                var field = ctx.ResolveField(_type, "Tag");
+                return LabelRule.Resolve(ctx, field.FieldType);
             }
             catch (KeyNotFoundException)
             {

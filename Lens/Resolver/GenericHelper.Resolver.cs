@@ -14,10 +14,16 @@ namespace Lens.Resolver
         {
             #region Constructor
 
-            public GenericResolver(Type[] genericDefs, Type[] hints, LambdaResolver lambdaResolver)
+            public GenericResolver(TypeResolutionContext ctx, Type[] genericDefs, Type[] hints, LambdaResolver lambdaResolver)
             {
+                _ctx = ctx;
                 _genericDefs = genericDefs;
                 _genericValues = hints ?? new Type[_genericDefs.Length];
+                _isHinted = new bool[_genericDefs.Length];
+
+                if (hints != null)
+                    for (var idx = 0; idx < hints.Length; idx++)
+                        _isHinted[idx] = hints[idx] != null;
 
                 _lambdaResolver = lambdaResolver;
             }
@@ -25,6 +31,11 @@ namespace Lens.Resolver
             #endregion
 
             #region Fields
+
+            /// <summary>
+            /// The resolution context of the current compilation.
+            /// </summary>
+            private readonly TypeResolutionContext _ctx;
 
             /// <summary>
             /// The source list of generic argument definitions.
@@ -41,6 +52,12 @@ namespace Lens.Resolver
             /// Therefore, 'T' means 'int' for current method.
             /// </summary>
             private readonly Type[] _genericValues;
+
+            /// <summary>
+            /// Flags marking the arguments that were given explicitly at the call site.
+            /// An explicit argument is authoritative: nothing inferred may contradict it.
+            /// </summary>
+            private readonly bool[] _isHinted;
 
             /// <summary>
             /// Callback for lambda argument resolving.
@@ -97,13 +114,24 @@ namespace Lens.Resolver
                         }
                         else
                         {
-                            var closest = FindImplementation(expected, actual);
+                            var closest = FindImplementation(_ctx, expected, actual);
                             ResolveRecursive(
                                 expected.GetGenericArguments(),
                                 closest.GetGenericArguments(),
                                 depth + 1
                             );
                         }
+                    }
+
+                    // an array parameter carries its element type, so 'T[]' against 'int[]'
+                    // resolves T just like a constructed generic type would
+                    else if (expected.IsArray && actual.IsArray)
+                    {
+                        ResolveRecursive(
+                            new[] {expected.GetElementType()},
+                            new[] {actual.GetElementType()},
+                            depth + 1
+                        );
                     }
 
                     else
@@ -114,6 +142,11 @@ namespace Lens.Resolver
                             var value = _genericValues[defIdx];
 
                             if (expected != def)
+                                continue;
+
+                            // an explicitly given argument is not overridden by inference:
+                            // the arguments are converted to it instead
+                            if (_isHinted[defIdx])
                                 continue;
 
                             if (value != null && value != actual)
@@ -130,8 +163,8 @@ namespace Lens.Resolver
             /// </summary>
             private void ResolveLambda(Type expected, Type actual, int lambdaPosition, int depth)
             {
-                var expectedInfo = ReflectionHelper.WrapDelegate(expected);
-                var actualInfo = ReflectionHelper.WrapDelegate(actual);
+                var expectedInfo = ReflectionHelper.WrapDelegate(_ctx, expected);
+                var actualInfo = ReflectionHelper.WrapDelegate(_ctx, actual);
 
                 var argTypes = new Type[actualInfo.ArgumentTypes.Length];
 
@@ -185,7 +218,7 @@ namespace Lens.Resolver
             /// <summary>
             /// Finds the appropriate generic type in the inheritance of the actual type.
             /// </summary>
-            private static Type FindImplementation(Type desired, Type actual)
+            private static Type FindImplementation(TypeResolutionContext ctx, Type desired, Type actual)
             {
                 var generic = desired.GetGenericTypeDefinition();
 
@@ -195,9 +228,9 @@ namespace Lens.Resolver
                 // is interface
                 if (desired.IsInterface)
                 {
-                    var matching = actual.ResolveInterfaces()
+                    var matching = ctx.ResolveInterfaces(actual)
                                          .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic)
-                                         .Where(i => i.DistanceFrom(desired) != int.MaxValue)
+                                         .Where(i => i.DistanceFrom(ctx, desired) != int.MaxValue)
                                          .Take(2)
                                          .ToList();
 

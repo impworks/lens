@@ -181,6 +181,86 @@ namespace Lens.Parser
             return list;
         }
 
+        /// <summary>
+        /// type_params                                 = "&lt;" type_param { "," type_param } "&gt;"
+        ///
+        /// Unlike type_args, this is a declaration site: after the name of the declared entity
+        /// a "&lt;" cannot start anything else, so there is no need to backtrack.
+        /// </summary>
+        private List<TypeParameterDefinition> ParseTypeParams()
+        {
+            if (!Check(LexemType.Less))
+                return null;
+
+            var list = new List<TypeParameterDefinition> {Bind(ParseTypeParam)};
+            while (Check(LexemType.Comma))
+                list.Add(Bind(ParseTypeParam));
+
+            Ensure(LexemType.Greater, ParserMessages.SymbolExpected, '>');
+            return list;
+        }
+
+        /// <summary>
+        /// type_param                                  = identifier [ "=" type_constraints ]
+        /// type_constraints                            = type_constraint { "&amp;" type_constraint }
+        /// </summary>
+        private TypeParameterDefinition ParseTypeParam()
+        {
+            var node = new TypeParameterDefinition();
+            node.Name = Ensure(LexemType.Identifier, ParserMessages.TypeParameterExpected).Value;
+
+            if (Check(LexemType.Assign))
+            {
+                ParseTypeConstraint(node);
+                while (Check(LexemType.BitAnd))
+                    ParseTypeConstraint(node);
+            }
+
+            return node;
+        }
+
+        /// <summary>
+        /// type_constraint                             = "class" | "struct" | "new" | type
+        ///
+        /// Note that "class" and "struct" are ordinary identifiers everywhere else in the language.
+        /// Inside a constraint list they always win over a host type of the same name.
+        /// </summary>
+        private void ParseTypeConstraint(TypeParameterDefinition node)
+        {
+            if (Check(LexemType.New))
+            {
+                node.RequiresDefaultCtor = true;
+                node.Keywords.Add("new");
+                return;
+            }
+
+            if (PeekConstraintKeyword("class"))
+            {
+                Skip();
+                node.IsReferenceType = true;
+                node.Keywords.Add("class");
+                return;
+            }
+
+            if (PeekConstraintKeyword("struct"))
+            {
+                Skip();
+                node.IsValueType = true;
+                node.Keywords.Add("struct");
+                return;
+            }
+
+            node.TypeConstraints.Add(Ensure(ParseType, ParserMessages.TypeConstraintExpected));
+        }
+
+        /// <summary>
+        /// Checks if the current lexem is the given pseudo-keyword used in a constraint list.
+        /// </summary>
+        private bool PeekConstraintKeyword(string keyword)
+        {
+            return Peek(LexemType.Identifier) && _lexems[_lexemId].Value == keyword;
+        }
+
         #endregion
 
         #region Structures
@@ -200,7 +280,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// record_def                                  = "record" identifier INDENT record_stmt { NL record_stmt } DEDENT
+        /// record_def                                  = "record" identifier [ type_params ] INDENT record_stmt { NL record_stmt } DEDENT
         /// </summary>
         private RecordDefinitionNode ParseRecordDef()
         {
@@ -210,6 +290,7 @@ namespace Lens.Parser
             var node = new RecordDefinitionNode();
 
             node.Name = Ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected).Value;
+            node.TypeParameters = ParseTypeParams();
             Ensure(LexemType.Indent, ParserMessages.RecordIndentExpected);
 
             var field = Bind(ParseRecordStmt);
@@ -240,7 +321,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// type_def                                    = "type" identifier INDENT type_stmt { type_stmt } DEDENT
+        /// type_def                                    = "type" identifier [ type_params ] INDENT type_stmt { type_stmt } DEDENT
         /// </summary>
         private TypeDefinitionNode ParseTypeDef()
         {
@@ -250,6 +331,7 @@ namespace Lens.Parser
             var node = new TypeDefinitionNode();
 
             node.Name = Ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
+            node.TypeParameters = ParseTypeParams();
             Ensure(LexemType.Indent, ParserMessages.TypeIndentExpected);
 
             var field = Bind(ParseTypeStmt);
@@ -280,7 +362,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// fun_def                                     = [ "pure" ] "fun" identifier [ ":" type ] fun_args "->" block
+        /// fun_def                                     = [ "pure" ] "fun" identifier [ type_params ] [ ":" type ] fun_args "->" block
         /// </summary>
         private FunctionNode ParseFunDef()
         {
@@ -296,6 +378,7 @@ namespace Lens.Parser
             }
 
             node.Name = Ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
+            node.TypeParameters = ParseTypeParams();
             if (Check(LexemType.Colon))
                 node.ReturnTypeSignature = Ensure(ParseType, ParserMessages.FunctionReturnExpected);
 
@@ -733,9 +816,14 @@ namespace Lens.Parser
         private GetIdentifierNode ParseGetIdExpr()
         {
             var node = Attempt(ParseLvalueIdExpr);
-            return node;
+            if (node == null)
+                return null;
 
-            // todo: type args
+            var hints = Attempt(ParseTypeArgs);
+            if (hints != null)
+                node.TypeHints = hints;
+
+            return node;
         }
 
         /// <summary>

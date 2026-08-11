@@ -1454,5 +1454,113 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("NullSafeOperatorValueType", resourceCulture);
             }
         }
+            
+        /// <summary>
+        ///   Looks up a localized string similar to LE3154: Type parameter &apos;{0}&apos; of &apos;{1}&apos; cannot have both the &apos;class&apos; and the &apos;struct&apos; constraint!.
+        /// </summary>
+        public static string GenericConstraintClassAndStruct {
+            get {
+                return ResourceManager.GetString("GenericConstraintClassAndStruct", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3155: Type parameter &apos;{0}&apos; of &apos;{1}&apos; cannot have both the &apos;struct&apos; and the &apos;new&apos; constraint, because &apos;struct&apos; already implies a default constructor!.
+        /// </summary>
+        public static string GenericConstraintStructAndNew {
+            get {
+                return ResourceManager.GetString("GenericConstraintStructAndNew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3156: Type parameter &apos;{0}&apos; of &apos;{1}&apos; cannot have the base type constraint &apos;{2}&apos; together with the &apos;{3}&apos; constraint!.
+        /// </summary>
+        public static string GenericConstraintBaseTypeAndKeyword {
+            get {
+                return ResourceManager.GetString("GenericConstraintBaseTypeAndKeyword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3157: Type parameter &apos;{0}&apos; of &apos;{1}&apos; cannot have more than one base type constraint (&apos;{2}&apos; and &apos;{3}&apos;)!.
+        /// </summary>
+        public static string GenericConstraintMultipleBaseTypes {
+            get {
+                return ResourceManager.GetString("GenericConstraintMultipleBaseTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3158: Type &apos;{0}&apos; cannot be used as a base type constraint for type parameter &apos;{1}&apos; of &apos;{2}&apos;!.
+        /// </summary>
+        public static string GenericConstraintInvalidBaseType {
+            get {
+                return ResourceManager.GetString("GenericConstraintInvalidBaseType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3159: Interface &apos;{0}&apos; is specified more than once as a constraint for type parameter &apos;{1}&apos; of &apos;{2}&apos;!.
+        /// </summary>
+        public static string GenericConstraintDuplicateInterface {
+            get {
+                return ResourceManager.GetString("GenericConstraintDuplicateInterface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3160: Type parameter &apos;{0}&apos; of &apos;{1}&apos; has a circular constraint dependency!.
+        /// </summary>
+        public static string GenericConstraintCircular {
+            get {
+                return ResourceManager.GetString("GenericConstraintCircular", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3161: Constraint &apos;{0}&apos; is specified more than once for type parameter &apos;{1}&apos; of &apos;{2}&apos;!.
+        /// </summary>
+        public static string GenericConstraintDuplicateKeyword {
+            get {
+                return ResourceManager.GetString("GenericConstraintDuplicateKeyword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3162: Type parameter &apos;{0}&apos; is declared more than once in &apos;{1}&apos;!.
+        /// </summary>
+        public static string TypeParameterRedefinition {
+            get {
+                return ResourceManager.GetString("TypeParameterRedefinition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3163: Type &apos;{0}&apos; expects {1} type argument(s), but {2} were given!.
+        /// </summary>
+        public static string GenericTypeArgCountMismatch {
+            get {
+                return ResourceManager.GetString("GenericTypeArgCountMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3164: Label &apos;{0}&apos; carries no value, so the type arguments of &apos;{1}&apos; cannot be inferred; specify them explicitly!.
+        /// </summary>
+        public static string GenericLabelTypeArgsRequired {
+            get {
+                return ResourceManager.GetString("GenericLabelTypeArgsRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3165: &apos;{0}&apos; is already declared with a different number of type parameters; LENS does not allow overloading by generic arity!.
+        /// </summary>
+        public static string GenericArityOverloading {
+            get {
+                return ResourceManager.GetString("GenericArityOverloading", resourceCulture);
+            }
+        }
     }
 }
