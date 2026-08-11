@@ -71,7 +71,10 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             ctx.EnterScope(Scope);
 
-            base.Transform(ctx, mustReturn);
+            // a statement is the unit of error recovery: a broken statement must not hide the
+            // problems in the ones that follow it
+            foreach (var child in GetChildren().ToArray())
+                ctx.WithRecovery(() => TransformChild(ctx, child, mustReturn));
 
             ctx.ExitScope();
         }

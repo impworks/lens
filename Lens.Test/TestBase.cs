@@ -46,6 +46,25 @@ namespace Lens.Test
             );
         }
 
+        /// <summary>
+        /// Checks that a script reports exactly the given list of diagnostics, in order.
+        /// </summary>
+        protected static void TestErrors(string src, params string[] msgs)
+        {
+            var compiler = CreateCompiler(null);
+            Assert.Throws<LensCompilerException>(() => compiler.Compile(src));
+
+            var actual = compiler.Diagnostics.Select(x => x.Message).ToArray();
+
+            Assert.AreEqual(
+                msgs.Select(x => x.Substring(0, 6)).ToArray(),
+                actual.Select(x => x.Substring(0, 6)).ToArray(),
+                "Diagnostics do not match!\nExpected: {0}\nActual: {1}",
+                string.Join(", ", msgs),
+                string.Join(", ", actual)
+            );
+        }
+
         protected static void Test(string src, object value, LensCompilerOptions opts)
         {
             Assert.AreEqual(value, Compile(src, opts));

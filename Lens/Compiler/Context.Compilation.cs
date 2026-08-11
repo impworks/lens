@@ -27,8 +27,14 @@ namespace Lens.Compiler
         public IScript Compile(IEnumerable<NodeBase> nodes)
         {
             LoadTree(nodes);
+            ThrowIfFailed();
+
             CreateInitialEntities();
+            ThrowIfFailed();
+
             TransformTree();
+            ThrowIfFailed();
+
             EmitCode();
             FinalizeAssembly();
 
@@ -43,16 +49,21 @@ namespace Lens.Compiler
         {
             foreach (var currNode in nodes)
             {
-                if (currNode is TypeDefinitionNode)
-                    DeclareType(currNode as TypeDefinitionNode);
-                else if (currNode is RecordDefinitionNode)
-                    DeclareRecord(currNode as RecordDefinitionNode);
-                else if (currNode is FunctionNode)
-                    DeclareFunction(currNode as FunctionNode);
-                else if (currNode is UseNode)
-                    DeclareOpenNamespace(currNode as UseNode);
-                else
-                    DeclareScriptNode(currNode);
+                var node = currNode;
+                WithRecovery(() =>
+                    {
+                        if (node is TypeDefinitionNode)
+                            DeclareType(node as TypeDefinitionNode);
+                        else if (node is RecordDefinitionNode)
+                            DeclareRecord(node as RecordDefinitionNode);
+                        else if (node is FunctionNode)
+                            DeclareFunction(node as FunctionNode);
+                        else if (node is UseNode)
+                            DeclareOpenNamespace(node as UseNode);
+                        else
+                            DeclareScriptNode(node);
+                    }
+                );
             }
         }
 
@@ -94,9 +105,19 @@ namespace Lens.Compiler
                     if (curr.Kind == TypeContentsKind.Closure)
                         continue;
 
-                    curr.TransformBody();
-                    curr.ProcessClosures();
+                    var diagnosticsBefore = Diagnostics.Count;
+                    WithRecovery(curr.TransformBody);
+
+                    // closure analysis assumes the transform above has completed: walking a
+                    // half-transformed body only produces follow-up noise
+                    if (Diagnostics.Count == diagnosticsBefore)
+                        WithRecovery(curr.ProcessClosures);
                 }
+
+                // the entities declared by this round cannot be prepared once anything has
+                // failed, so gather the round's diagnostics and stop here
+                if (Diagnostics.HasErrors)
+                    break;
 
                 PrepareEntities();
             }
@@ -132,6 +153,46 @@ namespace Lens.Compiler
                 MainAssembly.Save(Options.FileName);
             }
 #endif
+        }
+
+        #endregion
+
+        #region Error recovery
+
+        /// <summary>
+        /// Runs one unit of analysis, recording the problems it reports instead of letting them
+        /// abort the whole compilation. This is what makes the compiler report more than one error.
+        /// </summary>
+        internal void WithRecovery(Action act)
+        {
+            var scopeDepth = _scopeStack.Count;
+
+            try
+            {
+                act();
+            }
+            catch (LensCompilerException ex)
+            {
+                Diagnostics.Add(ex);
+            }
+            finally
+            {
+                // an aborted unit may have left scopes open: unwind them, or everything that
+                // follows would resolve its names in the wrong frame
+                while (_scopeStack.Count > scopeDepth)
+                    _scopeStack.Pop();
+            }
+        }
+
+        /// <summary>
+        /// Surfaces the first recorded error as an exception, which is the shape the public API
+        /// has always had.
+        /// </summary>
+        private void ThrowIfFailed()
+        {
+            var error = Diagnostics.FirstError();
+            if (error != null)
+                throw error.AsException();
         }
 
         #endregion

@@ -71,22 +71,28 @@ namespace Lens.SyntaxTree
         {
             var children = GetChildren().ToArray();
             foreach (var child in children)
-            {
-                if (child == null || child.Node == null)
-                    continue;
+                TransformChild(ctx, child, mustReturn);
+        }
 
-                child.Node.Resolve(ctx, mustReturn);
-                var sub = child.Node.Expand(ctx, mustReturn);
-                if (sub != null)
-                {
-                    child.Setter(sub);
-                    sub.Resolve(ctx, mustReturn);
-                    sub.Transform(ctx, mustReturn);
-                }
-                else
-                {
-                    child.Node.Transform(ctx, mustReturn);
-                }
+        /// <summary>
+        /// Resolves a single child node, expands it if it wants to be, and recurses into it.
+        /// </summary>
+        protected static void TransformChild(Context ctx, NodeChild child, bool mustReturn)
+        {
+            if (child?.Node == null)
+                return;
+
+            child.Node.Resolve(ctx, mustReturn);
+            var sub = child.Node.Expand(ctx, mustReturn);
+            if (sub != null)
+            {
+                child.Setter(sub);
+                sub.Resolve(ctx, mustReturn);
+                sub.Transform(ctx, mustReturn);
+            }
+            else
+            {
+                child.Node.Transform(ctx, mustReturn);
             }
         }
 

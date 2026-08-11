@@ -34,6 +34,8 @@ namespace Lens.Compiler
             _definedTypes = new Dictionary<string, TypeEntity>();
             _definedProperties = new Dictionary<string, GlobalPropertyInfo>();
 
+            Diagnostics = new DiagnosticBag();
+
             Resolver = new TypeResolutionContext();
 
             Unique = new UniqueNameGenerator();
@@ -101,6 +103,12 @@ namespace Lens.Compiler
         /// Compiler options.
         /// </summary>
         internal LensCompilerOptions Options { get; }
+
+        /// <summary>
+        /// Everything that has gone wrong so far.
+        /// The compiler keeps analysing after an error, so this may hold more than one entry.
+        /// </summary>
+        internal DiagnosticBag Diagnostics { get; }
 
         /// <summary>
         /// The state of type resolution for the current compilation:

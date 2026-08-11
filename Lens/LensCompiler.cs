@@ -36,6 +36,17 @@ namespace Lens
 
         #endregion
 
+        #region Properties
+
+        /// <summary>
+        /// All the problems found while compiling the script.
+        /// A failed compilation still throws, reporting the first error, but the full list is
+        /// available here - a script with several independent mistakes yields several entries.
+        /// </summary>
+        public IEnumerable<Diagnostic> Diagnostics => _context.Diagnostics;
+
+        #endregion
+
         #region Methods
 
         /// <summary>
