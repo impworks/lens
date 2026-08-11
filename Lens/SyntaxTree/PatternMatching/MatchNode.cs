@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.PatternMatching
         /// <summary>
         /// Checks if the current node has been resolved as a value-returning context.
         /// </summary>
-        private bool MustReturnValue(Context ctx) => !ctx.FindExpressionType(this).IsVoid();
+        private bool MustReturnValue(Context ctx) => !TypeEntryCache.Of(ctx.FindExpressionType(this)).IsVoid();
 
         #endregion
 
@@ -87,7 +87,7 @@ namespace Lens.SyntaxTree.PatternMatching
                     if (nameRule != null && stmt.Condition == null)
                     {
                         var nameType = nameRule.Type == null ? typeof(object) : ctx.ResolveType(nameRule.Type);
-                        if (commonType != null && commonType.IsExtendablyAssignableFrom(ctx.Resolver, nameType))
+                        if (commonType != null && TypeEntryCache.Of(commonType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(nameType)))
                             Error(CompilerMessages.PatternUnreachable);
 
                         commonType = nameType;
@@ -95,9 +95,9 @@ namespace Lens.SyntaxTree.PatternMatching
                 }
             }
 
-            return stmtTypes.Any(x => x.IsVoid())
+            return stmtTypes.Any(x => TypeEntryCache.Of(x).IsVoid())
                 ? typeof(UnitType)
-                : stmtTypes.ToArray().GetMostCommonType(ctx.Resolver);
+                : stmtTypes.Select(TypeEntryCache.Of).ToArray().GetMostCommonType(ctx.Resolver).Materialize();
         }
 
         #endregion

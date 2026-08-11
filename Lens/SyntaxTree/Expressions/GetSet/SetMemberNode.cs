@@ -89,7 +89,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var valType = Value.Resolve(ctx);
             ctx.CheckTypedExpression(Value, valType, true);
 
-            if (!destType.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, valType))
+            if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(valType)))
                 Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
         }
 
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (!_isStatic)
             {
                 var exprType = Expression.Resolve(ctx);
-                if (Expression is IPointerProvider provider && exprType.IsStruct())
+                if (Expression is IPointerProvider provider && TypeEntryCache.Of(exprType).IsStruct())
                     ctx.RequirePointer(provider);
 
                 Expression.Emit(ctx, true);

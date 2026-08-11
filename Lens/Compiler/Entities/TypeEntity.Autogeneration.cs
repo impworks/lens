@@ -27,7 +27,7 @@ namespace Lens.Compiler.Entities
                 var right = Expr.GetMember(Expr.Get("other"), f.Name);
 
                 var fieldType = FieldTypeOf(f);
-                var isSeq = fieldType.IsGenericType && fieldType.Implements(Context.Resolver, typeof(IEnumerable<>), true);
+                var isSeq = fieldType.IsGenericType && TypeEntryCache.Of(fieldType).Implements(Context.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)), true);
                 var expr = isSeq
                     ? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
                     : Expr.Invoke(DefaultComparerOf(fieldType), "Equals", left, right);
@@ -128,7 +128,7 @@ namespace Lens.Compiler.Entities
             {
                 var fieldType = FieldTypeOf(f);
                 NodeBase expr;
-                if (fieldType.IsIntegerType())
+                if (TypeEntryCache.Of(fieldType).IsIntegerType())
                 {
                     expr = Expr.GetMember(Expr.This(), f.Name);
                 }
@@ -161,7 +161,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         private void CreatePureWrapper(MethodEntity method)
         {
-            if (method.ReturnType.IsVoid())
+            if (TypeEntryCache.Of(method.ReturnType).IsVoid())
                 Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
 
             var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);

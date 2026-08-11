@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         {
             if (Literal.LiteralType == typeof(NullType))
             {
-                if (expressionType.IsValueType && !expressionType.IsAppliedVersionOf(ctx.Resolver, typeof(Nullable<>)))
+                if (expressionType.IsValueType && !TypeEntryCache.Of(expressionType).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Nullable<>))))
                     Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
             }
             else if (expressionType != Literal.LiteralType)

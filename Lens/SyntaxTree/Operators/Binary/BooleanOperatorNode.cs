@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
         {
-            return leftType.IsImplicitlyBoolean() && rightType.IsImplicitlyBoolean()
+            return TypeEntryCache.Of(leftType).IsImplicitlyBoolean() && TypeEntryCache.Of(rightType).IsImplicitlyBoolean()
                 ? typeof(bool)
                 : null;
         }

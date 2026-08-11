@@ -95,8 +95,24 @@ namespace Lens.Resolver
 
         /// <summary>
         /// The generic definition this type instantiates, or null when it is not an instantiation.
+        ///
+        /// Note the difference from <see cref="System.Type.GetGenericTypeDefinition"/>, which
+        /// returns a definition unchanged when asked. Use <see cref="GetGenericDefinition"/> when
+        /// translating code that relied on that.
         /// </summary>
         public virtual TypeEntry GenericDefinition => null;
+
+        /// <summary>
+        /// The generic definition behind this type, with the semantics of
+        /// <see cref="System.Type.GetGenericTypeDefinition"/>: a definition is its own definition.
+        ///
+        /// The compiler passes open definitions around constantly - typeof(IEnumerable&lt;&gt;) and
+        /// friends - so the distinction matters at nearly every call site.
+        /// </summary>
+        public TypeEntry GetGenericDefinition()
+        {
+            return IsGenericTypeDefinition ? this : GenericDefinition;
+        }
 
         /// <summary>
         /// Every interface the type implements, transitively.
@@ -229,6 +245,38 @@ namespace Lens.Resolver
         #region Helpers
 
         protected static readonly TypeEntry[] EmptyEntries = new TypeEntry[0];
+
+        /// <summary>
+        /// Whether this entry stands for the given host type. Shorthand for the comparison the
+        /// compiler makes more often than any other.
+        /// </summary>
+        public bool Is<T>()
+        {
+            return this == TypeEntryCache.Of<T>();
+        }
+
+        /// <summary>
+        /// Whether this entry stands for the given host type.
+        /// </summary>
+        public bool Is(Type type)
+        {
+            return this == TypeEntryCache.Of(type);
+        }
+
+        /// <summary>
+        /// The CLR types that implement a list of entries.
+        /// </summary>
+        public static Type[] Materialize(TypeEntry[] entries)
+        {
+            if (entries == null)
+                return null;
+
+            var result = new Type[entries.Length];
+            for (var idx = 0; idx < entries.Length; idx++)
+                result[idx] = entries[idx]?.Materialize();
+
+            return result;
+        }
 
         /// <summary>
         /// Walks this type and everything it inherits from, nearest first.

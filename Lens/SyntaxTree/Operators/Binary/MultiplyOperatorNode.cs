@@ -41,12 +41,12 @@ namespace Lens.SyntaxTree.Operators.Binary
                     return leftType;
 
                 // typed sequence repetition
-                var enumerable = leftType.ResolveImplementationOf(ctx.Resolver, typeof(IEnumerable<>));
+                var enumerable = TypeEntryCache.Of(leftType).ResolveImplementationOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));
                 if (enumerable != null)
-                    return enumerable;
+                    return enumerable.Materialize();
 
                 // untyped sequence repetition
-                if (leftType.Implements(ctx.Resolver, typeof(IEnumerable), false))
+                if (TypeEntryCache.Of(leftType).Implements(ctx.Resolver, TypeEntryCache.Of<IEnumerable>(), false))
                     return typeof(IEnumerable);
             }
 
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 if (type.IsArray)
                     return ArrayExpand(ctx);
 
-                if (type == typeof(IEnumerable) || type.IsAppliedVersionOf(ctx.Resolver, typeof(IEnumerable<>)))
+                if (type == typeof(IEnumerable) || TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
                     return SeqExpand(ctx);
             }
 

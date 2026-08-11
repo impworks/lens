@@ -50,9 +50,9 @@ namespace Lens.SyntaxTree.ControlFlow
             var type = TrueAction.Resolve(ctx);
             var otherType = FalseAction.Resolve(ctx);
 
-            return type.IsVoid() || otherType.IsVoid()
+            return TypeEntryCache.Of(type).IsVoid() || TypeEntryCache.Of(otherType).IsVoid()
                 ? typeof(UnitType)
-                : new[] {type, otherType}.GetMostCommonType(ctx.Resolver);
+                : new[] {TypeEntryCache.Of(type), TypeEntryCache.Of(otherType)}.GetMostCommonType(ctx.Resolver).Materialize();
         }
 
         #endregion
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var gen = ctx.CurrentMethod.Generator;
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
+            if (!TypeEntryCache.Of(condType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             if (Condition.IsConstant && ctx.Options.UnrollConstants)
@@ -87,11 +87,11 @@ namespace Lens.SyntaxTree.ControlFlow
                 {
                     var nodeType = node.Resolve(ctx);
                     var desiredType = Resolve(ctx);
-                    if (!nodeType.IsVoid() && !desiredType.IsVoid())
+                    if (!TypeEntryCache.Of(nodeType).IsVoid() && !TypeEntryCache.Of(desiredType).IsVoid())
                         node = Expr.Cast(node, desiredType);
 
                     node.Emit(ctx, mustReturn);
-                    if (!mustReturn && !node.Resolve(ctx).IsVoid())
+                    if (!mustReturn && !TypeEntryCache.Of(node.Resolve(ctx)).IsVoid())
                         gen.EmitPop();
                 }
 
@@ -107,7 +107,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 // if (...) { ... }
                 gen.EmitBranchFalse(endLabel);
                 TrueAction.Emit(ctx, mustReturn);
-                if (!TrueAction.Resolve(ctx).IsVoid())
+                if (!TypeEntryCache.Of(TrueAction.Resolve(ctx)).IsVoid())
                     gen.EmitPop();
 
                 gen.MarkLabel(endLabel);
@@ -132,10 +132,10 @@ namespace Lens.SyntaxTree.ControlFlow
         private void EmitBranch(Context ctx, NodeBase branch, bool mustReturn)
         {
             var desiredType = Resolve(ctx);
-            mustReturn &= !desiredType.IsVoid();
+            mustReturn &= !TypeEntryCache.Of(desiredType).IsVoid();
             var branchType = branch.Resolve(ctx, mustReturn);
 
-            if (!branchType.IsVoid() && !desiredType.IsVoid())
+            if (!TypeEntryCache.Of(branchType).IsVoid() && !TypeEntryCache.Of(desiredType).IsVoid())
                 branch = Expr.Cast(branch, desiredType);
 
             branch.Emit(ctx, mustReturn);

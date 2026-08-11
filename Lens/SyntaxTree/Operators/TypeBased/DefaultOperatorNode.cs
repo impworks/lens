@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var gen = ctx.CurrentMethod.Generator;
             var type = Resolve(ctx);
 
-            if (type.IsVoid())
+            if (TypeEntryCache.Of(type).IsVoid())
                 Error(CompilerMessages.VoidTypeDefault);
 
             if (I4Types.Contains(type))

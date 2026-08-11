@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             if (leftType == rightType)
             {
-                if (leftType.IsIntegerType() || leftType.IsEnum)
+                if (TypeEntryCache.Of(leftType).IsIntegerType() || leftType.IsEnum)
                     return leftType;
             }
 

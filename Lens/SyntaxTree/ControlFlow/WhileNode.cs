@@ -46,10 +46,10 @@ namespace Lens.SyntaxTree.ControlFlow
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var loopType = Resolve(ctx);
-            var saveLast = mustReturn && !loopType.IsVoid();
+            var saveLast = mustReturn && !TypeEntryCache.Of(loopType).IsVoid();
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
+            if (!TypeEntryCache.Of(condType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             // condition is known to be false: do not emit the loop at all
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             var gen = ctx.CurrentMethod.Generator;
             var loopType = Resolve(ctx);
-            var saveLast = mustReturn && !loopType.IsVoid();
+            var saveLast = mustReturn && !TypeEntryCache.Of(loopType).IsVoid();
 
             var beginLabel = gen.DefineLabel();
             var endLabel = gen.DefineLabel();

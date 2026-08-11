@@ -36,7 +36,7 @@ namespace Lens.Compiler
             if (!allowNull && type == typeof(NullType))
                 Error(node, CompilerMessages.ExpressionNull);
 
-            if (type.IsVoid())
+            if (TypeEntryCache.Of(type).IsVoid())
                 Error(node, CompilerMessages.ExpressionVoid);
 
             if (type.IsLambdaType())

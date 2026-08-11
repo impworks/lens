@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            if (LeftOperand.Resolve(ctx).IsNumericType())
+            if (TypeEntryCache.Of(LeftOperand.Resolve(ctx)).IsNumericType())
             {
                 LoadAndConvertNumerics(ctx);
             }

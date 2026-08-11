@@ -122,7 +122,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             if (retType == typeof(NullType))
                 Error(CompilerMessages.LambdaReturnTypeUnknown);
 
-            return retType.IsVoid() ? typeof(void) : retType;
+            return TypeEntryCache.Of(retType).IsVoid() ? typeof(void) : retType;
         }
 
         #endregion

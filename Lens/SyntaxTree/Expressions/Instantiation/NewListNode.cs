@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
                 ctx.CheckTypedExpression(curr, currType, true);
 
-                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
+                if (!TypeEntryCache.Of(_itemType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(currType)))
                     Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);

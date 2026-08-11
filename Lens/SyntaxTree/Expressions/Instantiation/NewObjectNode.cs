@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
                 Error(ex.Message, TypeSignature.FullSignature);
             }
 
-            if (type.IsVoid())
+            if (TypeEntryCache.Of(type).IsVoid())
                 Error(CompilerMessages.VoidTypeDefault);
 
             if (type.IsAbstract)

@@ -162,14 +162,14 @@ namespace Lens.Resolver
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, arg, owner));
 
             if (constr.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
-                if (!value.IsValueType || value.IsNullableType())
+                if (!value.IsValueType || TypeEntryCache.Of(value).IsNullableType())
                     throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, arg, owner));
 
             if (constr.HasFlag(GenericParameterAttributes.DefaultConstructorConstraint) && !value.HasDefaultConstructor())
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, arg, owner));
 
             foreach (var currBase in arg.GetGenericParameterConstraints())
-                if (!currBase.IsExtendablyAssignableFrom(ctx, value, true))
+                if (!TypeEntryCache.Of(currBase).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
                     throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, arg, owner, currBase));
         }
 
@@ -181,17 +181,17 @@ namespace Lens.Resolver
             if (entity.IsReferenceType && value.IsValueType)
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, entity.Name, owner));
 
-            if (entity.IsValueType && (!value.IsValueType || value.IsNullableType()))
+            if (entity.IsValueType && (!value.IsValueType || TypeEntryCache.Of(value).IsNullableType()))
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, entity.Name, owner));
 
             if (entity.RequiresDefaultCtor && !value.HasDefaultConstructor())
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, entity.Name, owner));
 
-            if (entity.BaseType != null && !entity.BaseType.IsExtendablyAssignableFrom(ctx, value, true))
+            if (entity.BaseType != null && !TypeEntryCache.Of(entity.BaseType).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, entity.BaseType));
 
             foreach (var iface in entity.Interfaces)
-                if (!iface.IsExtendablyAssignableFrom(ctx, value, true))
+                if (!TypeEntryCache.Of(iface).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
                     throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, iface));
         }
 

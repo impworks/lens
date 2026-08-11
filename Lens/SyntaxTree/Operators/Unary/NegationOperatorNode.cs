@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Operators.Unary
         protected override Type ResolveOperatorType(Context ctx)
         {
             var type = Operand.Resolve(ctx);
-            return type.IsNumericType() ? type : null;
+            return TypeEntryCache.Of(type).IsNumericType() ? type : null;
         }
 
         #endregion

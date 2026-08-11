@@ -230,7 +230,7 @@ namespace Lens.Resolver
                 {
                     var matching = ctx.ResolveInterfaces(actual)
                                          .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic)
-                                         .Where(i => i.DistanceFrom(ctx, desired) != int.MaxValue)
+                                         .Where(i => TypeEntryCache.Of(i).DistanceFrom(ctx, TypeEntryCache.Of(desired)) != int.MaxValue)
                                          .Take(2)
                                          .ToList();
 

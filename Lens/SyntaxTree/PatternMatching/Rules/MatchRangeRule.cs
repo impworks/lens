@@ -35,10 +35,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             var startType = RangeStartRule.Literal.LiteralType;
             var endType = RangeEndRule.Literal.LiteralType;
 
-            if (!startType.IsNumericType() || !endType.IsNumericType())
+            if (!TypeEntryCache.Of(startType).IsNumericType() || !TypeEntryCache.Of(endType).IsNumericType())
                 Error(CompilerMessages.PatternRangeNotNumeric);
 
-            if (!expressionType.IsNumericType())
+            if (!TypeEntryCache.Of(expressionType).IsNumericType())
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, "int");
 
             return NoBindings();

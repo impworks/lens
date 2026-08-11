@@ -137,7 +137,7 @@ namespace Lens.Resolver
                 {
                     DeclaringType = TypeEntryCache.Of(type),
                     ConstructorInfo = ctor.Method,
-                    ArgumentTypes = ctor.ArgumentTypes.Select(TypeEntryCache.Of).ToArray(),
+                    ArgumentTypes = ctor.ArgumentTypes,
                     IsPartiallyApplied = IsPartiallyApplied(argTypes),
                     IsVariadic = IsVariadic(ctor.Method)
                 };
@@ -160,7 +160,7 @@ namespace Lens.Resolver
                 {
                     DeclaringType = TypeEntryCache.Of(type),
                     ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
-                    ArgumentTypes = genCtor.ArgumentTypes.Select(TypeEntryCache.Of).ToArray(),
+                    ArgumentTypes = genCtor.ArgumentTypes,
                     IsPartiallyApplied = IsPartiallyApplied(argTypes),
                     IsVariadic = IsVariadic(genCtor.Method)
                 };
@@ -242,7 +242,7 @@ namespace Lens.Resolver
                 if (mInfo.IsGenericMethod)
                 {
                     var genericDefs = mInfo.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, method.ArgumentTypes, argTypes, genericDefs, hints);
+                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(method.ArgumentTypes), argTypes, genericDefs, hints);
 
                     mInfo = mInfo.MakeGenericMethod(genericValues);
                     mw.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
@@ -255,7 +255,7 @@ namespace Lens.Resolver
                 mw.MethodInfo = mInfo;
                 mw.IsStatic = mInfo.IsStatic;
                 mw.IsVirtual = mInfo.IsVirtual;
-                mw.ArgumentTypes = method.ArgumentTypes.Select(TypeEntryCache.Of).ToArray();
+                mw.ArgumentTypes = method.ArgumentTypes;
                 mw.ReturnType = TypeEntryCache.Of(mInfo.ReturnType);
                 mw.IsPartiallyApplied = IsPartiallyApplied(argTypes);
                 mw.IsVariadic = IsVariadic(mInfo);
@@ -283,7 +283,7 @@ namespace Lens.Resolver
                 if (mInfoOriginal.IsGenericMethod)
                 {
                     var genericDefs = mInfoOriginal.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, genMethod.ArgumentTypes, argTypes, genericDefs, hints, lambdaResolver);
+                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(genMethod.ArgumentTypes), argTypes, genericDefs, hints, lambdaResolver);
 
                     mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -458,7 +458,7 @@ namespace Lens.Resolver
                     continue;
 
                 var argType = typeProcessor(idxArgs[0].ParameterType);
-                var distance = argType.DistanceFrom(ctx, idxType);
+                var distance = TypeEntryCache.Of(argType).DistanceFrom(ctx, TypeEntryCache.Of(idxType));
 
                 indexers.Add(new Tuple<PropertyInfo, Type, int>(pty, argType, distance));
             }
@@ -499,7 +499,7 @@ namespace Lens.Resolver
         /// <param name="argTypes">Desired argument types.</param>
         public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, Type[]> argsGetter, Func<T, bool> isVariadicGetter, Type[] argTypes)
         {
-            var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
+            var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, TypeEntryCache.Of(argTypes), TypeEntryCache.Of(argsGetter(x)), x, isVariadicGetter(x)))
                              .OrderBy(rec => rec.Distance)
                              .Take(2) // no more than 2 is needed
                              .ToArray();

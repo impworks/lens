@@ -77,7 +77,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_property != null)
                 return _property.PropertyType.Materialize();
 
-            return _method.ReturnType.Materialize().IsVoid()
+            return _method.ReturnType.IsVoid()
                 ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
                 : FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
         }
@@ -295,7 +295,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 gen.EmitNull();
 
             var retType = _method.ReturnType;
-            var type = retType.Materialize().IsVoid()
+            var type = retType.IsVoid()
                 ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
                 : FunctionalHelper.CreateFuncType(retType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
 

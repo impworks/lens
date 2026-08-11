@@ -97,16 +97,16 @@ namespace Lens.SyntaxTree.Operators.Binary
                 return true;
 
             // numeric .. numeric
-            if (left.IsNumericType() && right.IsNumericType())
-                return left.IsUnsignedIntegerType() == right.IsUnsignedIntegerType();
+            if (TypeEntryCache.Of(left).IsNumericType() && TypeEntryCache.Of(right).IsNumericType())
+                return TypeEntryCache.Of(left).IsUnsignedIntegerType() == TypeEntryCache.Of(right).IsUnsignedIntegerType();
 
             if (equalityOnly)
             {
                 // Nullable<T> .. (Nullable<T> | T | null)
-                if (left.IsNullableType())
+                if (TypeEntryCache.Of(left).IsNullableType())
                     return left == right || Nullable.GetUnderlyingType(left) == right || right == typeof(NullType);
 
-                if (right.IsNullableType())
+                if (TypeEntryCache.Of(right).IsNullableType())
                     return Nullable.GetUnderlyingType(right) == left || left == typeof(NullType);
 
                 // ref type .. null
@@ -166,7 +166,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             // compare primitive types
-            if ((left.IsNumericType() && right.IsNumericType()) || (left == right && left == typeof(bool)))
+            if ((TypeEntryCache.Of(left).IsNumericType() && TypeEntryCache.Of(right).IsNumericType()) || (left == right && left == typeof(bool)))
             {
                 if (left == typeof(bool))
                 {
@@ -187,7 +187,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             // compare nullable against another nullable, it's base type or null
-            if (left.IsNullableType())
+            if (TypeEntryCache.Of(left).IsNullableType())
             {
                 if (left == right || Nullable.GetUnderlyingType(left) == right)
                     EmitNullableComparison(ctx, LeftOperand, RightOperand);
@@ -197,7 +197,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 return;
             }
 
-            if (right.IsNullableType())
+            if (TypeEntryCache.Of(right).IsNullableType())
             {
                 if (Nullable.GetUnderlyingType(right) == left)
                     EmitNullableComparison(ctx, RightOperand, LeftOperand);
@@ -247,7 +247,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             var nullType = nullValue.Resolve(ctx);
             var otherType = otherValue.Resolve(ctx);
-            var otherNull = otherType.IsNullableType();
+            var otherNull = TypeEntryCache.Of(otherType).IsNullableType();
 
             var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
             var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();

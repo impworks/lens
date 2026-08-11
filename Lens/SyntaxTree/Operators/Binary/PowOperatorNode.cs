@@ -31,7 +31,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
         {
-            return leftType.IsNumericType() && rightType.IsNumericType() ? typeof(double) : null;
+            return TypeEntryCache.Of(leftType).IsNumericType() && TypeEntryCache.Of(rightType).IsNumericType() ? typeof(double) : null;
         }
 
         #endregion

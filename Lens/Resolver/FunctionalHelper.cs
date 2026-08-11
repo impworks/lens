@@ -159,6 +159,54 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Type kind methods for type entries
+
+        // these overloads exist so that code which has already been converted to type entries can
+        // ask the same questions. They defer to the reflection versions above: converting the whole
+        // of this helper to entries is a separate step.
+
+        /// <summary>
+        /// Checks if a type is a function type.
+        /// </summary>
+        public static bool IsFuncType(this TypeEntry type)
+        {
+            return type.Materialize().IsFuncType();
+        }
+
+        /// <summary>
+        /// Checks if a type is an action type;
+        /// </summary>
+        public static bool IsActionType(this TypeEntry type)
+        {
+            return type.Materialize().IsActionType();
+        }
+
+        /// <summary>
+        /// Checks if a type is a function type.
+        /// </summary>
+        public static bool IsLambdaType(this TypeEntry type)
+        {
+            return type.Materialize().IsLambdaType();
+        }
+
+        /// <summary>
+        /// Checks if a type is a tuple type.
+        /// </summary>
+        public static bool IsTupleType(this TypeEntry type)
+        {
+            return type.Materialize().IsTupleType();
+        }
+
+        /// <summary>
+        /// Checks if the type can be called.
+        /// </summary>
+        public static bool IsCallableType(this TypeEntry type)
+        {
+            return type.Materialize().IsCallableType();
+        }
+
+        #endregion
+
         #region Type constructing
 
         /// <summary>
@@ -166,7 +214,7 @@ namespace Lens.Resolver
         /// </summary>
         public static Type CreateDelegateType(Type returnType, params Type[] args)
         {
-            return returnType.IsVoid()
+            return TypeEntryCache.Of(returnType).IsVoid()
                 ? CreateActionType(args)
                 : CreateFuncType(returnType, args);
         }

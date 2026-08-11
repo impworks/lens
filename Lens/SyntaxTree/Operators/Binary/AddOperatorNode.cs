@@ -36,19 +36,19 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             if (leftType == rightType)
             {
-                if (leftType.IsArray || leftType.IsAppliedVersionOf(ctx.Resolver, typeof(Dictionary<,>)))
+                if (leftType.IsArray || TypeEntryCache.Of(leftType).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Dictionary<,>))))
                     return leftType;
             }
 
-            var dictType = typeof(IDictionary<,>).ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType);
+            var dictType = TypeEntryCache.Of(typeof(IDictionary<,>)).ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
             if (dictType != null)
-                return dictType;
+                return dictType.Materialize();
 
-            var enumerableType = typeof(IEnumerable<>).ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType)
-                                 ?? typeof(IEnumerable).ResolveCommonImplementationFor(ctx.Resolver, leftType, rightType);
+            var enumerableType = TypeEntryCache.Of(typeof(IEnumerable<>)).ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType))
+                                 ?? TypeEntryCache.Of<IEnumerable>().ResolveCommonImplementationFor(ctx.Resolver, TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
 
             if (enumerableType != null)
-                return enumerableType;
+                return enumerableType.Materialize();
 
             return null;
         }
@@ -69,13 +69,13 @@ namespace Lens.SyntaxTree.Operators.Binary
                 if (type.IsArray)
                     return ArrayExpand(ctx);
 
-                if (type.IsAppliedVersionOf(ctx.Resolver, typeof(IDictionary<,>)))
+                if (TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IDictionary<,>))))
                     return DictExpand(ctx);
 
                 if (type == typeof(IEnumerable))
                     return SeqExpand();
 
-                if (type.IsAppliedVersionOf(ctx.Resolver, typeof(IEnumerable<>)))
+                if (TypeEntryCache.Of(type).IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
                     return TypedSeqExpand();
             }
 

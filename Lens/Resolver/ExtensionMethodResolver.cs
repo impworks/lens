@@ -106,7 +106,7 @@ namespace Lens.Resolver
                                 continue;
 
                             var argType = method.GetParameters()[0].ParameterType;
-                            if (!argType.IsExtendablyAssignableFrom(ctx, forType))
+                            if (!TypeEntryCache.Of(argType).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(forType)))
                                 continue;
 
                             if (!dict.ContainsKey(method.Name))
@@ -131,8 +131,8 @@ namespace Lens.Resolver
         private static int GetExtensionDistance(TypeResolutionContext ctx, MethodInfo method, Type type, Type[] args)
         {
             var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-            var baseDist = methodArgs.First().DistanceFrom(ctx, type);
-            var argsDist = TypeExtensions.TypeListDistance(ctx, args, methodArgs.Skip(1));
+            var baseDist = TypeEntryCache.Of(methodArgs.First()).DistanceFrom(ctx, TypeEntryCache.Of(type));
+            var argsDist = TypeExtensions.TypeListDistance(ctx, args.Select(TypeEntryCache.Of), methodArgs.Skip(1).Select(TypeEntryCache.Of));
 
             if (baseDist == int.MaxValue || argsDist == int.MaxValue)
                 return int.MaxValue;

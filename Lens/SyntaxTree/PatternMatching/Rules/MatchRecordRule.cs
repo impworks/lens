@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 Error(Identifier, CompilerMessages.PatternNotValidRecord, Identifier.FullSignature);
 
             _type = ctx.ResolvePatternType(typeEntity, expressionType);
-            if (!_type.IsExtendablyAssignableFrom(ctx.Resolver, expressionType) && !expressionType.IsExtendablyAssignableFrom(ctx.Resolver, _type))
+            if (!TypeEntryCache.Of(_type).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(expressionType)) && !TypeEntryCache.Of(expressionType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(_type)))
                 Error(CompilerMessages.PatternTypeMatchImpossible, _type, expressionType);
 
             var duplicate = FieldRules.GroupBy(x => x.Name).FirstOrDefault(x => x.Count() > 1);

@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var leftType = left.GetType();
             var rightType = right.GetType();
 
-            if (TypeExtensions.IsIntegerType(leftType) && TypeExtensions.IsIntegerType(rightType) && right == 0)
+            if (TypeExtensions.IsIntegerType(TypeEntryCache.Of(leftType)) && TypeExtensions.IsIntegerType(TypeEntryCache.Of(rightType)) && right == 0)
                 Error(CompilerMessages.ConstantDivisionByZero);
 
             return left / right;

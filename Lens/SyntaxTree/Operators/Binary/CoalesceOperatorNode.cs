@@ -52,18 +52,18 @@ namespace Lens.SyntaxTree.Operators.Binary
                     : right;
 
 
-            if (left.IsValueType && !left.IsNullableType())
+            if (left.IsValueType && !TypeEntryCache.Of(left).IsNullableType())
                 Error(LeftOperand, CompilerMessages.CoalesceOperatorLeftNotNull, left.FullName);
 
-            var baseLeft = left.GetNullableUnderlyingType() ?? left;
-            var baseRight = right.GetNullableUnderlyingType() ?? right;
+            var baseLeft = TypeEntryCache.Of(left).GetNullableUnderlyingType()?.Materialize() ?? left;
+            var baseRight = TypeEntryCache.Of(right).GetNullableUnderlyingType()?.Materialize() ?? right;
 
             // do not accept combinations like "nullable<int>" and "string"
             if(baseLeft.IsValueType != baseRight.IsValueType)
                 Error(CompilerMessages.CoalesceOperatorTypeMismatch, left.FullName, right.FullName);
 
-            var common = new[] {baseLeft, baseRight}.GetMostCommonType(ctx.Resolver);
-            return right.IsNullableType()
+            var common = new[] {TypeEntryCache.Of(baseLeft), TypeEntryCache.Of(baseRight)}.GetMostCommonType(ctx.Resolver).Materialize();
+            return TypeEntryCache.Of(right).IsNullableType()
                 ? typeof(Nullable<>).MakeGenericType(common)
                 : common;
         }
@@ -89,11 +89,11 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             var condition = Expr.Compare(ComparisonOperatorKind.Equals, leftAccessor, Expr.Null());
-            var leftResult = left.IsNullableType() && left != right
+            var leftResult = TypeEntryCache.Of(left).IsNullableType() && left != right
                 ? Expr.GetMember(leftAccessor, nameof(Nullable<int>.Value))
                 : leftAccessor;
 
-            var rightResult = right.IsNullableType() && left != right
+            var rightResult = TypeEntryCache.Of(right).IsNullableType() && left != right
                 ? Expr.GetMember(RightOperand, nameof(Nullable<int>.Value))
                 : RightOperand;
 

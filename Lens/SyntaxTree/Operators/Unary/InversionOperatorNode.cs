@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         protected override Type ResolveOperatorType(Context ctx)
         {
-            return Operand.Resolve(ctx).IsImplicitlyBoolean() ? typeof(bool) : null;
+            return TypeEntryCache.Of(Operand.Resolve(ctx)).IsImplicitlyBoolean() ? typeof(bool) : null;
         }
 
         #endregion

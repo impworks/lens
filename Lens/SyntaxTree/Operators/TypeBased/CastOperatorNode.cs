@@ -29,7 +29,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromType = Expression.Resolve(ctx);
             var toType = Resolve(ctx);
 
-            if (fromType.IsNullableType() && !toType.IsNullableType())
+            if (TypeEntryCache.Of(fromType).IsNullableType() && !TypeEntryCache.Of(toType).IsNullableType())
                 return Expr.Cast(Expr.GetMember(Expression, "Value"), toType);
 
             return base.Expand(ctx, mustReturn);
@@ -49,10 +49,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             if (ctx.Resolver.IsDeclaredTypeParameter(fromType) || ctx.Resolver.IsDeclaredTypeParameter(toType))
                 CastGenericParameter(ctx, fromType, toType);
 
-            else if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType, true))
+            else if (TypeEntryCache.Of(toType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(fromType), true))
                 Expression.Emit(ctx, true);
 
-            else if (fromType.IsNumericType() && toType.IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
+            else if (TypeEntryCache.Of(fromType).IsNumericType() && TypeEntryCache.Of(toType).IsNumericType(true)) // (decimal -> T) is processed via op_Explicit()
                 CastNumeric(ctx, fromType, toType);
 
             else if (fromType.IsCallableType() && toType.IsCallableType())
@@ -60,7 +60,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
             else if (fromType == typeof(NullType))
             {
-                if (toType.IsNullableType())
+                if (TypeEntryCache.Of(toType).IsNullableType())
                 {
                     var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType, true);
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
@@ -75,12 +75,12 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                     Error(CompilerMessages.CastNullValueType, toType);
             }
 
-            else if (toType.IsNullableType())
+            else if (TypeEntryCache.Of(toType).IsNullableType())
             {
                 Expression.Emit(ctx, true);
 
                 var underlying = Nullable.GetUnderlyingType(toType);
-                if (underlying.IsNumericType() && fromType.IsNumericType() && underlying != fromType)
+                if (TypeEntryCache.Of(underlying).IsNumericType() && TypeEntryCache.Of(fromType).IsNumericType() && underlying != fromType)
                     gen.EmitConvert(underlying);
                 else if (underlying != fromType)
                     Error(fromType, toType);
@@ -89,7 +89,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 gen.EmitCreateObject(ctor);
             }
 
-            else if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
+            else if (TypeEntryCache.Of(toType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(fromType)))
             {
                 Expression.Emit(ctx, true);
 
@@ -107,7 +107,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 }
             }
 
-            else if (fromType.IsExtendablyAssignableFrom(ctx.Resolver, toType))
+            else if (TypeEntryCache.Of(fromType).IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of(toType)))
             {
                 Expression.Emit(ctx, true);
 
@@ -170,10 +170,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromArgs = fromMethod.ArgumentTypes;
             var toArgs = toMethod.ArgumentTypes;
 
-            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id].Materialize(), true)).Any(x => x))
+            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
                 Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
-            if (!toMethod.ReturnType.Materialize().IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType.Materialize(), true))
+            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
                 Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
 
             if (fromMethod.IsStatic)

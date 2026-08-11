@@ -66,25 +66,25 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             if (IsNumericOperator)
             {
-                if (leftType.IsNullableType() || rightType.IsNullableType())
+                if (TypeEntryCache.Of(leftType).IsNullableType() || TypeEntryCache.Of(rightType).IsNullableType())
                 {
-                    var leftNullable = leftType.IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
-                    var rightNullable = rightType.IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
+                    var leftNullable = TypeEntryCache.Of(leftType).IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
+                    var rightNullable = TypeEntryCache.Of(rightType).IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
 
-                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(leftNullable), TypeEntryCache.Of(rightNullable));
                     if (commonNumericType == null)
                         Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-                    return typeof(Nullable<>).MakeGenericType(commonNumericType);
+                    return typeof(Nullable<>).MakeGenericType(commonNumericType.Materialize());
                 }
 
-                if (leftType.IsNumericType() && rightType.IsNumericType())
+                if (TypeEntryCache.Of(leftType).IsNumericType() && TypeEntryCache.Of(rightType).IsNumericType())
                 {
-                    var commonNumericType = TypeExtensions.GetNumericOperationType(leftType, rightType);
+                    var commonNumericType = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(leftType), TypeEntryCache.Of(rightType));
                     if (commonNumericType == null)
                         Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-                    return commonNumericType;
+                    return commonNumericType.Materialize();
                 }
             }
 
@@ -112,10 +112,10 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (Resolve(ctx).IsNullableType())
+            if (TypeEntryCache.Of(Resolve(ctx)).IsNullableType())
             {
-                var leftNullable = LeftOperand.Resolve(ctx).IsNullableType();
-                var rightNullable = RightOperand.Resolve(ctx).IsNullableType();
+                var leftNullable = TypeEntryCache.Of(LeftOperand.Resolve(ctx)).IsNullableType();
+                var rightNullable = TypeEntryCache.Of(RightOperand.Resolve(ctx)).IsNullableType();
                 if (leftNullable && rightNullable)
                 {
                     return Expr.If(
@@ -204,7 +204,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var right = RightOperand.Resolve(ctx);
 
             if (type == null)
-                type = TypeExtensions.GetNumericOperationType(left, right);
+                type = TypeExtensions.GetNumericOperationType(TypeEntryCache.Of(left), TypeEntryCache.Of(right))?.Materialize();
 
             Expr.Cast(LeftOperand, type).Emit(ctx, true);
             Expr.Cast(RightOperand, type).Emit(ctx, true);

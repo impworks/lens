@@ -131,11 +131,11 @@ namespace Lens.SyntaxTree.ControlFlow
                 )
             );
 
-            if (_enumeratorType.Implements(ctx.Resolver, typeof(IDisposable), false))
+            if (TypeEntryCache.Of(_enumeratorType).Implements(ctx.Resolver, TypeEntryCache.Of<IDisposable>(), false))
             {
                 var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
                 var returnType = Resolve(ctx);
-                var saveLast = mustReturn && !returnType.IsVoid();
+                var saveLast = mustReturn && !TypeEntryCache.Of(returnType).IsVoid();
 
                 if (saveLast)
                 {
@@ -279,7 +279,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if (t1 != t2)
                 Error(CompilerMessages.ForeachRangeTypeMismatch, t1, t2);
 
-            if (!t1.IsIntegerType())
+            if (!TypeEntryCache.Of(t1).IsIntegerType())
                 Error(CompilerMessages.ForeachRangeNotInteger, t1);
 
             _variableType = t1;
