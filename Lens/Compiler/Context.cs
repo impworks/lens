@@ -261,11 +261,11 @@ namespace Lens.Compiler
             }
             else
             {
-                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndCollect);
                 _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
             }
 #else
-            _mainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+            _mainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndCollect);
             _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
 #endif
         }
