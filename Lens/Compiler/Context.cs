@@ -132,11 +132,13 @@ namespace Lens.Compiler
         /// Whether this compilation is going to emit IL at all.
         ///
         /// Analysis and emission are separate halves of preparing an entity, and an analysis-only
-        /// run performs the first of them. The one place the halves cannot be ordered freely is a
-        /// generic declaration: a composite signature or constraint that names a type parameter is
-        /// still spelled in terms of that parameter's builder, so while an assembly is being built
-        /// such a declaration keeps resolving its signature after its builders exist, exactly as it
-        /// always did.
+        /// run performs the first of them and stops. This is what tells preparation which of the two
+        /// it is doing; it no longer orders them, because a signature now resolves into an entry and
+        /// so needs no builders.
+        ///
+        /// It also decides where a member of an imported generic over a declared type is looked up.
+        /// Reflection can answer that once the assembly exists, and taking the path it always took
+        /// is what keeps the emitted IL identical; analysis answers from the definition instead.
         /// </summary>
         internal bool IsEmitting { get; private set; }
 
@@ -280,11 +282,13 @@ namespace Lens.Compiler
         /// Locally declared generic types are emitted under an arity-mangled name, but LENS refers
         /// to them by their plain name, so both spellings are accepted here.
         /// </summary>
-        private Type LookupTypeForResolver(string name)
+        private TypeEntry LookupTypeForResolver(string name)
         {
+            // no Builder check: the parameter's entry answers from its constraint model, so a
+            // signature naming T resolves whether or not the declaration has been emitted
             var typeParam = Resolver.FindTypeParameter(name);
-            if (typeParam?.Builder != null)
-                return typeParam.Builder;
+            if (typeParam != null)
+                return typeParam.TypeInfo;
 
             var lensName = name;
             var arity = 0;
@@ -300,7 +304,7 @@ namespace Lens.Compiler
             if (!_definedTypes.TryGetValue(lensName, out var ent))
                 return null;
 
-            return ent.GenericParameterCount == arity ? ent.TypeBuilder : null;
+            return ent.GenericParameterCount == arity ? ent.TypeInfo : null;
         }
 
         #endregion

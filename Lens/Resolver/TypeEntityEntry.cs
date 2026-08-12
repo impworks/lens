@@ -81,11 +81,10 @@ namespace Lens.Resolver
                 if (parameters == null || parameters.Count == 0)
                     return EmptyEntries;
 
-                // before the declaration is prepared its parameters have no builders yet; step 3
-                // gives them entries of their own and this stops depending on emission
-                return parameters
-                    .Select(x => x.Builder == null ? null : TypeEntryCache.Of(x.Builder))
-                    .ToArray();
+                // the parameters' own entries, not their builders: a declaration that has not been
+                // emitted still has parameters, and returning nulls here made substitution against
+                // this definition silently do nothing
+                return parameters.Select(x => x.TypeInfo).ToArray();
             }
         }
 

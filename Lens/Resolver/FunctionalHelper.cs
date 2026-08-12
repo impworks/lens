@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 
 namespace Lens.Resolver
@@ -182,7 +183,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsActionType(this TypeEntry type)
         {
-            return !type.IsDeclared && type.Materialize().IsActionType();
+            return !type.IsDeclared && (type.Is<Action>() || IsKnownType(ActionTypesLookup, type));
         }
 
         /// <summary>
@@ -190,7 +191,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsLambdaType(this TypeEntry type)
         {
-            return !type.IsDeclared && type.Materialize().IsLambdaType();
+            return !type.IsDeclared && IsKnownType(LambdaTypesLookup, type);
         }
 
         /// <summary>
@@ -198,7 +199,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsTupleType(this TypeEntry type)
         {
-            return !type.IsDeclared && type.Materialize().IsTupleType();
+            return !type.IsDeclared && IsKnownType(TupleTypesLookup, type);
         }
 
         /// <summary>
@@ -206,7 +207,9 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsCallableType(this TypeEntry type)
         {
-            return !type.IsDeclared && type.Materialize().IsCallableType();
+            // the base chain, not the CLR type: Func<SomeRecord> is as callable as Func<int>, and
+            // asking either of them for a System.Type is emission's business
+            return !type.IsDeclared && type.SelfAndBaseTypes().Any(x => x.Is<MulticastDelegate>());
         }
 
         #endregion
@@ -290,6 +293,22 @@ namespace Lens.Resolver
         private static bool IsKnownType(HashSet<Type> typesLookup, Type type)
         {
             return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
+        }
+
+        /// <summary>
+        /// Checks whether an entry stands for one of a known family of generic types.
+        ///
+        /// Only the generic definition is looked at, and a definition is always a host type even when
+        /// the instantiation is made of declarations - so Func&lt;SomeRecord&gt; can be recognised
+        /// without anything having been emitted.
+        /// </summary>
+        private static bool IsKnownType(HashSet<Type> typesLookup, TypeEntry type)
+        {
+            if (!type.IsGenericType)
+                return false;
+
+            var definition = type.GetGenericDefinition();
+            return definition != null && !definition.IsDeclared && typesLookup.Contains(definition.Materialize());
         }
 
         #endregion

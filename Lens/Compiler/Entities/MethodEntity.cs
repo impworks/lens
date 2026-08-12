@@ -87,20 +87,13 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Resolves the signature of the method and the constraint model of its generic parameters.
         ///
-        /// A generic method is the one case where this cannot be done on its own while an assembly
-        /// is being built: a composite signature like Option&lt;T&gt; is still spelled in terms of
-        /// the generic parameter builders, so it can only be resolved once they exist. When there is
-        /// an emit target, <see cref="EmitSelf"/> therefore does this part itself, in the order it
-        /// always had.
+        /// A generic method used to have to wait for its parameter builders, because a composite
+        /// signature like Option&lt;T&gt; was resolved into a constructed CLR type. Now that a
+        /// signature resolves into an entry, nothing here needs an assembly.
         /// </summary>
         public override void ResolveSelf()
         {
             if (IsImported || _isResolved)
-                return;
-
-            var ctx = ContainerType.Context;
-
-            if (IsGeneric && ctx.IsEmitting)
                 return;
 
             ResolveSelfCore();

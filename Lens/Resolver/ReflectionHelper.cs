@@ -532,6 +532,105 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Entry-space generic inference
+
+        /// <summary>
+        /// Infers the values of a generic method's type parameters from the call site, entirely in
+        /// the entry model.
+        ///
+        /// The counterpart of <see cref="GenericHelper.ResolveMethodGenericsByArgs"/> for a call
+        /// whose arguments are made of something the script declared: those have no CLR type to
+        /// match against until the declaration has been emitted, and asking for one is what would
+        /// force the assembly into existence.
+        ///
+        /// Lambda inference is deliberately absent. A lambda reaches here already resolved into a
+        /// delegate type, because that is the only shape in which it can be matched structurally.
+        /// </summary>
+        public static TypeEntry[] InferGenericArguments(TypeResolutionContext ctx, TypeEntry[] parameters, TypeEntry[] expectedTypes, TypeEntry[] actualTypes, TypeEntry[] hints)
+        {
+            if (hints != null && hints.Length != parameters.Length)
+                throw new ArgumentException(nameof(hints));
+
+            var values = new TypeEntry[parameters.Length];
+
+            if (hints != null)
+                for (var idx = 0; idx < hints.Length; idx++)
+                    values[idx] = hints[idx];
+
+            var count = Math.Min(expectedTypes.Length, actualTypes.Length);
+            for (var idx = 0; idx < count; idx++)
+                Unify(ctx, expectedTypes[idx], actualTypes[idx], parameters, values);
+
+            for (var idx = 0; idx < values.Length; idx++)
+                if (ReferenceEquals(values[idx], null))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, parameters[idx]));
+
+            return values;
+        }
+
+        /// <summary>
+        /// Matches an expected signature against the type actually passed, recording whatever the
+        /// match says about the parameters being inferred.
+        /// </summary>
+        private static void Unify(TypeResolutionContext ctx, TypeEntry expected, TypeEntry actual, TypeEntry[] parameters, TypeEntry[] values)
+        {
+            if (ReferenceEquals(expected, null) || ReferenceEquals(actual, null))
+                return;
+
+            if (expected.IsGenericParameter)
+            {
+                for (var idx = 0; idx < parameters.Length; idx++)
+                    if (TypeEntry.Same(parameters[idx], expected) && ReferenceEquals(values[idx], null))
+                        values[idx] = actual;
+
+                return;
+            }
+
+            if (expected.IsArray || expected.IsByRef)
+            {
+                Unify(ctx, expected.ElementType, actual.ElementType, parameters, values);
+                return;
+            }
+
+            if (!expected.IsGenericType || expected.IsGenericTypeDefinition)
+                return;
+
+            // the argument need not be the expected generic type itself: passing a List<T> where an
+            // IEnumerable<> is expected is what makes inference worth doing at all
+            var source = FindInstantiationOf(ctx, expected.GetGenericDefinition(), actual);
+            if (ReferenceEquals(source, null))
+                return;
+
+            var expectedArgs = expected.GenericArguments;
+            var actualArgs = source.GenericArguments;
+
+            var pairs = Math.Min(expectedArgs.Length, actualArgs.Length);
+            for (var idx = 0; idx < pairs; idx++)
+                Unify(ctx, expectedArgs[idx], actualArgs[idx], parameters, values);
+        }
+
+        /// <summary>
+        /// Finds the instantiation of a generic definition that a type is, inherits from or
+        /// implements.
+        /// </summary>
+        private static TypeEntry FindInstantiationOf(TypeResolutionContext ctx, TypeEntry definition, TypeEntry type)
+        {
+            if (ReferenceEquals(definition, null))
+                return null;
+
+            foreach (var curr in type.SelfAndBaseTypes())
+                if (TypeEntry.Same(curr.GetGenericDefinition(), definition))
+                    return curr;
+
+            foreach (var curr in type.GetInterfaces(ctx))
+                if (TypeEntry.Same(curr.GetGenericDefinition(), definition))
+                    return curr;
+
+            return null;
+        }
+
+        #endregion
+
         #region Delegate handling
 
         /// <summary>
@@ -635,7 +734,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Returns the list of methods by name, flattening interface hierarchy.
         /// </summary>
-        private static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
+        public static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
         {
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 

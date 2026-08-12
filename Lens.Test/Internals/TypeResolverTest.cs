@@ -69,7 +69,7 @@ namespace Lens.Test.Internals
         [Test]
         public void DefaultNamespaces()
         {
-            Assert.AreEqual(Resolver.ResolveType("Enumerable"), typeof(System.Linq.Enumerable));
+            Assert.AreEqual(Resolver.ResolveType("Enumerable").Materialize(), typeof(System.Linq.Enumerable));
         }
 
         [Test]
@@ -102,7 +102,8 @@ namespace Lens.Test.Internals
 
         private static void Test<T>(string signature)
         {
-            Assert.AreEqual(Resolver.ResolveType(signature), typeof(T));
+            // the resolver hands out entries now; the CLR type it stands for is what this asserts on
+            Assert.AreEqual(Resolver.ResolveType(signature).Materialize(), typeof(T));
         }
     }
 }

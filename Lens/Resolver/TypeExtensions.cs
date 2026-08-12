@@ -174,12 +174,12 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        /// Checks whether an entry stands for something the script declared rather than for a type
-        /// the CLR already has: a type entity or a generic parameter.
+        /// Checks whether an entry stands for something the script declared, or is built out of one:
+        /// a type entity, a generic parameter, T[], List&lt;SomeRecord&gt;.
         /// </summary>
         private static bool IsDeclaration(TypeEntry type)
         {
-            return !ReferenceEquals(type, null) && type.IsDeclared;
+            return !ReferenceEquals(type, null) && type.ContainsDeclared;
         }
 
         /// <summary>

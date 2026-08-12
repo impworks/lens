@@ -164,11 +164,9 @@ namespace Lens.Compiler.Entities
         /// Resolves everything the declaration itself states: the constraint model of its generic
         /// parameters and its parent type.
         ///
-        /// A generic type is the one case where this cannot be done on its own while an assembly is
-        /// being built: the parent of a label is spelled Foo&lt;T&gt;, and a constraint may be too,
-        /// and both are still expressed in terms of the generic parameter builders. When there is an
-        /// emit target, <see cref="EmitSelf"/> therefore does this part itself, in the order it
-        /// always had.
+        /// A generic declaration used to have to wait for its parameter builders, because the parent
+        /// of a label is spelled Foo&lt;T&gt; and that was resolved into a constructed CLR type. Now
+        /// that a signature resolves into an entry, nothing here needs an assembly.
         /// </summary>
         public void ResolveSelf()
         {
@@ -177,9 +175,6 @@ namespace Lens.Compiler.Entities
 
             if (IsGeneric)
             {
-                if (Context.IsEmitting)
-                    return;
-
                 _isResolved = true;
 
                 Context.RegisterGenericParameters(GenericParameters);
@@ -387,12 +382,18 @@ namespace Lens.Compiler.Entities
         /// Rewrites the declared signature of a member in terms of the actual type arguments,
         /// so that overload resolution compares like with like.
         /// </summary>
-        private static TypeEntry[] Substitute(TypeEntry[] types, TypeEntry instantiation)
+        private TypeEntry[] Substitute(TypeEntry[] types, TypeEntry instantiation)
         {
             if (instantiation == null)
                 return types;
 
-            return types.Select(x => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(x.Materialize(), instantiation.Materialize(), false))).ToArray();
+            // the declaration's own parameters, not the ones its entry reports: an entity that has
+            // not been emitted has no parameter builders, and the substitution has to work anyway
+            var parameters = GenericParameters.Select(x => x.TypeInfo).ToArray();
+
+            return types
+                .Select(x => ConstructedTypeEntry.SubstituteInto(Context.Resolver, x, parameters, instantiation.GenericArguments))
+                .ToArray();
         }
 
         #endregion

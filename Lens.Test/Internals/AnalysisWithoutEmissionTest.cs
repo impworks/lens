@@ -73,6 +73,57 @@ id 5");
         }
 
         [Test]
+        public void AnalysingAGenericOverADeclaredTypeBuildsNoAssembly()
+        {
+            var ctx = Analyze(@"
+record P
+    X : int
+
+var l = new List<P> ()
+l.Add (new P 1)
+l");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty, "a declared type inside a generic must resolve");
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAnArrayOfATypeParameterBuildsNoAssembly()
+        {
+            var ctx = Analyze("fun first<T>:T (xs:T[]) -> xs[0]\nfirst (new[1; 2])");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAGenericRecordBuildsNoAssembly()
+        {
+            var ctx = Analyze("record B<T>\n    V : T\n\n1");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAGenericRecordWithACompositeFieldBuildsNoAssembly()
+        {
+            var ctx = Analyze("record B<T>\n    V : List<T>\n\n1");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAGenericAlgebraicTypeBuildsNoAssembly()
+        {
+            var ctx = Analyze("type Opt<T>\n    Some of T\n    None\n\n1");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
         public void AnalysisReportsErrorsWithoutThrowing()
         {
             var ctx = Analyze("missing1\nmissing2");

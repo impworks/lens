@@ -68,11 +68,11 @@ namespace Lens.Compiler
                         Error(signature, CompilerMessages.GenericTypeArgCountMismatch, genericDeclared.Name, genericDeclared.GenericParameterCount, signature.Arguments.Length);
 
                     var args = signature.Arguments.Select(x => ResolveType(x)).ToArray();
-                    return TypeEntryCache.Of(GenericHelper.MakeGenericTypeChecked(Resolver, genericDeclared.TypeInfo.Materialize(), TypeEntry.Materialize(args)));
+                    return GenericHelper.MakeGenericTypeChecked(Resolver, genericDeclared.TypeInfo, args);
                 }
             }
 
-            return TypeEntryCache.Of(_typeResolver.ResolveType(signature));
+            return _typeResolver.ResolveType(signature);
         }
 
         /// <summary>
@@ -130,7 +130,9 @@ namespace Lens.Compiler
         {
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ReflectionHelper.ResolveField(Resolver, type.Materialize(), name);
+                return NeedsEntryLookup(type)
+                    ? ResolveHostField(type, name)
+                    : ReflectionHelper.ResolveField(Resolver, type.Materialize(), name);
 
             var fi = declared.Entity.ResolveField(name);
             return new FieldWrapper
@@ -153,7 +155,9 @@ namespace Lens.Compiler
         public PropertyWrapper ResolveProperty(TypeEntry type, string name)
         {
             if (FindDeclaredType(type) == null)
-                return ReflectionHelper.ResolveProperty(Resolver, type.Materialize(), name);
+                return NeedsEntryLookup(type)
+                    ? ResolveHostProperty(type, name)
+                    : ReflectionHelper.ResolveProperty(Resolver, type.Materialize(), name);
 
             // no internal properties
             throw new KeyNotFoundException();
@@ -165,7 +169,14 @@ namespace Lens.Compiler
         public EventWrapper ResolveEvent(TypeEntry type, string name)
         {
             if (FindDeclaredType(type) == null)
+            {
+                // a type with no CLR counterpart yet cannot declare an event either: LENS never
+                // declares one, and an imported generic's events are out of reach until emission
+                if (NeedsEntryLookup(type))
+                    throw new KeyNotFoundException();
+
                 return ReflectionHelper.ResolveEvent(Resolver, type.Materialize(), name);
+            }
 
             // no internal events
             throw new KeyNotFoundException();
@@ -178,7 +189,9 @@ namespace Lens.Compiler
         {
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ReflectionHelper.ResolveConstructor(Resolver, type.Materialize(), TypeEntry.Materialize(argTypes));
+                return NeedsEntryLookup(type, argTypes)
+                    ? ResolveHostConstructor(type, argTypes)
+                    : ReflectionHelper.ResolveConstructor(Resolver, type.Materialize(), TypeEntry.Materialize(argTypes));
 
             var ctor = declared.Entity.ResolveConstructor(argTypes, declared.Instantiation);
 
@@ -218,7 +231,9 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ReflectionHelper.ResolveMethod(Resolver, type.Materialize(), name, argTypes, hints, resolver);
+                return NeedsEntryLookup(type, argTypes)
+                    ? ResolveHostMethod(type, name, argTypes, hints)
+                    : ReflectionHelper.ResolveMethod(Resolver, type.Materialize(), name, argTypes, hints, resolver);
 
             try
             {
@@ -401,7 +416,9 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ReflectionHelper.ResolveMethodGroup(Resolver, type.Materialize(), name);
+                return NeedsEntryLookup(type)
+                    ? ResolveHostMethodGroup(type, name)
+                    : ReflectionHelper.ResolveMethodGroup(Resolver, type.Materialize(), name);
 
             return declared.Entity.ResolveMethodGroup(name).Select(x => WrapMethod(declared, x));
         }
@@ -439,6 +456,11 @@ namespace Lens.Compiler
             public TypeEntity Entity;
 
             /// <summary>
+            /// The resolution context, which the entry-space substitution below needs.
+            /// </summary>
+            public TypeResolutionContext Resolver;
+
+            /// <summary>
             /// The constructed generic type, or null when the reference is to the definition itself.
             /// </summary>
             public TypeEntry Instantiation;
@@ -459,15 +481,25 @@ namespace Lens.Compiler
             /// </summary>
             public TypeEntry Substitute(TypeEntry type)
             {
-                return Instantiation == null ? type : TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(type.Materialize(), Instantiation.Materialize(), false));
+                if (Instantiation == null)
+                    return type;
+
+                // the declaration's own parameters, not the ones its entry reports: an entity that
+                // has not been emitted has no parameter builders, and this has to work anyway
+                var parameters = Entity.GenericParameters.Select(x => x.TypeInfo).ToArray();
+
+                return ConstructedTypeEntry.SubstituteInto(Resolver, type, parameters, Instantiation.GenericArguments);
             }
 
             /// <summary>
             /// Returns the version of a field that belongs to the constructed type.
+            ///
+            /// A builder that does not exist yet has no per-instantiation version either: analysis
+            /// never needs one, and by the time emission does, the builders are all there.
             /// </summary>
             public FieldInfo MemberOf(FieldBuilder field)
             {
-                return Instantiation == null ? (FieldInfo) field : TypeBuilder.GetField(Instantiation.Materialize(), field);
+                return Instantiation == null || field == null ? (FieldInfo) field : TypeBuilder.GetField(Instantiation.Materialize(), field);
             }
 
             /// <summary>
@@ -475,7 +507,7 @@ namespace Lens.Compiler
             /// </summary>
             public ConstructorInfo MemberOf(ConstructorBuilder ctor)
             {
-                return Instantiation == null ? (ConstructorInfo) ctor : TypeBuilder.GetConstructor(Instantiation.Materialize(), ctor);
+                return Instantiation == null || ctor == null ? (ConstructorInfo) ctor : TypeBuilder.GetConstructor(Instantiation.Materialize(), ctor);
             }
 
             /// <summary>
@@ -512,10 +544,10 @@ namespace Lens.Compiler
             // recognised once it had a builder - the chicken and egg that made analysing a script
             // require emitting it.
             if (type is TypeEntityEntry declared)
-                return new DeclaredTypeReference {Entity = declared.Entity};
+                return new DeclaredTypeReference {Entity = declared.Entity, Resolver = Resolver};
 
             if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GenericDefinition is TypeEntityEntry definition)
-                return new DeclaredTypeReference {Entity = definition.Entity, Instantiation = type};
+                return new DeclaredTypeReference {Entity = definition.Entity, Resolver = Resolver, Instantiation = type};
 
             return null;
         }
@@ -534,6 +566,231 @@ namespace Lens.Compiler
                 yield return entity.BaseType;
 
             yield return TypeEntryCache.Of<object>();
+        }
+
+        #endregion
+
+        #region Members of a type that has no CLR counterpart yet
+
+        // The lookups below are what tier 2 of the entry model will replace with member entries. They
+        // answer from the generic definition, which is always a host type that reflection can be
+        // asked about, and rewrite what it says into the terms of the instantiation. None of them
+        // hands out a FieldInfo, a MethodInfo or a ConstructorInfo: those are assembly artefacts, and
+        // a type whose arguments have not been emitted has none. Only emission needs one and only
+        // emission takes these paths' place.
+
+        /// <summary>
+        /// Whether a member lookup has to be answered from the entry model instead of from
+        /// reflection.
+        ///
+        /// A type or an argument made of something the script declared has no CLR counterpart until
+        /// that declaration has been emitted, and asking for one during analysis is precisely what
+        /// would force the assembly into existence. While an assembly is being built the counterpart
+        /// does exist, so emission keeps taking the reflection path it always did - which is what
+        /// keeps the generated IL identical.
+        /// </summary>
+        private bool NeedsEntryLookup(TypeEntry type, TypeEntry[] argTypes = null)
+        {
+            if (IsEmitting)
+                return false;
+
+            if (IsHostInstantiation(type))
+                return true;
+
+            return argTypes != null && argTypes.Any(x => x != null && x.ContainsDeclared);
+        }
+
+        /// <summary>
+        /// Whether a type is an instantiation of a host generic definition over something the script
+        /// declared: List&lt;SomeRecord&gt;, EqualityComparer&lt;T&gt;.
+        ///
+        /// The instantiation cannot be reflected on, but its definition is an ordinary host type, so
+        /// a member is looked up there and its signature rewritten into the instantiation's terms.
+        /// </summary>
+        private static bool IsHostInstantiation(TypeEntry type)
+        {
+            return type != null
+                   && type.ContainsDeclared
+                   && type.IsGenericType
+                   && !type.IsGenericTypeDefinition
+                   && !type.GetGenericDefinition().IsDeclared;
+        }
+
+        /// <summary>
+        /// The type a member of the given type has to be looked up on: the type itself, or the
+        /// definition behind it when the type is an instantiation with no CLR counterpart.
+        /// </summary>
+        private static Type LookupTargetOf(TypeEntry type)
+        {
+            return (IsHostInstantiation(type) ? type.GetGenericDefinition() : type).Materialize();
+        }
+
+        /// <summary>
+        /// Rewrites a member's declared signature into the terms of the instantiation it was reached
+        /// through, doing nothing when the member was found on the type itself.
+        /// </summary>
+        private TypeEntry SubstituteIntoInstantiation(Type declared, TypeEntry instantiation)
+        {
+            var type = TypeEntryCache.Of(declared);
+            if (instantiation == null)
+                return type;
+
+            return ConstructedTypeEntry.SubstituteInto(
+                Resolver,
+                type,
+                instantiation.GetGenericDefinition().GenericArguments,
+                instantiation.GenericArguments
+            );
+        }
+
+        /// <summary>
+        /// Resolves a field of a host type that has no CLR counterpart yet.
+        ///
+        /// There is no FieldInfo to hand out: only emission needs one, and only emission has one.
+        /// </summary>
+        private FieldWrapper ResolveHostField(TypeEntry type, string name)
+        {
+            var instantiation = IsHostInstantiation(type) ? type : null;
+            var field = LookupTargetOf(type).GetField(name);
+            if (field == null)
+                throw new KeyNotFoundException();
+
+            return new FieldWrapper
+            {
+                Name = name,
+                DeclaringType = type,
+
+                IsStatic = field.IsStatic,
+                IsLiteral = field.IsLiteral,
+                FieldType = SubstituteIntoInstantiation(field.FieldType, instantiation)
+            };
+        }
+
+        /// <summary>
+        /// Resolves a property of a host type that has no CLR counterpart yet.
+        /// </summary>
+        private PropertyWrapper ResolveHostProperty(TypeEntry type, string name)
+        {
+            var instantiation = IsHostInstantiation(type) ? type : null;
+            var pty = LookupTargetOf(type).GetProperty(name);
+            if (pty == null)
+                throw new KeyNotFoundException();
+
+            var getter = pty.GetGetMethod();
+            var setter = pty.GetSetMethod();
+            var any = getter ?? setter;
+
+            return new PropertyWrapper
+            {
+                Name = name,
+                DeclaringType = type,
+
+                // a wrapper with no accessors would read as "cannot get and cannot set", so the
+                // definition's accessors stand in for the ones emission would build
+                Getter = getter,
+                Setter = setter,
+                IsStatic = any.IsStatic,
+                IsVirtual = any.IsVirtual,
+                PropertyType = SubstituteIntoInstantiation(pty.PropertyType, instantiation)
+            };
+        }
+
+        /// <summary>
+        /// Resolves a constructor of a host type that has no CLR counterpart yet.
+        /// </summary>
+        private ConstructorWrapper ResolveHostConstructor(TypeEntry type, TypeEntry[] argTypes)
+        {
+            var instantiation = IsHostInstantiation(type) ? type : null;
+            var found = ReflectionHelper.ResolveMethodByArgs(
+                Resolver,
+                LookupTargetOf(type).GetConstructors(),
+                c => c.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
+                ReflectionHelper.IsVariadic,
+                argTypes
+            );
+
+            return new ConstructorWrapper
+            {
+                DeclaringType = type,
+                ArgumentTypes = found.ArgumentTypes,
+
+                IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+                IsVariadic = ReflectionHelper.IsVariadic(found.Method)
+            };
+        }
+
+        /// <summary>
+        /// Resolves a method of a host type that has no CLR counterpart yet, or one whose arguments
+        /// are made of declared types.
+        /// </summary>
+        private MethodWrapper ResolveHostMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints)
+        {
+            var instantiation = IsHostInstantiation(type) ? type : null;
+            var found = ReflectionHelper.ResolveMethodByArgs(
+                Resolver,
+                ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name),
+                m => m.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
+                ReflectionHelper.IsVariadic,
+                argTypes
+            );
+
+            var info = found.Method;
+            var mw = new MethodWrapper
+            {
+                Name = name,
+                DeclaringType = type,
+
+                IsStatic = info.IsStatic,
+                IsVirtual = info.IsVirtual,
+                IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+                IsVariadic = ReflectionHelper.IsVariadic(info),
+
+                ArgumentTypes = found.ArgumentTypes,
+                ReturnType = SubstituteIntoInstantiation(info.ReturnType, instantiation)
+            };
+
+            if (info.IsGenericMethod)
+            {
+                var parameters = TypeEntryCache.Of(info.GetGenericArguments());
+                var values = ReflectionHelper.InferGenericArguments(Resolver, parameters, found.ArgumentTypes, argTypes, hints);
+
+                mw.GenericArguments = values;
+                mw.ArgumentTypes = found.ArgumentTypes.Select(x => ConstructedTypeEntry.SubstituteInto(Resolver, x, parameters, values)).ToArray();
+                mw.ReturnType = ConstructedTypeEntry.SubstituteInto(Resolver, mw.ReturnType, parameters, values);
+            }
+            else if (hints != null)
+            {
+                Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+            }
+
+            return mw;
+        }
+
+        /// <summary>
+        /// Resolves the non-generic methods of a given name on a host type that has no CLR
+        /// counterpart yet.
+        /// </summary>
+        private IEnumerable<MethodWrapper> ResolveHostMethodGroup(TypeEntry type, string name)
+        {
+            var instantiation = IsHostInstantiation(type) ? type : null;
+
+            return ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name)
+                                   .Where(m => !m.IsGenericMethod)
+                                   .Select(
+                                       m => new MethodWrapper
+                                       {
+                                           Name = name,
+                                           DeclaringType = type,
+
+                                           IsStatic = m.IsStatic,
+                                           IsVirtual = m.IsVirtual,
+                                           IsVariadic = ReflectionHelper.IsVariadic(m),
+
+                                           ArgumentTypes = m.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
+                                           ReturnType = SubstituteIntoInstantiation(m.ReturnType, instantiation)
+                                       }
+                                   )
+                                   .ToArray();
         }
 
         #endregion

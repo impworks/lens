@@ -493,9 +493,10 @@ namespace Lens.Compiler
         /// Runs preparation over everything that is pending: the analysis half always, and the
         /// emission half right after it when there is an assembly to emit into.
         ///
-        /// The two halves of one entity stay adjacent on purpose. A generic declaration resolves the
-        /// types it names once its own parameter builders exist, so its analysis half cannot be
-        /// hoisted above the emission half of the declaration before it.
+        /// The two halves of one entity stay adjacent. Nothing forces that any more - a signature
+        /// resolves into an entry and needs no builders - but separating them would reorder the
+        /// DefineType and DefineMethod calls, and the order in which an assembly is built is part of
+        /// what this compiler produces.
         /// </summary>
         private void ProcessEntities(bool clearTypes, bool emit)
         {
