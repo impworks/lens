@@ -54,29 +54,6 @@ namespace Lens.Compiler
                 ExternalLookup = LookupTypeForResolver
             };
 
-            AssemblyName an;
-            lock (typeof(Context))
-                an = new AssemblyName(Unique.AssemblyName());
-
-#if NET_CLASSIC
-            if (Options.AllowSave)
-            {
-                if (string.IsNullOrEmpty(Options.FileName))
-                    Options.FileName = an.Name + (Options.SaveAsExe ? ".exe" : ".dll");
-
-                MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
-                MainModule = MainAssembly.DefineDynamicModule(an.Name, Options.FileName);
-            }
-            else
-            {
-                MainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-                MainModule = MainAssembly.DefineDynamicModule(an.Name);
-            }
-#else
-            MainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-            MainModule = MainAssembly.DefineDynamicModule(an.Name);
-#endif
-
             ContextId = GlobalPropertyHelper.RegisterContext();
 
             MainType = CreateType(EntityNames.MainTypeName, prepare: false);
@@ -118,13 +95,38 @@ namespace Lens.Compiler
 
         /// <summary>
         /// The assembly that's being currently built.
+        /// Created on first use: analysing a script must not build one.
         /// </summary>
-        public AssemblyBuilder MainAssembly { get; }
+        public AssemblyBuilder MainAssembly
+        {
+            get
+            {
+                EnsureEmitTarget();
+                return _mainAssembly;
+            }
+        }
 
         /// <summary>
         /// The main module of the current assembly.
+        /// Created on first use: analysing a script must not build one.
         /// </summary>
-        public ModuleBuilder MainModule { get; }
+        public ModuleBuilder MainModule
+        {
+            get
+            {
+                EnsureEmitTarget();
+                return _mainModule;
+            }
+        }
+
+        /// <summary>
+        /// Whether anything has yet asked for somewhere to emit into.
+        ///
+        /// This is the boundary between analysis and emission made observable. It exists so the
+        /// claim "analysing a script allocates no AssemblyBuilder" can be asserted rather than
+        /// asserted about.
+        /// </summary>
+        public bool HasEmitTarget => _mainAssembly != null;
 
         /// <summary>
         /// The main type in which all "global" functions are stored.
@@ -213,6 +215,48 @@ namespace Lens.Compiler
         /// The list of assemblies referenced by current script.
         /// </summary>
         internal readonly ReferencedAssemblyCache AssemblyCache;
+
+        private AssemblyBuilder _mainAssembly;
+        private ModuleBuilder _mainModule;
+
+        #endregion
+
+        #region Emit target
+
+        /// <summary>
+        /// Creates the assembly and module to emit into, unless that has already happened.
+        ///
+        /// Everything before this point is analysis, and used to be impossible to separate: the
+        /// constructor built an assembly whether or not anything was ever going to be emitted.
+        /// </summary>
+        private void EnsureEmitTarget()
+        {
+            if (_mainAssembly != null)
+                return;
+
+            AssemblyName an;
+            lock (typeof(Context))
+                an = new AssemblyName(Unique.AssemblyName());
+
+#if NET_CLASSIC
+            if (Options.AllowSave)
+            {
+                if (string.IsNullOrEmpty(Options.FileName))
+                    Options.FileName = an.Name + (Options.SaveAsExe ? ".exe" : ".dll");
+
+                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
+                _mainModule = _mainAssembly.DefineDynamicModule(an.Name, Options.FileName);
+            }
+            else
+            {
+                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+                _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
+            }
+#else
+            _mainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+            _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
+#endif
+        }
 
         #endregion
 

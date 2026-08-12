@@ -44,6 +44,27 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// Runs everything that is analysis and nothing that is emission: declarations are read,
+        /// bodies are bound, captures are worked out, and diagnostics are collected. No IL is
+        /// generated.
+        ///
+        /// This is the entry point a language server consumes. It does not throw on a bad script -
+        /// the caller reads Diagnostics.
+        /// </summary>
+        public void Analyze(IEnumerable<NodeBase> nodes)
+        {
+            LoadTree(nodes);
+            if (Diagnostics.HasErrors)
+                return;
+
+            CreateInitialEntities();
+            if (Diagnostics.HasErrors)
+                return;
+
+            BindTree();
+        }
+
+        /// <summary>
         /// Initializes the context from a stream of nodes.
         /// </summary>
         private void LoadTree(IEnumerable<NodeBase> nodes)
@@ -96,29 +117,7 @@ namespace Lens.Compiler
         {
             while (UnprocessedMethods.Count > 0)
             {
-                var methods = UnprocessedMethods.OrderByDescending(x => x.IsImported).ToArray();
-                UnprocessedMethods.Clear();
-
-                // closure method bodies have been processed as contents of their lambda
-                // no need to process them twice
-                var pending = methods.Where(x => x.Kind != TypeContentsKind.Closure).ToArray();
-                var analysed = new List<MethodEntityBase>();
-
-                foreach (var curr in pending)
-                {
-                    var diagnosticsBefore = Diagnostics.Count;
-                    WithRecovery(curr.TransformBody);
-
-                    // closure analysis assumes the transform above has completed: walking a
-                    // half-transformed body only produces follow-up noise
-                    if (Diagnostics.Count != diagnosticsBefore)
-                        continue;
-
-                    WithRecovery(curr.AnalyzeClosures);
-
-                    if (Diagnostics.Count == diagnosticsBefore)
-                        analysed.Add(curr);
-                }
+                var analysed = BindRound();
 
                 // the entities declared by this round cannot be prepared once anything has
                 // failed, so gather the round's diagnostics and stop here
@@ -135,6 +134,54 @@ namespace Lens.Compiler
 
                 PrepareEntities();
             }
+        }
+
+        /// <summary>
+        /// Binds every method body without creating anything the assembly would hold.
+        /// </summary>
+        private void BindTree()
+        {
+            while (UnprocessedMethods.Count > 0)
+            {
+                BindRound();
+
+                if (Diagnostics.HasErrors)
+                    return;
+            }
+        }
+
+        /// <summary>
+        /// Transforms and binds one round of pending method bodies, and works out what each of them
+        /// captures. Returns the methods that came through without a diagnostic, which are the ones
+        /// whose closure entities may be created.
+        /// </summary>
+        private List<MethodEntityBase> BindRound()
+        {
+            var methods = UnprocessedMethods.OrderByDescending(x => x.IsImported).ToArray();
+            UnprocessedMethods.Clear();
+
+            // closure method bodies have been processed as contents of their lambda
+            // no need to process them twice
+            var pending = methods.Where(x => x.Kind != TypeContentsKind.Closure);
+            var analysed = new List<MethodEntityBase>();
+
+            foreach (var curr in pending)
+            {
+                var diagnosticsBefore = Diagnostics.Count;
+                WithRecovery(curr.TransformBody);
+
+                // closure analysis assumes the transform above has completed: walking a
+                // half-transformed body only produces follow-up noise
+                if (Diagnostics.Count != diagnosticsBefore)
+                    continue;
+
+                WithRecovery(curr.AnalyzeClosures);
+
+                if (Diagnostics.Count == diagnosticsBefore)
+                    analysed.Add(curr);
+            }
+
+            return analysed;
         }
 
         /// <summary>

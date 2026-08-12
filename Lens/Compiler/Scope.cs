@@ -155,7 +155,14 @@ namespace Lens.Compiler
         public Local DeclareImplicit(Context ctx, TypeEntry type, bool isConst)
         {
             var local = DeclareLocal(ctx.Unique.TempVariableName(), type, isConst);
-            local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type.Materialize());
+
+            // a name the compiler invents while emitting arrives after this scope has already
+            // declared its locals, so it has to claim a slot straight away. One invented while
+            // binding is declared by EmitSelf along with every other local - and must not be
+            // declared here, or binding would need an ILGenerator it should know nothing about.
+            if (ctx.CurrentMethod?.Generator != null)
+                local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type.Materialize());
+
             return local;
         }
 
@@ -256,8 +263,10 @@ namespace Lens.Compiler
                     var field = closure.ClosureType.CreateField(curr.ClosureFieldName, closure.SubstituteIntoClosure(curr.Type));
                     field.Kind = TypeContentsKind.Closure;
                 }
-                else
+                else if (curr.LocalBuilder == null)
                 {
+                    // an implicit local invented while emitting already has its slot; declaring a
+                    // second one for it wasted a slot per temporary
                     curr.LocalBuilder = gen.DeclareLocal(curr.Type.Materialize());
                 }
             }
