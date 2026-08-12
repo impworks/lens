@@ -91,9 +91,24 @@ namespace Lens.Compiler.Entities
 
         private TypeEntry _typeInfo;
 
+        private TypeEntityEntry _declaredEntry;
+
+        /// <summary>
+        /// The type as the rest of the compiler refers to it.
+        ///
+        /// For a declaration this is an entry that answers from the declaration itself, so that
+        /// binding never has to ask a half-built TypeBuilder a question it cannot answer. For an
+        /// imported type it is whatever the host handed over.
+        /// </summary>
         public TypeEntry TypeInfo
         {
-            get => TypeBuilder != null ? TypeEntryCache.Of(TypeBuilder) : _typeInfo;
+            get
+            {
+                if (IsImported)
+                    return _typeInfo;
+
+                return _declaredEntry ?? (_declaredEntry = new TypeEntityEntry(this));
+            }
             set
             {
                 if (!IsImported)
@@ -101,6 +116,19 @@ namespace Lens.Compiler.Entities
 
                 _typeInfo = value;
             }
+        }
+
+        /// <summary>
+        /// Produces the CLR type for this declaration, creating its builder if that has not happened
+        /// yet. This is the point at which a declaration stops being an idea and starts being
+        /// assembly metadata; only emission should reach it.
+        /// </summary>
+        internal Type MaterializeSelf()
+        {
+            if (TypeBuilder == null)
+                PrepareSelf();
+
+            return TypeBuilder;
         }
 
         /// <summary>
@@ -174,6 +202,11 @@ namespace Lens.Compiler.Entities
             if (Interfaces != null)
                 foreach (var iface in Interfaces)
                     TypeBuilder.AddInterfaceImplementation(iface.Materialize());
+
+            // a builder that arrives back from reflection - as the definition of an instantiation,
+            // say - must resolve to this declaration and not to a bare wrapper around the builder,
+            // or the two would be different entries for the same type
+            TypeEntryCache.Register(TypeBuilder, TypeInfo);
         }
 
         /// <summary>

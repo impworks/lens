@@ -309,9 +309,9 @@ namespace Lens.Resolver
         /// </summary>
         private static bool IsDeclaredGeneric(TypeEntry type)
         {
-            // the entry model does not yet know which declaration an instantiation came from, so the
-            // builder behind the definition is still the only witness
-            return !type.IsGenericTypeDefinition && type.GenericDefinition?.Materialize() is TypeBuilder;
+            // the definition behind the instantiation says whether the script declared it, with no
+            // need to materialize anything and no need for it to have been emitted yet
+            return !type.IsGenericTypeDefinition && type.GenericDefinition?.IsDeclared == true;
         }
 
         /// <summary>

@@ -420,18 +420,15 @@ namespace Lens.Compiler
             if (type == null)
                 return null;
 
-            if (type.Materialize() is TypeBuilder)
-            {
-                var entity = FindTypeByEmittedName(type.Name);
-                return entity == null ? null : new DeclaredTypeReference {Entity = entity};
-            }
+            // the entry knows what it is. This used to test 'type is TypeBuilder' and then look the
+            // declaration back up by its emitted name, which meant a declaration could only be
+            // recognised once it had a builder - the chicken and egg that made analysing a script
+            // require emitting it.
+            if (type is TypeEntityEntry declared)
+                return new DeclaredTypeReference {Entity = declared.Entity};
 
-            if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GenericDefinition.Materialize() is TypeBuilder definition)
-            {
-                var entity = FindTypeByEmittedName(definition.Name);
-                if (entity != null)
-                    return new DeclaredTypeReference {Entity = entity, Instantiation = type};
-            }
+            if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GenericDefinition is TypeEntityEntry definition)
+                return new DeclaredTypeReference {Entity = definition.Entity, Instantiation = type};
 
             return null;
         }
@@ -450,16 +447,6 @@ namespace Lens.Compiler
                 yield return entity.BaseType;
 
             yield return TypeEntryCache.Of<object>();
-        }
-
-        /// <summary>
-        /// Finds a declared type by the name it is emitted under, which for a generic type
-        /// carries the arity suffix that LENS itself never uses.
-        /// </summary>
-        private TypeEntity FindTypeByEmittedName(string name)
-        {
-            var tick = name.IndexOf('`');
-            return FindType(tick < 0 ? name : name.Substring(0, tick));
         }
 
         #endregion
