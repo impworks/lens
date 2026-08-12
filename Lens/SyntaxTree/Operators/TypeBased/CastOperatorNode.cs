@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromType = Expression.Resolve(ctx);
             var toType = Resolve(ctx);
 
-            if (ctx.Resolver.IsDeclaredTypeParameter(fromType.Materialize()) || ctx.Resolver.IsDeclaredTypeParameter(toType.Materialize()))
+            if (ctx.Resolver.IsDeclaredTypeParameter(fromType) || ctx.Resolver.IsDeclaredTypeParameter(toType))
                 CastGenericParameter(ctx, fromType, toType);
 
             else if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType, true))

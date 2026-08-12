@@ -169,7 +169,7 @@ namespace Lens.Compiler
 
             while (true)
             {
-                var next = Resolver.FindConstraints(curr.BaseType?.Materialize());
+                var next = Resolver.FindConstraints(curr.BaseType);
                 if (next == null)
                     return;
 

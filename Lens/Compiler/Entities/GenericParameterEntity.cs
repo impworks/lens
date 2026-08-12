@@ -87,6 +87,14 @@ namespace Lens.Compiler.Entities
         /// </summary>
         public GenericParameterEntity Source;
 
+        private GenericParameterEntry _entry;
+
+        /// <summary>
+        /// The parameter as the rest of the compiler refers to it. Answers from the constraint model
+        /// above rather than from the builder, which cannot be asked until its owner exists.
+        /// </summary>
+        public TypeEntry TypeInfo => _entry ?? (_entry = new GenericParameterEntry(this));
+
         #endregion
 
         #region Debug

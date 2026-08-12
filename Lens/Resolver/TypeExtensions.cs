@@ -421,14 +421,10 @@ namespace Lens.Resolver
         /// </summary>
         private static TypeEntry GetGenericParameterBase(TypeResolutionContext ctx, TypeEntry type, bool ignoreConstraints)
         {
-            // the constraint model is keyed by the builder that represents the parameter
-            var entity = ctx.FindConstraints(type.Materialize());
-            if (entity != null)
-            {
-                return ignoreConstraints
-                    ? TypeEntryCache.Of<object>()
-                    : entity.BaseType ?? (entity.IsValueType ? TypeEntryCache.Of<ValueType>() : TypeEntryCache.Of<object>());
-            }
+            // a declared parameter carries its own constraints, and its BaseType already applies the
+            // CLI defaults - ValueType for a struct constraint, object otherwise
+            if (type.IsGenericParameter && type.IsDeclared)
+                return ignoreConstraints ? TypeEntryCache.Of<object>() : type.BaseType;
 
             return GetBaseType(type) ?? TypeEntryCache.Of<object>();
         }

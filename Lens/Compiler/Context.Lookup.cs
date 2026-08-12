@@ -42,8 +42,10 @@ namespace Lens.Compiler
             if (signature.Arguments == null && string.IsNullOrEmpty(signature.Postfix))
             {
                 var typeParam = Resolver.FindTypeParameter(signature.Name);
-                if (typeParam?.Builder != null)
-                    return TypeEntryCache.Of(typeParam.Builder);
+                // no Builder check: the parameter's entry answers from its constraint model, so a
+                // signature naming T resolves whether or not the declaration has been emitted
+                if (typeParam != null)
+                    return typeParam.TypeInfo;
             }
 
             var declared = FindType(signature.FullSignature);
@@ -442,7 +444,7 @@ namespace Lens.Compiler
             foreach (var iface in Resolver.ResolveInterfaces(typeParameter.Materialize()))
                 yield return TypeEntryCache.Of(iface);
 
-            var entity = Resolver.FindConstraints(typeParameter.Materialize());
+            var entity = Resolver.FindConstraints(typeParameter);
             if (entity?.BaseType != null && !entity.BaseType.IsGenericParameter)
                 yield return entity.BaseType;
 

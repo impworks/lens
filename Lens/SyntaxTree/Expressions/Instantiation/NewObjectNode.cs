@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             // parameterless one, and the CLI reaches it through Activator.CreateInstance<T>
             if (type.IsGenericParameter)
             {
-                var constraints = ctx.Resolver.FindConstraints(type.Materialize());
+                var constraints = ctx.Resolver.FindConstraints(type);
                 if (binding.ArgTypes.Length > 0 || constraints == null || !constraints.RequiresDefaultCtor)
                     Error(CompilerMessages.TypeConstructorNotFound, type);
 

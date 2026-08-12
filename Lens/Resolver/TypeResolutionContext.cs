@@ -256,7 +256,13 @@ namespace Lens.Resolver
         public void Register(GenericParameterEntity entity)
         {
             if (entity.Builder != null)
+            {
                 _knownParameters[entity.Builder] = entity;
+
+                // a builder arriving back from reflection must resolve to the declared parameter and
+                // not to a bare wrapper, or the same T would have two entries
+                TypeEntryCache.Register(entity.Builder, entity.TypeInfo);
+            }
         }
 
         /// <summary>
@@ -266,6 +272,24 @@ namespace Lens.Resolver
         public bool IsDeclaredTypeParameter(Type type)
         {
             return type != null && type.IsGenericParameter && FindConstraints(type) != null;
+        }
+
+        /// <summary>
+        /// Checks whether a type is a generic parameter declared in LENS code, as opposed to an
+        /// unsubstituted parameter that leaked in from an imported generic definition.
+        /// </summary>
+        public bool IsDeclaredTypeParameter(TypeEntry type)
+        {
+            return type is GenericParameterEntry;
+        }
+
+        /// <summary>
+        /// Returns the constraint model for a LENS-declared generic parameter, or null if the type
+        /// is not one of ours. The entry carries its own model, so nothing has to be looked up.
+        /// </summary>
+        public GenericParameterEntity FindConstraints(TypeEntry type)
+        {
+            return (type as GenericParameterEntry)?.Entity;
         }
 
         /// <summary>
