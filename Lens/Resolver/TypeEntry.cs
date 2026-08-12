@@ -190,7 +190,24 @@ namespace Lens.Resolver
         /// Instantiates a generic definition over the given arguments, returning the same entry
         /// every time the same instantiation is asked for.
         /// </summary>
-        public abstract TypeEntry MakeGeneric(TypeResolutionContext resolver, TypeEntry[] arguments);
+        public abstract TypeEntry MakeGeneric(TypeResolutionContext resolver, params TypeEntry[] arguments);
+
+        /// <summary>
+        /// Instantiates a host generic definition named at the call site.
+        /// Spares the caller the TypeEntryCache.Of around every typeof(Something&lt;&gt;).
+        /// </summary>
+        public static TypeEntry Generic(TypeResolutionContext resolver, Type definition, params TypeEntry[] arguments)
+        {
+            return TypeEntryCache.Of(definition).MakeGeneric(resolver, arguments);
+        }
+
+        /// <summary>
+        /// The nullable type that lifts this one. Pairs with GetNullableUnderlyingType.
+        /// </summary>
+        public TypeEntry MakeNullable(TypeResolutionContext resolver)
+        {
+            return Generic(resolver, typeof(Nullable<>), this);
+        }
 
         #endregion
 
@@ -276,6 +293,14 @@ namespace Lens.Resolver
                 result[idx] = entries[idx]?.Materialize();
 
             return result;
+        }
+
+        /// <summary>
+        /// The CLR types that implement a sequence of entries.
+        /// </summary>
+        public static Type[] Materialize(IEnumerable<TypeEntry> entries)
+        {
+            return entries?.Select(x => x?.Materialize()).ToArray();
         }
 
         /// <summary>
