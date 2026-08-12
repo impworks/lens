@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Declarations;
@@ -159,7 +160,7 @@ namespace Lens.Compiler
             {
                 if (Options.SaveAsExe)
                 {
-                    var ep = ResolveMethod(ResolveType(EntityNames.MainTypeName).Materialize(), EntityNames.EntryPointMethodName);
+                    var ep = ResolveMethod(ResolveType(EntityNames.MainTypeName), EntityNames.EntryPointMethodName);
                     MainAssembly.SetEntryPoint(ep.MethodInfo, PEFileKinds.ConsoleApplication);
                 }
 
@@ -371,7 +372,7 @@ namespace Lens.Compiler
                     if (curr.Name == "_")
                         curr.Name = Unique.AnonymousArgName();
 
-                    if (curr.Type == typeof(UnspecifiedType))
+                    if (curr.Type == TypeEntryCache.Of<UnspecifiedType>())
                         Error(CompilerMessages.LambdaArgTypeUnknown);
 
                     if (curr.IsVariadic)

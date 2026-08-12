@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -107,11 +107,11 @@ namespace Lens.SyntaxTree.Expressions
                 try
                 {
                     binding.Method = ctx.ResolveMethod(
-                        type.Materialize(),
+                        type,
                         node.MemberName,
-                        TypeEntry.Materialize(binding.ArgTypes),
-                        TypeEntry.Materialize(binding.TypeHints),
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        binding.ArgTypes,
+                        binding.TypeHints,
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
 
                     if (binding.Method.IsStatic)
@@ -128,7 +128,7 @@ namespace Lens.SyntaxTree.Expressions
                 // resolve a callable field
                 try
                 {
-                    ctx.ResolveField(type.Materialize(), node.MemberName);
+                    ctx.ResolveField(type, node.MemberName);
                     ResolveExpression(ctx, binding, node);
                     return;
                 }
@@ -139,7 +139,7 @@ namespace Lens.SyntaxTree.Expressions
                 // resolve a callable property
                 try
                 {
-                    ctx.ResolveProperty(type.Materialize(), node.MemberName);
+                    ctx.ResolveProperty(type, node.MemberName);
                     ResolveExpression(ctx, binding, node);
                     return;
                 }
@@ -163,8 +163,8 @@ namespace Lens.SyntaxTree.Expressions
                     binding.Method = ctx.ResolveMethod(
                         ctx.MainType.TypeInfo,
                         node.MemberName,
-                        TypeEntry.Materialize(binding.ArgTypes),
-                        resolver: (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        binding.ArgTypes,
+                        resolver: (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
 
                     return;
@@ -181,11 +181,11 @@ namespace Lens.SyntaxTree.Expressions
                         throw new KeyNotFoundException();
 
                     binding.Method = ctx.ResolveExtensionMethod(
-                        type.Materialize(),
+                        type,
                         node.MemberName,
-                        TypeEntry.Materialize(oldArgTypes),
-                        TypeEntry.Materialize(binding.TypeHints),
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        oldArgTypes,
+                        binding.TypeHints,
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
                 }
                 catch (KeyNotFoundException)
@@ -225,9 +225,9 @@ namespace Lens.SyntaxTree.Expressions
                 binding.Method = ctx.ResolveMethod(
                     ctx.MainType.TypeInfo,
                     node.Identifier,
-                    TypeEntry.Materialize(binding.ArgTypes),
-                    TypeEntry.Materialize(binding.TypeHints),
-                    (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                    binding.ArgTypes,
+                    binding.TypeHints,
+                    (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                 );
 
                 if (binding.Method == null)
@@ -274,13 +274,13 @@ namespace Lens.SyntaxTree.Expressions
             try
             {
                 // argtypes are required for partial application
-                binding.Method = ctx.ResolveMethod(exprType.Materialize(), "Invoke", TypeEntry.Materialize(binding.ArgTypes));
+                binding.Method = ctx.ResolveMethod(exprType, "Invoke", binding.ArgTypes);
             }
             catch (KeyNotFoundException)
             {
                 // delegate argument types are mismatched:
                 // infer whatever method there is and detect actual error
-                binding.Method = ctx.ResolveMethod(exprType.Materialize(), "Invoke");
+                binding.Method = ctx.ResolveMethod(exprType, "Invoke");
 
                 var argTypes = binding.Method.ArgumentTypes;
                 if (argTypes.Length != binding.ArgTypes.Length)

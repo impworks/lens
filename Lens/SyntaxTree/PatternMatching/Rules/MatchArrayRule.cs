@@ -158,7 +158,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     //     |> Skip before // optional
                     //     |> Take (expr.Length - before - after)
                     //     |> ToArray ()
-                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArray().Materialize(), false);
+                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArray(), false);
                     var subseqExpr = subseqIdx == 0
                         ? expression
                         : Expr.Invoke(expression, "Skip", Expr.Int(subseqIdx));
@@ -209,7 +209,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     yield return check;
 
                 // tmpVar = seq.Skip N
-                var subseqVar = ctx.Scope.DeclareImplicit(ctx, typeof(IEnumerable<>).MakeGenericType(_elementType.Materialize()), false);
+                var subseqVar = ctx.Scope.DeclareImplicit(ctx, TypeEntry.Generic(ctx.Resolver, typeof(IEnumerable<>), _elementType), false);
                 yield return Expr.Set(
                     subseqVar,
                     Expr.Invoke(
@@ -232,8 +232,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (count == 0)
                 yield break;
 
-            var enumerableType = typeof(IEnumerable<>).MakeGenericType(_elementType.Materialize());
-            var enumeratorType = typeof(IEnumerator<>).MakeGenericType(_elementType.Materialize());
+            var enumerableType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerable<>), _elementType);
+            var enumeratorType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerator<>), _elementType);
 
             var enumeratorVar = ctx.Scope.DeclareImplicit(ctx, enumeratorType, false);
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
@@ -144,13 +144,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // each checked receiver is evaluated once, into a local the rest of the chain reads from
             foreach (var check in _checks)
             {
-                check.Local = ctx.Scope.DeclareImplicit(ctx, check.ReceiverType.Materialize(), false);
+                check.Local = ctx.Scope.DeclareImplicit(ctx, check.ReceiverType, false);
                 check.Holder.Expression = Expr.Get(check.Local);
             }
 
             var body = isUnit || _chainType == resultType
                 ? Chain
-                : Expr.Cast(Chain, resultType.Materialize());
+                : Expr.Cast(Chain, resultType);
 
             for (var idx = _checks.Count - 1; idx >= 0; idx--)
             {

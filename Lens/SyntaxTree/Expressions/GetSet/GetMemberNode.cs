@@ -101,7 +101,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             _type = StaticTypeInfo != null
-                    ? TypeEntryCache.Of(StaticTypeInfo)
+                    ? StaticTypeInfo
                     : (StaticType != null
                         ? ctx.ResolveType(StaticType)
                         : Expression.Resolve(ctx));
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for field
             try
             {
-                _field = ctx.ResolveField(_type.Materialize(), MemberName);
+                _field = ctx.ResolveField(_type, MemberName);
                 _isStatic = _field.IsStatic;
 
                 check();
@@ -129,7 +129,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for property
             try
             {
-                _property = ctx.ResolveProperty(_type.Materialize(), MemberName);
+                _property = ctx.ResolveProperty(_type, MemberName);
 
                 if (!_property.CanGet)
                     Error(CompilerMessages.PropertyNoGetter, _type, MemberName);
@@ -146,7 +146,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for event: events are only allowed at the left side of += and -=
             try
             {
-                ctx.ResolveEvent(_type.Materialize(), MemberName);
+                ctx.ResolveEvent(_type, MemberName);
                 Error(CompilerMessages.EventAsExpr);
             }
             catch (KeyNotFoundException)
@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             // find method
             var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
-            var methods = ctx.ResolveMethodGroup(_type.Materialize(), MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
+            var methods = ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
 
             if (methods.Length == 0)
                 Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, _type.Name, MemberName);
@@ -278,7 +278,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             if (ctx.IsPointerRequired(this))
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType.Materialize(), false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, _property.PropertyType, false);
                 gen.EmitSaveLocal(tmpVar.LocalBuilder);
                 gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
             }
@@ -300,7 +300,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
                 : FunctionalHelper.CreateFuncType(retType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
 
-            var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
+            var ctor = ctx.ResolveConstructor(TypeEntryCache.Of(type), new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
             gen.EmitLoadFunctionPointer(_method.MethodInfo);
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }

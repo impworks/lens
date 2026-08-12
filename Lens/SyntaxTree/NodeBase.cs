@@ -240,7 +240,7 @@ namespace Lens.SyntaxTree
             lambda.Resolve(ctx);
 
             if (lambda.MustInferArgTypes)
-                lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes.Select(x => x.Materialize()).ToArray());
+                lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes);
         }
 
         #endregion

@@ -187,11 +187,11 @@ namespace Lens.Resolver
             if (entity.RequiresDefaultCtor && !value.HasDefaultConstructor())
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, entity.Name, owner));
 
-            if (entity.BaseType != null && !TypeEntryCache.Of(entity.BaseType).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
+            if (entity.BaseType != null && !entity.BaseType.IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, entity.BaseType));
 
             foreach (var iface in entity.Interfaces)
-                if (!TypeEntryCache.Of(iface).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
+                if (!iface.IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(value), true))
                     throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, iface));
         }
 

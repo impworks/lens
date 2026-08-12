@@ -27,7 +27,7 @@ namespace Lens.Compiler.Entities
 
         #region Properties
 
-        public Type[] Interfaces;
+        public TypeEntry[] Interfaces;
 
         private readonly Dictionary<string, FieldEntity> _fields;
         private readonly Dictionary<string, List<MethodEntity>> _methods;
@@ -87,13 +87,13 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// The resolved parent type.
         /// </summary>
-        public Type Parent;
+        public TypeEntry Parent;
 
-        private Type _typeInfo;
+        private TypeEntry _typeInfo;
 
-        public Type TypeInfo
+        public TypeEntry TypeInfo
         {
-            get => TypeBuilder ?? _typeInfo;
+            get => TypeBuilder != null ? TypeEntryCache.Of(TypeBuilder) : _typeInfo;
             set
             {
                 if (!IsImported)
@@ -108,14 +108,14 @@ namespace Lens.Compiler.Entities
         /// </summary>
         public TypeBuilder TypeBuilder { get; private set; }
 
-        private Type _selfType;
+        private TypeEntry _selfType;
 
         /// <summary>
         /// The type as it must be spelled in a signature that refers to this very type:
         /// for a generic type this is the definition constructed over its own parameters
         /// (KeyValue&lt;K, V&gt;), because open generic types cannot appear in metadata.
         /// </summary>
-        public Type SelfType => _selfType ?? TypeInfo;
+        public TypeEntry SelfType => _selfType ?? TypeInfo;
 
         /// <summary>
         /// A kind of LENS type this entity represents.
@@ -149,31 +149,31 @@ namespace Lens.Compiler.Entities
                 for (var idx = 0; idx < builders.Length; idx++)
                     GenericParameters[idx].Builder = builders[idx];
 
-                _selfType = Context.Resolver.MakeGenericType(TypeBuilder, builders.Cast<Type>().ToArray());
+                _selfType = TypeEntryCache.Of(Context.Resolver.MakeGenericType(TypeBuilder, builders.Cast<Type>().ToArray()));
 
                 Context.ResolveGenericParameters(GenericParameters);
 
                 Context.WithGenericScope(GenericParameters, () =>
                     {
                         if (Parent == null && ParentSignature != null)
-                            Parent = Context.ResolveType(ParentSignature).Materialize();
+                            Parent = Context.ResolveType(ParentSignature);
                     }
                 );
 
                 if (Parent != null)
-                    TypeBuilder.SetParent(Parent);
+                    TypeBuilder.SetParent(Parent.Materialize());
             }
             else
             {
                 if (Parent == null && ParentSignature != null)
-                    Parent = Context.ResolveType(ParentSignature).Materialize();
+                    Parent = Context.ResolveType(ParentSignature);
 
-                TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent);
+                TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent?.Materialize());
             }
 
             if (Interfaces != null)
                 foreach (var iface in Interfaces)
-                    TypeBuilder.AddInterfaceImplementation(iface);
+                    TypeBuilder.AddInterfaceImplementation(iface.Materialize());
         }
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Resolves a method assembly entity.
         /// </summary>
-        internal MethodEntity ResolveMethod(string name, Type[] args, bool exact = false, Type instantiation = null)
+        internal MethodEntity ResolveMethod(string name, TypeEntry[] args, bool exact = false, TypeEntry instantiation = null)
         {
             if (!_methods.TryGetValue(name, out var group))
                 throw new KeyNotFoundException();
@@ -244,9 +244,9 @@ namespace Lens.Compiler.Entities
             var info = ReflectionHelper.ResolveMethodByArgs(
                 Context.Resolver,
                 group,
-                m => Substitute(m.GetArgumentTypes(Context), instantiation),
+                m => TypeEntry.Materialize(Substitute(m.GetArgumentTypes(Context), instantiation)),
                 m => m.IsVariadic,
-                args
+                TypeEntry.Materialize(args)
             );
 
             if (exact && info.Distance != 0)
@@ -269,14 +269,14 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Resolves a method assembly entity.
         /// </summary>
-        internal ConstructorEntity ResolveConstructor(Type[] args, Type instantiation = null)
+        internal ConstructorEntity ResolveConstructor(TypeEntry[] args, TypeEntry instantiation = null)
         {
             var info = ReflectionHelper.ResolveMethodByArgs(
                 Context.Resolver,
                 _constructors,
-                c => Substitute(c.GetArgumentTypes(Context), instantiation),
+                c => TypeEntry.Materialize(Substitute(c.GetArgumentTypes(Context), instantiation)),
                 c => false,
-                args
+                TypeEntry.Materialize(args)
             );
 
             return info.Method;
@@ -286,12 +286,12 @@ namespace Lens.Compiler.Entities
         /// Rewrites the declared signature of a member in terms of the actual type arguments,
         /// so that overload resolution compares like with like.
         /// </summary>
-        private static Type[] Substitute(Type[] types, Type instantiation)
+        private static TypeEntry[] Substitute(TypeEntry[] types, TypeEntry instantiation)
         {
             if (instantiation == null)
                 return types;
 
-            return types.Select(x => GenericHelper.ApplyGenericArguments(x, instantiation, false)).ToArray();
+            return types.Select(x => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(x.Materialize(), instantiation.Materialize(), false))).ToArray();
         }
 
         #endregion

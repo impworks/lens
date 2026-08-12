@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             if (!IsWildcard)
-                yield return new PatternNameBinding(Name, expressionType.Materialize());
+                yield return new PatternNameBinding(Name, expressionType);
 
             if (Type != null)
             {

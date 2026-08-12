@@ -81,9 +81,9 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase StringExpand(Context ctx)
         {
-            var tmpString = ctx.Scope.DeclareImplicit(ctx, typeof(string), false);
-            var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof(StringBuilder), false);
-            var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx).Materialize(), false);
+            var tmpString = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<string>(), false);
+            var tmpSb = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<StringBuilder>(), false);
+            var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx), false);
 
             // var sb = new StringBuilder();
             // for _ in 1..N do
@@ -116,11 +116,11 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase ArrayExpand(Context ctx)
         {
-            var arrayType = LeftOperand.Resolve(ctx).Materialize();
+            var arrayType = LeftOperand.Resolve(ctx);
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
             var tmpResult = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
-            var tmpRight = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
-            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+            var tmpRight = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
+            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
 
             // a = <left>
             // b = right
@@ -141,7 +141,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 Expr.Set(
                     tmpResult,
                     Expr.Array(
-                        arrayType.GetElementType(),
+                        arrayType.ElementType,
                         Expr.Mult(
                             Expr.GetMember(
                                 Expr.Get(tmpLeft),
@@ -185,13 +185,13 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase SeqExpand(Context ctx)
         {
-            var seqType = LeftOperand.Resolve(ctx).Materialize();
+            var seqType = LeftOperand.Resolve(ctx);
 
             NodeBase leftWrapper;
-            if (seqType == typeof(IEnumerable))
+            if (seqType.Is<IEnumerable>())
             {
                 leftWrapper = Expr.Invoke(Expr.GetMember("System.Linq.Enumerable", "OfType", "object"), LeftOperand);
-                seqType = typeof(IEnumerable<object>);
+                seqType = TypeEntryCache.Of<IEnumerable<object>>();
             }
             else
             {
@@ -200,7 +200,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, seqType, false);
             var tmpResult = ctx.Scope.DeclareImplicit(ctx, seqType, false);
-            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
 
             // a = <left>
             // result = a

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Lens.Resolver;
 
 namespace Lens.Utils
 {
@@ -9,7 +9,7 @@ namespace Lens.Utils
     {
         #region Constructor
 
-        public PatternNameBinding(string name, Type type)
+        public PatternNameBinding(string name, TypeEntry type)
         {
             Name = name;
             Type = type;
@@ -27,7 +27,7 @@ namespace Lens.Utils
         /// <summary>
         /// The type corresponding to this name.
         /// </summary>
-        public readonly Type Type;
+        public readonly TypeEntry Type;
 
         #endregion
 

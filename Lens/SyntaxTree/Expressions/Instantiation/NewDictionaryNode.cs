@@ -72,10 +72,10 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             var gen = ctx.CurrentMethod.Generator;
             var dictType = Resolve(ctx);
 
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType.Materialize(), true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, dictType, true);
 
-            var ctor = ctx.ResolveConstructor(dictType.Materialize(), new[] {typeof(int)});
-            var addMethod = ctx.ResolveMethod(dictType.Materialize(), "Add", new[] {_keyType.Materialize(), _valueType.Materialize()});
+            var ctor = ctx.ResolveConstructor(dictType, new[] {TypeEntryCache.Of<int>()});
+            var addMethod = ctx.ResolveMethod(dictType, "Add", new[] {_keyType, _valueType});
 
             var count = Expressions.Count;
             gen.EmitConstant(count);

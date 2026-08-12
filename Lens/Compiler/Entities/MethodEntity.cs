@@ -49,7 +49,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         public bool IsGeneric => GenericParameterCount > 0;
 
-        public override bool IsVoid => TypeEntryCache.Of(ReturnType).IsVoid();
+        public override bool IsVoid => ReturnType.IsVoid();
 
         /// <summary>
         /// The signature of method's return type.
@@ -59,7 +59,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Compiled return type.
         /// </summary>
-        public Type ReturnType;
+        public TypeEntry ReturnType;
 
         /// <summary>
         /// Assembly-level method builder.
@@ -109,14 +109,14 @@ namespace Lens.Compiler.Entities
 
                 ctx.WithGenericScope(GenericParameters, ResolveSignature);
 
-                MethodBuilder.SetParameters(ArgumentTypes);
-                MethodBuilder.SetReturnType(TypeEntryCache.Of(ReturnType).IsVoid() ? typeof(void) : ReturnType);
+                MethodBuilder.SetParameters(TypeEntry.Materialize(ArgumentTypes));
+                MethodBuilder.SetReturnType(ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize());
             }
             else
             {
                 ResolveSignature();
 
-                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, TypeEntryCache.Of(ReturnType).IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
+                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize(), TypeEntry.Materialize(ArgumentTypes));
             }
 
             Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
@@ -145,12 +145,12 @@ namespace Lens.Compiler.Entities
 
             if (ReturnType == null)
                 ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-                    ? typeof(UnitType)
-                    : ctx.ResolveType(ReturnTypeSignature).Materialize();
+                    ? TypeEntryCache.Of<UnitType>()
+                    : ctx.ResolveType(ReturnTypeSignature);
 
             if (ArgumentTypes == null)
                 ArgumentTypes = Arguments == null
-                    ? new Type[0]
+                    ? new TypeEntry[0]
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
         }
 
@@ -163,13 +163,13 @@ namespace Lens.Compiler.Entities
             var gen = ctx.CurrentMethod.Generator;
             var actualType = Body.Resolve(ctx);
 
-            if (!TypeEntryCache.Of(ReturnType).IsVoid() || !actualType.IsVoid())
+            if (!ReturnType.IsVoid() || !actualType.IsVoid())
             {
-                if (!TypeEntryCache.Of(ReturnType).IsExtendablyAssignableFrom(ctx.Resolver, actualType))
+                if (!ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, actualType))
                     Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
             }
 
-            if (ReturnType == typeof(object) && actualType.IsValueType && !actualType.IsVoid())
+            if (ReturnType.Is<object>() && actualType.IsValueType && !actualType.IsVoid())
                 gen.EmitBox(actualType.Materialize());
 
             // special hack: if the main method's implicit type is Unit, it should still return null

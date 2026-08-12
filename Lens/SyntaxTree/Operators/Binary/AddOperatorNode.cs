@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Lens.Compiler;
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase ArrayExpand(Context ctx)
         {
-            var type = Resolve(ctx).Materialize();
+            var type = Resolve(ctx);
 
             var tmpArray = ctx.Scope.DeclareImplicit(ctx, type, false);
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, type, false);
@@ -112,7 +112,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 Expr.Set(
                     tmpArray,
                     Expr.Array(
-                        type.GetElementType(),
+                        type.ElementType,
                         Expr.Add(
                             Expr.GetMember(Expr.Get(tmpLeft), "Length"),
                             Expr.GetMember(Expr.Get(tmpRight), "Length")
@@ -180,9 +180,9 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase DictExpand(Context ctx)
         {
-            var keyValueTypes = TypeEntry.Materialize(LeftOperand.Resolve(ctx).GenericArguments);
-            var dictType = typeof(Dictionary<,>).MakeGenericType(keyValueTypes);
-            var currType = typeof(KeyValuePair<,>).MakeGenericType(keyValueTypes);
+            var keyValueTypes = LeftOperand.Resolve(ctx).GenericArguments;
+            var dictType = TypeEntry.Generic(ctx.Resolver, typeof(Dictionary<,>), keyValueTypes);
+            var currType = TypeEntry.Generic(ctx.Resolver, typeof(KeyValuePair<,>), keyValueTypes);
             var tmpDict = ctx.Scope.DeclareImplicit(ctx, dictType, false);
             var tmpCurr = ctx.Scope.DeclareImplicit(ctx, currType, false);
 
@@ -196,7 +196,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                         dictType,
                         Expr.Cast(
                             LeftOperand,
-                            typeof(IDictionary<,>).MakeGenericType(keyValueTypes)
+                            TypeEntry.Generic(ctx.Resolver, typeof(IDictionary<,>), keyValueTypes)
                         )
                     )
                 ),

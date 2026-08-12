@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using Lens.Resolver;
 
 namespace Lens.Compiler.Entities
 {
@@ -22,7 +22,7 @@ namespace Lens.Compiler.Entities
             DeclarationName = declarationName;
 
             TypeConstraintSignatures = new List<TypeSignature>();
-            Interfaces = new List<Type>();
+            Interfaces = new List<TypeEntry>();
         }
 
         #endregion
@@ -69,12 +69,12 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// The resolved base type constraint, if any.
         /// </summary>
-        public Type BaseType;
+        public TypeEntry BaseType;
 
         /// <summary>
         /// The resolved interface constraints.
         /// </summary>
-        public readonly List<Type> Interfaces;
+        public readonly List<TypeEntry> Interfaces;
 
         /// <summary>
         /// The builder that represents this parameter in the emitted assembly.

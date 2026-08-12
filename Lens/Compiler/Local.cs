@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection.Emit;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 
 namespace Lens.Compiler
@@ -15,7 +15,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Creates a new instance of the Local variable.
         /// </summary>
-        public Local(string name, Type type, bool isConst = false, bool isRefArg = false)
+        public Local(string name, TypeEntry type, bool isConst = false, bool isRefArg = false)
         {
             Name = name;
             Type = type;
@@ -35,7 +35,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Variable type.
         /// </summary>
-        public readonly Type Type;
+        public readonly TypeEntry Type;
 
         /// <summary>
         /// Is the name a constant or a variable?

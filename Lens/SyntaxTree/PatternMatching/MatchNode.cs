@@ -125,7 +125,7 @@ namespace Lens.SyntaxTree.PatternMatching
             }
             else
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType.Materialize(), false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
                 exprGetter = Expr.Get(tmpVar);
                 block.Add(Expr.Set(tmpVar, Expression));
             }

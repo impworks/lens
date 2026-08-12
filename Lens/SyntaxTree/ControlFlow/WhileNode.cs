@@ -54,7 +54,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
             // condition is known to be false: do not emit the loop at all
             if (Condition.IsConstant && condType.Is<bool>() && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
-                return saveLast ? (NodeBase) Expr.Default(loopType.Materialize()) : Expr.Unit();
+                return saveLast ? (NodeBase) Expr.Default(loopType) : Expr.Unit();
 
             return base.Expand(ctx, mustReturn);
         }
@@ -81,8 +81,8 @@ namespace Lens.SyntaxTree.ControlFlow
             Local tmpVar = null;
             if (saveLast)
             {
-                tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType.Materialize(), false);
-                Expr.Set(tmpVar, Expr.Default(loopType.Materialize())).Emit(ctx, false);
+                tmpVar = ctx.Scope.DeclareImplicit(ctx, loopType, false);
+                Expr.Set(tmpVar, Expr.Default(loopType)).Emit(ctx, false);
             }
 
             gen.MarkLabel(beginLabel);

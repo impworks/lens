@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// The type of the object to create.
         /// </summary>
-        public Type Type;
+        public TypeEntry Type;
 
         /// <summary>
         /// The type signature of the object to create.
@@ -79,7 +79,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             base.ResolveInternal(ctx, true);
 
             var binding = ctx.BindingOf<Binding>(this);
-            var type = Type != null ? TypeEntryCache.Of(Type) : null;
+            var type = Type;
 
             try
             {
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             try
             {
-                binding.Constructor = ctx.ResolveConstructor(type.Materialize(), TypeEntry.Materialize(binding.ArgTypes));
+                binding.Constructor = ctx.ResolveConstructor(type, binding.ArgTypes);
             }
             catch (TypeMatchException ex)
             {
@@ -169,8 +169,8 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             if (binding.IsTypeParameter)
             {
-                var type = Type ?? ctx.ResolveType(TypeSignature).Materialize();
-                var creator = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes).MakeGenericMethod(type);
+                var type = Type ?? ctx.ResolveType(TypeSignature);
+                var creator = typeof(Activator).GetMethod("CreateInstance", System.Type.EmptyTypes).MakeGenericMethod(type.Materialize());
                 gen.EmitCall(creator);
                 return;
             }

@@ -48,7 +48,7 @@ namespace Lens.SyntaxTree.Declarations
 
             return string.IsNullOrEmpty(VariableName)
                 ? Body.Resolve(ctx)
-                : Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), new Local(VariableName, exprType.Materialize()));
+                : Scope.WithTempLocals(ctx, () => Body.Resolve(ctx), new Local(VariableName, exprType));
         }
 
         #endregion
@@ -58,7 +58,7 @@ namespace Lens.SyntaxTree.Declarations
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx, mustReturn);
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType.Materialize(), false);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, exprType, false);
 
             var newBody = Expr.Block(Expr.Set(tmpVar, Expression));
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Lens.Compiler;
 using Lens.Lexer;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Declarations;
@@ -417,7 +418,7 @@ namespace Lens.Parser
                 if (required)
                     Error(ParserMessages.SymbolExpected, ":");
 
-                node.Type = typeof(UnspecifiedType);
+                node.Type = TypeEntryCache.Of<UnspecifiedType>();
                 return node;
             }
 

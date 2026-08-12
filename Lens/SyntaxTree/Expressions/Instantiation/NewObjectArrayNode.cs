@@ -22,7 +22,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// Processed array item type.
         /// </summary>
-        public Type Type;
+        public TypeEntry Type;
 
         /// <summary>
         /// Desired size of the array (must be int!).
@@ -36,13 +36,13 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Type == null)
-                Type = ctx.ResolveType(TypeSignature).Materialize();
+                Type = ctx.ResolveType(TypeSignature);
 
             var idxType = Size.Resolve(ctx);
             if (!TypeEntryCache.Of<int>().IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Size, CompilerMessages.ArraySizeNotInt, idxType);
 
-            return TypeEntryCache.Of(Type.MakeArrayType());
+            return Type.MakeArray();
         }
 
         #endregion
@@ -63,7 +63,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             var gen = ctx.CurrentMethod.Generator;
 
             Expr.Cast<int>(Size).Emit(ctx, true);
-            gen.EmitCreateArray(Type);
+            gen.EmitCreateArray(Type.Materialize());
         }
 
         #endregion

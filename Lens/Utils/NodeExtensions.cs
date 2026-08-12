@@ -37,7 +37,7 @@ namespace Lens.Utils
                 {
                     var gen = ctx.CurrentMethod.Generator;
 
-                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, type.Materialize(), true);
+                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, type, true);
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 
                     node.Emit(ctx, true);

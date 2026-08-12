@@ -51,7 +51,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private void ResolveSelf(Context ctx)
         {
             var type = StaticTypeInfo != null
-                       ? TypeEntryCache.Of(StaticTypeInfo)
+                       ? StaticTypeInfo
                        : (StaticType != null
                            ? ctx.ResolveType(StaticType)
                            : Expression.Resolve(ctx));
@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // check for field
             try
             {
-                _field = ctx.ResolveField(type.Materialize(), MemberName);
+                _field = ctx.ResolveField(type, MemberName);
                 _isStatic = _field.IsStatic;
                 if (Expression == null && !_isStatic)
                     Error(CompilerMessages.DynamicMemberFromStaticContext, type, MemberName);
@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _property = ctx.ResolveProperty(type.Materialize(), MemberName);
+                    _property = ctx.ResolveProperty(type, MemberName);
                     if (!_property.CanSet)
                         Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 

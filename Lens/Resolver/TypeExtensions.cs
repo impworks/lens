@@ -427,7 +427,7 @@ namespace Lens.Resolver
             {
                 return ignoreConstraints
                     ? TypeEntryCache.Of<object>()
-                    : TypeEntryCache.Of(entity.BaseType) ?? (entity.IsValueType ? TypeEntryCache.Of<ValueType>() : TypeEntryCache.Of<object>());
+                    : entity.BaseType ?? (entity.IsValueType ? TypeEntryCache.Of<ValueType>() : TypeEntryCache.Of<object>());
             }
 
             return GetBaseType(type) ?? TypeEntryCache.Of<object>();

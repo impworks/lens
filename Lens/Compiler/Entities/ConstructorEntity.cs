@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 
@@ -49,10 +50,10 @@ namespace Lens.Compiler.Entities
 
             if (ArgumentTypes == null)
                 ArgumentTypes = Arguments == null
-                    ? new Type[0]
+                    ? new TypeEntry[0]
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
 
-            ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ArgumentTypes);
+            ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, TypeEntry.Materialize(ArgumentTypes));
             Generator = ConstructorBuilder.GetILGenerator(Context.IlStreamSize);
         }
 

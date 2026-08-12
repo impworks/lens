@@ -83,7 +83,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var leftAccessor = LeftOperand;
             if (!(LeftOperand is GetIdentifierNode))
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, left.Materialize(), false);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, left, false);
                 body.Add(Expr.Set(tmpVar, LeftOperand));
                 leftAccessor = Expr.Get(tmpVar);
             }

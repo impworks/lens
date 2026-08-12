@@ -118,7 +118,7 @@ namespace Lens.Compiler
         {
             foreach (var signature in entity.TypeConstraintSignatures)
             {
-                var type = ResolveType(signature).Materialize();
+                var type = ResolveType(signature);
 
                 if (type.IsInterface)
                 {
@@ -150,9 +150,9 @@ namespace Lens.Compiler
         /// <summary>
         /// Checks whether a concrete type may be used as a base type constraint.
         /// </summary>
-        private static bool IsLegalBaseConstraint(Type type)
+        private static bool IsLegalBaseConstraint(TypeEntry type)
         {
-            if (ForbiddenConstraintTypes.Contains(type))
+            if (ForbiddenConstraintTypes.Contains(type.Materialize()))
                 return false;
 
             // a static class is abstract and sealed at once
@@ -169,7 +169,7 @@ namespace Lens.Compiler
 
             while (true)
             {
-                var next = Resolver.FindConstraints(curr.BaseType);
+                var next = Resolver.FindConstraints(curr.BaseType?.Materialize());
                 if (next == null)
                     return;
 
@@ -200,12 +200,12 @@ namespace Lens.Compiler
                 entity.Builder.SetGenericParameterAttributes(attributes);
 
             // the CLI spells a value type constraint as ValueType plus the attribute
-            var baseType = entity.BaseType ?? (entity.IsValueType ? typeof(ValueType) : null);
+            var baseType = entity.BaseType ?? (entity.IsValueType ? TypeEntryCache.Of<ValueType>() : null);
             if (baseType != null)
-                entity.Builder.SetBaseTypeConstraint(baseType);
+                entity.Builder.SetBaseTypeConstraint(baseType.Materialize());
 
             if (entity.Interfaces.Count > 0)
-                entity.Builder.SetInterfaceConstraints(entity.Interfaces.ToArray());
+                entity.Builder.SetInterfaceConstraints(TypeEntry.Materialize(entity.Interfaces));
         }
 
         /// <summary>
@@ -252,10 +252,10 @@ namespace Lens.Compiler
             foreach (var curr in parameters)
             {
                 if (curr.Source.BaseType != null)
-                    curr.BaseType = GenericHelper.ApplyGenericArguments(curr.Source.BaseType, sources, targets, false);
+                    curr.BaseType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(curr.Source.BaseType.Materialize(), sources, targets, false));
 
                 foreach (var iface in curr.Source.Interfaces)
-                    curr.Interfaces.Add(GenericHelper.ApplyGenericArguments(iface, sources, targets, false));
+                    curr.Interfaces.Add(TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(iface.Materialize(), sources, targets, false)));
             }
         }
 

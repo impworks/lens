@@ -25,7 +25,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var gen = ctx.CurrentMethod.Generator;
 
             var exprType = Expression.Resolve(ctx);
-            var desiredType = Type != null ? TypeEntryCache.Of(Type) : ctx.ResolveType(TypeSignature);
+            var desiredType = Type ?? ctx.ResolveType(TypeSignature);
 
             CheckTypeInSafeMode(ctx, desiredType);
 

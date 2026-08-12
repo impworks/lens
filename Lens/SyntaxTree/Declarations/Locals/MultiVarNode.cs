@@ -46,7 +46,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
                 if (Names[idx] == "_")
                     Error(CompilerMessages.UnderscoreName);
 
-                _locals[idx] = ctx.Scope.DeclareLocal(Names[idx], type.Materialize(), false);
+                _locals[idx] = ctx.Scope.DeclareLocal(Names[idx], type, false);
             }
 
             return base.ResolveInternal(ctx, mustReturn);

@@ -44,7 +44,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         /// Already resolved type for non-initialized variables, used by auto-generated code where
         /// the type has no printable signature - a generic parameter, for instance.
         /// </summary>
-        public Type ResolvedType { get; set; }
+        public TypeEntry ResolvedType { get; set; }
 
         /// <summary>
         /// The value to assign to the variable.
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
-                : (ResolvedType != null ? TypeEntryCache.Of(ResolvedType) : ctx.ResolveType(Type));
+                : (ResolvedType ?? ctx.ResolveType(Type));
 
             ctx.CheckTypedExpression(Value, type);
 
@@ -75,7 +75,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
                 try
                 {
-                    var name = ctx.Scope.DeclareLocal(Name, type.Materialize(), IsImmutable);
+                    var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
                     name.Declaration = this;
 
                     if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)

@@ -41,7 +41,7 @@ namespace Lens.Compiler
 
             if (type.IsLambdaType())
             {
-                var argUnknown = (node as LambdaNode).Arguments.First(x => x.Type == typeof(UnspecifiedType));
+                var argUnknown = (node as LambdaNode).Arguments.First(x => x.Type == TypeEntryCache.Of<UnspecifiedType>());
                 Error(node, CompilerMessages.LambdaArgTypeUnknown, argUnknown.Name);
             }
         }

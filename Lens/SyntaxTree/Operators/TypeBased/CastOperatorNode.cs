@@ -15,7 +15,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            var type = Type != null ? TypeEntryCache.Of(Type) : ctx.ResolveType(TypeSignature);
+            var type = Type ?? ctx.ResolveType(TypeSignature);
             EnsureLambdaInferred(ctx, Expression, type);
             return type;
         }
@@ -62,7 +62,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             {
                 if (toType.IsNullableType())
                 {
-                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType.Materialize(), true);
+                    var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType, true);
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
                     gen.EmitInitObject(toType.Materialize());
                     gen.EmitLoadLocal(tmpVar.LocalBuilder);
@@ -99,7 +99,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
                 else
                 {
-                    var castOp = ctx.ResolveConvertorToType(fromType.Materialize(), toType.Materialize());
+                    var castOp = ctx.ResolveConvertorToType(fromType, toType);
                     if (castOp != null)
                         gen.EmitCall(castOp.MethodInfo);
                     else
@@ -121,7 +121,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
                 else
                 {
-                    var castOp = ctx.ResolveConvertorToType(fromType.Materialize(), toType.Materialize());
+                    var castOp = ctx.ResolveConvertorToType(fromType, toType);
                     if (castOp != null)
                         gen.EmitCall(castOp.MethodInfo);
                     else
@@ -163,9 +163,9 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var toCtor = ctx.ResolveConstructor(to.Materialize(), new[] {typeof(object), typeof(IntPtr)});
-            var fromMethod = ctx.ResolveMethod(from.Materialize(), "Invoke");
-            var toMethod = ctx.ResolveMethod(to.Materialize(), "Invoke");
+            var toCtor = ctx.ResolveConstructor(to, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
+            var fromMethod = ctx.ResolveMethod(from, "Invoke");
+            var toMethod = ctx.ResolveMethod(to, "Invoke");
 
             var fromArgs = fromMethod.ArgumentTypes;
             var toArgs = toMethod.ArgumentTypes;
@@ -196,10 +196,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
             if (to.Is<decimal>())
             {
-                var ctor = ctx.ResolveConstructor(typeof(decimal), new[] {from.Materialize()});
+                var ctor = ctx.ResolveConstructor(TypeEntryCache.Of<decimal>(), new[] {from});
                 if (ctor == null)
                 {
-                    ctor = ctx.ResolveConstructor(typeof(decimal), new[] {typeof(int)});
+                    ctor = ctx.ResolveConstructor(TypeEntryCache.Of<decimal>(), new[] {TypeEntryCache.Of<int>()});
                     gen.EmitConvert(typeof(int));
                 }
 

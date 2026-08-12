@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators.TypeBased
@@ -20,7 +21,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         /// <summary>
         /// Defined type parameter.
         /// </summary>
-        public Type Type { get; set; }
+        public TypeEntry Type { get; set; }
 
         #endregion
 

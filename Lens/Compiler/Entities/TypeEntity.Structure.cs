@@ -20,7 +20,7 @@ namespace Lens.Compiler.Entities
             if (!mi.IsStatic || !mi.IsPublic)
                 Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
-            var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
+            var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, TypeEntryCache.Of(p.ParameterType), p.ParameterType.IsByRef));
             var me = new MethodEntity(this)
             {
                 Name = name,
@@ -29,7 +29,7 @@ namespace Lens.Compiler.Entities
                 IsVirtual = false,
                 IsVariadic = ReflectionHelper.IsVariadic(mi),
                 MethodInfo = mi,
-                ReturnType = mi.ReturnType,
+                ReturnType = TypeEntryCache.Of(mi.ReturnType),
                 Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
             };
 
@@ -57,7 +57,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new field by resolved type.
         /// </summary>
-        internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = true)
+        internal FieldEntity CreateField(string name, TypeEntry type, bool isStatic = false, bool prepare = true)
         {
             return CreateFieldCore(name, isStatic, prepare, fe => fe.Type = type);
         }
@@ -65,7 +65,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new method by resolved argument types.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeEntry returnType, TypeEntry[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
         {
             return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
                 {
@@ -101,7 +101,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new method with a resolved return type and argument types given by function arguments.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, Type returnType, IEnumerable<FunctionArgument> args, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeEntry returnType, IEnumerable<FunctionArgument> args, bool isStatic = false, bool isVirtual = false, bool prepare = true)
         {
             return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
                 {
@@ -118,7 +118,7 @@ namespace Lens.Compiler.Entities
         {
             var ce = new ConstructorEntity(this)
             {
-                ArgumentTypes = argTypes?.Select(x => Context.ResolveType(x).Materialize()).ToArray(),
+                ArgumentTypes = argTypes?.Select(x => Context.ResolveType(x)).ToArray(),
             };
 
             _constructors.Add(ce);

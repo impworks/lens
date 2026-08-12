@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx).Materialize(), true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
             // create array
             var count = Expressions.Count;

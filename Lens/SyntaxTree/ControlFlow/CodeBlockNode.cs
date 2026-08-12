@@ -131,7 +131,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var loc = scope.ClosureVariable;
 
             // create closure instance
-            var closureCtor = ctx.ResolveConstructor(type, Type.EmptyTypes);
+            var closureCtor = ctx.ResolveConstructor(type, new TypeEntry[0]);
             gen.EmitCreateObject(closureCtor.ConstructorInfo);
             gen.EmitSaveLocal(loc);
 

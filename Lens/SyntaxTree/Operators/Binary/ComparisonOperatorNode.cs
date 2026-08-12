@@ -114,7 +114,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                     return true;
 
                 // a type declared in the script always has a generated Equals
-                if (left == right && ctx.IsDeclaredType(left.Materialize()))
+                if (left == right && ctx.IsDeclaredType(left))
                     return true;
 
                 if (left == right)
@@ -220,9 +220,9 @@ namespace Lens.SyntaxTree.Operators.Binary
                 return;
             }
 
-            if (left == right && ctx.IsDeclaredType(left.Materialize()))
+            if (left == right && ctx.IsDeclaredType(left))
             {
-                var equals = ctx.ResolveMethod(left.Materialize(), "Equals", new[] {typeof(object)});
+                var equals = ctx.ResolveMethod(left, "Equals", new[] {TypeEntryCache.Of<object>()});
 
                 LeftOperand.Emit(ctx, true);
                 RightOperand.Emit(ctx, true);
@@ -256,9 +256,9 @@ namespace Lens.SyntaxTree.Operators.Binary
             var endLabel = gen.DefineLabel();
 
             Local nullVar, otherVar = null;
-            nullVar = ctx.Scope.DeclareImplicit(ctx, nullType.Materialize(), true);
+            nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
             if (otherNull)
-                otherVar = ctx.Scope.DeclareImplicit(ctx, otherType.Materialize(), true);
+                otherVar = ctx.Scope.DeclareImplicit(ctx, otherType, true);
 
             // $tmp = nullValue
             nullValue.Emit(ctx, true);
@@ -317,7 +317,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             var gen = ctx.CurrentMethod.Generator;
             var nullType = nullValue.Resolve(ctx);
-            var nullVar = ctx.Scope.DeclareImplicit(ctx, nullType.Materialize(), true);
+            var nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
             var hasValueGetter = nullType.Materialize().GetProperty("HasValue").GetGetMethod();
 
             nullValue.Emit(ctx, true);

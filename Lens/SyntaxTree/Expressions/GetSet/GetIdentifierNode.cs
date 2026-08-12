@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Cached algebraic type reference (if the identifier represents it).
         /// </summary>
-        private Type _labelType;
+        private TypeEntry _labelType;
 
         /// <summary>
         /// Explicit type arguments for a generic function or an untagged generic label, if any.
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
                     _localConstant = local;
 
-                return TypeEntryCache.Of(local.Type);
+                return local.Type;
             }
 
             // static function declared in the script
@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
                 _method = methods[0];
-                return TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx)));
+                return TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), TypeEntry.Materialize(_method.GetArgumentTypes(ctx))));
             }
             catch (KeyNotFoundException)
             {
@@ -96,7 +96,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    type.ResolveConstructor(new Type[0]);
+                    type.ResolveConstructor(new TypeEntry[0]);
 
                     var hints = TypeHints ?? new List<TypeSignature>();
                     if (type.IsGeneric)
@@ -106,7 +106,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                         if (hints.Count == 0 || hints.Any(x => x.FullSignature == "_"))
                             Error(CompilerMessages.GenericLabelTypeArgsRequired, type.Name, type.ParentSignature.Name);
 
-                        _labelType = ctx.ResolveType(new TypeSignature(Identifier, hints.ToArray())).Materialize();
+                        _labelType = ctx.ResolveType(new TypeSignature(Identifier, hints.ToArray()));
                     }
                     else
                     {
@@ -116,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                         _labelType = type.TypeInfo;
                     }
 
-                    return TypeEntryCache.Of(_labelType);
+                    return _labelType;
                 }
                 catch (KeyNotFoundException)
                 {
@@ -181,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // load pointer to global function
             if (_method != null)
             {
-                var ctor = ctx.ResolveConstructor(resultType.Materialize(), new[] {typeof(object), typeof(IntPtr)});
+                var ctor = ctx.ResolveConstructor(resultType, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
 
                 gen.EmitNull();
                 gen.EmitLoadFunctionPointer(_method.MethodInfo);
@@ -240,7 +240,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 gen.EmitLoadArgument(name.ArgumentId.Value, ptr);
                 if (name.IsRefArgument && !ptr)
-                    gen.EmitLoadFromPointer(name.Type);
+                    gen.EmitLoadFromPointer(name.Type.Materialize());
             }
             else
             {

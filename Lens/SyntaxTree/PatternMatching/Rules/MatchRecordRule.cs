@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             {
                 try
                 {
-                    var field = ctx.ResolveField(_type.Materialize(), fieldRule.Name.FullSignature);
+                    var field = ctx.ResolveField(_type, fieldRule.Name.FullSignature);
                     subBindings.AddRange(fieldRule.Rule.Resolve(ctx, field.FieldType));
                 }
                 catch (KeyNotFoundException)

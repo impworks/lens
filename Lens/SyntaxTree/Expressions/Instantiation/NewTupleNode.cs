@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             foreach (var curr in Expressions)
                 curr.Emit(ctx, true);
 
-            var ctor = ctx.ResolveConstructor(tupleType.Materialize(), TypeEntry.Materialize(_types));
+            var ctor = ctx.ResolveConstructor(tupleType, _types);
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }
 

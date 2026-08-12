@@ -81,8 +81,8 @@ namespace Lens.Compiler
 
             MainType = CreateType(EntityNames.MainTypeName, prepare: false);
             MainType.Kind = TypeEntityKind.Main;
-            MainType.Interfaces = new[] {typeof(IScript)};
-            MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, typeof(object), Type.EmptyTypes, false, true, false);
+            MainType.Interfaces = new[] {TypeEntryCache.Of<IScript>()};
+            MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, TypeEntryCache.Of<object>(), new TypeEntry[0], false, true, false);
 
             if (Options.LoadStandardLibrary)
                 InitStdlib();

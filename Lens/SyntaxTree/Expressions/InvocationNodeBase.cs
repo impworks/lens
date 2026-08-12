@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
@@ -201,7 +201,7 @@ namespace Lens.SyntaxTree.Expressions
                 if (lambda.MustInferArgTypes)
                 {
                     var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx].Materialize());
-                    lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes.Select(x => x.Materialize()).ToArray());
+                    lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
                     lambda.Resolve(ctx);
                 }
             }

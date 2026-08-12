@@ -119,7 +119,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             try
             {
-                var evt = ctx.ResolveEvent(type.Materialize(), node.MemberName);
+                var evt = ctx.ResolveEvent(type, node.MemberName);
 //				node.Value = Expr.CastTransparent(node.Value, evt.EventHandlerType);
                 return new EventNode(evt, node, _operatorType == LexemType.Plus);
             }
@@ -170,7 +170,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             // (x + y).name += value
             // must cache (x + y) to a local variable to prevent double execution
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, node.Expression.Resolve(ctx).Materialize(), false);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, node.Expression.Resolve(ctx), false);
             return Expr.Block(
                 Expr.Set(tmpVar, node.Expression),
                 Expr.SetMember(
@@ -198,7 +198,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // must cache expression?
             if (!(node.Expression is GetIdentifierNode))
             {
-                var tmpExpr = ctx.Scope.DeclareImplicit(ctx, node.Expression.Resolve(ctx).Materialize(), false);
+                var tmpExpr = ctx.Scope.DeclareImplicit(ctx, node.Expression.Resolve(ctx), false);
                 body.Add(Expr.Set(tmpExpr, node.Expression));
                 node.Expression = Expr.Get(tmpExpr);
             }
@@ -206,7 +206,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // must cache index?
             if (!(node.Index is GetIdentifierNode || node.Index is ILiteralNode || node.Index.IsConstant))
             {
-                var tmpIdx = ctx.Scope.DeclareImplicit(ctx, node.Index.Resolve(ctx).Materialize(), false);
+                var tmpIdx = ctx.Scope.DeclareImplicit(ctx, node.Index.Resolve(ctx), false);
                 body.Add(Expr.Set(tmpIdx, node.Index));
                 node.Index = Expr.Get(tmpIdx);
             }

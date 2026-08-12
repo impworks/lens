@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var destType = TypeEntryCache.Of(nameInfo != null ? nameInfo.Type : _property.PropertyType);
+            var destType = nameInfo != null ? nameInfo.Type : TypeEntryCache.Of(_property.PropertyType);
             EnsureLambdaInferred(ctx, Value, destType);
 
             var exprType = Value.Resolve(ctx);
@@ -161,7 +161,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 gen.EmitLoadArgument(name.ArgumentId.Value);
                 castNode.Emit(ctx, true);
-                gen.EmitSaveObject(name.Type);
+                gen.EmitSaveObject(name.Type.Materialize());
             }
         }
 

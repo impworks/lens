@@ -83,17 +83,17 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 // no type specified: assume string
                 if (string.IsNullOrEmpty(type))
                 {
-                    _namedGroups.Add(new PatternNameBinding(name, typeof(string)));
+                    _namedGroups.Add(new PatternNameBinding(name, TypeEntryCache.Of<string>()));
                     continue;
                 }
 
                 var actualType = WrapError(
-                    () => ctx.ResolveType(type).Materialize(),
+                    () => ctx.ResolveType(type),
                     CompilerMessages.RegexConverterTypeNotFound, type
                 );
 
                 WrapError(
-                    () => ctx.ResolveMethod(actualType, "TryParse", new[] {typeof(string), actualType}),
+                    () => ctx.ResolveMethod(actualType, "TryParse", new[] {TypeEntryCache.Of<string>(), actualType}),
                     CompilerMessages.RegexConverterTypeIncompatible, type
                 );
 
@@ -155,7 +155,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
             // var match = new Regex(...).Match(str)
             // if not match.Success then Jump!
-            var matchVar = ctx.Scope.DeclareImplicit(ctx, typeof(Match), false);
+            var matchVar = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<Match>(), false);
             yield return Expr.Set(
                 matchVar,
                 Expr.Invoke(
@@ -188,7 +188,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     "Value"
                 );
 
-                if (curr.Type == typeof(string))
+                if (curr.Type.Is<string>())
                 {
                     // name = value
                     yield return Expr.Set(

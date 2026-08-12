@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -57,8 +58,8 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             base.AnalyzeClosures(ctx);
 
-            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType).Materialize() : typeof(Exception);
-            if (type != typeof(Exception) && !type.IsSubclassOf(typeof(Exception)))
+            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : TypeEntryCache.Of<Exception>();
+            if (!type.Is<Exception>() && !type.IsSubclassOf(TypeEntryCache.Of<Exception>()))
                 Error(CompilerMessages.CatchTypeNotException, type);
 
             if (!string.IsNullOrEmpty(ExceptionVariable))

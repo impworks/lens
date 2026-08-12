@@ -1,5 +1,5 @@
-﻿using System;
-using System.Reflection.Emit;
+﻿using System.Reflection.Emit;
+using Lens.Resolver;
 using Lens.SyntaxTree;
 
 namespace Lens.Compiler
@@ -15,7 +15,7 @@ namespace Lens.Compiler
         {
         }
 
-        public FunctionArgument(string name, Type type, bool isRefArg = false)
+        public FunctionArgument(string name, TypeEntry type, bool isRefArg = false)
         {
             Name = name;
             Type = type;
@@ -41,7 +41,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Argument resolved type.
         /// </summary>
-        public Type Type { get; set; }
+        public TypeEntry Type { get; set; }
 
         /// <summary>
         /// Argument type
@@ -70,16 +70,16 @@ namespace Lens.Compiler
         /// <summary>
         /// Calculates argument type.
         /// </summary>
-        public Type GetArgumentType(Context ctx)
+        public TypeEntry GetArgumentType(Context ctx)
         {
             if (Type == null)
             {
-                Type = ctx.ResolveType(TypeSignature).Materialize();
+                Type = ctx.ResolveType(TypeSignature);
 
                 if (IsRefArgument)
-                    Type = Type.MakeByRefType();
+                    Type = Type.MakeByRef();
                 else if (IsVariadic)
-                    Type = Type.MakeArrayType();
+                    Type = Type.MakeArray();
             }
 
             return Type;

@@ -35,7 +35,7 @@ namespace Lens.SyntaxTree.Operators.Unary
             {
                 try
                 {
-                    OverloadedMethod = ctx.ResolveMethod(type.Materialize(), OverloadedMethodName, new[] {type.Materialize()});
+                    OverloadedMethod = ctx.ResolveMethod(type, OverloadedMethodName, new[] {type});
 
                     // cannot be generic
                     if (OverloadedMethod != null)

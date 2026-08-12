@@ -31,7 +31,7 @@ namespace Lens.Compiler
             {
                 Name = name,
                 Kind = TypeEntityKind.Imported,
-                TypeInfo = type
+                TypeInfo = TypeEntryCache.Of(type)
             };
             _definedTypes.Add(name, te);
         }

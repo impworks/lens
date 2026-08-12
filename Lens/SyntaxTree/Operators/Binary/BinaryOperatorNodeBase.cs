@@ -46,13 +46,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 try
                 {
-                    OverloadedMethod = ctx.ResolveMethod(leftType.Materialize(), OverloadedMethodName, new[] {leftType.Materialize(), rightType.Materialize()});
+                    OverloadedMethod = ctx.ResolveMethod(leftType, OverloadedMethodName, new[] {leftType, rightType});
                 }
                 catch
                 {
                     try
                     {
-                        OverloadedMethod = ctx.ResolveMethod(rightType.Materialize(), OverloadedMethodName, new[] {leftType.Materialize(), rightType.Materialize()});
+                        OverloadedMethod = ctx.ResolveMethod(rightType, OverloadedMethodName, new[] {leftType, rightType});
                     }
                     catch
                     {

@@ -19,7 +19,7 @@ namespace Lens.SyntaxTree.Internals
 
             // for a generic type this is the definition applied to its own parameters,
             // because an open generic type cannot appear in a signature
-            return TypeEntryCache.Of(ctx.CurrentType.SelfType);
+            return ctx.CurrentType.SelfType;
         }
 
         #endregion

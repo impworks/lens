@@ -27,7 +27,7 @@ namespace Lens.Compiler.Entities
                 var right = Expr.GetMember(Expr.Get("other"), f.Name);
 
                 var fieldType = FieldTypeOf(f);
-                var isSeq = fieldType.IsGenericType && TypeEntryCache.Of(fieldType).Implements(Context.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)), true);
+                var isSeq = fieldType.IsGenericType && fieldType.Implements(Context.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)), true);
                 var expr = isSeq
                     ? Expr.Invoke("Enumerable", "SequenceEqual", left, right)
                     : Expr.Invoke(DefaultComparerOf(fieldType), "Equals", left, right);
@@ -46,9 +46,9 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Returns the type of a field, resolving its signature if that has not happened yet.
         /// </summary>
-        private Type FieldTypeOf(FieldEntity field)
+        private TypeEntry FieldTypeOf(FieldEntity field)
         {
-            return field.Type ?? (field.Type = Context.ResolveType(field.TypeSignature).Materialize());
+            return field.Type ?? (field.Type = Context.ResolveType(field.TypeSignature));
         }
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace Lens.Compiler.Entities
         /// or a Nullable&lt;&gt;, and the correct comparison differs in each case. This is the same
         /// reason C# routes generated equality through the default comparer.
         /// </summary>
-        private NodeBase DefaultComparerOf(Type fieldType)
+        private NodeBase DefaultComparerOf(TypeEntry fieldType)
         {
-            var comparerType = Context.Resolver.MakeGenericType(typeof(EqualityComparer<>), new[] {fieldType});
+            var comparerType = TypeEntry.Generic(Context.Resolver, typeof(EqualityComparer<>), fieldType);
             return Expr.GetMember(comparerType, "Default");
         }
 
@@ -113,8 +113,8 @@ namespace Lens.Compiler.Entities
         {
             var ghc = CreateMethod(
                 "GetHashCode",
-                typeof(int),
-                Type.EmptyTypes,
+                TypeEntryCache.Of<int>(),
+                new TypeEntry[0],
                 false,
                 true
             );
@@ -128,7 +128,7 @@ namespace Lens.Compiler.Entities
             {
                 var fieldType = FieldTypeOf(f);
                 NodeBase expr;
-                if (TypeEntryCache.Of(fieldType).IsIntegerType())
+                if (fieldType.IsIntegerType())
                 {
                     expr = Expr.GetMember(Expr.This(), f.Name);
                 }
@@ -161,7 +161,7 @@ namespace Lens.Compiler.Entities
         /// </summary>
         private void CreatePureWrapper(MethodEntity method)
         {
-            if (TypeEntryCache.Of(method.ReturnType).IsVoid())
+            if (method.ReturnType.IsVoid())
                 Context.Error(CompilerMessages.PureFunctionReturnUnit, method.Name);
 
             var pureName = string.Format(EntityNames.PureMethodNameTemplate, method.Name);
@@ -229,7 +229,7 @@ namespace Lens.Compiler.Entities
                 _sourceParameters = method.GenericParameters.Select(x => (Type) x.Builder).ToArray();
                 _ownParameters = parameters.Select(x => (Type) x.Builder).ToArray();
 
-                _ownerType = ctx.Resolver.MakeGenericType(_owner.TypeBuilder, _sourceParameters);
+                _ownerType = TypeEntryCache.Of(ctx.Resolver.MakeGenericType(_owner.TypeBuilder, _sourceParameters));
             }
 
             #endregion
@@ -237,7 +237,7 @@ namespace Lens.Compiler.Entities
             #region Fields
 
             private readonly TypeEntity _owner;
-            private readonly Type _ownerType;
+            private readonly TypeEntry _ownerType;
             private readonly Type[] _sourceParameters;
             private readonly Type[] _ownParameters;
             private readonly TypeSignature[] _typeHints;
@@ -249,7 +249,7 @@ namespace Lens.Compiler.Entities
             /// <summary>
             /// Declares a cache field, rewriting its type into the terms of the holder class.
             /// </summary>
-            public void CreateField(string name, Type type)
+            public void CreateField(string name, TypeEntry type)
             {
                 _owner.CreateField(name, Substitute(type), true);
             }
@@ -291,11 +291,11 @@ namespace Lens.Compiler.Entities
             /// <summary>
             /// Rewrites a type expressed in the function's parameters into the holder's own ones.
             /// </summary>
-            private Type Substitute(Type type)
+            private TypeEntry Substitute(TypeEntry type)
             {
                 return _sourceParameters == null
                     ? type
-                    : GenericHelper.ApplyGenericArguments(type, _sourceParameters, _ownParameters, false);
+                    : TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(type.Materialize(), _sourceParameters, _ownParameters, false));
             }
 
             #endregion
@@ -310,7 +310,7 @@ namespace Lens.Compiler.Entities
             var flagName = string.Format(EntityNames.PureMethodCacheFlagNameTemplate, wrapper.Name);
 
             cache.CreateField(fieldName, wrapper.ReturnType);
-            cache.CreateField(flagName, typeof(bool));
+            cache.CreateField(flagName, TypeEntryCache.Of<bool>());
 
             wrapper.Body = Expr.Block(
                 ScopeKind.FunctionRoot,
@@ -341,7 +341,7 @@ namespace Lens.Compiler.Entities
             var argName = wrapper.Arguments[0].Name;
 
             var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-            var fieldType = Context.Resolver.MakeGenericType(typeof(Dictionary<,>), new[] {args[0], wrapper.ReturnType});
+            var fieldType = TypeEntry.Generic(Context.Resolver, typeof(Dictionary<,>), args[0], wrapper.ReturnType);
 
             cache.CreateField(fieldName, fieldType);
 
@@ -397,8 +397,8 @@ namespace Lens.Compiler.Entities
             var args = wrapper.GetArgumentTypes(Context);
 
             var fieldName = string.Format(EntityNames.PureMethodCacheNameTemplate, wrapper.Name);
-            var tupleType = FunctionalHelper.CreateTupleType(args);
-            var fieldType = Context.Resolver.MakeGenericType(typeof(Dictionary<,>), new[] {tupleType, wrapper.ReturnType});
+            var tupleType = TypeEntryCache.Of(FunctionalHelper.CreateTupleType(TypeEntry.Materialize(args)));
+            var fieldType = TypeEntry.Generic(Context.Resolver, typeof(Dictionary<,>), tupleType, wrapper.ReturnType);
 
             cache.CreateField(fieldName, fieldType);
 

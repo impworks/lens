@@ -182,8 +182,10 @@ namespace Lens.Resolver
         {
             var result = new List<Type>();
 
-            foreach (var iface in entity.Interfaces)
+            foreach (var currIface in entity.Interfaces)
             {
+                var iface = currIface.Materialize();
+
                 if (!result.Contains(iface))
                     result.Add(iface);
 
@@ -194,7 +196,7 @@ namespace Lens.Resolver
 
             if (entity.BaseType != null)
             {
-                foreach (var curr in ResolveInterfaces(entity.BaseType))
+                foreach (var curr in ResolveInterfaces(entity.BaseType.Materialize()))
                     if (!result.Contains(curr))
                         result.Add(curr);
             }

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Resolver;
 
 namespace Lens.Compiler.Entities
 {
@@ -32,7 +32,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Type of the values that can be saved in the field.
         /// </summary>
-        public Type Type;
+        public TypeEntry Type;
 
         /// <summary>
         /// Assembly-level field builder.
@@ -56,9 +56,9 @@ namespace Lens.Compiler.Entities
                 attrs |= FieldAttributes.Static;
 
             if (Type == null)
-                Type = ContainerType.Context.ResolveType(TypeSignature).Materialize();
+                Type = ContainerType.Context.ResolveType(TypeSignature);
 
-            FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
+            FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type.Materialize(), attrs);
         }
 
         #endregion

@@ -52,11 +52,11 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
-            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx).Materialize(), true);
+            var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
             var listType = Resolve(ctx);
-            var ctor = ctx.ResolveConstructor(listType.Materialize(), new[] {typeof(int)});
-            var addMethod = ctx.ResolveMethod(listType.Materialize(), "Add", new[] {_itemType.Materialize()});
+            var ctor = ctx.ResolveConstructor(listType, new[] {TypeEntryCache.Of<int>()});
+            var addMethod = ctx.ResolveMethod(listType, "Add", new[] {_itemType});
 
             var count = Expressions.Count;
             gen.EmitConstant(count);

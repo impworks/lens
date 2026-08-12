@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn = true)
         {
-            return Type != null ? TypeEntryCache.Of(Type) : ctx.ResolveType(TypeSignature);
+            return Type ?? ctx.ResolveType(TypeSignature);
         }
 
         #endregion
@@ -80,7 +80,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
             else
             {
-                var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx).Materialize(), true);
+                var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
                 gen.EmitInitObject(type.Materialize());
