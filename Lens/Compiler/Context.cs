@@ -129,6 +129,18 @@ namespace Lens.Compiler
         public bool HasEmitTarget => _mainAssembly != null;
 
         /// <summary>
+        /// Whether this compilation is going to emit IL at all.
+        ///
+        /// Analysis and emission are separate halves of preparing an entity, and an analysis-only
+        /// run performs the first of them. The one place the halves cannot be ordered freely is a
+        /// generic declaration: a composite signature or constraint that names a type parameter is
+        /// still spelled in terms of that parameter's builder, so while an assembly is being built
+        /// such a declaration keeps resolving its signature after its builders exist, exactly as it
+        /// always did.
+        /// </summary>
+        internal bool IsEmitting { get; private set; }
+
+        /// <summary>
         /// The main type in which all "global" functions are stored.
         /// </summary>
         internal TypeEntity MainType { get; }

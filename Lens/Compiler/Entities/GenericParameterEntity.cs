@@ -77,6 +77,11 @@ namespace Lens.Compiler.Entities
         public readonly List<TypeEntry> Interfaces;
 
         /// <summary>
+        /// Whether the type constraints above have already been resolved from their signatures.
+        /// </summary>
+        public bool ConstraintsResolved;
+
+        /// <summary>
         /// The builder that represents this parameter in the emitted assembly.
         /// </summary>
         public GenericTypeParameterBuilder Builder;

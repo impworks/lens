@@ -81,20 +81,23 @@ namespace Lens.Compiler
         #region Type parameter resolution
 
         /// <summary>
-        /// Resolves the type constraints of a declaration's parameters and applies them to the builders.
-        /// Must be called after all the builders of the declaration have been created, because a
-        /// constraint may name a sibling parameter.
+        /// The analysis half: registers the constraint model of a declaration's parameters and
+        /// resolves their type constraints. Creates nothing the assembly would hold.
+        ///
+        /// The constraints of a forwarded parameter are copied from its source at emission time,
+        /// because the copy is expressed in terms of the builders on both sides.
         /// </summary>
-        public void ResolveGenericParameters(List<GenericParameterEntity> parameters)
+        public void RegisterGenericParameters(List<GenericParameterEntity> parameters)
         {
             foreach (var curr in parameters)
                 Resolver.Register(curr);
 
-            if (parameters.Count > 0 && parameters[0].Source != null)
-            {
-                ApplyForwardedConstraints(parameters);
-            }
-            else
+            // preparation can be asked for more than once, and resolving the same constraint list
+            // twice would report every one of its interfaces as a duplicate
+            if (parameters.Count == 0 || parameters[0].ConstraintsResolved)
+                return;
+
+            if (parameters[0].Source == null)
             {
                 WithGenericScope(parameters, () =>
                     {
@@ -102,10 +105,35 @@ namespace Lens.Compiler
                             ResolveConstraintsOf(curr);
                     }
                 );
-            }
 
+                foreach (var curr in parameters)
+                    CheckCircularConstraints(curr);
+
+                foreach (var curr in parameters)
+                    curr.ConstraintsResolved = true;
+            }
+        }
+
+        /// <summary>
+        /// The emission half: applies the resolved constraints to the parameter builders. Must be
+        /// called after all the builders of the declaration have been created, because a constraint
+        /// may name a sibling parameter.
+        /// </summary>
+        public void EmitGenericParameters(List<GenericParameterEntity> parameters)
+        {
             foreach (var curr in parameters)
-                CheckCircularConstraints(curr);
+                Resolver.Register(curr);
+
+            if (parameters.Count > 0 && parameters[0].Source != null && !parameters[0].ConstraintsResolved)
+            {
+                ApplyForwardedConstraints(parameters);
+
+                foreach (var curr in parameters)
+                    CheckCircularConstraints(curr);
+
+                foreach (var curr in parameters)
+                    curr.ConstraintsResolved = true;
+            }
 
             foreach (var curr in parameters)
                 ApplyConstraints(curr);

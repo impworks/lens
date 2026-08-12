@@ -143,6 +143,40 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// Ensures that inferred or explicitly given arguments satisfy the constraints of a
+        /// LENS-declared generic function, with the arguments given as entries.
+        ///
+        /// The check is the one below, less the "new()" constraint for an argument that is itself a
+        /// declaration: whether a declared type has a parameterless constructor is a question about
+        /// its members, and answering it from the declaration is a separate job.
+        /// </summary>
+        public static void CheckConstraints(TypeResolutionContext ctx, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        {
+            for (var idx = 0; idx < parameters.Count; idx++)
+            {
+                var entity = parameters[idx];
+                var value = values[idx];
+                var owner = entity.DeclarationName;
+
+                if (entity.IsReferenceType && value.IsValueType)
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, entity.Name, owner));
+
+                if (entity.IsValueType && (!value.IsValueType || value.IsNullableType()))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericStructConstraintViolated, value, entity.Name, owner));
+
+                if (entity.RequiresDefaultCtor && !value.IsDeclared && !value.Materialize().HasDefaultConstructor())
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericConstructorConstraintViolated, value, entity.Name, owner));
+
+                if (entity.BaseType != null && !entity.BaseType.IsExtendablyAssignableFrom(ctx, value, true))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, entity.BaseType));
+
+                foreach (var iface in entity.Interfaces)
+                    if (!iface.IsExtendablyAssignableFrom(ctx, value, true))
+                        throw new TypeMatchException(string.Format(CompilerMessages.GenericInheritanceConstraintViolated, value, entity.Name, owner, iface));
+            }
+        }
+
+        /// <summary>
         /// Ensures that a single type argument satisfies the constraints of its placeholder.
         /// </summary>
         private static void CheckConstraint(TypeResolutionContext ctx, Type arg, Type value, object owner)

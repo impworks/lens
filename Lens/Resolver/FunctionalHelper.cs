@@ -164,13 +164,17 @@ namespace Lens.Resolver
         // these overloads exist so that code which has already been converted to type entries can
         // ask the same questions. They defer to the reflection versions above: converting the whole
         // of this helper to entries is a separate step.
+        //
+        // None of these kinds is ever something the script declared - a record is not a Func, and
+        // neither is a type parameter - so a declaration is answered without materialising it, which
+        // would force the assembly into existence.
 
         /// <summary>
         /// Checks if a type is a function type.
         /// </summary>
         public static bool IsFuncType(this TypeEntry type)
         {
-            return type.Materialize().IsFuncType();
+            return !type.IsDeclared && type.Materialize().IsFuncType();
         }
 
         /// <summary>
@@ -178,7 +182,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsActionType(this TypeEntry type)
         {
-            return type.Materialize().IsActionType();
+            return !type.IsDeclared && type.Materialize().IsActionType();
         }
 
         /// <summary>
@@ -186,7 +190,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsLambdaType(this TypeEntry type)
         {
-            return type.Materialize().IsLambdaType();
+            return !type.IsDeclared && type.Materialize().IsLambdaType();
         }
 
         /// <summary>
@@ -194,7 +198,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsTupleType(this TypeEntry type)
         {
-            return type.Materialize().IsTupleType();
+            return !type.IsDeclared && type.Materialize().IsTupleType();
         }
 
         /// <summary>
@@ -202,7 +206,7 @@ namespace Lens.Resolver
         /// </summary>
         public static bool IsCallableType(this TypeEntry type)
         {
-            return type.Materialize().IsCallableType();
+            return !type.IsDeclared && type.Materialize().IsCallableType();
         }
 
         #endregion

@@ -36,14 +36,14 @@ namespace Lens.Compiler.Entities
         #region Methods
 
         /// <summary>
-        /// Creates a ConstructorBuilder for current constructor entity.
+        /// Resolves the argument types of the constructor.
         /// </summary>
-        public override void PrepareSelf()
+        public override void ResolveSelf()
         {
             if (IsStatic)
                 throw new LensCompilerException(CompilerMessages.ConstructorStatic);
 
-            if (ConstructorBuilder != null || IsImported)
+            if (IsImported)
                 return;
 
             var ctx = ContainerType.Context;
@@ -52,6 +52,17 @@ namespace Lens.Compiler.Entities
                 ArgumentTypes = Arguments == null
                     ? new TypeEntry[0]
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
+        }
+
+        /// <summary>
+        /// Creates a ConstructorBuilder for current constructor entity.
+        /// </summary>
+        public override void EmitSelf()
+        {
+            if (ConstructorBuilder != null || IsImported)
+                return;
+
+            ResolveSelf();
 
             ConstructorBuilder = ContainerType.TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, TypeEntry.Materialize(ArgumentTypes));
             Generator = ConstructorBuilder.GetILGenerator(Context.IlStreamSize);

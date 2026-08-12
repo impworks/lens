@@ -68,7 +68,7 @@ namespace Lens.Compiler
             extraInit?.Invoke(te);
 
             if (prepare)
-                te.PrepareSelf();
+                te.PrepareSelfAsNeeded();
             else
                 UnpreparedTypes.Add(te);
 

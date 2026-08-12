@@ -223,7 +223,7 @@ namespace Lens.Resolver
         /// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
         /// Generic arguments whose values can be inferred from argument types can be skipped.
         /// </summary>
-        public static MethodWrapper ResolveMethod(TypeResolutionContext ctx, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
+        public static MethodWrapper ResolveMethod(TypeResolutionContext ctx, Type type, string name, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver)
         {
             var mw = new MethodWrapper {Name = name, DeclaringType = TypeEntryCache.Of(type)};
 
@@ -232,7 +232,7 @@ namespace Lens.Resolver
                 var method = ResolveMethodByArgs(
                     ctx,
                     GetMethodsByName(type, name),
-                    m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
+                    m => TypeEntryCache.Of(m.GetParameters().Select(p => p.ParameterType).ToArray()),
                     IsVariadic,
                     argTypes
                 );
@@ -242,7 +242,7 @@ namespace Lens.Resolver
                 if (mInfo.IsGenericMethod)
                 {
                     var genericDefs = mInfo.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(method.ArgumentTypes), argTypes, genericDefs, hints);
+                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(method.ArgumentTypes), TypeEntry.Materialize(argTypes), genericDefs, TypeEntry.Materialize(hints));
 
                     mInfo = mInfo.MakeGenericMethod(genericValues);
                     mw.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
@@ -271,7 +271,7 @@ namespace Lens.Resolver
                 var genMethod = ResolveMethodByArgs(
                     ctx,
                     GetMethodsByName(genType, name),
-                    m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
+                    m => TypeEntryCache.Of(m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray()),
                     IsVariadic,
                     argTypes
                 );
@@ -283,7 +283,7 @@ namespace Lens.Resolver
                 if (mInfoOriginal.IsGenericMethod)
                 {
                     var genericDefs = mInfoOriginal.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(genMethod.ArgumentTypes), argTypes, genericDefs, hints, lambdaResolver);
+                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, TypeEntry.Materialize(genMethod.ArgumentTypes), TypeEntry.Materialize(argTypes), genericDefs, TypeEntry.Materialize(hints), lambdaResolver);
 
                     mInfo = mInfo.MakeGenericMethod(genericValues);
 
@@ -499,7 +499,24 @@ namespace Lens.Resolver
         /// <param name="argTypes">Desired argument types.</param>
         public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, Type[]> argsGetter, Func<T, bool> isVariadicGetter, Type[] argTypes)
         {
-            var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, TypeEntryCache.Of(argTypes), TypeEntryCache.Of(argsGetter(x)), x, isVariadicGetter(x)))
+            return ResolveMethodByArgs(ctx, list, x => TypeEntryCache.Of(argsGetter(x)), isVariadicGetter, TypeEntryCache.Of(argTypes));
+        }
+
+        /// <summary>
+        /// Resolves the best-matching method-like entity within a generic list, with both sides of
+        /// the comparison given as entries.
+        ///
+        /// The declared signature of a member the script declares is made of entries already, and
+        /// some of them - the generic parameters of a method whose builders do not exist yet - stand
+        /// for no CLR type at all, so the overload above cannot be used for those.
+        /// </summary>
+        /// <typeparam name="T">Type of method-like entity.</typeparam>
+        /// <param name="list">List of method-like entitites.</param>
+        /// <param name="argsGetter">A function that gets method entity arguments.</param>
+        /// <param name="argTypes">Desired argument types.</param>
+        public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isVariadicGetter, TypeEntry[] argTypes)
+        {
+            var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
                              .OrderBy(rec => rec.Distance)
                              .Take(2) // no more than 2 is needed
                              .ToArray();
@@ -575,6 +592,14 @@ namespace Lens.Resolver
         public static bool IsPartiallyApplied(Type[] argTypes)
         {
             return argTypes.Contains(typeof(UnspecifiedType));
+        }
+
+        /// <summary>
+        /// Checks if the list of argument types denotes a partial application case.
+        /// </summary>
+        public static bool IsPartiallyApplied(TypeEntry[] argTypes)
+        {
+            return argTypes.Any(x => x.Is<UnspecifiedType>());
         }
 
         /// <summary>

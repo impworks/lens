@@ -162,9 +162,24 @@ namespace Lens.Resolver
         /// </summary>
         public static int DistanceFrom(this TypeEntry varType, TypeResolutionContext ctx, TypeEntry exprType, bool exactly = false)
         {
+            // a declaration is never memoized anyway - its shape can still change - and asking one
+            // for a CLR type would create the very assembly artefact that analysis must not need,
+            // so those pairs go straight to the calculation
+            if (IsDeclaration(varType) || IsDeclaration(exprType))
+                return distanceFrom(ctx, varType, exprType, exactly);
+
             // the memoization key is the pair of CLR types: entries are canonical per type, so the
             // two keyings agree, and the cache has to decide whether a type is still being built
             return ctx.CachedDistance(varType?.Materialize(), exprType?.Materialize(), exactly, () => distanceFrom(ctx, varType, exprType, exactly));
+        }
+
+        /// <summary>
+        /// Checks whether an entry stands for something the script declared rather than for a type
+        /// the CLR already has: a type entity or a generic parameter.
+        /// </summary>
+        private static bool IsDeclaration(TypeEntry type)
+        {
+            return !ReferenceEquals(type, null) && type.IsDeclared;
         }
 
         /// <summary>

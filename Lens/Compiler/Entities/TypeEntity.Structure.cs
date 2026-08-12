@@ -125,7 +125,7 @@ namespace Lens.Compiler.Entities
             Context.UnprocessedMethods.Add(ce);
 
             if (prepare)
-                ce.PrepareSelf();
+                ce.PrepareSelfAsNeeded();
             else
                 Context.UnpreparedTypeContents.Add(ce);
 
@@ -200,7 +200,7 @@ namespace Lens.Compiler.Entities
             extraInit?.Invoke(fe);
 
             if (prepare)
-                fe.PrepareSelf();
+                fe.PrepareSelfAsNeeded();
             else
                 Context.UnpreparedTypeContents.Add(fe);
 
@@ -225,7 +225,7 @@ namespace Lens.Compiler.Entities
 
             if (prepare)
             {
-                me.PrepareSelf();
+                me.PrepareSelfAsNeeded();
                 CheckMethod(me);
             }
             else

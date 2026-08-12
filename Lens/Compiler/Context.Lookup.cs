@@ -140,7 +140,10 @@ namespace Lens.Compiler
 
                 FieldInfo = declared.MemberOf(fi.FieldBuilder),
                 IsStatic = fi.IsStatic,
-                FieldType = declared.Substitute(TypeEntryCache.Of(fi.FieldBuilder.FieldType))
+
+                // the resolved type of the field, not the builder's: they are the same type, and
+                // only one of the two can be asked before the field has been emitted
+                FieldType = declared.Substitute(fi.Type)
             };
         }
 
@@ -185,7 +188,7 @@ namespace Lens.Compiler
                 ConstructorInfo = declared.MemberOf(ctor.ConstructorBuilder),
                 ArgumentTypes = ctor.GetArgumentTypes(this).Select(declared.Substitute).ToArray(),
 
-                IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(TypeEntry.Materialize(argTypes)),
+                IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
                 IsVariadic = false // built-in ctors can't do that
             };
         }
@@ -215,12 +218,12 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ReflectionHelper.ResolveMethod(Resolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), resolver);
+                return ReflectionHelper.ResolveMethod(Resolver, type.Materialize(), name, argTypes, hints, resolver);
 
             try
             {
                 var method = declared.Entity.ResolveMethod(name, argTypes, instantiation: declared.Instantiation);
-                var mw = WrapMethod(declared, method, ReflectionHelper.IsPartiallyApplied(TypeEntry.Materialize(argTypes)));
+                var mw = WrapMethod(declared, method, ReflectionHelper.IsPartiallyApplied(argTypes));
 
                 if (method.IsImported && method.MethodInfo.IsGenericMethod)
                 {
@@ -257,6 +260,14 @@ namespace Lens.Compiler
         /// </summary>
         private void InstantiateGenericMethod(MethodWrapper mw, MethodEntity method, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver resolver)
         {
+            // there is no assembly, so the parameters have no builders and the type-based resolver
+            // has nothing to work with: infer from the declared entries instead
+            if (method.GenericParameters[0].Builder == null)
+            {
+                InferGenericMethod(mw, method, argTypes, hints);
+                return;
+            }
+
             var genericDefs = method.GenericParameters.Select(p => (Type) p.Builder).ToArray();
 
             if (hints != null && hints.Length != genericDefs.Length)
@@ -271,6 +282,83 @@ namespace Lens.Compiler
             mw.ArgumentTypes = argTypeDefs.Select(t => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(t.Materialize(), genericDefs, genericValues))).ToArray();
             mw.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
             mw.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(method.ReturnType.Materialize(), genericDefs, genericValues));
+        }
+
+        /// <summary>
+        /// Infers the generic arguments of a LENS-declared generic function from the call site while
+        /// no assembly exists, and rewrites the wrapper into their terms.
+        ///
+        /// The signatures that reach here are the ones that can be resolved before emission: a naked
+        /// type parameter, or an array of one. A composite signature such as Option&lt;T&gt; is still
+        /// spelled in terms of the parameter builders and cannot be resolved at all until they exist,
+        /// which is the remaining coupling between binding and emission.
+        ///
+        /// There is no MethodInfo to hand out: only emission needs one, and only emission has one.
+        /// </summary>
+        private void InferGenericMethod(MethodWrapper mw, MethodEntity method, TypeEntry[] argTypes, TypeEntry[] hints)
+        {
+            var parameters = method.GenericParameters;
+
+            if (hints != null && hints.Length != parameters.Count)
+                Error(CompilerMessages.GenericArgCountMismatch);
+
+            var values = new TypeEntry[parameters.Count];
+            if (hints != null)
+                for (var idx = 0; idx < hints.Length; idx++)
+                    values[idx] = hints[idx];
+
+            var declaredArgs = method.GetArgumentTypes(this);
+            var count = Math.Min(declaredArgs.Length, argTypes.Length);
+            for (var idx = 0; idx < count; idx++)
+                InferGenericArgument(declaredArgs[idx], argTypes[idx], parameters, values);
+
+            for (var idx = 0; idx < values.Length; idx++)
+                if (values[idx] == null)
+                    Error(CompilerMessages.GenericArgumentNotResolved, parameters[idx].Name);
+
+            GenericHelper.CheckConstraints(Resolver, parameters, values);
+
+            mw.MethodInfo = null;
+            mw.ArgumentTypes = declaredArgs.Select(x => SubstituteGenericArguments(x, parameters, values)).ToArray();
+            mw.GenericArguments = values;
+            mw.ReturnType = SubstituteGenericArguments(method.ReturnType, parameters, values);
+        }
+
+        /// <summary>
+        /// Reads the value of a type parameter off one argument of the call site.
+        /// </summary>
+        private static void InferGenericArgument(TypeEntry declared, TypeEntry actual, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        {
+            var entity = (declared as GenericParameterEntry)?.Entity;
+            if (entity != null)
+            {
+                var idx = parameters.IndexOf(entity);
+                if (idx >= 0 && values[idx] == null)
+                    values[idx] = actual;
+
+                return;
+            }
+
+            if (declared.IsArray && !ReferenceEquals(actual, null) && actual.IsArray)
+                InferGenericArgument(declared.ElementType, actual.ElementType, parameters, values);
+        }
+
+        /// <summary>
+        /// Rewrites a declared type in the terms of the inferred type arguments.
+        /// </summary>
+        private static TypeEntry SubstituteGenericArguments(TypeEntry type, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        {
+            var entity = (type as GenericParameterEntry)?.Entity;
+            if (entity != null)
+            {
+                var idx = parameters.IndexOf(entity);
+                return idx >= 0 ? values[idx] : type;
+            }
+
+            if (type.IsArray)
+                return SubstituteGenericArguments(type.ElementType, parameters, values).MakeArray();
+
+            return type;
         }
 
         /// <summary>

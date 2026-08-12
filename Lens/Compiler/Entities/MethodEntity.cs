@@ -62,6 +62,12 @@ namespace Lens.Compiler.Entities
         public TypeEntry ReturnType;
 
         /// <summary>
+        /// Whether the signature has already been resolved. The analysis half runs at most once,
+        /// however many times preparation is asked for.
+        /// </summary>
+        private bool _isResolved;
+
+        /// <summary>
         /// Assembly-level method builder.
         /// </summary>
         public MethodBuilder MethodBuilder { get; private set; }
@@ -79,9 +85,58 @@ namespace Lens.Compiler.Entities
         #region Methods
 
         /// <summary>
+        /// Resolves the signature of the method and the constraint model of its generic parameters.
+        ///
+        /// A generic method is the one case where this cannot be done on its own while an assembly
+        /// is being built: a composite signature like Option&lt;T&gt; is still spelled in terms of
+        /// the generic parameter builders, so it can only be resolved once they exist. When there is
+        /// an emit target, <see cref="EmitSelf"/> therefore does this part itself, in the order it
+        /// always had.
+        /// </summary>
+        public override void ResolveSelf()
+        {
+            if (IsImported || _isResolved)
+                return;
+
+            var ctx = ContainerType.Context;
+
+            if (IsGeneric && ctx.IsEmitting)
+                return;
+
+            ResolveSelfCore();
+        }
+
+        /// <summary>
+        /// Resolves the signature, whatever phase asked for it.
+        /// </summary>
+        private void ResolveSelfCore()
+        {
+            if (_isResolved)
+                return;
+
+            _isResolved = true;
+
+            var ctx = ContainerType.Context;
+
+            if (IsGeneric)
+            {
+                ctx.RegisterGenericParameters(GenericParameters);
+                ctx.WithGenericScope(GenericParameters, ResolveSignature);
+            }
+            else
+            {
+                ResolveSignature();
+            }
+
+            // an empty script is allowed and it's return is null
+            if (this == ctx.MainMethod && Body.Statements.Count == 0)
+                Body.Statements.Add(new UnitNode());
+        }
+
+        /// <summary>
         /// Creates a MethodBuilder for current method entity.
         /// </summary>
-        public override void PrepareSelf()
+        public override void EmitSelf()
         {
             if (MethodBuilder != null || IsImported)
                 return;
@@ -96,8 +151,8 @@ namespace Lens.Compiler.Entities
 
             if (IsGeneric)
             {
-                // the generic parameters are the very types the signature refers to, so they must
-                // be defined before the signature is resolved:
+                // the generic parameters are the very types a composite signature refers to, so
+                // they must be defined before the signature is resolved:
                 // DefineMethod -> DefineGenericParameters -> constraints -> SetParameters/SetReturnType
                 MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs);
 
@@ -105,16 +160,20 @@ namespace Lens.Compiler.Entities
                 for (var idx = 0; idx < builders.Length; idx++)
                     GenericParameters[idx].Builder = builders[idx];
 
-                ctx.ResolveGenericParameters(GenericParameters);
+                // the constraint model is registered and applied before the signature is resolved,
+                // exactly as it always was: a signature that instantiates a constrained generic
+                // type over one of these parameters is checked against the model
+                ctx.RegisterGenericParameters(GenericParameters);
+                ctx.EmitGenericParameters(GenericParameters);
 
-                ctx.WithGenericScope(GenericParameters, ResolveSignature);
+                ResolveSelfCore();
 
                 MethodBuilder.SetParameters(TypeEntry.Materialize(ArgumentTypes));
                 MethodBuilder.SetReturnType(ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize());
             }
             else
             {
-                ResolveSignature();
+                ResolveSelfCore();
 
                 MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize(), TypeEntry.Materialize(ArgumentTypes));
             }
@@ -130,10 +189,6 @@ namespace Lens.Compiler.Entities
                     idx++;
                 }
             }
-
-            // an empty script is allowed and it's return is null
-            if (this == ctx.MainMethod && Body.Statements.Count == 0)
-                Body.Statements.Add(new UnitNode());
         }
 
         /// <summary>

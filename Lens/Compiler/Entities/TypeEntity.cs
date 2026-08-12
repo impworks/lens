@@ -94,6 +94,12 @@ namespace Lens.Compiler.Entities
         private TypeEntityEntry _declaredEntry;
 
         /// <summary>
+        /// Whether the declaration has already been resolved. The analysis half runs at most once,
+        /// however many times preparation is asked for.
+        /// </summary>
+        private bool _isResolved;
+
+        /// <summary>
         /// The type as the rest of the compiler refers to it.
         ///
         /// For a declaration this is an entry that answers from the declaration itself, so that
@@ -155,9 +161,72 @@ namespace Lens.Compiler.Entities
         #region Preparation & Compilation
 
         /// <summary>
+        /// Resolves everything the declaration itself states: the constraint model of its generic
+        /// parameters and its parent type.
+        ///
+        /// A generic type is the one case where this cannot be done on its own while an assembly is
+        /// being built: the parent of a label is spelled Foo&lt;T&gt;, and a constraint may be too,
+        /// and both are still expressed in terms of the generic parameter builders. When there is an
+        /// emit target, <see cref="EmitSelf"/> therefore does this part itself, in the order it
+        /// always had.
+        /// </summary>
+        public void ResolveSelf()
+        {
+            if (IsImported || _isResolved)
+                return;
+
+            if (IsGeneric)
+            {
+                if (Context.IsEmitting)
+                    return;
+
+                _isResolved = true;
+
+                Context.RegisterGenericParameters(GenericParameters);
+                Context.WithGenericScope(GenericParameters, ResolveParent);
+            }
+            else
+            {
+                _isResolved = true;
+
+                ResolveParent();
+            }
+        }
+
+        /// <summary>
+        /// Resolves the parent type from its signature, unless it is known already.
+        /// </summary>
+        private void ResolveParent()
+        {
+            if (Parent == null && ParentSignature != null)
+                Parent = Context.ResolveType(ParentSignature);
+        }
+
+        /// <summary>
         /// Generates a TypeBuilder for current type entity.
         /// </summary>
         public void PrepareSelf()
+        {
+            ResolveSelf();
+            EmitSelf();
+        }
+
+        /// <summary>
+        /// Prepares the type as far as the current compilation goes: the declaration always, the
+        /// builders only when there is somewhere to emit them into.
+        /// </summary>
+        public void PrepareSelfAsNeeded()
+        {
+            ResolveSelf();
+
+            if (Context.IsEmitting)
+                EmitSelf();
+        }
+
+        /// <summary>
+        /// Generates a TypeBuilder for current type entity.
+        /// </summary>
+        public void EmitSelf()
         {
             if (TypeBuilder != null || IsImported)
                 return;
@@ -179,22 +248,19 @@ namespace Lens.Compiler.Entities
 
                 _selfType = TypeEntryCache.Of(Context.Resolver.MakeGenericType(TypeBuilder, builders.Cast<Type>().ToArray()));
 
-                Context.ResolveGenericParameters(GenericParameters);
+                _isResolved = true;
 
-                Context.WithGenericScope(GenericParameters, () =>
-                    {
-                        if (Parent == null && ParentSignature != null)
-                            Parent = Context.ResolveType(ParentSignature);
-                    }
-                );
+                Context.RegisterGenericParameters(GenericParameters);
+                Context.EmitGenericParameters(GenericParameters);
+
+                Context.WithGenericScope(GenericParameters, ResolveParent);
 
                 if (Parent != null)
                     TypeBuilder.SetParent(Parent.Materialize());
             }
             else
             {
-                if (Parent == null && ParentSignature != null)
-                    Parent = Context.ResolveType(ParentSignature);
+                ResolveSelf();
 
                 TypeBuilder = Context.MainModule.DefineType(Name, attrs, Parent?.Materialize());
             }
@@ -260,7 +326,9 @@ namespace Lens.Compiler.Entities
             if (!_fields.TryGetValue(name, out var fe))
                 throw new KeyNotFoundException();
 
-            if (fe.FieldBuilder == null)
+            // the builder is emission's business: what a caller needs here is the resolved type of
+            // the field, which is what the analysis half of preparation produces
+            if (fe.Type == null)
                 throw new InvalidOperationException($"Type '{Name}' must be prepared before its entities can be resolved.");
 
             return fe;
@@ -277,9 +345,9 @@ namespace Lens.Compiler.Entities
             var info = ReflectionHelper.ResolveMethodByArgs(
                 Context.Resolver,
                 group,
-                m => TypeEntry.Materialize(Substitute(m.GetArgumentTypes(Context), instantiation)),
+                m => Substitute(m.GetArgumentTypes(Context), instantiation),
                 m => m.IsVariadic,
-                TypeEntry.Materialize(args)
+                args
             );
 
             if (exact && info.Distance != 0)
@@ -307,9 +375,9 @@ namespace Lens.Compiler.Entities
             var info = ReflectionHelper.ResolveMethodByArgs(
                 Context.Resolver,
                 _constructors,
-                c => TypeEntry.Materialize(Substitute(c.GetArgumentTypes(Context), instantiation)),
+                c => Substitute(c.GetArgumentTypes(Context), instantiation),
                 c => false,
-                TypeEntry.Materialize(args)
+                args
             );
 
             return info.Method;
