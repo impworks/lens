@@ -133,7 +133,11 @@ namespace Lens.Resolver
                 return Same(element, type.ElementType) ? type : element.MakeByRef(resolver);
             }
 
-            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            // a definition is included deliberately: a member signature routinely names its own
+            // declaring type as the open form - the type of EqualityComparer<>.Default, and the
+            // argument of its GetHashCode, are both spelled that way - and skipping those made
+            // substitution silently do nothing and resolve the member on the open definition
+            if (type.IsGenericType)
             {
                 var args = type.GenericArguments;
                 var substituted = new TypeEntry[args.Length];
@@ -145,7 +149,7 @@ namespace Lens.Resolver
                     changed |= !Same(substituted[idx], args[idx]);
                 }
 
-                return changed ? type.GenericDefinition.MakeGeneric(resolver, substituted) : type;
+                return changed ? type.GetGenericDefinition().MakeGeneric(resolver, substituted) : type;
             }
 
             return type;
