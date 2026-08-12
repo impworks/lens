@@ -55,6 +55,65 @@ namespace Lens.Resolver
         #region Generic type instantiation
 
         /// <summary>
+        /// Canonical entry-space instantiations. Unlike the CLR-side table below, this one exists
+        /// only to hand out one object per instantiation - a ConstructedTypeEntry compares by
+        /// definition and arguments, so it would be correct without the cache, just wasteful.
+        /// </summary>
+        private readonly Dictionary<TypeEntry, List<Tuple<TypeEntry[], TypeEntry>>> _entryInstantiations =
+            new Dictionary<TypeEntry, List<Tuple<TypeEntry[], TypeEntry>>>();
+
+        /// <summary>
+        /// Applies type arguments to a generic definition.
+        ///
+        /// An instantiation made only of host types is handed to reflection, which already interns
+        /// it. Anything involving a declaration is built in the entry model instead, so that nothing
+        /// has to be emitted in order to name List&lt;SomeRecord&gt; or Dictionary&lt;string, T&gt;.
+        /// </summary>
+        public TypeEntry MakeGeneric(TypeEntry definition, TypeEntry[] arguments)
+        {
+            if (!definition.ContainsDeclared && arguments.All(x => !ReferenceEquals(x, null) && !x.ContainsDeclared))
+                return TypeEntryCache.Of(MakeGenericType(definition.Materialize(), TypeEntry.Materialize(arguments)));
+
+            if (!_entryInstantiations.TryGetValue(definition, out var known))
+            {
+                known = new List<Tuple<TypeEntry[], TypeEntry>>();
+                _entryInstantiations.Add(definition, known);
+            }
+
+            foreach (var curr in known)
+                if (TypeEntry.SameAll(curr.Item1, arguments))
+                    return curr.Item2;
+
+            var result = new ConstructedTypeEntry(this, definition, arguments);
+            known.Add(new Tuple<TypeEntry[], TypeEntry>(arguments, result));
+            return result;
+        }
+
+        /// <summary>
+        /// Wraps a type into an array, in the entry model when the element needs it.
+        /// </summary>
+        public TypeEntry MakeArray(TypeEntry element)
+        {
+            return element.ContainsDeclared
+                ? new ArrayTypeEntry(this, element)
+                : TypeEntryCache.Of(element.Materialize().MakeArrayType());
+        }
+
+        /// <summary>
+        /// Wraps a type into a by-ref type, in the entry model when the element needs it.
+        /// </summary>
+        public TypeEntry MakeByRef(TypeEntry element)
+        {
+            return element.ContainsDeclared
+                ? (TypeEntry) new ByRefTypeEntry(this, element)
+                : TypeEntryCache.Of(element.Materialize().MakeByRefType());
+        }
+
+        #endregion
+
+        #region CLR type instantiation
+
+        /// <summary>
         /// Applies type arguments to a generic type definition, returning the same object every
         /// time the same instantiation is requested.
         /// </summary>

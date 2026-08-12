@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (!TypeEntryCache.Of<int>().IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Size, CompilerMessages.ArraySizeNotInt, idxType);
 
-            return Type.MakeArray();
+            return Type.MakeArray(ctx.Resolver);
         }
 
         #endregion

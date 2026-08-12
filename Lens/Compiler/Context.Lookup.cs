@@ -346,19 +346,16 @@ namespace Lens.Compiler
         /// <summary>
         /// Rewrites a declared type in the terms of the inferred type arguments.
         /// </summary>
-        private static TypeEntry SubstituteGenericArguments(TypeEntry type, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        private TypeEntry SubstituteGenericArguments(TypeEntry type, IList<GenericParameterEntity> parameters, TypeEntry[] values)
         {
-            var entity = (type as GenericParameterEntry)?.Entity;
-            if (entity != null)
-            {
-                var idx = parameters.IndexOf(entity);
-                return idx >= 0 ? values[idx] : type;
-            }
-
-            if (type.IsArray)
-                return SubstituteGenericArguments(type.ElementType, parameters, values).MakeArray();
-
-            return type;
+            // the shared substitution walks nested instantiations and by-ref types as well as
+            // arrays, so a declared signature mentioning List<T> substitutes as readily as T[]
+            return ConstructedTypeEntry.SubstituteInto(
+                Resolver,
+                type,
+                parameters.Select(x => x.TypeInfo).ToArray(),
+                values
+            );
         }
 
         /// <summary>

@@ -159,16 +159,6 @@ namespace Lens.Resolver
 
         #region Construction
 
-        public override TypeEntry MakeArray()
-        {
-            return TypeEntryCache.Of(Materialize().MakeArrayType());
-        }
-
-        public override TypeEntry MakeByRef()
-        {
-            return TypeEntryCache.Of(Materialize().MakeByRefType());
-        }
-
         public override TypeEntry MakeGeneric(TypeResolutionContext resolver, params TypeEntry[] arguments)
         {
             throw new InvalidOperationException($"Type parameter '{Entity.Name}' is not a generic definition!");

@@ -34,7 +34,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (_itemType.Is<NullType>())
                 Error(CompilerMessages.ArrayTypeUnknown);
 
-            return _itemType.MakeArray();
+            return _itemType.MakeArray(ctx.Resolver);
         }
 
         #endregion

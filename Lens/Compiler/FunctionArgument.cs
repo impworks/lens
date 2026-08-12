@@ -77,9 +77,9 @@ namespace Lens.Compiler
                 Type = ctx.ResolveType(TypeSignature);
 
                 if (IsRefArgument)
-                    Type = Type.MakeByRef();
+                    Type = Type.MakeByRef(ctx.Resolver);
                 else if (IsVariadic)
-                    Type = Type.MakeArray();
+                    Type = Type.MakeArray(ctx.Resolver);
             }
 
             return Type;

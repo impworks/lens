@@ -72,6 +72,32 @@ namespace Lens.Resolver
         /// </summary>
         public virtual bool IsDeclared => false;
 
+        /// <summary>
+        /// Whether the type is a declaration or is built out of one: SomeRecord, List&lt;SomeRecord&gt;,
+        /// T[], Dictionary&lt;string, T&gt;.
+        ///
+        /// This is the test for "reflection cannot be trusted with this one". A host type made only
+        /// of host types can always be reflected on; anything else has to be answered by the model.
+        /// </summary>
+        public virtual bool ContainsDeclared
+        {
+            get
+            {
+                if (IsDeclared)
+                    return true;
+
+                var element = ElementType;
+                if (!ReferenceEquals(element, null))
+                    return element.ContainsDeclared;
+
+                foreach (var curr in GenericArguments)
+                    if (!ReferenceEquals(curr, null) && curr.ContainsDeclared)
+                        return true;
+
+                return false;
+            }
+        }
+
         #endregion
 
         #region Structure
@@ -178,13 +204,22 @@ namespace Lens.Resolver
 
         /// <summary>
         /// The array type whose elements are of this type.
+        ///
+        /// Goes through the resolution context because the answer is a different kind of entry
+        /// depending on the element: reflection can represent int[], but not SomeRecord[].
         /// </summary>
-        public abstract TypeEntry MakeArray();
+        public TypeEntry MakeArray(TypeResolutionContext resolver)
+        {
+            return resolver.MakeArray(this);
+        }
 
         /// <summary>
         /// The by-ref type that refers to a storage location of this type.
         /// </summary>
-        public abstract TypeEntry MakeByRef();
+        public TypeEntry MakeByRef(TypeResolutionContext resolver)
+        {
+            return resolver.MakeByRef(this);
+        }
 
         /// <summary>
         /// Instantiates a generic definition over the given arguments, returning the same entry

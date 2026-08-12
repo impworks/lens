@@ -139,19 +139,9 @@ namespace Lens.Resolver
 
         #region Construction
 
-        public override TypeEntry MakeArray()
-        {
-            return TypeEntryCache.Of(Materialize().MakeArrayType());
-        }
-
-        public override TypeEntry MakeByRef()
-        {
-            return TypeEntryCache.Of(Materialize().MakeByRefType());
-        }
-
         public override TypeEntry MakeGeneric(TypeResolutionContext resolver, params TypeEntry[] arguments)
         {
-            return TypeEntryCache.Of(resolver.MakeGenericType(Materialize(), Materialize(arguments)));
+            return resolver.MakeGeneric(this, arguments);
         }
 
         #endregion

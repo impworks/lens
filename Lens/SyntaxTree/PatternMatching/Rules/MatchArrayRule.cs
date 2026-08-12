@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
                 var itemType = _subsequenceIndex != idx
                     ? _elementType
-                    : (_isIndexable ? _elementType.MakeArray() : TypeEntryCache.Of(typeof(IEnumerable<>)).MakeGeneric(ctx.Resolver, new[] {_elementType}));
+                    : (_isIndexable ? _elementType.MakeArray(ctx.Resolver) : TypeEntryCache.Of(typeof(IEnumerable<>)).MakeGeneric(ctx.Resolver, new[] {_elementType}));
 
                 var bindings = ElementRules[idx].Resolve(ctx, itemType);
                 foreach (var binding in bindings)
@@ -158,7 +158,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     //     |> Skip before // optional
                     //     |> Take (expr.Length - before - after)
                     //     |> ToArray ()
-                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArray(), false);
+                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArray(ctx.Resolver), false);
                     var subseqExpr = subseqIdx == 0
                         ? expression
                         : Expr.Invoke(expression, "Skip", Expr.Int(subseqIdx));

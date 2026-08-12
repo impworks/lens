@@ -578,7 +578,7 @@ namespace Lens.Resolver
                 var rightElem = right.ElementType;
                 return leftElem.IsValueType || rightElem.IsValueType
                     ? TypeEntryCache.Of<object>()
-                    : GetMostCommonType(ctx, leftElem, rightElem).MakeArray();
+                    : GetMostCommonType(ctx, leftElem, rightElem).MakeArray(ctx);
             }
 
             // inheritance
