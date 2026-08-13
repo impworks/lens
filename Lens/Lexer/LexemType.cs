@@ -38,6 +38,7 @@
         Ref,
         Throw,
         Yield,
+        Await,
 
         // Literals
         Null,

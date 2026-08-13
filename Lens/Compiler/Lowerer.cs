@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations;
+using Lens.SyntaxTree.Declarations.Locals;
+using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.PatternMatching;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Internals;
 using Lens.Translations;
@@ -29,10 +33,11 @@ namespace Lens.Compiler
     {
         #region Constructor
 
-        public Lowerer(Context ctx, Action<NodeBase, List<NodeBase>> emitYield = null, bool lowerEverything = false)
+        public Lowerer(Context ctx, Action<NodeBase, List<NodeBase>> emitYield = null, Func<NodeBase, List<NodeBase>, NodeBase> emitAwait = null, bool lowerEverything = false)
         {
             _ctx = ctx;
             _emitYield = emitYield;
+            _emitAwait = emitAwait;
             _lowerEverything = lowerEverything;
         }
 
@@ -47,6 +52,12 @@ namespace Lens.Compiler
         /// Null when the pass is being used without a state machine, which is how it is validated.
         /// </summary>
         private readonly Action<NodeBase, List<NodeBase>> _emitYield;
+
+        /// <summary>
+        /// Appends the statements that suspend the function until an operation finishes, and
+        /// returns the expression that reads the operation's result.
+        /// </summary>
+        private readonly Func<NodeBase, List<NodeBase>, NodeBase> _emitAwait;
 
         /// <summary>
         /// Whether every construct is to be flattened, rather than only the ones that contain a
@@ -96,7 +107,10 @@ namespace Lens.Compiler
                 return;
             }
 
-            var hasYield = ContainsYield(stmt);
+            if (TryLowerAwait(stmt, output))
+                return;
+
+            var hasYield = ContainsResumePoint(stmt);
             if (!hasYield && !_lowerEverything)
             {
                 output.Add(stmt);
@@ -109,7 +123,7 @@ namespace Lens.Compiler
             if (valuePosition)
             {
                 if (hasYield)
-                    Error(stmt, CompilerMessages.YieldInProtectedBlock);
+                    RejectResumePoint(stmt);
 
                 output.Add(stmt);
                 return;
@@ -134,12 +148,25 @@ namespace Lens.Compiler
                     return;
             }
 
-            // try, using and match all open a protected region or a construct with its own labels,
-            // and neither can be resumed into
             if (hasYield)
-                Error(stmt, CompilerMessages.YieldInProtectedBlock);
+                RejectResumePoint(stmt);
 
             output.Add(stmt);
+        }
+
+        /// <summary>
+        /// Explains why a resume point cannot stay where it is.
+        /// </summary>
+        private static void RejectResumePoint(NodeBase stmt)
+        {
+            // try, using and match each open a protected region or a construct with labels of its
+            // own, and neither can be resumed into
+            if (stmt is TryNode || stmt is UsingNode || stmt is MatchNode)
+                Error(stmt, CompilerMessages.ResumePointInProtectedBlock);
+
+            // anything else is an ordinary expression that happens to contain an await: what a
+            // half-evaluated expression left on the stack is not there when the machine comes back
+            Error(stmt, CompilerMessages.AwaitPosition);
         }
 
         #endregion
@@ -311,6 +338,63 @@ namespace Lens.Compiler
             output.Add(new DisposeNode(Expr.Get(iterator)));
         }
 
+        /// <summary>
+        /// Handles the statement shapes an await is allowed to appear in.
+        ///
+        /// A resume point has to be a statement: it is a place the machine leaves from and comes
+        /// back to, and whatever a half-evaluated expression had left on the stack is not there
+        /// when it does. Spilling an arbitrary expression into temporaries would lift that
+        /// restriction, and would have to preserve evaluation order while doing it; the shapes
+        /// below are the ones glue code actually writes.
+        /// </summary>
+        private bool TryLowerAwait(NodeBase stmt, List<NodeBase> output)
+        {
+            NodeBase awaited;
+            Func<NodeBase, NodeBase> rebuild;
+
+            switch (stmt)
+            {
+                case AwaitNode node:
+                    awaited = node.Expression;
+                    rebuild = null;
+                    break;
+
+                case VarNode node when node.Value is AwaitNode value:
+                    awaited = value.Expression;
+                    rebuild = r => Rebind(new VarNode(node.Name) {Value = r, Local = node.Local}, node);
+                    break;
+
+                case LetNode node when node.Value is AwaitNode value:
+                    awaited = value.Expression;
+                    rebuild = r => Rebind(new LetNode(node.Name) {Value = r, Local = node.Local}, node);
+                    break;
+
+                case SetIdentifierNode node when node.Value is AwaitNode value:
+                    awaited = value.Expression;
+                    rebuild = r => Rebind(new SetIdentifierNode(node.Identifier) {Value = r, Local = node.Local, IsInitialization = node.IsInitialization}, node);
+                    break;
+
+                default:
+                    return false;
+            }
+
+            if (_emitAwait == null)
+                Error(stmt, CompilerMessages.AwaitNotInAsync);
+
+            var result = _emitAwait(awaited, output);
+
+            // even a discarded await has to read its result: that is where a failed operation
+            // turns back into an exception
+            output.Add(rebuild == null ? result : rebuild(result));
+            return true;
+        }
+
+        private static NodeBase Rebind(NodeBase node, NodeBase original)
+        {
+            CopyLocation(original, node);
+            return node;
+        }
+
         #endregion
 
         #region Helpers
@@ -332,50 +416,53 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Checks whether a subtree hands values to the consumer of the function currently being
-        /// rewritten. A lambda's yields are its own, not this function's, and are rejected
-        /// separately.
+        /// Checks whether a subtree suspends the function currently being rewritten. A lambda's
+        /// yields and awaits are its own, not this function's, and are rejected separately.
         /// </summary>
-        public static bool ContainsYield(NodeBase node)
+        public static bool ContainsResumePoint(NodeBase node)
         {
             if (node == null || node is FunctionNodeBase)
                 return false;
 
-            if (node is YieldNode)
+            if (node is YieldNode || node is AwaitNode)
                 return true;
 
-            return node.GetChildren().Any(child => ContainsYield(child?.Node));
+            return node.GetChildren().Any(child => ContainsResumePoint(child?.Node));
         }
 
         /// <summary>
-        /// Reports a yield that appears where no state machine can consume it.
+        /// Checks whether a subtree contains a node of a kind anywhere at all, lambdas included.
         /// </summary>
-        public static void CheckNoNestedYields(NodeBase node)
+        public static bool ContainsAnywhere<T>(NodeBase node)
+            where T : NodeBase
+        {
+            if (node == null)
+                return false;
+
+            if (node is T)
+                return true;
+
+            return node.GetChildren().Any(child => ContainsAnywhere<T>(child?.Node));
+        }
+
+        /// <summary>
+        /// Reports a resume point that appears where no state machine can consume it.
+        /// </summary>
+        public static void CheckNoNestedResumePoints(NodeBase node)
         {
             if (node == null)
                 return;
 
             if (node is FunctionNodeBase fn)
             {
-                if (ContainsYieldAnywhere(fn.Body))
-                    Error(node, CompilerMessages.YieldInLambda);
+                if (ContainsAnywhere<YieldNode>(fn.Body) || ContainsAnywhere<AwaitNode>(fn.Body))
+                    Error(node, CompilerMessages.ResumePointInLambda);
 
                 return;
             }
 
             foreach (var child in node.GetChildren())
-                CheckNoNestedYields(child?.Node);
-        }
-
-        public static bool ContainsYieldAnywhere(NodeBase node)
-        {
-            if (node == null)
-                return false;
-
-            if (node is YieldNode)
-                return true;
-
-            return node.GetChildren().Any(child => ContainsYieldAnywhere(child?.Node));
+                CheckNoNestedResumePoints(child?.Node);
         }
 
         #endregion

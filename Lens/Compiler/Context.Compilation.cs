@@ -500,6 +500,8 @@ namespace Lens.Compiler
             // implements one, and a factory that hands it out. The rewrite replaces the body above.
             if (IteratorBuilder.IsIterator(node))
                 _pendingStateMachines.Add(Tuple.Create(node, method));
+            else if (AsyncBuilder.IsAsync(node))
+                _pendingStateMachines.Add(Tuple.Create(node, method));
         }
 
         /// <summary>
@@ -511,11 +513,27 @@ namespace Lens.Compiler
         /// </summary>
         private void BuildStateMachines()
         {
+            // the script body is not a function and cannot be one: it has no declared return type
+            // to say what kind of machine it would be
+            WithRecovery(() =>
+                {
+                    if (Lowerer.ContainsAnywhere<YieldNode>(MainMethod.Body))
+                        Error(CompilerMessages.YieldNotInIterator);
+
+                    if (Lowerer.ContainsAnywhere<AwaitNode>(MainMethod.Body))
+                        Error(CompilerMessages.AwaitNotInAsync);
+                }
+            );
+
             foreach (var curr in _pendingStateMachines)
             {
                 var node = curr.Item1;
                 var method = curr.Item2;
-                WithRecovery(() => IteratorBuilder.Build(this, node, method));
+                var builder = IteratorBuilder.IsIterator(node)
+                    ? (StateMachineBuilder) new IteratorBuilder(this, node, method)
+                    : new AsyncBuilder(this, node, method);
+
+                WithRecovery(builder.Build);
             }
 
             _pendingStateMachines.Clear();

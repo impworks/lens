@@ -339,4 +339,7 @@
   <data name="YieldExpressionExpected" xml:space="preserve">
     <value>LE2074: An expression to yield is expected!</value>
   </data>
+  <data name="AwaitExpressionExpected" xml:space="preserve">
+    <value>LE2075: An expression to await is expected!</value>
+  </data>
 </root>

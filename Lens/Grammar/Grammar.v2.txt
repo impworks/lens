@@ -121,7 +121,8 @@ rule_keyvalue <MatchKeyValueRule>           = "=>" rule_generic
 
 // line expressions
 line_stmt <NodeBase>                        = set_stmt | line_expr
-line_expr <NodeBase>                        = if_line | while_line | for_line | using_line | throw_stmt | new_object_expr | typeop_expr | line_typecheck_expr
+line_expr <NodeBase>                        = await_expr | if_line | while_line | for_line | using_line | throw_stmt | new_object_expr | typeop_expr | line_typecheck_expr
+await_expr <AwaitNode>                      = "await" line_expr
 typeop_expr <NodeBase>                      = default_expr | typeof_expr
 default_expr <DefaultOperatorNode>          = "default" type
 typeof_expr <TypeofOperatorNode>            = "typeof" type

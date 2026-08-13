@@ -615,6 +615,11 @@ namespace Lens.SyntaxTree
             return new YieldNode {Expression = expr, IsSequence = true};
         }
 
+        public static AwaitNode Await(NodeBase expr)
+        {
+            return new AwaitNode {Expression = expr};
+        }
+
         public static ThrowNode Throw()
         {
             return new ThrowNode();

@@ -1564,7 +1564,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3166: A &apos;yield&apos; statement can only appear in the body of a named function..
+        ///   Looks up a localized string similar to LE3166: A &apos;yield&apos; statement can only appear in the body of a named function that returns a sequence..
         /// </summary>
         public static string YieldNotInIterator {
             get {
@@ -1600,25 +1600,25 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3170: A &apos;yield&apos; is not allowed inside a try, using or match block..
+        ///   Looks up a localized string similar to LE3170: A &apos;yield&apos; or an &apos;await&apos; is not allowed inside a try, using or match block..
         /// </summary>
-        public static string YieldInProtectedBlock {
+        public static string ResumePointInProtectedBlock {
             get {
-                return ResourceManager.GetString("YieldInProtectedBlock", resourceCulture);
+                return ResourceManager.GetString("ResumePointInProtectedBlock", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3171: A &apos;yield&apos; is not allowed inside a lambda..
+        ///   Looks up a localized string similar to LE3171: A &apos;yield&apos; or an &apos;await&apos; is not allowed inside a lambda..
         /// </summary>
-        public static string YieldInLambda {
+        public static string ResumePointInLambda {
             get {
-                return ResourceManager.GetString("YieldInLambda", resourceCulture);
+                return ResourceManager.GetString("ResumePointInLambda", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3172: Variable &apos;{0}&apos; is declared inside a loop of an iterator function and captured by a lambda, which is not supported..
+        ///   Looks up a localized string similar to LE3172: Variable &apos;{0}&apos; is declared inside a loop of a state machine function and captured by a lambda, which is not supported..
         /// </summary>
         public static string YieldLoopClosure {
             get {
@@ -1632,6 +1632,60 @@ namespace Lens.Translations {
         public static string IteratorGeneric {
             get {
                 return ResourceManager.GetString("IteratorGeneric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3174: An &apos;await&apos; can only appear in the body of a named function that returns a Task..
+        /// </summary>
+        public static string AwaitNotInAsync {
+            get {
+                return ResourceManager.GetString("AwaitNotInAsync", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3175: Function &apos;{0}&apos; contains an &apos;await&apos;, so it must declare its return type explicitly..
+        /// </summary>
+        public static string AsyncReturnTypeRequired {
+            get {
+                return ResourceManager.GetString("AsyncReturnTypeRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3176: Function &apos;{0}&apos; contains an &apos;await&apos;, so its return type must be Task or Task&lt;T&gt;, not &apos;{1}&apos;!.
+        /// </summary>
+        public static string AsyncReturnTypeMismatch {
+            get {
+                return ResourceManager.GetString("AsyncReturnTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3177: Function &apos;{0}&apos; cannot be pure and contain an &apos;await&apos;: a memoized task would be handed to every caller already completed..
+        /// </summary>
+        public static string AsyncPure {
+            get {
+                return ResourceManager.GetString("AsyncPure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3178: Function &apos;{0}&apos; contains an &apos;await&apos; and declares type parameters; generic async functions are not supported yet..
+        /// </summary>
+        public static string AsyncGeneric {
+            get {
+                return ResourceManager.GetString("AsyncGeneric", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3179: An &apos;await&apos; can only be a statement of its own or the value assigned to a variable..
+        /// </summary>
+        public static string AwaitPosition {
+            get {
+                return ResourceManager.GetString("AwaitPosition", resourceCulture);
             }
         }
     }

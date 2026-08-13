@@ -32,6 +32,7 @@ namespace Lens.Lexer
             new StaticLexemDefinition("finally", LexemType.Finally),
             new StaticLexemDefinition("throw", LexemType.Throw),
             new StaticLexemDefinition("yield", LexemType.Yield),
+            new StaticLexemDefinition("await", LexemType.Await),
             new StaticLexemDefinition("match", LexemType.Match),
             new StaticLexemDefinition("with", LexemType.With),
             new StaticLexemDefinition("case", LexemType.Case),

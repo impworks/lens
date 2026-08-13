@@ -619,7 +619,7 @@
     <value>LE3165: '{0}' is already declared with a different number of type parameters; LENS does not allow overloading by generic arity!</value>
   </data>
   <data name="YieldNotInIterator" xml:space="preserve">
-    <value>LE3166: A 'yield' statement can only appear in the body of a named function.</value>
+    <value>LE3166: A 'yield' statement can only appear in the body of a named function that returns a sequence.</value>
   </data>
   <data name="IteratorReturnTypeRequired" xml:space="preserve">
     <value>LE3167: Function '{0}' contains a 'yield', so it must declare its return type explicitly.</value>
@@ -630,16 +630,34 @@
   <data name="IteratorPure" xml:space="preserve">
     <value>LE3169: Function '{0}' cannot be pure and contain a 'yield': a memoized iterator would hand the same one-shot enumerator to every caller.</value>
   </data>
-  <data name="YieldInProtectedBlock" xml:space="preserve">
-    <value>LE3170: A 'yield' is not allowed inside a try, using or match block.</value>
+  <data name="ResumePointInProtectedBlock" xml:space="preserve">
+    <value>LE3170: A 'yield' or an 'await' is not allowed inside a try, using or match block.</value>
   </data>
-  <data name="YieldInLambda" xml:space="preserve">
-    <value>LE3171: A 'yield' is not allowed inside a lambda.</value>
+  <data name="ResumePointInLambda" xml:space="preserve">
+    <value>LE3171: A 'yield' or an 'await' is not allowed inside a lambda.</value>
   </data>
   <data name="YieldLoopClosure" xml:space="preserve">
-    <value>LE3172: Variable '{0}' is declared inside a loop of an iterator function and captured by a lambda, which is not supported.</value>
+    <value>LE3172: Variable '{0}' is declared inside a loop of a state machine function and captured by a lambda, which is not supported.</value>
   </data>
   <data name="IteratorGeneric" xml:space="preserve">
     <value>LE3173: Function '{0}' contains a 'yield' and declares type parameters; generic iterators are not supported yet.</value>
+  </data>
+  <data name="AwaitNotInAsync" xml:space="preserve">
+    <value>LE3174: An 'await' can only appear in the body of a named function that returns a Task.</value>
+  </data>
+  <data name="AsyncReturnTypeRequired" xml:space="preserve">
+    <value>LE3175: Function '{0}' contains an 'await', so it must declare its return type explicitly.</value>
+  </data>
+  <data name="AsyncReturnTypeMismatch" xml:space="preserve">
+    <value>LE3176: Function '{0}' contains an 'await', so its return type must be Task or Task&lt;T&gt;, not '{1}'!</value>
+  </data>
+  <data name="AsyncPure" xml:space="preserve">
+    <value>LE3177: Function '{0}' cannot be pure and contain an 'await': a memoized task would be handed to every caller already completed.</value>
+  </data>
+  <data name="AsyncGeneric" xml:space="preserve">
+    <value>LE3178: Function '{0}' contains an 'await' and declares type parameters; generic async functions are not supported yet.</value>
+  </data>
+  <data name="AwaitPosition" xml:space="preserve">
+    <value>LE3179: An 'await' can only be a statement of its own or the value assigned to a variable.</value>
   </data>
 </root>

@@ -44,6 +44,10 @@ namespace Lens.Compiler
             {
                 Namespaces.Add("System", true);
                 Namespaces.Add("System.Linq", true);
+
+                // 'await' needs somewhere to put its answer, and a script that awaits will be
+                // spelling Task in its signatures
+                Namespaces.Add("System.Threading.Tasks", true);
                 Namespaces.Add("System.Text.RegularExpressions", true);
             }
 

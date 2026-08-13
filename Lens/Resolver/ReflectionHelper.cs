@@ -437,7 +437,49 @@ namespace Lens.Resolver
                              .SelectMany(x => GetMethodsByName(x, name))
                              .ToArray();
 
-            return result;
+            return WithoutHiddenMethods(result);
+        }
+
+        /// <summary>
+        /// Drops the base declarations that a derived type has replaced.
+        ///
+        /// Reflection reports both, because the signature that hides is the same signature that was
+        /// hidden. Overload resolution would then find two candidates that fit the call equally
+        /// well and give up - which is what Task&lt;T&gt;.GetAwaiter, hiding Task.GetAwaiter with a
+        /// different return type, does to anything that tries to await a task.
+        /// </summary>
+        private static MethodInfo[] WithoutHiddenMethods(MethodInfo[] methods)
+        {
+            if (methods.Length < 2)
+                return methods;
+
+            return methods.Where(m => !methods.Any(other => Hides(other, m))).ToArray();
+        }
+
+        /// <summary>
+        /// Checks whether one declaration replaces another: same shape, declared further down.
+        /// </summary>
+        private static bool Hides(MethodInfo derived, MethodInfo hidden)
+        {
+            if (ReferenceEquals(derived, hidden) || derived.DeclaringType == null || hidden.DeclaringType == null)
+                return false;
+
+            if (derived.DeclaringType == hidden.DeclaringType || !hidden.DeclaringType.IsAssignableFrom(derived.DeclaringType))
+                return false;
+
+            if (derived.IsStatic != hidden.IsStatic || derived.GetGenericArguments().Length != hidden.GetGenericArguments().Length)
+                return false;
+
+            var derivedArgs = derived.GetParameters();
+            var hiddenArgs = hidden.GetParameters();
+            if (derivedArgs.Length != hiddenArgs.Length)
+                return false;
+
+            for (var idx = 0; idx < derivedArgs.Length; idx++)
+                if (derivedArgs[idx].ParameterType != hiddenArgs[idx].ParameterType)
+                    return false;
+
+            return true;
         }
 
         /// <summary>

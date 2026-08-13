@@ -39,7 +39,49 @@ namespace Lens.SyntaxTree.ControlFlow
         /// </summary>
         public CodeBlockNode Code { get; set; }
 
-        private Local _exceptionVariable;
+        #endregion
+
+        #region Binding
+
+        /// <summary>
+        /// What binding learned about this clause.
+        /// </summary>
+        private class Binding
+        {
+            /// <summary>
+            /// The name the caught exception is assigned to, if the clause names one.
+            /// </summary>
+            public Local ExceptionVariable;
+        }
+
+        #endregion
+
+        #region Resolve
+
+        /// <summary>
+        /// Declares the name the exception is caught into.
+        ///
+        /// This used to happen during closure analysis, which runs after the body has been bound -
+        /// so the body could not actually use the name it was given.
+        /// </summary>
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
+        {
+            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : TypeEntryCache.Of<Exception>();
+            if (!type.Is<Exception>() && !type.IsSubclassOf(TypeEntryCache.Of<Exception>()))
+                Error(CompilerMessages.CatchTypeNotException, type);
+
+            if (!string.IsNullOrEmpty(ExceptionVariable))
+            {
+                var binding = ctx.BindingOf<Binding>(this);
+                if (binding.ExceptionVariable == null)
+                {
+                    binding.ExceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
+                    binding.ExceptionVariable.Declaration = this;
+                }
+            }
+
+            return base.ResolveInternal(ctx, mustReturn);
+        }
 
         #endregion
 
@@ -56,17 +98,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public override void AnalyzeClosures(Context ctx)
         {
+            Resolve(ctx);
+
             base.AnalyzeClosures(ctx);
-
-            var type = ExceptionType != null ? ctx.ResolveType(ExceptionType) : TypeEntryCache.Of<Exception>();
-            if (!type.Is<Exception>() && !type.IsSubclassOf(TypeEntryCache.Of<Exception>()))
-                Error(CompilerMessages.CatchTypeNotException, type);
-
-            if (!string.IsNullOrEmpty(ExceptionVariable))
-            {
-                _exceptionVariable = ctx.Scope.DeclareLocal(ExceptionVariable, type, false);
-                _exceptionVariable.Declaration = this;
-            }
         }
 
         #endregion
@@ -83,10 +117,26 @@ namespace Lens.SyntaxTree.ControlFlow
             var type = ExceptionType != null ? ctx.ResolveType(ExceptionType).Materialize() : typeof(Exception);
             gen.BeginCatchBlock(type);
 
-            if (_exceptionVariable == null)
+            var exceptionVariable = ctx.BindingOf<Binding>(this).ExceptionVariable;
+            if (exceptionVariable == null)
+            {
                 gen.EmitPop();
+            }
+            else if (exceptionVariable.IsClosured)
+            {
+                // the closure instance has to be pushed before the value, and the exception is
+                // already on the stack, so it waits in a slot of its own for a moment
+                var slot = gen.DeclareLocal(exceptionVariable.Type.Materialize());
+                gen.EmitSaveLocal(slot);
+
+                var closureType = ctx.Scope.EmitClosureInstance(ctx, exceptionVariable);
+                gen.EmitLoadLocal(slot);
+                gen.EmitSaveField(ctx.ResolveField(closureType, exceptionVariable.ClosureFieldName).FieldInfo);
+            }
             else
-                gen.EmitSaveLocal(_exceptionVariable.LocalBuilder);
+            {
+                gen.EmitSaveLocal(exceptionVariable.LocalBuilder);
+            }
 
             Code.Emit(ctx, false);
 

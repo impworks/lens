@@ -142,7 +142,9 @@ namespace Lens.SyntaxTree.ControlFlow
             {
                 gen.EmitLoadLocal(loc);
 
-                if (scope.ClosureParentIsRemote)
+                // a state machine's frame is the receiver, so a closure nested inside one affixes
+                // itself to 'this' just as a closure in another method does
+                if (scope.ClosureParentIsRemote || scope.ClosureParent.ClosureIsThis)
                     gen.EmitLoadArgument(0);
                 else
                     gen.EmitLoadLocal(scope.ClosureParent.ClosureVariable);

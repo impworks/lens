@@ -166,7 +166,7 @@ glue code rarely needs.
 
 ## What was built, and what was left out
 
-Steps 1–3 are done. The staging that was actually taken:
+Steps 1–4 are done. The staging that was actually taken:
 
 - **The lowering pass** (`Lens/Compiler/Lowerer.cs`) runs before binding, on the parse tree, and
   rewrites rather than mutates. Blocks stay nested and only the control flow *between* them is
@@ -181,32 +181,71 @@ Steps 1–3 are done. The staging that was actually taken:
 - **`yield` and `yield from`**, with the machine implementing `IEnumerable<T>`, `IEnumerable`,
   `IEnumerator<T>`, `IEnumerator` and `IDisposable`. The two non-generic members are explicit
   overrides; everything else matches its interface method by name.
+- **`await`**, on the same machine, costing roughly what the phase predicted. The awaiter is matched
+  structurally — `GetAwaiter`, `IsCompleted`, `OnCompleted`, `GetResult` — so `Task`, `ValueTask`
+  and a host's own awaitable all work without the compiler knowing they exist.
 
-Deliberately left out, each with a specific diagnostic rather than a crash:
+### Two decisions the phase asked to be made deliberately
+
+**No `async` marker.** A function that contains `await` is async. C# needs the marker because
+`await` had to keep working as an identifier, which LENS has no history of; and the objection that
+inference makes the return type depend on the body does not apply here, because the return type is
+declared rather than inferred either way.
+
+**A completion source, not `AsyncTaskMethodBuilder`.** The builder API is designed to be driven by
+a struct machine passed by reference through generic methods with constraints — a lot of ceremony
+to buy an allocation LENS does not care about. `TaskCompletionSource<T>` says the same thing in
+code the compiler can already emit. The cost is that only `Task` and `Task<T>` can be returned;
+`ValueTask` can be awaited but not produced.
+
+`MoveNext` cannot catch its own exceptions, because nothing may be resumed into a protected region.
+So the `try` sits one method out, in `<Resume>` — the only place `MoveNext` is ever called from,
+including the first synchronous call the factory makes.
+
+### Rejected, each with a specific diagnostic rather than a crash
 
 | Rejected | Message |
 |---|---|
-| `yield` in `try` / `using` / `match` | LE3170 |
-| `yield` in a lambda | LE3171 |
-| `pure` iterator | LE3169 |
-| iterator with no declared return type | LE3167 |
-| iterator whose return type is not `IEnumerable<T>` | LE3168 |
-| generic iterator (`fun f<T>:IEnumerable<T>`) | LE3173 |
-| a name declared in a loop *and* captured, inside an iterator | LE3172 |
+| `yield` or `await` in `try` / `using` / `match` | LE3170 |
+| `yield` or `await` in a lambda | LE3171 |
+| `await` anywhere but a statement or the value assigned to a name | LE3179 |
+| `pure` iterator / `pure` async | LE3169 / LE3177 |
+| no declared return type | LE3167 / LE3175 |
+| return type that is not `IEnumerable<T>` / not `Task` | LE3168 / LE3176 |
+| generic iterator or generic async function | LE3173 / LE3178 |
+| a name declared in a loop *and* captured, inside a machine | LE3172 |
 
-Two of these are worth calling out.
+Four of these are worth calling out.
 
-**Return type inference was not built.** An iterator must declare `IEnumerable<T>` (or `T~`)
-explicitly. Inferring `T` from the yielded expressions needs the body bound, and the machine is
-built out of the parse tree — before anything has a type — because that is what lets the rewrite
-reuse the existing binding and emission path wholesale rather than re-binding a tree that has
-already been bound once.
+**Return type inference was not built.** A machine function must declare its return type. Inferring
+it from the yielded or returned expressions needs the body bound, and the machine is built out of
+the parse tree — before anything has a type — because that is what lets the rewrite reuse the
+existing binding and emission path wholesale rather than re-binding a tree that has already been
+bound once.
 
-**`yield` inside `try` is the deferred piece**, exactly as the phase proposed. The consequence
-visible today is that a lowered `foreach` inside an iterator disposes its enumerator when the loop
-ends normally and not when the iterator is abandoned. Supporting it means moving `finally` bodies
-into separate methods that both the normal path and `Dispose` call, and that is the same machinery
-`await` in `try` needs.
+**A resume point must be a statement.** `var x = await f ()`, `x = await f ()` and a bare
+`await f ()` are the supported shapes; `1 + (await t)` is not. A suspension is a place the machine
+leaves from and comes back to, and what a half-evaluated expression left on the stack is not there
+when it returns. Lifting the restriction means spilling arbitrary expressions into temporaries while
+preserving evaluation order.
+
+**Async void is not supported**, deliberately: its only purpose is an event handler signature, and
+glue code has no need for one.
+
+**`yield`/`await` inside `try` is the deferred piece**, exactly as the phase proposed. The
+consequence visible today is that a lowered `foreach` inside an iterator disposes its enumerator
+when the loop ends normally and not when the iterator is abandoned. Supporting it means moving
+`finally` bodies into separate methods that both the normal path and `Dispose` call.
+
+### Two bugs the phase turned up, fixed along the way
+
+- **Hidden methods made overload resolution give up.** Reflection reports both the declaration that
+  hides and the one that was hidden, and they fit a call equally well — which is what
+  `Task<T>.GetAwaiter`, hiding `Task.GetAwaiter` with a different return type, does to anything
+  trying to await a task. `ReflectionHelper.GetMethodsByName` now drops the hidden declaration.
+- **A `catch` clause's variable was declared during closure analysis**, which runs after the body
+  has been bound — so the body could not use the name it was given. It is declared while binding
+  now.
 
 ## Acceptance criteria
 

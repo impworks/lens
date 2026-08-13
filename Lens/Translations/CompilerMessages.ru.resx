@@ -619,7 +619,7 @@
     <value>LE3165: '{0}' уже объявлен с другим количеством параметров типа; LENS не допускает перегрузку по числу параметров типа!</value>
   </data>
   <data name="YieldNotInIterator" xml:space="preserve">
-    <value>LE3166: Оператор 'yield' может находиться только в теле именованной функции.</value>
+    <value>LE3166: Оператор 'yield' может находиться только в теле именованной функции, возвращающей последовательность.</value>
   </data>
   <data name="IteratorReturnTypeRequired" xml:space="preserve">
     <value>LE3167: Функция '{0}' содержит 'yield', поэтому её возвращаемый тип должен быть указан явно.</value>
@@ -630,16 +630,34 @@
   <data name="IteratorPure" xml:space="preserve">
     <value>LE3169: Функция '{0}' не может быть одновременно чистой и содержать 'yield': закэшированный итератор вернул бы всем вызывающим один и тот же одноразовый перечислитель.</value>
   </data>
-  <data name="YieldInProtectedBlock" xml:space="preserve">
-    <value>LE3170: Оператор 'yield' недопустим внутри блока try, using или match.</value>
+  <data name="ResumePointInProtectedBlock" xml:space="preserve">
+    <value>LE3170: Оператор 'yield' или 'await' недопустим внутри блока try, using или match.</value>
   </data>
-  <data name="YieldInLambda" xml:space="preserve">
-    <value>LE3171: Оператор 'yield' недопустим внутри лямбды.</value>
+  <data name="ResumePointInLambda" xml:space="preserve">
+    <value>LE3171: Оператор 'yield' или 'await' недопустим внутри лямбды.</value>
   </data>
   <data name="YieldLoopClosure" xml:space="preserve">
-    <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-итератора и захвачена лямбдой, что не поддерживается.</value>
+    <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-машины состояний и захвачена лямбдой, что не поддерживается.</value>
   </data>
   <data name="IteratorGeneric" xml:space="preserve">
     <value>LE3173: Функция '{0}' содержит 'yield' и объявляет параметры типа; обобщённые итераторы пока не поддерживаются.</value>
+  </data>
+  <data name="AwaitNotInAsync" xml:space="preserve">
+    <value>LE3174: Оператор 'await' может находиться только в теле именованной функции, возвращающей Task.</value>
+  </data>
+  <data name="AsyncReturnTypeRequired" xml:space="preserve">
+    <value>LE3175: Функция '{0}' содержит 'await', поэтому её возвращаемый тип должен быть указан явно.</value>
+  </data>
+  <data name="AsyncReturnTypeMismatch" xml:space="preserve">
+    <value>LE3176: Функция '{0}' содержит 'await', поэтому её возвращаемым типом должен быть Task или Task&lt;T&gt;, а не '{1}'!</value>
+  </data>
+  <data name="AsyncPure" xml:space="preserve">
+    <value>LE3177: Функция '{0}' не может быть одновременно чистой и содержать 'await': закэшированная задача возвращалась бы всем вызывающим уже завершённой.</value>
+  </data>
+  <data name="AsyncGeneric" xml:space="preserve">
+    <value>LE3178: Функция '{0}' содержит 'await' и объявляет параметры типа; обобщённые асинхронные функции пока не поддерживаются.</value>
+  </data>
+  <data name="AwaitPosition" xml:space="preserve">
+    <value>LE3179: Оператор 'await' может быть только отдельной инструкцией или значением, присваиваемым переменной.</value>
   </data>
 </root>

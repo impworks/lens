@@ -1802,11 +1802,12 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// line_expr                                   = if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
+        /// line_expr                                   = await_expr | if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
         /// </summary>
         private NodeBase ParseLineExpr()
         {
-            return Attempt(ParseIfLine)
+            return Attempt(ParseAwaitExpr)
+                   ?? Attempt(ParseIfLine)
                    ?? Attempt(ParseWhileLine)
                    ?? Attempt(ParseForLine)
                    ?? Attempt(ParseUsingLine)
@@ -2031,6 +2032,20 @@ namespace Lens.Parser
 
             node.Body.Add(Ensure(ParseLineStmt, ParserMessages.UsingExpressionExpected));
             return node;
+        }
+
+        /// <summary>
+        /// await_expr                                  = "await" line_expr
+        /// </summary>
+        private AwaitNode ParseAwaitExpr()
+        {
+            if (!Check(LexemType.Await))
+                return null;
+
+            return new AwaitNode
+            {
+                Expression = Ensure(ParseLineExpr, ParserMessages.AwaitExpressionExpected)
+            };
         }
 
         /// <summary>

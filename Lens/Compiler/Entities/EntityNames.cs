@@ -98,5 +98,16 @@
         /// The name of the method that implements IEnumerator.Current, for the same reason.
         /// </summary>
         public const string NonGenericCurrentGetterName = "<get_Current>";
+
+        /// <summary>
+        /// The name of the field that holds the task an async function handed to its caller.
+        /// </summary>
+        public const string CompletionFieldName = "<completion>";
+
+        /// <summary>
+        /// The name of the method that calls MoveNext with a handler around it. MoveNext cannot
+        /// catch its own exceptions, because nothing may be resumed into a protected region.
+        /// </summary>
+        public const string ResumeMethodName = "<Resume>";
     }
 }

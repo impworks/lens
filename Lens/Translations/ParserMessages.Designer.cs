@@ -725,5 +725,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("YieldExpressionExpected", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE2075: An expression to await is expected!.
+        /// </summary>
+        public static string AwaitExpressionExpected {
+            get {
+                return ResourceManager.GetString("AwaitExpressionExpected", resourceCulture);
+            }
+        }
     }
 }
