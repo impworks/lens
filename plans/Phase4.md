@@ -218,12 +218,20 @@ including the first synchronous call the factory makes.
   the unwinding outwards to the one around it, which is what makes `using` inside an iterator behave
   when the consumer stops reading half-way.
 
+- **Suspending inside a `match` case body.** A match opens no protected region and needs none of
+  the region machinery: the node already expands into a flat run of labels and jumps, so a dispatch
+  can land in the middle of a case body. All that was missing is that the expansion happens while
+  binding, long after the pass - so the pass reaches into the case bodies and lets the node expand
+  around them as it always did. Arriving in the middle skips the rule checks and the declarations of
+  the names the pattern bound, which is exactly right: inside a machine those names are fields, and
+  they still hold what the check that matched put there.
+
 ### Rejected, each with a specific diagnostic rather than a crash
 
 | Rejected | Message |
 |---|---|
-| `yield` or `await` in `match` | LE3170 |
 | `yield` or `await` in a lambda | LE3171 |
+| a lambda inside a `match` that also suspends | LE3180 |
 | `await` anywhere but a statement or the value assigned to a name | LE3179 |
 | a bare `throw` the pass could not reach, in a moved handler | LE3173 |
 | `pure` iterator / `pure` async | LE3169 / LE3177 |
@@ -253,9 +261,9 @@ handler body no longer sits in the protected region it was written in. The pass 
 statement position; one nested inside a construct that had no reason to be flattened is rejected
 rather than silently miscompiled.
 
-**`match` is still rejected.** It emits labels and branches of its own during binding, and there is
-no way in from outside. Lowering it means expressing pattern matching in the pass, which is a
-different job from the one this phase set out to do.
+**A lambda inside a suspending `match`** is rejected rather than miscompiled. A lambda belongs to
+the frame the match opens, and a machine that resumes into a case body arrives after that frame was
+set up - so the closure instance it would be bound to was never created.
 
 ### Bugs the phase turned up, fixed along the way
 

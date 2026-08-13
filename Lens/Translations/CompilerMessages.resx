@@ -657,4 +657,7 @@
   <data name="RethrowInMovedHandler" xml:space="preserve">
     <value>LE3173: A bare 'throw' cannot be reached here: name the exception in the catch clause and rethrow it explicitly.</value>
   </data>
+  <data name="LambdaInMatchedResumePoint" xml:space="preserve">
+    <value>LE3180: A lambda is not allowed inside a 'match' that also contains a 'yield' or an 'await'.</value>
+  </data>
 </root>

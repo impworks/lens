@@ -198,6 +198,10 @@ namespace Lens.Compiler
                     LowerUsing(node, output);
                     return;
 
+                case MatchNode node:
+                    LowerMatch(node, output);
+                    return;
+
                 case ThrowNode node when node.Expression == null && _rethrowVariable != null:
                     // the handler body no longer sits in the protected region it was written in,
                     // so there is nothing for a bare rethrow to pick the exception up from
@@ -216,9 +220,6 @@ namespace Lens.Compiler
         /// </summary>
         private static void RejectResumePoint(NodeBase stmt)
         {
-            // a match emits labels and branches of its own, and there is no way in from outside
-            if (stmt is MatchNode)
-                Error(stmt, CompilerMessages.ResumePointInProtectedBlock);
 
             // anything else is an ordinary expression that happens to contain an await: what a
             // half-evaluated expression left on the stack is not there when the machine comes back
@@ -770,6 +771,64 @@ namespace Lens.Compiler
                 },
                 output
             );
+        }
+
+        /// <summary>
+        /// Lowers the bodies of a match's cases, leaving the match itself alone.
+        ///
+        /// A match needs none of the region machinery, because it opens no protected region: the
+        /// node already expands into a flat run of labels and jumps, and a dispatch can land in the
+        /// middle of one as freely as anywhere else. All that is missing is that the expansion
+        /// happens while binding, long after this pass - so the pass reaches into the case bodies
+        /// instead, and lets the node expand around them as it always did.
+        ///
+        /// Arriving in the middle skips the rule checks and the declarations of the names the
+        /// pattern bound. That is what should happen: inside a machine those names are fields, and
+        /// they still hold what the check that matched put there.
+        /// </summary>
+        private void LowerMatch(MatchNode node, List<NodeBase> output)
+        {
+            // the value being matched and the guards are read before a case is chosen, so a
+            // suspension in either of them is a suspension in the middle of an expression
+            if (ContainsResumePoint(node.Expression))
+                Error(node.Expression, CompilerMessages.AwaitPosition);
+
+            // a lambda inside a match belongs to the frame the match opens, and a machine that
+            // resumes into a case body arrives after that frame was set up
+            if (ContainsAnywhere<LambdaNode>(node))
+                Error(node, CompilerMessages.LambdaInMatchedResumePoint);
+
+            var statements = new List<MatchStatementNode>();
+
+            foreach (var curr in node.MatchStatements)
+            {
+                if (curr.Condition != null && ContainsResumePoint(curr.Condition))
+                    Error(curr.Condition, CompilerMessages.AwaitPosition);
+
+                statements.Add(
+                    new MatchStatementNode
+                    {
+                        MatchRules = curr.MatchRules,
+                        Condition = curr.Condition,
+                        Expression = LowerCaseBody(curr.Expression)
+                    }
+                );
+            }
+
+            var result = new MatchNode {Expression = node.Expression, MatchStatements = statements};
+            CopyLocation(node, result);
+            output.Add(result);
+        }
+
+        private NodeBase LowerCaseBody(NodeBase body)
+        {
+            if (body is CodeBlockNode block)
+                return LowerBlock(block, false);
+
+            if (ContainsResumePoint(body))
+                Error(body, CompilerMessages.AwaitPosition);
+
+            return body;
         }
 
         /// <summary>

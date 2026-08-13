@@ -1517,7 +1517,11 @@ namespace Lens.Parser
 
             while (!Check(LexemType.Dedent))
             {
-                Ensure(LexemType.NewLine, ParserMessages.NewlineSeparatorExpected);
+                // a case whose body is a block has already been closed by that block's dedent, and
+                // there is no newline left over for the next case to be separated by
+                if (!IsStmtSeparator())
+                    Error(ParserMessages.NewlineSeparatorExpected);
+
                 node.MatchStatements.Add(Ensure(ParseMatchStmt, ParserMessages.SymbolExpected, "case"));
             }
 

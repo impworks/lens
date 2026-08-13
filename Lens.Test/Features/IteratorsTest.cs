@@ -477,19 +477,6 @@ pure fun broken:IEnumerable<int> ->
         }
 
         [Test]
-        public void YieldInsideMatchIsRejected()
-        {
-            TestError(
-                @"
-fun broken:IEnumerable<int> (x:int) ->
-    match x with
-        case 1 then yield 1
-        case _ then yield 2",
-                "LE3170"
-            );
-        }
-
-        [Test]
         public void YieldInsideLambdaIsRejected()
         {
             TestError(

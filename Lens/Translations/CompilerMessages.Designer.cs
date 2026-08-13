@@ -1679,5 +1679,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("RethrowInMovedHandler", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3180: A lambda is not allowed inside a &apos;match&apos; that also contains a &apos;yield&apos; or an &apos;await&apos;..
+        /// </summary>
+        public static string LambdaInMatchedResumePoint {
+            get {
+                return ResourceManager.GetString("LambdaInMatchedResumePoint", resourceCulture);
+            }
+        }
     }
 }
