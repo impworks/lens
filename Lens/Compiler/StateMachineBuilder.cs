@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Lens.Compiler.Entities;
 using Lens.Resolver;
 using Lens.SyntaxTree;
 using Lens.SyntaxTree.ControlFlow;
+using Lens.SyntaxTree.Declarations;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Internals;
 using Lens.Translations;
@@ -47,6 +49,11 @@ namespace Lens.Compiler
 
         protected TypeEntity Machine;
         protected TypeSignature MachineSignature;
+
+        /// <summary>
+        /// The machine's own copies of the function's type parameters, or null if neither is generic.
+        /// </summary>
+        private List<GenericParameterEntity> _machineParameters;
 
         /// <summary>
         /// The label that resumes each suspension point, in the order the states are numbered.
@@ -126,9 +133,17 @@ namespace Lens.Compiler
         private void CreateMachineType()
         {
             var name = Ctx.Unique.StateMachineName();
-            MachineSignature = new TypeSignature(name);
 
-            Machine = Ctx.CreateType(name, isSealed: true, prepare: false);
+            // a machine built out of a generic function is generic in the same parameters, and
+            // under the same names: everything inside the class is spelled as a signature, so a
+            // field that said 'T' in the function goes on saying 'T' and resolves to the copy
+            _machineParameters = Ctx.CreateGenericParameters(Node.TypeParameters, name);
+
+            MachineSignature = _machineParameters == null
+                ? new TypeSignature(name)
+                : new TypeSignature(name, Node.TypeParameters.Select(x => new TypeSignature(x.Name)).ToArray());
+
+            Machine = Ctx.CreateType(name, isSealed: true, prepare: false, genericParameters: _machineParameters);
             Machine.Kind = TypeEntityKind.Closure;
 
             CreateField(EntityNames.StateFieldName, new TypeSignature("int"));
@@ -149,9 +164,15 @@ namespace Lens.Compiler
             foreach (var arg in Node.Arguments)
             {
                 var fieldName = Ctx.Unique.ClosureFieldName(arg.Name);
-                var type = arg.GetArgumentType(Ctx);
+                var type = ArgumentTypeInMachineSpace(arg);
 
-                CreateField(fieldName, type);
+                // the field is declared by signature where there is one, so that a type naming a
+                // parameter of the function resolves to the machine's copy of it
+                if (arg.TypeSignature != null && !arg.IsVariadic)
+                    CreateField(fieldName, arg.TypeSignature);
+                else
+                    CreateField(fieldName, type);
+
                 _argumentFields.Add(Tuple.Create(arg, fieldName));
 
                 // the argument is an ordinary name inside MoveNext, already hoisted: the body goes
@@ -166,6 +187,24 @@ namespace Lens.Compiler
                     }
                 );
             }
+        }
+
+        /// <summary>
+        /// The type of an argument as the machine's own members see it.
+        ///
+        /// The argument's own resolved type is in the function's terms, and the function's type
+        /// parameters mean nothing inside the class: the same signature has to be resolved again,
+        /// against the copies the machine declares.
+        /// </summary>
+        private TypeEntry ArgumentTypeInMachineSpace(FunctionArgument arg)
+        {
+            if (_machineParameters == null || arg.TypeSignature == null)
+                return arg.GetArgumentType(Ctx);
+
+            TypeEntry type = null;
+            Ctx.WithGenericScope(_machineParameters, () => type = Ctx.ResolveType(arg.TypeSignature));
+
+            return arg.IsVariadic ? type.MakeArray(Ctx.Resolver) : type;
         }
 
         #endregion

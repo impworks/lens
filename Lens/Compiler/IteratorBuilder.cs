@@ -49,9 +49,6 @@ namespace Lens.Compiler
             if (Node.IsPure)
                 Error(CompilerMessages.IteratorPure, Node.Name);
 
-            if (Node.TypeParameters != null && Node.TypeParameters.Count > 0)
-                Error(CompilerMessages.IteratorGeneric, Node.Name);
-
             var returnType = Node.ReturnTypeSignature;
             if (returnType == null || string.IsNullOrEmpty(returnType.FullSignature))
                 Error(CompilerMessages.IteratorReturnTypeRequired, Node.Name);

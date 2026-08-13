@@ -352,6 +352,89 @@ resets (three ())",
 
         #endregion
 
+        #region Generics
+
+        [Test]
+        public void GenericIterator()
+        {
+            Test(
+                @"
+fun twice<T>:IEnumerable<T> (item:T) ->
+    yield item
+    yield item
+
+twice ""a""
+  |> Aggregate (a:string b:string) -> a + b",
+                "aa"
+            );
+        }
+
+        [Test]
+        public void GenericIteratorOverASequence()
+        {
+            Test(
+                @"
+fun pairs<T>:IEnumerable<T> (items:IEnumerable<T>) ->
+    for x in items do
+        yield x
+        yield x
+
+pairs (new [1; 2])
+  |> Sum ()",
+                6
+            );
+        }
+
+        [Test]
+        public void GenericIteratorWithTwoParameters()
+        {
+            Test(
+                @"
+fun zip<A, B>:IEnumerable<string> (a:A b:B) ->
+    yield a.ToString ()
+    yield b.ToString ()
+
+zip 1 true
+  |> Aggregate (x:string y:string) -> x + "" "" + y",
+                "1 True"
+            );
+        }
+
+        [Test]
+        public void GenericIteratorOverADeclaredType()
+        {
+            Test(
+                @"
+record Box
+    Value : int
+
+fun unwrap<T>:IEnumerable<T> (item:T) ->
+    yield item
+
+var total = 0
+for b in unwrap (new Box 42) do
+    total = total + b.Value
+total",
+                42
+            );
+        }
+
+        [Test]
+        public void GenericIteratorWithAConstraint()
+        {
+            Test(
+                @"
+fun described<T = System.IComparable>:IEnumerable<string> (item:T) ->
+    yield item.ToString ()
+
+described 7
+  |> Aggregate (a:string b:string) -> a + b",
+                "7"
+            );
+        }
+
+        #endregion
+
         #region Rejections
 
         [Test]
@@ -430,17 +513,6 @@ fun broken:IEnumerable<int> ->
         yield 1
     yield 2",
                 "LE3171"
-            );
-        }
-
-        [Test]
-        public void GenericIteratorIsRejected()
-        {
-            TestError(
-                @"
-fun broken<T>:IEnumerable<T> (item:T) ->
-    yield item",
-                "LE3173"
             );
         }
 

@@ -257,6 +257,41 @@ fetch ()",
 
         #endregion
 
+        #region Generics
+
+        [Test]
+        public void GenericAsyncFunction()
+        {
+            TestAsyncConfigured(
+                Setup,
+                @"
+fun twice<T>:Task<T> (item:T task:Task<int>) ->
+    let ignored = await task
+    item
+
+twice 21 (delay 1)",
+                21,
+                result => ((Task<int>) result).Result
+            );
+        }
+
+        [Test]
+        public void GenericAsyncOverTheAwaitedValue()
+        {
+            TestAsyncConfigured(
+                Setup,
+                @"
+fun unwrap<T>:Task<T> (source:Task<T>) ->
+    await source
+
+unwrap (delay 5)",
+                10,
+                result => ((Task<int>) result).Result
+            );
+        }
+
+        #endregion
+
         #region Rejections
 
         [Test]
@@ -295,17 +330,6 @@ fun broken:int ->
 pure fun broken:Task<int> ->
     await 1",
                 "LE3177"
-            );
-        }
-
-        [Test]
-        public void GenericAsyncIsRejected()
-        {
-            TestError(
-                @"
-fun broken<T>:Task<T> (item:T) ->
-    await item",
-                "LE3178"
             );
         }
 

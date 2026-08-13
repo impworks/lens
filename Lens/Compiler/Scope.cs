@@ -58,8 +58,14 @@ namespace Lens.Compiler
         /// The closure type as it is referred to from the method that owns the closure.
         /// A closure declared inside a generic function is generic in that function's parameters,
         /// so it must be instantiated over them before it can be mentioned in a signature.
+        ///
+        /// A state machine refers to itself instead: MoveNext is a member of the machine class, so
+        /// what it holds is the class applied to its own parameters, which only exists once the
+        /// declaration has been emitted.
         /// </summary>
-        public TypeEntry ClosureInstanceType { get; private set; }
+        public TypeEntry ClosureInstanceType => ClosureIsThis ? ClosureType.SelfType : _closureInstanceType;
+
+        private TypeEntry _closureInstanceType;
 
         /// <summary>
         /// The generic parameters that the closure type forwards, in the terms of the method
@@ -249,7 +255,6 @@ namespace Lens.Compiler
             ClosureIsThis = true;
             NeedsClosure = true;
             ClosureType = machineType;
-            ClosureInstanceType = machineType.TypeInfo;
         }
 
         /// <summary>
@@ -567,11 +572,11 @@ namespace Lens.Compiler
             {
                 _closureSourceParameters = enclosing.Select(x => (Type) x.Builder).ToArray();
                 _closureOwnParameters = forwarded.Select(x => (Type) x.Builder).ToArray();
-                ClosureInstanceType = TypeEntryCache.Of(ctx.Resolver.MakeGenericType(ClosureType.TypeBuilder, _closureSourceParameters));
+                _closureInstanceType = TypeEntryCache.Of(ctx.Resolver.MakeGenericType(ClosureType.TypeBuilder, _closureSourceParameters));
             }
             else
             {
-                ClosureInstanceType = ClosureType.TypeInfo;
+                _closureInstanceType = ClosureType.TypeInfo;
             }
 
             return ClosureType;

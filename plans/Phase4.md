@@ -212,7 +212,6 @@ including the first synchronous call the factory makes.
 | `pure` iterator / `pure` async | LE3169 / LE3177 |
 | no declared return type | LE3167 / LE3175 |
 | return type that is not `IEnumerable<T>` / not `Task` | LE3168 / LE3176 |
-| generic iterator or generic async function | LE3173 / LE3178 |
 | a name declared in a loop *and* captured, inside a machine | LE3172 |
 
 Four of these are worth calling out.

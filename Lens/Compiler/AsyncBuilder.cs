@@ -71,9 +71,6 @@ namespace Lens.Compiler
             if (Node.IsPure)
                 Error(CompilerMessages.AsyncPure, Node.Name);
 
-            if (Node.TypeParameters != null && Node.TypeParameters.Count > 0)
-                Error(CompilerMessages.AsyncGeneric, Node.Name);
-
             var returnType = Node.ReturnTypeSignature;
             if (returnType == null || string.IsNullOrEmpty(returnType.FullSignature))
                 Error(CompilerMessages.AsyncReturnTypeRequired, Node.Name);

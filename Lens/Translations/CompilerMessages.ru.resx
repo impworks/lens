@@ -639,9 +639,6 @@
   <data name="YieldLoopClosure" xml:space="preserve">
     <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-машины состояний и захвачена лямбдой, что не поддерживается.</value>
   </data>
-  <data name="IteratorGeneric" xml:space="preserve">
-    <value>LE3173: Функция '{0}' содержит 'yield' и объявляет параметры типа; обобщённые итераторы пока не поддерживаются.</value>
-  </data>
   <data name="AwaitNotInAsync" xml:space="preserve">
     <value>LE3174: Оператор 'await' может находиться только в теле именованной функции, возвращающей Task.</value>
   </data>
@@ -653,9 +650,6 @@
   </data>
   <data name="AsyncPure" xml:space="preserve">
     <value>LE3177: Функция '{0}' не может быть одновременно чистой и содержать 'await': закэшированная задача возвращалась бы всем вызывающим уже завершённой.</value>
-  </data>
-  <data name="AsyncGeneric" xml:space="preserve">
-    <value>LE3178: Функция '{0}' содержит 'await' и объявляет параметры типа; обобщённые асинхронные функции пока не поддерживаются.</value>
   </data>
   <data name="AwaitPosition" xml:space="preserve">
     <value>LE3179: Оператор 'await' может быть только отдельной инструкцией или значением, присваиваемым переменной.</value>

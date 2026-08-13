@@ -639,9 +639,6 @@
   <data name="YieldLoopClosure" xml:space="preserve">
     <value>LE3172: Variable '{0}' is declared inside a loop of a state machine function and captured by a lambda, which is not supported.</value>
   </data>
-  <data name="IteratorGeneric" xml:space="preserve">
-    <value>LE3173: Function '{0}' contains a 'yield' and declares type parameters; generic iterators are not supported yet.</value>
-  </data>
   <data name="AwaitNotInAsync" xml:space="preserve">
     <value>LE3174: An 'await' can only appear in the body of a named function that returns a Task.</value>
   </data>
@@ -653,9 +650,6 @@
   </data>
   <data name="AsyncPure" xml:space="preserve">
     <value>LE3177: Function '{0}' cannot be pure and contain an 'await': a memoized task would be handed to every caller already completed.</value>
-  </data>
-  <data name="AsyncGeneric" xml:space="preserve">
-    <value>LE3178: Function '{0}' contains an 'await' and declares type parameters; generic async functions are not supported yet.</value>
   </data>
   <data name="AwaitPosition" xml:space="preserve">
     <value>LE3179: An 'await' can only be a statement of its own or the value assigned to a variable.</value>

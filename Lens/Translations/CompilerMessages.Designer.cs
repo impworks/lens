@@ -1627,15 +1627,6 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3173: Function &apos;{0}&apos; contains a &apos;yield&apos; and declares type parameters; generic iterators are not supported yet..
-        /// </summary>
-        public static string IteratorGeneric {
-            get {
-                return ResourceManager.GetString("IteratorGeneric", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to LE3174: An &apos;await&apos; can only appear in the body of a named function that returns a Task..
         /// </summary>
         public static string AwaitNotInAsync {
@@ -1668,15 +1659,6 @@ namespace Lens.Translations {
         public static string AsyncPure {
             get {
                 return ResourceManager.GetString("AsyncPure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to LE3178: Function &apos;{0}&apos; contains an &apos;await&apos; and declares type parameters; generic async functions are not supported yet..
-        /// </summary>
-        public static string AsyncGeneric {
-            get {
-                return ResourceManager.GetString("AsyncGeneric", resourceCulture);
             }
         }
         
