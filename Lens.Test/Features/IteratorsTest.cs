@@ -477,20 +477,6 @@ pure fun broken:IEnumerable<int> ->
         }
 
         [Test]
-        public void YieldInsideTryIsRejected()
-        {
-            TestError(
-                @"
-fun broken:IEnumerable<int> ->
-    try
-        yield 1
-    catch
-        ()",
-                "LE3170"
-            );
-        }
-
-        [Test]
         public void YieldInsideMatchIsRejected()
         {
             TestError(

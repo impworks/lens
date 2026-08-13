@@ -9,6 +9,7 @@ using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.SyntaxTree.PatternMatching;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Internals;
+using Lens.Compiler.Entities;
 using Lens.Translations;
 
 namespace Lens.Compiler
@@ -33,12 +34,16 @@ namespace Lens.Compiler
     {
         #region Constructor
 
-        public Lowerer(Context ctx, Action<NodeBase, List<NodeBase>> emitYield = null, Func<NodeBase, List<NodeBase>, NodeBase> emitAwait = null, bool lowerEverything = false)
+        public Lowerer(Context ctx, Action<NodeBase, ResumePoint, List<NodeBase>> emitYield = null, Func<NodeBase, ResumePoint, List<NodeBase>, NodeBase> emitAwait = null, Func<LabelRef, bool, NodeBase> emitUnwind = null, LabelRef unwind = null, bool lowerEverything = false)
         {
             _ctx = ctx;
             _emitYield = emitYield;
             _emitAwait = emitAwait;
+            _emitUnwind = emitUnwind;
             _lowerEverything = lowerEverything;
+
+            Body = new LoweredRegion(null, "body", unwind);
+            _region = Body;
         }
 
         #endregion
@@ -51,13 +56,20 @@ namespace Lens.Compiler
         /// Appends the statements that hand one value over to the consumer of an iterator.
         /// Null when the pass is being used without a state machine, which is how it is validated.
         /// </summary>
-        private readonly Action<NodeBase, List<NodeBase>> _emitYield;
+        private readonly Action<NodeBase, ResumePoint, List<NodeBase>> _emitYield;
 
         /// <summary>
         /// Appends the statements that suspend the function until an operation finishes, and
         /// returns the expression that reads the operation's result.
         /// </summary>
-        private readonly Func<NodeBase, List<NodeBase>, NodeBase> _emitAwait;
+        private readonly Func<NodeBase, ResumePoint, List<NodeBase>, NodeBase> _emitAwait;
+
+        /// <summary>
+        /// Builds the jump that carries on unwinding when the machine is being abandoned: an
+        /// iterator that is disposed half-way still owes its finally blocks a run.
+        /// Null for a machine nobody can abandon.
+        /// </summary>
+        private readonly Func<LabelRef, bool, NodeBase> _emitUnwind;
 
         /// <summary>
         /// Whether every construct is to be flattened, rather than only the ones that contain a
@@ -67,6 +79,37 @@ namespace Lens.Compiler
         private readonly bool _lowerEverything;
 
         private int _labelId;
+        private int _stateId;
+
+        /// <summary>
+        /// The region a resume point met right now would belong to.
+        /// </summary>
+        private LoweredRegion _region;
+
+        /// <summary>
+        /// The name a bare 'throw' means while a hoisted handler body is being lowered.
+        /// </summary>
+        private string _rethrowVariable;
+
+        /// <summary>
+        /// The method body itself, seen as the outermost region.
+        /// </summary>
+        public readonly LoweredRegion Body;
+
+        /// <summary>
+        /// Where a suspension goes. Leaving is how a machine gets out of MoveNext from anywhere,
+        /// protected region or not, and the actual return happens at this label.
+        /// </summary>
+        public readonly LabelRef SuspendLabel = new LabelRef("suspend");
+
+        /// <summary>
+        /// The statements that send a resuming machine to the point it stopped at.
+        /// Only meaningful once the body has been lowered.
+        /// </summary>
+        public List<NodeBase> RootDispatch()
+        {
+            return BuildDispatch(Body);
+        }
 
         #endregion
 
@@ -146,6 +189,20 @@ namespace Lens.Compiler
                 case ForeachNode node:
                     LowerForeach(node, output);
                     return;
+
+                case TryNode node:
+                    LowerTry(node, output);
+                    return;
+
+                case UsingNode node:
+                    LowerUsing(node, output);
+                    return;
+
+                case ThrowNode node when node.Expression == null && _rethrowVariable != null:
+                    // the handler body no longer sits in the protected region it was written in,
+                    // so there is nothing for a bare rethrow to pick the exception up from
+                    output.Add(Expr.Throw(Expr.Get(_rethrowVariable)));
+                    return;
             }
 
             if (hasYield)
@@ -159,9 +216,8 @@ namespace Lens.Compiler
         /// </summary>
         private static void RejectResumePoint(NodeBase stmt)
         {
-            // try, using and match each open a protected region or a construct with labels of its
-            // own, and neither can be resumed into
-            if (stmt is TryNode || stmt is UsingNode || stmt is MatchNode)
+            // a match emits labels and branches of its own, and there is no way in from outside
+            if (stmt is MatchNode)
                 Error(stmt, CompilerMessages.ResumePointInProtectedBlock);
 
             // anything else is an ordinary expression that happens to contain an await: what a
@@ -312,6 +368,33 @@ namespace Lens.Compiler
 
         #region Resume points
 
+        /// <summary>
+        /// Claims the next state number and the label that resumes it, and records which region it
+        /// belongs to so that the dispatch can find its way in.
+        /// </summary>
+        private ResumePoint NewResumePoint()
+        {
+            var point = new ResumePoint(++_stateId);
+
+            _region.Points.Add(point);
+            _region.Register(point.State);
+
+            return point;
+        }
+
+        /// <summary>
+        /// Runs a suspension, and follows it with the check that decides whether the machine is
+        /// being resumed or unwound.
+        /// </summary>
+        private void Suspend(Action<ResumePoint> emit, List<NodeBase> output)
+        {
+            emit(NewResumePoint());
+
+            var unwind = _emitUnwind?.Invoke(_region.Unwind, _region != Body);
+            if (unwind != null)
+                output.Add(unwind);
+        }
+
         private void LowerYield(YieldNode node, List<NodeBase> output)
         {
             if (_emitYield == null)
@@ -319,7 +402,7 @@ namespace Lens.Compiler
 
             if (!node.IsSequence)
             {
-                _emitYield(node.Expression, output);
+                Suspend(point => _emitYield(node.Expression, point, output), output);
                 return;
             }
 
@@ -332,7 +415,7 @@ namespace Lens.Compiler
             output.Add(Expr.Var(iterator, new GetEnumeratorNode(node.Expression)));
             output.Add(new LabelNode(beginLabel));
             output.Add(new GotoNode(endLabel, Expr.Invoke(Expr.Get(iterator), "MoveNext"), false));
-            _emitYield(Expr.GetMember(Expr.Get(iterator), "Current"), output);
+            Suspend(point => _emitYield(Expr.GetMember(Expr.Get(iterator), "Current"), point, output), output);
             output.Add(new GotoNode(beginLabel));
             output.Add(new LabelNode(endLabel));
             output.Add(new DisposeNode(Expr.Get(iterator)));
@@ -381,7 +464,8 @@ namespace Lens.Compiler
             if (_emitAwait == null)
                 Error(stmt, CompilerMessages.AwaitNotInAsync);
 
-            var result = _emitAwait(awaited, output);
+            NodeBase result = null;
+            Suspend(point => result = _emitAwait(awaited, point, output), output);
 
             // even a discarded await has to read its result: that is where a failed operation
             // turns back into an exception
@@ -394,6 +478,336 @@ namespace Lens.Compiler
             CopyLocation(original, node);
             return node;
         }
+
+        #endregion
+
+        #region Protected regions
+
+        /// <summary>
+        /// Rewrites a try so that a resume point inside it can be reached and left again.
+        ///
+        /// Two IL rules decide the shape. Nothing may branch into a protected region, so the region
+        /// gets a dispatch of its own just inside it and the enclosing dispatch only knows how to
+        /// reach its entry. And leaving a region runs its finally handlers, which is exactly wrong
+        /// for a suspension - so the handler bodies stop being handler bodies: the catch clauses are
+        /// reduced to stashing which one fired, and their code, along with the finally, moves out of
+        /// the region and runs afterwards. Once out there it is ordinary code, and may suspend as
+        /// freely as anything else.
+        ///
+        ///     var h = 0
+        ///     var e : Exception                     # only when there is a finally
+        ///     try
+        ///         [dispatch]
+        ///         try
+        ///             [dispatch]
+        ///             [body]
+        ///         catch (E1 e1) -> h = 1
+        ///         catch (E2 e2) -> h = 2
+        ///         goto handler_1 if h == 1
+        ///         goto handler_2 if h == 2
+        ///         goto handled
+        ///         handler_1: h = 0; [first catch body];  goto handled
+        ///         handler_2: h = 0; [second catch body]; goto handled
+        ///         handled:
+        ///     catch (Exception e) -> ()             # only when there is a finally
+        ///     [finally body]
+        ///     goto rethrown if e == null
+        ///     rethrow e
+        ///     rethrown:
+        /// </summary>
+        private void LowerTry(TryNode node, List<NodeBase> output)
+        {
+            var hasFinally = node.Finally != null;
+            var handlerVar = node.CatchClauses.Count > 0 ? _ctx.Unique.TempVariableName() : null;
+            var pendingVar = hasFinally ? _ctx.Unique.TempVariableName() : null;
+
+            if (handlerVar != null)
+                output.Add(Expr.Var(handlerVar, Expr.Int(0)));
+
+            // every name a moved handler reads has to be declared before the try rather than by the
+            // catch clause that fills it in: a clause's names come into being while the try is
+            // transformed, and by then the statements after it have already been bound
+            var caught = DeclareHandlerNames(node, output);
+
+            void Guarded(List<NodeBase> inner) => EmitGuardedBody(node, handlerVar, caught, inner);
+
+            if (!hasFinally)
+            {
+                Guarded(output);
+                return;
+            }
+
+            output.Add(Expr.Var(pendingVar, ExceptionType));
+
+            // the finally has to run when a handler body throws as well, so everything above -
+            // including the handler bodies that have just been moved out of their own region - goes
+            // inside one more region whose only job is to remember the exception
+            var statement = Region(Guarded, new[] {StashClause(pendingVar)}, "finally", out var region);
+
+            output.Add(new LabelNode(region.Entry));
+            output.Add(statement);
+
+            // a suspension inside the region leaves to here when the machine is being abandoned,
+            // which is what makes the finally run for an iterator nobody finished reading
+            output.Add(new LabelNode(region.Unwind));
+            output.Add(LowerBlock(node.Finally, false));
+
+            var rethrown = NewLabel("rethrown");
+            output.Add(new GotoNode(rethrown, Expr.Equal(Expr.Get(pendingVar), Expr.Null())));
+            output.Add(Rethrow(pendingVar));
+            output.Add(new LabelNode(rethrown));
+
+            ContinueUnwinding(output);
+        }
+
+        /// <summary>
+        /// Hands the unwinding on to the region around this one, once this one has run whatever it
+        /// owed.
+        /// </summary>
+        private void ContinueUnwinding(List<NodeBase> output)
+        {
+            var unwind = _emitUnwind?.Invoke(_region.Unwind, _region != Body);
+            if (unwind != null)
+                output.Add(unwind);
+        }
+
+        /// <summary>
+        /// Declares the name each catch clause's exception will be read through once its body has
+        /// been moved out of the region, and returns them in clause order.
+        /// </summary>
+        private List<string> DeclareHandlerNames(TryNode node, List<NodeBase> output)
+        {
+            var result = new List<string>();
+
+            foreach (var curr in node.CatchClauses)
+            {
+                // a handler that no longer catches anything still needs a name for the exception,
+                // because a bare rethrow in its body has to be given something to throw
+                var name = string.IsNullOrEmpty(curr.ExceptionVariable)
+                    ? _ctx.Unique.TempVariableName()
+                    : curr.ExceptionVariable;
+
+                output.Add(Expr.Var(name, curr.ExceptionType ?? ExceptionType));
+                result.Add(name);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// The try itself, and the handler bodies that used to be its catch clauses.
+        /// </summary>
+        private void EmitGuardedBody(TryNode node, string handlerVar, List<string> caught, List<NodeBase> output)
+        {
+            if (node.CatchClauses.Count == 0)
+            {
+                output.Add(LowerBlock(node.Code, false));
+                return;
+            }
+
+            var stash = new List<CatchNode>();
+            var handlers = new List<Tuple<CatchNode, string, LabelRef>>();
+
+            foreach (var curr in node.CatchClauses)
+            {
+                var name = caught[handlers.Count];
+                var slot = _ctx.Unique.TempVariableName();
+
+                stash.Add(
+                    new CatchNode
+                    {
+                        ExceptionType = curr.ExceptionType,
+                        ExceptionVariable = slot,
+                        Code = Expr.Block(
+                            Expr.Set(name, Expr.Get(slot)),
+                            Expr.Set(handlerVar, Expr.Int(handlers.Count + 1))
+                        )
+                    }
+                );
+
+                handlers.Add(Tuple.Create(curr, name, NewLabel("handler")));
+            }
+
+            var statement = Region(inner => inner.Add(LowerBlock(node.Code, false)), stash, "try", out var region);
+
+            output.Add(new LabelNode(region.Entry));
+            output.Add(statement);
+            output.Add(new LabelNode(region.Unwind));
+
+            var handled = NewLabel("handled");
+            for (var idx = 0; idx < handlers.Count; idx++)
+                output.Add(new GotoNode(handlers[idx].Item3, Expr.Equal(Expr.Get(handlerVar), Expr.Int(idx + 1))));
+
+            output.Add(new GotoNode(handled));
+
+            foreach (var curr in handlers)
+            {
+                output.Add(new LabelNode(curr.Item3));
+                output.Add(Expr.Set(handlerVar, Expr.Int(0)));
+                output.Add(LowerHandlerBody(curr.Item1.Code, curr.Item2));
+                output.Add(new GotoNode(handled));
+            }
+
+            output.Add(new LabelNode(handled));
+
+            // a try that has no finally owes nothing on the way out, but the region around it may
+            if (node.Finally == null)
+                ContinueUnwinding(output);
+        }
+
+        /// <summary>
+        /// Builds a protected region: its own dispatch first, then whatever the caller puts in it.
+        /// </summary>
+        private TryNode Region(Action<List<NodeBase>> fill, IEnumerable<CatchNode> catches, string name, out LoweredRegion region)
+        {
+            var outer = _region;
+            region = new LoweredRegion(outer, name + "_" + ++_labelId, NewLabel("unwind"));
+            _region = region;
+
+            var statements = new List<NodeBase>();
+            fill(statements);
+
+            var code = new CodeBlockNode();
+            code.AddRange(BuildDispatch(_region));
+            code.AddRange(statements);
+
+            _region = outer;
+
+            return new TryNode {Code = code, CatchClauses = catches.ToList()};
+        }
+
+        /// <summary>
+        /// The catch clause that only remembers what happened, so that the finally can run outside
+        /// the region and the exception can be thrown again after it.
+        /// </summary>
+        private CatchNode StashClause(string pendingVar)
+        {
+            var slot = _ctx.Unique.TempVariableName();
+
+            return new CatchNode
+            {
+                ExceptionType = ExceptionType,
+                ExceptionVariable = slot,
+                Code = Expr.Block(Expr.Set(pendingVar, Expr.Get(slot)))
+            };
+        }
+
+        /// <summary>
+        /// Lowers a handler body, with a bare rethrow rewritten to name the exception explicitly.
+        /// </summary>
+        private CodeBlockNode LowerHandlerBody(CodeBlockNode body, string variable)
+        {
+            var previous = _rethrowVariable;
+            _rethrowVariable = variable;
+
+            var result = LowerBlock(body, false);
+
+            _rethrowVariable = previous;
+
+            if (ContainsBareRethrow(result))
+                Error(body, CompilerMessages.RethrowInMovedHandler);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks for a bare rethrow the pass could not reach - one nested inside a construct that
+        /// had no reason to be flattened.
+        /// </summary>
+        private static bool ContainsBareRethrow(NodeBase node)
+        {
+            if (node == null || node is CatchNode)
+                return false;
+
+            if (node is ThrowNode throwNode && throwNode.Expression == null)
+                return true;
+
+            return node.GetChildren().Any(child => ContainsBareRethrow(child?.Node));
+        }
+
+        /// <summary>
+        /// Throws an exception again without losing where it came from.
+        /// </summary>
+        private static NodeBase Rethrow(string variable)
+        {
+            return Expr.Invoke(
+                Expr.Invoke("System.Runtime.ExceptionServices.ExceptionDispatchInfo", "Capture", Expr.Get(variable)),
+                "Throw"
+            );
+        }
+
+        /// <summary>
+        ///     var r = expr
+        ///     try
+        ///         var x = r
+        ///         [body]
+        ///     finally
+        ///         r.Dispose ()
+        ///
+        /// The node's own expansion says the same thing, but it says it while binding - by which
+        /// time this pass has long finished.
+        /// </summary>
+        private void LowerUsing(UsingNode node, List<NodeBase> output)
+        {
+            var resource = _ctx.Unique.TempVariableName();
+
+            var body = new CodeBlockNode();
+
+            // the name is a variable rather than a constant, because that is what the node's own
+            // expansion gives the body and a script is allowed to assign to it
+            if (!string.IsNullOrEmpty(node.VariableName))
+                body.Add(Expr.Var(node.VariableName, Expr.Get(resource)));
+
+            body.Add(node.Body);
+
+            output.Add(Expr.Var(resource, node.Expression));
+
+            LowerTry(
+                new TryNode
+                {
+                    Code = body,
+                    Finally = Expr.Block(Expr.Invoke(Expr.Get(resource), "Dispose"))
+                },
+                output
+            );
+        }
+
+        /// <summary>
+        /// The statements that send a resuming machine into this region: straight to the point it
+        /// stopped at when that point is here, or to the entry of the nested region that holds it.
+        /// </summary>
+        private static List<NodeBase> BuildDispatch(LoweredRegion region)
+        {
+            var result = new List<NodeBase>();
+
+            foreach (var child in region.Children)
+            {
+                if (!child.HasStates)
+                    continue;
+
+                result.Add(
+                    new GotoNode(
+                        child.Entry,
+                        Expr.And(
+                            Expr.GreaterEqual(State(), Expr.Int(child.FirstState)),
+                            Expr.LessEqual(State(), Expr.Int(child.LastState))
+                        )
+                    )
+                );
+            }
+
+            foreach (var curr in region.Points)
+                result.Add(new GotoNode(curr.Label, Expr.Equal(State(), Expr.Int(curr.State))));
+
+            return result;
+        }
+
+        private static NodeBase State()
+        {
+            return Expr.GetMember(Expr.This(), EntityNames.StateFieldName);
+        }
+
+        private static readonly TypeSignature ExceptionType = new TypeSignature("System.Exception");
 
         #endregion
 

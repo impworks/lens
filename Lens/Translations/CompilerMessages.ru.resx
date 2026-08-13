@@ -654,4 +654,7 @@
   <data name="AwaitPosition" xml:space="preserve">
     <value>LE3179: Оператор 'await' может быть только отдельной инструкцией или значением, присваиваемым переменной.</value>
   </data>
+  <data name="RethrowInMovedHandler" xml:space="preserve">
+    <value>LE3173: Оператор 'throw' без аргумента здесь недоступен: укажите имя исключения в catch и выбросьте его явно.</value>
+  </data>
 </root>

@@ -138,15 +138,21 @@ namespace Lens.Compiler
         ///     [the lowered body, ending in the completion source being told the answer]
         /// done:
         ///     state = -1
+        /// suspend:
         /// </summary>
         protected override CodeBlockNode BuildMoveNextBody()
         {
-            var body = new Lowerer(Ctx, emitAwait: EmitAwait).Lower(WithResultHandover(), false);
-            var doneLabel = new LabelRef("done");
+            Lowering = new Lowerer(Ctx, emitAwait: EmitAwait);
 
-            body.Statements.InsertRange(0, BuildDispatch(doneLabel));
+            var doneLabel = new LabelRef("done");
+            var body = LowerBody(WithResultHandover(), doneLabel);
+
             body.Add(new LabelNode(doneLabel));
             body.Add(SetState(Expr.Int(FinishedState)));
+
+            // every suspension leaves rather than returns, because a return is not valid inside a
+            // protected region; this is where the leaving lands, and the method ends anyway
+            body.Add(new LabelNode(Lowering.SuspendLabel));
 
             return body;
         }
@@ -203,8 +209,8 @@ namespace Lens.Compiler
         ///     var a = (operation).GetAwaiter ()
         ///     goto ready if a.IsCompleted
         ///     state = k
-        ///     a.OnCompleted (-> this.Resume ())
-        ///     return
+        ///     a.OnCompleted (this.Resume)
+        ///     leave suspend
         /// resume_k:
         ///     state = -1
         /// ready:
@@ -214,18 +220,17 @@ namespace Lens.Compiler
         /// other name into a machine field puts it there too - without which it would not survive
         /// the return.
         /// </summary>
-        private NodeBase EmitAwait(NodeBase awaited, List<NodeBase> output)
+        private NodeBase EmitAwait(NodeBase awaited, ResumePoint point, List<NodeBase> output)
         {
             var awaiter = Ctx.Unique.TempVariableName();
-            var label = NewResumePoint(out var state);
-            var readyLabel = new LabelRef("ready_" + state);
+            var readyLabel = new LabelRef("ready_" + point.State);
 
             output.Add(Expr.Var(awaiter, Expr.Invoke(awaited, "GetAwaiter")));
             output.Add(new GotoNode(readyLabel, Expr.GetMember(Expr.Get(awaiter), "IsCompleted")));
-            output.Add(SetState(Expr.Int(state)));
+            output.Add(SetState(Expr.Int(point.State)));
             output.Add(Expr.Invoke(Expr.Get(awaiter), "OnCompleted", ResumeCallback()));
-            output.Add(new ReturnValueNode(null));
-            output.Add(new LabelNode(label));
+            output.Add(new GotoNode(Lowering.SuspendLabel, isLeave: true));
+            output.Add(new LabelNode(point.Label));
             output.Add(SetState(Expr.Int(FinishedState)));
             output.Add(new LabelNode(readyLabel));
 

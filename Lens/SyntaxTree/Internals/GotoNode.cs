@@ -16,11 +16,12 @@ namespace Lens.SyntaxTree.Internals
     {
         #region Constructor
 
-        public GotoNode(LabelRef label, NodeBase condition = null, bool jumpIfTrue = true)
+        public GotoNode(LabelRef label, NodeBase condition = null, bool jumpIfTrue = true, bool isLeave = false)
         {
             Label = label;
             Condition = condition;
             JumpIfTrue = jumpIfTrue;
+            IsLeave = isLeave;
         }
 
         #endregion
@@ -39,6 +40,15 @@ namespace Lens.SyntaxTree.Internals
         /// </summary>
         public readonly bool JumpIfTrue;
 
+        /// <summary>
+        /// Whether the jump leaves a protected region.
+        ///
+        /// A plain branch out of a try is not valid IL; 'leave' is, and outside a protected region
+        /// it does exactly what a branch does. A suspension therefore always leaves, wherever in
+        /// the body it happens to be.
+        /// </summary>
+        public readonly bool IsLeave;
+
         #endregion
 
         #region Transform
@@ -46,7 +56,7 @@ namespace Lens.SyntaxTree.Internals
         internal override IEnumerable<NodeChild> GetChildren()
         {
             if (Condition != null)
-                yield return new NodeChild(Condition);
+                yield return new NodeChild(Condition, true);
         }
 
         #endregion
@@ -60,7 +70,11 @@ namespace Lens.SyntaxTree.Internals
 
             if (Condition == null)
             {
-                gen.EmitJump(label);
+                if (IsLeave)
+                    gen.EmitLeave(label);
+                else
+                    gen.EmitJump(label);
+
                 return;
             }
 
@@ -69,6 +83,21 @@ namespace Lens.SyntaxTree.Internals
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
+
+            if (IsLeave)
+            {
+                // a conditional leave has no opcode of its own: branch over an unconditional one
+                var skip = gen.DefineLabel();
+
+                if (JumpIfTrue)
+                    gen.EmitBranchFalse(skip);
+                else
+                    gen.EmitBranchTrue(skip);
+
+                gen.EmitLeave(label);
+                gen.MarkLabel(skip);
+                return;
+            }
 
             if (JumpIfTrue)
                 gen.EmitBranchTrue(label);

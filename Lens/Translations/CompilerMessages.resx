@@ -654,4 +654,7 @@
   <data name="AwaitPosition" xml:space="preserve">
     <value>LE3179: An 'await' can only be a statement of its own or the value assigned to a variable.</value>
   </data>
+  <data name="RethrowInMovedHandler" xml:space="preserve">
+    <value>LE3173: A bare 'throw' cannot be reached here: name the exception in the catch clause and rethrow it explicitly.</value>
+  </data>
 </root>

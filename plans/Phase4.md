@@ -202,13 +202,30 @@ code the compiler can already emit. The cost is that only `Task` and `Task<T>` c
 So the `try` sits one method out, in `<Resume>` — the only place `MoveNext` is ever called from,
 including the first synchronous call the factory makes.
 
+- **Suspending inside `try`, `catch`, `finally` and `using`.** Two IL rules decide the shape:
+  nothing may branch *into* a protected region, and leaving one runs its finally handlers. So the
+  dispatch is a chain rather than one switch - each region carries its own, just inside it, and the
+  enclosing dispatch only knows how to reach the region's entry. And the handler bodies stop being
+  handler bodies: the catch clauses are reduced to recording which one fired, and their code, along
+  with the finally, moves out of the region and runs after it. Out there it is ordinary code, and
+  may suspend as freely as anything else.
+
+  A suspension leaves rather than returns, wherever in the body it is; `leave` outside a protected
+  region does exactly what a branch does, so there is one path rather than two.
+
+  An abandoned iterator still owes its finally blocks a run, and only MoveNext knows where they
+  are - so `Dispose` says which way the machine is going and asks it to carry on. Each region hands
+  the unwinding outwards to the one around it, which is what makes `using` inside an iterator behave
+  when the consumer stops reading half-way.
+
 ### Rejected, each with a specific diagnostic rather than a crash
 
 | Rejected | Message |
 |---|---|
-| `yield` or `await` in `try` / `using` / `match` | LE3170 |
+| `yield` or `await` in `match` | LE3170 |
 | `yield` or `await` in a lambda | LE3171 |
 | `await` anywhere but a statement or the value assigned to a name | LE3179 |
+| a bare `throw` the pass could not reach, in a moved handler | LE3173 |
 | `pure` iterator / `pure` async | LE3169 / LE3177 |
 | no declared return type | LE3167 / LE3175 |
 | return type that is not `IEnumerable<T>` / not `Task` | LE3168 / LE3176 |
@@ -231,12 +248,16 @@ preserving evaluation order.
 **Async void is not supported**, deliberately: its only purpose is an event handler signature, and
 glue code has no need for one.
 
-**`yield`/`await` inside `try` is the deferred piece**, exactly as the phase proposed. The
-consequence visible today is that a lowered `foreach` inside an iterator disposes its enumerator
-when the loop ends normally and not when the iterator is abandoned. Supporting it means moving
-`finally` bodies into separate methods that both the normal path and `Dispose` call.
+**A bare `throw` in a moved handler** is rewritten to name the exception explicitly, because the
+handler body no longer sits in the protected region it was written in. The pass reaches every
+statement position; one nested inside a construct that had no reason to be flattened is rejected
+rather than silently miscompiled.
 
-### Two bugs the phase turned up, fixed along the way
+**`match` is still rejected.** It emits labels and branches of its own during binding, and there is
+no way in from outside. Lowering it means expressing pattern matching in the pass, which is a
+different job from the one this phase set out to do.
+
+### Bugs the phase turned up, fixed along the way
 
 - **Hidden methods made overload resolution give up.** Reflection reports both the declaration that
   hides and the one that was hidden, and they fit a call equally well — which is what

@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Internals
         internal override IEnumerable<NodeChild> GetChildren()
         {
             if (Value != null)
-                yield return new NodeChild(Value);
+                yield return new NodeChild(Value, true);
         }
 
         #endregion

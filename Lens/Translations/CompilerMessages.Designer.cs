@@ -1670,5 +1670,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("AwaitPosition", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3173: A bare &apos;throw&apos; cannot be reached here: name the exception in the catch clause and rethrow it explicitly..
+        /// </summary>
+        public static string RethrowInMovedHandler {
+            get {
+                return ResourceManager.GetString("RethrowInMovedHandler", resourceCulture);
+            }
+        }
     }
 }

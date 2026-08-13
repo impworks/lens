@@ -89,6 +89,12 @@
         public const string CurrentFieldName = "<current>";
 
         /// <summary>
+        /// The name of the field that says a suspended iterator is being abandoned rather than
+        /// resumed, so that MoveNext runs the finally blocks it still owes and stops.
+        /// </summary>
+        public const string DisposingFieldName = "<disposing>";
+
+        /// <summary>
         /// The name of the method that implements IEnumerable.GetEnumerator, which cannot be
         /// called GetEnumerator because the generic interface has claimed that name.
         /// </summary>

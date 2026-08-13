@@ -97,7 +97,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         internal override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Value);
+            yield return new NodeChild(Value, true);
         }
 
         #endregion

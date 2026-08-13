@@ -56,9 +56,9 @@ namespace Lens.Compiler
         private List<GenericParameterEntity> _machineParameters;
 
         /// <summary>
-        /// The label that resumes each suspension point, in the order the states are numbered.
+        /// The pass that flattened the body, which is what knows where its suspension points are.
         /// </summary>
-        private readonly List<LabelRef> _resumePoints = new List<LabelRef>();
+        protected Lowerer Lowering;
 
         /// <summary>
         /// The field each of the function's arguments is carried in.
@@ -212,35 +212,26 @@ namespace Lens.Compiler
         #region Shared bodies
 
         /// <summary>
-        ///     goto resume_k if state == k         (for every suspension point)
-        ///     goto done if state &lt;&gt; 0
-        ///     state = -1
+        /// Lowers the function's body and wraps it in the dispatch that sends a resuming machine
+        /// back to where it stopped.
+        ///
+        /// The dispatch is the lowering pass's answer rather than this class's, because only the
+        /// pass knows which suspension points ended up inside a protected region - and a region can
+        /// only be entered at its head, never jumped into.
         /// </summary>
-        protected List<NodeBase> BuildDispatch(LabelRef doneLabel)
+        protected CodeBlockNode LowerBody(CodeBlockNode source, LabelRef doneLabel)
         {
-            var dispatch = new List<NodeBase>();
+            var body = Lowering.Lower(source, false);
 
-            for (var idx = 0; idx < _resumePoints.Count; idx++)
-                dispatch.Add(new GotoNode(_resumePoints[idx], Expr.Equal(GetState(), Expr.Int(idx + 1))));
-
+            var dispatch = Lowering.RootDispatch();
             dispatch.Add(new GotoNode(doneLabel, Expr.NotEqual(GetState(), Expr.Int(InitialState))));
 
             // the machine is running from here on: should the body throw, a further MoveNext must
             // find a finished machine rather than resume into the statement that failed
             dispatch.Add(SetState(Expr.Int(FinishedState)));
 
-            return dispatch;
-        }
-
-        /// <summary>
-        /// Claims the next state number and the label that resumes it.
-        /// </summary>
-        protected LabelRef NewResumePoint(out int state)
-        {
-            state = _resumePoints.Count + 1;
-            var label = new LabelRef("resume_" + state);
-            _resumePoints.Add(label);
-            return label;
+            body.Statements.InsertRange(0, dispatch);
+            return body;
         }
 
         /// <summary>

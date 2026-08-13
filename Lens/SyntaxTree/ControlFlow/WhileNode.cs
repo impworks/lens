@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.ControlFlow
 
         internal override IEnumerable<NodeChild> GetChildren()
         {
-            yield return new NodeChild(Condition);
+            yield return new NodeChild(Condition, true);
             yield return new NodeChild(Body);
         }
 

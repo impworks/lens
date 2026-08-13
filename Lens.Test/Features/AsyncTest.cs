@@ -345,21 +345,6 @@ fun broken:Task<int> (t:Task<int>) ->
         }
 
         [Test]
-        public void AwaitInsideTryIsRejected()
-        {
-            TestError(
-                @"
-fun broken:Task<int> (t:Task<int>) ->
-    try
-        await t
-    catch
-        ()
-    1",
-                "LE3170"
-            );
-        }
-
-        [Test]
         public void AwaitInsideLambdaIsRejected()
         {
             TestError(

@@ -65,7 +65,7 @@ namespace Lens.SyntaxTree
         {
             var children = GetChildren().ToArray();
             foreach (var child in children)
-                TransformChild(ctx, child, mustReturn);
+                TransformChild(ctx, child, child?.MustReturn ?? mustReturn);
         }
 
         /// <summary>

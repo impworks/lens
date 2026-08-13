@@ -97,6 +97,7 @@ namespace Lens.Compiler
             };
 
             CreateField(EntityNames.CurrentFieldName, _elementSignature);
+            CreateField(EntityNames.DisposingFieldName, new TypeSignature("bool"));
         }
 
         protected override void DeclareMachineMembers(CodeBlockNode moveNextBody)
@@ -127,7 +128,24 @@ namespace Lens.Compiler
                 typeof(IEnumerable).GetMethod("GetEnumerator")
             );
 
-            CreateMethod("Dispose", new TypeSignature("Void"), Block(SetState(Expr.Int(FinishedState))));
+            // an abandoned iterator still owes its finally blocks a run, and the only code that
+            // knows where they are is MoveNext: so Dispose says which way the machine is going and
+            // asks it to carry on, and the unwinding takes it from there
+            CreateMethod(
+                "Dispose",
+                new TypeSignature("Void"),
+                Block(
+                    Expr.If(
+                        Expr.Greater(Expr.GetMember(Expr.This(), EntityNames.StateFieldName), Expr.Int(InitialState)),
+                        Expr.Block(
+                            Expr.SetMember(Expr.This(), EntityNames.DisposingFieldName, Expr.True()),
+                            Expr.Invoke(Expr.This(), "MoveNext"),
+                            Expr.Unit()
+                        )
+                    ),
+                    SetState(Expr.Int(FinishedState))
+                )
+            );
             CreateMethod("Reset", new TypeSignature("Void"), Block(Expr.Throw("System.NotSupportedException")));
         }
 
@@ -140,17 +158,25 @@ namespace Lens.Compiler
         ///     [the lowered body, whose yields jump back into it]
         /// done:
         ///     state = -1
-        ///     false
+        ///     return false
+        /// suspend:
+        ///     true
         /// </summary>
         protected override CodeBlockNode BuildMoveNextBody()
         {
-            var body = new Lowerer(Ctx, EmitYield).Lower(Node.Body, false);
             var doneLabel = new LabelRef("done");
 
-            body.Statements.InsertRange(0, BuildDispatch(doneLabel));
+            Lowering = new Lowerer(Ctx, EmitYield, emitUnwind: EmitUnwind, unwind: doneLabel);
+            var body = LowerBody(Node.Body, doneLabel);
+
             body.Add(new LabelNode(doneLabel));
             body.Add(SetState(Expr.Int(FinishedState)));
-            body.Add(Expr.False());
+            body.Add(new ReturnValueNode(Expr.False()));
+
+            // every suspension leaves rather than returns, because a return is not valid inside a
+            // protected region; this is where the leaving lands
+            body.Add(new LabelNode(Lowering.SuspendLabel));
+            body.Add(Expr.True());
 
             return body;
         }
@@ -158,19 +184,29 @@ namespace Lens.Compiler
         /// <summary>
         ///     current = value
         ///     state = k
-        ///     return true
+        ///     leave suspend
         /// resume_k:
         ///     state = -1
         /// </summary>
-        private void EmitYield(NodeBase value, List<NodeBase> output)
+        private void EmitYield(NodeBase value, ResumePoint point, List<NodeBase> output)
         {
-            var label = NewResumePoint(out var state);
-
             output.Add(Expr.SetMember(Expr.This(), EntityNames.CurrentFieldName, value));
-            output.Add(SetState(Expr.Int(state)));
-            output.Add(new ReturnValueNode(Expr.True()));
-            output.Add(new LabelNode(label));
+            output.Add(SetState(Expr.Int(point.State)));
+            output.Add(new GotoNode(Lowering.SuspendLabel, isLeave: true));
+            output.Add(new LabelNode(point.Label));
             output.Add(SetState(Expr.Int(FinishedState)));
+        }
+
+        /// <summary>
+        ///     leave [the next thing that has to run on the way out] if disposing
+        /// </summary>
+        private static NodeBase EmitUnwind(LabelRef target, bool leaving)
+        {
+            return new GotoNode(
+                target,
+                Expr.GetMember(Expr.This(), EntityNames.DisposingFieldName),
+                isLeave: leaving
+            );
         }
 
         /// <summary>
