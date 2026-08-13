@@ -59,7 +59,7 @@ namespace Lens.Compiler
         /// A closure declared inside a generic function is generic in that function's parameters,
         /// so it must be instantiated over them before it can be mentioned in a signature.
         /// </summary>
-        public Type ClosureInstanceType { get; private set; }
+        public TypeEntry ClosureInstanceType { get; private set; }
 
         /// <summary>
         /// The generic parameters that the closure type forwards, in the terms of the method
@@ -114,7 +114,7 @@ namespace Lens.Compiler
 
                 var argType = arg.GetArgumentType(ctx);
                 if (argType.IsByRef)
-                    argType = argType.GetElementType();
+                    argType = argType.ElementType;
 
                 var local = new Local(arg.Name, argType, false, arg.IsRefArgument)
                 {
@@ -131,7 +131,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Adds a new local name to current scope.
         /// </summary>
-        public Local DeclareLocal(string name, Type type, bool isConst, bool isRefArg = false)
+        public Local DeclareLocal(string name, TypeEntry type, bool isConst, bool isRefArg = false)
         {
             var local = new Local(name, type, isConst, isRefArg);
             DeclareLocal(local);
@@ -152,10 +152,17 @@ namespace Lens.Compiler
         /// <summary>
         /// Creates a new implicit local variable or constant.
         /// </summary>
-        public Local DeclareImplicit(Context ctx, Type type, bool isConst)
+        public Local DeclareImplicit(Context ctx, TypeEntry type, bool isConst)
         {
             var local = DeclareLocal(ctx.Unique.TempVariableName(), type, isConst);
-            local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type);
+
+            // a name the compiler invents while emitting arrives after this scope has already
+            // declared its locals, so it has to claim a slot straight away. One invented while
+            // binding is declared by EmitSelf along with every other local - and must not be
+            // declared here, or binding would need an ILGenerator it should know nothing about.
+            if (ctx.CurrentMethod?.Generator != null)
+                local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type.Materialize());
+
             return local;
         }
 
@@ -256,9 +263,11 @@ namespace Lens.Compiler
                     var field = closure.ClosureType.CreateField(curr.ClosureFieldName, closure.SubstituteIntoClosure(curr.Type));
                     field.Kind = TypeContentsKind.Closure;
                 }
-                else
+                else if (curr.LocalBuilder == null)
                 {
-                    curr.LocalBuilder = gen.DeclareLocal(curr.Type);
+                    // an implicit local invented while emitting already has its slot; declaring a
+                    // second one for it wasted a slot per temporary
+                    curr.LocalBuilder = gen.DeclareLocal(curr.Type.Materialize());
                 }
             }
 
@@ -276,12 +285,12 @@ namespace Lens.Compiler
 
                     var parentType = _closureOwnParameters == null
                         ? ClosureParent.ClosureType.TypeInfo
-                        : ctx.Resolver.MakeGenericType(ClosureParent.ClosureType.TypeBuilder, _closureOwnParameters);
+                        : TypeEntryCache.Of(ctx.Resolver.MakeGenericType(ClosureParent.ClosureType.TypeBuilder, _closureOwnParameters));
 
                     ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType);
                 }
 
-                ClosureVariable = gen.DeclareLocal(ClosureInstanceType);
+                ClosureVariable = gen.DeclareLocal(ClosureInstanceType.Materialize());
             }
         }
 
@@ -298,7 +307,7 @@ namespace Lens.Compiler
         /// Emits the code that loads the closure instance which contains the given local variable.
         /// </summary>
         /// <returns>The type of the closure instance that has been pushed onto the stack.</returns>
-        public Type EmitClosureInstance(Context ctx, Local local)
+        public TypeEntry EmitClosureInstance(Context ctx, Local local)
         {
             var gen = ctx.CurrentMethod.Generator;
             var closure = local.ClosureScope;
@@ -344,7 +353,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Declares a new anonymous method in the current closure class.
         /// </summary>
-        public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, Type returnType)
+        public MethodEntity CreateClosureMethod(Context ctx, IEnumerable<FunctionArgument> args, TypeEntry returnType)
         {
             var scope = ClosureOwner();
             scope.NeedsClosure = true;
@@ -468,7 +477,7 @@ namespace Lens.Compiler
             {
                 _closureSourceParameters = enclosing.Select(x => (Type) x.Builder).ToArray();
                 _closureOwnParameters = forwarded.Select(x => (Type) x.Builder).ToArray();
-                ClosureInstanceType = ctx.Resolver.MakeGenericType(ClosureType.TypeBuilder, _closureSourceParameters);
+                ClosureInstanceType = TypeEntryCache.Of(ctx.Resolver.MakeGenericType(ClosureType.TypeBuilder, _closureSourceParameters));
             }
             else
             {
@@ -483,12 +492,12 @@ namespace Lens.Compiler
         /// into the terms of the closure type's own parameters, which is how the members of the
         /// closure class must be declared.
         /// </summary>
-        private Type SubstituteIntoClosure(Type type)
+        private TypeEntry SubstituteIntoClosure(TypeEntry type)
         {
             if (_closureSourceParameters == null)
                 return type;
 
-            return GenericHelper.ApplyGenericArguments(type, _closureSourceParameters, _closureOwnParameters, false);
+            return TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(type.Materialize(), _closureSourceParameters, _closureOwnParameters, false));
         }
 
         #endregion

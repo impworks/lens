@@ -28,26 +28,26 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            if (rightType == typeof(int))
+            if (rightType.Is<int>())
             {
                 // string repetition
-                if (leftType == typeof(string))
-                    return typeof(string);
+                if (leftType.Is<string>())
+                    return TypeEntryCache.Of<string>();
 
                 // array repetition
                 if (leftType.IsArray)
                     return leftType;
 
                 // typed sequence repetition
-                var enumerable = leftType.ResolveImplementationOf(ctx.Resolver, typeof(IEnumerable<>));
+                var enumerable = leftType.ResolveImplementationOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));
                 if (enumerable != null)
                     return enumerable;
 
                 // untyped sequence repetition
-                if (leftType.Implements(ctx.Resolver, typeof(IEnumerable), false))
-                    return typeof(IEnumerable);
+                if (leftType.Implements(ctx.Resolver, TypeEntryCache.Of<IEnumerable>(), false))
+                    return TypeEntryCache.Of<IEnumerable>();
             }
 
             return null;
@@ -63,13 +63,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 var type = Resolve(ctx);
 
-                if (type == typeof(string))
+                if (type.Is<string>())
                     return StringExpand(ctx);
 
                 if (type.IsArray)
                     return ArrayExpand(ctx);
 
-                if (type == typeof(IEnumerable) || type.IsAppliedVersionOf(ctx.Resolver, typeof(IEnumerable<>)))
+                if (type.Is<IEnumerable>() || type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
                     return SeqExpand(ctx);
             }
 
@@ -81,8 +81,8 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// </summary>
         private NodeBase StringExpand(Context ctx)
         {
-            var tmpString = ctx.Scope.DeclareImplicit(ctx, typeof(string), false);
-            var tmpSb = ctx.Scope.DeclareImplicit(ctx, typeof(StringBuilder), false);
+            var tmpString = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<string>(), false);
+            var tmpSb = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<StringBuilder>(), false);
             var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx), false);
 
             // var sb = new StringBuilder();
@@ -119,8 +119,8 @@ namespace Lens.SyntaxTree.Operators.Binary
             var arrayType = LeftOperand.Resolve(ctx);
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
             var tmpResult = ctx.Scope.DeclareImplicit(ctx, arrayType, false);
-            var tmpRight = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
-            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+            var tmpRight = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
+            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
 
             // a = <left>
             // b = right
@@ -141,7 +141,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                 Expr.Set(
                     tmpResult,
                     Expr.Array(
-                        arrayType.GetElementType(),
+                        arrayType.ElementType,
                         Expr.Mult(
                             Expr.GetMember(
                                 Expr.Get(tmpLeft),
@@ -188,10 +188,10 @@ namespace Lens.SyntaxTree.Operators.Binary
             var seqType = LeftOperand.Resolve(ctx);
 
             NodeBase leftWrapper;
-            if (seqType == typeof(IEnumerable))
+            if (seqType.Is<IEnumerable>())
             {
                 leftWrapper = Expr.Invoke(Expr.GetMember("System.Linq.Enumerable", "OfType", "object"), LeftOperand);
-                seqType = typeof(IEnumerable<object>);
+                seqType = TypeEntryCache.Of<IEnumerable<object>>();
             }
             else
             {
@@ -200,7 +200,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             var tmpLeft = ctx.Scope.DeclareImplicit(ctx, seqType, false);
             var tmpResult = ctx.Scope.DeclareImplicit(ctx, seqType, false);
-            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+            var tmpIndex = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
 
             // a = <left>
             // result = a

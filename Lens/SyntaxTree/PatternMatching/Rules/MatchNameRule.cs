@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             if (!IsWildcard)
                 yield return new PatternNameBinding(Name, expressionType);

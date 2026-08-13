@@ -77,23 +77,23 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
             var isEquality = Kind == ComparisonOperatorKind.Equals || Kind == ComparisonOperatorKind.NotEquals;
-            return CanCompare(ctx, leftType, rightType, isEquality) ? typeof(bool) : null;
+            return CanCompare(ctx, leftType, rightType, isEquality) ? TypeEntryCache.Of<bool>() : null;
         }
 
         /// <summary>
         /// Checks if two types can be compared.
         /// </summary>
-        private bool CanCompare(Context ctx, Type left, Type right, bool equalityOnly)
+        private bool CanCompare(Context ctx, TypeEntry left, TypeEntry right, bool equalityOnly)
         {
             // there's an overridden method
             if (OverloadedMethod != null)
                 return true;
 
             // string .. string
-            if (left == typeof(string) && right == left)
+            if (left.Is<string>() && right == left)
                 return true;
 
             // numeric .. numeric
@@ -104,13 +104,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 // Nullable<T> .. (Nullable<T> | T | null)
                 if (left.IsNullableType())
-                    return left == right || Nullable.GetUnderlyingType(left) == right || right == typeof(NullType);
+                    return left == right || left.GetNullableUnderlyingType() == right || right.Is<NullType>();
 
                 if (right.IsNullableType())
-                    return Nullable.GetUnderlyingType(right) == left || left == typeof(NullType);
+                    return right.GetNullableUnderlyingType() == left || left.Is<NullType>();
 
                 // ref type .. null
-                if ((right == typeof(NullType) && !left.IsValueType) || (left == typeof(NullType) && !right.IsValueType))
+                if ((right.Is<NullType>() && !left.IsValueType) || (left.Is<NullType>() && !right.IsValueType))
                     return true;
 
                 // a type declared in the script always has a generated Equals
@@ -118,7 +118,7 @@ namespace Lens.SyntaxTree.Operators.Binary
                     return true;
 
                 if (left == right)
-                    return left.IsAnyOf(typeof(bool));
+                    return left.IsAnyOf(TypeEntryCache.Of<bool>());
             }
 
             return false;
@@ -146,12 +146,12 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Emits code for equality and inequality comparison.
         /// </summary>
-        private void EmitEqualityComparison(Context ctx, Type left, Type right)
+        private void EmitEqualityComparison(Context ctx, TypeEntry left, TypeEntry right)
         {
             var gen = ctx.CurrentMethod.Generator;
 
             // compare two strings
-            if (left == right && left == typeof(string))
+            if (left == right && left.Is<string>())
             {
                 LeftOperand.Emit(ctx, true);
                 RightOperand.Emit(ctx, true);
@@ -166,9 +166,9 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             // compare primitive types
-            if ((left.IsNumericType() && right.IsNumericType()) || (left == right && left == typeof(bool)))
+            if ((left.IsNumericType() && right.IsNumericType()) || (left == right && left.Is<bool>()))
             {
-                if (left == typeof(bool))
+                if (left.Is<bool>())
                 {
                     LeftOperand.Emit(ctx, true);
                     RightOperand.Emit(ctx, true);
@@ -189,9 +189,9 @@ namespace Lens.SyntaxTree.Operators.Binary
             // compare nullable against another nullable, it's base type or null
             if (left.IsNullableType())
             {
-                if (left == right || Nullable.GetUnderlyingType(left) == right)
+                if (left == right || left.GetNullableUnderlyingType() == right)
                     EmitNullableComparison(ctx, LeftOperand, RightOperand);
-                else if (right == typeof(NullType))
+                else if (right.Is<NullType>())
                     EmitHasValueCheck(ctx, LeftOperand);
 
                 return;
@@ -199,16 +199,16 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             if (right.IsNullableType())
             {
-                if (Nullable.GetUnderlyingType(right) == left)
+                if (right.GetNullableUnderlyingType() == left)
                     EmitNullableComparison(ctx, RightOperand, LeftOperand);
-                else if (left == typeof(NullType))
+                else if (left.Is<NullType>())
                     EmitHasValueCheck(ctx, RightOperand);
 
                 return;
             }
 
             // compare a reftype against a null
-            if (left == typeof(NullType) || right == typeof(NullType))
+            if (left.Is<NullType>() || right.Is<NullType>())
             {
                 LeftOperand.Emit(ctx, true);
                 RightOperand.Emit(ctx, true);
@@ -222,7 +222,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             if (left == right && ctx.IsDeclaredType(left))
             {
-                var equals = ctx.ResolveMethod(left, "Equals", new[] {typeof(object)});
+                var equals = ctx.ResolveMethod(left, "Equals", new[] {TypeEntryCache.Of<object>()});
 
                 LeftOperand.Emit(ctx, true);
                 RightOperand.Emit(ctx, true);
@@ -249,8 +249,8 @@ namespace Lens.SyntaxTree.Operators.Binary
             var otherType = otherValue.Resolve(ctx);
             var otherNull = otherType.IsNullableType();
 
-            var getValOrDefault = nullType.GetMethod("GetValueOrDefault", Type.EmptyTypes);
-            var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
+            var getValOrDefault = nullType.Materialize().GetMethod("GetValueOrDefault", Type.EmptyTypes);
+            var hasValueGetter = nullType.Materialize().GetProperty("HasValue").GetGetMethod();
 
             var falseLabel = gen.DefineLabel();
             var endLabel = gen.DefineLabel();
@@ -318,7 +318,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var gen = ctx.CurrentMethod.Generator;
             var nullType = nullValue.Resolve(ctx);
             var nullVar = ctx.Scope.DeclareImplicit(ctx, nullType, true);
-            var hasValueGetter = nullType.GetProperty("HasValue").GetGetMethod();
+            var hasValueGetter = nullType.Materialize().GetProperty("HasValue").GetGetMethod();
 
             nullValue.Emit(ctx, true);
             gen.EmitSaveLocal(nullVar.LocalBuilder);
@@ -343,12 +343,12 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Emits code for relation comparison: greater, less, etc.
         /// </summary>
-        private void EmitRelation(Context ctx, Type left, Type right)
+        private void EmitRelation(Context ctx, TypeEntry left, TypeEntry right)
         {
             var gen = ctx.CurrentMethod.Generator;
 
             // string comparisons
-            if (left == typeof(string))
+            if (left.Is<string>())
             {
                 LeftOperand.Emit(ctx, true);
                 RightOperand.Emit(ctx, true);

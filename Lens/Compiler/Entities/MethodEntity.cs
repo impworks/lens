@@ -31,6 +31,16 @@ namespace Lens.Compiler.Entities
         #region Fields
 
         public bool IsVirtual;
+
+        /// <summary>
+        /// The method replaces an inherited virtual method rather than introducing a new one.
+        ///
+        /// The distinction is the whole difference between overriding and shadowing: a virtual
+        /// method marked NewSlot takes a fresh vtable slot and leaves the inherited one alone, so a
+        /// caller reaching the object through its base type never sees it.
+        /// </summary>
+        public bool IsOverride;
+
         public bool IsPure;
         public bool IsVariadic;
 
@@ -59,7 +69,13 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Compiled return type.
         /// </summary>
-        public Type ReturnType;
+        public TypeEntry ReturnType;
+
+        /// <summary>
+        /// Whether the signature has already been resolved. The analysis half runs at most once,
+        /// however many times preparation is asked for.
+        /// </summary>
+        private bool _isResolved;
 
         /// <summary>
         /// Assembly-level method builder.
@@ -79,9 +95,51 @@ namespace Lens.Compiler.Entities
         #region Methods
 
         /// <summary>
+        /// Resolves the signature of the method and the constraint model of its generic parameters.
+        ///
+        /// A generic method used to have to wait for its parameter builders, because a composite
+        /// signature like Option&lt;T&gt; was resolved into a constructed CLR type. Now that a
+        /// signature resolves into an entry, nothing here needs an assembly.
+        /// </summary>
+        public override void ResolveSelf()
+        {
+            if (IsImported || _isResolved)
+                return;
+
+            ResolveSelfCore();
+        }
+
+        /// <summary>
+        /// Resolves the signature, whatever phase asked for it.
+        /// </summary>
+        private void ResolveSelfCore()
+        {
+            if (_isResolved)
+                return;
+
+            _isResolved = true;
+
+            var ctx = ContainerType.Context;
+
+            if (IsGeneric)
+            {
+                ctx.RegisterGenericParameters(GenericParameters);
+                ctx.WithGenericScope(GenericParameters, ResolveSignature);
+            }
+            else
+            {
+                ResolveSignature();
+            }
+
+            // an empty script is allowed and it's return is null
+            if (this == ctx.MainMethod && Body.Statements.Count == 0)
+                Body.Statements.Add(new UnitNode());
+        }
+
+        /// <summary>
         /// Creates a MethodBuilder for current method entity.
         /// </summary>
-        public override void PrepareSelf()
+        public override void EmitSelf()
         {
             if (MethodBuilder != null || IsImported)
                 return;
@@ -92,12 +150,19 @@ namespace Lens.Compiler.Entities
             if (IsStatic)
                 attrs |= MethodAttributes.Static;
             if (IsVirtual)
-                attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
+            {
+                attrs |= MethodAttributes.Virtual;
+
+                // an override has to reuse the slot it inherits, so NewSlot is exactly wrong for it;
+                // a method that implements an interface does want a slot of its own
+                if (!IsOverride)
+                    attrs |= MethodAttributes.NewSlot;
+            }
 
             if (IsGeneric)
             {
-                // the generic parameters are the very types the signature refers to, so they must
-                // be defined before the signature is resolved:
+                // the generic parameters are the very types a composite signature refers to, so
+                // they must be defined before the signature is resolved:
                 // DefineMethod -> DefineGenericParameters -> constraints -> SetParameters/SetReturnType
                 MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs);
 
@@ -105,18 +170,22 @@ namespace Lens.Compiler.Entities
                 for (var idx = 0; idx < builders.Length; idx++)
                     GenericParameters[idx].Builder = builders[idx];
 
-                ctx.ResolveGenericParameters(GenericParameters);
+                // the constraint model is registered and applied before the signature is resolved,
+                // exactly as it always was: a signature that instantiates a constrained generic
+                // type over one of these parameters is checked against the model
+                ctx.RegisterGenericParameters(GenericParameters);
+                ctx.EmitGenericParameters(GenericParameters);
 
-                ctx.WithGenericScope(GenericParameters, ResolveSignature);
+                ResolveSelfCore();
 
-                MethodBuilder.SetParameters(ArgumentTypes);
-                MethodBuilder.SetReturnType(ReturnType.IsVoid() ? typeof(void) : ReturnType);
+                MethodBuilder.SetParameters(TypeEntry.Materialize(ArgumentTypes));
+                MethodBuilder.SetReturnType(ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize());
             }
             else
             {
-                ResolveSignature();
+                ResolveSelfCore();
 
-                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType, ArgumentTypes);
+                MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize(), TypeEntry.Materialize(ArgumentTypes));
             }
 
             Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
@@ -130,10 +199,6 @@ namespace Lens.Compiler.Entities
                     idx++;
                 }
             }
-
-            // an empty script is allowed and it's return is null
-            if (this == ctx.MainMethod && Body.Statements.Count == 0)
-                Body.Statements.Add(new UnitNode());
         }
 
         /// <summary>
@@ -145,12 +210,12 @@ namespace Lens.Compiler.Entities
 
             if (ReturnType == null)
                 ReturnType = ReturnTypeSignature == null || string.IsNullOrEmpty(ReturnTypeSignature.FullSignature)
-                    ? typeof(UnitType)
+                    ? TypeEntryCache.Of<UnitType>()
                     : ctx.ResolveType(ReturnTypeSignature);
 
             if (ArgumentTypes == null)
                 ArgumentTypes = Arguments == null
-                    ? new Type[0]
+                    ? new TypeEntry[0]
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
         }
 
@@ -169,8 +234,8 @@ namespace Lens.Compiler.Entities
                     Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
             }
 
-            if (ReturnType == typeof(object) && actualType.IsValueType && !actualType.IsVoid())
-                gen.EmitBox(actualType);
+            if (ReturnType.Is<object>() && actualType.IsValueType && !actualType.IsVoid())
+                gen.EmitBox(actualType.Materialize());
 
             // special hack: if the main method's implicit type is Unit, it should still return null
             if (this == ctx.MainMethod && actualType.IsVoid())

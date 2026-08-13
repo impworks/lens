@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// The type of the object to create.
         /// </summary>
-        public Type Type;
+        public TypeEntry Type;
 
         /// <summary>
         /// The type signature of the object to create.
@@ -74,7 +74,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             base.ResolveInternal(ctx, true);
 
@@ -170,7 +170,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (binding.IsTypeParameter)
             {
                 var type = Type ?? ctx.ResolveType(TypeSignature);
-                var creator = typeof(Activator).GetMethod("CreateInstance", Type.EmptyTypes).MakeGenericMethod(type);
+                var creator = typeof(Activator).GetMethod("CreateInstance", System.Type.EmptyTypes).MakeGenericMethod(type.Materialize());
                 gen.EmitCall(creator);
                 return;
             }
@@ -181,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
                 {
                     var destTypes = binding.Constructor.ArgumentTypes;
                     for (var idx = 0; idx < binding.Arguments.Count; idx++)
-                        Expr.Cast(binding.Arguments[idx], destTypes[idx]).Emit(ctx, true);
+                        Expr.Cast(binding.Arguments[idx], destTypes[idx].Materialize()).Emit(ctx, true);
                 }
 
                 gen.EmitCreateObject(binding.Constructor.ConstructorInfo);

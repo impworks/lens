@@ -33,7 +33,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var leftType = LeftOperand.Resolve(ctx);
             var rightType = RightOperand.Resolve(ctx);
@@ -68,14 +68,14 @@ namespace Lens.SyntaxTree.Operators.Binary
             {
                 if (leftType.IsNullableType() || rightType.IsNullableType())
                 {
-                    var leftNullable = leftType.IsNullableType() ? leftType.GetGenericArguments()[0] : leftType;
-                    var rightNullable = rightType.IsNullableType() ? rightType.GetGenericArguments()[0] : rightType;
+                    var leftNullable = leftType.IsNullableType() ? leftType.GenericArguments[0] : leftType;
+                    var rightNullable = rightType.IsNullableType() ? rightType.GenericArguments[0] : rightType;
 
                     var commonNumericType = TypeExtensions.GetNumericOperationType(leftNullable, rightNullable);
                     if (commonNumericType == null)
                         Error(CompilerMessages.OperatorTypesSignednessMismatch);
 
-                    return typeof(Nullable<>).MakeGenericType(commonNumericType);
+                    return TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {commonNumericType});
                 }
 
                 if (leftType.IsNumericType() && rightType.IsNumericType())
@@ -95,7 +95,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         /// <summary>
         /// Resolves operator return type, in case it's not an overloaded method call.
         /// </summary>
-        protected virtual Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected virtual TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
             return null;
         }
@@ -181,8 +181,8 @@ namespace Lens.SyntaxTree.Operators.Binary
             }
 
             var ps = OverloadedMethod.ArgumentTypes;
-            Expr.Cast(LeftOperand, ps[0]).Emit(ctx, true);
-            Expr.Cast(RightOperand, ps[1]).Emit(ctx, true);
+            Expr.Cast(LeftOperand, ps[0].Materialize()).Emit(ctx, true);
+            Expr.Cast(RightOperand, ps[1].Materialize()).Emit(ctx, true);
             gen.EmitCall(OverloadedMethod.MethodInfo);
         }
 
@@ -204,7 +204,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var right = RightOperand.Resolve(ctx);
 
             if (type == null)
-                type = TypeExtensions.GetNumericOperationType(left, right);
+                type = TypeExtensions.GetNumericOperationType(left, right)?.Materialize();
 
             Expr.Cast(LeftOperand, type).Emit(ctx, true);
             Expr.Cast(RightOperand, type).Emit(ctx, true);

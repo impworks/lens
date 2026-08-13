@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -10,9 +10,77 @@ namespace Lens.Resolver
     internal class WrapperBase
     {
         public string Name;
-        public Type Type;
+
+        /// <summary>
+        /// The type that declares the member.
+        /// </summary>
+        public TypeEntry DeclaringType;
 
         public bool IsStatic;
+    }
+
+    /// <summary>
+    /// A reflection object a wrapper hands out on demand.
+    ///
+    /// A wrapper is resolved structurally: its signature is made of <see cref="TypeEntry"/> values,
+    /// which exist whether or not anything has been emitted. The reflection object is the one part
+    /// that cannot exist before emission - a member of a declared type, or of a host generic
+    /// instantiated over one, has no MethodInfo or FieldInfo until there is an assembly - so the
+    /// wrapper holds whatever it was built from and produces the reflection object only when asked,
+    /// exactly the way <see cref="TypeEntry.Materialize"/> produces a System.Type.
+    ///
+    /// Emission asks; analysis never does.
+    /// </summary>
+    /// <typeparam name="T">Type of the reflection object.</typeparam>
+    internal class LazyMember<T> where T : class
+    {
+        #region Fields
+
+        private Func<T> _source;
+        private T _value;
+        private bool _resolved;
+
+        #endregion
+
+        #region Members
+
+        /// <summary>
+        /// The function that produces the reflection object, called at most once.
+        /// </summary>
+        public Func<T> Source
+        {
+            set
+            {
+                _source = value;
+                _resolved = false;
+                _value = null;
+            }
+        }
+
+        /// <summary>
+        /// The reflection object itself. Only emission may ask for one.
+        /// </summary>
+        public T Value
+        {
+            get
+            {
+                if (!_resolved)
+                {
+                    _resolved = true;
+                    _value = _source?.Invoke();
+                }
+
+                return _value;
+            }
+            set
+            {
+                _source = null;
+                _resolved = true;
+                _value = value;
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -23,7 +91,7 @@ namespace Lens.Resolver
         public bool IsPartiallyApplied;
         public bool IsPartiallyResolved;
         public bool IsVariadic;
-        public Type[] ArgumentTypes;
+        public TypeEntry[] ArgumentTypes;
     }
 
     /// <summary>
@@ -38,24 +106,38 @@ namespace Lens.Resolver
         public MethodWrapper(MethodInfo info)
         {
             Name = info.Name;
-            Type = info.DeclaringType;
+            DeclaringType = TypeEntryCache.Of(info.DeclaringType);
 
             MethodInfo = info;
             IsVirtual = info.IsVirtual;
             IsStatic = info.IsStatic;
-            ReturnType = info.ReturnType;
+            ReturnType = TypeEntryCache.Of(info.ReturnType);
 
             var args = info.GetParameters();
-            ArgumentTypes = args.Select(p => p.ParameterType).ToArray();
+            ArgumentTypes = args.Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray();
             IsVariadic = args.Length > 0 && args[args.Length - 1].IsDefined(typeof(ParamArrayAttribute), true);
         }
 
-        public MethodInfo MethodInfo;
+        private readonly LazyMember<MethodInfo> _methodInfo = new LazyMember<MethodInfo>();
+
+        /// <summary>
+        /// Produces the MethodInfo when emission asks for one.
+        /// </summary>
+        public Func<MethodInfo> MethodInfoSource
+        {
+            set => _methodInfo.Source = value;
+        }
+
+        public MethodInfo MethodInfo
+        {
+            get => _methodInfo.Value;
+            set => _methodInfo.Value = value;
+        }
 
         public bool IsVirtual;
 
-        public Type ReturnType;
-        public Type[] GenericArguments;
+        public TypeEntry ReturnType;
+        public TypeEntry[] GenericArguments;
 
         public bool IsGeneric => GenericArguments != null;
     }
@@ -65,7 +147,21 @@ namespace Lens.Resolver
     /// </summary>
     internal class ConstructorWrapper : CallableWrapperBase
     {
-        public ConstructorInfo ConstructorInfo;
+        private readonly LazyMember<ConstructorInfo> _constructorInfo = new LazyMember<ConstructorInfo>();
+
+        /// <summary>
+        /// Produces the ConstructorInfo when emission asks for one.
+        /// </summary>
+        public Func<ConstructorInfo> ConstructorInfoSource
+        {
+            set => _constructorInfo.Source = value;
+        }
+
+        public ConstructorInfo ConstructorInfo
+        {
+            get => _constructorInfo.Value;
+            set => _constructorInfo.Value = value;
+        }
     }
 
 
@@ -74,11 +170,25 @@ namespace Lens.Resolver
     /// </summary>
     internal class FieldWrapper : WrapperBase
     {
-        public FieldInfo FieldInfo;
+        private readonly LazyMember<FieldInfo> _fieldInfo = new LazyMember<FieldInfo>();
+
+        /// <summary>
+        /// Produces the FieldInfo when emission asks for one.
+        /// </summary>
+        public Func<FieldInfo> FieldInfoSource
+        {
+            set => _fieldInfo.Source = value;
+        }
+
+        public FieldInfo FieldInfo
+        {
+            get => _fieldInfo.Value;
+            set => _fieldInfo.Value = value;
+        }
 
         public bool IsLiteral;
 
-        public Type FieldType;
+        public TypeEntry FieldType;
     }
 
     /// <summary>
@@ -86,13 +196,45 @@ namespace Lens.Resolver
     /// </summary>
     internal class PropertyWrapper : WrapperBase
     {
-        public Type PropertyType;
-        public MethodInfo Getter;
-        public MethodInfo Setter;
+        public TypeEntry PropertyType;
+
+        private readonly LazyMember<MethodInfo> _getter = new LazyMember<MethodInfo>();
+        private readonly LazyMember<MethodInfo> _setter = new LazyMember<MethodInfo>();
+
+        /// <summary>
+        /// Produces the getter when emission asks for one.
+        /// </summary>
+        public Func<MethodInfo> GetterSource
+        {
+            set => _getter.Source = value;
+        }
+
+        /// <summary>
+        /// Produces the setter when emission asks for one.
+        /// </summary>
+        public Func<MethodInfo> SetterSource
+        {
+            set => _setter.Source = value;
+        }
+
+        public MethodInfo Getter
+        {
+            get => _getter.Value;
+            set => _getter.Value = value;
+        }
+
+        public MethodInfo Setter
+        {
+            get => _setter.Value;
+            set => _setter.Value = value;
+        }
+
         public bool IsVirtual;
 
-        public bool CanGet => Getter != null;
-        public bool CanSet => Setter != null;
+        // whether the property has an accessor is part of its structure, not of the assembly: the
+        // question is answered while binding, when no accessor can be produced yet
+        public bool CanGet;
+        public bool CanSet;
     }
 
     /// <summary>
@@ -100,9 +242,37 @@ namespace Lens.Resolver
     /// </summary>
     internal class EventWrapper : WrapperBase
     {
-        public Type EventHandlerType;
+        public TypeEntry EventHandlerType;
 
-        public MethodInfo AddMethod;
-        public MethodInfo RemoveMethod;
+        private readonly LazyMember<MethodInfo> _addMethod = new LazyMember<MethodInfo>();
+        private readonly LazyMember<MethodInfo> _removeMethod = new LazyMember<MethodInfo>();
+
+        /// <summary>
+        /// Produces the subscription method when emission asks for one.
+        /// </summary>
+        public Func<MethodInfo> AddMethodSource
+        {
+            set => _addMethod.Source = value;
+        }
+
+        /// <summary>
+        /// Produces the unsubscription method when emission asks for one.
+        /// </summary>
+        public Func<MethodInfo> RemoveMethodSource
+        {
+            set => _removeMethod.Source = value;
+        }
+
+        public MethodInfo AddMethod
+        {
+            get => _addMethod.Value;
+            set => _addMethod.Value = value;
+        }
+
+        public MethodInfo RemoveMethod
+        {
+            get => _removeMethod.Value;
+            set => _removeMethod.Value = value;
+        }
     }
 }

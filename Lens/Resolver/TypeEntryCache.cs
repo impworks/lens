@@ -38,6 +38,29 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// The entry that stands for a host-provided type named at compile time.
+        /// </summary>
+        public static TypeEntry Of<T>()
+        {
+            return Of(typeof(T));
+        }
+
+        /// <summary>
+        /// The entries that stand for a list of host-provided types.
+        /// </summary>
+        public static TypeEntry[] Of(Type[] types)
+        {
+            if (types == null)
+                return null;
+
+            var result = new TypeEntry[types.Length];
+            for (var idx = 0; idx < types.Length; idx++)
+                result[idx] = Of(types[idx]);
+
+            return result;
+        }
+
+        /// <summary>
         /// Registers the entry that stands for a type the script declared, so that a CLR type
         /// arriving from elsewhere resolves back to the declaration rather than to a bare wrapper.
         /// </summary>

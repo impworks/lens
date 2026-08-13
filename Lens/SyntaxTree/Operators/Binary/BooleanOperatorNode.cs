@@ -42,10 +42,10 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
             return leftType.IsImplicitlyBoolean() && rightType.IsImplicitlyBoolean()
-                ? typeof(bool)
+                ? TypeEntryCache.Of<bool>()
                 : null;
         }
 

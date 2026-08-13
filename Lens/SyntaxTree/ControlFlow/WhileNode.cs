@@ -34,9 +34,9 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            return mustReturn ? Body.Resolve(ctx) : typeof(UnitType);
+            return mustReturn ? Body.Resolve(ctx) : TypeEntryCache.Of<UnitType>();
         }
 
         #endregion
@@ -49,11 +49,11 @@ namespace Lens.SyntaxTree.ControlFlow
             var saveLast = mustReturn && !loopType.IsVoid();
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             // condition is known to be false: do not emit the loop at all
-            if (Condition.IsConstant && condType == typeof(bool) && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+            if (Condition.IsConstant && condType.Is<bool>() && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
                 return saveLast ? (NodeBase) Expr.Default(loopType) : Expr.Unit();
 
             return base.Expand(ctx, mustReturn);

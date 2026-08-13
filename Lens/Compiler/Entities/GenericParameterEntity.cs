@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using Lens.Resolver;
 
 namespace Lens.Compiler.Entities
 {
@@ -22,7 +22,7 @@ namespace Lens.Compiler.Entities
             DeclarationName = declarationName;
 
             TypeConstraintSignatures = new List<TypeSignature>();
-            Interfaces = new List<Type>();
+            Interfaces = new List<TypeEntry>();
         }
 
         #endregion
@@ -69,12 +69,17 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// The resolved base type constraint, if any.
         /// </summary>
-        public Type BaseType;
+        public TypeEntry BaseType;
 
         /// <summary>
         /// The resolved interface constraints.
         /// </summary>
-        public readonly List<Type> Interfaces;
+        public readonly List<TypeEntry> Interfaces;
+
+        /// <summary>
+        /// Whether the type constraints above have already been resolved from their signatures.
+        /// </summary>
+        public bool ConstraintsResolved;
 
         /// <summary>
         /// The builder that represents this parameter in the emitted assembly.
@@ -86,6 +91,14 @@ namespace Lens.Compiler.Entities
         /// to be generic in the parameters of its enclosing declaration.
         /// </summary>
         public GenericParameterEntity Source;
+
+        private GenericParameterEntry _entry;
+
+        /// <summary>
+        /// The parameter as the rest of the compiler refers to it. Answers from the constraint model
+        /// above rather than from the builder, which cannot be asked until its owner exists.
+        /// </summary>
+        public TypeEntry TypeInfo => _entry ?? (_entry = new GenericParameterEntry(this));
 
         #endregion
 

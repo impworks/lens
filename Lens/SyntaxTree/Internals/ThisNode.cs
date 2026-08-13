@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Internals
 {
@@ -10,7 +11,7 @@ namespace Lens.SyntaxTree.Internals
     {
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             // sic! compiler error, no need to localize
             if (ctx.CurrentMethod.IsStatic)

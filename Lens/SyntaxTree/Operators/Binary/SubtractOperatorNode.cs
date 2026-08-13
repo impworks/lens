@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
@@ -23,9 +24,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            return leftType == typeof(string) && rightType == typeof(string) ? typeof(string) : null;
+            return leftType.Is<string>() && rightType.Is<string>() ? TypeEntryCache.Of<string>() : null;
         }
 
         #endregion
@@ -36,7 +37,7 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             if (!IsConstant)
             {
-                if (Resolve(ctx) == typeof(string))
+                if (Resolve(ctx).Is<string>())
                     return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
             }
 

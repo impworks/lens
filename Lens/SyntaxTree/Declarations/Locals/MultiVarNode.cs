@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
@@ -33,7 +34,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = ctx.ResolveType(Type);
             CheckTypeInSafeMode(ctx, type);

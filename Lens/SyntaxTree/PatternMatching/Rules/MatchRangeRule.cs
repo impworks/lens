@@ -30,12 +30,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             var startType = RangeStartRule.Literal.LiteralType;
             var endType = RangeEndRule.Literal.LiteralType;
 
-            if (!startType.IsNumericType() || !endType.IsNumericType())
+            if (!TypeEntryCache.Of(startType).IsNumericType() || !TypeEntryCache.Of(endType).IsNumericType())
                 Error(CompilerMessages.PatternRangeNotNumeric);
 
             if (!expressionType.IsNumericType())

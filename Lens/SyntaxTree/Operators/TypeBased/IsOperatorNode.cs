@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.TypeBased
 {
@@ -10,9 +11,9 @@ namespace Lens.SyntaxTree.Operators.TypeBased
     {
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn = true)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn = true)
         {
-            return typeof(bool);
+            return TypeEntryCache.Of<bool>();
         }
 
         #endregion
@@ -38,14 +39,14 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             // valuetype can only be cast to object
             if (exprType.IsValueType)
             {
-                gen.EmitConstant(desiredType == typeof(object));
+                gen.EmitConstant(desiredType.Is<object>());
                 return;
             }
 
             Expression.Emit(ctx, true);
 
             // check if not null
-            if (desiredType == typeof(object))
+            if (desiredType.Is<object>())
             {
                 gen.EmitNull();
                 gen.EmitCompareEqual();
@@ -54,7 +55,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             }
             else
             {
-                gen.EmitCast(desiredType, false);
+                gen.EmitCast(desiredType.Materialize(), false);
                 gen.EmitNull();
                 gen.EmitCompareGreater(false);
             }

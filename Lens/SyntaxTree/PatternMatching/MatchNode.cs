@@ -69,12 +69,12 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ctx.CheckTypedExpression(Expression, allowNull: true);
 
-            var stmtTypes = new List<Type>(MatchStatements.Count);
-            Type commonType = null;
+            var stmtTypes = new List<TypeEntry>(MatchStatements.Count);
+            TypeEntry commonType = null;
             foreach (var stmt in MatchStatements)
             {
                 stmt.ParentNode = this;
@@ -86,7 +86,7 @@ namespace Lens.SyntaxTree.PatternMatching
                     // detect catch-all expression for a type
                     if (nameRule != null && stmt.Condition == null)
                     {
-                        var nameType = nameRule.Type == null ? typeof(object) : ctx.ResolveType(nameRule.Type);
+                        var nameType = nameRule.Type == null ? TypeEntryCache.Of<object>() : ctx.ResolveType(nameRule.Type);
                         if (commonType != null && commonType.IsExtendablyAssignableFrom(ctx.Resolver, nameType))
                             Error(CompilerMessages.PatternUnreachable);
 
@@ -96,7 +96,7 @@ namespace Lens.SyntaxTree.PatternMatching
             }
 
             return stmtTypes.Any(x => x.IsVoid())
-                ? typeof(UnitType)
+                ? TypeEntryCache.Of<UnitType>()
                 : stmtTypes.ToArray().GetMostCommonType(ctx.Resolver);
         }
 
@@ -138,7 +138,7 @@ namespace Lens.SyntaxTree.PatternMatching
                 block.Add(
                     Expr.Block(
                         Expr.JumpLabel(_defaultLabel),
-                        Expr.Default(ctx.FindExpressionType(this))
+                        Expr.Default(ctx.FindExpressionType(this).Materialize())
                     )
                 );
             }

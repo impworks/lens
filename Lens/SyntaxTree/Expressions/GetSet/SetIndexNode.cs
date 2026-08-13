@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
             var idxType = Index.Resolve(ctx);
@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType, idxType, false);
+                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType.Materialize(), idxType.Materialize(), false);
                 }
                 catch (LensCompilerException ex)
                 {
@@ -46,8 +46,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var idxDestType = exprType.IsArray ? typeof(int) : _indexer.ArgumentTypes[0];
-            var valDestType = exprType.IsArray ? exprType.GetElementType() : _indexer.ArgumentTypes[1];
+            var idxDestType = exprType.IsArray ? TypeEntryCache.Of<int>() : _indexer.ArgumentTypes[0];
+            var valDestType = exprType.IsArray ? exprType.ElementType : _indexer.ArgumentTypes[1];
 
             if (!idxDestType.IsExtendablyAssignableFrom(ctx.Resolver, idxType))
                 Error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var gen = ctx.CurrentMethod.Generator;
 
             var exprType = Expression.Resolve(ctx);
-            var itemType = exprType.GetElementType();
+            var itemType = exprType.ElementType.Materialize();
 
             Expression.Emit(ctx, true);
             Expr.Cast(Index, typeof(int)).Emit(ctx, true);
@@ -113,8 +113,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
                 Expression.Emit(ctx, true);
 
-                Expr.Cast(Index, idxDest).Emit(ctx, true);
-                Expr.Cast(Value, valDest).Emit(ctx, true);
+                Expr.Cast(Index, idxDest.Materialize()).Emit(ctx, true);
+                Expr.Cast(Value, valDest.Materialize()).Emit(ctx, true);
 
                 gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
             }

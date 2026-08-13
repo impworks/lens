@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
 using Lens.Utils;
@@ -43,7 +44,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         /// Already resolved type for non-initialized variables, used by auto-generated code where
         /// the type has no printable signature - a generic parameter, for instance.
         /// </summary>
-        public Type ResolvedType { get; set; }
+        public TypeEntry ResolvedType { get; set; }
 
         /// <summary>
         /// The value to assign to the variable.
@@ -59,11 +60,11 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Value != null
                 ? Value.Resolve(ctx)
-                : ResolvedType ?? ctx.ResolveType(Type);
+                : (ResolvedType ?? ctx.ResolveType(Type));
 
             ctx.CheckTypedExpression(Value, type);
 

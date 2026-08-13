@@ -22,7 +22,7 @@ namespace Lens.Utils
             if (ctx.Resolver.IsDeclaredTypeParameter(type))
             {
                 node.Emit(ctx, true);
-                ctx.CurrentMethod.Generator.EmitBox(type);
+                ctx.CurrentMethod.Generator.EmitBox(type.Materialize());
                 return;
             }
 
@@ -41,7 +41,7 @@ namespace Lens.Utils
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
 
                     node.Emit(ctx, true);
-                    gen.EmitSaveObject(type);
+                    gen.EmitSaveObject(type.Materialize());
 
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
                 }

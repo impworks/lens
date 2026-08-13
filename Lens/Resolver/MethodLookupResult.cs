@@ -9,7 +9,7 @@ namespace Lens.Resolver
     {
         #region Constructor
 
-        public MethodLookupResult(T method, int dist, Type[] args)
+        public MethodLookupResult(T method, int dist, TypeEntry[] args)
         {
             Method = method;
             Distance = dist;
@@ -33,7 +33,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Inferred or evident argument types.
         /// </summary>
-        public readonly Type[] ArgumentTypes;
+        public readonly TypeEntry[] ArgumentTypes;
 
         #endregion
     }

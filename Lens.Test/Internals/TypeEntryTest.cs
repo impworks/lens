@@ -71,7 +71,7 @@ namespace Lens.Test.Internals
         [Test]
         public void ArraysRoundTrip()
         {
-            var array = Of<int>().MakeArray();
+            var array = Of<int>().MakeArray(new TypeResolutionContext());
 
             Assert.IsTrue(array.IsArray);
             Assert.AreEqual(Of<int>(), array.ElementType);
@@ -82,7 +82,7 @@ namespace Lens.Test.Internals
         [Test]
         public void ByRefRoundTrips()
         {
-            var byRef = Of<int>().MakeByRef();
+            var byRef = Of<int>().MakeByRef(new TypeResolutionContext());
 
             Assert.IsTrue(byRef.IsByRef);
             Assert.AreEqual(Of<int>(), byRef.ElementType);
@@ -162,7 +162,7 @@ namespace Lens.Test.Internals
         public void MaterializeReturnsTheUnderlyingType()
         {
             Assert.AreSame(typeof(int), Of<int>().Materialize());
-            Assert.AreSame(typeof(int[]), Of<int>().MakeArray().Materialize());
+            Assert.AreSame(typeof(int[]), Of<int>().MakeArray(new TypeResolutionContext()).Materialize());
         }
 
         private class ConstrainedHolder<T>

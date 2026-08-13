@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 
 namespace Lens.Resolver
@@ -159,6 +160,60 @@ namespace Lens.Resolver
 
         #endregion
 
+        #region Type kind methods for type entries
+
+        // these overloads exist so that code which has already been converted to type entries can
+        // ask the same questions. They defer to the reflection versions above: converting the whole
+        // of this helper to entries is a separate step.
+        //
+        // None of these kinds is ever something the script declared - a record is not a Func, and
+        // neither is a type parameter - so a declaration is answered without materialising it, which
+        // would force the assembly into existence.
+
+        /// <summary>
+        /// Checks if a type is a function type.
+        /// </summary>
+        public static bool IsFuncType(this TypeEntry type)
+        {
+            return !type.IsDeclared && type.Materialize().IsFuncType();
+        }
+
+        /// <summary>
+        /// Checks if a type is an action type;
+        /// </summary>
+        public static bool IsActionType(this TypeEntry type)
+        {
+            return !type.IsDeclared && (type.Is<Action>() || IsKnownType(ActionTypesLookup, type));
+        }
+
+        /// <summary>
+        /// Checks if a type is a function type.
+        /// </summary>
+        public static bool IsLambdaType(this TypeEntry type)
+        {
+            return !type.IsDeclared && IsKnownType(LambdaTypesLookup, type);
+        }
+
+        /// <summary>
+        /// Checks if a type is a tuple type.
+        /// </summary>
+        public static bool IsTupleType(this TypeEntry type)
+        {
+            return !type.IsDeclared && IsKnownType(TupleTypesLookup, type);
+        }
+
+        /// <summary>
+        /// Checks if the type can be called.
+        /// </summary>
+        public static bool IsCallableType(this TypeEntry type)
+        {
+            // the base chain, not the CLR type: Func<SomeRecord> is as callable as Func<int>, and
+            // asking either of them for a System.Type is emission's business
+            return !type.IsDeclared && type.SelfAndBaseTypes().Any(x => x.Is<MulticastDelegate>());
+        }
+
+        #endregion
+
         #region Type constructing
 
         /// <summary>
@@ -166,7 +221,7 @@ namespace Lens.Resolver
         /// </summary>
         public static Type CreateDelegateType(Type returnType, params Type[] args)
         {
-            return returnType.IsVoid()
+            return TypeEntryCache.Of(returnType).IsVoid()
                 ? CreateActionType(args)
                 : CreateFuncType(returnType, args);
         }
@@ -238,6 +293,22 @@ namespace Lens.Resolver
         private static bool IsKnownType(HashSet<Type> typesLookup, Type type)
         {
             return type.IsGenericType && typesLookup.Contains(type.GetGenericTypeDefinition());
+        }
+
+        /// <summary>
+        /// Checks whether an entry stands for one of a known family of generic types.
+        ///
+        /// Only the generic definition is looked at, and a definition is always a host type even when
+        /// the instantiation is made of declarations - so Func&lt;SomeRecord&gt; can be recognised
+        /// without anything having been emitted.
+        /// </summary>
+        private static bool IsKnownType(HashSet<Type> typesLookup, TypeEntry type)
+        {
+            if (!type.IsGenericType)
+                return false;
+
+            var definition = type.GetGenericDefinition();
+            return definition != null && !definition.IsDeclared && typesLookup.Contains(definition.Materialize());
         }
 
         #endregion

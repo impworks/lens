@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Expressions
             /// <summary>
             /// The resolved type hints of a generic method or delegate, if any were given.
             /// </summary>
-            public Type[] TypeHints;
+            public TypeEntry[] TypeHints;
         }
 
         protected override InvocationBinding GetBinding(Context ctx)
@@ -67,7 +67,7 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             // resolve the argument types
             base.ResolveInternal(ctx, mustReturn);
@@ -111,7 +111,7 @@ namespace Lens.SyntaxTree.Expressions
                         node.MemberName,
                         binding.ArgTypes,
                         binding.TypeHints,
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
 
                     if (binding.Method.IsStatic)
@@ -164,7 +164,7 @@ namespace Lens.SyntaxTree.Expressions
                         ctx.MainType.TypeInfo,
                         node.MemberName,
                         binding.ArgTypes,
-                        resolver: (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        resolver: (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
 
                     return;
@@ -185,7 +185,7 @@ namespace Lens.SyntaxTree.Expressions
                         node.MemberName,
                         oldArgTypes,
                         binding.TypeHints,
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                     );
                 }
                 catch (KeyNotFoundException)
@@ -227,7 +227,7 @@ namespace Lens.SyntaxTree.Expressions
                     node.Identifier,
                     binding.ArgTypes,
                     binding.TypeHints,
-                    (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
+                    (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
                 );
 
                 if (binding.Method == null)
@@ -367,10 +367,10 @@ namespace Lens.SyntaxTree.Expressions
                         if (argRef)
                             Error(arg, CompilerMessages.ReferenceArgUnexpected);
                         else
-                            Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].GetElementType());
+                            Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].Materialize().GetElementType());
                     }
 
-                    var expr = argRef ? arg : Expr.Cast(arg, destTypes[idx]);
+                    var expr = argRef ? arg : Expr.Cast(arg, destTypes[idx].Materialize());
                     expr.Emit(ctx, true);
                 }
             }

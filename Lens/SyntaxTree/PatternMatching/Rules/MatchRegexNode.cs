@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -50,9 +51,9 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
-            if (expressionType != typeof(string))
+            if (!expressionType.Is<string>())
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, typeof(string));
 
             ParseValue(ctx);
@@ -82,7 +83,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 // no type specified: assume string
                 if (string.IsNullOrEmpty(type))
                 {
-                    _namedGroups.Add(new PatternNameBinding(name, typeof(string)));
+                    _namedGroups.Add(new PatternNameBinding(name, TypeEntryCache.Of<string>()));
                     continue;
                 }
 
@@ -92,7 +93,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                 );
 
                 WrapError(
-                    () => ctx.ResolveMethod(actualType, "TryParse", new[] {typeof(string), actualType}),
+                    () => ctx.ResolveMethod(actualType, "TryParse", new[] {TypeEntryCache.Of<string>(), actualType}),
                     CompilerMessages.RegexConverterTypeIncompatible, type
                 );
 
@@ -154,7 +155,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
             // var match = new Regex(...).Match(str)
             // if not match.Success then Jump!
-            var matchVar = ctx.Scope.DeclareImplicit(ctx, typeof(Match), false);
+            var matchVar = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<Match>(), false);
             yield return Expr.Set(
                 matchVar,
                 Expr.Invoke(
@@ -187,7 +188,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     "Value"
                 );
 
-                if (curr.Type == typeof(string))
+                if (curr.Type.Is<string>())
                 {
                     // name = value
                     yield return Expr.Set(

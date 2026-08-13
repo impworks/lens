@@ -50,13 +50,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            var prevTypes = new List<Type>();
+            var prevTypes = new List<TypeEntry>();
 
             foreach (var curr in CatchClauses)
             {
-                var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : typeof(Exception);
+                var currType = curr.ExceptionType != null ? ctx.ResolveType(curr.ExceptionType) : TypeEntryCache.Of<Exception>();
 
                 foreach (var prevType in prevTypes)
                 {

@@ -32,9 +32,38 @@
         public TypeContentsKind Kind;
 
         /// <summary>
-        /// Creates the assembly instances for the current entity.
+        /// The analysis half of preparation: resolves everything the declaration itself states -
+        /// the types of the signature - and creates nothing the assembly would hold.
         /// </summary>
-        public abstract void PrepareSelf();
+        public abstract void ResolveSelf();
+
+        /// <summary>
+        /// The emission half of preparation: creates the builder for the entity and everything
+        /// that hangs off it. Requires the container type to have a TypeBuilder.
+        /// </summary>
+        public abstract void EmitSelf();
+
+        /// <summary>
+        /// Creates the assembly instances for the current entity, resolving its signature first
+        /// if that has not happened yet.
+        /// </summary>
+        public void PrepareSelf()
+        {
+            ResolveSelf();
+            EmitSelf();
+        }
+
+        /// <summary>
+        /// Prepares the entity as far as the current compilation goes: the signature always, the
+        /// builders only when there is somewhere to emit them into.
+        /// </summary>
+        public void PrepareSelfAsNeeded()
+        {
+            ResolveSelf();
+
+            if (ContainerType.Context.IsEmitting)
+                EmitSelf();
+        }
 
         #endregion
     }

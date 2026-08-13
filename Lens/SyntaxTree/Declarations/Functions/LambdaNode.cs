@@ -38,7 +38,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             /// <summary>
             /// The return type the surrounding context demands, when it demands one.
             /// </summary>
-            public Type InferredReturnType;
+            public TypeEntry InferredReturnType;
         }
 
         #endregion
@@ -54,9 +54,9 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            var argTypes = new List<Type>();
+            var argTypes = new List<TypeEntry>();
             foreach (var curr in Arguments)
             {
                 if (curr.IsVariadic)
@@ -65,17 +65,17 @@ namespace Lens.SyntaxTree.Declarations.Functions
                 var type = curr.GetArgumentType(ctx);
                 argTypes.Add(type);
 
-                if (type == typeof(UnspecifiedType))
+                if (type.Is<UnspecifiedType>())
                     MustInferArgTypes = true;
             }
 
             if (MustInferArgTypes)
-                return FunctionalHelper.CreateLambdaType(argTypes.ToArray());
+                return TypeEntryCache.Of(FunctionalHelper.CreateLambdaType(TypeEntry.Materialize(argTypes)));
 
             ctx.ScopeOf(Body).RegisterArguments(ctx, false, Arguments);
 
             var retType = Body.Resolve(ctx);
-            return FunctionalHelper.CreateDelegateType(retType, argTypes.ToArray());
+            return TypeEntryCache.Of(FunctionalHelper.CreateDelegateType(retType.Materialize(), TypeEntry.Materialize(argTypes)));
         }
 
         #endregion
@@ -110,19 +110,19 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Works out the return type of the method the lambda will be compiled into.
         /// </summary>
-        private Type ResolveClosureReturnType(Context ctx)
+        private TypeEntry ResolveClosureReturnType(Context ctx)
         {
             if (MustInferArgTypes)
             {
-                var name = Arguments.First(a => a.Type == typeof(UnspecifiedType)).Name;
+                var name = Arguments.First(a => a.Type == TypeEntryCache.Of<UnspecifiedType>()).Name;
                 Error(CompilerMessages.LambdaArgTypeUnknown, name);
             }
 
             var retType = ctx.BindingOf<Binding>(this).InferredReturnType ?? Body.Resolve(ctx);
-            if (retType == typeof(NullType))
+            if (retType.Is<NullType>())
                 Error(CompilerMessages.LambdaReturnTypeUnknown);
 
-            return retType.IsVoid() ? typeof(void) : retType;
+            return retType.IsVoid() ? TypeEntryCache.Of(typeof(void)) : retType;
         }
 
         #endregion
@@ -136,8 +136,8 @@ namespace Lens.SyntaxTree.Declarations.Functions
             // the delegate type is expressed in the terms of the enclosing method, while the
             // backing method belongs to the closure class and may be generic in its parameters
             var argTypes = Arguments.Select(x => x.GetArgumentType(ctx)).ToArray();
-            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx), argTypes);
-            var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
+            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx).Materialize(), TypeEntry.Materialize(argTypes));
+            var ctor = ctx.ResolveConstructor(TypeEntryCache.Of(type), new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
 
             var closure = ctx.Scope.ActiveClosure;
             var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, ctx.BindingOf<Binding>(this).Method.Name).Single();
@@ -154,7 +154,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Sets correct types for arguments which are inferred from usage (invocation, assignment, type casting).
         /// </summary>
-        public void SetInferredArgumentTypes(Context ctx, Type[] argTypes)
+        public void SetInferredArgumentTypes(Context ctx, TypeEntry[] argTypes)
         {
             if (Arguments.Count != argTypes.Length)
                 Error(CompilerMessages.LambdaArgumentsCountMismatch, argTypes.Length, Arguments.Count);
@@ -162,12 +162,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
             for (var idx = 0; idx < argTypes.Length; idx++)
             {
                 var inferred = argTypes[idx];
-                if (inferred == typeof(UnspecifiedType))
+                if (inferred.Is<UnspecifiedType>())
                     Error(CompilerMessages.LambdaArgTypeUnknown, Arguments[idx].Name);
 
 #if DEBUG
                 var specified = Arguments[idx].Type;
-                if (specified != typeof(UnspecifiedType) && specified != inferred)
+                if (specified != TypeEntryCache.Of<UnspecifiedType>() && specified != inferred)
                     throw new InvalidOperationException($"Argument type differs: specified '{specified}', inferred '{inferred}'!");
 #endif
 
@@ -184,7 +184,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
         /// <summary>
         /// Interprets the lambda as a particular delegate with given arg & return types.
         /// </summary>
-        public void SetInferredReturnType(Context ctx, Type type)
+        public void SetInferredReturnType(Context ctx, TypeEntry type)
         {
             ctx.BindingOf<Binding>(this).InferredReturnType = type;
         }

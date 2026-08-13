@@ -81,20 +81,23 @@ namespace Lens.Compiler
         #region Type parameter resolution
 
         /// <summary>
-        /// Resolves the type constraints of a declaration's parameters and applies them to the builders.
-        /// Must be called after all the builders of the declaration have been created, because a
-        /// constraint may name a sibling parameter.
+        /// The analysis half: registers the constraint model of a declaration's parameters and
+        /// resolves their type constraints. Creates nothing the assembly would hold.
+        ///
+        /// The constraints of a forwarded parameter are copied from its source at emission time,
+        /// because the copy is expressed in terms of the builders on both sides.
         /// </summary>
-        public void ResolveGenericParameters(List<GenericParameterEntity> parameters)
+        public void RegisterGenericParameters(List<GenericParameterEntity> parameters)
         {
             foreach (var curr in parameters)
                 Resolver.Register(curr);
 
-            if (parameters.Count > 0 && parameters[0].Source != null)
-            {
-                ApplyForwardedConstraints(parameters);
-            }
-            else
+            // preparation can be asked for more than once, and resolving the same constraint list
+            // twice would report every one of its interfaces as a duplicate
+            if (parameters.Count == 0 || parameters[0].ConstraintsResolved)
+                return;
+
+            if (parameters[0].Source == null)
             {
                 WithGenericScope(parameters, () =>
                     {
@@ -102,10 +105,35 @@ namespace Lens.Compiler
                             ResolveConstraintsOf(curr);
                     }
                 );
-            }
 
+                foreach (var curr in parameters)
+                    CheckCircularConstraints(curr);
+
+                foreach (var curr in parameters)
+                    curr.ConstraintsResolved = true;
+            }
+        }
+
+        /// <summary>
+        /// The emission half: applies the resolved constraints to the parameter builders. Must be
+        /// called after all the builders of the declaration have been created, because a constraint
+        /// may name a sibling parameter.
+        /// </summary>
+        public void EmitGenericParameters(List<GenericParameterEntity> parameters)
+        {
             foreach (var curr in parameters)
-                CheckCircularConstraints(curr);
+                Resolver.Register(curr);
+
+            if (parameters.Count > 0 && parameters[0].Source != null && !parameters[0].ConstraintsResolved)
+            {
+                ApplyForwardedConstraints(parameters);
+
+                foreach (var curr in parameters)
+                    CheckCircularConstraints(curr);
+
+                foreach (var curr in parameters)
+                    curr.ConstraintsResolved = true;
+            }
 
             foreach (var curr in parameters)
                 ApplyConstraints(curr);
@@ -150,9 +178,9 @@ namespace Lens.Compiler
         /// <summary>
         /// Checks whether a concrete type may be used as a base type constraint.
         /// </summary>
-        private static bool IsLegalBaseConstraint(Type type)
+        private static bool IsLegalBaseConstraint(TypeEntry type)
         {
-            if (ForbiddenConstraintTypes.Contains(type))
+            if (ForbiddenConstraintTypes.Contains(type.Materialize()))
                 return false;
 
             // a static class is abstract and sealed at once
@@ -200,12 +228,12 @@ namespace Lens.Compiler
                 entity.Builder.SetGenericParameterAttributes(attributes);
 
             // the CLI spells a value type constraint as ValueType plus the attribute
-            var baseType = entity.BaseType ?? (entity.IsValueType ? typeof(ValueType) : null);
+            var baseType = entity.BaseType ?? (entity.IsValueType ? TypeEntryCache.Of<ValueType>() : null);
             if (baseType != null)
-                entity.Builder.SetBaseTypeConstraint(baseType);
+                entity.Builder.SetBaseTypeConstraint(baseType.Materialize());
 
             if (entity.Interfaces.Count > 0)
-                entity.Builder.SetInterfaceConstraints(entity.Interfaces.ToArray());
+                entity.Builder.SetInterfaceConstraints(TypeEntry.Materialize(entity.Interfaces));
         }
 
         /// <summary>
@@ -252,10 +280,10 @@ namespace Lens.Compiler
             foreach (var curr in parameters)
             {
                 if (curr.Source.BaseType != null)
-                    curr.BaseType = GenericHelper.ApplyGenericArguments(curr.Source.BaseType, sources, targets, false);
+                    curr.BaseType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(curr.Source.BaseType.Materialize(), sources, targets, false));
 
                 foreach (var iface in curr.Source.Interfaces)
-                    curr.Interfaces.Add(GenericHelper.ApplyGenericArguments(iface, sources, targets, false));
+                    curr.Interfaces.Add(TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(iface.Materialize(), sources, targets, false)));
             }
         }
 

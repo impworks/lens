@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ctx.CheckTypedExpression(LeftOperand, allowNull: true);
             ctx.CheckTypedExpression(RightOperand, allowNull: true);
@@ -39,16 +39,16 @@ namespace Lens.SyntaxTree.Operators.Binary
             var right = RightOperand.Resolve(ctx);
 
             // no types inferrable
-            if (left == typeof(NullType) && right == typeof(NullType))
+            if (left.Is<NullType>() && right.Is<NullType>())
                 return left;
 
             // only one type known
-            if (right == typeof(NullType))
+            if (right.Is<NullType>())
                 return left;
 
-            if (left == typeof(NullType))
+            if (left.Is<NullType>())
                 return right.IsValueType
-                    ? typeof(Nullable<>).MakeGenericType(right)
+                    ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {right})
                     : right;
 
 
@@ -64,7 +64,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             var common = new[] {baseLeft, baseRight}.GetMostCommonType(ctx.Resolver);
             return right.IsNullableType()
-                ? typeof(Nullable<>).MakeGenericType(common)
+                ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {common})
                 : common;
         }
 
@@ -101,10 +101,10 @@ namespace Lens.SyntaxTree.Operators.Binary
                 Expr.If(
                     condition,
                     Expr.Block(
-                        Expr.Cast(rightResult, common)
+                        Expr.Cast(rightResult, common.Materialize())
                     ),
                     Expr.Block(
-                        Expr.Cast(leftResult, common)
+                        Expr.Cast(leftResult, common.Materialize())
                     )
                 )
             );

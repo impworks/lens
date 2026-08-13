@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
@@ -35,23 +35,23 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// The type of the chain's value when none of the checks trip.
         /// </summary>
-        private Type _chainType;
+        private TypeEntry _chainType;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             PrepareChain(ctx);
 
             // "foo?.DoStuff ()" is a no-op rather than a value
             if (_chainType.IsVoid())
-                return typeof(UnitType);
+                return TypeEntryCache.Of<UnitType>();
 
             // a value type gains a null state by being lifted into Nullable<T>, but only once
             return _chainType.IsValueType && !_chainType.IsNullableType()
-                ? typeof(Nullable<>).MakeGenericType(_chainType)
+                ? TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx.Resolver, new[] {_chainType})
                 : _chainType;
         }
 
@@ -159,7 +159,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Expr.Set(check.Local, check.Receiver),
                     isUnit
                         ? Expr.If(IsNotNull(check), Expr.Block(body))
-                        : Expr.If(IsNull(check), Expr.Block(Expr.Default(resultType)), Expr.Block(body))
+                        : Expr.If(IsNull(check), Expr.Block(Expr.Default(resultType.Materialize())), Expr.Block(body))
                 );
             }
 
@@ -214,7 +214,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             /// <summary>
             /// The type of the checked value.
             /// </summary>
-            public Type ReceiverType;
+            public TypeEntry ReceiverType;
 
             /// <summary>
             /// Flag indicating that the checked value is a Nullable&lt;T&gt;.

@@ -18,6 +18,7 @@ namespace Lens.Resolver
         internal ReflectedTypeEntry(Type type)
         {
             _type = type ?? throw new ArgumentNullException(nameof(type));
+            _isStable = TypeResolutionContext.IsStable(type);
         }
 
         #endregion
@@ -25,6 +26,16 @@ namespace Lens.Resolver
         #region Fields
 
         private readonly Type _type;
+
+        // A runtime type's shape cannot change, so the answers below are computed once. A builder's
+        // can, so for those nothing is memoized - which is the same rule TypeResolutionContext
+        // applies to its own caches. These two are memoized in particular because ContainsDeclared
+        // is asked on nearly every type comparison and walks the generic arguments to answer, and
+        // GenericArguments used to allocate a fresh array on every single access.
+        private readonly bool _isStable;
+
+        private TypeEntry[] _genericArguments;
+        private bool? _containsDeclared;
 
         #endregion
 
@@ -50,6 +61,23 @@ namespace Lens.Resolver
         public override bool IsArray => _type.IsArray;
         public override bool IsByRef => _type.IsByRef;
         public override bool IsPointer => _type.IsPointer;
+
+        public override bool ContainsDeclared
+        {
+            get
+            {
+                if (_containsDeclared.HasValue)
+                    return _containsDeclared.Value;
+
+                // a type made only of runtime types can never contain a declaration, and that is by
+                // far the common case: answer it without walking anything
+                var result = !_isStable && base.ContainsDeclared;
+                if (_isStable)
+                    _containsDeclared = result;
+
+                return result;
+            }
+        }
 
         public override bool IsGenericParameter => _type.IsGenericParameter;
         public override bool IsGenericType => _type.IsGenericType;
@@ -104,7 +132,14 @@ namespace Lens.Resolver
                 if (!_type.IsGenericType)
                     return EmptyEntries;
 
-                return _type.GetGenericArguments().Select(TypeEntryCache.Of).ToArray();
+                if (_genericArguments != null)
+                    return _genericArguments;
+
+                var args = _type.GetGenericArguments().Select(TypeEntryCache.Of).ToArray();
+                if (_isStable)
+                    _genericArguments = args;
+
+                return args;
             }
         }
 
@@ -211,20 +246,9 @@ namespace Lens.Resolver
 
         #region Construction
 
-        public override TypeEntry MakeArray()
+        public override TypeEntry MakeGeneric(TypeResolutionContext resolver, params TypeEntry[] arguments)
         {
-            return TypeEntryCache.Of(_type.MakeArrayType());
-        }
-
-        public override TypeEntry MakeByRef()
-        {
-            return TypeEntryCache.Of(_type.MakeByRefType());
-        }
-
-        public override TypeEntry MakeGeneric(TypeResolutionContext resolver, TypeEntry[] arguments)
-        {
-            var args = arguments.Select(x => x.Materialize()).ToArray();
-            return TypeEntryCache.Of(resolver.MakeGenericType(_type, args));
+            return resolver.MakeGeneric(this, arguments);
         }
 
         #endregion
@@ -234,6 +258,18 @@ namespace Lens.Resolver
         public override Type Materialize()
         {
             return _type;
+        }
+
+        #endregion
+
+        #region Debug
+
+        // diagnostics interpolate types into their messages, and Type.ToString() does not agree
+        // with FullName for a generic instantiation. Deferring to the wrapped type keeps every
+        // existing message byte-identical as more of the compiler starts handling entries.
+        public override string ToString()
+        {
+            return _type.ToString();
         }
 
         #endregion

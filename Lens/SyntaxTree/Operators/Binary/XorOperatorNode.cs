@@ -21,9 +21,9 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Resolve
 
-        protected override Type ResolveOperatorType(Context ctx, Type leftType, Type rightType)
+        protected override TypeEntry ResolveOperatorType(Context ctx, TypeEntry leftType, TypeEntry rightType)
         {
-            return leftType == typeof(bool) && rightType == typeof(bool) ? typeof(bool) : null;
+            return leftType.Is<bool>() && rightType.Is<bool>() ? TypeEntryCache.Of<bool>() : null;
         }
 
         #endregion

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions
             /// <summary>
             /// The resolved types of those arguments.
             /// </summary>
-            public Type[] ArgTypes;
+            public TypeEntry[] ArgTypes;
         }
 
         /// <summary>
@@ -68,13 +68,13 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            Type TypeOf(NodeBase arg)
+            TypeEntry TypeOf(NodeBase arg)
             {
                 var gin = arg as GetIdentifierNode;
                 if (gin != null && gin.Identifier == "_")
-                    return typeof(UnspecifiedType);
+                    return TypeEntryCache.Of<UnspecifiedType>();
 
                 return arg.Resolve(ctx);
             }
@@ -84,8 +84,8 @@ namespace Lens.SyntaxTree.Expressions
             binding.ArgTypes = Arguments.Select(TypeOf).ToArray();
 
             // discard 'unit' pseudoargument
-            if (binding.ArgTypes.Length == 1 && binding.ArgTypes[0] == typeof(UnitType))
-                binding.ArgTypes = Type.EmptyTypes;
+            if (binding.ArgTypes.Length == 1 && binding.ArgTypes[0].Is<UnitType>())
+                binding.ArgTypes = new TypeEntry[0];
 
             // prepares arguments only
             return null;
@@ -120,7 +120,7 @@ namespace Lens.SyntaxTree.Expressions
                 var argExprs = new List<NodeBase>();
                 for (var idx = 0; idx < binding.ArgTypes.Length; idx++)
                 {
-                    if (binding.ArgTypes[idx] == typeof(UnspecifiedType))
+                    if (binding.ArgTypes[idx].Is<UnspecifiedType>())
                     {
                         var argName = ctx.Unique.AnonymousArgName();
                         argDefs.Add(Expr.Arg(argName, wrapper.ArgumentTypes[idx].FullName));
@@ -148,7 +148,7 @@ namespace Lens.SyntaxTree.Expressions
                 //     fx a b (new[ c as X; d as X ])
                 if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
                 {
-                    var elemType = lastDst.GetElementType();
+                    var elemType = lastDst.ElementType.Materialize();
                     var simpleArgs = binding.Arguments.Take(dstTypes.Length - 1);
                     var combined = Expr.Array(binding.Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
                     return RecreateSelfWithArgs(simpleArgs.Union(new[] {combined}));
@@ -170,7 +170,7 @@ namespace Lens.SyntaxTree.Expressions
         /// <summary>
         /// Resolves the expression type in case of partial application.
         /// </summary>
-        protected static Type ResolvePartial(CallableWrapperBase wrapper, Type returnType, Type[] argTypes)
+        protected static TypeEntry ResolvePartial(CallableWrapperBase wrapper, TypeEntry returnType, TypeEntry[] argTypes)
         {
             if (!wrapper.IsPartiallyApplied)
                 return returnType;
@@ -178,11 +178,11 @@ namespace Lens.SyntaxTree.Expressions
             var lambdaArgTypes = new List<Type>();
             for (var idx = 0; idx < argTypes.Length; idx++)
             {
-                if (argTypes[idx] == typeof(UnspecifiedType))
-                    lambdaArgTypes.Add(wrapper.ArgumentTypes[idx]);
+                if (argTypes[idx].Is<UnspecifiedType>())
+                    lambdaArgTypes.Add(wrapper.ArgumentTypes[idx].Materialize());
             }
 
-            return FunctionalHelper.CreateDelegateType(returnType, lambdaArgTypes.ToArray());
+            return TypeEntryCache.Of(FunctionalHelper.CreateDelegateType(returnType.Materialize(), lambdaArgTypes.ToArray()));
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace Lens.SyntaxTree.Expressions
                 var lambda = (LambdaNode) binding.Arguments[idx];
                 if (lambda.MustInferArgTypes)
                 {
-                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx]);
+                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx].Materialize());
                     lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
                     lambda.Resolve(ctx);
                 }

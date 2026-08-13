@@ -42,16 +42,16 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (!mustReturn || FalseAction == null)
-                return typeof(UnitType);
+                return TypeEntryCache.Of<UnitType>();
 
             var type = TrueAction.Resolve(ctx);
             var otherType = FalseAction.Resolve(ctx);
 
             return type.IsVoid() || otherType.IsVoid()
-                ? typeof(UnitType)
+                ? TypeEntryCache.Of<UnitType>()
                 : new[] {type, otherType}.GetMostCommonType(ctx.Resolver);
         }
 
@@ -76,7 +76,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var gen = ctx.CurrentMethod.Generator;
 
             var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, typeof(bool)))
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             if (Condition.IsConstant && ctx.Options.UnrollConstants)
@@ -88,7 +88,7 @@ namespace Lens.SyntaxTree.ControlFlow
                     var nodeType = node.Resolve(ctx);
                     var desiredType = Resolve(ctx);
                     if (!nodeType.IsVoid() && !desiredType.IsVoid())
-                        node = Expr.Cast(node, desiredType);
+                        node = Expr.Cast(node, desiredType.Materialize());
 
                     node.Emit(ctx, mustReturn);
                     if (!mustReturn && !node.Resolve(ctx).IsVoid())
@@ -136,7 +136,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var branchType = branch.Resolve(ctx, mustReturn);
 
             if (!branchType.IsVoid() && !desiredType.IsVoid())
-                branch = Expr.Cast(branch, desiredType);
+                branch = Expr.Cast(branch, desiredType.Materialize());
 
             branch.Emit(ctx, mustReturn);
         }

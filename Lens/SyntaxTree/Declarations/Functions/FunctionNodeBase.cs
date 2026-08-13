@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
@@ -37,7 +38,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             return Body.Resolve(ctx);
         }

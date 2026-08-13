@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.PatternMatching.Rules;
 using Lens.Translations;
@@ -55,7 +56,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = ParentNode.Expression.Resolve(ctx);
 

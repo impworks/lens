@@ -43,7 +43,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Identifier == "_")
                 Error(CompilerMessages.UnderscoreNameUsed);
@@ -73,7 +73,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var destType = nameInfo != null ? nameInfo.Type : _property.PropertyType;
+            var destType = nameInfo != null ? nameInfo.Type : TypeEntryCache.Of(_property.PropertyType);
             EnsureLambdaInferred(ctx, Value, destType);
 
             var exprType = Value.Resolve(ctx);
@@ -107,7 +107,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
-            var type = Value.Resolve(ctx);
+            var type = Value.Resolve(ctx).Materialize();
 
             if (_property != null)
             {
@@ -161,7 +161,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 gen.EmitLoadArgument(name.ArgumentId.Value);
                 castNode.Emit(ctx, true);
-                gen.EmitSaveObject(name.Type);
+                gen.EmitSaveObject(name.Type.Materialize());
             }
         }
 

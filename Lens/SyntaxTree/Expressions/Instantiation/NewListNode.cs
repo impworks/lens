@@ -18,22 +18,22 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         /// <summary>
         /// Common type inferred from all items' actual types.
         /// </summary>
-        private Type _itemType;
+        private TypeEntry _itemType;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Expressions.Count == 0)
                 Error(CompilerMessages.ListEmpty);
 
             _itemType = ResolveItemType(Expressions, ctx);
-            if (_itemType == typeof(NullType))
+            if (_itemType.Is<NullType>())
                 Error(CompilerMessages.ListTypeUnknown);
 
-            return typeof(List<>).MakeGenericType(_itemType);
+            return TypeEntryCache.Of(typeof(List<>)).MakeGeneric(ctx.Resolver, new[] {_itemType});
         }
 
         #endregion
@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             var tmpVar = ctx.Scope.DeclareImplicit(ctx, Resolve(ctx), true);
 
             var listType = Resolve(ctx);
-            var ctor = ctx.ResolveConstructor(listType, new[] {typeof(int)});
+            var ctor = ctx.ResolveConstructor(listType, new[] {TypeEntryCache.Of<int>()});
             var addMethod = ctx.ResolveMethod(listType, "Add", new[] {_itemType});
 
             var count = Expressions.Count;
@@ -74,7 +74,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
-                Expr.Cast(curr, addMethod.ArgumentTypes[0]).Emit(ctx, true);
+                Expr.Cast(curr, addMethod.ArgumentTypes[0].Materialize()).Emit(ctx, true);
                 gen.EmitCall(addMethod.MethodInfo, addMethod.IsVirtual);
             }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -22,7 +23,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Operand.Resolve(ctx);
 
@@ -52,7 +53,7 @@ namespace Lens.SyntaxTree.Operators.Unary
         /// <summary>
         /// Overridable resolver for unary operators.
         /// </summary>
-        protected virtual Type ResolveOperatorType(Context ctx)
+        protected virtual TypeEntry ResolveOperatorType(Context ctx)
         {
             return null;
         }
@@ -81,7 +82,7 @@ namespace Lens.SyntaxTree.Operators.Unary
             }
 
             var ps = OverloadedMethod.ArgumentTypes;
-            Expr.Cast(Operand, ps[0]).Emit(ctx, true);
+            Expr.Cast(Operand, ps[0].Materialize()).Emit(ctx, true);
             gen.EmitCall(OverloadedMethod.MethodInfo);
         }
 

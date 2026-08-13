@@ -187,7 +187,7 @@ namespace Lens.Test.Internals
         {
             var from = typeof(bool[]);
             var to = typeof(IEnumerable<>);
-            Assert.AreEqual(2, to.DistanceFrom(Ctx, from));
+            Assert.AreEqual(2, TypeEntryCache.Of(to).DistanceFrom(Ctx, TypeEntryCache.Of(from)));
         }
 
         [Test]
@@ -207,8 +207,8 @@ namespace Lens.Test.Internals
 
             var to = typeof(Array).GetMethod("FindAll").GetParameters().Select(p => p.ParameterType).ToArray();
 
-            Assert.AreEqual(2, to[0].DistanceFrom(Ctx, from1));
-            Assert.AreEqual(2, to[1].DistanceFrom(Ctx, from2));
+            Assert.AreEqual(2, TypeEntryCache.Of(to[0]).DistanceFrom(Ctx, TypeEntryCache.Of(from1)));
+            Assert.AreEqual(2, TypeEntryCache.Of(to[1]).DistanceFrom(Ctx, TypeEntryCache.Of(from2)));
         }
 
         [Test]
@@ -216,10 +216,10 @@ namespace Lens.Test.Internals
         {
             var types = new[] {typeof(object), typeof(float), typeof(int), typeof(string)};
             foreach (var type in types)
-                Assert.AreEqual(0, type.MakeByRefType().DistanceFrom(Ctx, type));
+                Assert.AreEqual(0, TypeEntryCache.Of(type.MakeByRefType()).DistanceFrom(Ctx, TypeEntryCache.Of(type)));
 
-            Assert.AreEqual(int.MaxValue, typeof(int).MakeByRefType().DistanceFrom(Ctx, typeof(float)));
-            Assert.AreEqual(int.MaxValue, typeof(float).MakeByRefType().DistanceFrom(Ctx, typeof(int)));
+            Assert.AreEqual(int.MaxValue, TypeEntryCache.Of(typeof(int).MakeByRefType()).DistanceFrom(Ctx, TypeEntryCache.Of<float>()));
+            Assert.AreEqual(int.MaxValue, TypeEntryCache.Of(typeof(float).MakeByRefType()).DistanceFrom(Ctx, TypeEntryCache.Of<int>()));
         }
 
         [Test]
@@ -299,7 +299,7 @@ namespace Lens.Test.Internals
         {
             var from = typeof(IOrderedEnumerable<int>);
             var to = typeof(IEnumerable<>);
-            Assert.IsTrue(to.DistanceFrom(Ctx, from) < int.MaxValue);
+            Assert.IsTrue(TypeEntryCache.Of(to).DistanceFrom(Ctx, TypeEntryCache.Of(from)) < int.MaxValue);
         }
 
         /// <summary>
@@ -310,23 +310,23 @@ namespace Lens.Test.Internals
         /// <param name="expected">Expected distance between types.</param>
         private static void TestDistanceFrom<T1, T2>(int expected)
         {
-            var result = typeof(T1).DistanceFrom(Ctx, typeof(T2));
+            var result = TypeEntryCache.Of<T1>().DistanceFrom(Ctx, TypeEntryCache.Of<T2>());
             Assert.AreEqual(expected, result);
         }
 
         private static void AssertNumericOperationType<T1, T2, TResult>()
         {
-            Assert.AreEqual(typeof(TResult), TypeExtensions.GetNumericOperationType(typeof(T1), typeof(T2)));
+            Assert.AreEqual(typeof(TResult), TypeExtensions.GetNumericOperationType(TypeEntryCache.Of<T1>(), TypeEntryCache.Of<T2>()).Materialize());
         }
 
         private static void AssertNumericOperationNotPermitted<T1, T2>()
         {
-            Assert.IsNull(TypeExtensions.GetNumericOperationType(typeof(T1), typeof(T2)));
+            Assert.IsNull(TypeExtensions.GetNumericOperationType(TypeEntryCache.Of<T1>(), TypeEntryCache.Of<T2>()));
         }
 
         private static void TestCommonType<T>(params Type[] types)
         {
-            Assert.AreEqual(typeof(T), types.GetMostCommonType(Ctx));
+            Assert.AreEqual(typeof(T), types.Select(TypeEntryCache.Of).ToArray().GetMostCommonType(Ctx).Materialize());
         }
     }
 }

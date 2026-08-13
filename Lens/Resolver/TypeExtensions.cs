@@ -21,25 +21,25 @@ namespace Lens.Resolver
         {
             SignedIntegerTypes = new[]
             {
-                typeof(sbyte),
-                typeof(short),
-                typeof(int),
-                typeof(long)
+                TypeEntryCache.Of<sbyte>(),
+                TypeEntryCache.Of<short>(),
+                TypeEntryCache.Of<int>(),
+                TypeEntryCache.Of<long>()
             };
 
             UnsignedIntegerTypes = new[]
             {
-                typeof(byte),
-                typeof(ushort),
-                typeof(uint),
-                typeof(ulong),
+                TypeEntryCache.Of<byte>(),
+                TypeEntryCache.Of<ushort>(),
+                TypeEntryCache.Of<uint>(),
+                TypeEntryCache.Of<ulong>(),
             };
 
             FloatTypes = new[]
             {
-                typeof(float),
-                typeof(double),
-                typeof(decimal)
+                TypeEntryCache.Of<float>(),
+                TypeEntryCache.Of<double>(),
+                TypeEntryCache.Of<decimal>()
             };
         }
 
@@ -47,9 +47,9 @@ namespace Lens.Resolver
 
         #region Fields
 
-        public static readonly Type[] SignedIntegerTypes;
-        public static readonly Type[] UnsignedIntegerTypes;
-        public static readonly Type[] FloatTypes;
+        public static readonly TypeEntry[] SignedIntegerTypes;
+        public static readonly TypeEntry[] UnsignedIntegerTypes;
+        public static readonly TypeEntry[] FloatTypes;
 
         #endregion
 
@@ -60,15 +60,15 @@ namespace Lens.Resolver
         /// </summary>
         /// <param name="type">Checked type.</param>
         /// <returns><c>true</c> if type is a <see cref="Nullable{T}"/>.</returns>
-        public static bool IsNullableType(this Type type)
+        public static bool IsNullableType(this TypeEntry type)
         {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+            return type.IsGenericType && type.GetGenericDefinition().Is(typeof(Nullable<>));
         }
 
         /// <summary>
         /// Checks if a type is a signed integer type.
         /// </summary>
-        public static bool IsSignedIntegerType(this Type type)
+        public static bool IsSignedIntegerType(this TypeEntry type)
         {
             return SignedIntegerTypes.Contains(type);
         }
@@ -76,7 +76,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type is an unsigned integer type.
         /// </summary>
-        public static bool IsUnsignedIntegerType(this Type type)
+        public static bool IsUnsignedIntegerType(this TypeEntry type)
         {
             return UnsignedIntegerTypes.Contains(type);
         }
@@ -84,7 +84,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type is a floating point type.
         /// </summary>
-        public static bool IsFloatType(this Type type)
+        public static bool IsFloatType(this TypeEntry type)
         {
             return FloatTypes.Contains(type);
         }
@@ -92,7 +92,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type is any of integer types, signed or unsigned.
         /// </summary>
-        public static bool IsIntegerType(this Type type)
+        public static bool IsIntegerType(this TypeEntry type)
         {
             return type.IsSignedIntegerType() || type.IsUnsignedIntegerType();
         }
@@ -100,9 +100,9 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type is any of the numeric types.
         /// </summary>
-        public static bool IsNumericType(this Type type, bool allowNonPrimitives = false)
+        public static bool IsNumericType(this TypeEntry type, bool allowNonPrimitives = false)
         {
-            if (!allowNonPrimitives && type == typeof(decimal))
+            if (!allowNonPrimitives && type.Is<decimal>())
                 return false;
 
             return type.IsSignedIntegerType() || type.IsUnsignedIntegerType() || type.IsFloatType();
@@ -111,15 +111,15 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if the type is void.
         /// </summary>
-        public static bool IsVoid(this Type type)
+        public static bool IsVoid(this TypeEntry type)
         {
-            return type == typeof(void) || type == typeof(UnitType);
+            return type.Is(typeof(void)) || type.Is<UnitType>();
         }
 
         /// <summary>
         /// Checks if the type is a struct.
         /// </summary>
-        public static bool IsStruct(this Type type)
+        public static bool IsStruct(this TypeEntry type)
         {
             return type.IsValueType && !type.IsNumericType();
         }
@@ -127,17 +127,17 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if type is actually boolean or can be implicitly casted to boolean.
         /// </summary>
-        public static bool IsImplicitlyBoolean(this Type type)
+        public static bool IsImplicitlyBoolean(this TypeEntry type)
         {
-            return type == typeof(bool) || type.GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof(bool));
+            return type.Is<bool>() || type.Materialize().GetMethods().Any(m => m.Name == "op_Implicit" && m.ReturnType == typeof(bool));
         }
 
         /// <summary>
         /// Returns T for Nullable&lt;T&gt;, or null if the type is not Nullable.
         /// </summary>
-        public static Type GetNullableUnderlyingType(this Type type)
+        public static TypeEntry GetNullableUnderlyingType(this TypeEntry type)
         {
-            return type.IsNullableType() ? type.GetGenericArguments()[0] : null;
+            return type.IsNullableType() ? type.GenericArguments[0] : null;
         }
 
         #endregion
@@ -151,7 +151,7 @@ namespace Lens.Resolver
         /// <param name="exprType">Type of assignment source (ex. expression)</param>
         /// <param name="exactly">Checks whether types must be compatible as-is, or additional code may be implicitly issued by the compiler.</param>
         /// <returns></returns>
-        public static bool IsExtendablyAssignableFrom(this Type varType, TypeResolutionContext ctx, Type exprType, bool exactly = false)
+        public static bool IsExtendablyAssignableFrom(this TypeEntry varType, TypeResolutionContext ctx, TypeEntry exprType, bool exactly = false)
         {
             return varType.DistanceFrom(ctx, exprType, exactly) < int.MaxValue;
         }
@@ -160,39 +160,56 @@ namespace Lens.Resolver
         /// Gets distance between two types.
         /// This method is memoized within the current compilation.
         /// </summary>
-        public static int DistanceFrom(this Type varType, TypeResolutionContext ctx, Type exprType, bool exactly = false)
+        public static int DistanceFrom(this TypeEntry varType, TypeResolutionContext ctx, TypeEntry exprType, bool exactly = false)
         {
-            return ctx.CachedDistance(varType, exprType, exactly, () => distanceFrom(ctx, varType, exprType, exactly));
+            // a declaration is never memoized anyway - its shape can still change - and asking one
+            // for a CLR type would create the very assembly artefact that analysis must not need,
+            // so those pairs go straight to the calculation
+            if (IsDeclaration(varType) || IsDeclaration(exprType))
+                return distanceFrom(ctx, varType, exprType, exactly);
+
+            // the memoization key is the pair of CLR types: entries are canonical per type, so the
+            // two keyings agree, and the cache has to decide whether a type is still being built
+            return ctx.CachedDistance(varType?.Materialize(), exprType?.Materialize(), exactly, () => distanceFrom(ctx, varType, exprType, exactly));
+        }
+
+        /// <summary>
+        /// Checks whether an entry stands for something the script declared, or is built out of one:
+        /// a type entity, a generic parameter, T[], List&lt;SomeRecord&gt;.
+        /// </summary>
+        private static bool IsDeclaration(TypeEntry type)
+        {
+            return !ReferenceEquals(type, null) && type.ContainsDeclared;
         }
 
         /// <summary>
         /// Calculates the distance between two types.
         /// </summary>
-        private static int distanceFrom(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
+        private static int distanceFrom(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType, bool exactly = false)
         {
             if (varType == exprType)
                 return 0;
 
             // partial application
-            if (exprType == typeof(UnspecifiedType))
+            if (exprType.Is<UnspecifiedType>())
                 return 0;
 
             if (varType.IsByRef)
-                return varType.GetElementType() == exprType ? 0 : int.MaxValue;
+                return varType.ElementType == exprType ? 0 : int.MaxValue;
 
             if (!exactly)
             {
-                if (varType.IsNullableType() && exprType == Nullable.GetUnderlyingType(varType))
+                if (varType.IsNullableType() && exprType == varType.GetNullableUnderlyingType())
                     return 1;
 
-                if ((varType.IsClass || varType.IsNullableType()) && exprType == typeof(NullType))
+                if ((varType.IsClass || varType.IsNullableType()) && exprType.Is<NullType>())
                     return 1;
 
                 if (varType.IsNumericType(true) && exprType.IsNumericType(true))
                     return NumericTypeConversion(varType, exprType);
             }
 
-            if (varType == typeof(object))
+            if (varType.Is<object>())
             {
                 if (exprType.IsValueType)
                     return exactly ? int.MaxValue : 1;
@@ -203,7 +220,7 @@ namespace Lens.Resolver
 
             if (varType.IsInterface)
             {
-                var idist = InterfaceDistance(ctx, varType, ctx.ResolveInterfaces(exprType));
+                var idist = InterfaceDistance(ctx, varType, exprType.GetInterfaces(ctx));
                 if (idist != int.MaxValue)
                     return idist;
             }
@@ -252,8 +269,8 @@ namespace Lens.Resolver
 
             if (varType.IsArray && exprType.IsArray)
             {
-                var varElType = varType.GetElementType();
-                var exprElType = exprType.GetElementType();
+                var varElType = varType.ElementType;
+                var exprElType = exprType.ElementType;
 
                 var areRefs = !varElType.IsValueType && !exprElType.IsValueType;
                 var generic = varElType.IsGenericParameter || exprElType.IsGenericParameter;
@@ -267,7 +284,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the distance to any of given interfaces.
         /// </summary>
-        private static int InterfaceDistance(TypeResolutionContext ctx, Type interfaceType, IEnumerable<Type> ifaces, bool exactly = false)
+        private static int InterfaceDistance(TypeResolutionContext ctx, TypeEntry interfaceType, IEnumerable<TypeEntry> ifaces, bool exactly = false)
         {
             var min = int.MaxValue;
             foreach (var iface in ifaces)
@@ -289,7 +306,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type is a child for some other type.
         /// </summary>
-        private static bool IsDerivedFrom(Type derivedType, Type baseType, out int distance)
+        private static bool IsDerivedFrom(TypeEntry derivedType, TypeEntry baseType, out int distance)
         {
             distance = 0;
             var current = derivedType;
@@ -305,38 +322,33 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a constructed generic type was declared in the script.
         /// </summary>
-        private static bool IsDeclaredGeneric(Type type)
+        private static bool IsDeclaredGeneric(TypeEntry type)
         {
-            return !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() is TypeBuilder;
+            // the definition behind the instantiation says whether the script declared it, with no
+            // need to materialize anything and no need for it to have been emitted yet
+            return !type.IsGenericTypeDefinition && type.GenericDefinition?.IsDeclared == true;
         }
 
         /// <summary>
         /// Gets the base type of a type, tolerating entities that are still being built.
         /// </summary>
-        private static Type GetBaseType(Type type)
+        private static TypeEntry GetBaseType(TypeEntry type)
         {
-            try
-            {
-                return type.BaseType;
-            }
-            catch (NotSupportedException)
-            {
-                return null;
-            }
+            return type.BaseType;
         }
 
         /// <summary>
         /// Calculates compound distance of two generic types' arguments if applicable.
         /// </summary>
-        private static int GenericDistance(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
+        private static int GenericDistance(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType, bool exactly = false)
         {
-            var definition = varType.GetGenericTypeDefinition();
-            if (definition != exprType.GetGenericTypeDefinition())
+            var definition = varType.GetGenericDefinition();
+            if (definition != exprType.GetGenericDefinition())
                 return int.MaxValue;
 
-            var arguments = definition.GetGenericArguments();
-            var arguments1 = varType.GetGenericArguments();
-            var arguments2 = exprType.GetGenericArguments();
+            var arguments = definition.GenericArguments;
+            var arguments1 = varType.GenericArguments;
+            var arguments2 = exprType.GenericArguments;
 
             var result = 0;
             for (var i = 0; i < arguments1.Length; ++i)
@@ -403,7 +415,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Checks if a type can be used as a substitute for a generic parameter.
         /// </summary>
-        private static int GenericParameterDistance(TypeResolutionContext ctx, Type varType, Type exprType, bool exactly = false)
+        private static int GenericParameterDistance(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType, bool exactly = false)
         {
             // generic parameter is on the same level of inheritance as the expression
             // therefore getting its parent type does not take a step
@@ -422,48 +434,34 @@ namespace Lens.Resolver
         /// For LENS-declared parameters the constraint model is used, because the constraints
         /// cannot be read back from an unfinished builder.
         /// </summary>
-        private static Type GetGenericParameterBase(TypeResolutionContext ctx, Type type, bool ignoreConstraints)
+        private static TypeEntry GetGenericParameterBase(TypeResolutionContext ctx, TypeEntry type, bool ignoreConstraints)
         {
-            var entity = ctx.FindConstraints(type);
-            if (entity != null)
-            {
-                return ignoreConstraints
-                    ? typeof(object)
-                    : entity.BaseType ?? (entity.IsValueType ? typeof(ValueType) : typeof(object));
-            }
+            // a declared parameter carries its own constraints, and its BaseType already applies the
+            // CLI defaults - ValueType for a struct constraint, object otherwise
+            if (type.IsGenericParameter && type.IsDeclared)
+                return ignoreConstraints ? TypeEntryCache.Of<object>() : type.BaseType;
 
-            return GetBaseType(type) ?? typeof(object);
+            return GetBaseType(type) ?? TypeEntryCache.Of<object>();
         }
 
         /// <summary>
         /// Reads the attributes of a generic parameter, tolerating unfinished builders.
         /// </summary>
-        private static GenericParameterAttributes GetGenericParameterAttributes(Type type)
+        private static GenericParameterAttributes GetGenericParameterAttributes(TypeEntry type)
         {
-            try
-            {
-                return type.GenericParameterAttributes;
-            }
-            catch (NotSupportedException)
-            {
-                return GenericParameterAttributes.None;
-            }
-            catch (InvalidOperationException)
-            {
-                return GenericParameterAttributes.None;
-            }
+            return type.GenericParameterAttributes;
         }
 
         /// <summary>
         /// Checks if a lambda signature matches a delegate.
         /// </summary>
-        private static int LambdaDistance(TypeResolutionContext ctx, Type varType, Type exprType)
+        private static int LambdaDistance(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType)
         {
             if (!varType.IsCallableType())
                 return int.MaxValue;
 
-            var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType);
-            var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType);
+            var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType.Materialize());
+            var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType.Materialize());
 
             if (varWrapper.ArgumentTypes.Length != exprWrapper.ArgumentTypes.Length)
                 return int.MaxValue;
@@ -493,7 +491,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets the most common type that all the given types would fit into.
         /// </summary>
-        public static Type GetMostCommonType(this Type[] types, TypeResolutionContext ctx)
+        public static TypeEntry GetMostCommonType(this TypeEntry[] types, TypeResolutionContext ctx)
         {
             if (types.Length == 0)
                 return null;
@@ -502,14 +500,14 @@ namespace Lens.Resolver
                 return types[0];
 
             // try to get the most wide type
-            Type curr = null;
+            TypeEntry curr = null;
             foreach (var type in types)
             {
                 if (type.IsVoid())
                     throw new LensCompilerException(CompilerMessages.NoCommonType);
 
-                curr = GetMostCommonType(curr, type);
-                if (curr == typeof(object))
+                curr = GetMostCommonType(ctx, curr, type);
+                if (curr.Is<object>())
                     break;
             }
 
@@ -521,66 +519,66 @@ namespace Lens.Resolver
             {
                 if (!curr.IsExtendablyAssignableFrom(ctx, type))
                 {
-                    curr = typeof(object);
+                    curr = TypeEntryCache.Of<object>();
                     break;
                 }
             }
 
-            if (!curr.IsAnyOf(typeof(object), typeof(ValueType), typeof(Delegate), typeof(Enum)))
+            if (!curr.IsAnyOf(TypeEntryCache.Of<object>(), TypeEntryCache.Of<ValueType>(), TypeEntryCache.Of<Delegate>(), TypeEntryCache.Of<Enum>()))
                 return curr;
 
             // try to get common interfaces
-            var ifaces = ctx.ResolveInterfaces(types[0]).AsEnumerable().ToList();
+            var ifaces = types[0].GetInterfaces(ctx).AsEnumerable().ToList();
             for (var idx = 1; idx < types.Length; idx++)
             {
-                var newIfaces = types[idx].IsInterface ? new[] {types[idx]} : ctx.ResolveInterfaces(types[idx]);
+                var newIfaces = types[idx].IsInterface ? new[] {types[idx]} : types[idx].GetInterfaces(ctx);
                 ifaces = ifaces.Intersect(newIfaces).ToList();
                 if (!ifaces.Any())
                     break;
             }
 
-            var iface = GetMostSpecificInterface(ifaces);
-            return iface ?? typeof(object);
+            var iface = GetMostSpecificInterface(ctx, ifaces);
+            return iface ?? TypeEntryCache.Of<object>();
         }
 
         /// <summary>
         /// Gets the most common type between two.
         /// </summary>
-        private static Type GetMostCommonType(Type left, Type right)
+        private static TypeEntry GetMostCommonType(TypeResolutionContext ctx, TypeEntry left, TypeEntry right)
         {
             // corner case
             if (left == null || left == right)
                 return right;
 
             if (right.IsInterface)
-                return typeof(object);
+                return TypeEntryCache.Of<object>();
 
             // valuetype & null
-            if (left == typeof(NullType) && right.IsValueType)
-                return typeof(Nullable<>).MakeGenericType(right);
+            if (left.Is<NullType>() && right.IsValueType)
+                return TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx, new[] {right});
 
-            if (right == typeof(NullType) && left.IsValueType)
-                return typeof(Nullable<>).MakeGenericType(left);
+            if (right.Is<NullType>() && left.IsValueType)
+                return TypeEntryCache.Of(typeof(Nullable<>)).MakeGeneric(ctx, new[] {left});
 
             // valuetype & Nullable<valuetype>
-            if (left.IsNullableType() && left.GetGenericArguments()[0] == right)
+            if (left.IsNullableType() && left.GenericArguments[0] == right)
                 return left;
 
-            if (right.IsNullableType() && right.GetGenericArguments()[0] == left)
+            if (right.IsNullableType() && right.GenericArguments[0] == left)
                 return right;
 
             // numeric extensions
             if (left.IsNumericType() && right.IsNumericType())
-                return GetNumericOperationType(left, right) ?? typeof(object);
+                return GetNumericOperationType(left, right) ?? TypeEntryCache.Of<object>();
 
             // arrays
             if (left.IsArray && right.IsArray)
             {
-                var leftElem = left.GetElementType();
-                var rightElem = right.GetElementType();
+                var leftElem = left.ElementType;
+                var rightElem = right.ElementType;
                 return leftElem.IsValueType || rightElem.IsValueType
-                    ? typeof(object)
-                    : GetMostCommonType(leftElem, rightElem).MakeArrayType();
+                    ? TypeEntryCache.Of<object>()
+                    : GetMostCommonType(ctx, leftElem, rightElem).MakeArray(ctx);
             }
 
             // inheritance
@@ -599,29 +597,29 @@ namespace Lens.Resolver
                 currLeft = currLeft.BaseType;
             }
 
-            return typeof(object);
+            return TypeEntryCache.Of<object>();
         }
 
         /// <summary>
         /// Finds the most specific interface from that contains all others.
         /// </summary>
-        private static Type GetMostSpecificInterface(IEnumerable<Type> ifaces)
+        private static TypeEntry GetMostSpecificInterface(TypeResolutionContext ctx, IEnumerable<TypeEntry> ifaces)
         {
             var remaining = ifaces.ToDictionary(i => i, i => true);
             foreach (var iface in ifaces)
             {
-                foreach (var curr in iface.GetInterfaces())
+                foreach (var curr in iface.GetInterfaces(ctx))
                     remaining.Remove(curr);
             }
 
             if (remaining.Count == 1)
                 return remaining.First().Key;
 
-            var preferred = new[] {typeof(IList<>), typeof(IEnumerable<>), typeof(IList)};
+            var preferred = new[] {TypeEntryCache.Of(typeof(IList<>)), TypeEntryCache.Of(typeof(IEnumerable<>)), TypeEntryCache.Of<IList>()};
             foreach (var pref in preferred)
             {
                 foreach (var curr in remaining.Keys)
-                    if (curr == pref || (curr.IsGenericType && curr.GetGenericTypeDefinition() == pref))
+                    if (curr == pref || (curr.IsGenericType && curr.GetGenericDefinition() == pref))
                         return curr;
             }
 
@@ -638,19 +636,19 @@ namespace Lens.Resolver
         /// <param name="type1">First operand type.</param>
         /// <param name="type2">Second operand type.</param>
         /// <returns>Operation type. <c>null</c> if operation not permitted.</returns>
-        public static Type GetNumericOperationType(Type type1, Type type2)
+        public static TypeEntry GetNumericOperationType(TypeEntry type1, TypeEntry type2)
         {
             if (type1.IsFloatType() || type2.IsFloatType())
             {
-                if (type1 == typeof(long) || type2 == typeof(long))
-                    return typeof(double);
+                if (type1.Is<long>() || type2.Is<long>())
+                    return TypeEntryCache.Of<double>();
 
                 return WidestNumericType(FloatTypes, type1, type2);
             }
 
             if (type1.IsSignedIntegerType() && type2.IsSignedIntegerType())
             {
-                var types = SignedIntegerTypes.SkipWhile(type => type != typeof(int)).ToArray();
+                var types = SignedIntegerTypes.SkipWhile(type => !type.Is<int>()).ToArray();
                 return WidestNumericType(types, type1, type2);
             }
 
@@ -658,9 +656,9 @@ namespace Lens.Resolver
             {
                 var index1 = Array.IndexOf(UnsignedIntegerTypes, type1);
                 var index2 = Array.IndexOf(UnsignedIntegerTypes, type2);
-                var uintIndex = Array.IndexOf(UnsignedIntegerTypes, typeof(uint));
+                var uintIndex = Array.IndexOf(UnsignedIntegerTypes, TypeEntryCache.Of<uint>());
                 if (index1 < uintIndex && index2 < uintIndex)
-                    return typeof(int);
+                    return TypeEntryCache.Of<int>();
 
                 return WidestNumericType(UnsignedIntegerTypes, type1, type2);
             }
@@ -669,7 +667,7 @@ namespace Lens.Resolver
             return null;
         }
 
-        private static Type WidestNumericType(Type[] types, Type type1, Type type2)
+        private static TypeEntry WidestNumericType(TypeEntry[] types, TypeEntry type1, TypeEntry type2)
         {
             var index1 = Array.IndexOf(types, type1);
             var index2 = Array.IndexOf(types, type2);
@@ -677,7 +675,7 @@ namespace Lens.Resolver
             return types[index < 0 ? 0 : index];
         }
 
-        private static int NumericTypeConversion(Type varType, Type exprType)
+        private static int NumericTypeConversion(TypeEntry varType, TypeEntry exprType)
         {
             if (varType.IsSignedIntegerType() && exprType.IsSignedIntegerType())
                 return SimpleNumericConversion(varType, exprType, SignedIntegerTypes);
@@ -700,7 +698,7 @@ namespace Lens.Resolver
             return int.MaxValue;
         }
 
-        private static int SimpleNumericConversion(Type varType, Type exprType, Type[] conversionChain)
+        private static int SimpleNumericConversion(TypeEntry varType, TypeEntry exprType, TypeEntry[] conversionChain)
         {
             var varTypeIndex = Array.IndexOf(conversionChain, varType);
             var exprTypeIndex = Array.IndexOf(conversionChain, exprType);
@@ -710,10 +708,10 @@ namespace Lens.Resolver
             return varTypeIndex - exprTypeIndex;
         }
 
-        private static int UnsignedToSignedConversion(Type varType, Type exprType)
+        private static int UnsignedToSignedConversion(TypeEntry varType, TypeEntry exprType)
         {
             // no unsigned type can be converted to the signed byte.
-            if (varType == typeof(sbyte))
+            if (varType.Is<sbyte>())
                 return int.MaxValue;
 
             var index = Array.IndexOf(SignedIntegerTypes, varType);
@@ -725,7 +723,7 @@ namespace Lens.Resolver
                 : result + 1;
         }
 
-        private static int SignedToFloatConversion(Type varType, Type exprType)
+        private static int SignedToFloatConversion(TypeEntry varType, TypeEntry exprType)
         {
             var targetType = GetCorrespondingSignedType(varType);
 
@@ -735,9 +733,9 @@ namespace Lens.Resolver
                 : result + 1;
         }
 
-        private static int UnsignedToFloatConversion(Type varType, Type exprType)
+        private static int UnsignedToFloatConversion(TypeEntry varType, TypeEntry exprType)
         {
-            if (exprType == typeof(ulong) && varType == typeof(decimal))
+            if (exprType.Is<ulong>() && varType.Is<decimal>())
             {
                 // ulong can be implicitly converted only to decimal.
                 return 1;
@@ -754,13 +752,13 @@ namespace Lens.Resolver
             }
         }
 
-        private static Type GetCorrespondingSignedType(Type floatType)
+        private static TypeEntry GetCorrespondingSignedType(TypeEntry floatType)
         {
-            if (floatType == typeof(float))
-                return typeof(int);
+            if (floatType.Is<float>())
+                return TypeEntryCache.Of<int>();
 
-            if (floatType == typeof(double) || floatType == typeof(decimal))
-                return typeof(long);
+            if (floatType.Is<double>() || floatType.Is<decimal>())
+                return TypeEntryCache.Of<long>();
 
             return null;
         }
@@ -772,7 +770,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets total distance between two sets of argument types.
         /// </summary>
-        public static MethodLookupResult<T> ArgumentDistance<T>(TypeResolutionContext ctx, IEnumerable<Type> passedTypes, Type[] actualTypes, T method, bool isVariadic)
+        public static MethodLookupResult<T> ArgumentDistance<T>(TypeResolutionContext ctx, IEnumerable<TypeEntry> passedTypes, TypeEntry[] actualTypes, T method, bool isVariadic)
         {
             if (!isVariadic)
                 return new MethodLookupResult<T>(method, TypeListDistance(ctx, passedTypes, actualTypes), actualTypes);
@@ -788,7 +786,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets total distance between two sequence of types.
         /// </summary>
-        public static int TypeListDistance(TypeResolutionContext ctx, IEnumerable<Type> passedArgs, IEnumerable<Type> calleeArgs)
+        public static int TypeListDistance(TypeResolutionContext ctx, IEnumerable<TypeEntry> passedArgs, IEnumerable<TypeEntry> calleeArgs)
         {
             var passedIter = passedArgs.GetEnumerator();
             var calleeIter = calleeArgs.GetEnumerator();
@@ -818,7 +816,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the compound distance of a list of arguments packed into a param array.
         /// </summary>
-        private static int VariadicArgumentDistance(TypeResolutionContext ctx, IEnumerable<Type> passedArgs, Type variadicArg)
+        private static int VariadicArgumentDistance(TypeResolutionContext ctx, IEnumerable<TypeEntry> passedArgs, TypeEntry variadicArg)
         {
             var args = passedArgs.ToArray();
 
@@ -827,7 +825,7 @@ namespace Lens.Resolver
                 return 0;
 
             var sum = 0;
-            var elemType = variadicArg.GetElementType();
+            var elemType = variadicArg.ElementType;
 
             foreach (var curr in args)
             {
@@ -853,9 +851,9 @@ namespace Lens.Resolver
         /// <param name="type">Type to check.</param>
         /// <param name="iface">Desired interface.</param>
         /// <param name="unwindGenerics">A flag indicating that generic arguments should be discarded from both the type and the interface.</param>
-        public static bool Implements(this Type type, TypeResolutionContext ctx, Type iface, bool unwindGenerics)
+        public static bool Implements(this TypeEntry type, TypeResolutionContext ctx, TypeEntry iface, bool unwindGenerics)
         {
-            var ifaces = ctx.ResolveInterfaces(type);
+            var ifaces = type.GetInterfaces(ctx);
             if (type.IsInterface)
                 ifaces = ifaces.Union(new[] {type}).ToArray();
 
@@ -865,11 +863,11 @@ namespace Lens.Resolver
                 {
                     var curr = ifaces[idx];
                     if (curr.IsGenericType)
-                        ifaces[idx] = curr.GetGenericTypeDefinition();
+                        ifaces[idx] = curr.GetGenericDefinition();
                 }
 
                 if (iface.IsGenericType)
-                    iface = iface.GetGenericTypeDefinition();
+                    iface = iface.GetGenericDefinition();
             }
 
             return ifaces.Contains(iface);
@@ -881,17 +879,17 @@ namespace Lens.Resolver
         /// <param name="type">Type to find the implementation in.</param>
         /// <param name="iface">Desirrable interface.</param>
         /// <returns>Implementation of the generic interface or null if none.</returns>
-        public static Type ResolveImplementationOf(this Type type, TypeResolutionContext ctx, Type iface)
+        public static TypeEntry ResolveImplementationOf(this TypeEntry type, TypeResolutionContext ctx, TypeEntry iface)
         {
             if (iface.IsGenericType && !iface.IsGenericTypeDefinition)
-                iface = iface.GetGenericTypeDefinition();
+                iface = iface.GenericDefinition;
 
-            var ifaces = ctx.ResolveInterfaces(type);
+            var ifaces = type.GetInterfaces(ctx);
             if (type.IsInterface)
                 ifaces = ifaces.Union(new[] {type}).ToArray();
 
             return ifaces.FirstOrDefault(
-                x => x == iface || (x.IsGenericType && x.GetGenericTypeDefinition() == iface)
+                x => x == iface || (x.IsGenericType && x.GetGenericDefinition() == iface)
             );
         }
 
@@ -902,7 +900,7 @@ namespace Lens.Resolver
         /// <param name="type1">First type to examine.</param>
         /// <param name="type2">First type to examine.</param>
         /// <returns>Common implementation of an interface, or null if none.</returns>
-        public static Type ResolveCommonImplementationFor(this Type iface, TypeResolutionContext ctx, Type type1, Type type2)
+        public static TypeEntry ResolveCommonImplementationFor(this TypeEntry iface, TypeResolutionContext ctx, TypeEntry type1, TypeEntry type2)
         {
             var impl1 = type1.ResolveImplementationOf(ctx, iface);
             var impl2 = type2.ResolveImplementationOf(ctx, iface);
@@ -915,7 +913,7 @@ namespace Lens.Resolver
         /// </summary>
         /// <param name="type">Closed type to test.</param>
         /// <param name="genericType">Generic type.</param>
-        public static bool IsAppliedVersionOf(this Type type, TypeResolutionContext ctx, Type genericType)
+        public static bool IsAppliedVersionOf(this TypeEntry type, TypeResolutionContext ctx, TypeEntry genericType)
         {
             if (type.IsInterface && !genericType.IsInterface)
                 throw new ArgumentException(string.Format("Interface {0} cannot implement a type! ({1} given).", type.FullName, genericType.FullName));
@@ -925,8 +923,20 @@ namespace Lens.Resolver
 
             return genericType.IsInterface
                 ? type.Implements(ctx, genericType, true)
-                : type.GetGenericTypeDefinition() == genericType.GetGenericTypeDefinition();
+                : type.GetGenericDefinition() == genericType.GetGenericDefinition();
         }
+
+        #endregion
+
+        #region Helpers
+
+        /// <summary>
+        /// Gets the generic definition of a generic type, exactly as
+        /// <see cref="Type.GetGenericTypeDefinition"/> does: a definition is its own definition,
+        /// while <see cref="TypeEntry.GenericDefinition"/> reports null for one.
+        ///
+        /// Only meaningful for a type that is generic, which is what the reflection call requires too.
+        /// </summary>
 
         #endregion
     }

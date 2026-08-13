@@ -31,24 +31,24 @@ namespace Lens.Resolver
                 }
             };
 
-            TypeAliases = new Dictionary<string, Type>
+            TypeAliases = new Dictionary<string, TypeEntry>
             {
-                {"object", typeof(object)},
-                {"bool", typeof(bool)},
-                {"int", typeof(int)},
-                {"long", typeof(long)},
-                {"float", typeof(float)},
-                {"double", typeof(double)},
-                {"decimal", typeof(decimal)},
-                {"string", typeof(string)},
-                {"char", typeof(char)},
-                {"byte", typeof(byte)},
+                {"object", TypeEntryCache.Of<object>()},
+                {"bool", TypeEntryCache.Of<bool>()},
+                {"int", TypeEntryCache.Of<int>()},
+                {"long", TypeEntryCache.Of<long>()},
+                {"float", TypeEntryCache.Of<float>()},
+                {"double", TypeEntryCache.Of<double>()},
+                {"decimal", TypeEntryCache.Of<decimal>()},
+                {"string", TypeEntryCache.Of<string>()},
+                {"char", TypeEntryCache.Of<char>()},
+                {"byte", TypeEntryCache.Of<byte>()},
             };
         }
 
         public TypeResolver(TypeResolutionContext resolutionContext, Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
         {
-            _cache = new Dictionary<string, Type>();
+            _cache = new Dictionary<string, TypeEntry>();
             _resolutionContext = resolutionContext;
             _namespaces = namespaces;
             _asmCache = asmCache;
@@ -66,7 +66,7 @@ namespace Lens.Resolver
         /// <summary>
         /// List of known type short names (like 'int' = 'System.Int32').
         /// </summary>
-        private static readonly Dictionary<string, Type> TypeAliases;
+        private static readonly Dictionary<string, TypeEntry> TypeAliases;
 
         /// <summary>
         /// The resolution context of the current compilation.
@@ -76,7 +76,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Cached list of already resolved types.
         /// </summary>
-        private readonly Dictionary<string, Type> _cache;
+        private readonly Dictionary<string, TypeEntry> _cache;
 
         /// <summary>
         /// List of namespaces to check when finding the type.
@@ -91,7 +91,7 @@ namespace Lens.Resolver
         /// <summary>
         /// The method that allows external types to be looked up.
         /// </summary>
-        public Func<string, Type> ExternalLookup { get; set; }
+        public Func<string, TypeEntry> ExternalLookup { get; set; }
 
         #endregion
 
@@ -100,16 +100,16 @@ namespace Lens.Resolver
         /// <summary>
         /// Resolves a type by its string signature.
         /// </summary>
-        public Type ResolveType(TypeSignature signature)
+        public TypeEntry ResolveType(TypeSignature signature)
         {
             if (_cache.TryGetValue(signature.FullSignature, out var cached))
                 return cached;
 
             var type = ParseTypeSignature(signature);
 
-            // a type parameter means different things in different declarations and an unfinished
-            // builder can still change shape, so neither may be memoized by name
-            if (type != null && TypeResolutionContext.IsStable(type))
+            // a type parameter means different things in different declarations and a declaration's
+            // shape can still change, so nothing built out of one may be memoized by name
+            if (type != null && !type.ContainsDeclared)
                 _cache.Add(signature.FullSignature, type);
 
             return type;
@@ -122,7 +122,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Parses the type signature.
         /// </summary>
-        private Type ParseTypeSignature(TypeSignature signature)
+        private TypeEntry ParseTypeSignature(TypeSignature signature)
         {
             try
             {
@@ -151,16 +151,21 @@ namespace Lens.Resolver
         /// <summary>
         /// Wraps a type into a specific postfix.
         /// </summary>
-        private Type ProcessPostfix(Type type, string postfix)
+        private TypeEntry ProcessPostfix(TypeEntry type, string postfix)
         {
             if (postfix == "[]")
-                return type.MakeArrayType();
+                return type.MakeArray(_resolutionContext);
 
             if (postfix == "~")
-                return GenericHelper.MakeGenericTypeChecked(_resolutionContext, typeof(IEnumerable<>), type);
+                return TypeEntry.Generic(_resolutionContext, typeof(IEnumerable<>), type);
 
             if (postfix == "?")
-                return GenericHelper.MakeGenericTypeChecked(_resolutionContext, typeof(Nullable<>), type);
+            {
+                // checked, not MakeNullable: Nullable<T> demands a non-nullable value type, and
+                // 'SomeRecord?' has to be rejected with the language's own message rather than
+                // accepted here and blamed on the CLR later
+                return GenericHelper.MakeGenericTypeChecked(_resolutionContext, TypeEntryCache.Of(typeof(Nullable<>)), type);
+            }
 
             throw new ArgumentException(string.Format("Unknown postfix '{0}'!", postfix));
         }
@@ -168,7 +173,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Searches for the specified type in the namespaces.
         /// </summary>
-        private Type FindType(string name)
+        private TypeEntry FindType(string name)
         {
             var checkNamespaces = !name.Contains('.');
 
@@ -219,7 +224,7 @@ namespace Lens.Resolver
             if (foundType == null)
                 throw new ArgumentException(string.Format(CompilerMessages.TypeNotFound, name));
 
-            return foundType;
+            return TypeEntryCache.Of(foundType);
         }
 
         #endregion

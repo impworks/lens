@@ -25,14 +25,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             if (Literal.LiteralType == typeof(NullType))
             {
-                if (expressionType.IsValueType && !expressionType.IsAppliedVersionOf(ctx.Resolver, typeof(Nullable<>)))
+                if (expressionType.IsValueType && !expressionType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Nullable<>))))
                     Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
             }
-            else if (expressionType != Literal.LiteralType)
+            else if (!expressionType.Is(Literal.LiteralType))
             {
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, Literal.LiteralType);
             }

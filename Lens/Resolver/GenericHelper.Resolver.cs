@@ -175,12 +175,12 @@ namespace Lens.Resolver
                     var expArg = expectedInfo.ArgumentTypes[idx];
                     var actualArg = actualInfo.ArgumentTypes[idx];
 
-                    if (actualArg == typeof(UnspecifiedType))
+                    if (actualArg == TypeEntryCache.Of(typeof(UnspecifiedType)))
                     {
                         // type is unspecified: try to infer it
                         try
                         {
-                            argTypes[idx] = ApplyGenericArguments(expArg, _genericDefs, _genericValues);
+                            argTypes[idx] = ApplyGenericArguments(expArg.Materialize(), _genericDefs, _genericValues);
                         }
                         catch (InvalidOperationException)
                         {
@@ -190,10 +190,10 @@ namespace Lens.Resolver
                     else
                     {
                         // type is specified: use it
-                        argTypes[idx] = actualArg;
+                        argTypes[idx] = actualArg.Materialize();
                         ResolveRecursive(
-                            new[] {expArg},
-                            new[] {actualArg},
+                            new[] {expArg.Materialize()},
+                            new[] {actualArg.Materialize()},
                             depth + 1
                         );
                     }
@@ -204,10 +204,10 @@ namespace Lens.Resolver
                     var lambdaReturnType = _lambdaResolver(lambdaPosition, argTypes);
 
                     // return type is significant for generic resolution
-                    if (ContainsGenericParameter(expectedInfo.ReturnType))
+                    if (ContainsGenericParameter(expectedInfo.ReturnType.Materialize()))
                     {
                         ResolveRecursive(
-                            new[] {expectedInfo.ReturnType},
+                            new[] {expectedInfo.ReturnType.Materialize()},
                             new[] {lambdaReturnType},
                             depth + 1
                         );
@@ -230,7 +230,7 @@ namespace Lens.Resolver
                 {
                     var matching = ctx.ResolveInterfaces(actual)
                                          .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == generic)
-                                         .Where(i => i.DistanceFrom(ctx, desired) != int.MaxValue)
+                                         .Where(i => TypeEntryCache.Of(i).DistanceFrom(ctx, TypeEntryCache.Of(desired)) != int.MaxValue)
                                          .Take(2)
                                          .ToList();
 

@@ -25,16 +25,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
             if (exprType.IsArray)
-                return exprType.GetElementType();
+                return exprType.ElementType;
 
             var idxType = Index.Resolve(ctx);
             try
             {
-                _getter = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType, idxType, true);
+                _getter = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType.Materialize(), idxType.Materialize(), true);
                 return _getter.ReturnType;
             }
             catch (LensCompilerException ex)
@@ -74,7 +74,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var gen = ctx.CurrentMethod.Generator;
 
             var exprType = Expression.Resolve(ctx);
-            var itemType = exprType.GetElementType();
+            var itemType = exprType.ElementType.Materialize();
 
             Expression.Emit(ctx, true);
             Expr.Cast(Index, typeof(int)).Emit(ctx, true);
@@ -105,7 +105,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             Expression.Emit(ctx, true);
 
-            Expr.Cast(Index, _getter.ArgumentTypes[0]).Emit(ctx, true);
+            Expr.Cast(Index, _getter.ArgumentTypes[0].Materialize()).Emit(ctx, true);
 
             gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
         }

@@ -43,15 +43,15 @@ namespace Lens.SyntaxTree.ControlFlow
 
         public CodeBlockNode Body { get; set; }
 
-        private Type _variableType;
-        private Type _enumeratorType;
+        private TypeEntry _variableType;
+        private TypeEntry _enumeratorType;
         private PropertyWrapper _currentProperty;
 
         #endregion
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (IterableExpression != null)
                 DetectEnumerableType(ctx);
@@ -112,8 +112,8 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             var iteratorVar = ctx.Scope.DeclareImplicit(ctx, _enumeratorType, false);
             var enumerableType = _enumeratorType.IsGenericType
-                ? typeof(IEnumerable<>).MakeGenericType(_enumeratorType.GetGenericArguments()[0])
-                : typeof(IEnumerable);
+                ? TypeEntry.Generic(ctx.Resolver, typeof(IEnumerable<>), _enumeratorType.GenericArguments[0])
+                : TypeEntryCache.Of<IEnumerable>();
 
             var init = Expr.Set(
                 iteratorVar,
@@ -131,7 +131,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 )
             );
 
-            if (_enumeratorType.Implements(ctx.Resolver, typeof(IDisposable), false))
+            if (_enumeratorType.Implements(ctx.Resolver, TypeEntryCache.Of<IDisposable>(), false))
             {
                 var dispose = Expr.Block(Expr.Invoke(Expr.Get(iteratorVar), "Dispose"));
                 var returnType = Resolve(ctx);
@@ -170,8 +170,8 @@ namespace Lens.SyntaxTree.ControlFlow
         private NodeBase ExpandArray(Context ctx)
         {
             var arrayVar = ctx.Scope.DeclareImplicit(ctx, IterableExpression.Resolve(ctx), false);
-            var idxVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
-            var lenVar = ctx.Scope.DeclareImplicit(ctx, typeof(int), false);
+            var idxVar = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
+            var lenVar = ctx.Scope.DeclareImplicit(ctx, TypeEntryCache.Of<int>(), false);
 
             return Expr.Block(
                 Expr.Set(idxVar, Expr.Int(0)),
@@ -246,20 +246,20 @@ namespace Lens.SyntaxTree.ControlFlow
             var seqType = IterableExpression.Resolve(ctx);
             if (seqType.IsArray)
             {
-                _variableType = seqType.GetElementType();
+                _variableType = seqType.ElementType;
                 return;
             }
 
-            var ifaces = ctx.Resolver.ResolveInterfaces(seqType);
+            var ifaces = seqType.GetInterfaces(ctx.Resolver);
             if (seqType.IsInterface)
                 ifaces = ifaces.Union(new[] {seqType}).ToArray();
 
-            var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            var generic = ifaces.FirstOrDefault(i => i.IsGenericType && i.GetGenericDefinition().Is(typeof(IEnumerable<>)));
             if (generic != null)
-                _enumeratorType = typeof(IEnumerator<>).MakeGenericType(generic.GetGenericArguments()[0]);
+                _enumeratorType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerator<>), generic.GenericArguments[0]);
 
-            else if (ifaces.Contains(typeof(IEnumerable)))
-                _enumeratorType = typeof(IEnumerator);
+            else if (ifaces.Contains(TypeEntryCache.Of<IEnumerable>()))
+                _enumeratorType = TypeEntryCache.Of<IEnumerator>();
 
             else
                 Error(IterableExpression, CompilerMessages.TypeNotIterable, seqType);

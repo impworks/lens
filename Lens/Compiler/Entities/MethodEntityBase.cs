@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Utils;
 
@@ -41,7 +42,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// The types of arguments (for auto-generated methods).
         /// </summary>
-        public Type[] ArgumentTypes;
+        public TypeEntry[] ArgumentTypes;
 
         /// <summary>
         /// The MSIL Generator stream to which commands are emitted.
@@ -105,7 +106,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Gets the information about argument types.
         /// </summary>
-        public Type[] GetArgumentTypes(Context ctx)
+        public TypeEntry[] GetArgumentTypes(Context ctx)
         {
             return ArgumentTypes ?? Arguments.Values.Select(a => a.GetArgumentType(ctx)).ToArray();
         }

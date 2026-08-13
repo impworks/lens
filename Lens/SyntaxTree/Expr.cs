@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.SyntaxTree.Declarations;
 using Lens.SyntaxTree.Declarations.Functions;
@@ -152,12 +153,17 @@ namespace Lens.SyntaxTree
 
         public static DefaultOperatorNode Default(Type type)
         {
+            return new DefaultOperatorNode {Type = TypeEntryCache.Of(type)};
+        }
+
+        public static DefaultOperatorNode Default(TypeEntry type)
+        {
             return new DefaultOperatorNode {Type = type};
         }
 
         public static DefaultOperatorNode Default<T>()
         {
-            return new DefaultOperatorNode {Type = typeof(T)};
+            return new DefaultOperatorNode {Type = TypeEntryCache.Of<T>()};
         }
 
         public static TypeofOperatorNode Typeof(TypeSignature type)
@@ -167,12 +173,17 @@ namespace Lens.SyntaxTree
 
         public static TypeofOperatorNode Typeof(Type type)
         {
+            return new TypeofOperatorNode {Type = TypeEntryCache.Of(type)};
+        }
+
+        public static TypeofOperatorNode Typeof(TypeEntry type)
+        {
             return new TypeofOperatorNode {Type = type};
         }
 
         public static TypeofOperatorNode Typeof<T>()
         {
-            return new TypeofOperatorNode {Type = typeof(T)};
+            return new TypeofOperatorNode {Type = TypeEntryCache.Of<T>()};
         }
 
         public static CastOperatorNode Cast(NodeBase node, TypeSignature type)
@@ -182,10 +193,20 @@ namespace Lens.SyntaxTree
 
         public static CastOperatorNode Cast(NodeBase node, Type type)
         {
+            return new CastOperatorNode {Expression = node, Type = TypeEntryCache.Of(type)};
+        }
+
+        public static CastOperatorNode Cast(NodeBase node, TypeEntry type)
+        {
             return new CastOperatorNode {Expression = node, Type = type};
         }
 
         public static CastOperatorNode CastTransparent(NodeBase node, Type type)
+        {
+            return CastTransparent(node, TypeEntryCache.Of(type));
+        }
+
+        public static CastOperatorNode CastTransparent(NodeBase node, TypeEntry type)
         {
             var expr = Cast(node, type);
             expr.StartLocation = node.StartLocation;
@@ -195,7 +216,7 @@ namespace Lens.SyntaxTree
 
         public static CastOperatorNode Cast<T>(NodeBase node)
         {
-            return new CastOperatorNode {Expression = node, Type = typeof(T)};
+            return new CastOperatorNode {Expression = node, Type = TypeEntryCache.Of<T>()};
         }
 
         public static IsOperatorNode Is(NodeBase node, TypeSignature type)
@@ -205,12 +226,17 @@ namespace Lens.SyntaxTree
 
         public static IsOperatorNode Is(NodeBase node, Type type)
         {
+            return new IsOperatorNode {Expression = node, Type = TypeEntryCache.Of(type)};
+        }
+
+        public static IsOperatorNode Is(NodeBase node, TypeEntry type)
+        {
             return new IsOperatorNode {Expression = node, Type = type};
         }
 
         public static IsOperatorNode Is<T>(NodeBase node)
         {
-            return new IsOperatorNode {Expression = node, Type = typeof(T)};
+            return new IsOperatorNode {Expression = node, Type = TypeEntryCache.Of<T>()};
         }
 
         public static BitOperatorNode BitAnd(NodeBase left, NodeBase right)
@@ -304,6 +330,11 @@ namespace Lens.SyntaxTree
 
         public static NewObjectArrayNode Array(Type type, NodeBase size)
         {
+            return new NewObjectArrayNode {Type = TypeEntryCache.Of(type), Size = size};
+        }
+
+        public static NewObjectArrayNode Array(TypeEntry type, NodeBase size)
+        {
             return new NewObjectArrayNode {Type = type, Size = size};
         }
 
@@ -327,6 +358,11 @@ namespace Lens.SyntaxTree
         }
 
         public static NewObjectNode New(Type type, params NodeBase[] args)
+        {
+            return New(TypeEntryCache.Of(type), args);
+        }
+
+        public static NewObjectNode New(TypeEntry type, params NodeBase[] args)
         {
             return new NewObjectNode
             {
@@ -381,10 +417,20 @@ namespace Lens.SyntaxTree
 
         public static GetMemberNode GetMember(Type type, string name, params TypeSignature[] hints)
         {
+            return new GetMemberNode {StaticTypeInfo = TypeEntryCache.Of(type), MemberName = name, TypeHints = hints.ToList()};
+        }
+
+        public static GetMemberNode GetMember(TypeEntry type, string name, params TypeSignature[] hints)
+        {
             return new GetMemberNode {StaticTypeInfo = type, MemberName = name, TypeHints = hints.ToList()};
         }
 
         public static SetMemberNode SetMember(Type type, string name, NodeBase value)
+        {
+            return new SetMemberNode {StaticTypeInfo = TypeEntryCache.Of(type), MemberName = name, Value = value};
+        }
+
+        public static SetMemberNode SetMember(TypeEntry type, string name, NodeBase value)
         {
             return new SetMemberNode {StaticTypeInfo = type, MemberName = name, Value = value};
         }
@@ -500,6 +546,11 @@ namespace Lens.SyntaxTree
         }
 
         public static VarNode Var(string name, Type type)
+        {
+            return new VarNode(name) {ResolvedType = TypeEntryCache.Of(type)};
+        }
+
+        public static VarNode Var(string name, TypeEntry type)
         {
             return new VarNode(name) {ResolvedType = type};
         }
@@ -673,7 +724,7 @@ namespace Lens.SyntaxTree
 
         public static FunctionArgument Arg(string name, bool isRef = false)
         {
-            return new FunctionArgument {Name = name, Type = typeof(UnspecifiedType), IsRefArgument = isRef};
+            return new FunctionArgument {Name = name, Type = TypeEntryCache.Of<UnspecifiedType>(), IsRefArgument = isRef};
         }
 
         public static FunctionArgument Arg(string name, TypeSignature type, bool isRef = false)
@@ -682,6 +733,11 @@ namespace Lens.SyntaxTree
         }
 
         public static FunctionArgument Arg(string name, Type type, bool isRef = false)
+        {
+            return new FunctionArgument {Name = name, Type = TypeEntryCache.Of(type), IsRefArgument = isRef};
+        }
+
+        public static FunctionArgument Arg(string name, TypeEntry type, bool isRef = false)
         {
             return new FunctionArgument {Name = name, Type = type, IsRefArgument = isRef};
         }

@@ -55,6 +55,65 @@ namespace Lens.Resolver
         #region Generic type instantiation
 
         /// <summary>
+        /// Canonical entry-space instantiations. Unlike the CLR-side table below, this one exists
+        /// only to hand out one object per instantiation - a ConstructedTypeEntry compares by
+        /// definition and arguments, so it would be correct without the cache, just wasteful.
+        /// </summary>
+        private readonly Dictionary<TypeEntry, List<Tuple<TypeEntry[], TypeEntry>>> _entryInstantiations =
+            new Dictionary<TypeEntry, List<Tuple<TypeEntry[], TypeEntry>>>();
+
+        /// <summary>
+        /// Applies type arguments to a generic definition.
+        ///
+        /// An instantiation made only of host types is handed to reflection, which already interns
+        /// it. Anything involving a declaration is built in the entry model instead, so that nothing
+        /// has to be emitted in order to name List&lt;SomeRecord&gt; or Dictionary&lt;string, T&gt;.
+        /// </summary>
+        public TypeEntry MakeGeneric(TypeEntry definition, TypeEntry[] arguments)
+        {
+            if (!definition.ContainsDeclared && arguments.All(x => !ReferenceEquals(x, null) && !x.ContainsDeclared))
+                return TypeEntryCache.Of(MakeGenericType(definition.Materialize(), TypeEntry.Materialize(arguments)));
+
+            if (!_entryInstantiations.TryGetValue(definition, out var known))
+            {
+                known = new List<Tuple<TypeEntry[], TypeEntry>>();
+                _entryInstantiations.Add(definition, known);
+            }
+
+            foreach (var curr in known)
+                if (TypeEntry.SameAll(curr.Item1, arguments))
+                    return curr.Item2;
+
+            var result = new ConstructedTypeEntry(this, definition, arguments);
+            known.Add(new Tuple<TypeEntry[], TypeEntry>(arguments, result));
+            return result;
+        }
+
+        /// <summary>
+        /// Wraps a type into an array, in the entry model when the element needs it.
+        /// </summary>
+        public TypeEntry MakeArray(TypeEntry element)
+        {
+            return element.ContainsDeclared
+                ? new ArrayTypeEntry(this, element)
+                : TypeEntryCache.Of(element.Materialize().MakeArrayType());
+        }
+
+        /// <summary>
+        /// Wraps a type into a by-ref type, in the entry model when the element needs it.
+        /// </summary>
+        public TypeEntry MakeByRef(TypeEntry element)
+        {
+            return element.ContainsDeclared
+                ? (TypeEntry) new ByRefTypeEntry(this, element)
+                : TypeEntryCache.Of(element.Materialize().MakeByRefType());
+        }
+
+        #endregion
+
+        #region CLR type instantiation
+
+        /// <summary>
         /// Applies type arguments to a generic type definition, returning the same object every
         /// time the same instantiation is requested.
         /// </summary>
@@ -182,8 +241,10 @@ namespace Lens.Resolver
         {
             var result = new List<Type>();
 
-            foreach (var iface in entity.Interfaces)
+            foreach (var currIface in entity.Interfaces)
             {
+                var iface = currIface.Materialize();
+
                 if (!result.Contains(iface))
                     result.Add(iface);
 
@@ -194,7 +255,7 @@ namespace Lens.Resolver
 
             if (entity.BaseType != null)
             {
-                foreach (var curr in ResolveInterfaces(entity.BaseType))
+                foreach (var curr in ResolveInterfaces(entity.BaseType.Materialize()))
                     if (!result.Contains(curr))
                         result.Add(curr);
             }
@@ -254,7 +315,13 @@ namespace Lens.Resolver
         public void Register(GenericParameterEntity entity)
         {
             if (entity.Builder != null)
+            {
                 _knownParameters[entity.Builder] = entity;
+
+                // a builder arriving back from reflection must resolve to the declared parameter and
+                // not to a bare wrapper, or the same T would have two entries
+                TypeEntryCache.Register(entity.Builder, entity.TypeInfo);
+            }
         }
 
         /// <summary>
@@ -264,6 +331,24 @@ namespace Lens.Resolver
         public bool IsDeclaredTypeParameter(Type type)
         {
             return type != null && type.IsGenericParameter && FindConstraints(type) != null;
+        }
+
+        /// <summary>
+        /// Checks whether a type is a generic parameter declared in LENS code, as opposed to an
+        /// unsubstituted parameter that leaked in from an imported generic definition.
+        /// </summary>
+        public bool IsDeclaredTypeParameter(TypeEntry type)
+        {
+            return type is GenericParameterEntry;
+        }
+
+        /// <summary>
+        /// Returns the constraint model for a LENS-declared generic parameter, or null if the type
+        /// is not one of ours. The entry carries its own model, so nothing has to be looked up.
+        /// </summary>
+        public GenericParameterEntity FindConstraints(TypeEntry type)
+        {
+            return (type as GenericParameterEntry)?.Entity;
         }
 
         /// <summary>

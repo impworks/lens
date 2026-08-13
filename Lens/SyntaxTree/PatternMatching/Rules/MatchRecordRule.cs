@@ -39,13 +39,13 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The actual type.
         /// </summary>
-        private Type _type;
+        private TypeEntry _type;
 
         #endregion
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             var typeEntity = ctx.FindType(Identifier.FullSignature);
             if (typeEntity == null || (!typeEntity.Kind.IsAnyOf(TypeEntityKind.Record)))
@@ -84,14 +84,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         {
             yield return MakeJumpIf(
                 nextStatement,
-                Expr.Not(Expr.Is(expression, _type))
+                Expr.Not(Expr.Is(expression, _type.Materialize()))
             );
 
             foreach (var fieldRule in FieldRules)
             {
                 var rules = fieldRule.Rule.Expand(
                     ctx,
-                    Expr.GetMember(Expr.Cast(expression, _type), fieldRule.Name.FullSignature),
+                    Expr.GetMember(Expr.Cast(expression, _type.Materialize()), fieldRule.Name.FullSignature),
                     nextStatement
                 );
 

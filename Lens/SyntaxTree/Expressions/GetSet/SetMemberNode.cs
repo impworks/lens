@@ -38,11 +38,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
-            return typeof(UnitType);
+            return TypeEntryCache.Of<UnitType>();
         }
 
         /// <summary>
@@ -50,8 +50,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void ResolveSelf(Context ctx)
         {
-            var type = StaticTypeInfo
-                       ?? (StaticType != null
+            var type = StaticTypeInfo != null
+                       ? StaticTypeInfo
+                       : (StaticType != null
                            ? ctx.ResolveType(StaticType)
                            : Expression.Resolve(ctx));
 
@@ -122,7 +123,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 Expression.Emit(ctx, true);
             }
 
-            Expr.Cast(Value, destType).Emit(ctx, true);
+            Expr.Cast(Value, destType.Materialize()).Emit(ctx, true);
 
             if (_field != null)
                 gen.EmitSaveField(_field.FieldInfo);

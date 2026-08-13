@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Emit;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.PatternMatching.Rules
@@ -15,7 +16,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// Gets the list of variables bindings declared in the pattern.
         /// </summary>
-        public abstract IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType);
+        public abstract IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType);
 
         /// <summary>
         /// Returns the AST representation of this rule's checks.

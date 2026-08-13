@@ -1,5 +1,6 @@
 ﻿using System;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
@@ -18,7 +19,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Already resolved type (for static member access from auto-generated code).
         /// </summary>
-        public Type StaticTypeInfo { get; set; }
+        public TypeEntry StaticTypeInfo { get; set; }
 
         /// <summary>
         /// The name of the member to access.

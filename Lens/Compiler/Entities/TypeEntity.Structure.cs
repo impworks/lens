@@ -20,7 +20,7 @@ namespace Lens.Compiler.Entities
             if (!mi.IsStatic || !mi.IsPublic)
                 Context.Error(CompilerMessages.ImportUnsupportedMethod);
 
-            var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, p.ParameterType, p.ParameterType.IsByRef));
+            var args = mi.GetParameters().Select(p => new FunctionArgument(p.Name, TypeEntryCache.Of(p.ParameterType), p.ParameterType.IsByRef));
             var me = new MethodEntity(this)
             {
                 Name = name,
@@ -29,7 +29,7 @@ namespace Lens.Compiler.Entities
                 IsVirtual = false,
                 IsVariadic = ReflectionHelper.IsVariadic(mi),
                 MethodInfo = mi,
-                ReturnType = mi.ReturnType,
+                ReturnType = TypeEntryCache.Of(mi.ReturnType),
                 Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
             };
 
@@ -57,7 +57,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new field by resolved type.
         /// </summary>
-        internal FieldEntity CreateField(string name, Type type, bool isStatic = false, bool prepare = true)
+        internal FieldEntity CreateField(string name, TypeEntry type, bool isStatic = false, bool prepare = true)
         {
             return CreateFieldCore(name, isStatic, prepare, fe => fe.Type = type);
         }
@@ -65,9 +65,9 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new method by resolved argument types.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, Type returnType, Type[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeEntry returnType, TypeEntry[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true, bool isOverride = false)
         {
-            return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
+            return CreateMethodCore(name, isStatic, isVirtual, prepare, isOverride, me =>
                 {
                     me.ArgumentTypes = argTypes;
                     me.ReturnType = returnType;
@@ -78,19 +78,19 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new method with argument types given by signatures.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeSignature returnType, string[] argTypes = null, bool isStatic = false, bool isVirtual = false, bool prepare = true, bool isOverride = false)
         {
             var args = argTypes?.Select((a, idx) => new FunctionArgument("arg" + idx.ToString(), a)).ToArray();
 
-            return CreateMethod(name, returnType, args, isStatic, isVirtual, prepare);
+            return CreateMethod(name, returnType, args, isStatic, isVirtual, prepare, isOverride);
         }
 
         /// <summary>
         /// Creates a new method with argument types given by function arguments.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeSignature returnType, IEnumerable<FunctionArgument> args = null, bool isStatic = false, bool isVirtual = false, bool prepare = true, bool isOverride = false)
         {
-            return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
+            return CreateMethodCore(name, isStatic, isVirtual, prepare, isOverride, me =>
                 {
                     me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
                     me.ReturnTypeSignature = returnType;
@@ -101,9 +101,9 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a new method with a resolved return type and argument types given by function arguments.
         /// </summary>
-        internal MethodEntity CreateMethod(string name, Type returnType, IEnumerable<FunctionArgument> args, bool isStatic = false, bool isVirtual = false, bool prepare = true)
+        internal MethodEntity CreateMethod(string name, TypeEntry returnType, IEnumerable<FunctionArgument> args, bool isStatic = false, bool isVirtual = false, bool prepare = true, bool isOverride = false)
         {
-            return CreateMethodCore(name, isStatic, isVirtual, prepare, me =>
+            return CreateMethodCore(name, isStatic, isVirtual, prepare, isOverride, me =>
                 {
                     me.Arguments = new HashList<FunctionArgument>(args, x => x.Name);
                     me.ReturnType = returnType;
@@ -118,14 +118,14 @@ namespace Lens.Compiler.Entities
         {
             var ce = new ConstructorEntity(this)
             {
-                ArgumentTypes = argTypes?.Select(Context.ResolveType).ToArray(),
+                ArgumentTypes = argTypes?.Select(x => Context.ResolveType(x)).ToArray(),
             };
 
             _constructors.Add(ce);
             Context.UnprocessedMethods.Add(ce);
 
             if (prepare)
-                ce.PrepareSelf();
+                ce.PrepareSelfAsNeeded();
             else
                 Context.UnpreparedTypeContents.Add(ce);
 
@@ -200,7 +200,7 @@ namespace Lens.Compiler.Entities
             extraInit?.Invoke(fe);
 
             if (prepare)
-                fe.PrepareSelf();
+                fe.PrepareSelfAsNeeded();
             else
                 Context.UnpreparedTypeContents.Add(fe);
 
@@ -210,13 +210,14 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Creates a method without setting argument type info.
         /// </summary>
-        private MethodEntity CreateMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, Action<MethodEntity> extraInit = null)
+        private MethodEntity CreateMethodCore(string name, bool isStatic, bool isVirtual, bool prepare, bool isOverride, Action<MethodEntity> extraInit = null)
         {
             var me = new MethodEntity(this)
             {
                 Name = name,
                 IsStatic = isStatic,
                 IsVirtual = isVirtual,
+                IsOverride = isOverride,
             };
 
             Context.UnprocessedMethods.Add(me);
@@ -225,7 +226,7 @@ namespace Lens.Compiler.Entities
 
             if (prepare)
             {
-                me.PrepareSelf();
+                me.PrepareSelfAsNeeded();
                 CheckMethod(me);
             }
             else

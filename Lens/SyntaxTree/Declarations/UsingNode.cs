@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lens.Compiler;
+using Lens.Resolver;
 using Lens.SyntaxTree.ControlFlow;
 using Lens.Translations;
 using Lens.Utils;
@@ -33,17 +34,17 @@ namespace Lens.SyntaxTree.Declarations
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx, mustReturn);
-            if (!typeof(IDisposable).IsAssignableFrom(exprType))
+            if (!typeof(IDisposable).IsAssignableFrom(exprType.Materialize()))
                 Error(Expression, CompilerMessages.ExpressionNotIDisposable, exprType);
 
             if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
                 throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
 
             if (!mustReturn)
-                return typeof(UnitType);
+                return TypeEntryCache.Of<UnitType>();
 
             return string.IsNullOrEmpty(VariableName)
                 ? Body.Resolve(ctx)

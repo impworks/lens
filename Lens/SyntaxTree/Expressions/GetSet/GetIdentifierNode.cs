@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Cached algebraic type reference (if the identifier represents it).
         /// </summary>
-        private Type _labelType;
+        private TypeEntry _labelType;
 
         /// <summary>
         /// Explicit type arguments for a generic function or an untagged generic label, if any.
@@ -55,7 +55,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             if (Identifier == "_")
                 Error(CompilerMessages.UnderscoreNameUsed);
@@ -84,7 +84,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
                 _method = methods[0];
-                return FunctionalHelper.CreateFuncType(_method.ReturnType, _method.GetArgumentTypes(ctx));
+                return TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), TypeEntry.Materialize(_method.GetArgumentTypes(ctx))));
             }
             catch (KeyNotFoundException)
             {
@@ -96,7 +96,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    type.ResolveConstructor(new Type[0]);
+                    type.ResolveConstructor(new TypeEntry[0]);
 
                     var hints = TypeHints ?? new List<TypeSignature>();
                     if (type.IsGeneric)
@@ -127,14 +127,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             try
             {
                 _property = ctx.ResolveGlobalProperty(Identifier);
-                return _property.PropertyType;
+                return TypeEntryCache.Of(_property.PropertyType);
             }
             catch (KeyNotFoundException)
             {
                 Error(CompilerMessages.IdentifierNotFound, Identifier);
             }
 
-            return typeof(UnitType);
+            return TypeEntryCache.Of<UnitType>();
         }
 
         #endregion
@@ -181,7 +181,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // load pointer to global function
             if (_method != null)
             {
-                var ctor = ctx.ResolveConstructor(resultType, new[] {typeof(object), typeof(IntPtr)});
+                var ctor = ctx.ResolveConstructor(resultType, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
 
                 gen.EmitNull();
                 gen.EmitLoadFunctionPointer(_method.MethodInfo);
@@ -240,7 +240,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 gen.EmitLoadArgument(name.ArgumentId.Value, ptr);
                 if (name.IsRefArgument && !ptr)
-                    gen.EmitLoadFromPointer(name.Type);
+                    gen.EmitLoadFromPointer(name.Type.Materialize());
             }
             else
             {

@@ -28,7 +28,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// <summary>
         /// Type (for static member access).
         /// </summary>
-        private Type _type;
+        private TypeEntry _type;
 
         /// <summary>
         /// Cached field reference (if the member resolves to it).
@@ -61,7 +61,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             ResolveSelf(ctx);
 
@@ -69,7 +69,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 CheckTypeInSafeMode(ctx, _type);
 
             if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
-                return typeof(int);
+                return TypeEntryCache.Of<int>();
 
             if (_field != null)
                 return _field.FieldType;
@@ -78,8 +78,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 return _property.PropertyType;
 
             return _method.ReturnType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
-                : FunctionalHelper.CreateFuncType(_method.ReturnType, _method.ArgumentTypes);
+                ? TypeEntryCache.Of(FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray()))
+                : TypeEntryCache.Of(FunctionalHelper.CreateFuncType(_method.ReturnType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray()));
         }
 
         /// <summary>
@@ -100,8 +100,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     Error(CompilerMessages.TypeArgumentsForNonMethod, _type, MemberName);
             }
 
-            _type = StaticTypeInfo
-                    ?? (StaticType != null
+            _type = StaticTypeInfo != null
+                    ? StaticTypeInfo
+                    : (StaticType != null
                         ? ctx.ResolveType(StaticType)
                         : Expression.Resolve(ctx));
 
@@ -171,7 +172,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             check();
         }
 
-        private static bool CheckMethodArgs(Type[] argTypes, MethodWrapper method)
+        private static bool CheckMethodArgs(TypeEntry[] argTypes, MethodWrapper method)
         {
             if (argTypes.Length == 0)
                 return true;
@@ -228,7 +229,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_field.IsLiteral)
             {
                 var fieldType = _field.FieldType;
-                var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType) : fieldType;
+                var dataType = fieldType.IsEnum ? Enum.GetUnderlyingType(fieldType.Materialize()) : fieldType.Materialize();
 
                 var value = _field.FieldInfo.GetValue(null);
 
@@ -271,7 +272,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private void EmitProperty(Context ctx, ILGenerator gen)
         {
             if (_property.PropertyType.IsValueType && RefArgumentRequired)
-                Error(CompilerMessages.PropertyValuetypeRef, _property.Type, MemberName, _property.PropertyType);
+                Error(CompilerMessages.PropertyValuetypeRef, _property.DeclaringType.Materialize(), MemberName, _property.PropertyType.Materialize());
 
             gen.EmitCall(_property.Getter, _property.IsVirtual);
 
@@ -296,10 +297,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             var retType = _method.ReturnType;
             var type = retType.IsVoid()
-                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes)
-                : FunctionalHelper.CreateFuncType(retType, _method.ArgumentTypes);
+                ? FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray())
+                : FunctionalHelper.CreateFuncType(retType.Materialize(), _method.ArgumentTypes.Select(x => x.Materialize()).ToArray());
 
-            var ctor = ctx.ResolveConstructor(type, new[] {typeof(object), typeof(IntPtr)});
+            var ctor = ctx.ResolveConstructor(TypeEntryCache.Of(type), new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
             gen.EmitLoadFunctionPointer(_method.MethodInfo);
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }

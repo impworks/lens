@@ -33,12 +33,12 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// <summary>
         /// The sequence's complete type.
         /// </summary>
-        private Type _expressionType;
+        private TypeEntry _expressionType;
 
         /// <summary>
         /// The sequence element's type.
         /// </summary>
-        private Type _elementType;
+        private TypeEntry _elementType;
 
         /// <summary>
         /// Checks whether the source expression is indexable.
@@ -59,20 +59,20 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         #region Resolve
 
-        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, Type expressionType)
+        public override IEnumerable<PatternNameBinding> Resolve(Context ctx, TypeEntry expressionType)
         {
             _expressionType = expressionType;
 
             if (expressionType.IsArray)
-                _elementType = expressionType.GetElementType();
+                _elementType = expressionType.ElementType;
 
-            else if (new[] {typeof(IEnumerable<>), typeof(IList<>)}.Any(t => expressionType.IsAppliedVersionOf(ctx.Resolver, t)))
-                _elementType = expressionType.GetGenericArguments()[0];
+            else if (new[] {typeof(IEnumerable<>), typeof(IList<>)}.Any(t => expressionType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(t))))
+                _elementType = expressionType.GenericArguments[0];
 
             else
                 Error(CompilerMessages.PatternTypeMismatch, expressionType, "IEnumerable<T>");
 
-            _isIndexable = !expressionType.IsAppliedVersionOf(ctx.Resolver, typeof(IEnumerable<>));
+            _isIndexable = !expressionType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));
 
             for (var idx = 0; idx < ElementRules.Count; idx++)
             {
@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
                 var itemType = _subsequenceIndex != idx
                     ? _elementType
-                    : (_isIndexable ? _elementType.MakeArrayType() : typeof(IEnumerable<>).MakeGenericType(_elementType));
+                    : (_isIndexable ? _elementType.MakeArray(ctx.Resolver) : TypeEntryCache.Of(typeof(IEnumerable<>)).MakeGeneric(ctx.Resolver, new[] {_elementType}));
 
                 var bindings = ElementRules[idx].Resolve(ctx, itemType);
                 foreach (var binding in bindings)
@@ -158,7 +158,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     //     |> Skip before // optional
                     //     |> Take (expr.Length - before - after)
                     //     |> ToArray ()
-                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArrayType(), false);
+                    var subseqVar = ctx.Scope.DeclareImplicit(ctx, _elementType.MakeArray(ctx.Resolver), false);
                     var subseqExpr = subseqIdx == 0
                         ? expression
                         : Expr.Invoke(expression, "Skip", Expr.Int(subseqIdx));
@@ -209,7 +209,7 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     yield return check;
 
                 // tmpVar = seq.Skip N
-                var subseqVar = ctx.Scope.DeclareImplicit(ctx, typeof(IEnumerable<>).MakeGenericType(_elementType), false);
+                var subseqVar = ctx.Scope.DeclareImplicit(ctx, TypeEntry.Generic(ctx.Resolver, typeof(IEnumerable<>), _elementType), false);
                 yield return Expr.Set(
                     subseqVar,
                     Expr.Invoke(
@@ -232,8 +232,8 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             if (count == 0)
                 yield break;
 
-            var enumerableType = typeof(IEnumerable<>).MakeGenericType(_elementType);
-            var enumeratorType = typeof(IEnumerator<>).MakeGenericType(_elementType);
+            var enumerableType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerable<>), _elementType);
+            var enumeratorType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerator<>), _elementType);
 
             var enumeratorVar = ctx.Scope.DeclareImplicit(ctx, enumeratorType, false);
 

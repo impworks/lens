@@ -1,6 +1,6 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
+using Lens.Resolver;
 
 namespace Lens.Compiler.Entities
 {
@@ -32,7 +32,7 @@ namespace Lens.Compiler.Entities
         /// <summary>
         /// Type of the values that can be saved in the field.
         /// </summary>
-        public Type Type;
+        public TypeEntry Type;
 
         /// <summary>
         /// Assembly-level field builder.
@@ -44,9 +44,18 @@ namespace Lens.Compiler.Entities
         #region Methods
 
         /// <summary>
+        /// Resolves the type of the field.
+        /// </summary>
+        public override void ResolveSelf()
+        {
+            if (Type == null)
+                Type = ContainerType.Context.ResolveType(TypeSignature);
+        }
+
+        /// <summary>
         /// Creates a FieldBuilder for current field entity.
         /// </summary>
-        public override void PrepareSelf()
+        public override void EmitSelf()
         {
             if (FieldBuilder != null)
                 return;
@@ -55,10 +64,9 @@ namespace Lens.Compiler.Entities
             if (IsStatic)
                 attrs |= FieldAttributes.Static;
 
-            if (Type == null)
-                Type = ContainerType.Context.ResolveType(TypeSignature);
+            ResolveSelf();
 
-            FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type, attrs);
+            FieldBuilder = ContainerType.TypeBuilder.DefineField(Name, Type.Materialize(), attrs);
         }
 
         #endregion

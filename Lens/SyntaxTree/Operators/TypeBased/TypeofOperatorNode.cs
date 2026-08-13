@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using Lens.Compiler;
+using Lens.Resolver;
 
 namespace Lens.SyntaxTree.Operators.TypeBased
 {
@@ -26,9 +27,9 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            return typeof(Type);
+            return TypeEntryCache.Of(typeof(Type));
         }
 
         #endregion
@@ -37,7 +38,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
-            var type = Type ?? ctx.ResolveType(TypeSignature);
+            var type = (Type ?? ctx.ResolveType(TypeSignature)).Materialize();
             var gen = ctx.CurrentMethod.Generator;
 
             gen.EmitConstant(type);

@@ -13,7 +13,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
     {
         #region Resolve
 
-        protected override Type ResolveInternal(Context ctx, bool mustReturn)
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var type = Type ?? ctx.ResolveType(TypeSignature);
             EnsureLambdaInferred(ctx, Expression, type);
@@ -30,7 +30,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var toType = Resolve(ctx);
 
             if (fromType.IsNullableType() && !toType.IsNullableType())
-                return Expr.Cast(Expr.GetMember(Expression, "Value"), toType);
+                return Expr.Cast(Expr.GetMember(Expression, "Value"), toType.Materialize());
 
             return base.Expand(ctx, mustReturn);
         }
@@ -58,13 +58,13 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             else if (fromType.IsCallableType() && toType.IsCallableType())
                 CastDelegate(ctx, fromType, toType);
 
-            else if (fromType == typeof(NullType))
+            else if (fromType.Is<NullType>())
             {
                 if (toType.IsNullableType())
                 {
                     var tmpVar = ctx.Scope.DeclareImplicit(ctx, toType, true);
                     gen.EmitLoadLocal(tmpVar.LocalBuilder, true);
-                    gen.EmitInitObject(toType);
+                    gen.EmitInitObject(toType.Materialize());
                     gen.EmitLoadLocal(tmpVar.LocalBuilder);
                 }
 
@@ -79,13 +79,13 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             {
                 Expression.Emit(ctx, true);
 
-                var underlying = Nullable.GetUnderlyingType(toType);
+                var underlying = toType.GetNullableUnderlyingType();
                 if (underlying.IsNumericType() && fromType.IsNumericType() && underlying != fromType)
-                    gen.EmitConvert(underlying);
+                    gen.EmitConvert(underlying.Materialize());
                 else if (underlying != fromType)
                     Error(fromType, toType);
 
-                var ctor = toType.GetConstructor(new[] {underlying});
+                var ctor = toType.Materialize().GetConstructor(new[] {underlying.Materialize()});
                 gen.EmitCreateObject(ctor);
             }
 
@@ -94,8 +94,8 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 Expression.Emit(ctx, true);
 
                 // box
-                if (fromType.IsValueType && toType == typeof(object))
-                    gen.EmitBox(fromType);
+                if (fromType.IsValueType && toType.Is<object>())
+                    gen.EmitBox(fromType.Materialize());
 
                 else
                 {
@@ -103,7 +103,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                     if (castOp != null)
                         gen.EmitCall(castOp.MethodInfo);
                     else
-                        gen.EmitCast(toType);
+                        gen.EmitCast(toType.Materialize());
                 }
             }
 
@@ -112,12 +112,12 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 Expression.Emit(ctx, true);
 
                 // unbox
-                if (fromType == typeof(object) && toType.IsValueType)
-                    gen.EmitUnbox(toType);
+                if (fromType.Is<object>() && toType.IsValueType)
+                    gen.EmitUnbox(toType.Materialize());
 
                 // cast ancestor to descendant
                 else if (!fromType.IsValueType && !toType.IsValueType)
-                    gen.EmitCast(toType);
+                    gen.EmitCast(toType.Materialize());
 
                 else
                 {
@@ -141,7 +141,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         /// 'box' and 'unbox.any' are valid for both kinds and therefore work for every
         /// instantiation of the enclosing declaration.
         /// </summary>
-        private void CastGenericParameter(Context ctx, Type from, Type to)
+        private void CastGenericParameter(Context ctx, TypeEntry from, TypeEntry to)
         {
             var gen = ctx.CurrentMethod.Generator;
 
@@ -151,19 +151,19 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 return;
 
             if (from.IsGenericParameter || from.IsValueType)
-                gen.EmitBox(from);
+                gen.EmitBox(from.Materialize());
 
             if (to.IsGenericParameter || to.IsValueType)
-                gen.EmitUnbox(to);
-            else if (to != typeof(object))
-                gen.EmitCast(to);
+                gen.EmitUnbox(to.Materialize());
+            else if (!to.Is<object>())
+                gen.EmitCast(to.Materialize());
         }
 
-        private void CastDelegate(Context ctx, Type from, Type to)
+        private void CastDelegate(Context ctx, TypeEntry from, TypeEntry to)
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var toCtor = ctx.ResolveConstructor(to, new[] {typeof(object), typeof(IntPtr)});
+            var toCtor = ctx.ResolveConstructor(to, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
             var fromMethod = ctx.ResolveMethod(from, "Invoke");
             var toMethod = ctx.ResolveMethod(to, "Invoke");
 
@@ -174,32 +174,32 @@ namespace Lens.SyntaxTree.Operators.TypeBased
                 Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
 
             if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
-                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType, fromMethod.ReturnType);
+                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
 
             if (fromMethod.IsStatic)
                 gen.EmitNull();
             else
                 Expression.Emit(ctx, true);
 
-            if (from.IsGenericType && to.IsGenericType && from.GetGenericTypeDefinition() == to.GetGenericTypeDefinition())
+            if (from.IsGenericType && to.IsGenericType && from.GetGenericDefinition() == to.GetGenericDefinition())
                 return;
 
             gen.EmitLoadFunctionPointer(fromMethod.MethodInfo);
             gen.EmitCreateObject(toCtor.ConstructorInfo);
         }
 
-        private void CastNumeric(Context ctx, Type from, Type to)
+        private void CastNumeric(Context ctx, TypeEntry from, TypeEntry to)
         {
             var gen = ctx.CurrentMethod.Generator;
 
             Expression.Emit(ctx, true);
 
-            if (to == typeof(decimal))
+            if (to.Is<decimal>())
             {
-                var ctor = ctx.ResolveConstructor(typeof(decimal), new[] {from});
+                var ctor = ctx.ResolveConstructor(TypeEntryCache.Of<decimal>(), new[] {from});
                 if (ctor == null)
                 {
-                    ctor = ctx.ResolveConstructor(typeof(decimal), new[] {typeof(int)});
+                    ctor = ctx.ResolveConstructor(TypeEntryCache.Of<decimal>(), new[] {TypeEntryCache.Of<int>()});
                     gen.EmitConvert(typeof(int));
                 }
 
@@ -207,7 +207,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             }
             else
             {
-                gen.EmitConvert(to);
+                gen.EmitConvert(to.Materialize());
             }
         }
 
@@ -218,7 +218,7 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         /// <summary>
         /// Displays a default error for uncastable types.
         /// </summary>
-        private void Error(Type from, Type to)
+        private void Error(TypeEntry from, TypeEntry to)
         {
             Error(CompilerMessages.CastTypesMismatch, from, to);
         }

@@ -18,302 +18,6 @@ namespace Lens.Resolver
         #region Various resolvers
 
         /// <summary>
-        /// Resolves a field from a type by its name.
-        /// </summary>
-        public static FieldWrapper ResolveField(TypeResolutionContext ctx, Type type, string name)
-        {
-            try
-            {
-                var field = type.GetField(name);
-                if (field == null)
-                    throw new KeyNotFoundException();
-
-                return new FieldWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    FieldInfo = field,
-                    IsStatic = field.IsStatic,
-                    IsLiteral = field.IsLiteral,
-                    FieldType = field.FieldType
-                };
-            }
-            catch (NotSupportedException)
-            {
-                if (!type.IsGenericType)
-                    throw new KeyNotFoundException();
-
-                var genType = type.GetGenericTypeDefinition();
-                var genField = genType.GetField(name);
-
-                if (genField == null)
-                    throw new KeyNotFoundException();
-
-                return new FieldWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    FieldInfo = TypeBuilder.GetField(type, genField),
-                    IsStatic = genField.IsStatic,
-                    IsLiteral = genField.IsLiteral,
-                    FieldType = GenericHelper.ApplyGenericArguments(genField.FieldType, type)
-                };
-            }
-        }
-
-        /// <summary>
-        /// Resolves a property from a type by its name.
-        /// </summary>
-        public static PropertyWrapper ResolveProperty(TypeResolutionContext ctx, Type type, string name)
-        {
-            try
-            {
-                var pty = type.GetProperty(name);
-                if (pty == null)
-                    throw new KeyNotFoundException();
-
-                var getter = pty.GetGetMethod();
-                var setter = pty.GetSetMethod();
-                return new PropertyWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    Getter = getter,
-                    Setter = setter,
-                    IsStatic = (getter ?? setter).IsStatic,
-                    PropertyType = pty.PropertyType,
-                    IsVirtual = (getter ?? setter).IsVirtual
-                };
-            }
-            catch (NotSupportedException)
-            {
-                if (!type.IsGenericType)
-                    throw new KeyNotFoundException();
-
-                var genType = type.GetGenericTypeDefinition();
-                var genPty = genType.GetProperty(name);
-
-                if (genPty == null)
-                    throw new KeyNotFoundException();
-
-                var getter = genPty.GetGetMethod();
-                var setter = genPty.GetSetMethod();
-
-                var declType = ResolveActualDeclaringType(ctx, type, genPty.DeclaringType);
-
-                return new PropertyWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    Getter = GetMethodVersionForType(declType, getter),
-                    Setter = GetMethodVersionForType(declType, setter),
-                    IsStatic = (getter ?? setter).IsStatic,
-                    PropertyType = GenericHelper.ApplyGenericArguments(genPty.PropertyType, type),
-                    IsVirtual = (getter ?? setter).IsVirtual
-                };
-            }
-        }
-
-        /// <summary>
-        /// Resolves a constructor from a type by the list of arguments.
-        /// </summary>
-        public static ConstructorWrapper ResolveConstructor(TypeResolutionContext ctx, Type type, Type[] argTypes)
-        {
-            try
-            {
-                var ctor = ResolveMethodByArgs(
-                    ctx,
-                    type.GetConstructors(),
-                    c => c.GetParameters().Select(p => p.ParameterType).ToArray(),
-                    IsVariadic,
-                    argTypes
-                );
-
-                return new ConstructorWrapper
-                {
-                    Type = type,
-                    ConstructorInfo = ctor.Method,
-                    ArgumentTypes = ctor.ArgumentTypes,
-                    IsPartiallyApplied = IsPartiallyApplied(argTypes),
-                    IsVariadic = IsVariadic(ctor.Method)
-                };
-            }
-            catch (NotSupportedException)
-            {
-                if (!type.IsGenericType)
-                    throw new KeyNotFoundException();
-
-                var genType = type.GetGenericTypeDefinition();
-                var genCtor = ResolveMethodByArgs(
-                    ctx,
-                    genType.GetConstructors(),
-                    c => c.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
-                    IsVariadic,
-                    argTypes
-                );
-
-                return new ConstructorWrapper
-                {
-                    Type = type,
-                    ConstructorInfo = TypeBuilder.GetConstructor(type, genCtor.Method),
-                    ArgumentTypes = genCtor.ArgumentTypes,
-                    IsPartiallyApplied = IsPartiallyApplied(argTypes),
-                    IsVariadic = IsVariadic(genCtor.Method)
-                };
-            }
-        }
-
-        /// <summary>
-        /// Resolves an event by its name.
-        /// </summary>
-        public static EventWrapper ResolveEvent(TypeResolutionContext ctx, Type type, string name)
-        {
-            try
-            {
-                var evt = type.GetEvent(name);
-                if (evt == null)
-                    throw new KeyNotFoundException();
-
-                return new EventWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    IsStatic = evt.GetRemoveMethod().IsStatic,
-
-                    AddMethod = evt.GetAddMethod(),
-                    RemoveMethod = evt.GetRemoveMethod(),
-                    EventHandlerType = evt.EventHandlerType
-                };
-            }
-            catch (NotSupportedException)
-            {
-                if (!type.IsGenericType)
-                    throw new KeyNotFoundException();
-
-                var genType = type.GetGenericTypeDefinition();
-                var genEvt = genType.GetEvent(name);
-
-                if (genEvt == null)
-                    throw new KeyNotFoundException();
-
-                var adder = genEvt.GetAddMethod();
-                var remover = genEvt.GetRemoveMethod();
-
-                var declType = ResolveActualDeclaringType(ctx, type, genEvt.DeclaringType);
-
-                return new EventWrapper
-                {
-                    Name = name,
-                    Type = type,
-
-                    AddMethod = GetMethodVersionForType(declType, adder),
-                    RemoveMethod = GetMethodVersionForType(declType, remover),
-                    IsStatic = adder.IsStatic,
-                    EventHandlerType = GenericHelper.ApplyGenericArguments(genEvt.EventHandlerType, type)
-                };
-            }
-        }
-
-        /// <summary>
-        /// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
-        /// Generic arguments whose values can be inferred from argument types can be skipped.
-        /// </summary>
-        public static MethodWrapper ResolveMethod(TypeResolutionContext ctx, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
-        {
-            var mw = new MethodWrapper {Name = name, Type = type};
-
-            try
-            {
-                var method = ResolveMethodByArgs(
-                    ctx,
-                    GetMethodsByName(type, name),
-                    m => m.GetParameters().Select(p => p.ParameterType).ToArray(),
-                    IsVariadic,
-                    argTypes
-                );
-
-                var mInfo = method.Method;
-
-                if (mInfo.IsGenericMethod)
-                {
-                    var genericDefs = mInfo.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, method.ArgumentTypes, argTypes, genericDefs, hints);
-
-                    mInfo = mInfo.MakeGenericMethod(genericValues);
-                    mw.GenericArguments = genericValues;
-                }
-                else if (hints != null)
-                {
-                    Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
-                }
-
-                mw.MethodInfo = mInfo;
-                mw.IsStatic = mInfo.IsStatic;
-                mw.IsVirtual = mInfo.IsVirtual;
-                mw.ArgumentTypes = method.ArgumentTypes;
-                mw.ReturnType = mInfo.ReturnType;
-                mw.IsPartiallyApplied = IsPartiallyApplied(argTypes);
-                mw.IsVariadic = IsVariadic(mInfo);
-
-                return mw;
-            }
-            catch (NotSupportedException)
-            {
-                if (!type.IsGenericType)
-                    throw new KeyNotFoundException();
-
-                var genType = type.GetGenericTypeDefinition();
-                var genMethod = ResolveMethodByArgs(
-                    ctx,
-                    GetMethodsByName(genType, name),
-                    m => m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type, false)).ToArray(),
-                    IsVariadic,
-                    argTypes
-                );
-
-                var mInfoOriginal = genMethod.Method;
-                var declType = ResolveActualDeclaringType(ctx, type, mInfoOriginal.DeclaringType);
-                var mInfo = GetMethodVersionForType(declType, mInfoOriginal);
-
-                if (mInfoOriginal.IsGenericMethod)
-                {
-                    var genericDefs = mInfoOriginal.GetGenericArguments();
-                    var genericValues = GenericHelper.ResolveMethodGenericsByArgs(ctx, genMethod.ArgumentTypes, argTypes, genericDefs, hints, lambdaResolver);
-
-                    mInfo = mInfo.MakeGenericMethod(genericValues);
-
-                    var totalGenericDefs = genericDefs.Union(genType.GetGenericTypeDefinition().GetGenericArguments()).ToArray();
-                    var totalGenericValues = genericValues.Union(type.GetGenericArguments()).ToArray();
-
-                    mw.GenericArguments = genericValues;
-                    mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, totalGenericDefs, totalGenericValues);
-                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, totalGenericDefs, totalGenericValues)).ToArray();
-                }
-                else
-                {
-                    if (hints != null)
-                        Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
-
-                    mw.ArgumentTypes = mInfoOriginal.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray();
-                    mw.ReturnType = GenericHelper.ApplyGenericArguments(mInfoOriginal.ReturnType, type, false);
-                }
-
-                mw.MethodInfo = mInfo;
-                mw.IsStatic = mInfoOriginal.IsStatic;
-                mw.IsVirtual = mInfoOriginal.IsVirtual;
-                mw.IsPartiallyApplied = IsPartiallyApplied(argTypes);
-                mw.IsVariadic = IsVariadic(mInfoOriginal);
-            }
-
-            return mw;
-        }
-
-        /// <summary>
         /// Resolves an extension method by arguments.
         /// </summary>
         public static MethodWrapper ResolveExtensionMethod(TypeResolutionContext ctx, ExtensionMethodResolver resolver, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
@@ -323,13 +27,13 @@ namespace Lens.Resolver
             var info = new MethodWrapper
             {
                 Name = name,
-                Type = method.DeclaringType,
+                DeclaringType = TypeEntryCache.Of(method.DeclaringType),
 
                 MethodInfo = method,
                 IsStatic = true,
                 IsVirtual = false,
-                ReturnType = method.ReturnType,
-                ArgumentTypes = args.Select(p => p.ParameterType).ToArray(),
+                ReturnType = TypeEntryCache.Of(method.ReturnType),
+                ArgumentTypes = args.Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray(),
                 IsPartiallyApplied = IsPartiallyApplied(argTypes),
                 IsVariadic = IsVariadic(method),
             };
@@ -351,10 +55,10 @@ namespace Lens.Resolver
                     lambdaResolver
                 );
 
-                info.GenericArguments = genericValues;
+                info.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
                 info.MethodInfo = info.MethodInfo.MakeGenericMethod(genericValues);
-                info.ReturnType = GenericHelper.ApplyGenericArguments(info.ReturnType, genericDefs, genericValues);
-                info.ArgumentTypes = expectedTypes.Select(t => GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues)).ToArray();
+                info.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(info.ReturnType.Materialize(), genericDefs, genericValues));
+                info.ArgumentTypes = expectedTypes.Select(t => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues))).ToArray();
             }
             else if (hints != null)
             {
@@ -389,13 +93,13 @@ namespace Lens.Resolver
                         return new MethodWrapper
                         {
                             Name = name,
-                            Type = type,
+                            DeclaringType = TypeEntryCache.Of(type),
 
                             MethodInfo = GetMethodVersionForType(declType, m),
                             IsStatic = m.IsStatic,
                             IsVirtual = m.IsVirtual,
-                            ArgumentTypes = m.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, declType)).ToArray(),
-                            ReturnType = GenericHelper.ApplyGenericArguments(m.ReturnType, declType)
+                            ArgumentTypes = m.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, declType))).ToArray(),
+                            ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(m.ReturnType, declType))
                         };
                     }
                 );
@@ -427,13 +131,13 @@ namespace Lens.Resolver
 
                 return new MethodWrapper
                 {
-                    Type = type,
+                    DeclaringType = TypeEntryCache.Of(type),
 
                     MethodInfo = GetMethodVersionForType(declType, indexer),
                     IsStatic = false,
                     IsVirtual = indexer.IsVirtual,
-                    ArgumentTypes = indexer.GetParameters().Select(p => GenericHelper.ApplyGenericArguments(p.ParameterType, type)).ToArray(),
-                    ReturnType = GenericHelper.ApplyGenericArguments(indexer.ReturnType, type)
+                    ArgumentTypes = indexer.GetParameters().Select(p => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(p.ParameterType, type))).ToArray(),
+                    ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(indexer.ReturnType, type))
                 };
             }
         }
@@ -458,7 +162,7 @@ namespace Lens.Resolver
                     continue;
 
                 var argType = typeProcessor(idxArgs[0].ParameterType);
-                var distance = argType.DistanceFrom(ctx, idxType);
+                var distance = TypeEntryCache.Of(argType).DistanceFrom(ctx, TypeEntryCache.Of(idxType));
 
                 indexers.Add(new Tuple<PropertyInfo, Type, int>(pty, argType, distance));
             }
@@ -491,13 +195,18 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        /// Resolves the best-matching method-like entity within a generic list.
+        /// Resolves the best-matching method-like entity within a generic list, with both sides of
+        /// the comparison given as entries.
+        ///
+        /// The declared signature of a member the script declares is made of entries already, and
+        /// some of them - the generic parameters of a method whose builders do not exist yet - stand
+        /// for no CLR type at all, so the overload above cannot be used for those.
         /// </summary>
         /// <typeparam name="T">Type of method-like entity.</typeparam>
         /// <param name="list">List of method-like entitites.</param>
         /// <param name="argsGetter">A function that gets method entity arguments.</param>
         /// <param name="argTypes">Desired argument types.</param>
-        public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, Type[]> argsGetter, Func<T, bool> isVariadicGetter, Type[] argTypes)
+        public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isVariadicGetter, TypeEntry[] argTypes)
         {
             var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
                              .OrderBy(rec => rec.Distance)
@@ -511,6 +220,105 @@ namespace Lens.Resolver
                 throw new AmbiguousMatchException();
 
             return result[0];
+        }
+
+        #endregion
+
+        #region Entry-space generic inference
+
+        /// <summary>
+        /// Infers the values of a generic method's type parameters from the call site, entirely in
+        /// the entry model.
+        ///
+        /// The counterpart of <see cref="GenericHelper.ResolveMethodGenericsByArgs"/> for a call
+        /// whose arguments are made of something the script declared: those have no CLR type to
+        /// match against until the declaration has been emitted, and asking for one is what would
+        /// force the assembly into existence.
+        ///
+        /// Lambda inference is deliberately absent. A lambda reaches here already resolved into a
+        /// delegate type, because that is the only shape in which it can be matched structurally.
+        /// </summary>
+        public static TypeEntry[] InferGenericArguments(TypeResolutionContext ctx, TypeEntry[] parameters, TypeEntry[] expectedTypes, TypeEntry[] actualTypes, TypeEntry[] hints)
+        {
+            if (hints != null && hints.Length != parameters.Length)
+                throw new ArgumentException(nameof(hints));
+
+            var values = new TypeEntry[parameters.Length];
+
+            if (hints != null)
+                for (var idx = 0; idx < hints.Length; idx++)
+                    values[idx] = hints[idx];
+
+            var count = Math.Min(expectedTypes.Length, actualTypes.Length);
+            for (var idx = 0; idx < count; idx++)
+                Unify(ctx, expectedTypes[idx], actualTypes[idx], parameters, values);
+
+            for (var idx = 0; idx < values.Length; idx++)
+                if (ReferenceEquals(values[idx], null))
+                    throw new TypeMatchException(string.Format(CompilerMessages.GenericArgumentNotResolved, parameters[idx]));
+
+            return values;
+        }
+
+        /// <summary>
+        /// Matches an expected signature against the type actually passed, recording whatever the
+        /// match says about the parameters being inferred.
+        /// </summary>
+        private static void Unify(TypeResolutionContext ctx, TypeEntry expected, TypeEntry actual, TypeEntry[] parameters, TypeEntry[] values)
+        {
+            if (ReferenceEquals(expected, null) || ReferenceEquals(actual, null))
+                return;
+
+            if (expected.IsGenericParameter)
+            {
+                for (var idx = 0; idx < parameters.Length; idx++)
+                    if (TypeEntry.Same(parameters[idx], expected) && ReferenceEquals(values[idx], null))
+                        values[idx] = actual;
+
+                return;
+            }
+
+            if (expected.IsArray || expected.IsByRef)
+            {
+                Unify(ctx, expected.ElementType, actual.ElementType, parameters, values);
+                return;
+            }
+
+            if (!expected.IsGenericType || expected.IsGenericTypeDefinition)
+                return;
+
+            // the argument need not be the expected generic type itself: passing a List<T> where an
+            // IEnumerable<> is expected is what makes inference worth doing at all
+            var source = FindInstantiationOf(ctx, expected.GetGenericDefinition(), actual);
+            if (ReferenceEquals(source, null))
+                return;
+
+            var expectedArgs = expected.GenericArguments;
+            var actualArgs = source.GenericArguments;
+
+            var pairs = Math.Min(expectedArgs.Length, actualArgs.Length);
+            for (var idx = 0; idx < pairs; idx++)
+                Unify(ctx, expectedArgs[idx], actualArgs[idx], parameters, values);
+        }
+
+        /// <summary>
+        /// Finds the instantiation of a generic definition that a type is, inherits from or
+        /// implements.
+        /// </summary>
+        private static TypeEntry FindInstantiationOf(TypeResolutionContext ctx, TypeEntry definition, TypeEntry type)
+        {
+            if (ReferenceEquals(definition, null))
+                return null;
+
+            foreach (var curr in type.SelfAndBaseTypes())
+                if (TypeEntry.Same(curr.GetGenericDefinition(), definition))
+                    return curr;
+
+            foreach (var curr in type.GetInterfaces(ctx))
+                if (TypeEntry.Same(curr.GetGenericDefinition(), definition))
+                    return curr;
+
+            return null;
         }
 
         #endregion
@@ -539,7 +347,7 @@ namespace Lens.Resolver
             var rt = WrapDelegate(ctx, left).ReturnType;
             var args = WrapDelegate(ctx, right).ArgumentTypes;
 
-            return args.Count() == 1 && args[0].IsAssignableFrom(rt);
+            return args.Count() == 1 && args[0].Materialize().IsAssignableFrom(rt.Materialize());
         }
 
         /// <summary>
@@ -553,7 +361,7 @@ namespace Lens.Resolver
             var args = WrapDelegate(ctx, left).ArgumentTypes;
             var rt = WrapDelegate(ctx, right).ReturnType;
 
-            return FunctionalHelper.CreateDelegateType(rt, args);
+            return FunctionalHelper.CreateDelegateType(rt.Materialize(), args.Select(x => x.Materialize()).ToArray());
         }
 
         #endregion
@@ -575,6 +383,14 @@ namespace Lens.Resolver
         public static bool IsPartiallyApplied(Type[] argTypes)
         {
             return argTypes.Contains(typeof(UnspecifiedType));
+        }
+
+        /// <summary>
+        /// Checks if the list of argument types denotes a partial application case.
+        /// </summary>
+        public static bool IsPartiallyApplied(TypeEntry[] argTypes)
+        {
+            return argTypes.Any(x => x.Is<UnspecifiedType>());
         }
 
         /// <summary>
@@ -610,7 +426,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Returns the list of methods by name, flattening interface hierarchy.
         /// </summary>
-        private static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
+        public static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
         {
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
@@ -629,7 +445,7 @@ namespace Lens.Resolver
         /// </summary>
         /// <param name="type">Actual type</param>
         /// <param name="decl">Declaring generic type of method or property</param>
-        private static Type ResolveActualDeclaringType(TypeResolutionContext ctx, Type type, Type decl)
+        public static Type ResolveActualDeclaringType(TypeResolutionContext ctx, Type type, Type decl)
         {
             if (type.IsInterface && type != decl)
             {
@@ -647,7 +463,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Creates a generic method version for a specific type.
         /// </summary>
-        private static MethodInfo GetMethodVersionForType(Type type, MethodInfo method)
+        public static MethodInfo GetMethodVersionForType(Type type, MethodInfo method)
         {
             if (method != null && type.IsGenericType)
                 return TypeBuilder.GetMethod(type, method);
