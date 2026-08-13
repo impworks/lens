@@ -31,6 +31,16 @@ namespace Lens.Compiler.Entities
         #region Fields
 
         public bool IsVirtual;
+
+        /// <summary>
+        /// The method replaces an inherited virtual method rather than introducing a new one.
+        ///
+        /// The distinction is the whole difference between overriding and shadowing: a virtual
+        /// method marked NewSlot takes a fresh vtable slot and leaves the inherited one alone, so a
+        /// caller reaching the object through its base type never sees it.
+        /// </summary>
+        public bool IsOverride;
+
         public bool IsPure;
         public bool IsVariadic;
 
@@ -140,7 +150,14 @@ namespace Lens.Compiler.Entities
             if (IsStatic)
                 attrs |= MethodAttributes.Static;
             if (IsVirtual)
-                attrs |= MethodAttributes.Virtual | MethodAttributes.NewSlot;
+            {
+                attrs |= MethodAttributes.Virtual;
+
+                // an override has to reuse the slot it inherits, so NewSlot is exactly wrong for it;
+                // a method that implements an interface does want a slot of its own
+                if (!IsOverride)
+                    attrs |= MethodAttributes.NewSlot;
+            }
 
             if (IsGeneric)
             {

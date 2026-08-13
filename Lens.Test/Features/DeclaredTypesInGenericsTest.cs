@@ -72,20 +72,14 @@ d[1].X", 9);
         public void MembershipTestOverADeclaredType()
         {
             // routes through EqualityComparer<P>.Default, which is an imported generic instantiated
-            // over a declaration - one of the shapes that used to need a reflection fallback.
-            //
-            // Deliberately compares the same instance rather than two equal ones: a record's
-            // generated Equals is not picked up by EqualityComparer<T>, so 'l.Contains (new P 1)'
-            // answers false. That is pre-existing behaviour, unrelated to this work, and asserting
-            // it here either way would be asserting something this test is not about.
+            // over a declaration - one of the shapes that used to need a reflection fallback
             Test(@"
 record P
     X : int
 
-let p = new P 1
 var l = new List<P> ()
-l.Add p
-l.Contains p", true);
+l.Add (new P 1)
+l.Contains (new P 1)", true);
         }
 
         [Test]

@@ -74,7 +74,11 @@ namespace Lens.Compiler.Entities
                 "bool",
                 new[] {Expr.Arg<object>("obj")},
                 false,
-                true
+                true,
+                // overrides Object.Equals rather than shadowing it, so that everything which
+                // compares through the base type - EqualityComparer, Contains, Distinct, a
+                // dictionary key - sees a record's fields instead of its identity
+                isOverride: true
             );
 
             // if(this.ReferenceEquals null obj)
@@ -116,7 +120,10 @@ namespace Lens.Compiler.Entities
                 TypeEntryCache.Of<int>(),
                 new TypeEntry[0],
                 false,
-                true
+                true,
+                // must override for the same reason, and must agree with Equals: a hash that
+                // disagrees with equality is worse than no hash at all
+                isOverride: true
             );
 
             // var result = 0
