@@ -37,6 +37,7 @@
         Default,
         Ref,
         Throw,
+        Yield,
 
         // Literals
         Null,

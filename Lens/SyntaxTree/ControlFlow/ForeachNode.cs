@@ -90,7 +90,7 @@ namespace Lens.SyntaxTree.ControlFlow
             return ExpandRange(ctx);
         }
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             if (IterableExpression != null)
             {
@@ -331,4 +331,4 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #endregion
     }
-}
+}

@@ -336,4 +336,7 @@
   <data name="TypeConstraintExpected" xml:space="preserve">
     <value>LE2073: Ожидается ограничение параметра типа!</value>
   </data>
+  <data name="YieldExpressionExpected" xml:space="preserve">
+    <value>LE2074: Ожидается выражение для yield!</value>
+  </data>
 </root>

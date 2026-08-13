@@ -107,7 +107,7 @@ namespace Lens.SyntaxTree
         /// <summary>
         /// Gets the list of child nodes.
         /// </summary>
-        protected virtual IEnumerable<NodeChild> GetChildren()
+        internal virtual IEnumerable<NodeChild> GetChildren()
         {
             yield break;
         }

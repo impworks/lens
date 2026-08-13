@@ -618,4 +618,25 @@
   <data name="GenericArityOverloading" xml:space="preserve">
     <value>LE3165: '{0}' уже объявлен с другим количеством параметров типа; LENS не допускает перегрузку по числу параметров типа!</value>
   </data>
+  <data name="YieldNotInIterator" xml:space="preserve">
+    <value>LE3166: Оператор 'yield' может находиться только в теле именованной функции.</value>
+  </data>
+  <data name="IteratorReturnTypeRequired" xml:space="preserve">
+    <value>LE3167: Функция '{0}' содержит 'yield', поэтому её возвращаемый тип должен быть указан явно.</value>
+  </data>
+  <data name="IteratorReturnTypeMismatch" xml:space="preserve">
+    <value>LE3168: Функция '{0}' содержит 'yield', поэтому её возвращаемым типом должен быть IEnumerable&lt;T&gt;, а не '{1}'!</value>
+  </data>
+  <data name="IteratorPure" xml:space="preserve">
+    <value>LE3169: Функция '{0}' не может быть одновременно чистой и содержать 'yield': закэшированный итератор вернул бы всем вызывающим один и тот же одноразовый перечислитель.</value>
+  </data>
+  <data name="YieldInProtectedBlock" xml:space="preserve">
+    <value>LE3170: Оператор 'yield' недопустим внутри блока try, using или match.</value>
+  </data>
+  <data name="YieldInLambda" xml:space="preserve">
+    <value>LE3171: Оператор 'yield' недопустим внутри лямбды.</value>
+  </data>
+  <data name="YieldLoopClosure" xml:space="preserve">
+    <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-итератора и захвачена лямбдой, что не поддерживается.</value>
+  </data>
 </root>

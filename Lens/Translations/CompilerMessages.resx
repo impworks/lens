@@ -618,4 +618,25 @@
   <data name="GenericArityOverloading" xml:space="preserve">
     <value>LE3165: '{0}' is already declared with a different number of type parameters; LENS does not allow overloading by generic arity!</value>
   </data>
+  <data name="YieldNotInIterator" xml:space="preserve">
+    <value>LE3166: A 'yield' statement can only appear in the body of a named function.</value>
+  </data>
+  <data name="IteratorReturnTypeRequired" xml:space="preserve">
+    <value>LE3167: Function '{0}' contains a 'yield', so it must declare its return type explicitly.</value>
+  </data>
+  <data name="IteratorReturnTypeMismatch" xml:space="preserve">
+    <value>LE3168: Function '{0}' contains a 'yield', so its return type must be IEnumerable&lt;T&gt;, not '{1}'!</value>
+  </data>
+  <data name="IteratorPure" xml:space="preserve">
+    <value>LE3169: Function '{0}' cannot be pure and contain a 'yield': a memoized iterator would hand the same one-shot enumerator to every caller.</value>
+  </data>
+  <data name="YieldInProtectedBlock" xml:space="preserve">
+    <value>LE3170: A 'yield' is not allowed inside a try, using or match block.</value>
+  </data>
+  <data name="YieldInLambda" xml:space="preserve">
+    <value>LE3171: A 'yield' is not allowed inside a lambda.</value>
+  </data>
+  <data name="YieldLoopClosure" xml:space="preserve">
+    <value>LE3172: Variable '{0}' is declared inside a loop of an iterator function and captured by a lambda, which is not supported.</value>
+  </data>
 </root>

@@ -52,7 +52,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Transform
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             for (var idx = 0; idx < Expressions.Count; idx++)
             {

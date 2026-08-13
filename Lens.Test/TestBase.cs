@@ -128,12 +128,20 @@ namespace Lens.Test
 
         protected static LensCompiler CreateCompiler(LensCompilerOptions opts)
         {
-            var compiler = new LensCompiler(opts ?? new LensCompilerOptions
+            var options = opts ?? new LensCompilerOptions
             {
                 #if NET_CLASSIC
                 AllowSave = true
                 #endif
-            });
+            };
+
+            // running the whole suite through the lowering pass is how it is checked to preserve
+            // behaviour on code that has nothing to do with state machines:
+            //   LENS_LOWER_ALL=1 dotnet test
+            if (Environment.GetEnvironmentVariable("LENS_LOWER_ALL") == "1")
+                options.LowerAllFunctions = true;
+
+            var compiler = new LensCompiler(options);
             compiler.RegisterAssembly(Assembly.Load("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));
             return compiler;
         }

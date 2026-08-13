@@ -104,7 +104,7 @@ namespace Lens.SyntaxTree.PatternMatching
 
         #region Transform
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Expression);
             foreach (var stmt in MatchStatements)

@@ -121,6 +121,8 @@ namespace Lens.Compiler
         /// </summary>
         private void TransformTree()
         {
+            LowerAllBodies();
+
             while (UnprocessedMethods.Count > 0)
             {
                 var analysed = BindRound();
@@ -139,6 +141,26 @@ namespace Lens.Compiler
                     break;
 
                 PrepareEntities();
+            }
+        }
+
+        /// <summary>
+        /// Flattens the control flow of every pending method body.
+        ///
+        /// This is how the lowering pass is validated: a body that contains no resume point must
+        /// behave the same either way, so the whole test suite can be run through the pass.
+        /// </summary>
+        private void LowerAllBodies()
+        {
+            if (!Options.LowerAllFunctions)
+                return;
+
+            foreach (var curr in UnprocessedMethods)
+            {
+                if (curr.Body == null || curr.IsImported)
+                    continue;
+
+                WithRecovery(() => curr.Body = new Lowerer(this, lowerEverything: true).Lower(curr.Body, !curr.IsVoid));
             }
         }
 

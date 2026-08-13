@@ -1562,5 +1562,68 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("GenericArityOverloading", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3166: A &apos;yield&apos; statement can only appear in the body of a named function..
+        /// </summary>
+        public static string YieldNotInIterator {
+            get {
+                return ResourceManager.GetString("YieldNotInIterator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3167: Function &apos;{0}&apos; contains a &apos;yield&apos;, so it must declare its return type explicitly..
+        /// </summary>
+        public static string IteratorReturnTypeRequired {
+            get {
+                return ResourceManager.GetString("IteratorReturnTypeRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3168: Function &apos;{0}&apos; contains a &apos;yield&apos;, so its return type must be IEnumerable&lt;T&gt;, not &apos;{1}&apos;!.
+        /// </summary>
+        public static string IteratorReturnTypeMismatch {
+            get {
+                return ResourceManager.GetString("IteratorReturnTypeMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3169: Function &apos;{0}&apos; cannot be pure and contain a &apos;yield&apos;: a memoized iterator would hand the same one-shot enumerator to every caller..
+        /// </summary>
+        public static string IteratorPure {
+            get {
+                return ResourceManager.GetString("IteratorPure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3170: A &apos;yield&apos; is not allowed inside a try, using or match block..
+        /// </summary>
+        public static string YieldInProtectedBlock {
+            get {
+                return ResourceManager.GetString("YieldInProtectedBlock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3171: A &apos;yield&apos; is not allowed inside a lambda..
+        /// </summary>
+        public static string YieldInLambda {
+            get {
+                return ResourceManager.GetString("YieldInLambda", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3172: Variable &apos;{0}&apos; is declared inside a loop of an iterator function and captured by a lambda, which is not supported..
+        /// </summary>
+        public static string YieldLoopClosure {
+            get {
+                return ResourceManager.GetString("YieldLoopClosure", resourceCulture);
+            }
+        }
     }
 }

@@ -80,7 +80,7 @@ namespace Lens.SyntaxTree.ControlFlow
             ctx.ExitScope();
         }
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             return Statements.Select((stmt, i) => new NodeChild(stmt));
         }
@@ -167,7 +167,7 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var lastExpressionIdx = Statements.FindLastIndex(x => !(x is JumpNode) && !(x is JumpLabelNode));
+            var lastExpressionIdx = Statements.FindLastIndex(x => !(x is IMetaNode));
 
             for (var idx = 0; idx < Statements.Count; idx++)
             {

@@ -87,5 +87,15 @@ namespace Lens
         /// Default = false
         /// </summary>
         public bool MeasureTime;
+
+        /// <summary>
+        /// Runs the lowering pass over every method body, not only the ones a state machine is
+        /// built from.
+        ///
+        /// This exists so that the pass can be checked on its own: a script that contains no yield
+        /// and no await must behave identically whether its control flow was flattened or not.
+        /// Nothing outside the test suite has a reason to turn it on.
+        /// </summary>
+        internal bool LowerAllFunctions;
     }
 }

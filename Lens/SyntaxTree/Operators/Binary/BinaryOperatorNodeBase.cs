@@ -104,7 +104,7 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         #region Transform
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(LeftOperand);
             yield return new NodeChild(RightOperand);

@@ -49,7 +49,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
         #region Transform
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             return Expressions.Select((expr, i) => new NodeChild(expr));
         }

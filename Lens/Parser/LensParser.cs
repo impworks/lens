@@ -496,7 +496,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// local_stmt                                  = name_def_stmt | set_stmt | expr
+        /// local_stmt                                  = yield_stmt | name_def_stmt | set_stmt | expr
         /// </summary>
         private NodeBase ParseLocalStmt()
         {
@@ -506,9 +506,31 @@ namespace Lens.Parser
             if (Peek(LexemType.PassRight))
                 Error(ParserMessages.MethodPassIndentExpected);
 
-            return Attempt(ParseNameDefStmt)
+            return Attempt(ParseYieldStmt)
+                   ?? Attempt(ParseNameDefStmt)
                    ?? Attempt(ParseSetStmt)
                    ?? Attempt(ParseExpr);
+        }
+
+        /// <summary>
+        /// yield_stmt                                  = "yield" [ "from" ] line_expr
+        /// </summary>
+        private YieldNode ParseYieldStmt()
+        {
+            if (!Check(LexemType.Yield))
+                return null;
+
+            // 'from' is not a keyword: it only means anything in the one position where a sequence
+            // may follow, and everywhere else it stays an ordinary name
+            var isSequence = Peek(LexemType.Identifier) && _lexems[_lexemId].Value == "from";
+            if (isSequence)
+                Skip();
+
+            return new YieldNode
+            {
+                IsSequence = isSequence,
+                Expression = Ensure(ParseLineExpr, ParserMessages.YieldExpressionExpected)
+            };
         }
 
         #endregion

@@ -605,6 +605,16 @@ namespace Lens.SyntaxTree
             return new ForeachNode {Local = local, RangeStart = from, RangeEnd = to, Body = body};
         }
 
+        public static YieldNode Yield(NodeBase expr)
+        {
+            return new YieldNode {Expression = expr};
+        }
+
+        public static YieldNode YieldFrom(NodeBase expr)
+        {
+            return new YieldNode {Expression = expr, IsSequence = true};
+        }
+
         public static ThrowNode Throw()
         {
             return new ThrowNode();

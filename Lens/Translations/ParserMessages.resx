@@ -336,4 +336,7 @@
   <data name="TypeConstraintExpected" xml:space="preserve">
     <value>LE2073: Type parameter constraint is expected!</value>
   </data>
+  <data name="YieldExpressionExpected" xml:space="preserve">
+    <value>LE2074: An expression to yield is expected!</value>
+  </data>
 </root>

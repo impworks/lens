@@ -166,7 +166,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             return body;
         }
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Chain);
         }

@@ -716,5 +716,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("TypeConstraintExpected", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE2074: An expression to yield is expected!.
+        /// </summary>
+        public static string YieldExpressionExpected {
+            get {
+                return ResourceManager.GetString("YieldExpressionExpected", resourceCulture);
+            }
+        }
     }
 }

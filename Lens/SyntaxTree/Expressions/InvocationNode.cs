@@ -302,7 +302,7 @@ namespace Lens.SyntaxTree.Expressions
 
         #region Transform
 
-        protected override IEnumerable<NodeChild> GetChildren()
+        internal override IEnumerable<NodeChild> GetChildren()
         {
             if (Expression is GetMemberNode)
             {
