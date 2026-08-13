@@ -639,4 +639,7 @@
   <data name="YieldLoopClosure" xml:space="preserve">
     <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-итератора и захвачена лямбдой, что не поддерживается.</value>
   </data>
+  <data name="IteratorGeneric" xml:space="preserve">
+    <value>LE3173: Функция '{0}' содержит 'yield' и объявляет параметры типа; обобщённые итераторы пока не поддерживаются.</value>
+  </data>
 </root>

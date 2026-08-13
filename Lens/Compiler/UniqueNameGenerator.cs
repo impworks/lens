@@ -16,6 +16,7 @@ namespace Lens.Compiler
         private int _closureMethodId;
         private int _closureFieldId;
         private int _tempVariableId;
+        private int _stateMachineId;
 
         #endregion
 
@@ -57,6 +58,14 @@ namespace Lens.Compiler
         public string AnonymousArgName()
         {
             return string.Format(EntityNames.AnonymousArgumentTemplate, ++_anonymousArgumentId);
+        }
+
+        /// <summary>
+        /// Creates a new unique name for a state machine class.
+        /// </summary>
+        public string StateMachineName()
+        {
+            return string.Format(EntityNames.StateMachineTypeNameTemplate, ++_stateMachineId);
         }
 
         /// <summary>

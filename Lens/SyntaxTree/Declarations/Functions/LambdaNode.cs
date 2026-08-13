@@ -142,7 +142,13 @@ namespace Lens.SyntaxTree.Declarations.Functions
             var closure = ctx.Scope.ActiveClosure;
             var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, ctx.BindingOf<Binding>(this).Method.Name).Single();
 
-            gen.EmitLoadLocal(closure.ClosureVariable);
+            // inside a state machine the closure class is the machine, and the instance the
+            // delegate must be bound to is the receiver rather than a local
+            if (closure.ClosureIsThis)
+                gen.EmitLoadArgument(0);
+            else
+                gen.EmitLoadLocal(closure.ClosureVariable);
+
             gen.EmitLoadFunctionPointer(closureMethod.MethodInfo);
             gen.EmitCreateObject(ctor.ConstructorInfo);
         }

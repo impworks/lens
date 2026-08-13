@@ -45,6 +45,16 @@ namespace Lens.Compiler.Entities
         public bool IsVariadic;
 
         /// <summary>
+        /// The interface method this one implements under a name of its own.
+        ///
+        /// Only needed where implicit matching cannot work: IEnumerable and IEnumerable&lt;T&gt;
+        /// both declare a GetEnumerator that takes nothing, and they differ only in what they
+        /// return, so at most one of the two can be implemented by a method actually called
+        /// GetEnumerator.
+        /// </summary>
+        public MethodInfo ExplicitOverride;
+
+        /// <summary>
         /// The generic parameters of the method, or null if the method is not generic.
         /// </summary>
         public List<GenericParameterEntity> GenericParameters;
@@ -187,6 +197,9 @@ namespace Lens.Compiler.Entities
 
                 MethodBuilder = ContainerType.TypeBuilder.DefineMethod(Name, attrs, ReturnType.IsVoid() ? typeof(void) : ReturnType.Materialize(), TypeEntry.Materialize(ArgumentTypes));
             }
+
+            if (ExplicitOverride != null)
+                ContainerType.TypeBuilder.DefineMethodOverride(MethodBuilder, ExplicitOverride);
 
             Generator = MethodBuilder.GetILGenerator(Context.IlStreamSize);
 

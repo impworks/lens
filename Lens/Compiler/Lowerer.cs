@@ -367,7 +367,7 @@ namespace Lens.Compiler
                 CheckNoNestedYields(child?.Node);
         }
 
-        private static bool ContainsYieldAnywhere(NodeBase node)
+        public static bool ContainsYieldAnywhere(NodeBase node)
         {
             if (node == null)
                 return false;

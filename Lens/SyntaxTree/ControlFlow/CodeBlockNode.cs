@@ -112,7 +112,9 @@ namespace Lens.SyntaxTree.ControlFlow
             var scope = ctx.ScopeOf(this);
             ctx.EnterScope(scope);
 
-            if (scope.ClosureType != null)
+            // a machine's frame needs no setting up: the closure instance is the receiver, and it
+            // was created by the function that handed the machine out
+            if (scope.ClosureType != null && !scope.ClosureIsThis)
                 EmitClosureSetup(ctx, scope);
 
             EmitStatements(ctx, mustReturn);

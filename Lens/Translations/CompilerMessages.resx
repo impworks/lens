@@ -639,4 +639,7 @@
   <data name="YieldLoopClosure" xml:space="preserve">
     <value>LE3172: Variable '{0}' is declared inside a loop of an iterator function and captured by a lambda, which is not supported.</value>
   </data>
+  <data name="IteratorGeneric" xml:space="preserve">
+    <value>LE3173: Function '{0}' contains a 'yield' and declares type parameters; generic iterators are not supported yet.</value>
+  </data>
 </root>

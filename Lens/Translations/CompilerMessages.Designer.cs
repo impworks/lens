@@ -1625,5 +1625,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("YieldLoopClosure", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3173: Function &apos;{0}&apos; contains a &apos;yield&apos; and declares type parameters; generic iterators are not supported yet..
+        /// </summary>
+        public static string IteratorGeneric {
+            get {
+                return ResourceManager.GetString("IteratorGeneric", resourceCulture);
+            }
+        }
     }
 }

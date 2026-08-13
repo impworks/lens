@@ -164,6 +164,50 @@ TFM-conditional feature — the `net47` leg retained in Phase 0 cannot have it w
 Do this only if a real use case appears. It roughly doubles the protocol complexity for a feature
 glue code rarely needs.
 
+## What was built, and what was left out
+
+Steps 1–3 are done. The staging that was actually taken:
+
+- **The lowering pass** (`Lens/Compiler/Lowerer.cs`) runs before binding, on the parse tree, and
+  rewrites rather than mutates. Blocks stay nested and only the control flow *between* them is
+  flattened, which means a name declared in a loop body still belongs to that body's frame — the
+  pass never merges two frames and therefore never has to rename anything. Validated independently
+  through `LensCompilerOptions.LowerAllFunctions`: `LENS_LOWER_ALL=1 dotnet test` runs the whole
+  suite with every method body flattened.
+- **Hoisting merges with closure hoisting**, as the phase demanded. The machine class *is* the
+  closure class of MoveNext's root scope (`Scope.MakeMachineRoot`), so a name that is both captured
+  by a lambda and live across a `yield` ends up in exactly one field. A lambda declared in an
+  iterator is compiled onto the machine class itself and reaches those fields through `this`.
+- **`yield` and `yield from`**, with the machine implementing `IEnumerable<T>`, `IEnumerable`,
+  `IEnumerator<T>`, `IEnumerator` and `IDisposable`. The two non-generic members are explicit
+  overrides; everything else matches its interface method by name.
+
+Deliberately left out, each with a specific diagnostic rather than a crash:
+
+| Rejected | Message |
+|---|---|
+| `yield` in `try` / `using` / `match` | LE3170 |
+| `yield` in a lambda | LE3171 |
+| `pure` iterator | LE3169 |
+| iterator with no declared return type | LE3167 |
+| iterator whose return type is not `IEnumerable<T>` | LE3168 |
+| generic iterator (`fun f<T>:IEnumerable<T>`) | LE3173 |
+| a name declared in a loop *and* captured, inside an iterator | LE3172 |
+
+Two of these are worth calling out.
+
+**Return type inference was not built.** An iterator must declare `IEnumerable<T>` (or `T~`)
+explicitly. Inferring `T` from the yielded expressions needs the body bound, and the machine is
+built out of the parse tree — before anything has a type — because that is what lets the rewrite
+reuse the existing binding and emission path wholesale rather than re-binding a tree that has
+already been bound once.
+
+**`yield` inside `try` is the deferred piece**, exactly as the phase proposed. The consequence
+visible today is that a lowered `foreach` inside an iterator disposes its enumerator when the loop
+ends normally and not when the iterator is abandoned. Supporting it means moving `finally` bodies
+into separate methods that both the normal path and `Dispose` call, and that is the same machinery
+`await` in `try` needs.
+
 ## Acceptance criteria
 
 - The lowering pass is validated independently, per control structure, before any state machine

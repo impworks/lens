@@ -16,6 +16,16 @@ namespace Lens.Compiler
 {
     internal partial class Context
     {
+        #region Fields
+
+        /// <summary>
+        /// The functions that turned out to yield, waiting for the whole script to be read before
+        /// they are rewritten.
+        /// </summary>
+        private readonly List<Tuple<FunctionNode, MethodEntity>> _pendingStateMachines = new List<Tuple<FunctionNode, MethodEntity>>();
+
+        #endregion
+
         #region Compilation essentials
 
         /// <summary>
@@ -30,6 +40,9 @@ namespace Lens.Compiler
             IsEmitting = true;
 
             LoadTree(nodes);
+            ThrowIfFailed();
+
+            BuildStateMachines();
             ThrowIfFailed();
 
             CreateInitialEntities(emit: true);
@@ -56,6 +69,10 @@ namespace Lens.Compiler
         public void Analyze(IEnumerable<NodeBase> nodes)
         {
             LoadTree(nodes);
+            if (Diagnostics.HasErrors)
+                return;
+
+            BuildStateMachines();
             if (Diagnostics.HasErrors)
                 return;
 
@@ -157,7 +174,10 @@ namespace Lens.Compiler
 
             foreach (var curr in UnprocessedMethods)
             {
-                if (curr.Body == null || curr.IsImported)
+                // a state machine's members carry a body that has already been through the pass,
+                // and their frame is the machine class itself - running them through it a second
+                // time would build a new frame and lose the names that live in the old one
+                if (curr.Body == null || curr.IsImported || curr.ContainerType.Kind == TypeEntityKind.Closure)
                     continue;
 
                 WithRecovery(() => curr.Body = new Lowerer(this, lowerEverything: true).Lower(curr.Body, !curr.IsVoid));
@@ -475,6 +495,30 @@ namespace Lens.Compiler
             method.IsVariadic = isVariadic;
             method.GenericParameters = CreateGenericParameters(node.TypeParameters, node.Name);
             method.Body = node.Body;
+
+            // a function that yields is not a function that returns a sequence: it is a class that
+            // implements one, and a factory that hands it out. The rewrite replaces the body above.
+            if (IteratorBuilder.IsIterator(node))
+                _pendingStateMachines.Add(Tuple.Create(node, method));
+        }
+
+        /// <summary>
+        /// Rewrites every function that yields into a state machine.
+        ///
+        /// This runs once the whole script has been read, not as each function is declared: the
+        /// rewrite resolves the argument types, and a function may well be declared before the
+        /// record it takes.
+        /// </summary>
+        private void BuildStateMachines()
+        {
+            foreach (var curr in _pendingStateMachines)
+            {
+                var node = curr.Item1;
+                var method = curr.Item2;
+                WithRecovery(() => IteratorBuilder.Build(this, node, method));
+            }
+
+            _pendingStateMachines.Clear();
         }
 
         /// <summary>

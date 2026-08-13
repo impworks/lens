@@ -73,6 +73,21 @@ namespace Lens.Compiler
         private Type[] _closureOwnParameters;
 
         /// <summary>
+        /// Whether the closure instance is the method's own 'this' rather than a local variable.
+        ///
+        /// This is what a state machine is: MoveNext is a method on the class that holds the
+        /// names, so the class does not have to be created and stored anywhere - it is already
+        /// there, as the receiver.
+        /// </summary>
+        public bool ClosureIsThis { get; private set; }
+
+        /// <summary>
+        /// Whether every name at or below this scope has to live in the closure type rather than
+        /// on the stack frame, because the frame does not survive between two statements.
+        /// </summary>
+        public bool IsMachineRoot { get; private set; }
+
+        /// <summary>
         /// The local variable in which the closure is saved.
         /// </summary>
         public LocalBuilder ClosureVariable { get; private set; }
@@ -225,15 +240,51 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// Declares that this scope's names belong to a state machine class, of which the method
+        /// being compiled is a member.
+        /// </summary>
+        public void MakeMachineRoot(TypeEntity machineType)
+        {
+            IsMachineRoot = true;
+            ClosureIsThis = true;
+            NeedsClosure = true;
+            ClosureType = machineType;
+            ClosureInstanceType = machineType.TypeInfo;
+        }
+
+        /// <summary>
         /// Records what the analysis of this scope concluded, once the whole scope has been walked.
         /// Names the closure fields but does not create them.
         /// </summary>
         public void AnalyzeSelf(Context ctx)
         {
+            var machine = MachineOwner();
+
             foreach (var curr in Locals.Values)
             {
                 if (IsUnrolledConstant(ctx, curr))
                     continue;
+
+                if (machine != null)
+                {
+                    // a state machine's frame does not survive between two statements, so every
+                    // name it holds has to be a field. This is the same hoisting a closure does,
+                    // and it is deliberately the same mechanism: a name that is both captured and
+                    // live across a resume point must end up in exactly one place, or a mutation
+                    // through one view would be invisible through the other.
+                    if (!curr.IsClosured)
+                    {
+                        curr.IsClosured = true;
+                        curr.ClosureScope = machine;
+                    }
+                    else if (curr.ClosureScope != machine)
+                    {
+                        // the name lives in a closure of its own - a loop makes one per iteration -
+                        // and that closure is held in a local the machine cannot carry across a
+                        // resume point
+                        Context.Error(CompilerMessages.YieldLoopClosure, curr.Name);
+                    }
+                }
 
                 if (curr.IsClosured && curr.ClosureFieldName == null)
                     curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
@@ -260,6 +311,12 @@ namespace Lens.Compiler
                     var closure = curr.ClosureScope;
                     closure.EnsureClosureType(ctx);
 
+                    // a state machine's arguments already have their fields: the function that
+                    // creates the machine has to fill them in, and it is compiled before anything
+                    // here has run
+                    if (closure.ClosureType.HasField(curr.ClosureFieldName))
+                        continue;
+
                     var field = closure.ClosureType.CreateField(curr.ClosureFieldName, closure.SubstituteIntoClosure(curr.Type));
                     field.Kind = TypeContentsKind.Closure;
                 }
@@ -274,6 +331,12 @@ namespace Lens.Compiler
             if (NeedsClosure)
             {
                 EnsureClosureType(ctx);
+
+                // the machine class is the outermost frame of its own MoveNext and is reached
+                // through 'this', so it has neither a parent to affix to nor a local to live in
+                if (ClosureIsThis)
+                    return;
+
                 DetectClosureParent();
 
                 if (ClosureParent != null)
@@ -319,7 +382,11 @@ namespace Lens.Compiler
 
             if (scope == closure)
             {
-                gen.EmitLoadLocal(closure.ClosureVariable);
+                if (closure.ClosureIsThis)
+                    gen.EmitLoadArgument(0);
+                else
+                    gen.EmitLoadLocal(closure.ClosureVariable);
+
                 return closure.ClosureInstanceType;
             }
 
@@ -452,6 +519,29 @@ namespace Lens.Compiler
         private Scope ClosureOwner()
         {
             return FindScope(s => s.Kind != ScopeKind.Unclosured);
+        }
+
+        /// <summary>
+        /// The state machine frame this scope belongs to, if any.
+        ///
+        /// The search stops at a lambda: a lambda declared inside an iterator is an ordinary method
+        /// with an ordinary frame, and its own names have no reason to be hoisted.
+        /// </summary>
+        private Scope MachineOwner()
+        {
+            var curr = this;
+            while (curr != null)
+            {
+                if (curr.IsMachineRoot)
+                    return curr;
+
+                if (curr.Kind == ScopeKind.LambdaRoot)
+                    return null;
+
+                curr = curr.OuterScope;
+            }
+
+            return null;
         }
 
         /// <summary>

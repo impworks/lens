@@ -29,6 +29,15 @@ namespace Lens.Compiler.Entities
 
         public TypeEntry[] Interfaces;
 
+        /// <summary>
+        /// The interfaces the type declares, before they have been resolved.
+        ///
+        /// A compiler-generated type is declared long before anything can be resolved - a state
+        /// machine is built out of the parse tree - and the interfaces it implements are spelled in
+        /// terms of the function's own return type.
+        /// </summary>
+        public TypeSignature[] InterfaceSignatures;
+
         private readonly Dictionary<string, FieldEntity> _fields;
         private readonly Dictionary<string, List<MethodEntity>> _methods;
         private readonly List<ConstructorEntity> _constructors;
@@ -195,6 +204,9 @@ namespace Lens.Compiler.Entities
         {
             if (Parent == null && ParentSignature != null)
                 Parent = Context.ResolveType(ParentSignature);
+
+            if (Interfaces == null && InterfaceSignatures != null)
+                Interfaces = InterfaceSignatures.Select(x => Context.ResolveType(x)).ToArray();
         }
 
         /// <summary>
@@ -312,6 +324,14 @@ namespace Lens.Compiler.Entities
         #endregion
 
         #region Structure methods
+
+        /// <summary>
+        /// Checks whether the type already declares a field under this name.
+        /// </summary>
+        internal bool HasField(string name)
+        {
+            return _fields.ContainsKey(name);
+        }
 
         /// <summary>
         /// Resolves a field assembly entity.
