@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.SyntaxTree.Operators.Binary
 {
@@ -71,6 +73,19 @@ namespace Lens.SyntaxTree.Operators.Binary
         #endregion
 
         #region Transform
+
+        /// <summary>
+        /// The node expands into the branch it stands for, and binding transforms that instead of
+        /// this - so these are here for the passes that read the tree before binding rather than
+        /// for binding itself. The operands are deliberately not reported as this node's operands:
+        /// the fallback is evaluated only when the first operand turned out to be null, and one
+        /// evaluated ahead of time would be evaluated when the source says it should not be.
+        /// </summary>
+        internal override IEnumerable<NodeChild> GetChildren()
+        {
+            yield return new NodeChild(LeftOperand);
+            yield return new NodeChild(RightOperand);
+        }
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {

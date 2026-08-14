@@ -104,6 +104,28 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Value);
         }
 
+        // a static member has no expression to evaluate: the type is not a value
+        internal override IReadOnlyList<NodeBase> Operands => Expression == null ? new[] {Value} : new[] {Expression, Value};
+
+        /// <summary>
+        /// The object being assigned into is not a value the node consumes: were it evaluated
+        /// ahead of time and kept in a temporary, a struct would be copied there and the
+        /// assignment would land in the copy.
+        /// </summary>
+        internal override bool CanHoistOperand(int index)
+        {
+            return Expression == null || index != 0;
+        }
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<SetMemberNode>();
+            if (Expression != null)
+                copy.Expression = operands[0];
+            copy.Value = operands[operands.Count - 1];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

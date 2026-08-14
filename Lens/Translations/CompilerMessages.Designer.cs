@@ -1663,7 +1663,7 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3179: An &apos;await&apos; can only be a statement of its own or the value assigned to a variable..
+        ///   Looks up a localized string similar to LE3179: A &apos;yield&apos; or &apos;await&apos; cannot appear in this position..
         /// </summary>
         public static string AwaitPosition {
             get {
@@ -1686,6 +1686,24 @@ namespace Lens.Translations {
         public static string LambdaInMatchedResumePoint {
             get {
                 return ResourceManager.GetString("LambdaInMatchedResumePoint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3182: An &apos;await&apos; cannot appear inside a null-safe chain. Evaluate it into a variable first..
+        /// </summary>
+        public static string ResumePointInNullSafeChain {
+            get {
+                return ResourceManager.GetString("ResumePointInNullSafeChain", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3181: The type of &apos;{0}&apos; cannot be worked out, because nothing is ever assigned to it..
+        /// </summary>
+        public static string DeferredNameNeverAssigned {
+            get {
+                return ResourceManager.GetString("DeferredNameNeverAssigned", resourceCulture);
             }
         }
     }

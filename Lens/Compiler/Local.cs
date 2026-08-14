@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
 using Lens.Resolver;
 using Lens.SyntaxTree;
+using Lens.Translations;
 
 namespace Lens.Compiler
 {
@@ -21,6 +23,10 @@ namespace Lens.Compiler
             Type = type;
             IsImmutable = isConst;
             IsRefArgument = isRefArg;
+
+            // a name declared without a type is one whose type is still being worked out from the
+            // values assigned to it
+            IsTypeDeferred = type == null;
         }
 
         #endregion
@@ -35,7 +41,20 @@ namespace Lens.Compiler
         /// <summary>
         /// Variable type.
         /// </summary>
-        public readonly TypeEntry Type;
+        public TypeEntry Type { get; private set; }
+
+        /// <summary>
+        /// Whether the type is still being worked out from the values assigned to the name.
+        ///
+        /// The lowering pass runs before anything has a type, because a state machine is built out
+        /// of the parse tree. When it has to invent a name to hold the value of a branch - what a
+        /// suspending 'if' or 'match' produces - there is nothing it can write down as the type,
+        /// and nothing it could resolve either, since the branch bodies mention names that only
+        /// come into being while the construct around them is bound. So the name is declared
+        /// without one, and each assignment widens it until the first read settles it. Binding
+        /// reaches the assignments before the read, in the order the statements were written.
+        /// </summary>
+        public bool IsTypeDeferred { get; private set; }
 
         /// <summary>
         /// Is the name a constant or a variable?
@@ -82,6 +101,38 @@ namespace Lens.Compiler
         /// The compile-time constant value for current local name.
         /// </summary>
         public dynamic ConstantValue;
+
+        #endregion
+
+        #region Deferred type
+
+        /// <summary>
+        /// Widens the name's type to also hold what is being assigned to it.
+        /// </summary>
+        public void ContributeType(TypeResolutionContext ctx, TypeEntry type)
+        {
+            if (!IsTypeDeferred)
+                throw new InvalidOperationException($"The type of '{Name}' is not deferred.");
+
+            Type = Type == null
+                ? type
+                : new[] {Type, type}.GetMostCommonType(ctx);
+        }
+
+        /// <summary>
+        /// Settles the name's type, because something is about to read it. Every assignment that
+        /// was going to widen it has been bound by now: they were all written before the read.
+        /// </summary>
+        public void SealType()
+        {
+            if (!IsTypeDeferred)
+                return;
+
+            if (Type == null)
+                throw new LensCompilerException(string.Format(CompilerMessages.DeferredNameNeverAssigned, Name));
+
+            IsTypeDeferred = false;
+        }
 
         #endregion
 

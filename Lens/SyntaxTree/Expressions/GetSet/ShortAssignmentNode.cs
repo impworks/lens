@@ -68,6 +68,22 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Expression);
         }
 
+        /// <summary>
+        /// '&amp;&amp;=' and '||=' expand into the operator they are named after, and that operator
+        /// only sometimes evaluates its right-hand side. The rest expand into one that always does.
+        /// </summary>
+        internal override IReadOnlyList<NodeBase> Operands =>
+            _operatorType == LexemType.And || _operatorType == LexemType.Or
+                ? NoOperands
+                : new[] {Expression};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<ShortAssignmentNode>();
+            copy.Expression = operands[0];
+            return copy;
+        }
+
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             if (Expression is SetIdentifierNode)

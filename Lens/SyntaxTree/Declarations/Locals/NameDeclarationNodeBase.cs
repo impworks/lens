@@ -103,6 +103,15 @@ namespace Lens.SyntaxTree.Declarations.Locals
             yield return new NodeChild(Value, true);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => Value == null ? NoOperands : new[] {Value};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<NameDeclarationNodeBase>();
+            copy.Value = operands[0];
+            return copy;
+        }
+
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var name = Local ?? ctx.Scope.FindLocal(Name);

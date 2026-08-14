@@ -45,6 +45,15 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             return Expressions.Select((expr, i) => new NodeChild(expr));
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => Expressions;
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<NewListNode>();
+            copy.Expressions = operands.ToList();
+            return copy;
+        }
+
         #endregion
 
         #region Emit

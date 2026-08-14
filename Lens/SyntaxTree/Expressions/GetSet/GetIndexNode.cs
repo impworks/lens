@@ -54,6 +54,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Index);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression, Index};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<GetIndexNode>();
+            copy.Expression = operands[0];
+            copy.Index = operands[1];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

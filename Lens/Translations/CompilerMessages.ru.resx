@@ -652,12 +652,18 @@
     <value>LE3177: Функция '{0}' не может быть одновременно чистой и содержать 'await': закэшированная задача возвращалась бы всем вызывающим уже завершённой.</value>
   </data>
   <data name="AwaitPosition" xml:space="preserve">
-    <value>LE3179: Оператор 'await' может быть только отдельной инструкцией или значением, присваиваемым переменной.</value>
+    <value>LE3179: Операторы 'yield' и 'await' недопустимы в этой позиции.</value>
   </data>
   <data name="RethrowInMovedHandler" xml:space="preserve">
     <value>LE3173: Оператор 'throw' без аргумента здесь недоступен: укажите имя исключения в catch и выбросьте его явно.</value>
   </data>
   <data name="LambdaInMatchedResumePoint" xml:space="preserve">
     <value>LE3180: Лямбда недопустима внутри 'match', который также содержит 'yield' или 'await'.</value>
+  </data>
+  <data name="ResumePointInNullSafeChain" xml:space="preserve">
+    <value>LE3182: Оператор 'await' недопустим внутри null-safe цепочки. Вычислите его в переменную заранее.</value>
+  </data>
+  <data name="DeferredNameNeverAssigned" xml:space="preserve">
+    <value>LE3181: Не удалось определить тип '{0}': этому имени нигде не присваивается значение.</value>
   </data>
 </root>

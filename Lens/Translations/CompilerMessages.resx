@@ -652,12 +652,18 @@
     <value>LE3177: Function '{0}' cannot be pure and contain an 'await': a memoized task would be handed to every caller already completed.</value>
   </data>
   <data name="AwaitPosition" xml:space="preserve">
-    <value>LE3179: An 'await' can only be a statement of its own or the value assigned to a variable.</value>
+    <value>LE3179: A 'yield' or 'await' cannot appear in this position.</value>
   </data>
   <data name="RethrowInMovedHandler" xml:space="preserve">
     <value>LE3173: A bare 'throw' cannot be reached here: name the exception in the catch clause and rethrow it explicitly.</value>
   </data>
   <data name="LambdaInMatchedResumePoint" xml:space="preserve">
     <value>LE3180: A lambda is not allowed inside a 'match' that also contains a 'yield' or an 'await'.</value>
+  </data>
+  <data name="ResumePointInNullSafeChain" xml:space="preserve">
+    <value>LE3182: An 'await' cannot appear inside a null-safe chain. Evaluate it into a variable first.</value>
+  </data>
+  <data name="DeferredNameNeverAssigned" xml:space="preserve">
+    <value>LE3181: The type of '{0}' cannot be worked out, because nothing is ever assigned to it.</value>
   </data>
 </root>

@@ -106,6 +106,24 @@ namespace Lens.SyntaxTree.Expressions
             }
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => Arguments;
+
+        /// <summary>
+        /// A partial application's placeholder stands for an argument that is not being passed at
+        /// all, so there is nothing about it to evaluate early.
+        /// </summary>
+        internal override bool CanHoistOperand(int index)
+        {
+            return !(Arguments[index] is GetIdentifierNode identifier && identifier.Identifier == "_");
+        }
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<InvocationNodeBase>();
+            copy.Arguments = operands.ToList();
+            return copy;
+        }
+
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var binding = GetBinding(ctx);

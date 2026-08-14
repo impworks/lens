@@ -309,6 +309,10 @@ namespace Lens.Compiler
                 if (IsUnrolledConstant(ctx, curr))
                     continue;
 
+                // a name whose type was still being worked out is settled by whatever reads it. One
+                // that reaches here unsettled was never read, and needs a slot all the same
+                curr.SealType();
+
                 if (curr.IsClosured)
                 {
                     // the owner may sit further out than this scope, and its own EmitSelf runs

@@ -63,6 +63,19 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             }
         }
 
+        // each pair is filled in before the next one, key first
+        internal override IReadOnlyList<NodeBase> Operands => Expressions.SelectMany(x => new[] {x.Key, x.Value}).ToList();
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<NewDictionaryNode>();
+            copy.Expressions = new List<KeyValuePair<NodeBase, NodeBase>>();
+            for (var idx = 0; idx < operands.Count; idx += 2)
+                copy.Expressions.Add(new KeyValuePair<NodeBase, NodeBase>(operands[idx], operands[idx + 1]));
+
+            return copy;
+        }
+
         #endregion
 
         #region Emit

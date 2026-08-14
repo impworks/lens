@@ -28,6 +28,15 @@ namespace Lens.SyntaxTree.ControlFlow
             yield return new NodeChild(Expression);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => Expression == null ? NoOperands : new[] {Expression};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<ThrowNode>();
+            copy.Expression = operands[0];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

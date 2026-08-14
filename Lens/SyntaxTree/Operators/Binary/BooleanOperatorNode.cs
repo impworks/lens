@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Resolver;
 
@@ -37,6 +38,13 @@ namespace Lens.SyntaxTree.Operators.Binary
         {
             return new BooleanOperatorNode(Kind) {LeftOperand = left, RightOperand = right};
         }
+
+        /// <summary>
+        /// The right operand is evaluated only when the left one did not already decide the answer,
+        /// so neither operand may be hoisted out of the operator. A rewrite that needs to suspend
+        /// inside one has to turn the operator into the branch it stands for first.
+        /// </summary>
+        internal override IReadOnlyList<NodeBase> Operands => NoOperands;
 
         #endregion
 

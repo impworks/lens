@@ -73,6 +73,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
+            // a name whose type is still being worked out has no type to check against yet: this
+            // assignment is one of the things that decides it
+            if (nameInfo != null && nameInfo.IsTypeDeferred)
+            {
+                var assignedType = Value.Resolve(ctx);
+                ctx.CheckTypedExpression(Value, assignedType, true);
+                nameInfo.ContributeType(ctx.Resolver, assignedType);
+                return base.ResolveInternal(ctx, mustReturn);
+            }
+
             var destType = nameInfo != null ? nameInfo.Type : TypeEntryCache.Of(_property.PropertyType);
             EnsureLambdaInferred(ctx, Value, destType);
 
@@ -98,6 +108,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Value, true);
+        }
+
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Value};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<SetIdentifierNode>();
+            copy.Value = operands[0];
+            return copy;
         }
 
         #endregion

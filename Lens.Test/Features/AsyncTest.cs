@@ -334,17 +334,6 @@ pure fun broken:Task<int> ->
         }
 
         [Test]
-        public void AwaitInsideAnExpressionIsRejected()
-        {
-            TestError(
-                @"
-fun broken:Task<int> (t:Task<int>) ->
-    1 + (await t)",
-                "LE3179"
-            );
-        }
-
-        [Test]
         public void AwaitInsideLambdaIsRejected()
         {
             TestError(

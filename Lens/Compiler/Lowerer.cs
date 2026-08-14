@@ -30,7 +30,7 @@ namespace Lens.Compiler
     /// declared in a loop body still belongs to that body's frame - the pass never has to merge two
     /// frames, and therefore never has to rename anything.
     /// </summary>
-    internal class Lowerer
+    internal partial class Lowerer
     {
         #region Constructor
 
@@ -150,80 +150,76 @@ namespace Lens.Compiler
                 return;
             }
 
-            if (TryLowerAwait(stmt, output))
-                return;
-
-            var hasYield = ContainsResumePoint(stmt);
-            if (!hasYield && !_lowerEverything)
+            var suspends = ContainsResumePoint(stmt);
+            if (!suspends && !_lowerEverything)
             {
                 output.Add(stmt);
                 return;
             }
 
-            // the value of a lowered construct would have to survive an arbitrary jump, and there
-            // is nowhere for it to wait: what a flattened branch leaves on the stack is not there
-            // when another branch arrives at the same label
+            // a construct in value position is not flattened: its value would have to survive an
+            // arbitrary jump, and there is nowhere for it to wait - what a flattened branch leaves
+            // on the stack is not there when another branch arrives at the same label. A block is
+            // the exception, because it does not branch: its value is its last statement's, and
+            // that statement is in value position in turn
             if (valuePosition)
             {
-                if (hasYield)
-                    RejectResumePoint(stmt);
+                if (stmt is CodeBlockNode valueBlock)
+                {
+                    output.Add(LowerBlock(valueBlock, true));
+                    return;
+                }
+            }
+            else
+            {
+                switch (stmt)
+                {
+                    case CodeBlockNode block:
+                        output.Add(LowerBlock(block, false));
+                        return;
 
+                    case IfNode node:
+                        LowerIf(node, output);
+                        return;
+
+                    case WhileNode node:
+                        LowerWhile(node, output);
+                        return;
+
+                    case ForeachNode node:
+                        LowerForeach(node, output);
+                        return;
+
+                    case TryNode node:
+                        LowerTry(node, output);
+                        return;
+
+                    case UsingNode node:
+                        LowerUsing(node, output);
+                        return;
+
+                    case MatchNode node:
+                        LowerMatch(node, output);
+                        return;
+
+                    case ThrowNode node when node.Expression == null && _rethrowVariable != null:
+                        // the handler body no longer sits in the protected region it was written
+                        // in, so there is nothing for a bare rethrow to pick the exception up from
+                        output.Add(Expr.Throw(Expr.Get(_rethrowVariable)));
+                        return;
+                }
+            }
+
+            if (!suspends)
+            {
                 output.Add(stmt);
                 return;
             }
 
-            switch (stmt)
-            {
-                case CodeBlockNode block:
-                    output.Add(LowerBlock(block, false));
-                    return;
-
-                case IfNode node:
-                    LowerIf(node, output);
-                    return;
-
-                case WhileNode node:
-                    LowerWhile(node, output);
-                    return;
-
-                case ForeachNode node:
-                    LowerForeach(node, output);
-                    return;
-
-                case TryNode node:
-                    LowerTry(node, output);
-                    return;
-
-                case UsingNode node:
-                    LowerUsing(node, output);
-                    return;
-
-                case MatchNode node:
-                    LowerMatch(node, output);
-                    return;
-
-                case ThrowNode node when node.Expression == null && _rethrowVariable != null:
-                    // the handler body no longer sits in the protected region it was written in,
-                    // so there is nothing for a bare rethrow to pick the exception up from
-                    output.Add(Expr.Throw(Expr.Get(_rethrowVariable)));
-                    return;
-            }
-
-            if (hasYield)
-                RejectResumePoint(stmt);
-
-            output.Add(stmt);
-        }
-
-        /// <summary>
-        /// Explains why a resume point cannot stay where it is.
-        /// </summary>
-        private static void RejectResumePoint(NodeBase stmt)
-        {
-
-            // anything else is an ordinary expression that happens to contain an await: what a
-            // half-evaluated expression left on the stack is not there when the machine comes back
-            Error(stmt, CompilerMessages.AwaitPosition);
+            // an ordinary statement that happens to suspend somewhere inside: the awaits are lifted
+            // out of it, and it is rebuilt around the names that hold their results
+            var spilled = Spill(stmt, output);
+            output.Add(spilled);
         }
 
         #endregion
@@ -242,7 +238,9 @@ namespace Lens.Compiler
         {
             var elseLabel = NewLabel("else");
 
-            output.Add(new GotoNode(elseLabel, node.Condition, false));
+            // the condition is decided before either branch is, so a suspension in it is one that
+            // happens before the branch - an ordinary statement's worth of rewriting
+            output.Add(new GotoNode(elseLabel, Spill(node.Condition, output), false));
             output.Add(LowerBlock(node.TrueAction, false));
 
             if (node.FalseAction == null)
@@ -270,8 +268,10 @@ namespace Lens.Compiler
             var beginLabel = NewLabel("while");
             var endLabel = NewLabel("endwhile");
 
+            // the condition is decided again on each turn of the loop, so whatever it takes to
+            // decide it belongs after the label the loop comes back to
             output.Add(new LabelNode(beginLabel));
-            output.Add(new GotoNode(endLabel, node.Condition, false));
+            output.Add(new GotoNode(endLabel, Spill(node.Condition, output), false));
             output.Add(LowerBlock(node.Body, false));
             output.Add(new GotoNode(beginLabel));
             output.Add(new LabelNode(endLabel));
@@ -300,7 +300,7 @@ namespace Lens.Compiler
             var endLabel = NewLabel("endfor");
             var iterator = _ctx.Unique.TempVariableName();
 
-            output.Add(Expr.Var(iterator, new GetEnumeratorNode(node.IterableExpression)));
+            output.Add(Expr.Var(iterator, new GetEnumeratorNode(Spill(node.IterableExpression, output))));
             output.Add(new LabelNode(beginLabel));
             output.Add(new GotoNode(endLabel, Expr.Invoke(Expr.Get(iterator), "MoveNext"), false));
             output.Add(
@@ -335,10 +335,16 @@ namespace Lens.Compiler
             var index = _ctx.Unique.TempVariableName();
             var step = _ctx.Unique.TempVariableName();
 
-            output.Add(Expr.Var(index, node.RangeStart));
-            output.Add(Expr.Var(step, Expr.Invoke("Math", "Sign", Expr.Sub(node.RangeEnd, Expr.Get(index)))));
+            // both ends are settled before the loop starts. The end is read again on every turn, so
+            // one that suspends has to be reduced to a name first - the suspension happens once,
+            // where the source put it, not once per iteration
+            var start = Spill(node.RangeStart, output);
+            var end = Spill(node.RangeEnd, output);
+
+            output.Add(Expr.Var(index, start));
+            output.Add(Expr.Var(step, Expr.Invoke("Math", "Sign", Expr.Sub(end, Expr.Get(index)))));
             output.Add(new LabelNode(beginLabel));
-            output.Add(new GotoNode(endLabel, Expr.Equal(Expr.Get(index), node.RangeEnd)));
+            output.Add(new GotoNode(endLabel, Expr.Equal(Expr.Get(index), end)));
             output.Add(LoopBody(node, Expr.Get(index)));
             output.Add(Expr.Set(index, Expr.Add(Expr.Get(index), Expr.Get(step))));
             output.Add(new GotoNode(beginLabel));
@@ -401,9 +407,13 @@ namespace Lens.Compiler
             if (_emitYield == null)
                 Error(node, CompilerMessages.YieldNotInIterator);
 
+            // what is being yielded may itself suspend, and has to have finished doing so before
+            // the value is handed over
+            var yielded = Spill(node.Expression, output);
+
             if (!node.IsSequence)
             {
-                Suspend(point => _emitYield(node.Expression, point, output), output);
+                Suspend(point => _emitYield(yielded, point, output), output);
                 return;
             }
 
@@ -413,71 +423,13 @@ namespace Lens.Compiler
             var endLabel = NewLabel("endyieldfrom");
             var iterator = _ctx.Unique.TempVariableName();
 
-            output.Add(Expr.Var(iterator, new GetEnumeratorNode(node.Expression)));
+            output.Add(Expr.Var(iterator, new GetEnumeratorNode(yielded)));
             output.Add(new LabelNode(beginLabel));
             output.Add(new GotoNode(endLabel, Expr.Invoke(Expr.Get(iterator), "MoveNext"), false));
             Suspend(point => _emitYield(Expr.GetMember(Expr.Get(iterator), "Current"), point, output), output);
             output.Add(new GotoNode(beginLabel));
             output.Add(new LabelNode(endLabel));
             output.Add(new DisposeNode(Expr.Get(iterator)));
-        }
-
-        /// <summary>
-        /// Handles the statement shapes an await is allowed to appear in.
-        ///
-        /// A resume point has to be a statement: it is a place the machine leaves from and comes
-        /// back to, and whatever a half-evaluated expression had left on the stack is not there
-        /// when it does. Spilling an arbitrary expression into temporaries would lift that
-        /// restriction, and would have to preserve evaluation order while doing it; the shapes
-        /// below are the ones glue code actually writes.
-        /// </summary>
-        private bool TryLowerAwait(NodeBase stmt, List<NodeBase> output)
-        {
-            NodeBase awaited;
-            Func<NodeBase, NodeBase> rebuild;
-
-            switch (stmt)
-            {
-                case AwaitNode node:
-                    awaited = node.Expression;
-                    rebuild = null;
-                    break;
-
-                case VarNode node when node.Value is AwaitNode value:
-                    awaited = value.Expression;
-                    rebuild = r => Rebind(new VarNode(node.Name) {Value = r, Local = node.Local}, node);
-                    break;
-
-                case LetNode node when node.Value is AwaitNode value:
-                    awaited = value.Expression;
-                    rebuild = r => Rebind(new LetNode(node.Name) {Value = r, Local = node.Local}, node);
-                    break;
-
-                case SetIdentifierNode node when node.Value is AwaitNode value:
-                    awaited = value.Expression;
-                    rebuild = r => Rebind(new SetIdentifierNode(node.Identifier) {Value = r, Local = node.Local, IsInitialization = node.IsInitialization}, node);
-                    break;
-
-                default:
-                    return false;
-            }
-
-            if (_emitAwait == null)
-                Error(stmt, CompilerMessages.AwaitNotInAsync);
-
-            NodeBase result = null;
-            Suspend(point => result = _emitAwait(awaited, point, output), output);
-
-            // even a discarded await has to read its result: that is where a failed operation
-            // turns back into an exception
-            output.Add(rebuild == null ? result : rebuild(result));
-            return true;
-        }
-
-        private static NodeBase Rebind(NodeBase node, NodeBase original)
-        {
-            CopyLocation(original, node);
-            return node;
         }
 
         #endregion
@@ -761,7 +713,7 @@ namespace Lens.Compiler
 
             body.Add(node.Body);
 
-            output.Add(Expr.Var(resource, node.Expression));
+            output.Add(Expr.Var(resource, Spill(node.Expression, output)));
 
             LowerTry(
                 new TryNode
@@ -785,13 +737,16 @@ namespace Lens.Compiler
         /// Arriving in the middle skips the rule checks and the declarations of the names the
         /// pattern bound. That is what should happen: inside a machine those names are fields, and
         /// they still hold what the check that matched put there.
+        ///
+        /// A match whose value is wanted is given the name to put it in, and the case bodies assign
+        /// to it rather than producing it - what one case leaves on the evaluation stack is not
+        /// there when a resuming machine arrives at the label after them.
         /// </summary>
-        private void LowerMatch(MatchNode node, List<NodeBase> output)
+        private void LowerMatch(MatchNode node, List<NodeBase> output, string resultName = null)
         {
-            // the value being matched and the guards are read before a case is chosen, so a
-            // suspension in either of them is a suspension in the middle of an expression
-            if (ContainsResumePoint(node.Expression))
-                Error(node.Expression, CompilerMessages.AwaitPosition);
+            // the value being matched is settled before any rule is tried, so a suspension in it is
+            // one that happens before the match
+            var matched = Spill(node.Expression, output);
 
             // a lambda inside a match belongs to the frame the match opens, and a machine that
             // resumes into a case body arrives after that frame was set up
@@ -802,33 +757,66 @@ namespace Lens.Compiler
 
             foreach (var curr in node.MatchStatements)
             {
-                if (curr.Condition != null && ContainsResumePoint(curr.Condition))
-                    Error(curr.Condition, CompilerMessages.AwaitPosition);
-
                 statements.Add(
                     new MatchStatementNode
                     {
                         MatchRules = curr.MatchRules,
-                        Condition = curr.Condition,
-                        Expression = LowerCaseBody(curr.Expression)
+                        Condition = LowerGuard(curr.Condition),
+                        Expression = LowerCaseBody(curr.Expression, resultName)
                     }
                 );
             }
 
-            var result = new MatchNode {Expression = node.Expression, MatchStatements = statements};
+            var result = new MatchNode {Expression = matched, MatchStatements = statements};
             CopyLocation(node, result);
             output.Add(result);
         }
 
-        private NodeBase LowerCaseBody(NodeBase body)
+        /// <summary>
+        /// A guard is asked only once its rules have matched, and the match asks it as an
+        /// expression - so a suspension in one becomes a block whose statements suspend and whose
+        /// value is the answer. That keeps the suspension behind the same check the guard is, which
+        /// a statement lifted out in front of the match would not.
+        /// </summary>
+        private NodeBase LowerGuard(NodeBase condition)
         {
+            if (condition == null || !ContainsResumePoint(condition))
+                return condition;
+
+            var statements = new List<NodeBase>();
+            var spilled = Spill(condition, statements);
+            statements.Add(spilled);
+
+            var result = new CodeBlockNode();
+            result.AddRange(statements);
+            CopyLocation(condition, result);
+            return result;
+        }
+
+        private NodeBase LowerCaseBody(NodeBase body, string resultName)
+        {
+            if (resultName != null)
+            {
+                body = body is CodeBlockNode valued
+                    ? AssignTail(valued, resultName)
+                    : AssignValue(body, resultName);
+            }
+
             if (body is CodeBlockNode block)
                 return LowerBlock(block, false);
 
-            if (ContainsResumePoint(body))
-                Error(body, CompilerMessages.AwaitPosition);
+            // a case body written as a single expression is still a statement's worth of lowering:
+            // it may suspend, and then it is several
+            var statements = new List<NodeBase>();
+            LowerStatement(body, false, statements);
 
-            return body;
+            if (statements.Count == 1)
+                return statements[0];
+
+            var wrapper = new CodeBlockNode();
+            wrapper.AddRange(statements);
+            CopyLocation(body, wrapper);
+            return wrapper;
         }
 
         /// <summary>

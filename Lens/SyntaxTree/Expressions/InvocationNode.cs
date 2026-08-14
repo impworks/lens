@@ -319,6 +319,66 @@ namespace Lens.SyntaxTree.Expressions
                 yield return curr;
         }
 
+        /// <summary>
+        /// The invoked expression is a name rather than a value, so what gets evaluated before the
+        /// arguments is the receiver it hangs off - the object of a method call, or the delegate
+        /// itself when the call is on an expression.
+        /// </summary>
+        private NodeBase Receiver
+        {
+            get
+            {
+                if (Expression is GetMemberNode member)
+                    return member.Expression;
+
+                return Expression is GetIdentifierNode ? null : Expression;
+            }
+        }
+
+        internal override IReadOnlyList<NodeBase> Operands
+        {
+            get
+            {
+                var receiver = Receiver;
+                if (receiver == null)
+                    return base.Operands;
+
+                var result = new List<NodeBase>(Arguments.Count + 1) {receiver};
+                result.AddRange(Arguments);
+                return result;
+            }
+        }
+
+        internal override bool CanHoistOperand(int index)
+        {
+            if (Receiver == null)
+                return base.CanHoistOperand(index);
+
+            return index == 0 || base.CanHoistOperand(index - 1);
+        }
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var receiver = Receiver;
+            if (receiver == null)
+                return base.WithOperands(operands);
+
+            var copy = (InvocationNode) base.WithOperands(operands.Skip(1).ToList());
+
+            if (Expression is GetMemberNode member)
+            {
+                var rebuilt = member.Copy<GetMemberNode>();
+                rebuilt.Expression = operands[0];
+                copy.Expression = rebuilt;
+            }
+            else
+            {
+                copy.Expression = operands[0];
+            }
+
+            return copy;
+        }
+
         #endregion
 
         #region Closures

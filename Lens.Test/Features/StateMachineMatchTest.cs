@@ -181,21 +181,56 @@ fetch 1");
 
         #endregion
 
-        #region Rejections
+        [Test]
+        public void ASuspendedMatchProducesAValue()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            compiler.RegisterFunction("delay", new Func<int, Task<int>>(value => Task.Run(() =>
+                        {
+                            Task.Delay(5).Wait();
+                            return value * 2;
+                        }
+                    )
+                )
+            );
+
+            var result = compiler.Run(@"
+fun fetch:Task<string> (n:int) ->
+    let value = match n with
+                    case 1 then await (delay 10)
+                    case x:int then (await (delay x)) + 1
+    ""got:"" + value.ToString ()
+
+fetch 3");
+
+            Assert.AreEqual("got:7", ((Task<string>) result).Result);
+        }
 
         [Test]
-        public void ASuspendedMatchCannotProduceAValue()
+        public void ASuspendedMatchIsTheValueOfTheFunction()
         {
-            TestError(
-                @"
-fun broken:IEnumerable<int> (t:System.Threading.Tasks.Task<int> n:int) ->
-    let x = match n with
-                case 1 then await t
-                case _ then 0
-    yield x",
-                "LE3179"
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            compiler.RegisterFunction("delay", new Func<int, Task<int>>(value => Task.Run(() =>
+                        {
+                            Task.Delay(5).Wait();
+                            return value * 2;
+                        }
+                    )
+                )
             );
+
+            var result = compiler.Run(@"
+fun fetch:Task<int> (n:int) ->
+    match n with
+        case 1 then await (delay 10)
+        case _ then 0
+
+fetch 1");
+
+            Assert.AreEqual(20, ((Task<int>) result).Result);
         }
+
+        #region Rejections
 
         [Test]
         public void ALambdaInsideASuspendedMatchIsRejected()

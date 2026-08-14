@@ -71,6 +71,27 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Value);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression, Index, Value};
+
+        /// <summary>
+        /// The object being indexed into is not a value the node consumes: were it evaluated ahead
+        /// of time and kept in a temporary, a struct would be copied there and the assignment would
+        /// land in the copy.
+        /// </summary>
+        internal override bool CanHoistOperand(int index)
+        {
+            return index != 0;
+        }
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<SetIndexNode>();
+            copy.Expression = operands[0];
+            copy.Index = operands[1];
+            copy.Value = operands[2];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

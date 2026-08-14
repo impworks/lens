@@ -114,6 +114,64 @@ namespace Lens.SyntaxTree
 
         #endregion
 
+        #region Rewriting
+
+        /// <summary>
+        /// The subexpressions this node evaluates, in the order it evaluates them - and only the
+        /// ones it evaluates unconditionally.
+        ///
+        /// This is what lets an await be lifted out of the middle of an expression. Everything the
+        /// expression would have evaluated before reaching the await has to be evaluated before it
+        /// still, which means the rewrite has to know the order; and a node that evaluates a
+        /// subexpression only sometimes - a short-circuiting operator, a match - cannot have its
+        /// operands hoisted at all, because hoisting one would evaluate it in a case where the
+        /// source says it should not be. Such a node reports no operands, and the rewrite deals
+        /// with it by name or rejects it, rather than reordering something it does not understand.
+        ///
+        /// This is deliberately not GetChildren: that enumerates a node's subtree for binding, and
+        /// is free to reach through a node into the one below it, which is exactly what a rewrite
+        /// must not do.
+        /// </summary>
+        internal virtual IReadOnlyList<NodeBase> Operands => NoOperands;
+
+        protected static readonly IReadOnlyList<NodeBase> NoOperands = new NodeBase[0];
+
+        /// <summary>
+        /// Builds a copy of this node with its operands replaced, positionally.
+        /// The list is the one Operands returned, with some of its entries swapped out.
+        /// </summary>
+        internal virtual NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            return this;
+        }
+
+        /// <summary>
+        /// Whether an operand may be evaluated into a temporary ahead of time.
+        /// True for a value; false where the node needs the subexpression itself rather than what
+        /// it evaluates to, and evaluating it early would hand the node a copy.
+        /// </summary>
+        internal virtual bool CanHoistOperand(int index)
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// A shallow copy, for a rewrite that replaces some of a node's operands and keeps
+        /// everything else about it.
+        ///
+        /// Only ever taken before binding, while everything a node learns about itself still lives
+        /// in a side table on the context and every field it caches is unset - so the copy and the
+        /// original share nothing that either of them will later write to. Anything a constructor
+        /// allocated, a list of arguments among them, is shared and has to be replaced by hand.
+        /// </summary>
+        internal T Copy<T>()
+            where T : NodeBase
+        {
+            return (T) MemberwiseClone();
+        }
+
+        #endregion
+
         #region Closures
 
         /// <summary>

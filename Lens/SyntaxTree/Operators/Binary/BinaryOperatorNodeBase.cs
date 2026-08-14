@@ -110,6 +110,13 @@ namespace Lens.SyntaxTree.Operators.Binary
             yield return new NodeChild(RightOperand);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {LeftOperand, RightOperand};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            return RecreateSelfWithArgs(operands[0], operands[1]);
+        }
+
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             if (Resolve(ctx).IsNullableType())

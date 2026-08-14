@@ -192,6 +192,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             yield return new NodeChild(Expression);
         }
 
+        // a static member has no expression to evaluate: the type is not a value
+        internal override IReadOnlyList<NodeBase> Operands => Expression == null ? NoOperands : new[] {Expression};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<GetMemberNode>();
+            copy.Expression = operands[0];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

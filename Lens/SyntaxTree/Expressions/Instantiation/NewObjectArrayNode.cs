@@ -54,6 +54,15 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             yield return new NodeChild(Size);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Size};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<NewObjectArrayNode>();
+            copy.Size = operands[0];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

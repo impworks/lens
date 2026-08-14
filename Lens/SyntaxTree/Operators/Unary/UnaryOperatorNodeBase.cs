@@ -67,6 +67,15 @@ namespace Lens.SyntaxTree.Operators.Unary
             yield return new NodeChild(Operand);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Operand};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<UnaryOperatorNodeBase>();
+            copy.Operand = operands[0];
+            return copy;
+        }
+
         #endregion
 
         #region Emit

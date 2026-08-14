@@ -72,6 +72,15 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             yield return new NodeChild(Expression);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            var copy = Copy<TypeCheckOperatorNodeBase>();
+            copy.Expression = operands[0];
+            return copy;
+        }
+
         #endregion
 
         #region Debug

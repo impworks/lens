@@ -45,6 +45,13 @@ namespace Lens.SyntaxTree.Internals
                 yield return new NodeChild(Value, true);
         }
 
+        internal override IReadOnlyList<NodeBase> Operands => Value == null ? NoOperands : new[] {Value};
+
+        internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
+        {
+            return new ReturnValueNode(operands[0], ReturnType) {StartLocation = StartLocation, EndLocation = EndLocation};
+        }
+
         #endregion
 
         #region Emit

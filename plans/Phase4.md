@@ -226,20 +226,62 @@ including the first synchronous call the factory makes.
   the names the pattern bound, which is exactly right: inside a machine those names are fields, and
   they still hold what the check that matched put there.
 
+- **Suspending in the middle of an expression** (`Lowerer.Spilling.cs`). An `await` written anywhere
+  an expression is allowed is lifted out into a statement, and the expression is rebuilt around the
+  name that holds the result. What makes this more than moving a subexpression is order: everything
+  the expression would have evaluated before reaching the await is evaluated into a name on the way
+  past, so that what ran before the suspension still does.
+
+      f (g ()) (await t) (h ())
+
+      var a = g ()                # was going to run before the suspension, so it still does
+      [suspend]
+      f a [result] (h ())         # h was always going to run after, and still does
+
+  Only what precedes the last await needs a name. Anything after it already ran after the suspension
+  in the source, and rebuilding leaves it where it was.
+
+  Nodes say what may be reordered around them, through `Operands` / `WithOperands` on `NodeBase`.
+  This is deliberately not `GetChildren`: that enumerates a subtree for binding and is free to reach
+  through one node into the one below it, which is exactly what a rewrite must not do. A node that
+  evaluates a subexpression only sometimes reports no operands at all, and is either handled by name
+  or rejected - never reordered by a pass that does not understand it.
+
+  Those handled by name are the ones that branch: `if` and `match` in value position,
+  `&&`, `||` and `??` with a suspension on the right. Each becomes the branch it stands for, over a
+  name that holds the answer, because what one branch leaves on the evaluation stack is not there
+  when another arrives at the same label. `&&`, `||` and `??` keep the operator itself standing over
+  the two names rather than being replaced by the answer, so that it goes on deciding what its
+  operands mean and what the whole thing produces - `??` in particular knows that a nullable left
+  operand and a plain right one make a plain result, and a name that had held both would not.
+
+  A `match` guard is neither: it is asked only once its rules have matched, so a suspension in one
+  becomes a block whose statements suspend and whose value is the answer, which keeps the suspension
+  behind the same check the guard is.
+
+- **Names whose type is not known when they are declared** (`Local.IsTypeDeferred`). Every construct
+  above needs a name to put a value in, and the pass runs before anything has a type. It cannot
+  resolve the branch bodies to find one either - they mention names that only come into being while
+  the construct around them is bound. So the name is declared without a type, each assignment widens
+  it to the most common type of what has been assigned so far, and the first read settles it.
+  Binding reaches the assignments before the read, in the order the statements were written.
+
 ### Rejected, each with a specific diagnostic rather than a crash
 
 | Rejected | Message |
 |---|---|
 | `yield` or `await` in a lambda | LE3171 |
 | a lambda inside a `match` that also suspends | LE3180 |
-| `await` anywhere but a statement or the value assigned to a name | LE3179 |
+| `await` inside a null-safe chain | LE3182 |
+| `await` somewhere no expression can be lifted out of | LE3179 |
+| a name whose deferred type nothing ever decided | LE3181 |
 | a bare `throw` the pass could not reach, in a moved handler | LE3173 |
 | `pure` iterator / `pure` async | LE3169 / LE3177 |
 | no declared return type | LE3167 / LE3175 |
 | return type that is not `IEnumerable<T>` / not `Task` | LE3168 / LE3176 |
 | a name declared in a loop *and* captured, inside a machine | LE3172 |
 
-Four of these are worth calling out.
+Some of these are worth calling out.
 
 **Return type inference was not built.** A machine function must declare its return type. Inferring
 it from the yielded or returned expressions needs the body bound, and the machine is built out of
@@ -247,11 +289,22 @@ the parse tree — before anything has a type — because that is what lets the 
 existing binding and emission path wholesale rather than re-binding a tree that has already been
 bound once.
 
-**A resume point must be a statement.** `var x = await f ()`, `x = await f ()` and a bare
-`await f ()` are the supported shapes; `1 + (await t)` is not. A suspension is a place the machine
-leaves from and comes back to, and what a half-evaluated expression left on the stack is not there
-when it returns. Lifting the restriction means spilling arbitrary expressions into temporaries while
-preserving evaluation order.
+**A null-safe chain cannot be suspended inside.** `s?.Substring (await t)` is refused. A chain
+answers with the default of its own type when a receiver turns out to be null, and that type is not
+the chain's value type but that type lifted so that it can also be null. There is nothing the pass
+could write down for it, and a deferred name would not arrive at it either: a name that has only
+ever held the value would answer 0 where the chain answers null. Refusing beats answering wrongly.
+
+**`&&=` and `||=` cannot be suspended inside.** They expand into the operator they are named after,
+and that operator evaluates its right-hand side only sometimes. Lifting the await out would evaluate
+it always. The other short assignments expand into operators that always evaluate both sides, and
+suspend as freely as anything else.
+
+**An assignment's target is not evaluated ahead of the suspension.** In `p.X = await t` and
+`a[i] = await t`, the object being assigned into stays where it is rather than being read into a
+name first, because a name would hold a copy of a struct and the assignment would land in the copy.
+So it is read after the suspension rather than before - which is only observable if reading it has
+an effect of its own, or if the awaited operation changes it.
 
 **Async void is not supported**, deliberately: its only purpose is an event handler signature, and
 glue code has no need for one.
@@ -285,6 +338,12 @@ set up - so the closure instance it would be bound to was never created.
 - Async: awaiting `Task`, `Task<T>`, `ValueTask<T>`, and a host-defined awaitable; exception
   propagation through `await`; a `Task<T>` returned to and awaited by host C# code.
 - A lambda capturing a local that is also live across a `yield`, with mutation visible through both.
+- An `await` in every position an expression may occupy, and in each one, what the source says runs
+  before the suspension provably runs before it.
+- A short-circuiting operator whose right operand suspends does not suspend when the left operand
+  already decided the answer.
+- A tree that suspends in the middle of an expression compiles twice to the same result, and is
+  unchanged afterwards - the rewrite builds new nodes and writes into none of the old ones.
 - Methods containing neither `yield` nor `await` are provably unaffected — same IL as before the
   phase, on a spot-check of representative scripts.
 - Whatever is rejected (`yield` in `try`, `pure` iterators, async void) is rejected with a specific

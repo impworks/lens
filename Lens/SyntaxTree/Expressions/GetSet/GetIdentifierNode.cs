@@ -73,6 +73,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
                     _localConstant = local;
 
+                // reading the name is what settles a type that was still being worked out: every
+                // assignment that could widen it was written before this, and has been bound
+                local.SealType();
+
                 return local.Type;
             }
 
