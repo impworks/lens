@@ -138,7 +138,10 @@ namespace Lens.SyntaxTree.PatternMatching
                 block.Add(
                     Expr.Block(
                         Expr.JumpLabel(_defaultLabel),
-                        Expr.Default(ctx.FindExpressionType(this).Materialize())
+
+                        // the entry rather than the Type behind it: materializing here would build
+                        // the assembly for a match that produces a record, and analysis must not
+                        Expr.Default(ctx.FindExpressionType(this))
                     )
                 );
             }
@@ -159,16 +162,33 @@ namespace Lens.SyntaxTree.PatternMatching
         {
             foreach (var stmt in MatchStatements)
             {
-                _expressionLabels.Add(stmt, ctx.CurrentMethod.Generator.DefineLabel());
+                _expressionLabels.Add(stmt, DefineLabel(ctx));
 
                 foreach (var rule in stmt.MatchRules)
-                    _ruleLabels.Add(Tuple.Create(rule, ctx.CurrentMethod.Generator.DefineLabel()));
+                    _ruleLabels.Add(Tuple.Create(rule, DefineLabel(ctx)));
             }
 
-            EndLabel = ctx.CurrentMethod.Generator.DefineLabel();
+            EndLabel = DefineLabel(ctx);
 
             if (MustReturnValue(ctx))
-                _defaultLabel = ctx.CurrentMethod.Generator.DefineLabel();
+                _defaultLabel = DefineLabel(ctx);
+        }
+
+        /// <summary>
+        /// Reserves a jump label, or a placeholder when there is nothing to emit into.
+        ///
+        /// A label is an emission artefact and its value is only ever read while emitting, so an
+        /// analysis-only run - which has no ILGenerator, by design - can hold placeholders. The
+        /// labels are matched to statements and rules by the dictionary keys around them, never by
+        /// their own value, so placeholders comparing equal to each other changes nothing.
+        /// </summary>
+        private static Label DefineLabel(Context ctx)
+        {
+            var generator = ctx.CurrentMethod?.Generator;
+
+            return generator == null
+                ? default(Label)
+                : generator.DefineLabel();
         }
 
         /// <summary>

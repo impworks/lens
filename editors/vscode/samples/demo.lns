@@ -1,0 +1,39 @@
+// A tour of what the editor can tell you about a LENS script.
+// Hover over a name, ask for its definition, rename it, or type a '.' and see what is offered.
+
+// The environment the host is expected to provide. In an editor this block *is* the environment;
+// when the script is compiled for real, the compiler checks it against what the host registered.
+declare
+    let title : string
+    var counter : int
+    fun clamp:int (value:int low:int high:int)
+
+use System.Linq
+
+record Point
+    X : int
+    Y : int
+
+type Shape
+    Empty
+    Dot of Point
+
+pure fun lengthSquared:int (p:Point) ->
+    p.X * p.X + p.Y * p.Y
+
+fun describe:string (s:Shape) ->
+    match s with
+        case Empty then "nothing"
+        case Dot of p then $"a dot at {p.X},{p.Y}"
+
+let origin = new Point 3 4
+let shape = Dot origin
+
+counter = clamp (lengthSquared origin) 0 100
+
+let squares = new [1; 2; 3; 4]
+    |> Where x -> x % 2 == 0
+    |> Select x -> x * x
+    |> ToArray ()
+
+$"{title}: {describe shape}, {counter} points, {squares.Length} squares"

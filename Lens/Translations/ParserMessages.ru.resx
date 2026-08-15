@@ -342,4 +342,31 @@
   <data name="AwaitExpressionExpected" xml:space="preserve">
     <value>LE2075: Ожидается выражение для await!</value>
   </data>
+  <data name="DeclareIndentExpected" xml:space="preserve">
+    <value>LE2076: Тело блока 'declare' должно быть выделено отступами!</value>
+  </data>
+  <data name="DeclareSeparatorExpected" xml:space="preserve">
+    <value>LE2077: Объявления должны разделяться переводом строки!</value>
+  </data>
+  <data name="DeclarationExpected" xml:space="preserve">
+    <value>LE2078: Объявление должно начинаться с 'reference', 'var', 'let', 'fun' или 'type'!</value>
+  </data>
+  <data name="DeclareReferencePathExpected" xml:space="preserve">
+    <value>LE2079: Путь к подключаемой сборке должен быть строкой!</value>
+  </data>
+  <data name="DeclarePropertyIdentifierExpected" xml:space="preserve">
+    <value>LE2080: Имя объявляемой переменной должно быть идентификатором!</value>
+  </data>
+  <data name="DeclarePropertyTypeExpected" xml:space="preserve">
+    <value>LE2081: Ожидается тип объявляемой переменной!</value>
+  </data>
+  <data name="DeclarePureNotAllowed" xml:space="preserve">
+    <value>LE2082: Модификатор 'pure' недопустим в объявлении: чистота относится к телу функции, которым владеет хост, и не может быть проверена!</value>
+  </data>
+  <data name="DeclareGenericNotAllowed" xml:space="preserve">
+    <value>LE2083: Объявляемая функция не может иметь параметров-типов!</value>
+  </data>
+  <data name="DeclareTypeAliasTargetExpected" xml:space="preserve">
+    <value>LE2084: Ожидается тип, для которого объявляется псевдоним!</value>
+  </data>
 </root>

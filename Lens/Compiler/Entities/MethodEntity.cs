@@ -232,20 +232,47 @@ namespace Lens.Compiler.Entities
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
         }
 
+        /// <summary>
+        /// Checks that the body actually produces the value the signature promises.
+        /// </summary>
+        private void CheckReturnType(Context ctx, TypeEntry actualType)
+        {
+            // the script's root method is declared as returning object, and returns null when the
+            // last statement of the script has no value: that is not a mismatch
+            if (this == ctx.MainMethod && actualType.IsVoid())
+                return;
+
+            if (ReturnType.IsVoid() && actualType.IsVoid())
+                return;
+
+            if (!ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, actualType))
+                Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
+        }
+
         #endregion
 
         #region Extension points
+
+        protected override void CheckBody(Context ctx)
+        {
+            // the root method is declared as returning object and accepts a body of any type at all,
+            // the absence of a value included: there is nothing here for the check to find, and
+            // resolving the body as a whole would only anticipate what emission does anyway
+            if (this == ctx.MainMethod)
+                return;
+
+            // the check belongs to the analysis half rather than to emission: nothing about it needs
+            // an assembly, and an editor must report a body that does not return the declared value
+            CheckReturnType(ctx, Body.Resolve(ctx));
+        }
 
         protected override void EmitTrailer(Context ctx)
         {
             var gen = ctx.CurrentMethod.Generator;
             var actualType = Body.Resolve(ctx);
 
-            if (!ReturnType.IsVoid() || !actualType.IsVoid())
-            {
-                if (!ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, actualType))
-                    Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
-            }
+            // a closure method never goes through the analysis half, so it is checked here
+            CheckReturnType(ctx, actualType);
 
             if (ReturnType.Is<object>() && actualType.IsValueType && !actualType.IsVoid())
                 gen.EmitBox(actualType.Materialize());

@@ -26,6 +26,14 @@ namespace Lens.SyntaxTree.Declarations.Types
         public string Name { get; set; }
 
         /// <summary>
+        /// Where the name itself is written, as opposed to the whole declaration.
+        ///
+        /// Renaming needs this: StartLocation points at the 'record' keyword, and replacing that
+        /// span would delete it.
+        /// </summary>
+        public LocationEntity NameLocation { get; set; }
+
+        /// <summary>
         /// The entries of the type node.
         /// </summary>
         public List<T> Entries { get; }

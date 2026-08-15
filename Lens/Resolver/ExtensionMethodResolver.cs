@@ -77,6 +77,18 @@ namespace Lens.Resolver
             return best[0].Method;
         }
 
+        /// <summary>
+        /// Returns every extension method applicable to a type, grouped by name.
+        /// Completion needs the whole set, where a call site only ever needs one.
+        /// </summary>
+        public Dictionary<string, List<MethodInfo>> EnumerateExtensionMethods(TypeResolutionContext ctx, Type type)
+        {
+            if (!_cache.ContainsKey(type))
+                _cache.Add(type, FindMethodsForType(ctx, type));
+
+            return _cache[type];
+        }
+
         #endregion
 
         #region Helpers

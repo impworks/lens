@@ -83,7 +83,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // static function declared in the script
             try
             {
-                var methods = ctx.MainType.ResolveMethodGroup(Identifier);
+                // a generic function is not a value: nothing here settles its type arguments, and
+                // a pointer to a method that still has open ones is not something the runtime can
+                // be handed - the assembly it lands in fails to load at all
+                var candidates = ctx.MainType.ResolveMethodGroup(Identifier).Where(m => !m.IsGeneric).ToArray();
+                if (candidates.Length == 0)
+                    Error(CompilerMessages.GenericFunctionAsValue, Identifier);
+
+                var methods = SelectOverload(ctx, candidates);
                 if (methods.Length > 1)
                     Error(CompilerMessages.FunctionInvocationAmbiguous, Identifier);
 
@@ -139,6 +146,40 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             return TypeEntryCache.Of<UnitType>();
+        }
+
+        /// <summary>
+        /// Narrows a group of overloads down to the one the type arguments name.
+        ///
+        /// The arguments of a function referred to by name rather than called are its argument
+        /// types, not generic ones: there is no call here for an overload to be inferred from, so
+        /// 'foo&lt;_&gt;' is how the one-argument foo is named - exactly as 'int::Parse &lt;_&gt;'
+        /// names one of Parse's overloads. An underscore stands for any type.
+        /// </summary>
+        private MethodEntity[] SelectOverload(Context ctx, MethodEntity[] methods)
+        {
+            if (TypeHints == null || TypeHints.Count == 0)
+                return methods;
+
+            var hints = TypeHints.Select(x => x.FullSignature == "_" ? null : ctx.ResolveType(x)).ToArray();
+            var result = methods.Where(m => MatchesHints(ctx, hints, m)).ToArray();
+
+            if (result.Length == 0)
+                Error(CompilerMessages.FunctionNotFound, Identifier);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks whether a function's arguments are the ones the type arguments spell out.
+        /// </summary>
+        private static bool MatchesHints(Context ctx, TypeEntry[] hints, MethodEntity method)
+        {
+            var args = method.GetArgumentTypes(ctx);
+            if (args.Length != hints.Length)
+                return false;
+
+            return !args.Where((arg, idx) => !ReferenceEquals(hints[idx], null) && arg != hints[idx]).Any();
         }
 
         #endregion

@@ -27,10 +27,27 @@ namespace Lens.Parser
         #region Constructor
 
         public LensParser(IEnumerable<Lexem> lexems)
+            : this(lexems, false)
+        {
+        }
+
+        /// <summary>
+        /// Parses a stream of lexems.
+        /// </summary>
+        /// <param name="lexems">Source lexems.</param>
+        /// <param name="tolerant">
+        /// Whether the first mistake should stop everything, or the parser should record it, skip
+        /// to the next statement and carry on. See <see cref="Failures"/>.
+        /// </param>
+        public LensParser(IEnumerable<Lexem> lexems, bool tolerant)
         {
             _lexems = lexems.ToArray();
+            _tolerant = tolerant;
+            Failures = new List<LensCompilerException>();
 
-            Nodes = ParseMain().ToList();
+            Nodes = tolerant
+                ? ParseMainTolerant()
+                : ParseMain().ToList();
         }
 
         #endregion
@@ -41,6 +58,17 @@ namespace Lens.Parser
         /// Generated list of nodes.
         /// </summary>
         public List<NodeBase> Nodes { get; private set; }
+
+        /// <summary>
+        /// Everything that went wrong, in a tolerant run. Always empty otherwise, because the first
+        /// problem is thrown instead.
+        /// </summary>
+        public List<LensCompilerException> Failures { get; }
+
+        /// <summary>
+        /// Whether the parser recovers from a mistake instead of throwing it.
+        /// </summary>
+        private readonly bool _tolerant;
 
         /// <summary>
         /// Source list of lexems.
@@ -78,11 +106,12 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// stmt                                        = using | record_def | type_def | fun_def | local_stmt
+        /// stmt                                        = declare_block | using | record_def | type_def | fun_def | local_stmt
         /// </summary>
         private NodeBase ParseStmt()
         {
-            return Attempt(ParseUsing)
+            return Attempt(ParseDeclareBlock)
+                   ?? Attempt(ParseUsing)
                    ?? Attempt(ParseRecordDef)
                    ?? Attempt(ParseTypeDef)
                    ?? Attempt(ParseFunDef)
@@ -235,7 +264,7 @@ namespace Lens.Parser
                 return;
             }
 
-            if (PeekConstraintKeyword("class"))
+            if (PeekContextualKeyword("class"))
             {
                 Skip();
                 node.IsReferenceType = true;
@@ -243,7 +272,7 @@ namespace Lens.Parser
                 return;
             }
 
-            if (PeekConstraintKeyword("struct"))
+            if (PeekContextualKeyword("struct"))
             {
                 Skip();
                 node.IsValueType = true;
@@ -255,11 +284,140 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// Checks if the current lexem is the given pseudo-keyword used in a constraint list.
+        /// Checks if the current lexem is the given contextual keyword: a word that is a keyword
+        /// inside one construct and an ordinary identifier everywhere else.
         /// </summary>
-        private bool PeekConstraintKeyword(string keyword)
+        private bool PeekContextualKeyword(string keyword)
         {
             return Peek(LexemType.Identifier) && _lexems[_lexemId].Value == keyword;
+        }
+
+        #endregion
+
+        #region Declarations
+
+        /// <summary>
+        /// declare_block                               = "declare" INDENT declare_stmt { NL declare_stmt } DEDENT
+        /// </summary>
+        private DeclarationBlockNode ParseDeclareBlock()
+        {
+            if (!Check(LexemType.Declare))
+                return null;
+
+            var node = new DeclarationBlockNode();
+
+            Ensure(LexemType.Indent, ParserMessages.DeclareIndentExpected);
+            node.Entries.Add(Bind(ParseDeclareStmt));
+
+            while (!Check(LexemType.Dedent))
+            {
+                Ensure(LexemType.NewLine, ParserMessages.DeclareSeparatorExpected);
+                node.Entries.Add(Bind(ParseDeclareStmt));
+            }
+
+            return node;
+        }
+
+        /// <summary>
+        /// declare_stmt                                = declare_ref | declare_prop | declare_fun | declare_type
+        /// </summary>
+        private DeclarationEntryBase ParseDeclareStmt()
+        {
+            var node = ParseDeclareReference()
+                       ?? ParseDeclareProperty()
+                       ?? ParseDeclareFunction()
+                       ?? (DeclarationEntryBase) ParseDeclareTypeAlias();
+
+            if (node == null)
+                Error(ParserMessages.DeclarationExpected);
+
+            return node;
+        }
+
+        /// <summary>
+        /// declare_ref                                 = "reference" string
+        /// </summary>
+        private DeclaredReference ParseDeclareReference()
+        {
+            if (!PeekContextualKeyword("reference"))
+                return null;
+
+            Skip();
+
+            var node = new DeclaredReference();
+            node.Path = Ensure(LexemType.String, ParserMessages.DeclareReferencePathExpected).Value;
+
+            return node;
+        }
+
+        /// <summary>
+        /// declare_prop                                = ( "var" | "let" ) identifier ":" type
+        /// </summary>
+        private DeclaredProperty ParseDeclareProperty()
+        {
+            bool isMutable;
+
+            if (Check(LexemType.Var))
+                isMutable = true;
+            else if (Check(LexemType.Let))
+                isMutable = false;
+            else
+                return null;
+
+            var node = new DeclaredProperty {IsMutable = isMutable};
+
+            node.Name = Ensure(LexemType.Identifier, ParserMessages.DeclarePropertyIdentifierExpected).Value;
+            Ensure(LexemType.Colon, ParserMessages.SymbolExpected, ':');
+            node.Type = Ensure(ParseType, ParserMessages.DeclarePropertyTypeExpected);
+
+            return node;
+        }
+
+        /// <summary>
+        /// declare_fun                                 = "fun" identifier [ ":" type ] [ fun_args ]
+        ///
+        /// This is fun_def without the body, and without the two things a body is what makes
+        /// meaningful: "pure" says something about an implementation the host owns, and generic
+        /// parameters have no counterpart in a registered MethodInfo that could be checked.
+        /// </summary>
+        private DeclaredFunction ParseDeclareFunction()
+        {
+            if (Peek(LexemType.Pure))
+                Error(ParserMessages.DeclarePureNotAllowed);
+
+            if (!Check(LexemType.Fun))
+                return null;
+
+            var node = new DeclaredFunction();
+
+            node.Name = Ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
+
+            if (Peek(LexemType.Less))
+                Error(ParserMessages.DeclareGenericNotAllowed);
+
+            if (Check(LexemType.Colon))
+                node.ReturnTypeSignature = Ensure(ParseType, ParserMessages.FunctionReturnExpected);
+
+            node.Arguments = Attempt(() => ParseFunArgs(true)) ?? new List<FunctionArgument>();
+
+            return node;
+        }
+
+        /// <summary>
+        /// declare_type                                = "type" identifier "=" type
+        /// </summary>
+        private DeclaredTypeAlias ParseDeclareTypeAlias()
+        {
+            if (!Check(LexemType.Type))
+                return null;
+
+            var node = new DeclaredTypeAlias();
+
+            node.Alias = Ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
+            Ensure(LexemType.Assign, ParserMessages.SymbolExpected, '=');
+            node.Type = Ensure(ParseType, ParserMessages.DeclareTypeAliasTargetExpected);
+
+            return node;
         }
 
         #endregion
@@ -290,7 +448,9 @@ namespace Lens.Parser
 
             var node = new RecordDefinitionNode();
 
-            node.Name = Ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected).Value;
+            var recordName = Ensure(LexemType.Identifier, ParserMessages.RecordIdentifierExpected);
+            node.Name = recordName.Value;
+            node.NameLocation = recordName;
             node.TypeParameters = ParseTypeParams();
             Ensure(LexemType.Indent, ParserMessages.RecordIndentExpected);
 
@@ -331,7 +491,9 @@ namespace Lens.Parser
 
             var node = new TypeDefinitionNode();
 
-            node.Name = Ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected).Value;
+            var typeName = Ensure(LexemType.Identifier, ParserMessages.TypeIdentifierExpected);
+            node.Name = typeName.Value;
+            node.NameLocation = typeName;
             node.TypeParameters = ParseTypeParams();
             Ensure(LexemType.Indent, ParserMessages.TypeIndentExpected);
 
@@ -378,7 +540,9 @@ namespace Lens.Parser
                     return null;
             }
 
-            node.Name = Ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected).Value;
+            var funName = Ensure(LexemType.Identifier, ParserMessages.FunctionIdentifierExpected);
+            node.Name = funName.Value;
+            node.NameLocation = funName;
             node.TypeParameters = ParseTypeParams();
             if (Check(LexemType.Colon))
                 node.ReturnTypeSignature = Ensure(ParseType, ParserMessages.FunctionReturnExpected);
@@ -466,7 +630,10 @@ namespace Lens.Parser
         /// </summary>
         private CodeBlockNode ParseBlock()
         {
-            var many = ParseLocalStmtList().ToList();
+            var many = _tolerant
+                ? ParseLocalStmtListTolerant()
+                : ParseLocalStmtList().ToList();
+
             if (many.Count > 0)
                 return new CodeBlockNode {Statements = many};
 

@@ -1760,5 +1760,122 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("DeferredNameNeverAssigned", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3189: A &apos;declare&apos; block may only be preceded by &apos;use&apos; statements and other &apos;declare&apos; blocks..
+        /// </summary>
+        public static string DeclareBlockNotAtTop {
+            get {
+                return ResourceManager.GetString("DeclareBlockNotAtTop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3190: The variable &apos;{0}&apos; is declared more than once..
+        /// </summary>
+        public static string DeclaredPropertyDuplicated {
+            get {
+                return ResourceManager.GetString("DeclaredPropertyDuplicated", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3191: The function &apos;{0}&apos; is declared more than once with the same argument types..
+        /// </summary>
+        public static string DeclaredFunctionDuplicated {
+            get {
+                return ResourceManager.GetString("DeclaredFunctionDuplicated", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3192: The type name &apos;{0}&apos; is declared more than once..
+        /// </summary>
+        public static string DeclaredTypeDuplicated {
+            get {
+                return ResourceManager.GetString("DeclaredTypeDuplicated", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3193: The variable &apos;{0}&apos; is declared, but the host has not registered it..
+        /// </summary>
+        public static string DeclaredPropertyMissing {
+            get {
+                return ResourceManager.GetString("DeclaredPropertyMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3194: The variable &apos;{0}&apos; is declared as &apos;{1}&apos;, but the host registered it as &apos;{2}&apos;..
+        /// </summary>
+        public static string DeclaredPropertyTypeMismatch {
+            get {
+                return ResourceManager.GetString("DeclaredPropertyTypeMismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3195: The variable &apos;{0}&apos; is declared with &apos;var&apos;, but the host registered it without a setter..
+        /// </summary>
+        public static string DeclaredPropertyNotWritable {
+            get {
+                return ResourceManager.GetString("DeclaredPropertyNotWritable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3196: The function &apos;{0}&apos; is declared, but the host has not registered it..
+        /// </summary>
+        public static string DeclaredFunctionMissing {
+            get {
+                return ResourceManager.GetString("DeclaredFunctionMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3197: The host has registered a function named &apos;{0}&apos;, but none of its overloads has the declared signature..
+        /// </summary>
+        public static string DeclaredFunctionSignatureMismatch {
+            get {
+                return ResourceManager.GetString("DeclaredFunctionSignatureMismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3198: The type name &apos;{0}&apos; is declared, but the script already defines a type with that name..
+        /// </summary>
+        public static string DeclaredTypeConflict {
+            get {
+                return ResourceManager.GetString("DeclaredTypeConflict", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3200: A compilation whose declarations provide the environment cannot emit code..
+        /// </summary>
+        public static string ProvideModeCannotEmit {
+            get {
+                return ResourceManager.GetString("ProvideModeCannotEmit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3199: The type name &apos;{0}&apos; is declared as &apos;{1}&apos;, but the host registered it as &apos;{2}&apos;..
+        /// </summary>
+        public static string DeclaredTypeMismatch {
+            get {
+                return ResourceManager.GetString("DeclaredTypeMismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3201: The generic function &apos;{0}&apos; cannot be used as a value..
+        /// </summary>
+        public static string GenericFunctionAsValue {
+            get {
+                return ResourceManager.GetString("GenericFunctionAsValue", resourceCulture);
+            }
+        }
     }
 }

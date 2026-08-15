@@ -227,7 +227,16 @@ namespace Lens.Resolver
 
         public override string ToString()
         {
-            return _definition + "<" + string.Join(", ", _arguments.Select(x => x.ToString())) + ">";
+            // reflection spells a definition with its arity mangled into the name and its arguments
+            // in brackets after it - 'List`1[T]' - which is neither how the script wrote it nor how
+            // anybody reading an error message expects to see it
+            var name = _definition.FullName ?? _definition.Name;
+
+            var arity = name.IndexOf('`');
+            if (arity >= 0)
+                name = name.Substring(0, arity);
+
+            return name + "<" + string.Join(", ", _arguments.Select(x => x.ToString())) + ">";
         }
 
         #endregion

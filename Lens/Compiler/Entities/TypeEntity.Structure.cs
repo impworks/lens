@@ -47,6 +47,30 @@ namespace Lens.Compiler.Entities
         }
 
         /// <summary>
+        /// Declares a method with a signature and no implementation.
+        ///
+        /// This is what a 'declare fun' entry produces when declarations are the source of truth
+        /// rather than an assertion about a host: there is no MethodInfo to import, because there is
+        /// no host in the room. Analysis needs only the signature; emission would need more, and is
+        /// refused outright in that mode.
+        /// </summary>
+        internal void DeclareMethod(string name, TypeEntry returnType, IEnumerable<FunctionArgument> args, bool isVariadic)
+        {
+            var me = new MethodEntity(this)
+            {
+                Name = name,
+                IsImported = true,
+                IsStatic = true,
+                IsVirtual = false,
+                IsVariadic = isVariadic,
+                ReturnType = returnType,
+                Arguments = new HashList<FunctionArgument>(args, arg => arg.Name)
+            };
+
+            CheckMethod(me);
+        }
+
+        /// <summary>
         /// Creates a new field by type signature.
         /// </summary>
         internal FieldEntity CreateField(string name, TypeSignature signature, bool isStatic = false, bool prepare = true)

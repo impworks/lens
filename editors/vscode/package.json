@@ -1,0 +1,104 @@
+{
+    "name": "lens-lang",
+    "displayName": "LENS",
+    "description": "Language support for LENS: highlighting, completion, diagnostics, navigation and rename.",
+    "version": "5.0.0",
+    "publisher": "lens",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/impworks/lens"
+    },
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:lens"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "lens",
+                "aliases": [
+                    "LENS",
+                    "lens"
+                ],
+                "extensions": [
+                    ".lns"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "lens",
+                "scopeName": "source.lens",
+                "path": "./syntaxes/lens.tmLanguage.json"
+            }
+        ],
+        "configuration": {
+            "title": "LENS",
+            "properties": {
+                "lens.server.path": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to lens-language-server.dll or to a self-contained lens-language-server executable. Leave empty to use the copy bundled with the extension."
+                },
+                "lens.server.dotnetPath": {
+                    "type": "string",
+                    "default": "dotnet",
+                    "description": "The dotnet executable used to run the server when it is a .dll."
+                },
+                "lens.trace.server": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Log the traffic between VS Code and the LENS language server."
+                }
+            }
+        },
+        "semanticTokenScopes": [
+            {
+                "language": "lens",
+                "scopes": {
+                    "type": [
+                        "entity.name.type.lens"
+                    ],
+                    "function": [
+                        "entity.name.function.lens"
+                    ],
+                    "parameter": [
+                        "variable.parameter.lens"
+                    ],
+                    "property": [
+                        "variable.other.property.lens"
+                    ]
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "build-server": "dotnet publish ../../Lens.LanguageServer/Lens.LanguageServer.csproj -c Release -o server",
+        "smoke-test": "node scripts/smoke-test.js server/lens-language-server.dll",
+        "vscode:prepublish": "npm run build-server && npm run compile",
+        "package": "vsce package"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^8.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^18.19.0",
+        "@types/vscode": "^1.75.0",
+        "typescript": "^5.4.0"
+    }
+}

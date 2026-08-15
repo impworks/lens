@@ -28,6 +28,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
         public string Name { get; set; }
 
         /// <summary>
+        /// Where the name itself is written, as opposed to the whole declaration.
+        /// Renaming needs this: StartLocation points at the 'fun' keyword.
+        /// </summary>
+        public LocationEntity NameLocation { get; set; }
+
+        /// <summary>
         /// Signature of function return type.
         /// </summary>
         public TypeSignature ReturnTypeSignature { get; set; }

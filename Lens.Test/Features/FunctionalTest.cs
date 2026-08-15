@@ -213,6 +213,79 @@ new [fx1; fx2; fx3]
         }
 
         [Test]
+        public void WildcardsSelectAnOverloadOfADeclaredFunction()
+        {
+            // the grammar has always allowed type arguments on a function name; nothing read them,
+            // so the only way to name one of several overloads was a cast - which cannot work,
+            // because the overload has to be settled before there is anything to cast
+            var src = @"
+fun foo:int (a:int) -> a
+fun foo:int (a:int b:int) -> a + b
+
+let one = foo<_>
+let two = foo<_, _>
+(one 1) + (two 2 3)";
+
+            Test(src, 6);
+        }
+
+        [Test]
+        public void WildcardsSelectAnOverloadByArgumentType()
+        {
+            var src = @"
+fun foo:int (a:int) -> a
+fun foo:int (a:string) -> a.Length
+
+let f = foo<string>
+f ""hello""";
+
+            Test(src, 5);
+        }
+
+        [Test]
+        public void WildcardsSelectANonGenericOverload()
+        {
+            // a generic overload is not a candidate here at all: only a call settles its type
+            // arguments, so what the wildcards name is the one that has none
+            var src = @"
+fun foo<T>:T (a:T) -> a
+fun foo:int (a:int b:int) -> a + b
+
+let f = foo<_, _>
+f 1 2";
+
+            Test(src, 3);
+        }
+
+        [Test]
+        public void WildcardsError3()
+        {
+            var src = @"
+fun foo:int (a:int) -> a
+fun foo:int (a:int b:int) -> a + b
+
+let z = foo<string>
+z 1";
+
+            TestError(src, CompilerMessages.FunctionNotFound);
+        }
+
+        [Test]
+        public void WildcardsError4()
+        {
+            // a wildcard tells the overloads apart by how many arguments they take, and these two
+            // take the same number
+            var src = @"
+fun foo:int (a:int) -> a
+fun foo:int (a:string) -> a.Length
+
+let z = foo<_>
+z 1";
+
+            TestError(src, CompilerMessages.FunctionInvocationAmbiguous);
+        }
+
+        [Test]
         public void WildcardsError2()
         {
             var src = @"int::Parse <string, string>";

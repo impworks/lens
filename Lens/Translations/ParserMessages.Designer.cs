@@ -734,5 +734,86 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("AwaitExpressionExpected", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2076: The body of a &apos;declare&apos; block must be an indented block!.
+        /// </summary>
+        public static string DeclareIndentExpected {
+            get {
+                return ResourceManager.GetString("DeclareIndentExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2077: Declarations must be separated by a newline!.
+        /// </summary>
+        public static string DeclareSeparatorExpected {
+            get {
+                return ResourceManager.GetString("DeclareSeparatorExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2078: A declaration must start with &apos;reference&apos;, &apos;var&apos;, &apos;let&apos;, &apos;fun&apos; or &apos;type&apos;!.
+        /// </summary>
+        public static string DeclarationExpected {
+            get {
+                return ResourceManager.GetString("DeclarationExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2079: The path of a referenced assembly must be a string!.
+        /// </summary>
+        public static string DeclareReferencePathExpected {
+            get {
+                return ResourceManager.GetString("DeclareReferencePathExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2080: The name of a declared variable must be an identifier!.
+        /// </summary>
+        public static string DeclarePropertyIdentifierExpected {
+            get {
+                return ResourceManager.GetString("DeclarePropertyIdentifierExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2081: The type of a declared variable is expected!.
+        /// </summary>
+        public static string DeclarePropertyTypeExpected {
+            get {
+                return ResourceManager.GetString("DeclarePropertyTypeExpected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2082: &apos;pure&apos; cannot be declared: purity is a property of a body the host owns and cannot be checked here!.
+        /// </summary>
+        public static string DeclarePureNotAllowed {
+            get {
+                return ResourceManager.GetString("DeclarePureNotAllowed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2083: A declared function cannot have generic parameters!.
+        /// </summary>
+        public static string DeclareGenericNotAllowed {
+            get {
+                return ResourceManager.GetString("DeclareGenericNotAllowed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE2084: The type a declared alias stands for is expected!.
+        /// </summary>
+        public static string DeclareTypeAliasTargetExpected {
+            get {
+                return ResourceManager.GetString("DeclareTypeAliasTargetExpected", resourceCulture);
+            }
+        }
     }
 }

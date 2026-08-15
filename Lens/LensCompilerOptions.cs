@@ -83,6 +83,12 @@ namespace Lens
         public SafeModeSubsystem SafeModeExplicitSubsystems = SafeModeSubsystem.None;
 
         /// <summary>
+        /// What a 'declare' block means to this compilation.
+        /// Default = Verify.
+        /// </summary>
+        public DeclarationMode DeclarationMode = DeclarationMode.Verify;
+
+        /// <summary>
         /// Checks whether compilation stage times must be measured.
         /// Default = false
         /// </summary>
@@ -97,5 +103,14 @@ namespace Lens
         /// Nothing outside the test suite has a reason to turn it on.
         /// </summary>
         internal bool LowerAllFunctions;
+
+        /// <summary>
+        /// Makes a copy, so that a consumer can adjust the options it was handed without writing
+        /// through to the caller's object. The list fields are shared, and are read-only in practice.
+        /// </summary>
+        internal LensCompilerOptions Copy()
+        {
+            return (LensCompilerOptions) MemberwiseClone();
+        }
     }
 }

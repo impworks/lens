@@ -120,7 +120,8 @@ namespace Lens.Lexer
 
             flush();
 
-            Lexems.Add(new Lexem(LexemType.InterpolatedString, startPos, GetPosition(), parts.ToArray()));
+            // 'start' rather than 'startPos': the span covers the '$' and the quotes too
+            Lexems.Add(new Lexem(LexemType.InterpolatedString, start, GetPosition(), parts.ToArray()));
         }
 
         /// <summary>

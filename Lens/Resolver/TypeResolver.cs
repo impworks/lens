@@ -69,6 +69,12 @@ namespace Lens.Resolver
         private static readonly Dictionary<string, TypeEntry> TypeAliases;
 
         /// <summary>
+        /// The short names the language gives to host types, for anything that has to spell a type
+        /// the way a script would have written it.
+        /// </summary>
+        public static IEnumerable<KeyValuePair<string, TypeEntry>> Aliases => TypeAliases;
+
+        /// <summary>
         /// The resolution context of the current compilation.
         /// </summary>
         private readonly TypeResolutionContext _resolutionContext;

@@ -8,6 +8,7 @@
         // Keywords
         Use,
         Using,
+        Declare,
         Type,
         Record,
         Pure,

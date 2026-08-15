@@ -32,6 +32,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lens\Lens.csproj" />
+        <ProjectReference Include="..\Lens.LanguageServer.Core\Lens.LanguageServer.Core.csproj" />
     </ItemGroup>
 
 </Project>

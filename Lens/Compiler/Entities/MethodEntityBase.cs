@@ -67,6 +67,7 @@ namespace Lens.Compiler.Entities
                 {
                     ctx.ScopeOf(Body).RegisterArguments(ctx, IsStatic, Arguments.Values);
                     Body.Transform(ctx, !IsVoid);
+                    CheckBody(ctx);
                 }
             );
         }
@@ -149,6 +150,14 @@ namespace Lens.Compiler.Entities
         #endregion
 
         #region Extension point methods
+
+        /// <summary>
+        /// Checks the bound body against the signature (if needed).
+        /// This runs in the analysis half, so an editor sees the same diagnostics a compilation does.
+        /// </summary>
+        protected virtual void CheckBody(Context ctx)
+        {
+        }
 
         /// <summary>
         /// Emits code before the body of the method (if needed).

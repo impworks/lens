@@ -168,7 +168,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             // find method
             var argTypes = TypeHints.Select(t => t.FullSignature == "_" ? null : ctx.ResolveType(t)).ToArray();
-            var methods = ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
+            var methods = ResolveMethods(ctx, argTypes);
 
             if (methods.Length == 0)
                 Error(argTypes.Length == 0 ? CompilerMessages.TypeIdentifierNotFound : CompilerMessages.TypeMethodNotFound, _type.Name, MemberName);
@@ -183,6 +183,25 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             _isStatic = _method.IsStatic;
 
             check();
+        }
+
+        /// <summary>
+        /// The methods of the receiver's type that the access could mean.
+        ///
+        /// A type declared by the script reports the absence of a name by throwing rather than by
+        /// answering with an empty group, and a member that does not exist is an error to report
+        /// against the access itself - not an exception to escape the binder with.
+        /// </summary>
+        private MethodWrapper[] ResolveMethods(Context ctx, TypeEntry[] argTypes)
+        {
+            try
+            {
+                return ctx.ResolveMethodGroup(_type, MemberName).Where(m => CheckMethodArgs(argTypes, m)).ToArray();
+            }
+            catch (KeyNotFoundException)
+            {
+                return new MethodWrapper[0];
+            }
         }
 
         private static bool CheckMethodArgs(TypeEntry[] argTypes, MethodWrapper method)

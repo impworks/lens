@@ -82,16 +82,18 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
 
         public override IEnumerable<NodeBase> Expand(Context ctx, NodeBase expression, Label nextStatement)
         {
+            // the entry rather than the Type behind it: materializing a declared type is what
+            // forces its builder into being, and binding must not do that
             yield return MakeJumpIf(
                 nextStatement,
-                Expr.Not(Expr.Is(expression, _type.Materialize()))
+                Expr.Not(Expr.Is(expression, _type))
             );
 
             foreach (var fieldRule in FieldRules)
             {
                 var rules = fieldRule.Rule.Expand(
                     ctx,
-                    Expr.GetMember(Expr.Cast(expression, _type.Materialize()), fieldRule.Name.FullSignature),
+                    Expr.GetMember(Expr.Cast(expression, _type), fieldRule.Name.FullSignature),
                     nextStatement
                 );
 

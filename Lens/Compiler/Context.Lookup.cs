@@ -31,9 +31,22 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Resolves a type by its signature.
+        /// Resolves a type by its signature, recording the reference when anything is watching.
         /// </summary>
         public TypeEntry ResolveType(TypeSignature signature, bool allowUnspecified = false)
+        {
+            var result = ResolveTypeCore(signature, allowUnspecified);
+
+            if (TrackTypeReferences)
+                RecordTypeReference(signature, result);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Resolves a type by its signature.
+        /// </summary>
+        private TypeEntry ResolveTypeCore(TypeSignature signature, bool allowUnspecified)
         {
             if (allowUnspecified && signature.FullSignature == "_")
                 return null;
@@ -92,7 +105,10 @@ namespace Lens.Compiler
             if (arguments == null)
                 Error(CompilerMessages.GenericTypeArgCountMismatch, entity.Name, entity.GenericParameterCount, 0);
 
-            return TypeEntryCache.Of(Resolver.MakeGenericType(entity.TypeBuilder, TypeEntry.Materialize(arguments)));
+            // in the entry model rather than through the builders: the declaration has no builder
+            // until the assembly is emitted, and an argument taken from the scrutinee may itself be
+            // a parameter of the enclosing function, which has none either
+            return GenericHelper.MakeGenericTypeChecked(Resolver, entity.TypeInfo, arguments);
         }
 
         /// <summary>
@@ -241,6 +257,8 @@ namespace Lens.Compiler
                         Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
                 }
 
+                CheckFixedParameters(mw, argTypes);
+
                 return mw;
             }
             catch (KeyNotFoundException)
@@ -369,7 +387,30 @@ namespace Lens.Compiler
         /// </summary>
         public MethodWrapper ResolveExtensionMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver lambdaResolver = null)
         {
+            // the lookup is reflection over the referenced assemblies, so every type involved has to
+            // have a CLR type behind it. An analysis-only run has built no assembly, so a signature
+            // that mentions a declaration or a type parameter has nothing to materialize: there is
+            // no extension method to be found, which is what a caller expecting one is told
+            if (!IsEmitting && (HasNoRuntimeType(type) || HasNoRuntimeType(argTypes) || HasNoRuntimeType(hints)))
+                throw new KeyNotFoundException();
+
             return ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+        }
+
+        /// <summary>
+        /// Whether a type cannot be turned into a CLR type before the assembly is emitted.
+        /// </summary>
+        private static bool HasNoRuntimeType(TypeEntry type)
+        {
+            return !ReferenceEquals(type, null) && type.ContainsDeclared;
+        }
+
+        /// <summary>
+        /// Whether any type in a list cannot be turned into a CLR type before the assembly is emitted.
+        /// </summary>
+        private static bool HasNoRuntimeType(TypeEntry[] types)
+        {
+            return types != null && types.Any(HasNoRuntimeType);
         }
 
         /// <summary>
@@ -830,7 +871,45 @@ namespace Lens.Compiler
                 Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
             }
 
+            CheckFixedParameters(mw, argTypes);
+
             return mw;
+        }
+
+        /// <summary>
+        /// Refuses a call that only matched because overload resolution treats a generic parameter as
+        /// something anything can be stored into.
+        ///
+        /// That is true of a generic method's own parameters, which is exactly what inference is for,
+        /// and it is why the check cannot live inside the distance calculation. It is not true of the
+        /// parameters an instantiation carries: inside a generic function, an arr of List&lt;T&gt;
+        /// takes a T in Add and nothing else, so 'arr.Add "test"' is a mistake rather than something a
+        /// later pass will settle. By this point every parameter inference could fill in has been
+        /// substituted, so whatever is still a bare parameter is fixed.
+        /// </summary>
+        private static void CheckFixedParameters(MethodWrapper method, TypeEntry[] argTypes)
+        {
+            var expected = method.ArgumentTypes;
+            if (expected == null || argTypes == null || method.IsPartiallyApplied || method.IsVariadic)
+                return;
+
+            var count = Math.Min(expected.Length, argTypes.Length);
+
+            for (var idx = 0; idx < count; idx++)
+            {
+                var want = expected[idx];
+                var got = argTypes[idx];
+
+                if (ReferenceEquals(want, null) || ReferenceEquals(got, null) || !want.IsGenericParameter)
+                    continue;
+
+                // null reaches a parameter of any reference type, and whether a T is one is decided
+                // by its constraints rather than here
+                if (want == got || got.Is<NullType>() || got.Is<UnspecifiedType>())
+                    continue;
+
+                Error(CompilerMessages.ArgumentTypeMismatch, got, want);
+            }
         }
 
         /// <summary>

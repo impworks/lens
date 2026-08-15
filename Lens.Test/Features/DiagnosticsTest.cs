@@ -46,6 +46,21 @@ missing3",
         }
 
         [Test]
+        public void FunctionReturningObjectMustProduceAValue()
+        {
+            // 'object' is the base of everything, the pseudotype that stands for the absence of a
+            // value included - which is exactly what must not be accepted here
+            TestErrors(
+                @"
+fun add:object (arr:List<int>) ->
+    arr.Add 1
+
+add (new [[2]])",
+                CompilerMessages.ReturnTypeMismatch
+            );
+        }
+
+        [Test]
         public void ErrorsInSeveralFunctionsAreAllReported()
         {
             TestErrors(

@@ -28,7 +28,7 @@ These apply to every phase and were set explicitly:
 | [3.5](Phase3.5.md) | Split binding from emission | Done | 3 |
 | [4](Phase4.md) | State machines: iterators and async | Done | 3, 3.5 |
 | [5](Phase5.md) | `Expression<T>` | Done | 3 |
-| [6](Phase6.md) | Language server | Planned | 3.5 |
+| [6](Phase6.md) | Language server | Done | 3.5 |
 
 ## Why Phase 2 was dropped
 
@@ -65,6 +65,11 @@ with context-scoped resolution. Phase 3 step 1 does the shared part. See
 [Phase3.md](Phase3.md#step-1-introduce-a-resolution-context) — if that step grows, consider
 swapping the two phases.
 
-**Phase 6 is last on purpose.** Every phase above changes the grammar and the semantic model.
-The one exception is lexer-driven syntax highlighting, which is grammar-stable and can ship at
-any time; it is broken out as [Phase 6 step 1](Phase6.md#step-1-syntax-highlighting-and-server-skeleton).
+**Phase 6 was last on purpose.** Every phase above changes the grammar and the semantic model, so a
+language server built first would have been rewritten after each one.
+
+It also turned out to be the first consumer that analyses a script without emitting one, which is
+what found the two places where binding still reached for the `ILGenerator` or a `TypeBuilder`.
+Phase 3.5's acceptance criterion was met by the tests it shipped with; it was not true of `match`.
+Worth remembering for the next refactor with a claim like that one: the criterion needs a consumer,
+not a test.

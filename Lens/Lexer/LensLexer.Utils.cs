@@ -16,6 +16,7 @@ namespace Lens.Lexer
 
             new StaticLexemDefinition("use", LexemType.Use),
             new StaticLexemDefinition("using", LexemType.Using),
+            new StaticLexemDefinition("declare", LexemType.Declare),
             new StaticLexemDefinition("type", LexemType.Type),
             new StaticLexemDefinition("record", LexemType.Record),
             new StaticLexemDefinition("pure", LexemType.Pure),
@@ -128,7 +129,10 @@ namespace Lens.Lexer
         [DebuggerStepThrough]
         private char CurrChar()
         {
-            return _source[_position];
+            // past the end reads as nothing, the way NextChar has always answered. A file being
+            // typed into runs out mid-construct all the time, and every test against this character
+            // is a test for something in particular.
+            return _position < _source.Length ? _source[_position] : '\0';
         }
 
         /// <summary>

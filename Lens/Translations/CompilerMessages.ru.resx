@@ -684,4 +684,43 @@
   <data name="DeferredNameNeverAssigned" xml:space="preserve">
     <value>LE3181: Не удалось определить тип '{0}': этому имени нигде не присваивается значение.</value>
   </data>
+  <data name="DeclareBlockNotAtTop" xml:space="preserve">
+    <value>LE3189: Блоку 'declare' могут предшествовать только выражения 'use' и другие блоки 'declare'.</value>
+  </data>
+  <data name="DeclaredPropertyDuplicated" xml:space="preserve">
+    <value>LE3190: Переменная '{0}' объявлена более одного раза.</value>
+  </data>
+  <data name="DeclaredFunctionDuplicated" xml:space="preserve">
+    <value>LE3191: Функция '{0}' объявлена более одного раза с теми же типами аргументов.</value>
+  </data>
+  <data name="DeclaredTypeDuplicated" xml:space="preserve">
+    <value>LE3192: Имя типа '{0}' объявлено более одного раза.</value>
+  </data>
+  <data name="DeclaredPropertyMissing" xml:space="preserve">
+    <value>LE3193: Переменная '{0}' объявлена, но не зарегистрирована хостом. Добавьте вызов RegisterProperty("{0}", ...).</value>
+  </data>
+  <data name="DeclaredPropertyTypeMismatch" xml:space="preserve">
+    <value>LE3194: Переменная '{0}' объявлена с типом '{1}', но хост зарегистрировал её с типом '{2}'.</value>
+  </data>
+  <data name="DeclaredPropertyNotWritable" xml:space="preserve">
+    <value>LE3195: Переменная '{0}' объявлена через 'var', но хост зарегистрировал её без сеттера. Объявите её через 'let' или передайте сеттер в RegisterProperty.</value>
+  </data>
+  <data name="DeclaredFunctionMissing" xml:space="preserve">
+    <value>LE3196: Функция '{0}' объявлена, но не зарегистрирована хостом. Добавьте вызов RegisterFunction("{0}", ...).</value>
+  </data>
+  <data name="DeclaredFunctionSignatureMismatch" xml:space="preserve">
+    <value>LE3197: Хост зарегистрировал функцию с именем '{0}', но ни одна из её перегрузок не имеет объявленной сигнатуры ({1}) -&gt; {2}.</value>
+  </data>
+  <data name="DeclaredTypeConflict" xml:space="preserve">
+    <value>LE3198: Имя типа '{0}' объявлено, но в скрипте уже определён тип с таким именем.</value>
+  </data>
+  <data name="ProvideModeCannotEmit" xml:space="preserve">
+    <value>LE3200: Компиляция, в которой объявления задают окружение, не может генерировать код: у объявленной функции нет тела, а у объявленной переменной - значения.</value>
+  </data>
+  <data name="DeclaredTypeMismatch" xml:space="preserve">
+    <value>LE3199: Имя типа '{0}' объявлено как '{1}', но хост зарегистрировал его как '{2}'.</value>
+  </data>
+  <data name="GenericFunctionAsValue" xml:space="preserve">
+    <value>LE3201: Обобщённая функция '{0}' не может использоваться как значение: её типовые аргументы определяются только при вызове.</value>
+  </data>
 </root>

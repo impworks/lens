@@ -40,7 +40,12 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             }
             catch (LensCompilerException ex)
             {
-                ex.BindToLocation(this);
+                // the items are resolved here too, and whatever goes wrong inside one of them is
+                // already bound to the item that has it. Only a failure that belongs to no single
+                // item - no common type across them - is the collection's own to report.
+                if (ex.StartLocation == null || ex.EndLocation == null)
+                    ex.BindToLocation(this);
+
                 throw;
             }
         }

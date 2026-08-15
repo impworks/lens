@@ -372,6 +372,24 @@ namespace Lens.Compiler.Entities
         }
 
         /// <summary>
+        /// Checks whether any method is declared under the given name.
+        /// </summary>
+        internal bool HasMethodGroup(string name)
+        {
+            return _methods.ContainsKey(name);
+        }
+
+        /// <summary>
+        /// Every field declared on this type. For completion and outlining.
+        /// </summary>
+        internal IEnumerable<FieldEntity> Fields => _fields.Values;
+
+        /// <summary>
+        /// Every method declared on this type, overloads included. For completion and outlining.
+        /// </summary>
+        internal IEnumerable<MethodEntity> Methods => _methods.Values.SelectMany(x => x);
+
+        /// <summary>
         /// Resolves a group of methods by their name.
         /// </summary>
         internal MethodEntity[] ResolveMethodGroup(string name)

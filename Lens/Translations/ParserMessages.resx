@@ -342,4 +342,31 @@
   <data name="AwaitExpressionExpected" xml:space="preserve">
     <value>LE2075: An expression to await is expected!</value>
   </data>
+  <data name="DeclareIndentExpected" xml:space="preserve">
+    <value>LE2076: The body of a 'declare' block must be an indented block!</value>
+  </data>
+  <data name="DeclareSeparatorExpected" xml:space="preserve">
+    <value>LE2077: Declarations must be separated by a newline!</value>
+  </data>
+  <data name="DeclarationExpected" xml:space="preserve">
+    <value>LE2078: A declaration must start with 'reference', 'var', 'let', 'fun' or 'type'!</value>
+  </data>
+  <data name="DeclareReferencePathExpected" xml:space="preserve">
+    <value>LE2079: The path of a referenced assembly must be a string!</value>
+  </data>
+  <data name="DeclarePropertyIdentifierExpected" xml:space="preserve">
+    <value>LE2080: The name of a declared variable must be an identifier!</value>
+  </data>
+  <data name="DeclarePropertyTypeExpected" xml:space="preserve">
+    <value>LE2081: The type of a declared variable is expected!</value>
+  </data>
+  <data name="DeclarePureNotAllowed" xml:space="preserve">
+    <value>LE2082: 'pure' cannot be declared: purity is a property of a body the host owns and cannot be checked here!</value>
+  </data>
+  <data name="DeclareGenericNotAllowed" xml:space="preserve">
+    <value>LE2083: A declared function cannot have generic parameters!</value>
+  </data>
+  <data name="DeclareTypeAliasTargetExpected" xml:space="preserve">
+    <value>LE2084: The type a declared alias stands for is expected!</value>
+  </data>
 </root>

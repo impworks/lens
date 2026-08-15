@@ -15,6 +15,22 @@ namespace Lens.Lexer
         #region Constructor
 
         public LensLexer(string src)
+            : this(src, false)
+        {
+        }
+
+        /// <summary>
+        /// Lexes the source code.
+        /// </summary>
+        /// <param name="src">Source code.</param>
+        /// <param name="tolerant">
+        /// Whether a lexing failure should stop everything, or leave the lexems read so far behind
+        /// and be reported in <see cref="Failure"/>.
+        ///
+        /// An editor needs the second: a file that is being typed into is malformed most of the
+        /// time, and colouring the part that did lex beats colouring nothing.
+        /// </param>
+        public LensLexer(string src, bool tolerant)
         {
             _position = 0;
             _offset = 1;
@@ -26,7 +42,30 @@ namespace Lens.Lexer
 
             _source = src;
 
-            Parse();
+            if (tolerant)
+            {
+                try
+                {
+                    Parse();
+                }
+                catch (LensCompilerException ex)
+                {
+                    Failure = ex;
+                }
+                catch (Exception ex)
+                {
+                    // a mistake of ours rather than of the source, and the caller is an editor:
+                    // colouring what was read beats answering nothing at all. The compiler's path
+                    // does not catch this, so nothing is being swept under the carpet.
+                    Failure = new LensCompilerException(ex.Message, ex);
+                }
+            }
+            else
+            {
+                Parse();
+            }
+
+            CloseBlocks();
             FilterNewlines();
         }
 
@@ -43,6 +82,11 @@ namespace Lens.Lexer
         /// Generated list of lexems.
         /// </summary>
         public List<Lexem> Lexems { get; private set; }
+
+        /// <summary>
+        /// The problem that stopped lexing, in a tolerant run. Null when the source lexed cleanly.
+        /// </summary>
+        public LensCompilerException Failure { get; private set; }
 
         /// <summary>
         /// Current position in the entire source string.
@@ -84,6 +128,11 @@ namespace Lens.Lexer
                 {
                     ProcessIndent();
                     _newLine = false;
+
+                    // the indentation ran to the end of the file: there is no lexem after it, and
+                    // looking for one is how a half-typed body used to report "unknown lexem"
+                    if (!InBounds())
+                        break;
                 }
 
                 if (ProcessNewLine())
@@ -126,8 +175,17 @@ namespace Lens.Lexer
 
                 SkipSpaces();
             }
+        }
 
-            if (Lexems[Lexems.Count - 1].Type != LexemType.NewLine)
+        /// <summary>
+        /// Closes every block left open and terminates the stream.
+        ///
+        /// This is separate from the loop above because a tolerant run reaches it after a failure
+        /// as well: the parser is given a well-formed stream either way, just a shorter one.
+        /// </summary>
+        private void CloseBlocks()
+        {
+            if (Lexems.Count > 0 && Lexems[Lexems.Count - 1].Type != LexemType.NewLine)
                 AddLexem(LexemType.NewLine, GetPosition());
 
             while (_indentLookup.Count > 1)
@@ -136,7 +194,7 @@ namespace Lens.Lexer
                 _indentLookup.Pop();
             }
 
-            if (Lexems[Lexems.Count - 1].Type == LexemType.NewLine)
+            if (Lexems.Count > 0 && Lexems[Lexems.Count - 1].Type == LexemType.NewLine)
                 Lexems.RemoveAt(Lexems.Count - 1);
 
             AddLexem(LexemType.Eof, GetPosition());
@@ -154,8 +212,9 @@ namespace Lens.Lexer
                 currIndent++;
             }
 
-            // empty line?
-            if (CurrChar() == '\n' || CurrChar() == '\r')
+            // empty line? a line of nothing but spaces at the very end of the file is one too, and
+            // is what an editor holds for as long as it takes to type the first character of a body
+            if (CurrChar() == '\n' || CurrChar() == '\r' || !InBounds())
                 return;
 
             // first line?
@@ -174,16 +233,20 @@ namespace Lens.Lexer
             {
                 while (true)
                 {
-                    if (_indentLookup.Count > 0)
-                        _indentLookup.Pop();
-                    else
+                    // the outermost level is never popped: it is what the file itself is indented
+                    // to, and popping it would leave nothing to compare the next line against
+                    if (_indentLookup.Count < 2)
                         Error(LexerMessages.InconsistentIdentation);
 
+                    _indentLookup.Pop();
                     AddLexem(LexemType.Dedent, GetPosition());
 
-                    if (currIndent == _indentLookup.Peek())
+                    if (currIndent >= _indentLookup.Peek())
                         break;
                 }
+
+                if (currIndent != _indentLookup.Peek())
+                    Error(LexerMessages.InconsistentIdentation);
             }
         }
 
@@ -239,7 +302,9 @@ namespace Lens.Lexer
                     else
                     {
                         Skip();
-                        Lexems.Add(new Lexem(LexemType.String, startPos, GetPosition(), sb.ToString()));
+                        // 'start' rather than 'startPos': the span covers the quotes as well, so
+                        // that an editor colouring by lexem does not leave them bare
+                        Lexems.Add(new Lexem(LexemType.String, start, GetPosition(), sb.ToString()));
                         return;
                     }
                 }
@@ -378,7 +443,11 @@ namespace Lens.Lexer
         /// </summary>
         private void AddLexem(LexemType type, LexemLocation loc)
         {
-            Lexems.Add(new Lexem(type, loc, default(LexemLocation)));
+            // a structural lexem is a zero-width marker, so it ends where it starts. It used to end
+            // nowhere at all, which left every construct closed by a DEDENT - a record, an algebraic
+            // type, a function with an indented body - with no end position: the parser takes the
+            // end of a node from the last lexem it consumed.
+            Lexems.Add(new Lexem(type, loc, loc));
         }
 
         #endregion

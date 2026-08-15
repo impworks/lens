@@ -1,6 +1,6 @@
 ﻿// globals
 main <~NodeBase>                            = stmt { NL stmt } EOF
-stmt <NodeBase>                             = use | record_def | type_def | fun_def | local_stmt
+stmt <NodeBase>                             = declare_block | use | record_def | type_def | fun_def | local_stmt
 
 // namespace & type signatures
 namespace <TypeSignature>                   = identifier { "." identifier }
@@ -10,6 +10,15 @@ type_params <~TypeParameterDefinition>      = "<" type_param { "," type_param } 
 type_param <TypeParameterDefinition>        = identifier [ "=" type_constraints ]
 type_constraints                            = type_constraint { "&" type_constraint }
 type_constraint                             = "class" | "struct" | "new" | type
+
+// host environment declarations
+// "reference" is a contextual keyword: an ordinary identifier everywhere outside a declare block
+declare_block <DeclarationBlockNode>        = "declare" INDENT declare_stmt { NL declare_stmt } DEDENT
+declare_stmt <DeclarationEntryBase>         = declare_ref | declare_prop | declare_fun | declare_type
+declare_ref <DeclaredReference>             = "reference" string
+declare_prop <DeclaredProperty>             = ( "var" | "let" ) identifier ":" type
+declare_fun <DeclaredFunction>              = "fun" identifier [ ":" type ] [ fun_args ]
+declare_type <DeclaredTypeAlias>            = "type" identifier "=" type
 
 // structures
 use <UseNode>                               = "use" namespace

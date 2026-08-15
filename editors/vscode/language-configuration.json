@@ -1,0 +1,39 @@
+{
+    "comments": {
+        "lineComment": "//"
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        { "open": "{", "close": "}" },
+        { "open": "[", "close": "]" },
+        { "open": "(", "close": ")" },
+        { "open": "\"", "close": "\"", "notIn": ["string"] },
+        { "open": "'", "close": "'", "notIn": ["string"] }
+    ],
+    "surroundingPairs": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "(^\\s*(declare|record|type)\\b.*$)|((->|\\b(then|else|do|try|finally)|\\bwith)\\s*$)|(^\\s*catch\\b.*$)",
+        "decreaseIndentPattern": "^\\s*(else|catch|finally)\\b.*$"
+    },
+    "onEnterRules": [
+        {
+            "beforeText": "^\\s*(declare|record|type)\\b.*$",
+            "action": { "indent": "indent" }
+        },
+        {
+            "beforeText": "(->|\\b(then|else|do|try|finally|with))\\s*$",
+            "action": { "indent": "indent" }
+        }
+    ],
+    "wordPattern": "[A-Za-z_][A-Za-z0-9_]*"
+}

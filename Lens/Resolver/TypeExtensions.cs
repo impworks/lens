@@ -194,6 +194,14 @@ namespace Lens.Resolver
             if (exprType.Is<UnspecifiedType>())
                 return 0;
 
+            // the absence of a value fits nothing but the absence of a value: Unit is an ordinary
+            // class as far as the CLR is concerned, so without this it would reach 'object' by
+            // inheritance - and through it any generic parameter, whose base is object as well
+            var varIsVoid = !ReferenceEquals(varType, null) && varType.IsVoid();
+            var exprIsVoid = !ReferenceEquals(exprType, null) && exprType.IsVoid();
+            if (varIsVoid || exprIsVoid)
+                return varIsVoid && exprIsVoid ? 0 : int.MaxValue;
+
             if (varType.IsByRef)
                 return varType.ElementType == exprType ? 0 : int.MaxValue;
 

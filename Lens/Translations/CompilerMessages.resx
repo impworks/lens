@@ -684,4 +684,43 @@
   <data name="DeferredNameNeverAssigned" xml:space="preserve">
     <value>LE3181: The type of '{0}' cannot be worked out, because nothing is ever assigned to it.</value>
   </data>
+  <data name="DeclareBlockNotAtTop" xml:space="preserve">
+    <value>LE3189: A 'declare' block may only be preceded by 'use' statements and other 'declare' blocks.</value>
+  </data>
+  <data name="DeclaredPropertyDuplicated" xml:space="preserve">
+    <value>LE3190: The variable '{0}' is declared more than once.</value>
+  </data>
+  <data name="DeclaredFunctionDuplicated" xml:space="preserve">
+    <value>LE3191: The function '{0}' is declared more than once with the same argument types.</value>
+  </data>
+  <data name="DeclaredTypeDuplicated" xml:space="preserve">
+    <value>LE3192: The type name '{0}' is declared more than once.</value>
+  </data>
+  <data name="DeclaredPropertyMissing" xml:space="preserve">
+    <value>LE3193: The variable '{0}' is declared, but the host has not registered it. Add a RegisterProperty("{0}", ...) call.</value>
+  </data>
+  <data name="DeclaredPropertyTypeMismatch" xml:space="preserve">
+    <value>LE3194: The variable '{0}' is declared as '{1}', but the host registered it as '{2}'.</value>
+  </data>
+  <data name="DeclaredPropertyNotWritable" xml:space="preserve">
+    <value>LE3195: The variable '{0}' is declared with 'var', but the host registered it without a setter. Declare it with 'let' or pass a setter to RegisterProperty.</value>
+  </data>
+  <data name="DeclaredFunctionMissing" xml:space="preserve">
+    <value>LE3196: The function '{0}' is declared, but the host has not registered it. Add a RegisterFunction("{0}", ...) call.</value>
+  </data>
+  <data name="DeclaredFunctionSignatureMismatch" xml:space="preserve">
+    <value>LE3197: The host has registered a function named '{0}', but none of its overloads has the declared signature ({1}) -&gt; {2}.</value>
+  </data>
+  <data name="DeclaredTypeConflict" xml:space="preserve">
+    <value>LE3198: The type name '{0}' is declared, but the script already defines a type with that name.</value>
+  </data>
+  <data name="ProvideModeCannotEmit" xml:space="preserve">
+    <value>LE3200: A compilation whose declarations provide the environment cannot emit code: a declared function has no body and a declared variable no value.</value>
+  </data>
+  <data name="DeclaredTypeMismatch" xml:space="preserve">
+    <value>LE3199: The type name '{0}' is declared as '{1}', but the host registered it as '{2}'.</value>
+  </data>
+  <data name="GenericFunctionAsValue" xml:space="preserve">
+    <value>LE3201: The generic function '{0}' cannot be used as a value: its type arguments are only settled by a call to it.</value>
+  </data>
 </root>

@@ -91,6 +91,59 @@ fun wrapB<T>:string (x:T) -> ""b"" + (x as object).ToString ()
             Test(src, "a1b2");
         }
 
+        [Test]
+        public void GenericFunctionAsAValueIsAnError()
+        {
+            var src = @"
+fun id<T>:T (x:T) -> x
+
+let z = id
+z 5";
+
+            TestError(src, CompilerMessages.GenericFunctionAsValue);
+        }
+
+        [Test]
+        public void GenericFunctionCastToADelegateIsAnError()
+        {
+            // a pointer to a method with open type arguments produced an assembly that the runtime
+            // refused to load at all - a BadImageFormatException out of a script that compiled
+            var src = @"
+fun id<T>:T (x:T) -> x
+
+let z = (id as Func<int, int>)
+z 5";
+
+            TestError(src, CompilerMessages.GenericFunctionAsValue);
+        }
+
+        [Test]
+        public void GenericFunctionPassedAsAnArgumentIsAnError()
+        {
+            var src = @"
+fun id<T>:T (x:T) -> x
+
+new [1; 2]
+    |> Select id
+    |> Count ()";
+
+            TestError(src, CompilerMessages.GenericFunctionAsValue);
+        }
+
+        [Test]
+        public void FunctionWithValuelessBodyIsAnError()
+        {
+            // a body that produces nothing used to satisfy a generic return type, because the
+            // parameter is compared through its base type, and everything descends from object
+            var src = @"
+fun add<T>:T (item:T arr:List<T>) ->
+    arr.Add item
+
+add 1 (new [[2]])";
+
+            TestError(src, CompilerMessages.ReturnTypeMismatch);
+        }
+
         #endregion
 
         #region Constraints

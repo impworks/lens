@@ -149,13 +149,14 @@ There are many cases in which your application can benefit from an embeddable sc
 The compiler already supports the following features:
 
 * **Full access** to any .NET types and assemblies referenced by your host project
-* Import of types, methods and even local variables from host into the script
+* Import of types, methods and even local variables from host into the script (use `declare` block to validate and enable editor support)
 * Declaration of records and functions inside the script
 * Local type inference
+* Generic functions, records, and types - oh my!
 * [Anonymous functions](https://github.com/impworks/lens/wiki/Lambda-expressions) with closures
 * [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
+* Async-await, iterators, `Expression<T>`
 * String interpolation: `$"a{expr}b"`, `$@"..."`, and format specifiers
-* Safe navigation: `?.` and `?[`, short-circuiting the whole accessor chain
 * Overloaded operators support
 * [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)
 * Pattern matching (with [awesome regex support](https://github.com/impworks/lens/wiki/Pattern-Matching#9-regex-rule))
@@ -166,7 +167,32 @@ The compiler already supports the following features:
 
 Please refer to the [Wiki](https://github.com/impworks/lens/wiki) for the complete list of features.
 
-Contributions are always welcome - especially if you would like to help create a text editor with code suggestions and syntax highlighting!
+### Editor support
+
+There is a language server and a [VS Code extension](editors/vscode/README.md): syntax highlighting
+(from the compiler, not from a regular expression), completion, diagnostics as you type, hover,
+go-to-definition, find-references, rename and an outline.
+
+```
+cd editors/vscode
+npm install
+npm run build-server
+npm run compile
+npm run package          # produces lens-lang-5.0.0.vsix
+```
+
+Install it with `code --install-extension lens-lang-5.0.0.vsix`, or open `editors/vscode` in VS Code
+and press F5 to run it without installing.
+
+The server speaks the language server protocol over stdio, so any editor that can launch
+`dotnet lens-language-server.dll` gets the same features. A plugin that would rather host the
+language services in-process can reference `Lens.LanguageServer.Core` and skip the protocol.
+
+Since a script's meaning depends on what the *host* registered, and an editor has no host, tell it
+with a `declare` block at the top of the file - the same block the compiler checks against the real
+host when the script runs.
+
+Contributions are always welcome!
 
 ### What NOT to expect
 

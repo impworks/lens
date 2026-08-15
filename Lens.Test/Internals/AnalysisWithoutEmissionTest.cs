@@ -151,6 +151,85 @@ l");
         }
 
         [Test]
+        public void AnalysingAMatchBuildsNoAssembly()
+        {
+            // 'match' expands into jumps, and a jump label used to be reserved on the ILGenerator
+            // while the tree was being bound - so a script containing one could not be analysed at
+            // all, which is most of what a LENS script does
+            var ctx = Analyze(@"
+type Shape
+    Empty
+    Dot of int
+
+fun describe:string (s:Shape) ->
+    match s with
+        case Empty then ""nothing""
+        case Dot of n then ""a dot""
+
+describe Empty");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAMatchProducingARecordBuildsNoAssembly()
+        {
+            // the fallback branch of a match that returns a value asks for the default of its type,
+            // and materializing a declared type is what forces its builder into being
+            var ctx = Analyze(@"
+record Point
+    X : int
+
+fun pick:Point (flag:bool) ->
+    match flag with
+        case true then new Point 1
+        case _ then new Point 2
+
+pick true");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAMatchOverAGenericTypeInsideAGenericFunctionBuildsNoAssembly()
+        {
+            // the type a pattern names is the label instantiated with the arguments of the value
+            // being matched - and both halves of that used to be built out of builders: the
+            // declaration has none before emission, and neither has the T it is instantiated with
+            var ctx = Analyze(@"
+type Opt<T>
+    None
+    Some of T
+
+fun map<T>:T (item:Opt<T> def:T) ->
+    match item with
+        case Some of x then x
+        case None then def
+
+map (Some 1) 0");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAFunctionThatReturnsNoValueReportsIt()
+        {
+            // the check used to live in the emission half only, so an editor - which never emits -
+            // saw nothing wrong with a function whose body produces no value at all
+            var ctx = Analyze(@"
+fun add<T>:T (item:T arr:List<T>) ->
+    arr.Add item
+
+add 1 (new [[2]])");
+
+            Assert.IsTrue(ctx.Diagnostics.HasErrors);
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
         public void CompilingStillBuildsAnAssembly()
         {
             var ctx = new Context(new LensCompilerOptions());

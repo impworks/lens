@@ -364,5 +364,20 @@ s 1 2 3
 ";
             TestError(src, CompilerMessages.VariadicArgumentLambda);
         }
+
+        [Test]
+        public void MissingRecordFieldIsAProperError()
+        {
+            // a declared type reports an unknown member by throwing, and that used to escape the
+            // binder as a bare dictionary failure with no location at all
+            var src = @"
+record Foo
+    B : int
+
+let x = new Foo 1
+x.Bla";
+
+            TestError(src, CompilerMessages.TypeIdentifierNotFound);
+        }
     }
 }
