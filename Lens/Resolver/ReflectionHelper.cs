@@ -208,18 +208,18 @@ namespace Lens.Resolver
         /// <param name="argTypes">Desired argument types.</param>
         public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isVariadicGetter, TypeEntry[] argTypes)
         {
-            var result = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
-                             .OrderBy(rec => rec.Distance)
-                             .Take(2) // no more than 2 is needed
-                             .ToArray();
+            var applicable = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
+                                 .Where(rec => rec.Distance != int.MaxValue)
+                                 .ToArray();
 
-            if (result.Length == 0 || result[0].Distance == int.MaxValue)
+            if (applicable.Length == 0)
                 throw new KeyNotFoundException();
 
-            if (result.Length == 2 && result[0].Distance == result[1].Distance)
+            var best = TypeExtensions.BestCandidates(ctx, argTypes, applicable, rec => rec.Distance, rec => rec.ArgumentTypes);
+            if (best.Length > 1)
                 throw new AmbiguousMatchException();
 
-            return result[0];
+            return best[0];
         }
 
         #endregion
@@ -268,6 +268,11 @@ namespace Lens.Resolver
         {
             if (ReferenceEquals(expected, null) || ReferenceEquals(actual, null))
                 return;
+
+            // a parameter that wants an expression tree is matched against the delegate the tree
+            // stands for, which is the shape the argument arrives in
+            if (expected.IsExpressionType() && !actual.IsExpressionType())
+                expected = expected.UnwrapExpressionType();
 
             if (expected.IsGenericParameter)
             {
@@ -330,6 +335,11 @@ namespace Lens.Resolver
         /// </summary>
         public static MethodWrapper WrapDelegate(TypeResolutionContext ctx, Type type)
         {
+            // Expression<TDelegate> describes the same signature as TDelegate does, and everything
+            // that asks a delegate for its shape - argument inference above all - wants that shape
+            // whichever of the two the call site spelled
+            type = type.UnwrapExpressionType();
+
             if (!type.IsCallableType())
                 throw new ArgumentException("type");
 

@@ -1,5 +1,8 @@
 # Phase 5 — `Expression<T>`
 
+> **Status: done.** What was actually built, and where it departed from this plan, is recorded in
+> [Outcome](#outcome) at the end.
+
 ## Goal
 
 Let LENS lambdas be consumed as `System.Linq.Expressions.Expression<TDelegate>`, so that scripts can
@@ -151,3 +154,86 @@ apply here. Worth noting because it looks like it should.
 - Compiling expression trees back to delegates as an optimisation.
 - Any EF-specific integration beyond making `IQueryable` work — no migrations, no change tracking
   helpers, no `DbContext` sugar. LENS drives the host's context; it does not wrap it.
+
+## Outcome
+
+### Call-site selection
+
+`Expression<TDelegate>` is unwrapped to its delegate wherever a signature is inspected:
+`FunctionalHelper.IsExpressionType` / `UnwrapExpressionType` (both `Type` and `TypeEntry`),
+`ReflectionHelper.WrapDelegate`, `TypeExtensions.distanceFrom`, and both generic inference paths
+(`GenericHelper.GenericResolver.ResolveRecursive`, `ReflectionHelper.Unify`). A lambda is therefore
+exactly as near to `Expression<Func<T,bool>>` as it is to `Func<T,bool>`.
+
+That leaves `Queryable.Where` and `Enumerable.Where` tied, because the receiver is one step from
+`IQueryable<T>` and from `IEnumerable<T>` alike under this distance model. **The tie-break the plan
+expected the existing interface-distance logic to produce is not there** — it was verified with a
+test, and it reported an ambiguity. Two rules were added instead, applied in order after distance,
+in `TypeExtensions.BestCandidates`, which both `ReflectionHelper.ResolveMethodByArgs` and
+`ExtensionMethodResolver` now go through:
+
+1. `ExpressionTreeAffinity` — prefer the candidate whose parameter wants a tree and is being handed
+   a lambda. This decides `Where`, `Select`, `OrderBy` and friends.
+2. `MostSpecific` — prefer the candidate no other candidate is strictly more specific than. This is
+   C#'s better-conversion-target rule, and it decides the calls with no lambda at all: `Count ()`,
+   `ToArray ()`, `Sum ()` on an `IQueryable` were newly ambiguous without it.
+
+Both rules only fire on an exact distance tie, which previously threw `AmbiguousMatchException`, so
+no call that resolved before resolves differently now.
+
+One thing the plan did not anticipate: on .NET Core, `Queryable` lives in its own assembly, while
+`ReferencedAssemblyCache` anchored `System.Linq` to `Enumerable`'s. `Queryable` was therefore
+invisible unless something else had already loaded the assembly, which made overload selection
+depend on what the host happened to have touched. `typeof(Queryable)` and `typeof(Expression)` are
+now anchors.
+
+### The translator
+
+`Lens/Compiler/ExpressionTreeBuilder.cs` walks the bound body and emits calls into the `Expression`
+factories. `LambdaNode` carries the target `Expression<TDelegate>` in its binding record, resolves
+to it, and dispatches to the builder from `EmitInternal`.
+
+Supported: literals and folded constants, parameters, captured locals, fields, properties, array
+length and indexing, indexers, method calls (extension methods included, as the static calls they
+are), `new` including records, arrays, arithmetic and comparison with numeric and `Nullable<T>`
+lifting, `&&` / `||` / `not`, `??`, `as`, `is`, `default`, and the line form of `if`.
+
+Two places translate the node the author wrote rather than what binding rewrote it into, because the
+rewrite is an IL-backend concern: `&&` / `||` (which LENS expands into `if`, and which must stay
+`AndAlso` / `OrElse` for a provider to read them) and nullable arithmetic. String `+` goes the other
+way and is built as C# builds it, an `Add` naming `string.Concat`.
+
+Captured variables are closure-field accesses, as the plan preferred — `Expression.Field` over a
+`Constant` holding the closure instance. A mutation after the query is built is visible to it, and
+EF Core turns the field into a query parameter rather than a literal. Both are asserted.
+
+The lambda still gets its closure class and backing method even in tree mode. The method is dead
+code, but the class is where a captured variable lives, and sharing the one hoisting mechanism is
+what keeps a variable captured by both a lambda and a tree in a single place.
+
+### Rejections
+
+Restricted to line-expression bodies as planned. Each rejection names the construct and its
+location: `ExpressionTreeBlockBody` (a block body, which is also what a `match` or a loop body
+reports), `ExpressionTreeNullSafe` (`?.`, rejected rather than translated, as recommended),
+`ExpressionTreeUnsupportedNode`, `ExpressionTreeUnsupportedOperator` (string ordering, shifts,
+delegate composition), `ExpressionTreeLambdaRequired` and `ExpressionTreeNoDelegateValue` (a
+delegate value passed where a tree is wanted has no body left to walk).
+
+### Safe mode
+
+No change was needed. The tree's own type goes through `CheckTypeInSafeMode` like any other resolved
+expression type, and the check recurses into the generic arguments, so a script cannot reach
+`System.Linq.Expressions` through a query while the restrictions forbid it. Asserted.
+
+### Tests
+
+`Lens.Test/Features/ExpressionTreeTest.cs` — overload selection asserted on the resolved
+`MethodInfo`, tree shapes compared against the string form of the tree the C# compiler builds for
+the same lambda, execution through `EnumerableQuery`, and the rejections.
+
+`Lens.Test/Features/ExpressionTreeEfCoreTest.cs` — end to end against EF Core on in-memory SQLite,
+asserting on the generated SQL. As the plan foresaw, the dependency is `net8.0`-only; rather than
+splitting the assembly, the fixture is compiled out of the net47 leg with `#if !NET_CLASSIC`.
+
+Both TFM legs are green, as is `LENS_LOWER_ALL=1`.

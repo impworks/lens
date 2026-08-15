@@ -39,6 +39,21 @@ namespace Lens.SyntaxTree.Declarations.Functions
             /// The return type the surrounding context demands, when it demands one.
             /// </summary>
             public TypeEntry InferredReturnType;
+
+            /// <summary>
+            /// The Expression&lt;TDelegate&gt; the surrounding context wants, when it wants a tree
+            /// rather than a delegate. Null for an ordinary lambda.
+            /// </summary>
+            public TypeEntry ExpressionTreeType;
+
+            /// <summary>
+            /// Whether the body's scope has already been given the lambda's arguments.
+            ///
+            /// Binding a lambda more than once is normal - its argument types arrive late, and so
+            /// does the decision to make it an expression tree - but declaring the same name twice
+            /// in the same scope is not.
+            /// </summary>
+            public bool ArgumentsRegistered;
         }
 
         #endregion
@@ -72,9 +87,21 @@ namespace Lens.SyntaxTree.Declarations.Functions
             if (MustInferArgTypes)
                 return TypeEntryCache.Of(FunctionalHelper.CreateLambdaType(TypeEntry.Materialize(argTypes)));
 
-            ctx.ScopeOf(Body).RegisterArguments(ctx, false, Arguments);
+            var binding = ctx.BindingOf<Binding>(this);
+            if (!binding.ArgumentsRegistered)
+            {
+                ctx.ScopeOf(Body).RegisterArguments(ctx, false, Arguments);
+                binding.ArgumentsRegistered = true;
+            }
 
             var retType = Body.Resolve(ctx);
+
+            // an expression tree is typed by the parameter that asked for one, not by the body: the
+            // tree's return type may be wider than what the body produces, and the translation
+            // inserts the conversion the delegate needs
+            if (binding.ExpressionTreeType != null)
+                return binding.ExpressionTreeType;
+
             return TypeEntryCache.Of(FunctionalHelper.CreateDelegateType(retType.Materialize(), TypeEntry.Materialize(argTypes)));
         }
 
@@ -95,6 +122,11 @@ namespace Lens.SyntaxTree.Declarations.Functions
         {
             var binding = ctx.BindingOf<Binding>(this);
 
+            // a lambda that becomes an expression tree still gets its closure class and its backing
+            // method. The method is never called - the tree is built from the body instead - but the
+            // class is what a captured variable lives in, and the tree reads it from there, so the
+            // hoisting has to happen exactly as it would for a delegate. Sharing the one mechanism
+            // is what keeps a variable that is captured by both a lambda and a tree in one place.
             binding.Method = ctx.Scope.CreateClosureMethod(ctx, Arguments, ResolveClosureReturnType(ctx));
             binding.Method.Body = Body;
 
@@ -132,6 +164,15 @@ namespace Lens.SyntaxTree.Declarations.Functions
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
+
+            // the body of an expression tree is never compiled to IL: it is walked here and turned
+            // into the calls that build the tree at runtime
+            var treeType = ctx.BindingOf<Binding>(this).ExpressionTreeType;
+            if (treeType != null)
+            {
+                new ExpressionTreeBuilder(ctx, this, treeType).Emit();
+                return;
+            }
 
             // the delegate type is expressed in the terms of the enclosing method, while the
             // backing method belongs to the closure class and may be generic in its parameters
@@ -193,6 +234,42 @@ namespace Lens.SyntaxTree.Declarations.Functions
         public void SetInferredReturnType(Context ctx, TypeEntry type)
         {
             ctx.BindingOf<Binding>(this).InferredReturnType = type;
+        }
+
+        #endregion
+
+        #region Expression trees
+
+        /// <summary>
+        /// Declares that the lambda is being converted to an expression tree rather than to a
+        /// delegate, because that is what the parameter it is passed to asks for.
+        /// </summary>
+        public void MakeExpressionTree(Context ctx, TypeEntry expressionType)
+        {
+            var binding = ctx.BindingOf<Binding>(this);
+            if (binding.ExpressionTreeType == expressionType)
+                return;
+
+            binding.ExpressionTreeType = expressionType;
+
+            // the lambda may already have been bound as a delegate, and its type is what changes
+            ctx.ResetExpressionType(this);
+        }
+
+        /// <summary>
+        /// The single expression the tree is built from.
+        ///
+        /// Only a line-expression body can be translated: a block, a match, a loop or an assignment
+        /// either has no counterpart in the Expression API or produces a tree no query provider can
+        /// translate, and rejecting it here beats deferring to the provider's own error.
+        /// </summary>
+        public NodeBase GetExpressionTreeBody()
+        {
+            var statements = Body.Statements.Where(x => !(x is IMetaNode)).ToArray();
+            if (statements.Length != 1)
+                Error(CompilerMessages.ExpressionTreeBlockBody);
+
+            return statements[0];
         }
 
         #endregion

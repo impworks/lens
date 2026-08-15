@@ -228,6 +228,12 @@ namespace Lens.Resolver
             if (varType.IsGenericParameter || exprType.IsGenericParameter)
                 return GenericParameterDistance(ctx, varType, exprType);
 
+            // a lambda reaches a parameter that wants an expression tree exactly as it reaches one
+            // that wants the delegate: which of the two a method asks for is what distinguishes
+            // Queryable from Enumerable, and the receiver decides between them
+            if (varType.IsExpressionType() && (exprType.IsLambdaType() || exprType.IsCallableType()))
+                return varType.GenericArguments[0].DistanceFrom(ctx, exprType, exactly);
+
             if (exprType.IsLambdaType())
                 return LambdaDistance(ctx, varType, exprType);
 
@@ -811,6 +817,114 @@ namespace Lens.Resolver
 
                 totalDist += dist;
             }
+        }
+
+        /// <summary>
+        /// Counts the parameters that ask for an expression tree and are being handed a lambda.
+        ///
+        /// This is the tie-break between an Enumerable overload and the Queryable one that differs
+        /// from it only in that parameter. Both are equally near by argument distance - a lambda
+        /// reaches Func&lt;T,bool&gt; and Expression&lt;Func&lt;T,bool&gt;&gt; alike, and the receiver
+        /// is one step from IEnumerable&lt;T&gt; and from IQueryable&lt;T&gt; alike - so nothing in the
+        /// distance model separates them, and leaving it at that would report an ambiguity for the
+        /// most ordinary LINQ call there is.
+        ///
+        /// C# arrives at the same answer from IQueryable&lt;T&gt; being the better conversion target;
+        /// the preference is spelled out here instead, because a query the author meant to run in
+        /// the database silently running in memory is the worse of the two failures.
+        /// </summary>
+        public static int ExpressionTreeAffinity(IEnumerable<TypeEntry> passedArgs, IEnumerable<TypeEntry> calleeArgs)
+        {
+            var passed = passedArgs.ToArray();
+            var callee = calleeArgs.ToArray();
+
+            var result = 0;
+            var count = Math.Min(passed.Length, callee.Length);
+            for (var idx = 0; idx < count; idx++)
+            {
+                if (!callee[idx].IsExpressionType() || ReferenceEquals(passed[idx], null))
+                    continue;
+
+                if (passed[idx].IsLambdaType() || passed[idx].IsCallableType())
+                    result++;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Narrows a list of applicable candidates down to the best ones: nearest first, then the
+        /// ones that want an expression tree, then the ones nothing is more specific than.
+        ///
+        /// More than one survivor means the call really is ambiguous.
+        /// </summary>
+        public static T[] BestCandidates<T>(TypeResolutionContext ctx, TypeEntry[] argTypes, T[] applicable, Func<T, int> distanceGetter, Func<T, TypeEntry[]> argsGetter)
+        {
+            var min = applicable.Min(distanceGetter);
+            var best = applicable.Where(x => distanceGetter(x) == min).ToArray();
+            if (best.Length < 2)
+                return best;
+
+            var maxAffinity = best.Max(x => ExpressionTreeAffinity(argTypes, argsGetter(x)));
+            best = best.Where(x => ExpressionTreeAffinity(argTypes, argsGetter(x)) == maxAffinity).ToArray();
+            if (best.Length < 2)
+                return best;
+
+            return MostSpecific(ctx, best, argsGetter);
+        }
+
+        /// <summary>
+        /// Reduces a set of equally near candidates to the ones no other candidate is strictly more
+        /// specific than.
+        ///
+        /// A signature is more specific than another when everything it accepts the other accepts
+        /// too, and not the other way round. This is what decides between Queryable's Count, which
+        /// takes IQueryable&lt;T&gt;, and Enumerable's, which takes IEnumerable&lt;T&gt;: both are
+        /// exactly as near to an IQueryable receiver, but only one of them is the reason the other
+        /// applies at all.
+        ///
+        /// C# reaches the same answer through its better-conversion-target rule.
+        /// </summary>
+        public static T[] MostSpecific<T>(TypeResolutionContext ctx, T[] candidates, Func<T, TypeEntry[]> argsGetter)
+        {
+            if (candidates.Length < 2)
+                return candidates;
+
+            var result = new List<T>();
+            foreach (var candidate in candidates)
+            {
+                var beaten = candidates.Any(other => !ReferenceEquals(other, candidate) && IsMoreSpecific(ctx, argsGetter(other), argsGetter(candidate)));
+                if (!beaten)
+                    result.Add(candidate);
+            }
+
+            return result.Count == 0 ? candidates : result.ToArray();
+        }
+
+        /// <summary>
+        /// Checks whether one signature accepts strictly less than another does.
+        /// </summary>
+        private static bool IsMoreSpecific(TypeResolutionContext ctx, TypeEntry[] left, TypeEntry[] right)
+        {
+            if (left.Length != right.Length)
+                return false;
+
+            var better = false;
+            for (var idx = 0; idx < left.Length; idx++)
+            {
+                if (left[idx] == right[idx])
+                    continue;
+
+                var leftFitsRight = right[idx].IsExtendablyAssignableFrom(ctx, left[idx]);
+                var rightFitsLeft = left[idx].IsExtendablyAssignableFrom(ctx, right[idx]);
+
+                if (leftFitsRight && !rightFitsLeft)
+                    better = true;
+                else if (rightFitsLeft && !leftFitsRight)
+                    return false;
+            }
+
+            return better;
         }
 
         /// <summary>

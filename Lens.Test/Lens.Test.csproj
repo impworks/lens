@@ -24,6 +24,12 @@
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     </ItemGroup>
 
+    <!-- the end-to-end check that a LENS query really does reach a database is worth a dependency,
+         but EF Core has no .NET Framework leg, so the test that uses it is compiled out there -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\Lens\Lens.csproj" />
     </ItemGroup>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -66,6 +67,8 @@ namespace Lens.Resolver
         {
             typeof(object), // System
             typeof(Enumerable), // System.Linq
+            typeof(Queryable), // System.Linq, again: Core splits Queryable off into its own assembly
+            typeof(Expression), // System.Linq.Expressions
             typeof(Regex) // System.Text.RegularExpressions
         };
 

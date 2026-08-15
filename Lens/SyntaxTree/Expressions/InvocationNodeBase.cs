@@ -5,6 +5,7 @@ using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.Translations;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions
@@ -54,6 +55,12 @@ namespace Lens.SyntaxTree.Expressions
         /// Returns the callable that binding resolved this invocation to.
         /// </summary>
         protected abstract CallableWrapperBase GetWrapper(Context ctx);
+
+        // an expression tree is built from the callable binding already settled on: re-resolving it
+        // would drop the receiver-as-argument-zero rewrite an extension method call went through
+
+        internal CallableWrapperBase BoundCallable(Context ctx) => GetWrapper(ctx);
+        internal List<NodeBase> BoundArguments(Context ctx) => GetBinding(ctx).Arguments;
 
         #endregion
 
@@ -209,19 +216,39 @@ namespace Lens.SyntaxTree.Expressions
         protected void ApplyLambdaArgTypes(Context ctx)
         {
             var binding = GetBinding(ctx);
+            var expectedTypes = GetWrapper(ctx).ArgumentTypes;
 
-            for (var idx = 0; idx < binding.ArgTypes.Length; idx++)
+            var count = Math.Min(binding.ArgTypes.Length, Math.Min(binding.Arguments.Count, expectedTypes.Length));
+            for (var idx = 0; idx < count; idx++)
             {
-                if (!binding.ArgTypes[idx].IsLambdaType())
+                var expected = expectedTypes[idx];
+                var lambda = binding.Arguments[idx] as LambdaNode;
+
+                // only a lambda can become an expression tree: a delegate value has no body left to
+                // walk by the time it reaches the call
+                if (expected.IsExpressionType() && lambda == null)
+                {
+                    var passed = binding.ArgTypes[idx];
+                    Error(
+                        binding.Arguments[idx],
+                        passed.IsCallableType() ? CompilerMessages.ExpressionTreeNoDelegateValue : CompilerMessages.ExpressionTreeLambdaRequired,
+                        passed.IsCallableType() ? passed.FullName : expected.FullName
+                    );
+                }
+
+                if (lambda == null || !(binding.ArgTypes[idx].IsLambdaType() || expected.IsExpressionType()))
                     continue;
 
-                var lambda = (LambdaNode) binding.Arguments[idx];
+                if (expected.IsExpressionType())
+                    lambda.MakeExpressionTree(ctx, expected);
+
                 if (lambda.MustInferArgTypes)
                 {
-                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, GetWrapper(ctx).ArgumentTypes[idx].Materialize());
+                    var actualWrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, expected.Materialize());
                     lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
-                    lambda.Resolve(ctx);
                 }
+
+                lambda.Resolve(ctx);
             }
         }
 

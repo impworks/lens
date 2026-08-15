@@ -57,19 +57,24 @@ namespace Lens.Resolver
                 throw new KeyNotFoundException();
 
             var methods = _cache[type][name];
-            var result = methods.Where(m => m.Name == name)
-                                .Select(mi => new {Method = mi, Distance = GetExtensionDistance(ctx, mi, type, args)})
-                                .OrderBy(p => p.Distance)
-                                .Take(2)
-                                .ToArray();
 
-            if (result.Length == 0 || result[0].Distance == int.MaxValue)
+            // the receiver is a parameter like any other here, so that the tie between Queryable's
+            // overload and Enumerable's - which differ in the receiver above all - can be decided
+            var applicable = methods.Where(m => m.Name == name)
+                                    .Select(mi => new Candidate(mi, GetExtensionDistance(ctx, mi, type, args), Signature(mi)))
+                                    .Where(c => c.Distance != int.MaxValue)
+                                    .ToArray();
+
+            if (applicable.Length == 0)
                 throw new KeyNotFoundException();
 
-            if (result.Length > 1 && result[0].Distance == result[1].Distance)
+            var receiverAndArgs = new[] {TypeEntryCache.Of(type)}.Concat(args.Select(TypeEntryCache.Of)).ToArray();
+            var best = TypeExtensions.BestCandidates(ctx, receiverAndArgs, applicable, c => c.Distance, c => c.ArgumentTypes);
+
+            if (best.Length > 1)
                 throw new AmbiguousMatchException();
 
-            return result[0].Method;
+            return best[0].Method;
         }
 
         #endregion
@@ -138,6 +143,35 @@ namespace Lens.Resolver
                 return int.MaxValue;
 
             return baseDist + argsDist;
+        }
+
+        /// <summary>
+        /// The declared signature of an extension method, receiver included.
+        /// </summary>
+        private static TypeEntry[] Signature(MethodInfo method)
+        {
+            return method.GetParameters().Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray();
+        }
+
+        #endregion
+
+        #region Nested classes
+
+        /// <summary>
+        /// One extension method considered for a call.
+        /// </summary>
+        private class Candidate
+        {
+            public Candidate(MethodInfo method, int distance, TypeEntry[] argumentTypes)
+            {
+                Method = method;
+                Distance = distance;
+                ArgumentTypes = argumentTypes;
+            }
+
+            public readonly MethodInfo Method;
+            public readonly int Distance;
+            public readonly TypeEntry[] ArgumentTypes;
         }
 
         #endregion

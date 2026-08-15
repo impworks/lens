@@ -489,6 +489,24 @@
   <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
     <value>LE3068: Невозможно вычислить значения обобщенных параметров для типа аргумента '{0}'! Укажите тип аргумента явно.</value>
   </data>
+  <data name="ExpressionTreeLambdaRequired" xml:space="preserve">
+    <value>LE3183: Параметр типа '{0}' ожидает дерево выражения, а преобразовать в дерево выражения можно только анонимную функцию!</value>
+  </data>
+  <data name="ExpressionTreeBlockBody" xml:space="preserve">
+    <value>LE3184: Анонимная функция, преобразуемая в дерево выражения, должна состоять из одного выражения!</value>
+  </data>
+  <data name="ExpressionTreeUnsupportedNode" xml:space="preserve">
+    <value>LE3185: Конструкция '{0}' не может быть преобразована в дерево выражения!</value>
+  </data>
+  <data name="ExpressionTreeUnsupportedOperator" xml:space="preserve">
+    <value>LE3186: Оператор '{0}' не может быть преобразован в дерево выражения!</value>
+  </data>
+  <data name="ExpressionTreeNullSafe" xml:space="preserve">
+    <value>LE3187: Оператор безопасного обращения не может быть преобразован в дерево выражения! Пожалуйста, запишите проверку явно.</value>
+  </data>
+  <data name="ExpressionTreeNoDelegateValue" xml:space="preserve">
+    <value>LE3188: Значение делегата типа '{0}' не может быть использовано там, где ожидается дерево выражения!</value>
+  </data>
   <data name="ArraySizeNotInt" xml:space="preserve">
     <value>LE3004: Невозможно использовать выражение типа '{0}' в качестве размера массива, поскольку оно не приводится к System.Int32!</value>
   </data>

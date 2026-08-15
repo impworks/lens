@@ -489,6 +489,24 @@
   <data name="LambdaArgGenericsUnresolved" xml:space="preserve">
     <value>LE3068: Lambda argument of type '{0}' contains unresolved generic references! Please specify the argument type explicitly.</value>
   </data>
+  <data name="ExpressionTreeLambdaRequired" xml:space="preserve">
+    <value>LE3183: Parameter of type '{0}' expects an expression tree, and only a lambda expression can be converted to one!</value>
+  </data>
+  <data name="ExpressionTreeBlockBody" xml:space="preserve">
+    <value>LE3184: A lambda that is converted to an expression tree must consist of a single expression!</value>
+  </data>
+  <data name="ExpressionTreeUnsupportedNode" xml:space="preserve">
+    <value>LE3185: The construct '{0}' cannot be translated into an expression tree!</value>
+  </data>
+  <data name="ExpressionTreeUnsupportedOperator" xml:space="preserve">
+    <value>LE3186: The operator '{0}' cannot be translated into an expression tree!</value>
+  </data>
+  <data name="ExpressionTreeNullSafe" xml:space="preserve">
+    <value>LE3187: The null-safe access operator cannot be translated into an expression tree! Please rewrite the condition explicitly.</value>
+  </data>
+  <data name="ExpressionTreeNoDelegateValue" xml:space="preserve">
+    <value>LE3188: A value of delegate type '{0}' cannot be used where an expression tree is expected!</value>
+  </data>
   <data name="ArraySizeNotInt" xml:space="preserve">
     <value>LE3004: Cannot use an expression of type '{0}' as array size specifier because it is not assignable to System.Int32!</value>
   </data>

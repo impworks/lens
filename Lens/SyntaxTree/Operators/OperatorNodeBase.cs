@@ -25,6 +25,17 @@ namespace Lens.SyntaxTree.Operators
         /// </summary>
         protected MethodWrapper OverloadedMethod;
 
+        /// <summary>
+        /// The user-defined operator binding settled on, if any. An expression tree names it
+        /// explicitly rather than letting the Expression API look it up again.
+        /// </summary>
+        internal MethodWrapper BoundOperatorMethod => OverloadedMethod;
+
+        /// <summary>
+        /// How the operator is spelled in the source, for diagnostics.
+        /// </summary>
+        internal string Representation => OperatorRepresentation;
+
         #endregion
 
         #region Transform

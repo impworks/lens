@@ -51,6 +51,15 @@ namespace Lens.SyntaxTree.Expressions
             return ctx.BindingOf<Binding>(this).Method;
         }
 
+        /// <summary>
+        /// The expression the call is made on, or null for a static method, a function and an
+        /// extension method - the latter has its receiver among the arguments instead.
+        /// </summary>
+        internal NodeBase BoundInvocationSource(Context ctx)
+        {
+            return ctx.BindingOf<Binding>(this).InvocationSource;
+        }
+
         #endregion
 
         #region Fields

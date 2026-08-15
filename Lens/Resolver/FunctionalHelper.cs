@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Lens.Compiler;
 
 namespace Lens.Resolver
@@ -158,6 +159,26 @@ namespace Lens.Resolver
             return false;
         }
 
+        /// <summary>
+        /// Checks if a type is an <see cref="Expression{TDelegate}"/>.
+        /// </summary>
+        public static bool IsExpressionType(this Type type)
+        {
+            return type != null && type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof(Expression<>);
+        }
+
+        /// <summary>
+        /// Returns the delegate an <see cref="Expression{TDelegate}"/> stands for, or the type
+        /// itself when it is not one.
+        ///
+        /// This is what lets a lambda be matched against a parameter that wants an expression tree
+        /// rather than a delegate: everything below this point reasons about the delegate.
+        /// </summary>
+        public static Type UnwrapExpressionType(this Type type)
+        {
+            return type.IsExpressionType() ? type.GetGenericArguments()[0] : type;
+        }
+
         #endregion
 
         #region Type kind methods for type entries
@@ -210,6 +231,27 @@ namespace Lens.Resolver
             // the base chain, not the CLR type: Func<SomeRecord> is as callable as Func<int>, and
             // asking either of them for a System.Type is emission's business
             return !type.IsDeclared && type.SelfAndBaseTypes().Any(x => x.Is<MulticastDelegate>());
+        }
+
+        /// <summary>
+        /// Checks if an entry stands for an <see cref="Expression{TDelegate}"/>.
+        /// </summary>
+        public static bool IsExpressionType(this TypeEntry type)
+        {
+            if (ReferenceEquals(type, null) || type.IsDeclared || !type.IsGenericType || type.IsGenericTypeDefinition)
+                return false;
+
+            var definition = type.GetGenericDefinition();
+            return definition != null && !definition.IsDeclared && definition.Is(typeof(Expression<>));
+        }
+
+        /// <summary>
+        /// Returns the delegate an <see cref="Expression{TDelegate}"/> stands for, or the entry
+        /// itself when it is not one.
+        /// </summary>
+        public static TypeEntry UnwrapExpressionType(this TypeEntry type)
+        {
+            return type.IsExpressionType() ? type.GenericArguments[0] : type;
         }
 
         #endregion
@@ -269,6 +311,14 @@ namespace Lens.Resolver
 
             var baseType = LambdaBaseTypes[args.Length - 1];
             return baseType.MakeGenericType(args);
+        }
+
+        /// <summary>
+        /// Wraps a delegate type into an <see cref="Expression{TDelegate}"/>.
+        /// </summary>
+        public static Type CreateExpressionType(Type delegateType)
+        {
+            return typeof(Expression<>).MakeGenericType(delegateType);
         }
 
         /// <summary>

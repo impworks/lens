@@ -291,6 +291,13 @@ namespace Lens.SyntaxTree
             if (lambda == null)
                 return;
 
+            // a target that wants an expression tree describes the same signature, one level down,
+            // and takes the lambda down the tree-building path
+            if (delegateType.IsExpressionType())
+                lambda.MakeExpressionTree(ctx, delegateType);
+            else if (!delegateType.IsCallableType())
+                return;
+
             var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType.Materialize());
             if (!wrapper.ReturnType.IsGenericParameter)
                 lambda.SetInferredReturnType(ctx, wrapper.ReturnType);

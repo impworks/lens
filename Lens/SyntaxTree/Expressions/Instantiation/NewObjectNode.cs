@@ -70,6 +70,14 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             return ctx.BindingOf<Binding>(this).Constructor;
         }
 
+        /// <summary>
+        /// The constructor binding resolved to, or null when the creation is a 'default' instead.
+        /// </summary>
+        internal ConstructorWrapper BoundConstructor(Context ctx)
+        {
+            return ctx.BindingOf<Binding>(this).Constructor;
+        }
+
         #endregion
 
         #region Resolve

@@ -59,6 +59,19 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         #endregion
 
+        #region Binding results
+
+        // an expression tree is built from the same members ordinary resolution settled on, so it
+        // reads them off the node rather than resolving the access a second time
+
+        internal FieldWrapper BoundField => _field;
+        internal PropertyWrapper BoundProperty => _property;
+        internal MethodWrapper BoundMethod => _method;
+        internal TypeEntry BoundType => _type;
+        internal bool IsStaticAccess => _isStatic;
+
+        #endregion
+
         #region Resolve
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)

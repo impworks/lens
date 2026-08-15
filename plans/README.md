@@ -27,7 +27,7 @@ These apply to every phase and were set explicitly:
 | [3](Phase3.md) | Generics in functions, records and types | Done | 0, 1 |
 | [3.5](Phase3.5.md) | Split binding from emission | Done | 3 |
 | [4](Phase4.md) | State machines: iterators and async | Done | 3, 3.5 |
-| [5](Phase5.md) | `Expression<T>` | Planned | 3 |
+| [5](Phase5.md) | `Expression<T>` | Done | 3 |
 | [6](Phase6.md) | Language server | Planned | 3.5 |
 
 ## Why Phase 2 was dropped

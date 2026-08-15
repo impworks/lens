@@ -21,6 +21,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         public bool RefArgumentRequired { get; set; }
 
+        /// <summary>
+        /// The indexer's getter binding settled on, or null when the access is to an array.
+        /// </summary>
+        internal MethodWrapper BoundGetter => _getter;
+
         #endregion
 
         #region Resolve

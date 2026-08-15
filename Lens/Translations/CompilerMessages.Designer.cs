@@ -700,6 +700,60 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3183: Parameter of type &apos;{0}&apos; expects an expression tree, and only a lambda expression can be converted to one!.
+        /// </summary>
+        public static string ExpressionTreeLambdaRequired {
+            get {
+                return ResourceManager.GetString("ExpressionTreeLambdaRequired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3184: A lambda that is converted to an expression tree must consist of a single expression!.
+        /// </summary>
+        public static string ExpressionTreeBlockBody {
+            get {
+                return ResourceManager.GetString("ExpressionTreeBlockBody", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3185: The construct &apos;{0}&apos; cannot be translated into an expression tree!.
+        /// </summary>
+        public static string ExpressionTreeUnsupportedNode {
+            get {
+                return ResourceManager.GetString("ExpressionTreeUnsupportedNode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3186: The operator &apos;{0}&apos; cannot be translated into an expression tree!.
+        /// </summary>
+        public static string ExpressionTreeUnsupportedOperator {
+            get {
+                return ResourceManager.GetString("ExpressionTreeUnsupportedOperator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3187: The null-safe access operator cannot be translated into an expression tree! Please rewrite the condition explicitly..
+        /// </summary>
+        public static string ExpressionTreeNullSafe {
+            get {
+                return ResourceManager.GetString("ExpressionTreeNullSafe", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3188: A value of delegate type &apos;{0}&apos; cannot be used where an expression tree is expected!.
+        /// </summary>
+        public static string ExpressionTreeNoDelegateValue {
+            get {
+                return ResourceManager.GetString("ExpressionTreeNoDelegateValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to LE3069: Type of argument &apos;{0}&apos; could not be inferred from usage! Please specify the type explicitly..
         /// </summary>
         public static string LambdaArgTypeUnknown {

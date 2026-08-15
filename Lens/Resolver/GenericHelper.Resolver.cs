@@ -103,6 +103,11 @@ namespace Lens.Resolver
                     var expected = expectedTypes[idx];
                     var actual = actualTypes[idx];
 
+                    // Expression<TDelegate> carries its generic arguments inside the delegate, so a
+                    // parameter that wants a tree is matched against the delegate the argument is
+                    if (expected.IsExpressionType() && !actual.IsExpressionType())
+                        expected = expected.UnwrapExpressionType();
+
                     if (expected.IsGenericType)
                     {
                         if (actual.IsLambdaType())
