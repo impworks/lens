@@ -165,18 +165,32 @@ namespace Lens.SyntaxTree.Expressions
                 var srcTypes = binding.ArgTypes;
                 var dstTypes = wrapper.ArgumentTypes;
                 var lastDst = dstTypes[dstTypes.Length - 1];
-                var lastSrc = srcTypes[srcTypes.Length - 1];
+                var fixedCount = dstTypes.Length - 1;
+
+                // the call may already pass the array itself, in which case there is nothing to pack
+                var isPacked = srcTypes.Length == dstTypes.Length && srcTypes[srcTypes.Length - 1] == lastDst;
 
                 // compress items into an array:
                 //     fx a b c d
                 // becomes
                 //     fx a b (new[ c as X; d as X ])
-                if (dstTypes.Length > srcTypes.Length || lastDst != lastSrc)
+                if (!isPacked)
                 {
-                    var elemType = lastDst.ElementType.Materialize();
-                    var simpleArgs = binding.Arguments.Take(dstTypes.Length - 1);
-                    var combined = Expr.Array(binding.Arguments.Skip(dstTypes.Length - 1).Select(x => Expr.Cast(x, elemType)).ToArray());
-                    return RecreateSelfWithArgs(simpleArgs.Union(new[] {combined}));
+                    var elemType = lastDst.ElementType;
+
+                    // an argument list of exactly one unit is the 'no arguments at all' spelling, and
+                    // resolution has already dropped it from the argument types
+                    var args = srcTypes.Length == 0 ? new List<NodeBase>() : binding.Arguments;
+                    var simpleArgs = args.Take(fixedCount);
+                    var variadicArgs = args.Skip(fixedCount).Select(x => (NodeBase) Expr.CastTransparent(x, elemType)).ToArray();
+
+                    // an array initializer cannot express an empty array: the variadic tail of a call
+                    // that passes nothing for it has to be constructed explicitly
+                    var combined = variadicArgs.Length == 0
+                        ? (NodeBase) Expr.Array(elemType, Expr.Int(0))
+                        : Expr.Array(variadicArgs);
+
+                    return RecreateSelfWithArgs(simpleArgs.Concat(new[] {combined}));
                 }
             }
 

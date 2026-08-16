@@ -204,6 +204,25 @@ prefixed ()
             );
         }
 
+        [Test]
+        public void SequenceIsJoinedItemByItem()
+        {
+            // a state machine reaches a param array of object as readily as it reaches
+            // IEnumerable<T>, and joining it as a single item would print the machine itself
+            Test(
+                @"
+fun test:int~ (vals:int~) ->
+    let x = 1
+    let b = (-> x)
+    yield b ()
+    yield from vals
+    yield 5
+
+string::Join "", "" (test new [2; 3; 4])",
+                "1, 2, 3, 4, 5"
+            );
+        }
+
         #endregion
 
         #region Closures

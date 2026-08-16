@@ -215,7 +215,7 @@ namespace Lens.Resolver
             if (applicable.Length == 0)
                 throw new KeyNotFoundException();
 
-            var best = TypeExtensions.BestCandidates(ctx, argTypes, applicable, rec => rec.Distance, rec => rec.ArgumentTypes);
+            var best = TypeExtensions.BestCandidates(ctx, argTypes, applicable, rec => rec.Distance, rec => rec.ArgumentTypes, rec => rec.IsExpanded);
             if (best.Length > 1)
                 throw new AmbiguousMatchException();
 

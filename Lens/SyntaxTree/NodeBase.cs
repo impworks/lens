@@ -83,8 +83,23 @@ namespace Lens.SyntaxTree
                 // the parse tree is left alone: the expansion is recorded on the side and
                 // emission picks it up from there
                 ctx.SetExpansion(child.Node, sub);
-                sub.Resolve(ctx, mustReturn);
-                sub.Transform(ctx, mustReturn);
+
+                try
+                {
+                    sub.Resolve(ctx, mustReturn);
+                    sub.Transform(ctx, mustReturn);
+                }
+                catch (LensCompilerException ex)
+                {
+                    // an expansion is synthesized and the nodes it is made of have no location of
+                    // their own, so an error raised inside one would otherwise reach the top with no
+                    // position at all and be reported against whatever the script starts with. It
+                    // belongs to the source the expansion came from.
+                    if (ex.StartLocation == null || ex.EndLocation == null)
+                        ex.BindToLocation(child.Node);
+
+                    throw;
+                }
             }
             else
             {

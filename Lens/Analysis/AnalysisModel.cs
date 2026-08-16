@@ -77,7 +77,8 @@ namespace Lens.Analysis
         HostType,
         GlobalVariable,
         Member,
-        Keyword
+        Keyword,
+        Namespace
     }
 
     /// <summary>

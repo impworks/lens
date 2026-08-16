@@ -92,6 +92,19 @@ namespace Lens.Resolver
         /// </summary>
         public IEnumerable<string> MissingDefaultAssemblies => _missingDefaultAssemblies;
 
+        /// <summary>
+        /// Every namespace the referenced assemblies contain, intermediate ones included.
+        ///
+        /// Reflecting over every exported type of every assembly is not something compilation would
+        /// ever want, so the set is built on first use and only completion ever asks for it.
+        /// </summary>
+        public IReadOnlyCollection<string> Namespaces => _namespaces ?? (_namespaces = CollectNamespaces());
+
+        /// <summary>
+        /// The memoized namespace list.
+        /// </summary>
+        private HashSet<string> _namespaces;
+
         #endregion
 
         #region Methods
@@ -122,6 +135,57 @@ namespace Lens.Resolver
         private static IEnumerable<Assembly> GetLoadedAssemblies()
         {
             return AppDomain.CurrentDomain.GetAssemblies();
+        }
+
+        /// <summary>
+        /// Reads the namespaces off the exported types of every referenced assembly.
+        ///
+        /// Each namespace is recorded along with all of its prefixes: nothing is declared directly in
+        /// System.Collections, and a list of namespaces that cannot get from System to
+        /// System.Collections.Generic is not one anybody can walk down.
+        ///
+        /// The runtime's own implementation assemblies are read as well, although they are
+        /// deliberately not referenced: on .NET Core the assemblies that are - mscorlib, System -
+        /// are facades that export nothing and merely forward, so System.IO would be missing from a
+        /// list built out of the references alone. A type in it resolves perfectly well through the
+        /// facade, which is what makes the namespace worth offering.
+        /// </summary>
+        private HashSet<string> CollectNamespaces()
+        {
+            var result = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var asm in _assemblies.Union(GetLoadedAssemblies()))
+            {
+                if (asm.IsDynamic)
+                    continue;
+
+                Type[] types;
+
+                try
+                {
+                    types = asm.GetExportedTypes();
+                }
+                catch (Exception ex)
+                {
+                    // an assembly whose dependencies are absent cannot be reflected over, and a
+                    // completion list missing one namespace beats one that throws
+                    Debug.WriteLine(ex);
+                    continue;
+                }
+
+                foreach (var type in types)
+                {
+                    var nsp = type.Namespace;
+                    if (string.IsNullOrEmpty(nsp) || !result.Add(nsp))
+                        continue;
+
+                    for (var dot = nsp.LastIndexOf('.'); dot > 0; dot = nsp.LastIndexOf('.', dot - 1))
+                        if (!result.Add(nsp.Substring(0, dot)))
+                            break;
+                }
+            }
+
+            return result;
         }
 
         #endregion

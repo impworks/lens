@@ -790,11 +790,17 @@ namespace Lens.Resolver
                 return new MethodLookupResult<T>(method, TypeListDistance(ctx, passedTypes, actualTypes), actualTypes);
 
             var simpleCount = actualTypes.Length - 1;
+            var variadicArgs = passedTypes.Skip(simpleCount).ToArray();
 
             var simpleDistance = TypeListDistance(ctx, passedTypes.Take(simpleCount), actualTypes.Take(simpleCount));
-            var variadicDistance = VariadicArgumentDistance(ctx, passedTypes.Skip(simpleCount), actualTypes[simpleCount]);
+            var variadicDistance = VariadicArgumentDistance(ctx, variadicArgs, actualTypes[simpleCount]);
             var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
-            return new MethodLookupResult<T>(method, distance, actualTypes);
+
+            // the array is passed as it is rather than assembled from the remaining arguments: the
+            // call is in normal form, and nothing about it is variadic any more
+            var isExpanded = !(variadicArgs.Length == 1 && variadicArgs[0] == actualTypes[simpleCount]);
+
+            return new MethodLookupResult<T>(method, distance, actualTypes, isExpanded);
         }
 
         /// <summary>
@@ -862,11 +868,12 @@ namespace Lens.Resolver
 
         /// <summary>
         /// Narrows a list of applicable candidates down to the best ones: nearest first, then the
-        /// ones that want an expression tree, then the ones nothing is more specific than.
+        /// ones that want an expression tree, then the ones that take the arguments as they are
+        /// rather than packing them, then the ones nothing is more specific than.
         ///
         /// More than one survivor means the call really is ambiguous.
         /// </summary>
-        public static T[] BestCandidates<T>(TypeResolutionContext ctx, TypeEntry[] argTypes, T[] applicable, Func<T, int> distanceGetter, Func<T, TypeEntry[]> argsGetter)
+        public static T[] BestCandidates<T>(TypeResolutionContext ctx, TypeEntry[] argTypes, T[] applicable, Func<T, int> distanceGetter, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isExpandedGetter = null)
         {
             var min = applicable.Min(distanceGetter);
             var best = applicable.Where(x => distanceGetter(x) == min).ToArray();
@@ -877,6 +884,23 @@ namespace Lens.Resolver
             best = best.Where(x => ExpressionTreeAffinity(argTypes, argsGetter(x)) == maxAffinity).ToArray();
             if (best.Length < 2)
                 return best;
+
+            // a candidate whose param array is being assembled out of the arguments loses to one that
+            // takes them as they are. Without this, 'string::Join ", " someSequence' is as near to
+            // Join(string, params object[]) - one step to object, one for the packing - as it is to
+            // Join<T>(string, IEnumerable<T>), and the sequence would be joined as a single item.
+            //
+            // C# has the same rule: an applicable member in normal form beats one that is only
+            // applicable in expanded form.
+            if (isExpandedGetter != null)
+            {
+                var normal = best.Where(x => !isExpandedGetter(x)).ToArray();
+                if (normal.Length > 0)
+                    best = normal;
+
+                if (best.Length < 2)
+                    return best;
+            }
 
             return MostSpecific(ctx, best, argsGetter);
         }

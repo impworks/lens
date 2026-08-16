@@ -961,6 +961,80 @@ declare
             }
         }
 
+        [Test]
+        public void SubNamespacesAreOfferedInAUseDirective()
+        {
+            using (var analysis = Analyze("use System."))
+            {
+                var entries = analysis.Complete(At(1, 12)).ToArray();
+                var names = entries.Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "Collections");
+                CollectionAssert.Contains(names, "Linq");
+                CollectionAssert.Contains(names, "Text");
+
+                // the segment alone is inserted, and the whole namespace is what it stands for
+                Assert.AreEqual("System.Linq", entries.First(x => x.Label == "Linq").Detail);
+                CollectionAssert.DoesNotContain(names, "System.Linq");
+
+                // and it is a namespace that is being named, not a member of anything
+                CollectionAssert.DoesNotContain(names, "String");
+                CollectionAssert.DoesNotContain(names, "match");
+            }
+        }
+
+        [Test]
+        public void IntermediateNamespacesAreOfferedInAUseDirective()
+        {
+            // nothing is declared in System.Collections itself, and a list that cannot get there
+            // cannot reach System.Collections.Generic either
+            using (var analysis = Analyze("use System.Collections."))
+            {
+                var names = analysis.Complete(At(1, 24)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "Generic");
+            }
+        }
+
+        [Test]
+        public void NamespaceRootsAreOfferedInAnEmptyUseDirective()
+        {
+            using (var analysis = Analyze("use "))
+            {
+                var names = analysis.Complete(At(1, 5)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "System");
+
+                // a root is a whole segment, never a dotted path
+                CollectionAssert.IsEmpty(names.Where(x => x.Contains(".")));
+            }
+        }
+
+        [Test]
+        public void PartiallyTypedNamespacesAreOfferedByTheirSegment()
+        {
+            // the editor filters the list by what has been typed, so the answer to 'System.Li' is
+            // the same set of segments as the answer to 'System.'
+            using (var analysis = Analyze("use System.Li"))
+            {
+                var names = analysis.Complete(At(1, 14)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "Linq");
+            }
+        }
+
+        [Test]
+        public void NamespacesAreNotOfferedOutsideAUseDirective()
+        {
+            using (var analysis = Analyze("var used = 1\nused"))
+            {
+                var names = analysis.Complete(At(2, 5)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "used");
+                CollectionAssert.DoesNotContain(names, "System");
+            }
+        }
+
         #endregion
 
         #region Outline

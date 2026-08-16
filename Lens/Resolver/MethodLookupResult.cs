@@ -9,11 +9,12 @@ namespace Lens.Resolver
     {
         #region Constructor
 
-        public MethodLookupResult(T method, int dist, TypeEntry[] args)
+        public MethodLookupResult(T method, int dist, TypeEntry[] args, bool isExpanded = false)
         {
             Method = method;
             Distance = dist;
             ArgumentTypes = args;
+            IsExpanded = isExpanded;
         }
 
         #endregion
@@ -34,6 +35,12 @@ namespace Lens.Resolver
         /// Inferred or evident argument types.
         /// </summary>
         public readonly TypeEntry[] ArgumentTypes;
+
+        /// <summary>
+        /// Whether the candidate only applies because its trailing param array is being built out of
+        /// the arguments, rather than passed as one.
+        /// </summary>
+        public readonly bool IsExpanded;
 
         #endregion
     }

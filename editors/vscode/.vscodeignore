@@ -1,4 +1,6 @@
 .vscode/**
+.gitignore
+*.vsix
 src/**
 scripts/**
 out/**/*.map

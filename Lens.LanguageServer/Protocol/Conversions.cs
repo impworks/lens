@@ -63,6 +63,7 @@ namespace Lens.LanguageServer.Protocol
                 case SymbolKind.GlobalVariable: return CompletionItemKind.Variable;
                 case SymbolKind.Member: return CompletionItemKind.Method;
                 case SymbolKind.Keyword: return CompletionItemKind.Keyword;
+                case SymbolKind.Namespace: return CompletionItemKind.Module;
                 default: return CompletionItemKind.Text;
             }
         }

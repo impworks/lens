@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -137,6 +138,30 @@ namespace Lens.Compiler
                 return null;
 
             return FindDeclaredType(type)?.Substitute(memberType) ?? memberType;
+        }
+
+        /// <summary>
+        /// The namespaces that sit directly under a prefix, as their last segment alone: an empty
+        /// prefix answers with the roots ("System", "Microsoft"), and "System" with "Collections",
+        /// "Linq" and the rest.
+        /// </summary>
+        internal IEnumerable<string> NamespacesUnder(string prefix)
+        {
+            var scope = string.IsNullOrEmpty(prefix) ? "" : prefix + ".";
+            var result = new SortedSet<string>(StringComparer.Ordinal);
+
+            foreach (var curr in AssemblyCache.Namespaces)
+            {
+                if (curr.Length <= scope.Length || !curr.StartsWith(scope, StringComparison.Ordinal))
+                    continue;
+
+                // the deeper namespaces are in the list too, and each of them contributes the one
+                // segment that follows the prefix rather than the whole of its tail
+                var dot = curr.IndexOf('.', scope.Length);
+                result.Add(dot < 0 ? curr.Substring(scope.Length) : curr.Substring(scope.Length, dot - scope.Length));
+            }
+
+            return result;
         }
 
         /// <summary>

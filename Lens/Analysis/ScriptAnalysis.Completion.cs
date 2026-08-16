@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree;
@@ -26,11 +27,30 @@ namespace Lens.Analysis
         /// </summary>
         public IReadOnlyList<CompletionEntry> Complete(LexemLocation position)
         {
+            // a 'use' directive names a namespace rather than an expression, and its dots separate
+            // namespace segments rather than reaching a member of anything
+            var namespacePrefix = FindNamespacePrefix(position);
+            if (namespacePrefix != null)
+                return CompleteNamespaces(namespacePrefix);
+
             var receiver = FindReceiver(position);
 
             return receiver == null
                 ? CompleteNames(position)
                 : CompleteMembers(receiver.Type, receiver.IsStatic);
+        }
+
+        /// <summary>
+        /// The namespaces that may follow what has been typed of a 'use' directive so far.
+        /// </summary>
+        private IReadOnlyList<CompletionEntry> CompleteNamespaces(string prefix)
+        {
+            var result = new List<CompletionEntry>();
+
+            foreach (var curr in _context.NamespacesUnder(prefix))
+                result.Add(new CompletionEntry(curr, SymbolKind.Namespace, prefix.Length == 0 ? curr : prefix + "." + curr));
+
+            return result;
         }
 
         /// <summary>
@@ -223,6 +243,42 @@ namespace Lens.Analysis
         #endregion
 
         #region Receiver resolution
+
+        /// <summary>
+        /// A 'use' directive, with the namespace it names split into the part that is complete and
+        /// the part still being typed.
+        /// </summary>
+        private static readonly Regex UseDirective = new Regex(
+            @"^\s*use\s+(?<prefix>[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*\.)?[A-Za-z0-9_]*$",
+            RegexOptions.Compiled
+        );
+
+        /// <summary>
+        /// The namespace whose children the caret is completing, "" for the roots, or null when the
+        /// caret is not in a 'use' directive at all.
+        ///
+        /// Read off the text rather than off the tree, because there is no tree to read: a directive
+        /// that ends in a dot does not parse, and one namespace segment is not a node in any case -
+        /// the whole of 'use System.Linq' binds to a single name.
+        /// </summary>
+        private string FindNamespacePrefix(LexemLocation position)
+        {
+            var caret = IndexOf(position);
+            if (caret < 0)
+                return null;
+
+            var start = caret;
+            while (start > 0 && Source[start - 1] != '\n')
+                start--;
+
+            var match = UseDirective.Match(Source.Substring(start, caret - start));
+            if (!match.Success)
+                return null;
+
+            // the prefix is captured with the dot that separates it from what is being typed
+            var prefix = match.Groups["prefix"].Value;
+            return prefix.Length == 0 ? "" : prefix.Substring(0, prefix.Length - 1);
+        }
 
         /// <summary>
         /// What the caret is completing a member of, or null when it is not completing one at all.

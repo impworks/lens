@@ -89,6 +89,9 @@ namespace Lens.LanguageServer.Handlers
         {
             switch (suggestion.Kind)
             {
+                // a 'use' directive is offered nothing but namespaces, so there is nothing for them
+                // to be sorted against - and everywhere else they are not offered at all
+                case Analysis.SymbolKind.Namespace:
                 case Analysis.SymbolKind.Local:
                 case Analysis.SymbolKind.Parameter:
                     return "1";

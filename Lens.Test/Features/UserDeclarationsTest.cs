@@ -330,6 +330,38 @@ cat 1 2 true ""test""
         }
 
         [Test]
+        public void VariadicFunctionWithoutVariadicArguments()
+        {
+            var src = @"
+fun mySum:int (data:int...) ->
+    var sum = 0
+    for curr in data do
+        sum = sum + curr
+    sum
+
+mySum ()
+";
+            Test(src, 0);
+        }
+
+        [Test]
+        public void VariadicHostMethodWithoutVariadicArguments()
+        {
+            var src = @"string::Join ""."" ";
+            Test(src, "");
+        }
+
+        [Test]
+        public void SequenceIsNotPackedIntoAParamArray()
+        {
+            var src = @"
+let seq = (new [1; 2; 3]).Select (x -> x * 2)
+string::Join "", "" seq
+";
+            Test(src, "2, 4, 6");
+        }
+
+        [Test]
         public void VariadicFunctionFail1()
         {
             var src = @"
