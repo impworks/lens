@@ -897,13 +897,31 @@ namespace Lens.Compiler
         public static bool ContainsAnywhere<T>(NodeBase node)
             where T : NodeBase
         {
+            return FindFirst<T>(node) != null;
+        }
+
+        /// <summary>
+        /// Returns the first node of a kind in a subtree, lambdas included, or null when there is
+        /// none. This is what lets a problem with a resume point be reported where the resume point
+        /// is, rather than at the top of whatever contains it.
+        /// </summary>
+        public static T FindFirst<T>(NodeBase node)
+            where T : NodeBase
+        {
             if (node == null)
-                return false;
+                return null;
 
-            if (node is T)
-                return true;
+            if (node is T match)
+                return match;
 
-            return node.GetChildren().Any(child => ContainsAnywhere<T>(child?.Node));
+            foreach (var child in node.GetChildren())
+            {
+                var found = FindFirst<T>(child?.Node);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
 
         /// <summary>

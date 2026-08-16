@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Lens.Compiler;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -292,44 +295,308 @@ unwrap (delay 5)",
 
         #endregion
 
+        #region Top level
+
+        [Test]
+        public void TopLevelAwaitProducesTheScriptValue()
+        {
+            TestTopLevel("await (delay 21)", 42);
+        }
+
+        [Test]
+        public void TopLevelAwaitOfATaskWithoutAResultProducesNull()
+        {
+            // the script's last statement has no value, and the script still answers something
+            TestTopLevel(
+                @"
+use System.Threading.Tasks
+await (Task::Delay 10)",
+                null
+            );
+        }
+
+        [Test]
+        public void TopLevelAwaitInTheMiddleOfAScript()
+        {
+            TestTopLevel(
+                @"
+var total = 0
+var one = await (delay 1)
+total = total + one
+var two = await (delay 2)
+total + two",
+                6
+            );
+        }
+
+        [Test]
+        public void TopLevelAwaitInsideALoop()
+        {
+            TestTopLevel(
+                @"
+var total = 0
+for i in 1..5 do
+    var step = await (delay i)
+    total = total + step
+total",
+                20
+            );
+        }
+
+        [Test]
+        public void TopLevelAwaitInsideACondition()
+        {
+            TestTopLevel(
+                @"
+var flag = true
+if flag then
+    await (delay 3)
+else
+    0",
+                6
+            );
+        }
+
+        [Test]
+        public void TopLevelAwaitOfAValueThatIsNotATask()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            compiler.RegisterFunction("custom", new Func<int, Awaitable>(value => new Awaitable(value)));
+
+            // the custom awaiter answers a string, which is what the script answers in turn
+            Assert.AreEqual("21", compiler.RunAsync("await (custom 21)").Result);
+        }
+
+        [Test]
+        public void TopLevelAwaitCallsAnAsyncFunction()
+        {
+            TestTopLevel(
+                @"
+fun fetch:Task<int> (value:int) ->
+    await (delay value)
+
+await (fetch 4)",
+                8
+            );
+        }
+
+        [Test]
+        public void TopLevelAwaitDoesNotDisturbAScriptThatOnlyReturnsATask()
+        {
+            // a script that hands out a task is not a script that waits for one: this one still
+            // answers through the synchronous door, and answers the task itself
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            Setup(compiler);
+
+            var result = compiler.Run(
+                @"
+fun fetch:Task<int> ->
+    await (delay 21)
+
+fetch ()"
+            );
+
+            Assert.IsInstanceOf<Task<int>>(result);
+            Assert.AreEqual(42, ((Task<int>) result).Result);
+        }
+
+        [Test]
+        public void TopLevelAwaitIsNotAProblemForAnEditor()
+        {
+            // the analysis an editor runs stops short of emission, and used to report the await it
+            // found at the top level as an error
+            var ctx = new Context(new LensCompilerOptions());
+            ctx.Analyze(Parse("use System.Threading.Tasks\nawait (Task::Delay 10)"));
+
+            CollectionAssert.IsEmpty(ctx.Diagnostics.Select(x => x.Message).ToArray());
+        }
+
+#if NET_CLASSIC
+        [Test]
+        public void TopLevelAwaitInASavedAssembly()
+        {
+            // nothing is registered here, and deliberately: an assembly that is to be saved cannot
+            // import anything from the host, so the script has to await something of its own
+            var compiler = CreateCompiler(new LensCompilerOptions {AllowSave = true});
+
+            Assert.AreEqual(
+                21,
+                compiler.Run(
+                    @"
+use System.Threading.Tasks
+await (Task::Delay 10)
+21"
+                )
+            );
+        }
+#endif
+
+        #endregion
+
+        #region The two doors
+
+        [Test]
+        public void ASynchronousScriptAnsweringThroughTheAsynchronousDoor()
+        {
+            var task = RunAsyncScript(null, "1 + 2");
+
+            // it had nothing to wait for, so it ran before the task was handed back
+            Assert.IsTrue(task.IsCompleted);
+            Assert.AreEqual(3, task.Result);
+        }
+
+        [Test]
+        public void AnAsynchronousScriptAnsweringThroughTheSynchronousDoor()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            Setup(compiler);
+
+            Assert.AreEqual(42, compiler.Run("await (delay 21)"));
+        }
+
+        [Test]
+        public void ASynchronousScriptThatThrowsFaultsTheTask()
+        {
+            var task = RunAsyncScript(null, @"throw new System.InvalidOperationException ""sync""");
+
+            Assert.IsTrue(task.IsFaulted);
+            Assert.AreEqual("sync", task.Exception.GetBaseException().Message);
+        }
+
+        [Test]
+        public void AnAsynchronousScriptThatThrowsFaultsTheTask()
+        {
+            var task = RunAsyncScript(Setup, @"
+let value = await (delay 1)
+throw new System.InvalidOperationException ""async""");
+
+            Assert.AreEqual("async", WaitForFailure(task));
+        }
+
+        [Test]
+        public void AFailedTopLevelAwaitFaultsTheTask()
+        {
+            Assert.AreEqual("inner", WaitForFailure(RunAsyncScript(Setup, "await (explode 0)")));
+        }
+
+        [Test]
+        public void AFailedTopLevelAwaitThrowsThroughTheSynchronousDoor()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            Setup(compiler);
+
+            // unwrapped: the sync door reports what the script threw, not an AggregateException
+            var error = Assert.Throws<InvalidOperationException>(() => compiler.Run("await (explode 0)"));
+            Assert.AreEqual("inner", error.Message);
+        }
+
+        [Test]
+        public void TheSynchronousDoorRefusesToBlockUnderASynchronizationContext()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            var pending = new TaskCompletionSource<int>();
+            compiler.RegisterFunction("pending", new Func<Task<int>>(() => pending.Task));
+
+            var original = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(new DeadSynchronizationContext());
+
+            try
+            {
+                // waiting here would post the continuation back to the thread doing the waiting
+                Assert.Throws<InvalidOperationException>(() => compiler.Run("await (pending ())"));
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(original);
+                pending.SetResult(0);
+            }
+        }
+
+        [Test]
+        public void TheSynchronousDoorStillAnswersUnderASynchronizationContextWhenNothingSuspends()
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            compiler.RegisterFunction("finished", new Func<Task<int>>(() => Task.FromResult(21)));
+
+            var original = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(new DeadSynchronizationContext());
+
+            try
+            {
+                // the machine never really suspended, so there is nothing to deadlock over
+                Assert.AreEqual(21, compiler.Run("await (finished ())"));
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(original);
+            }
+        }
+
+        #endregion
+
         #region Rejections
 
         [Test]
-        public void AwaitOutsideAFunctionIsRejected()
+        public void RedefiningRunAsyncIsRejected()
         {
-            TestError("await 1", "LE3174");
+            TestError(
+                @"
+fun RunAsync -> 1
+
+1",
+                "LE3095"
+            );
         }
+
+        [Test]
+        public void AwaitInsideATopLevelLambdaIsRejected()
+        {
+            TestError(
+                @"
+use System.Threading.Tasks
+let f = ->
+    await (Task::Delay 1)
+f ()",
+                "LE3171"
+            );
+        }
+
+        // the rejections below are reported at a part of the declaration rather than at the whole
+        // of it, so each of them asserts where it lands
 
         [Test]
         public void UndeclaredReturnTypeIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 fun broken ->
     await 1",
-                "LE3175"
+                "LE3175",
+                2, 5, 2, 11
             );
         }
 
         [Test]
         public void AsyncVoidIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 fun broken:int ->
     await 1",
-                "LE3176"
+                "LE3176",
+                2, 12, 2, 15
             );
         }
 
         [Test]
         public void PureAsyncIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 pure fun broken:Task<int> ->
     await 1",
-                "LE3177"
+                "LE3177",
+                2, 10, 2, 16
             );
         }
 
@@ -392,6 +659,39 @@ fun broken:Task<int> (t:Task<int>) ->
             TestAsyncConfigured(Setup, src, expected, result => ((Task<int>) result).Result);
         }
 
+        /// <summary>
+        /// Checks the value a script that awaits at its top level answers with, through the door
+        /// meant for it.
+        /// </summary>
+        private static void TestTopLevel(string src, object expected)
+        {
+            Assert.AreEqual(expected, RunAsyncScript(Setup, src).Result);
+        }
+
+        private static Task<object> RunAsyncScript(Action<LensCompiler> setup, string src)
+        {
+            var compiler = CreateCompiler(new LensCompilerOptions());
+            setup?.Invoke(compiler);
+
+            return compiler.RunAsync(src);
+        }
+
+        /// <summary>
+        /// The message of whatever a script failed with, waited for rather than polled.
+        /// </summary>
+        private static string WaitForFailure(Task<object> task)
+        {
+            try
+            {
+                task.Wait();
+                return "no error";
+            }
+            catch (AggregateException ex)
+            {
+                return ex.GetBaseException().Message;
+            }
+        }
+
         private static void TestAsyncConfigured(Action<LensCompiler> setup, string src, object expected, Func<object, object> project)
         {
             var compiler = CreateCompiler(new LensCompilerOptions());
@@ -400,6 +700,21 @@ fun broken:Task<int> (t:Task<int>) ->
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// A context that accepts continuations and never runs them, which is what a UI thread blocked
+    /// on a task amounts to.
+    /// </summary>
+    internal class DeadSynchronizationContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback d, object state)
+        {
+        }
+
+        public override void Send(SendOrPostCallback d, object state)
+        {
+        }
     }
 
     /// <summary>

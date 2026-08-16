@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Lens.Compiler;
 using Lens.Lexer;
 using Lens.Parser;
@@ -117,12 +119,48 @@ namespace Lens
         /// </summary>
         public Func<object> Compile(string src)
         {
+            return CompileSource(src, Compile);
+        }
+
+        /// <summary>
+        /// Compile the script for many invocations.
+        /// </summary>
+        private Func<object> Compile(IEnumerable<NodeBase> nodes)
+        {
+            var script = _context.Compile(nodes);
+
+            // a script that awaits at its top level cannot answer without waiting, and this is the
+            // door that has to answer anyway
+            if (script is IAsyncScript async)
+                return () => Wait(async.RunAsync());
+
+            return ((IScript) script).Run;
+        }
+
+        /// <summary>
+        /// Compile the script for many invocations, as an operation that may suspend itself.
+        ///
+        /// A script that does not await runs to completion before the task is handed back, exactly
+        /// as an async method containing no await does.
+        /// </summary>
+        public Func<Task<object>> CompileAsync(string src)
+        {
+            return CompileSource(src, CompileAsync);
+        }
+
+        /// <summary>
+        /// Reads the source and hands the tree to whichever door was asked for.
+        ///
+        /// Both doors compile the same way and differ only in what they hand back: which of the two
+        /// entry points the script type has is decided by the script, not by the caller.
+        /// </summary>
+        private T CompileSource<T>(string src, Func<IEnumerable<NodeBase>, T> compile)
+        {
             try
             {
                 var lexer = Measure(() => new LensLexer(src), "Lexer");
                 var parser = Measure(() => new LensParser(lexer.Lexems), "Parser");
-                var λ = Measure(() => Compile(parser.Nodes), "Compiler");
-                return λ;
+                return Measure(() => compile(parser.Nodes), "Compiler");
             }
             catch (LensCompilerException)
             {
@@ -135,12 +173,19 @@ namespace Lens
         }
 
         /// <summary>
-        /// Compile the script for many invocations.
+        /// Compile the script for many invocations, as an operation that may suspend itself.
         /// </summary>
-        private Func<object> Compile(IEnumerable<NodeBase> nodes)
+        private Func<Task<object>> CompileAsync(IEnumerable<NodeBase> nodes)
         {
             var script = _context.Compile(nodes);
-            return script.Run;
+
+            if (script is IAsyncScript async)
+                return async.RunAsync;
+
+            // the script has nothing to wait for, but the caller asked for a task and must get the
+            // same shape of answer either way - a failure included
+            var sync = (IScript) script;
+            return () => Completed(sync.Run);
         }
 
         /// <summary>
@@ -157,6 +202,71 @@ namespace Lens
         internal object Run(IEnumerable<NodeBase> nodes)
         {
             return Compile(nodes)();
+        }
+
+        /// <summary>
+        /// Run the script and get the task that completes with its return value.
+        /// </summary>
+        public Task<object> RunAsync(string src)
+        {
+            return CompileAsync(src)();
+        }
+
+        /// <summary>
+        /// Run the script and get the task that completes with its return value.
+        /// </summary>
+        internal Task<object> RunAsync(IEnumerable<NodeBase> nodes)
+        {
+            return CompileAsync(nodes)();
+        }
+
+        #endregion
+
+        #region Script invocation
+
+        /// <summary>
+        /// Runs a script that does not suspend itself and reports its outcome as a task.
+        ///
+        /// The task is never handed back incomplete: it is the shape of the answer that is uniform
+        /// across scripts, not the amount of waiting involved. A failure becomes a faulted task
+        /// rather than an exception out of the call, so that a caller of the asynchronous API has one
+        /// error path whatever the script turned out to be.
+        /// </summary>
+        private static Task<object> Completed(Func<object> body)
+        {
+            var completion = new TaskCompletionSource<object>();
+
+            try
+            {
+                completion.SetResult(body());
+            }
+            catch (Exception ex)
+            {
+                completion.SetException(ex);
+            }
+
+            return completion.Task;
+        }
+
+        /// <summary>
+        /// Waits for a script that suspends itself, on behalf of a caller that asked for a value.
+        ///
+        /// Blocking on a task is safe only where the continuation that completes it can run on some
+        /// other thread. Where a synchronization context has claimed the current one - a UI thread,
+        /// classic ASP.NET - the continuation would be posted back to the thread doing the waiting
+        /// and neither would ever proceed, so this refuses instead of hanging. A machine that never
+        /// really suspended is already finished by the time we look, and needs no such care.
+        /// </summary>
+        private static object Wait(Task<object> task)
+        {
+            if (!task.IsCompleted && SynchronizationContext.Current != null)
+                throw new InvalidOperationException(
+                    "This script awaits at its top level, and the current thread has a synchronization context, "
+                    + "so waiting for it here would deadlock. Use CompileAsync or RunAsync instead."
+                );
+
+            // not Result, and not Wait: those wrap what the script threw in an AggregateException
+            return task.GetAwaiter().GetResult();
         }
 
         #endregion

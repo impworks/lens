@@ -47,6 +47,26 @@ namespace Lens.Test
         }
 
         /// <summary>
+        /// Checks that a script reports an error, and that the error is bound to the expected
+        /// segment of the source. Lines and offsets are 1-based, as the lexer counts them.
+        /// </summary>
+        protected static void TestErrorAt(string src, string msg, int startLine, int startOffset, int endLine, int endOffset)
+        {
+            var exception = Assert.Throws<LensCompilerException>(() => Compile(src));
+
+            Assert.AreEqual(
+                msg.Substring(0, 6),
+                exception.Message.Substring(0, 6),
+                "Message does not match!\nExpected: {0}\nActual: {1}!",
+                msg,
+                exception.Message
+            );
+
+            Assert.AreEqual($"{startLine}:{startOffset}", exception.StartLocation?.ToString(), "Error starts in the wrong place!");
+            Assert.AreEqual($"{endLine}:{endOffset}", exception.EndLocation?.ToString(), "Error ends in the wrong place!");
+        }
+
+        /// <summary>
         /// Checks that a script reports exactly the given list of diagnostics, in order.
         /// </summary>
         protected static void TestErrors(string src, params string[] msgs)

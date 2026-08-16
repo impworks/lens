@@ -18,6 +18,12 @@
         public const string RunMethodName = "Run";
 
         /// <summary>
+        /// The name the main method takes instead when the script awaits at its top level, and so
+        /// hands out a task rather than a value.
+        /// </summary>
+        public const string RunAsyncMethodName = "RunAsync";
+
+        /// <summary>
         /// The name of the assembly entry point (when it's saved as exe).
         /// </summary>
         public const string EntryPointMethodName = "Main";

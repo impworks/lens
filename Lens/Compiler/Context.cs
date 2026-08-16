@@ -62,6 +62,9 @@ namespace Lens.Compiler
 
             MainType = CreateType(EntityNames.MainTypeName, prepare: false);
             MainType.Kind = TypeEntityKind.Main;
+
+            // the script is assumed to answer a value outright; a top-level await is what turns it
+            // into one that answers a task, and the whole script has to be read before that is known
             MainType.Interfaces = new[] {TypeEntryCache.Of<IScript>()};
             MainMethod = MainType.CreateMethod(EntityNames.RunMethodName, TypeEntryCache.Of<object>(), new TypeEntry[0], false, true, false);
 
@@ -155,6 +158,12 @@ namespace Lens.Compiler
         /// The function that is the body of the script.
         /// </summary>
         internal MethodEntity MainMethod { get; }
+
+        /// <summary>
+        /// Whether the script awaits at its top level, and so hands out a task instead of a value.
+        /// Known once the whole script has been read.
+        /// </summary>
+        internal bool IsScriptAsync { get; private set; }
 
         /// <summary>
         /// Type that is currently processed.

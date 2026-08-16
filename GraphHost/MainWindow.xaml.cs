@@ -31,7 +31,15 @@ namespace GraphHost
             base.OnKeyDown(e);
         }
 
-        private void Run()
+        /// <summary>
+        /// Plots the formula, one point per step.
+        ///
+        /// The formula is evaluated through the asynchronous door because this runs on the UI thread:
+        /// a formula that awaits would post its continuation back here, and a thread waiting for it
+        /// would be the thread that has to run it. A formula that awaits nothing - which is every
+        /// formula worth plotting - completes inline and never yields, so the loop costs nothing.
+        /// </summary>
+        private async void Run()
         {
             var lens = new LensCompiler();
 
@@ -43,21 +51,18 @@ namespace GraphHost
             lens.RegisterProperty("x", () => currX);
             lens.RegisterProperty("y", () => currY, y => currY = y);
 
-            IEnumerable<(double x, double y)> GenerateValues()
+            try
             {
-                var fx = lens.Compile(Func.Text);
+                var fx = lens.CompileAsync(Func.Text);
+                var values = new List<(double x, double y)>();
 
                 while (currX < endX)
                 {
-                    fx();
-                    yield return (currX, currY);
+                    await fx();
+                    values.Add((currX, currY));
                     currX += step;
                 }
-            }
 
-            try
-            {
-                var values = GenerateValues().ToList();
                 Graph.Plot(values.Select(v => v.x), values.Select(v => v.y));
             }
             catch (LensCompilerException ex)

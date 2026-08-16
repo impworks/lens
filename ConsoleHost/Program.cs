@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 #if NET_CLASSIC
 using System.Windows.Forms;
 #endif
@@ -15,7 +16,7 @@ namespace ConsoleHost
 {
     internal class Program
     {
-        private static void Main()
+        private static async Task Main()
         {
             PrintPreamble();
             WarmUp();
@@ -33,7 +34,10 @@ namespace ConsoleHost
 #endif
                         MeasureTime = timer
                     });
-                    var res = lc.Run(source);
+
+                    // awaited rather than waited for: a script may await at its top level, and the
+                    // prompt is the topmost level there is
+                    var res = await lc.RunAsync(source);
                     PrintObject(res);
 
                     if (timer)

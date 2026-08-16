@@ -47,15 +47,15 @@ namespace Lens.Compiler
             ValidateCommon();
 
             if (Node.IsPure)
-                Error(CompilerMessages.IteratorPure, Node.Name);
+                Error(Declaration, CompilerMessages.IteratorPure, Node.Name);
 
             var returnType = Node.ReturnTypeSignature;
             if (returnType == null || string.IsNullOrEmpty(returnType.FullSignature))
-                Error(CompilerMessages.IteratorReturnTypeRequired, Node.Name);
+                Error(Declaration, CompilerMessages.IteratorReturnTypeRequired, Node.Name);
 
             _elementSignature = GetElementSignature(returnType);
             if (_elementSignature == null)
-                Error(CompilerMessages.IteratorReturnTypeMismatch, Node.Name, returnType.FullSignature);
+                Error(returnType, CompilerMessages.IteratorReturnTypeMismatch, Node.Name, returnType.FullSignature);
         }
 
         /// <summary>

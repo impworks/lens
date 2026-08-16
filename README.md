@@ -128,6 +128,15 @@ catch(LensCompilerException e)
 
 The code above creates the compiler and registers local variables `x`, `y`, and `result` in the script. The body of the script is compiled into a native .NET object that can be invoked several times without recompilation. Finally, the result of the expression is printed out - and guess what the result is!
 
+A script may also `await` at its top level:
+
+```csharp
+var source = "await (fetchAsync url)";
+var result = await cp.RunAsync(source);
+```
+
+`CompileAsync` and `RunAsync` are the asynchronous counterparts of `Compile` and `Run`, and either pair works whatever the script turned out to be: a script that awaits nothing simply runs to completion before the task is handed back. Prefer the asynchronous pair in a UI application - waiting for a script that suspends itself would block the very thread its continuation needs.
+
 ### Why might one need an embeddable scripting language?
 
 There are many cases in which your application can benefit from an embeddable scripting language:
@@ -155,7 +164,7 @@ The compiler already supports the following features:
 * Generic functions, records, and types - oh my!
 * [Anonymous functions](https://github.com/impworks/lens/wiki/Lambda-expressions) with closures
 * [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
-* Async-await, iterators, `Expression<T>`
+* Async-await (in functions and at the top level of a script), iterators, `Expression<T>`
 * String interpolation: `$"a{expr}b"`, `$@"..."`, and format specifiers
 * Overloaded operators support
 * [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)

@@ -116,7 +116,14 @@ namespace GraphicScript
             }
         }
 
-        public void Run()
+        /// <summary>
+        /// Runs the script and draws what it produced.
+        ///
+        /// Through the asynchronous door, because this is the UI thread: a script that awaits at its
+        /// top level would post its continuation here, and blocking here would be blocking the very
+        /// thread that has to run it. A script that awaits nothing completes inline.
+        /// </summary>
+        public async void Run()
         {
             var lc = new LensCompiler();
 
@@ -127,8 +134,8 @@ namespace GraphicScript
 
             try
             {
-                var fx = lc.Compile(Code);
-                fx();
+                var fx = lc.CompileAsync(Code);
+                await fx();
 
                 Status = Status.Success;
 

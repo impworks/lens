@@ -32,6 +32,31 @@ namespace Lens.Compiler
         {
         }
 
+        private AsyncBuilder(Context ctx, FunctionNode node, MethodEntity method, bool isScriptBody) : this(ctx, node, method)
+        {
+            _isScriptBody = isScriptBody;
+        }
+
+        /// <summary>
+        /// Builds the machine for the script's own body rather than for a function.
+        ///
+        /// The body is wrapped in a declaration nobody wrote: it takes no arguments, and the task it
+        /// hands out carries object, because a script answers whatever its last statement does - or
+        /// nothing at all, which is a value here too.
+        /// </summary>
+        public static AsyncBuilder ForScriptBody(Context ctx, MethodEntity method)
+        {
+            var node = new FunctionNode
+            {
+                Name = EntityNames.RunAsyncMethodName,
+                ReturnTypeSignature = new TypeSignature("System.Threading.Tasks.Task", new TypeSignature("object"))
+            };
+
+            node.Body.LoadFrom(method.Body);
+
+            return new AsyncBuilder(ctx, node, method, isScriptBody: true);
+        }
+
         #endregion
 
         #region Fields
@@ -46,6 +71,11 @@ namespace Lens.Compiler
         /// Whether the function produces a value at all, or only completion.
         /// </summary>
         private bool _hasResult;
+
+        /// <summary>
+        /// Whether the body being rewritten is the script's rather than a function's.
+        /// </summary>
+        private readonly bool _isScriptBody;
 
         #endregion
 
@@ -69,14 +99,14 @@ namespace Lens.Compiler
             ValidateCommon();
 
             if (Node.IsPure)
-                Error(CompilerMessages.AsyncPure, Node.Name);
+                Error(Declaration, CompilerMessages.AsyncPure, Node.Name);
 
             var returnType = Node.ReturnTypeSignature;
             if (returnType == null || string.IsNullOrEmpty(returnType.FullSignature))
-                Error(CompilerMessages.AsyncReturnTypeRequired, Node.Name);
+                Error(Declaration, CompilerMessages.AsyncReturnTypeRequired, Node.Name);
 
             if (!IsTaskSignature(returnType))
-                Error(CompilerMessages.AsyncReturnTypeMismatch, Node.Name, returnType.FullSignature);
+                Error(returnType, CompilerMessages.AsyncReturnTypeMismatch, Node.Name, returnType.FullSignature);
 
             // async void is not supported, and deliberately: it is a footgun whose only purpose is
             // an event handler signature, and glue code has no need for one
@@ -164,6 +194,10 @@ namespace Lens.Compiler
         /// That statement is therefore the one that has to hand the answer over - unless it is
         /// itself an await, in which case the await is lowered first and its result handed over
         /// afterwards, which is what makes 'fun fetch:Task&lt;string&gt; -> await (...)' work.
+        ///
+        /// The script's body answers object and may end in a statement with no value at all, so
+        /// there the value is wrapped rather than named: what to do about it is a question only
+        /// binding can answer.
         /// </summary>
         private CodeBlockNode WithResultHandover()
         {
@@ -176,8 +210,17 @@ namespace Lens.Compiler
             else
             {
                 var lastIdx = statements.FindLastIndex(x => !(x is IMetaNode));
+
+                // a script of nothing but declarations answers null, the same as one that is empty;
+                // a function that declares a result and produces none is a mistake
                 if (lastIdx < 0)
-                    Error(CompilerMessages.AsyncReturnTypeMismatch, Node.Name, Node.ReturnTypeSignature.FullSignature);
+                {
+                    if (!_isScriptBody)
+                        Error(Declaration, CompilerMessages.AsyncReturnTypeMismatch, Node.Name, Node.ReturnTypeSignature.FullSignature);
+
+                    statements.Add(SetResult(Expr.Null()));
+                    return BlockOf(statements);
+                }
 
                 var last = statements[lastIdx];
 
@@ -188,7 +231,13 @@ namespace Lens.Compiler
 
                 statements.RemoveAt(lastIdx);
 
-                if (last is AwaitNode)
+                if (_isScriptBody)
+                {
+                    // an await of a task without a result lowers into a call that is void, so the
+                    // value cannot go through a name: a name would have to have a type
+                    statements.Add(SetResult(new AsObjectNode(last)));
+                }
+                else if (last is AwaitNode)
                 {
                     var name = Ctx.Unique.TempVariableName();
                     statements.Add(Expr.Var(name, last));
@@ -200,6 +249,14 @@ namespace Lens.Compiler
                 }
             }
 
+            return BlockOf(statements);
+        }
+
+        /// <summary>
+        /// A block in the same frame as the body being rewritten.
+        /// </summary>
+        private CodeBlockNode BlockOf(IEnumerable<NodeBase> statements)
+        {
             var body = new CodeBlockNode(Node.Body.ScopeKind);
             body.AddRange(statements);
             return body;

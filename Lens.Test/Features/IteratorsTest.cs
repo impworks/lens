@@ -463,35 +463,47 @@ described 7
         }
 
         [Test]
+        public void YieldOutsideAFunctionIsReportedAtTheYield()
+        {
+            TestErrorAt("use System\nyield 1", "LE3166", 2, 1, 2, 8);
+        }
+
+        // the rejections below are reported at a part of the declaration rather than at the whole
+        // of it, so each of them asserts where it lands
+
+        [Test]
         public void UndeclaredReturnTypeIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 fun broken ->
     yield 1",
-                "LE3167"
+                "LE3167",
+                2, 5, 2, 11
             );
         }
 
         [Test]
         public void NonSequenceReturnTypeIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 fun broken:int ->
     yield 1",
-                "LE3168"
+                "LE3168",
+                2, 12, 2, 15
             );
         }
 
         [Test]
         public void PureIteratorIsRejected()
         {
-            TestError(
+            TestErrorAt(
                 @"
 pure fun broken:IEnumerable<int> ->
     yield 1",
-                "LE3169"
+                "LE3169",
+                2, 10, 2, 16
             );
         }
 

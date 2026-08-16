@@ -242,7 +242,7 @@ namespace Lens.SyntaxTree.Expressions
                 if (binding.Method == null)
                     throw new KeyNotFoundException();
 
-                if (binding.ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.EntryPointMethodName))
+                if (binding.ArgTypes.Length == 0 && node.Identifier.IsAnyOf(EntityNames.RunMethodName, EntityNames.RunAsyncMethodName, EntityNames.EntryPointMethodName))
                     Error(CompilerMessages.ReservedFunctionInvocation, node.Identifier);
 
                 return;

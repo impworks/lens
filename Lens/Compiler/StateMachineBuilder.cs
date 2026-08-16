@@ -313,13 +313,27 @@ namespace Lens.Compiler
 
             foreach (var arg in Node.Arguments)
                 if (arg.IsRefArgument)
-                    Error(CompilerMessages.ClosureRef, arg.Name);
+                    Error(arg, CompilerMessages.ClosureRef, arg.Name);
         }
 
+        /// <summary>
+        /// What an error about the declaration as a whole points at: the name, which is where a
+        /// reader looks for the function, rather than the whole body it turns out to have.
+        /// </summary>
+        protected LocationEntity Declaration => Node.NameLocation ?? Node;
+
+        /// <summary>
+        /// Reports a problem with the declaration, bound to the part of it the problem is about.
+        /// </summary>
         [ContractAnnotation("=> halt")]
-        protected static void Error(string message, params object[] args)
+        protected static void Error(LocationEntity where, string message, params object[] args)
         {
-            throw new LensCompilerException(string.Format(message, args));
+            var error = new LensCompilerException(string.Format(message, args));
+
+            if (where != null)
+                error.BindToLocation(where);
+
+            throw error;
         }
 
         #endregion
