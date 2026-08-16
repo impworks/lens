@@ -34,10 +34,16 @@ namespace Lens.Analysis
                 return CompleteNamespaces(namespacePrefix);
 
             var receiver = FindReceiver(position);
+            if (receiver != null)
+                return CompleteMembers(receiver.Type, receiver.IsStatic);
 
-            return receiver == null
+            // 'new' is followed by a type and by nothing else, so the names in scope are the wrong
+            // answer there however many of them there are
+            var newPrefix = FindNewPrefix(position);
+
+            return newPrefix == null
                 ? CompleteNames(position)
-                : CompleteMembers(receiver.Type, receiver.IsStatic);
+                : CompleteTypes(newPrefix);
         }
 
         /// <summary>
@@ -51,6 +57,80 @@ namespace Lens.Analysis
                 result.Add(new CompletionEntry(curr, SymbolKind.Namespace, prefix.Length == 0 ? curr : prefix + "." + curr));
 
             return result;
+        }
+
+        /// <summary>
+        /// The types that may follow a 'new'.
+        ///
+        /// Nothing but a type may: the names in scope are all wrong there, and there are enough of
+        /// them to bury the one word that would have compiled.
+        /// </summary>
+        private IReadOnlyList<CompletionEntry> CompleteTypes(string prefix)
+        {
+            var result = new List<CompletionEntry>();
+            var seen = new HashSet<string>();
+
+            // what the script declares goes first: there is a handful of those against thousands of
+            // host types, and a record is what a script constructs most of the time
+            if (prefix.Length == 0)
+            {
+                foreach (var curr in _context.DefinedTypes)
+                {
+                    if (curr.Key.StartsWith("<") || !seen.Add(curr.Key))
+                        continue;
+
+                    result.Add(
+                        new CompletionEntry(
+                            curr.Key,
+                            curr.Value.IsImported ? SymbolKind.HostType : SymbolKind.Record,
+                            curr.Value.TypeInfo?.FullName ?? curr.Key
+                        )
+                    );
+                }
+
+                // the language's own names for host types: 'string' is what a script writes, and no
+                // namespace leads to it - System holds a 'String'
+                foreach (var curr in TypeResolver.Aliases)
+                {
+                    if (seen.Add(curr.Key))
+                        result.Add(new CompletionEntry(curr.Key, SymbolKind.HostType, curr.Value.FullName ?? curr.Key));
+                }
+            }
+
+            foreach (var curr in prefix.Length == 0 ? _context.TypesInScope() : _context.TypesInNamespace(prefix))
+            {
+                if (!IsConstructible(curr))
+                    continue;
+
+                var name = TypeNames.ShortNameOf(curr);
+                if (!seen.Add(name))
+                    continue;
+
+                result.Add(new CompletionEntry(name, SymbolKind.HostType, TypeNames.SignatureOf(curr)));
+            }
+
+            // a type may also be reached by spelling out where it lives, so the namespaces under
+            // what has been typed so far belong in the list beside the types themselves
+            foreach (var curr in _context.NamespacesUnder(prefix))
+            {
+                if (seen.Add(curr))
+                    result.Add(new CompletionEntry(curr, SymbolKind.Namespace, prefix.Length == 0 ? curr : prefix + "." + curr));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Whether 'new' could be written in front of a type. An interface or an abstract class has
+        /// no instances, and an enum has all of its own already.
+        /// </summary>
+        private static bool IsConstructible(Type type)
+        {
+            return !type.IsAbstract
+                   && !type.IsInterface
+                   && !type.IsEnum
+                   && !type.IsSpecialName
+                   && type.Name.IndexOf('<') < 0;
         }
 
         /// <summary>
@@ -236,7 +316,7 @@ namespace Lens.Analysis
                 if (!seen.Add(curr.Key))
                     continue;
 
-                target.Add(new CompletionEntry(curr.Key, SymbolKind.Member, Describe(curr.Value[0])));
+                target.Add(new CompletionEntry(curr.Key, SymbolKind.Member, DescribeExtension(curr.Value[0], type)));
             }
         }
 
@@ -272,6 +352,44 @@ namespace Lens.Analysis
                 start--;
 
             var match = UseDirective.Match(Source.Substring(start, caret - start));
+            if (!match.Success)
+                return null;
+
+            // the prefix is captured with the dot that separates it from what is being typed
+            var prefix = match.Groups["prefix"].Value;
+            return prefix.Length == 0 ? "" : prefix.Substring(0, prefix.Length - 1);
+        }
+
+        /// <summary>
+        /// A 'new' and the type name being written after it, split into the namespace that has been
+        /// spelled out and the part still being typed.
+        /// </summary>
+        private static readonly Regex NewExpression = new Regex(
+            @"(^|[^A-Za-z0-9_])new\s+(?<prefix>[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*\.)?[A-Za-z0-9_]*$",
+            RegexOptions.Compiled
+        );
+
+        /// <summary>
+        /// The namespace the type name after a 'new' is being written under, "" when the name is
+        /// unqualified, or null when the caret is not naming a constructed type at all.
+        ///
+        /// Read off the text for the same reason a 'use' directive is: 'new ' does not parse, and
+        /// what follows it is a type signature rather than a node the tree would hold. The trailing
+        /// space matters - 'new' with the caret against it is still a name being typed, and the
+        /// other collection literals ('new [', 'new (') never reach the pattern because a bracket
+        /// is not part of a name.
+        /// </summary>
+        private string FindNewPrefix(LexemLocation position)
+        {
+            var caret = IndexOf(position);
+            if (caret < 0)
+                return null;
+
+            var start = caret;
+            while (start > 0 && Source[start - 1] != '\n')
+                start--;
+
+            var match = NewExpression.Match(Source.Substring(start, caret - start));
             if (!match.Success)
                 return null;
 
@@ -417,7 +535,7 @@ namespace Lens.Analysis
             if (patched == null)
                 return null;
 
-            using (var variant = _analyzer.AnalyzeVariant(patched))
+            using (var variant = _analyzer.AnalyzeVariant(patched, _baseDirectory))
                 return variant.TypeEndingAt(end, preferWidest);
         }
 
@@ -429,7 +547,7 @@ namespace Lens.Analysis
             if (patched == null)
                 return null;
 
-            using (var variant = _analyzer.AnalyzeVariant(patched))
+            using (var variant = _analyzer.AnalyzeVariant(patched, _baseDirectory))
                 return variant.TypeCovering(position);
         }
 
@@ -656,10 +774,65 @@ namespace Lens.Analysis
 
         #region Descriptions
 
-        private static string Describe(MethodInfo method, IDictionary<string, string> arguments = null)
+        /// <summary>
+        /// Describes a .NET method.
+        /// </summary>
+        /// <param name="method">The method as reflection reports it.</param>
+        /// <param name="arguments">What to call the generic parameters its signature mentions.</param>
+        /// <param name="skip">
+        /// How many leading parameters are not written at the call site. One, for an extension
+        /// method: its receiver goes to the left of the dot rather than into the brackets.
+        /// </param>
+        private static string Describe(MethodInfo method, IDictionary<string, string> arguments = null, int skip = 0)
         {
-            var args = string.Join(" ", method.GetParameters().Select(x => $"{x.Name}:{TypeNames.Of(x.ParameterType, arguments)}"));
+            var args = string.Join(" ", method.GetParameters().Skip(skip).Select(x => $"{x.Name}:{TypeNames.Of(x.ParameterType, arguments)}"));
             return $"{method.Name}:{TypeNames.Of(method.ReturnType, arguments)}{(args.Length > 0 ? " (" + args + ")" : "")}";
+        }
+
+        /// <summary>
+        /// Describes an extension method as the receiver sees it.
+        ///
+        /// An extension method is declared over its own parameters, and reflection reports it that
+        /// way: the Where of an int[] is offered as taking a Func&lt;TSource, bool&gt;, which is not
+        /// a thing anybody can write. The receiver pins those parameters down, so it is asked.
+        /// </summary>
+        private string DescribeExtension(MethodInfo method, TypeEntry type)
+        {
+            return Describe(method, ExtensionArgumentsOf(method, type), 1);
+        }
+
+        /// <summary>
+        /// What the generic parameters of an extension method are, once the receiver has been
+        /// matched against the one parameter it is passed as. Null when it does not pin them down.
+        /// </summary>
+        private IDictionary<string, string> ExtensionArgumentsOf(MethodInfo method, TypeEntry type)
+        {
+            var parameters = method.GetGenericArguments();
+            if (parameters.Length == 0)
+                return null;
+
+            try
+            {
+                var values = GenericHelper.ResolveMethodGenericsByArgs(
+                    _context.Resolver,
+                    new[] {method.GetParameters()[0].ParameterType},
+                    new[] {type.Materialize()},
+                    parameters
+                );
+
+                var result = new Dictionary<string, string>();
+
+                for (var idx = 0; idx < parameters.Length && idx < values.Length; idx++)
+                    result[parameters[idx].Name] = TypeNames.Of(values[idx]);
+
+                return result;
+            }
+            catch (Exception)
+            {
+                // a parameter the receiver says nothing about cannot be named, and the name the
+                // declaration gave it is still an honest answer
+                return null;
+            }
         }
 
         /// <summary>

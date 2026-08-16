@@ -201,6 +201,22 @@ Since a script's meaning depends on what the *host* registered, and an editor ha
 with a `declare` block at the top of the file - the same block the compiler checks against the real
 host when the script runs.
 
+```
+declare
+    reference "System.Net.Http"         // a platform assembly, found wherever the runtime keeps it
+    reference "./lib/Contoso.Model.dll" // a library of your own, relative to the script
+    let customer:Contoso.Model.Customer
+
+use System.Net.Http
+let http = new HttpClient ()
+```
+
+A `reference` entry actually loads the assembly, so its types can be named, completed and checked -
+in the editor and when the script runs. An assembly that is part of the platform is named rather
+than pathed: `"System.Net.Http"` and `"System.Net.Http.dll"` both work, and neither ties the script
+to the machine it was written on. A reference that does not resolve is a warning and not an error,
+because the host may have registered the assembly by itself already.
+
 Contributions are always welcome!
 
 ### What NOT to expect

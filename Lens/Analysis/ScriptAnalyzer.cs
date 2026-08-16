@@ -63,7 +63,12 @@ namespace Lens.Analysis
         /// Lexes, parses and binds a script, collecting everything that went wrong instead of
         /// stopping at the first problem.
         /// </summary>
-        public ScriptAnalysis Analyze(string source)
+        /// <param name="source">The text of the script.</param>
+        /// <param name="baseDirectory">
+        /// The folder the script lives in, if it has one: a 'declare reference' entry may name a
+        /// library by a path relative to it.
+        /// </param>
+        public ScriptAnalysis Analyze(string source, string baseDirectory = null)
         {
             source = source ?? string.Empty;
 
@@ -75,7 +80,7 @@ namespace Lens.Analysis
             var lexer = Guard(() => new LensLexer(source, true), () => new LensLexer(string.Empty, true), ref fatal);
             var parser = Guard(() => new LensParser(lexer.Lexems, true), () => new LensParser(EmptyLexems, true), ref fatal);
 
-            var context = new Context(_options) {TrackTypeReferences = true};
+            var context = new Context(OptionsFor(baseDirectory)) {TrackTypeReferences = true};
 
             foreach (var curr in _assemblies)
                 context.RegisterAssembly(curr);
@@ -90,21 +95,36 @@ namespace Lens.Analysis
                 ref fatal
             );
 
-            return new ScriptAnalysis(this, source, lexer, parser, context, fatal);
+            return new ScriptAnalysis(this, source, baseDirectory, lexer, parser, context, fatal);
         }
 
         /// <summary>
         /// Analyses a variant of the source, for the questions that need one - completion after a
         /// dot, where the source as written does not parse.
         /// </summary>
-        internal ScriptAnalysis AnalyzeVariant(string source)
+        internal ScriptAnalysis AnalyzeVariant(string source, string baseDirectory)
         {
-            return Analyze(source);
+            return Analyze(source, baseDirectory);
         }
 
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// The options for one analysis, which differ from the configured ones only in where a
+        /// relative reference is looked for - and that is a property of the file, not of the
+        /// analyzer, which serves every file the editor has open.
+        /// </summary>
+        private LensCompilerOptions OptionsFor(string baseDirectory)
+        {
+            if (string.IsNullOrEmpty(baseDirectory) || baseDirectory == _options.ScriptDirectory)
+                return _options;
+
+            var result = _options.Copy();
+            result.ScriptDirectory = baseDirectory;
+            return result;
+        }
 
         /// <summary>
         /// Runs one stage of the reading, falling back to an empty result and recording the first

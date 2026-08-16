@@ -487,6 +487,297 @@ fun readIt:int (l:Left r:Right) -> l.Value + r.Value"))
         }
 
         [Test]
+        public void EveryOverloadOfAMethodIsDescribed()
+        {
+            // the name on its own says nothing the line under the pointer does not already say:
+            // what a reader wants is what the method takes, and which of the overloads they are on
+            using (var analysis = Analyze("var text = \"hello\"\ntext.Substring(1)"))
+            {
+                var detail = analysis.DescribeAt(At(2, 7));
+
+                StringAssert.Contains("Substring:string (startIndex:int)", detail);
+                StringAssert.Contains("Substring:string (startIndex:int length:int)", detail);
+            }
+        }
+
+        [Test]
+        public void APropertyIsDescribedWithItsOwnerAndType()
+        {
+            using (var analysis = Analyze("var text = \"hello\"\ntext.Length"))
+            {
+                Assert.AreEqual("string.Length : int", analysis.DescribeAt(At(2, 7)));
+            }
+        }
+
+        [Test]
+        public void AMemberOfAnInstantiationIsDescribedWithItsArguments()
+        {
+            // reflection reports the members of List<int> in the terms of the definition they came
+            // off, and a reader looking at a list of ints wants to be told 'int' rather than 'T'
+            using (var analysis = Analyze("var xs = new List<int> ()\nxs.Add(1)"))
+            {
+                StringAssert.Contains("item:int", analysis.DescribeAt(At(2, 5)));
+            }
+        }
+
+        [Test]
+        public void EveryOverloadOfAStaticMethodIsDescribed()
+        {
+            using (var analysis = Analyze("var x = System.Math::Abs(-1)\nx"))
+            {
+                var detail = analysis.DescribeAt(At(1, 22));
+
+                StringAssert.Contains("Abs:int (value:int)", detail);
+                StringAssert.Contains("Abs:double (value:double)", detail);
+            }
+        }
+
+        [Test]
+        public void AnExtensionMethodIsDescribedWithItsSignature()
+        {
+            // nothing on int[] is called Where - the signature is the one the extension declares,
+            // read in the terms of the receiver, and without the receiver itself: that goes to the
+            // left of the dot rather than into the brackets
+            using (var analysis = Analyze("var xs = new [1; 2; 3]\nxs.Where(x -> x > 1)"))
+            {
+                var detail = analysis.DescribeAt(At(2, 5));
+
+                StringAssert.Contains("Where:IEnumerable<int> (predicate:Func<int, bool>)", detail);
+                StringAssert.Contains("Where:IEnumerable<int> (predicate:Func<int, int, bool>)", detail);
+                StringAssert.DoesNotContain("source:", detail);
+            }
+        }
+
+        [Test]
+        public void AMethodOfADeclaredRecordIsDescribed()
+        {
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+
+let p = new Point 1
+p.Equals(p)"))
+            {
+                StringAssert.Contains("other:Point", analysis.DescribeAt(At(6, 3)));
+            }
+        }
+
+        [Test]
+        public void EveryOverloadOfAScriptFunctionIsDescribed()
+        {
+            using (var analysis = Analyze(@"
+fun twice:int (value:int) -> value * 2
+fun twice:string (value:string) -> value + value
+
+twice 1"))
+            {
+                var detail = analysis.DescribeAt(At(5, 2));
+
+                StringAssert.Contains("fun twice:int (value:int)", detail);
+                StringAssert.Contains("fun twice:string (value:string)", detail);
+            }
+        }
+
+        [Test]
+        public void TheConstructorOfARecordIsDescribedByItsFields()
+        {
+            // the compiler's own constructor names its arguments '_x' and '_y', which is not a
+            // spelling anybody wrote - what the reader needs is which field each one fills
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+    Y : string
+
+let p = new Point 1 ""a""
+p"))
+            {
+                var detail = analysis.DescribeAt(At(6, 13));
+
+                StringAssert.Contains("record Point", detail);
+                StringAssert.Contains("new Point (X:int Y:string)", detail);
+            }
+        }
+
+        [Test]
+        public void TheConstructorOfAGenericRecordIsDescribedWithItsArguments()
+        {
+            using (var analysis = Analyze(@"
+record Box<T>
+    Value : T
+
+let b = new Box<int> 1
+b"))
+            {
+                StringAssert.Contains("new Box<int> (Value:int)", analysis.DescribeAt(At(5, 13)));
+            }
+        }
+
+        [Test]
+        public void EveryConstructorOfAHostTypeIsDescribed()
+        {
+            using (var analysis = Analyze("var xs = new List<int> ()\nxs"))
+            {
+                var detail = analysis.DescribeAt(At(1, 14));
+
+                StringAssert.Contains("new List<int> ()", detail);
+                StringAssert.Contains("new List<int> (capacity:int)", detail);
+                StringAssert.Contains("new List<int> (collection:IEnumerable<int>)", detail);
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreNotDescribedForAGenericArgumentOfTheTypeBeingBuilt()
+        {
+            // the 'int' of 'new List<int>' is a question about int, not about the list
+            using (var analysis = Analyze("var xs = new List<int> ()\nxs"))
+            {
+                var detail = analysis.DescribeAt(At(1, 19));
+
+                Assert.IsFalse(detail != null && detail.Contains("new List<int> (capacity:int)"));
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreNotDescribedWhereNothingIsBeingConstructed()
+        {
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+
+fun shift:Point (p:Point) -> new Point (p.X + 1)"))
+            {
+                // the argument names the type, but it is not the one being built
+                Assert.AreEqual("record Point", analysis.DescribeAt(At(5, 22)));
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedWhileTheStatementStillDoesNotParse()
+        {
+            // 'new string' on its own is not a statement, and the editor asks about it anyway -
+            // that is the moment somebody wants to be told what they could pass
+            using (var analysis = Analyze("new string"))
+            {
+                Assert.IsTrue(analysis.HasSyntaxErrors);
+
+                var detail = analysis.DescribeAt(At(1, 6));
+
+                StringAssert.Contains("new string (c:char count:int)", detail);
+                StringAssert.Contains("new string (value:char[])", detail);
+
+                // a pointer is not something a script can hand over, and String takes four of them
+                StringAssert.DoesNotContain("*", detail);
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedWhenNoneOfThemMatchesTheArguments()
+        {
+            // the whole point of the tooltip here: the call binds to nothing, so the tree has no
+            // type to offer, and the signature is written in the source all the same
+            using (var analysis = Analyze("var x = new string 'x'\nx"))
+            {
+                Assert.IsNotEmpty(analysis.Diagnostics.Where(d => d.IsError));
+
+                StringAssert.Contains("new string (c:char count:int)", analysis.DescribeAt(At(1, 14)));
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedForADottedNameThatDoesNotParse()
+        {
+            using (var analysis = Analyze("new System.Text.StringBuilder"))
+            {
+                var detail = analysis.DescribeAt(At(1, 20));
+
+                StringAssert.StartsWith("new StringBuilder ()", detail);
+                StringAssert.Contains("new StringBuilder (capacity:int)", detail);
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedForAGenericNameWithNoArgumentsWrittenYet()
+        {
+            // 'new List' names nothing on its own - the definition it is halfway to still says
+            // what its constructors take, in the terms of its own parameters
+            using (var analysis = Analyze("new List"))
+            {
+                var detail = analysis.DescribeAt(At(1, 6));
+
+                StringAssert.Contains("new List<T> ()", detail);
+                StringAssert.Contains("new List<T> (collection:IEnumerable<T>)", detail);
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedForAGenericNameThatDoesNotParse()
+        {
+            using (var analysis = Analyze("new Dictionary<string, int>"))
+            {
+                var detail = analysis.DescribeAt(At(1, 6));
+
+                StringAssert.Contains("new Dictionary<string, int> ()", detail);
+                StringAssert.Contains("capacity:int", detail);
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreDescribedForARecordThatDoesNotParse()
+        {
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+    Y : int
+
+new Point"))
+            {
+                StringAssert.Contains("new Point (X:int Y:int)", analysis.DescribeAt(At(6, 6)));
+            }
+        }
+
+        [Test]
+        public void ConstructorsAreNotDescribedForAGenericArgumentOfAnUnparsedName()
+        {
+            using (var analysis = Analyze("new Dictionary<string, int>"))
+            {
+                var detail = analysis.DescribeAt(At(1, 17));
+
+                Assert.IsFalse(detail != null && detail.Contains("new Dictionary"));
+            }
+        }
+
+        [Test]
+        public void TheLanguagesOwnTypeNamesAreOfferedAfterNew()
+        {
+            // 'string' is what a script writes, and no namespace leads to it - System holds a
+            // 'String', which is a different word
+            using (var analysis = Analyze("var x = new "))
+            {
+                var names = analysis.Complete(At(1, 13)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "string");
+                CollectionAssert.Contains(names, "int");
+            }
+        }
+
+        [Test]
+        public void ADeclaredTypeAliasIsDescribedWithTheConstructorsItStandsFor()
+        {
+            using (var analysis = Analyze(@"
+declare
+    type Sb = System.Text.StringBuilder
+
+let b = new Sb ()
+b"))
+            {
+                var detail = analysis.DescribeAt(At(5, 13));
+
+                StringAssert.Contains("type Sb = System.Text.StringBuilder", detail);
+                StringAssert.Contains("new StringBuilder (capacity:int)", detail);
+            }
+        }
+
+        [Test]
         public void RenameIsRefusedWhileTheFileDoesNotParse()
         {
             using (var analysis = Analyze(@"
@@ -1020,6 +1311,126 @@ declare
                 var names = analysis.Complete(At(1, 14)).Select(x => x.Label).ToArray();
 
                 CollectionAssert.Contains(names, "Linq");
+            }
+        }
+
+        [Test]
+        public void TypesAreOfferedAfterNew()
+        {
+            using (var analysis = Analyze("var x = new "))
+            {
+                var entries = analysis.Complete(At(1, 13)).ToArray();
+                var names = entries.Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "List");
+                CollectionAssert.Contains(names, "StringBuilder");
+
+                // reflection names a definition 'List`1', which is not a name anybody can write
+                Assert.AreEqual("System.Collections.Generic.List<T>", entries.First(x => x.Label == "List").Detail);
+            }
+        }
+
+        [Test]
+        public void TypesDeclaredByTheScriptAreOfferedAfterNew()
+        {
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+    Y : int
+
+var p = new "))
+            {
+                var entries = analysis.Complete(At(6, 13)).ToArray();
+
+                CollectionAssert.Contains(entries.Select(x => x.Label).ToArray(), "Point");
+                Assert.AreEqual(SymbolKind.Record, entries.First(x => x.Label == "Point").Kind);
+            }
+        }
+
+        [Test]
+        public void NamesInScopeAreNotOfferedAfterNew()
+        {
+            // 'new' is followed by a type and by nothing else, and the names in scope would bury
+            // the one word that could have compiled
+            using (var analysis = Analyze("var total = 1\nvar x = new "))
+            {
+                var names = analysis.Complete(At(2, 13)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.DoesNotContain(names, "total");
+                CollectionAssert.DoesNotContain(names, "print");
+                CollectionAssert.DoesNotContain(names, "match");
+            }
+        }
+
+        [Test]
+        public void TypesAreOfferedAfterAPartialNameFollowingNew()
+        {
+            using (var analysis = Analyze("var x = new Str"))
+            {
+                var names = analysis.Complete(At(1, 16)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "StringBuilder");
+            }
+        }
+
+        [Test]
+        public void TypesThatCannotBeConstructedAreNotOfferedAfterNew()
+        {
+            using (var analysis = Analyze("var x = new "))
+            {
+                var names = analysis.Complete(At(1, 13)).Select(x => x.Label).ToArray();
+
+                // an interface has no instances, and an abstract class has none of its own
+                CollectionAssert.DoesNotContain(names, "IEnumerable");
+                CollectionAssert.DoesNotContain(names, "Enumerable");
+            }
+        }
+
+        [Test]
+        public void NamespacesAreOfferedAfterNew()
+        {
+            // a type can be reached by spelling out where it lives, so the way there is part of
+            // what may be written
+            using (var analysis = Analyze("var x = new System.Text."))
+            {
+                var roots = analysis.Complete(At(1, 13)).Select(x => x.Label).ToArray();
+                CollectionAssert.Contains(roots, "System");
+
+                var names = analysis.Complete(At(1, 25)).Select(x => x.Label).ToArray();
+                CollectionAssert.Contains(names, "StringBuilder");
+                CollectionAssert.Contains(names, "RegularExpressions");
+
+                // the namespace was named in full, so nothing outside it is on offer
+                CollectionAssert.DoesNotContain(names, "List");
+            }
+        }
+
+        [Test]
+        public void ItemsAreOfferedInsideANewCollectionLiteral()
+        {
+            // 'new [' and 'new (' start a collection rather than name a type, and what goes in one
+            // is an expression like any other
+            using (var analysis = Analyze("var total = 1\nvar xs = new [ tot"))
+            {
+                var names = analysis.Complete(At(2, 19)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "total");
+            }
+        }
+
+        [Test]
+        public void NamesAreOfferedForTheArgumentsOfAConstructor()
+        {
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+
+var total = 1
+var p = new Point tot"))
+            {
+                var names = analysis.Complete(At(6, 22)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "total");
             }
         }
 

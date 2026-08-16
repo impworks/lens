@@ -152,8 +152,8 @@ half * 2",
         [Test]
         public void MissingReferenceIsNotACompilationProblem()
         {
-            // the host has already decided which assemblies exist, so an unresolvable path is a
-            // problem for tooling and not for the compiler
+            // the host may well have registered the assembly by other means, so a reference that
+            // does not resolve is a warning and the script still runs
             TestConfigured(
                 ctx => { ctx.RegisterProperty("half", () => 21); },
                 @"
@@ -163,6 +163,23 @@ declare
 
 half * 2",
                 42
+            );
+        }
+
+        [Test]
+        public void ReferencedAssemblyIsLoadedByTheCompilerToo()
+        {
+            // whatever the editor lets a script name, running it has to accept as well
+            TestConfigured(
+                ctx => { },
+                @"
+declare
+    reference ""System.Net.Http""
+
+use System.Net.Http
+let http = new HttpClient ()
+http.Timeout.TotalSeconds > 0.0",
+                true
             );
         }
 

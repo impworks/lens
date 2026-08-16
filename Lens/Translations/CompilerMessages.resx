@@ -723,4 +723,10 @@
   <data name="GenericFunctionAsValue" xml:space="preserve">
     <value>LE3201: The generic function '{0}' cannot be used as a value: its type arguments are only settled by a call to it.</value>
   </data>
+  <data name="DeclaredReferenceNotFound" xml:space="preserve">
+    <value>LE3202: The referenced assembly '{0}' could not be loaded ({1}). The names it provides cannot be checked.</value>
+  </data>
+  <data name="SafeModeIllegalReference" xml:space="preserve">
+    <value>LE3203: The assembly '{0}' cannot be referenced by the script due to safe mode settings!</value>
+  </data>
 </root>

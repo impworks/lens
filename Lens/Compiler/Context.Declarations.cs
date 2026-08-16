@@ -37,7 +37,40 @@ namespace Lens.Compiler
             if (_hasScriptContents)
                 Error(node, CompilerMessages.DeclareBlockNotAtTop);
 
+            // references are the one entry that cannot wait: everything below the block - and the
+            // rest of the block itself - may name a type that only the referenced assembly has
+            foreach (var curr in node.Entries.OfType<DeclaredReference>())
+                WithRecovery(() => ProcessReference(curr));
+
             _pendingDeclarations.Add(node);
+        }
+
+        /// <summary>
+        /// Makes the types of a referenced assembly available to the script.
+        ///
+        /// This is the one place where a reference is more than documentation. A host that embeds
+        /// LENS registers its own assemblies and needs no help, but a script that is edited on its
+        /// own - in an editor, with no host anywhere - has nothing else to say what it may name.
+        /// Failing to load is therefore a warning and not an error: the host may well have
+        /// registered the assembly already, and the script is none the worse for saying so twice.
+        /// </summary>
+        private void ProcessReference(DeclaredReference entry)
+        {
+            // a sandboxed script does not get to decide which code is loaded into the host process:
+            // merely loading an assembly runs its module initializers, whatever the type checks say
+            if (Options.SafeMode != SafeMode.Disabled)
+            {
+                Error(entry, CompilerMessages.SafeModeIllegalReference, entry.Path);
+                return;
+            }
+
+            if (AssemblyReferenceResolver.TryResolve(entry.Path, Options.ScriptDirectory, AssemblyCache.Assemblies, out var assembly, out var error))
+            {
+                RegisterAssembly(assembly);
+                return;
+            }
+
+            Diagnostics.Add(DiagnosticSeverity.Warning, entry, string.Format(CompilerMessages.DeclaredReferenceNotFound, entry.Path, error));
         }
 
         #endregion
@@ -76,9 +109,9 @@ namespace Lens.Compiler
             foreach (var curr in entries.OfType<DeclaredFunction>())
                 WithRecovery(() => ProcessFunction(curr, functions));
 
-            // DeclaredReference is deliberately not processed: the host has already decided which
-            // assemblies exist, so a path that does not resolve is a tooling problem and not a
-            // compilation one
+            // DeclaredReference is not processed here: an assembly has to be in place before
+            // anything that might name a type from it is read, so it is handled as the block is
+            // read rather than once the whole script has been. See ProcessReference.
         }
 
         /// <summary>

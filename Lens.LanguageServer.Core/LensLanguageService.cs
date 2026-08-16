@@ -88,9 +88,8 @@ namespace Lens.LanguageServer.Core
         #region Features
 
         /// <summary>
-        /// Everything wrong with a file: what the compiler reports, plus the references that do not
-        /// resolve - which the compiler deliberately says nothing about, because the assemblies are
-        /// the host's business and not the script's.
+        /// Everything wrong with a file, errors and warnings alike - an assembly the script asks
+        /// for and the machine does not have is one of the latter.
         /// </summary>
         public IReadOnlyList<Problem> Diagnose(string uri)
         {
@@ -98,13 +97,9 @@ namespace Lens.LanguageServer.Core
             if (document == null)
                 return EmptyProblems;
 
-            var result = document.Analysis.Diagnostics
-                                 .Select(x => new Problem(x.Message, x.IsError ? ProblemSeverity.Error : ProblemSeverity.Warning, TextRange.FromSpan(x.Span)))
-                                 .ToList();
-
-            result.AddRange(MissingReferences(document));
-
-            return result;
+            return document.Analysis.Diagnostics
+                           .Select(x => new Problem(x.Message, x.IsError ? ProblemSeverity.Error : ProblemSeverity.Warning, TextRange.FromSpan(x.Span)))
+                           .ToArray();
         }
 
         /// <summary>
@@ -251,67 +246,6 @@ namespace Lens.LanguageServer.Core
         private ScriptSymbol SymbolAt(string uri, TextPosition position)
         {
             return Find(uri)?.Analysis.FindSymbol(position.ToLocation());
-        }
-
-        /// <summary>
-        /// The 'declare reference' lines that point at a file which is not there.
-        ///
-        /// A warning rather than an error, and reported here rather than by the compiler: the host
-        /// decides which assemblies exist, so a path that does not resolve says nothing about
-        /// whether the script will run - only that the editor cannot see what the script names.
-        /// </summary>
-        private IEnumerable<Problem> MissingReferences(LensDocument document)
-        {
-            var folder = FolderOf(document.Uri);
-
-            foreach (var curr in document.Analysis.References)
-            {
-                if (string.IsNullOrWhiteSpace(curr.Path) || Exists(folder, curr.Path))
-                    continue;
-
-                yield return new Problem(
-                    $"The referenced assembly '{curr.Path}' was not found. Names it provides cannot be checked.",
-                    ProblemSeverity.Warning,
-                    TextRange.FromSpan(curr.Span)
-                );
-            }
-        }
-
-        /// <summary>
-        /// Whether a referenced assembly resolves, relative to the script when the path is relative.
-        /// </summary>
-        private static bool Exists(string folder, string path)
-        {
-            try
-            {
-                if (Path.IsPathRooted(path))
-                    return File.Exists(path);
-
-                return folder != null && File.Exists(Path.Combine(folder, path));
-            }
-            catch (Exception)
-            {
-                // an unusable path is a path that does not resolve
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// The folder a document lives in, as far as its uri says.
-        /// </summary>
-        private static string FolderOf(string uri)
-        {
-            try
-            {
-                if (Uri.TryCreate(uri, UriKind.Absolute, out var parsed) && parsed.IsFile)
-                    return Path.GetDirectoryName(parsed.LocalPath);
-
-                return Path.GetDirectoryName(uri);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
         }
 
         /// <summary>

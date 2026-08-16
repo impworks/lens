@@ -74,9 +74,10 @@ namespace Lens.SyntaxTree.Declarations
     /// <summary>
     /// An assembly the script expects to have been referenced.
     ///
-    /// The compiler ignores this entirely - the embedding host has already decided which assemblies
-    /// exist, via RegisterAssembly - so a path that does not resolve is not a compilation problem.
-    /// It is here for tooling, which has nothing else to go on.
+    /// Unlike the other entries this one takes effect: the assembly is loaded and its types become
+    /// available, which is the only way a script edited outside a host - in an editor, say - can
+    /// name anything the host did not register. A reference that does not resolve is a warning
+    /// rather than an error, because the host may have registered the assembly by itself already.
     /// </summary>
     internal class DeclaredReference : DeclarationEntryBase
     {

@@ -192,6 +192,18 @@ namespace Lens.Analysis
         /// </summary>
         public string RenameRefusal { get; }
 
+        /// <summary>
+        /// The same symbol, described differently.
+        ///
+        /// Where a name is written can say more about it than the name alone does: a record is a
+        /// declaration to navigate to wherever it appears, and a constructor to call where it
+        /// follows a 'new'. Only the description changes - it is the same name in the same places.
+        /// </summary>
+        internal ScriptSymbol WithDetail(string detail)
+        {
+            return new ScriptSymbol(Name, Kind, detail, Declaration, References, CanRename, RenameRefusal);
+        }
+
         public override string ToString() => $"{Kind} {Name}";
     }
 

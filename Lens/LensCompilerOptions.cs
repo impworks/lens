@@ -83,6 +83,14 @@ namespace Lens
         public SafeModeSubsystem SafeModeExplicitSubsystems = SafeModeSubsystem.None;
 
         /// <summary>
+        /// The folder that a relative path in a 'declare reference' entry is resolved against.
+        /// A host that compiles a script it read from disk should point this at the script's own
+        /// folder, so that the script names its libraries the way its author saw them.
+        /// Default = none, which resolves relative paths against the host's folder.
+        /// </summary>
+        public string ScriptDirectory;
+
+        /// <summary>
         /// What a 'declare' block means to this compilation.
         /// Default = Verify.
         /// </summary>

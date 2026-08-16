@@ -723,4 +723,10 @@
   <data name="GenericFunctionAsValue" xml:space="preserve">
     <value>LE3201: Обобщённая функция '{0}' не может использоваться как значение: её типовые аргументы определяются только при вызове.</value>
   </data>
+  <data name="DeclaredReferenceNotFound" xml:space="preserve">
+    <value>LE3202: Не удалось загрузить подключаемую сборку '{0}' ({1}). Объявленные в ней имена не могут быть проверены.</value>
+  </data>
+  <data name="SafeModeIllegalReference" xml:space="preserve">
+    <value>LE3203: Настройки безопасного режима не позволяют подключить сборку '{0}'!</value>
+  </data>
 </root>

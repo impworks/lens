@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Lens.Analysis;
 
 namespace Lens.LanguageServer.Core
@@ -22,6 +23,7 @@ namespace Lens.LanguageServer.Core
 
             _analyzer = analyzer;
             _text = text ?? string.Empty;
+            _folder = FolderOf(uri);
         }
 
         #endregion
@@ -29,6 +31,7 @@ namespace Lens.LanguageServer.Core
         #region Fields
 
         private readonly ScriptAnalyzer _analyzer;
+        private readonly string _folder;
 
         private string _text;
         private ScriptAnalysis _analysis;
@@ -56,7 +59,7 @@ namespace Lens.LanguageServer.Core
         /// <summary>
         /// The reading of the current text.
         /// </summary>
-        public ScriptAnalysis Analysis => _analysis ?? (_analysis = _analyzer.Analyze(_text));
+        public ScriptAnalysis Analysis => _analysis ?? (_analysis = _analyzer.Analyze(_text, _folder));
 
         #endregion
 
@@ -131,6 +134,26 @@ namespace Lens.LanguageServer.Core
         private static bool IsWordChar(char ch)
         {
             return char.IsLetterOrDigit(ch) || ch == '_';
+        }
+
+        /// <summary>
+        /// The folder the file lives in, as far as its uri says - which is what a 'declare
+        /// reference' entry with a relative path is resolved against. An unsaved buffer has none,
+        /// and a reference by name works there just as well.
+        /// </summary>
+        private static string FolderOf(string uri)
+        {
+            try
+            {
+                if (System.Uri.TryCreate(uri, UriKind.Absolute, out var parsed) && parsed.IsFile)
+                    return Path.GetDirectoryName(parsed.LocalPath);
+
+                return Path.GetDirectoryName(uri);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         private int[] LineStarts

@@ -89,9 +89,6 @@ namespace Lens.LanguageServer.Handlers
         {
             switch (suggestion.Kind)
             {
-                // a 'use' directive is offered nothing but namespaces, so there is nothing for them
-                // to be sorted against - and everywhere else they are not offered at all
-                case Analysis.SymbolKind.Namespace:
                 case Analysis.SymbolKind.Local:
                 case Analysis.SymbolKind.Parameter:
                     return "1";
@@ -100,12 +97,22 @@ namespace Lens.LanguageServer.Handlers
                 case Analysis.SymbolKind.RecordField:
                     return "2";
 
+                // what the script itself declares, which is a short list against the thousands of
+                // names the environment contributes
                 case Analysis.SymbolKind.Function:
                 case Analysis.SymbolKind.GlobalVariable:
+                case Analysis.SymbolKind.Record:
+                case Analysis.SymbolKind.AlgebraicType:
                     return "3";
 
                 case Analysis.SymbolKind.Keyword:
                     return "5";
+
+                // a namespace is a step towards a name rather than a name: after a 'new' it is the
+                // types beside it that are being looked for, and in a 'use' directive there is
+                // nothing for it to be sorted against anyway
+                case Analysis.SymbolKind.Namespace:
+                    return "6";
 
                 default:
                     return "4";

@@ -9,8 +9,8 @@ language: highlighting, completion, diagnostics, navigation and rename for `.lns
 |---|---|
 | Syntax highlighting | A TextMate grammar for the shape of the file, and **semantic colouring from the compiler** on top of it — so a bare name is coloured as the record, argument or function it actually is. |
 | Diagnostics | Everything the compiler finds, as you type. Several independent errors are reported as several problems, not just the first. |
-| Completion | Instance members after `.` (extension methods and LINQ included), static members after `::`, and every name in scope elsewhere. The two are kept apart, so `::` never offers what would not compile. |
-| Hover | The type or signature of whatever is under the pointer. |
+| Completion | Instance members after `.` (extension methods and LINQ included), static members after `::`, type names after `new`, namespaces in a `use` directive, and every name in scope elsewhere. Each is kept to itself, so `::` never offers what would not compile and `new` is never buried under the names in scope. |
+| Hover | The type or signature of whatever is under the pointer — every overload of a method or function, and every constructor of a type named after a `new`, with the parameter types written as the receiver sees them rather than as the declaration named them. |
 | Go to definition | Locals, arguments, functions, records, algebraic types and record fields. |
 | Find references | The same set. |
 | Rename | The same set. Anything the script does not own — a .NET member, a host type, a standard library function — is refused rather than half-done. |

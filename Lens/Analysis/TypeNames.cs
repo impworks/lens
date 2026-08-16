@@ -100,6 +100,35 @@ namespace Lens.Analysis
         }
 
         /// <summary>
+        /// The name a script writes to reach a type declaration: 'List' rather than 'List`1'. The
+        /// arguments are not part of it - they are written where the type is used, if at all.
+        ///
+        /// Not aliased, unlike a type in a signature: an alias is a name of its own rather than a
+        /// shorter spelling of this one, and it is not reachable through the namespace this is.
+        /// </summary>
+        public static string ShortNameOf(Type type)
+        {
+            return type == null ? Unknown : StripArity(type.Name);
+        }
+
+        /// <summary>
+        /// A type declaration spelled out in full, with its parameters as the declaration names
+        /// them: 'System.Collections.Generic.List&lt;T&gt;'.
+        /// </summary>
+        public static string SignatureOf(Type type)
+        {
+            if (type == null)
+                return Unknown;
+
+            var name = StripArity(type.Name);
+            var full = string.IsNullOrEmpty(type.Namespace) ? name : type.Namespace + "." + name;
+
+            return type.IsGenericTypeDefinition
+                ? Compose(full, type.GetGenericArguments().Select(x => x.Name))
+                : full;
+        }
+
+        /// <summary>
         /// What the parameters of a generic definition are called in one of its instantiations.
         /// Empty when the type is not an instantiation, or when the two lists do not line up.
         /// </summary>

@@ -1877,5 +1877,23 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("GenericFunctionAsValue", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3202: The referenced assembly &apos;{0}&apos; could not be loaded ({1}). The names it provides cannot be checked..
+        /// </summary>
+        public static string DeclaredReferenceNotFound {
+            get {
+                return ResourceManager.GetString("DeclaredReferenceNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3203: The assembly &apos;{0}&apos; cannot be referenced by the script due to safe mode settings!.
+        /// </summary>
+        public static string SafeModeIllegalReference {
+            get {
+                return ResourceManager.GetString("SafeModeIllegalReference", resourceCulture);
+            }
+        }
     }
 }

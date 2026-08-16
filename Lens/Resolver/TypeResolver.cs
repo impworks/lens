@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lens.Compiler;
 using Lens.Translations;
 
@@ -62,6 +63,16 @@ namespace Lens.Resolver
         /// List of known locations: assembly name and the list of default namespaces in it.
         /// </summary>
         private static readonly Dictionary<string, List<string>> Locations;
+
+        /// <summary>
+        /// The namespaces an assembly contributes on top of the ones the script imported, or null
+        /// when it contributes none. A type in one of these resolves without a 'use' directive, so
+        /// anything listing what a script can name has to look in them too.
+        /// </summary>
+        public static IEnumerable<string> ImplicitNamespacesOf(Assembly asm)
+        {
+            return Locations.TryGetValue(asm.GetName().Name, out var result) ? result : null;
+        }
 
         /// <summary>
         /// List of known type short names (like 'int' = 'System.Int32').

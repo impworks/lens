@@ -91,6 +91,24 @@ namespace Lens.Compiler
             return exists ^ Options.SafeMode == SafeMode.Blacklist;
         }
 
+        /// <summary>
+        /// Checks if a CLR type is allowed according to the safe mode restrictions.
+        ///
+        /// The same question as the overload above, asked of a type that has not been modelled yet:
+        /// a completion list weighs every exported type of every referenced assembly, and building a
+        /// <see cref="TypeEntry"/> for each of them only to throw it away is work nobody needs.
+        /// </summary>
+        internal bool IsTypeAllowed(Type type)
+        {
+            if (Options.SafeMode == SafeMode.Disabled)
+                return true;
+
+            var exists = (type.FullName != null && _explicitTypes.ContainsKey(type.FullName))
+                         || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+
+            return exists ^ Options.SafeMode == SafeMode.Blacklist;
+        }
+
         #endregion
     }
 }

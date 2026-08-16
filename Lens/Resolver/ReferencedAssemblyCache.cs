@@ -98,12 +98,24 @@ namespace Lens.Resolver
         /// Reflecting over every exported type of every assembly is not something compilation would
         /// ever want, so the set is built on first use and only completion ever asks for it.
         /// </summary>
-        public IReadOnlyCollection<string> Namespaces => _namespaces ?? (_namespaces = CollectNamespaces());
+        public IReadOnlyCollection<string> Namespaces
+        {
+            get
+            {
+                EnsureExportsRead();
+                return _namespaces;
+            }
+        }
 
         /// <summary>
         /// The memoized namespace list.
         /// </summary>
         private HashSet<string> _namespaces;
+
+        /// <summary>
+        /// The memoized exported types, by the namespace that declares them.
+        /// </summary>
+        private Dictionary<string, List<Type>> _typesByNamespace;
 
         #endregion
 
@@ -138,7 +150,20 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        /// Reads the namespaces off the exported types of every referenced assembly.
+        /// The exported types declared directly in a namespace. Empty for one that holds nothing but
+        /// other namespaces, and for one no referenced assembly knows about.
+        /// </summary>
+        public IEnumerable<Type> TypesIn(string nsp)
+        {
+            EnsureExportsRead();
+
+            return _typesByNamespace.TryGetValue(nsp ?? "", out var result)
+                ? (IEnumerable<Type>) result
+                : Array.Empty<Type>();
+        }
+
+        /// <summary>
+        /// Reads the exported types of every referenced assembly, and the namespaces holding them.
         ///
         /// Each namespace is recorded along with all of its prefixes: nothing is declared directly in
         /// System.Collections, and a list of namespaces that cannot get from System to
@@ -149,10 +174,18 @@ namespace Lens.Resolver
         /// are facades that export nothing and merely forward, so System.IO would be missing from a
         /// list built out of the references alone. A type in it resolves perfectly well through the
         /// facade, which is what makes the namespace worth offering.
+        ///
+        /// Both answers come out of the one pass, because the pass is the expensive part: reflecting
+        /// over every exported type of every assembly is not something compilation would ever want,
+        /// so it happens on first use and only completion ever asks for it.
         /// </summary>
-        private HashSet<string> CollectNamespaces()
+        private void EnsureExportsRead()
         {
-            var result = new HashSet<string>(StringComparer.Ordinal);
+            if (_namespaces != null)
+                return;
+
+            var namespaces = new HashSet<string>(StringComparer.Ordinal);
+            var byNamespace = new Dictionary<string, List<Type>>(StringComparer.Ordinal);
 
             foreach (var asm in _assemblies.Union(GetLoadedAssemblies()))
             {
@@ -176,16 +209,30 @@ namespace Lens.Resolver
                 foreach (var type in types)
                 {
                     var nsp = type.Namespace;
-                    if (string.IsNullOrEmpty(nsp) || !result.Add(nsp))
+                    if (string.IsNullOrEmpty(nsp))
+                        continue;
+
+                    // a nested type is exported under the namespace of the type enclosing it, and
+                    // LENS has no syntax that names one - offering it offers what cannot be written
+                    if (!type.IsNested)
+                    {
+                        if (!byNamespace.TryGetValue(nsp, out var declared))
+                            byNamespace[nsp] = declared = new List<Type>();
+
+                        declared.Add(type);
+                    }
+
+                    if (!namespaces.Add(nsp))
                         continue;
 
                     for (var dot = nsp.LastIndexOf('.'); dot > 0; dot = nsp.LastIndexOf('.', dot - 1))
-                        if (!result.Add(nsp.Substring(0, dot)))
+                        if (!namespaces.Add(nsp.Substring(0, dot)))
                             break;
                 }
             }
 
-            return result;
+            _typesByNamespace = byNamespace;
+            _namespaces = namespaces;
         }
 
         #endregion

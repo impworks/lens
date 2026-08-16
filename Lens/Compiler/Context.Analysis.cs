@@ -165,6 +165,40 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// The host types a script can name without qualifying them: everything exported by a
+        /// namespace that type resolution looks in.
+        ///
+        /// That is not the same as the namespaces the script imported. Three assemblies contribute
+        /// namespaces of their own - System.Collections.Generic among them - and a name in one of
+        /// those resolves with no 'use' directive at all, so a list built out of the imports alone
+        /// would leave out most of what a script actually writes.
+        /// </summary>
+        internal IEnumerable<Type> TypesInScope()
+        {
+            var namespaces = new HashSet<string>(Namespaces.Keys, StringComparer.Ordinal);
+
+            foreach (var asm in AssemblyCache.Assemblies)
+            {
+                var extras = TypeResolver.ImplicitNamespacesOf(asm);
+                if (extras == null)
+                    continue;
+
+                foreach (var curr in extras)
+                    namespaces.Add(curr);
+            }
+
+            return namespaces.SelectMany(TypesInNamespace);
+        }
+
+        /// <summary>
+        /// The host types declared directly in a namespace, for a name that spells its own.
+        /// </summary>
+        internal IEnumerable<Type> TypesInNamespace(string nsp)
+        {
+            return AssemblyCache.TypesIn(nsp).Where(IsTypeAllowed);
+        }
+
+        /// <summary>
         /// Enumerates the extension methods applicable to a type, grouped by name.
         /// </summary>
         internal Dictionary<string, List<MethodInfo>> ExtensionMethodsOf(TypeEntry type)

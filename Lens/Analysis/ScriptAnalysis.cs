@@ -20,9 +20,10 @@ namespace Lens.Analysis
     {
         #region Constructor
 
-        internal ScriptAnalysis(ScriptAnalyzer analyzer, string source, LensLexer lexer, LensParser parser, Context context, Exception fatal)
+        internal ScriptAnalysis(ScriptAnalyzer analyzer, string source, string baseDirectory, LensLexer lexer, LensParser parser, Context context, Exception fatal)
         {
             _analyzer = analyzer;
+            _baseDirectory = baseDirectory;
             _lexer = lexer;
             _parser = parser;
             _context = context;
@@ -36,6 +37,7 @@ namespace Lens.Analysis
         #region Fields
 
         private readonly ScriptAnalyzer _analyzer;
+        private readonly string _baseDirectory;
         private readonly LensLexer _lexer;
         private readonly LensParser _parser;
         private readonly Context _context;

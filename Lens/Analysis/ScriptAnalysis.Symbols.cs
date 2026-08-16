@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Lens.Compiler;
 using Lens.Compiler.Entities;
 using Lens.Lexer;
@@ -8,6 +10,7 @@ using Lens.SyntaxTree.Declarations;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Declarations.Types;
 using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Expressions.Instantiation;
 
 namespace Lens.Analysis
 {
@@ -34,9 +37,20 @@ namespace Lens.Analysis
             if (lexem == null || lexem.Type != LexemType.Identifier)
                 return null;
 
-            return FindLocalSymbol(position)
-                   ?? FindGlobalSymbol(lexem)
-                   ?? FindMemberSymbol(lexem);
+            var symbol = FindLocalSymbol(position) ?? FindGlobalSymbol(lexem);
+
+            // a type written after a 'new' is being called, not merely named, and which of its
+            // constructors will be reached is the question the arguments about to be typed answer
+            var constructors = FindConstructors(lexem);
+
+            // a segment of a dotted type name is not a member access, however much it looks like
+            // one: the 'StringBuilder' of 'new System.Text.StringBuilder' is part of the name
+            if (constructors == null)
+                return symbol ?? FindMemberSymbol(lexem);
+
+            return symbol == null
+                ? new ScriptSymbol(lexem.Value, SymbolKind.HostType, constructors, null, new[] {SpanOf(lexem)}, false, RenameRefusedForExternal)
+                : symbol.WithDetail(symbol.Detail + "\n" + constructors);
         }
 
         /// <summary>
@@ -124,14 +138,32 @@ namespace Lens.Analysis
             if (previous.Type != LexemType.Dot && previous.Type != LexemType.NullSafeDot && previous.Type != LexemType.DoubleСolon)
                 return null;
 
-            if (previous.Type != LexemType.DoubleСolon)
+            var isStatic = previous.Type == LexemType.DoubleСolon;
+
+            if (!isStatic)
             {
                 var field = FindRecordFieldSymbol(previous, lexem.Value);
                 if (field != null)
                     return field;
             }
 
-            return new ScriptSymbol(lexem.Value, SymbolKind.Member, lexem.Value, null, new[] {SpanOf(lexem)}, false, RenameRefusedForExternal);
+            // the name on its own says nothing the line under the pointer does not already say:
+            // what a reader wants of 'Substring' is what it takes and what it gives back, and with
+            // several overloads under the one name, which of them they are about
+            var detail = DescribeMember(ReceiverOf(previous, isStatic), isStatic, lexem.Value);
+
+            return new ScriptSymbol(lexem.Value, SymbolKind.Member, detail ?? lexem.Value, null, new[] {SpanOf(lexem)}, false, RenameRefusedForExternal);
+        }
+
+        /// <summary>
+        /// The type a member is being read from: the type named to the left of a '::', or the type
+        /// of the expression ending at a '.'.
+        /// </summary>
+        private Resolver.TypeEntry ReceiverOf(Lexem accessor, bool isStatic)
+        {
+            return isStatic
+                ? FindStaticReceiver(IndexOf(accessor.StartLocation))?.Type
+                : TypeEndingAt(accessor.StartLocation);
         }
 
         /// <summary>
@@ -145,6 +177,177 @@ namespace Lens.Analysis
             return ReferenceEquals(receiver, null)
                 ? null
                 : BuildRecordFieldSymbol(receiver.Name, name);
+        }
+
+        /// <summary>
+        /// The constructors of the type named at a position, when the position is inside the type
+        /// of a 'new'. Null everywhere else: nothing is being constructed there.
+        /// </summary>
+        private string FindConstructors(Lexem lexem)
+        {
+            return DescribeConstructors(ConstructedType(lexem));
+        }
+
+        /// <summary>
+        /// The type a 'new' at a position builds.
+        ///
+        /// The bound tree answers first, because it is the only thing that knows what the generic
+        /// arguments came out as. It answers for very little of the time an editor spends, though,
+        /// and none of the time that matters: 'new string' is halfway through being typed and does
+        /// not parse, and 'new string 'x'' parses but matches no constructor and so binds to
+        /// nothing - and those are exactly the moments somebody wants to be told what the
+        /// constructors are. The text answers when the tree cannot; the type is written in both.
+        /// </summary>
+        private Resolver.TypeEntry ConstructedType(Lexem lexem)
+        {
+            foreach (var curr in AllNodes())
+            {
+                if (!(curr is NewObjectNode created) || created.TypeSignature == null)
+                    continue;
+
+                if (!Contains(SpanOf(created.TypeSignature), lexem.StartLocation) || !NamesTheType(created.TypeSignature, lexem.StartLocation))
+                    continue;
+
+                return created.Type ?? _context.FindExpressionType(curr) ?? ResolvedType(created.TypeSignature);
+            }
+
+            return ResolvedType(SignatureAfterNew(lexem));
+        }
+
+        /// <summary>
+        /// The type signature the caret is inside of, when it is written directly after a 'new'.
+        ///
+        /// Read off the lexem stream rather than off the tree, because there may be no tree: a name
+        /// is dotted, and it carries generic arguments that are names in their own right, so the
+        /// run of lexems between the 'new' and the arguments of the call is the whole of it.
+        /// </summary>
+        private TypeSignature SignatureAfterNew(Lexem lexem)
+        {
+            var index = IndexOfLexem(lexem);
+            if (index <= 0)
+                return null;
+
+            var start = index;
+            while (start > 0 && IsSignatureLexem(_lexer.Lexems[start - 1].Type))
+                start--;
+
+            if (start == 0 || _lexer.Lexems[start - 1].Type != LexemType.New)
+                return null;
+
+            // the 'int' of 'new List<int>' is a question about int, not about the list
+            for (var idx = start; idx < index; idx++)
+            {
+                if (_lexer.Lexems[idx].Type == LexemType.Less)
+                    return null;
+            }
+
+            var end = index;
+            while (end + 1 < _lexer.Lexems.Count && IsSignatureLexem(_lexer.Lexems[end + 1].Type))
+                end++;
+
+            var from = IndexOf(_lexer.Lexems[start].StartLocation);
+            var to = IndexOf(_lexer.Lexems[end].EndLocation);
+
+            if (from < 0 || to <= from)
+                return null;
+
+            try
+            {
+                return TypeSignature.Parse(Source.Substring(from, to - from));
+            }
+            catch (Exception)
+            {
+                // half of a generic argument list is not a signature yet
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Whether a lexem can be part of a type name. A '.' separates the segments of one, and the
+        /// angle brackets and commas belong to its generic arguments.
+        /// </summary>
+        private static bool IsSignatureLexem(LexemType type)
+        {
+            switch (type)
+            {
+                case LexemType.Identifier:
+                case LexemType.Dot:
+                case LexemType.Less:
+                case LexemType.Greater:
+                case LexemType.Comma:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// What a signature names, or null when it names nothing this script can see.
+        /// </summary>
+        private Resolver.TypeEntry ResolvedType(TypeSignature signature)
+        {
+            if (signature == null)
+                return null;
+
+            var direct = TryResolve(signature);
+            if (!ReferenceEquals(direct, null))
+                return direct;
+
+            // 'new List' is halfway to 'new List<int>' and names nothing on its own, but the
+            // definition it is halfway to still says what the constructors take. Answering in the
+            // terms of the declaration beats answering nothing while somebody is still typing.
+            if (signature.Arguments != null || signature.Name == null)
+                return null;
+
+            for (var arity = 1; arity <= MaxInferredArity; arity++)
+            {
+                var candidate = TryResolve(new TypeSignature(signature.Name + "`" + arity));
+                if (!ReferenceEquals(candidate, null))
+                    return candidate;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The one attempt: a signature either names a type or throws.
+        /// </summary>
+        private Resolver.TypeEntry TryResolve(TypeSignature signature)
+        {
+            try
+            {
+                return _context.ResolveType(signature);
+            }
+            catch (Exception)
+            {
+                // not a type, or not one this script can see
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// How many generic parameters a name with none written is guessed at. Past a handful the
+        /// guess is worse than silence - and nothing anybody constructs by hand has that many.
+        /// </summary>
+        private const int MaxInferredArity = 4;
+
+        /// <summary>
+        /// Whether a position falls on the name of a type signature rather than inside one of its
+        /// generic arguments: the 'int' of 'new List&lt;int&gt;' is a question about int.
+        /// </summary>
+        private static bool NamesTheType(TypeSignature signature, LexemLocation position)
+        {
+            if (signature.Arguments == null)
+                return true;
+
+            foreach (var curr in signature.Arguments)
+            {
+                if (Contains(SpanOf(curr), position))
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -334,11 +537,14 @@ namespace Lens.Analysis
         /// </summary>
         private System.Tuple<SymbolKind, string, TextSpan?> FindDeclaration(string name)
         {
+            // functions first, and all of them at once: overloads are separate declarations under
+            // one name, and which of them a reader means is the question a hover is being asked
+            var functions = FindFunctionDeclarations(name);
+            if (functions != null)
+                return functions;
+
             foreach (var curr in _parser.Nodes)
             {
-                if (curr is FunctionNode fun && fun.Name == name)
-                    return System.Tuple.Create(SymbolKind.Function, Describe(fun), (TextSpan?) SpanOf(fun.NameLocation));
-
                 // record fields are not looked up here: they are members, and which record a
                 // mention belongs to is a question about the receiver's type rather than the name
                 if (curr is RecordDefinitionNode record && record.Name == name)
@@ -366,7 +572,44 @@ namespace Lens.Analysis
         }
 
         /// <summary>
-        /// What a 'declare' block says about a name.
+        /// Every function written under a name, whether the script defines it or a 'declare' block
+        /// merely promises it, one signature per line. The name is taken to be declared at the
+        /// first of them, since a definition can only point at one place.
+        /// </summary>
+        private System.Tuple<SymbolKind, string, TextSpan?> FindFunctionDeclarations(string name)
+        {
+            var signatures = new List<string>();
+            var declaration = (TextSpan?) null;
+
+            foreach (var curr in _parser.Nodes)
+            {
+                if (curr is FunctionNode fun && fun.Name == name)
+                {
+                    signatures.Add(Describe(fun));
+                    declaration = declaration ?? SpanOf(fun.NameLocation);
+                }
+
+                if (!(curr is DeclarationBlockNode block))
+                    continue;
+
+                foreach (var entry in block.Entries)
+                {
+                    if (!(entry is DeclaredFunction declared) || declared.Name != name)
+                        continue;
+
+                    signatures.Add(Describe(declared));
+                    declaration = declaration ?? SpanOf(entry);
+                }
+            }
+
+            return signatures.Count == 0
+                ? null
+                : System.Tuple.Create(SymbolKind.Function, string.Join("\n", signatures), declaration);
+        }
+
+        /// <summary>
+        /// What a 'declare' block says about a name. Functions are not looked up here - they are
+        /// gathered across every block at once, so that overloads are described together.
         /// </summary>
         private static System.Tuple<SymbolKind, string, TextSpan?> FindDeclaredEntry(DeclarationBlockNode block, string name)
         {
@@ -374,9 +617,6 @@ namespace Lens.Analysis
             {
                 if (curr is DeclaredProperty property && property.Name == name)
                     return System.Tuple.Create(SymbolKind.GlobalVariable, $"{(property.IsMutable ? "var" : "let")} {name} : {property.Type}", (TextSpan?) SpanOf(curr));
-
-                if (curr is DeclaredFunction function && function.Name == name)
-                    return System.Tuple.Create(SymbolKind.Function, Describe(function), (TextSpan?) SpanOf(curr));
 
                 if (curr is DeclaredTypeAlias alias && alias.Alias == name)
                     return System.Tuple.Create(SymbolKind.HostType, $"type {name} = {alias.Type}", (TextSpan?) SpanOf(curr));
@@ -411,6 +651,192 @@ namespace Lens.Analysis
         #endregion
 
         #region Descriptions
+
+        /// <summary>
+        /// How a type can be constructed, one line per overload, written the way the call is:
+        /// 'new Point (X:int Y:int)'.
+        /// </summary>
+        private string DescribeConstructors(Resolver.TypeEntry type)
+        {
+            if (ReferenceEquals(type, null))
+                return null;
+
+            var declared = _context.DeclarationOf(type);
+            if (declared != null && !declared.IsImported)
+                return DescribeRecordConstructor(declared, type);
+
+            try
+            {
+                var raw = ReflectableForm(type);
+                if (raw == null)
+                    return null;
+
+                var arguments = raw.IsGenericTypeDefinition && !type.IsGenericTypeDefinition
+                    ? TypeNames.ArgumentsOf(type)
+                    : null;
+
+                var signatures = raw.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+                                    .Select(x => x.GetParameters())
+                                    // a pointer is not something a script can hand over, and String
+                                    // offers four constructors that take one
+                                    .Where(x => x.All(p => !p.ParameterType.IsPointer))
+                                    .Select(x => Compose(type, x.Select(p => $"{p.Name}:{TypeNames.Of(p.ParameterType, arguments)}")))
+                                    .ToArray();
+
+                // the parameterless constructor of a value type is not one reflection reports, and
+                // LENS writes it out in full all the same
+                if (signatures.Length == 0)
+                    return raw.IsValueType ? Compose(type, Enumerable.Empty<string>()) : null;
+
+                return string.Join("\n", signatures);
+            }
+            catch (Exception)
+            {
+                // a type still under construction answers nothing about itself
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// How a record is constructed: from its fields, in the order they are declared.
+        ///
+        /// Not from the constructor the compiler generated for it, although that is what the call
+        /// reaches - it names its arguments in a spelling nobody wrote ('_x' for a field 'X'), and
+        /// the whole use of the signature here is saying which field each argument fills.
+        /// </summary>
+        private string DescribeRecordConstructor(TypeEntity declared, Resolver.TypeEntry type)
+        {
+            var record = _parser.Nodes.OfType<RecordDefinitionNode>().FirstOrDefault(x => x.Name == declared.Name);
+            if (record == null)
+                return null;
+
+            try
+            {
+                var fields = record.Entries.Select(
+                    x => $"{x.Name}:{(declared.HasField(x.Name) ? TypeName(_context.MemberTypeOf(type, declared.ResolveField(x.Name).Type)) : x.Type.FullSignature)}"
+                );
+
+                return Compose(type, fields);
+            }
+            catch (Exception)
+            {
+                // a record whose fields did not resolve has no signature worth showing
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Joins a type and its constructor arguments into the call that would reach it. The
+        /// brackets are always written: LENS demands them even where there is nothing to pass.
+        /// </summary>
+        private static string Compose(Resolver.TypeEntry type, IEnumerable<string> arguments)
+        {
+            return $"new {TypeName(type)} ({string.Join(" ", arguments)})";
+        }
+
+        /// <summary>
+        /// What a member of a type is, with one line per overload when it is a method.
+        /// </summary>
+        private string DescribeMember(Resolver.TypeEntry type, bool isStatic, string name)
+        {
+            if (ReferenceEquals(type, null))
+                return null;
+
+            // a type the script declares answers about itself: it has no CLR form to reflect over
+            // until the assembly is emitted, and an analysis run emits nothing
+            var declared = _context.DeclarationOf(type);
+            if (declared != null && !declared.IsImported)
+                return isStatic ? null : DescribeDeclaredMember(declared, type, name);
+
+            return DescribeReflectedMember(type, isStatic, name)
+                   // an extension method is called on a value, never on a type name
+                   ?? (isStatic ? null : DescribeExtensionMethod(type, name));
+        }
+
+        /// <summary>
+        /// A member of a record or an algebraic type, written in the terms of the reference it is
+        /// reached through rather than of the parameters its declaration named.
+        /// </summary>
+        private string DescribeDeclaredMember(TypeEntity declared, Resolver.TypeEntry type, string name)
+        {
+            var field = declared.Fields.FirstOrDefault(x => x.Name == name);
+            if (field != null)
+                return $"{TypeName(type)}.{name} : {TypeName(_context.MemberTypeOf(type, field.Type))}";
+
+            var methods = declared.Methods.Where(x => x.Name == name).Select(x => Describe(x, type)).ToArray();
+
+            return methods.Length == 0 ? null : string.Join("\n", methods);
+        }
+
+        /// <summary>
+        /// A member of a .NET type, as reflection reports it.
+        /// </summary>
+        private string DescribeReflectedMember(Resolver.TypeEntry type, bool isStatic, string name)
+        {
+            // LENS keeps the two apart: '.' reaches an instance member of a value, '::' a static
+            // member of a type, so answering about the other one answers about what will not compile
+            var flags = BindingFlags.Public
+                        | BindingFlags.FlattenHierarchy
+                        | (isStatic ? BindingFlags.Static : BindingFlags.Instance);
+
+            try
+            {
+                var raw = ReflectableForm(type);
+                if (raw == null)
+                    return null;
+
+                // when the members come off the definition rather than off the instantiation, they
+                // are written in terms of its parameters, and the reader is looking at a List<int>
+                var arguments = raw.IsGenericTypeDefinition && !type.IsGenericTypeDefinition
+                    ? TypeNames.ArgumentsOf(type)
+                    : null;
+
+                // by name rather than by lookup: an overridden property or a hidden field is
+                // reported twice by a flattened search, and GetProperty answers that with a throw
+                var property = raw.GetProperties(flags).FirstOrDefault(x => x.Name == name);
+                if (property != null)
+                    return $"{TypeName(type)}.{name} : {TypeNames.Of(property.PropertyType, arguments)}";
+
+                var field = raw.GetFields(flags).FirstOrDefault(x => x.Name == name);
+                if (field != null)
+                    return $"{TypeName(type)}.{name} : {TypeNames.Of(field.FieldType, arguments)}";
+
+                // property accessors and operators are reached by other syntax, not by this name
+                var methods = raw.GetMethods(flags)
+                                 .Where(x => x.Name == name && !x.IsSpecialName)
+                                 .Select(x => Describe(x, arguments))
+                                 .ToArray();
+
+                return methods.Length == 0 ? null : string.Join("\n", methods);
+            }
+            catch (Exception)
+            {
+                // a type still under construction answers nothing about itself, and a tooltip that
+                // says only the name beats one that stops the editor
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Every extension method in scope that a type could be passed to under a name.
+        /// </summary>
+        private string DescribeExtensionMethod(Resolver.TypeEntry type, string name)
+        {
+            Dictionary<string, List<MethodInfo>> methods;
+
+            try
+            {
+                methods = _context.ExtensionMethodsOf(type);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+            return methods.TryGetValue(name, out var group)
+                ? string.Join("\n", group.Select(x => DescribeExtension(x, type)))
+                : null;
+        }
 
         private static string Describe(FunctionNode node)
         {
