@@ -59,27 +59,30 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (!IsConstant)
-            {
-                var type = Resolve(ctx);
+            // folding gives the best code there is, but it can be switched off - and an operator
+            // whose meaning is a call rather than an opcode has to become that call either way
+            var folded = base.Expand(ctx, mustReturn);
+            if (folded != null)
+                return folded;
 
-                if (type.Is<string>())
-                    return StringExpand();
+            var type = Resolve(ctx);
 
-                if (type.IsArray)
-                    return ArrayExpand(ctx);
+            if (type.Is<string>())
+                return StringExpand();
 
-                if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IDictionary<,>))))
-                    return DictExpand(ctx);
+            if (type.IsArray)
+                return ArrayExpand(ctx);
 
-                if (type.Is<IEnumerable>())
-                    return SeqExpand();
+            if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IDictionary<,>))))
+                return DictExpand(ctx);
 
-                if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
-                    return TypedSeqExpand();
-            }
+            if (type.Is<IEnumerable>())
+                return SeqExpand();
 
-            return base.Expand(ctx, mustReturn);
+            if (type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
+                return TypedSeqExpand();
+
+            return null;
         }
 
         /// <summary>

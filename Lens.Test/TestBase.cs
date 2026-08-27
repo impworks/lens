@@ -161,6 +161,15 @@ namespace Lens.Test
             if (Environment.GetEnvironmentVariable("LENS_LOWER_ALL") == "1")
                 options.LowerAllFunctions = true;
 
+            // and running it with symbols is how the debuggable backend is checked to compile the
+            // same language: on .NET it is a different kind of assembly builder, so every script
+            // the suite knows is a script it has to build too.
+            //   LENS_DEBUG_ALL=1 dotnet test
+            // Constants are not unrolled when debugging, so the handful of tests that assert on
+            // what folding produces are expected to differ under this switch.
+            if (Environment.GetEnvironmentVariable("LENS_DEBUG_ALL") == "1")
+                options.DebugSettings.Enabled = true;
+
             var compiler = new LensCompiler(options);
             compiler.RegisterAssembly(Assembly.Load("System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"));
             return compiler;

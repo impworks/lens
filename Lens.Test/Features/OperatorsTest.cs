@@ -262,6 +262,16 @@ let a = 1
         }
 
         [Test]
+        public void StringRepetitionByAVariable()
+        {
+            // the same operator with nothing for the folder to work on, so the loop it expands into
+            // is what produces the answer - and it has to repeat the string as often as it was asked
+            Test("var n = 3" + "\n" + @"""ab"" * n", "ababab");
+            Test("var n = 1" + "\n" + @"""ab"" * n", "ab");
+            Test("var n = 0" + "\n" + @"""ab"" * n", "");
+        }
+
+        [Test]
         public void ArrayRepetition()
         {
             Test(@"new [1; 2; 3] * 3", new[] {1, 2, 3, 1, 2, 3, 1, 2, 3});

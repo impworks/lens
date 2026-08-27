@@ -78,7 +78,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
                     var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
                     name.Declaration = this;
 
-                    if (Value != null && Value.IsConstant && ctx.Options.UnrollConstants)
+                    if (Value != null && Value.IsConstant && ctx.UnrollConstants)
                     {
                         name.IsConstant = true;
                         name.ConstantValue = Value.ConstantValue;
@@ -115,7 +115,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             var name = Local ?? ctx.Scope.FindLocal(Name);
-            if (name.IsConstant && name.IsImmutable && ctx.Options.UnrollConstants)
+            if (name.IsConstant && name.IsImmutable && ctx.UnrollConstants)
                 return Expr.Unit();
 
             return new SetIdentifierNode

@@ -1,0 +1,176 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "LENS",
+    "scopeName": "source.lens",
+    "fileTypes": ["lns"],
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#declare" },
+        { "include": "#string" },
+        { "include": "#char" },
+        { "include": "#regex" },
+        { "include": "#number" },
+        { "include": "#declaration" },
+        { "include": "#keyword" },
+        { "include": "#constant" },
+        { "include": "#type-annotation" },
+        { "include": "#operator" }
+    ],
+    "repository": {
+        "comment": {
+            "name": "comment.line.double-slash.lens",
+            "match": "//.*$"
+        },
+
+        "declare": {
+            "comment": "'reference' is a keyword only inside a declare block, so it is matched by position rather than by word",
+            "match": "^\\s*(reference)\\s+(?=[\"@$])",
+            "captures": {
+                "1": { "name": "keyword.control.lens" }
+            }
+        },
+
+        "string": {
+            "patterns": [
+                {
+                    "comment": "interpolated, with holes coloured as code",
+                    "name": "string.quoted.double.interpolated.lens",
+                    "begin": "\\$@?\"",
+                    "end": "\"",
+                    "patterns": [
+                        { "name": "constant.character.escape.lens", "match": "\\\\." },
+                        { "name": "constant.character.escape.lens", "match": "\\{\\{|\\}\\}" },
+                        {
+                            "name": "meta.interpolation.lens",
+                            "begin": "\\{",
+                            "end": "\\}",
+                            "beginCaptures": { "0": { "name": "punctuation.definition.interpolation.begin.lens" } },
+                            "endCaptures": { "0": { "name": "punctuation.definition.interpolation.end.lens" } },
+                            "patterns": [
+                                { "include": "#string" },
+                                { "include": "#number" },
+                                { "include": "#keyword" },
+                                { "include": "#constant" },
+                                { "include": "#operator" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "string.quoted.double.verbatim.lens",
+                    "begin": "@\"",
+                    "end": "\"",
+                    "patterns": [
+                        { "name": "constant.character.escape.lens", "match": "\"\"" }
+                    ]
+                },
+                {
+                    "name": "string.quoted.double.lens",
+                    "begin": "\"",
+                    "end": "\"",
+                    "patterns": [
+                        { "name": "constant.character.escape.lens", "match": "\\\\." }
+                    ]
+                }
+            ]
+        },
+
+        "char": {
+            "name": "string.quoted.single.lens",
+            "begin": "'",
+            "end": "'",
+            "patterns": [
+                { "name": "constant.character.escape.lens", "match": "\\\\." }
+            ]
+        },
+
+        "regex": {
+            "name": "string.regexp.lens",
+            "match": "#([^#]|##)*#[a-zA-Z]*"
+        },
+
+        "number": {
+            "patterns": [
+                { "name": "constant.numeric.float.lens", "match": "\\b(0|[1-9][0-9]*)(\\.[0-9]+)?[FfMm]\\b" },
+                { "name": "constant.numeric.float.lens", "match": "\\b(0|[1-9][0-9]*)\\.[0-9]+\\b" },
+                { "name": "constant.numeric.integer.lens", "match": "\\b(0|[1-9][0-9]*)L?\\b" }
+            ]
+        },
+
+        "declaration": {
+            "patterns": [
+                {
+                    "comment": "the name that follows a declaring keyword",
+                    "match": "\\b(pure\\s+)?(fun)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+                    "captures": {
+                        "1": { "name": "storage.modifier.lens" },
+                        "2": { "name": "keyword.declaration.function.lens" },
+                        "3": { "name": "entity.name.function.lens" }
+                    }
+                },
+                {
+                    "match": "\\b(record|type)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+                    "captures": {
+                        "1": { "name": "keyword.declaration.type.lens" },
+                        "2": { "name": "entity.name.type.lens" }
+                    }
+                },
+                {
+                    "match": "\\b(let|var)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+                    "captures": {
+                        "1": { "name": "keyword.declaration.variable.lens" },
+                        "2": { "name": "variable.other.lens" }
+                    }
+                },
+                {
+                    "match": "\\b(use)\\s+([A-Za-z_][A-Za-z0-9_.]*)",
+                    "captures": {
+                        "1": { "name": "keyword.control.import.lens" },
+                        "2": { "name": "entity.name.namespace.lens" }
+                    }
+                }
+            ]
+        },
+
+        "keyword": {
+            "patterns": [
+                {
+                    "name": "keyword.control.lens",
+                    "match": "\\b(if|then|else|while|do|for|in|try|catch|finally|throw|match|with|case|when|yield|await|using)\\b"
+                },
+                {
+                    "name": "keyword.declaration.lens",
+                    "match": "\\b(declare|use|record|type|fun|pure|let|var)\\b"
+                },
+                {
+                    "comment": "keyword.other rather than keyword.operator.word: Visual Studio colours everything under keyword.operator as an operator, which leaves these looking like plain text. They are keywords.",
+                    "name": "keyword.other.lens",
+                    "match": "\\b(new|not|is|as|of|ref|typeof|default)\\b"
+                }
+            ]
+        },
+
+        "constant": {
+            "name": "constant.language.lens",
+            "match": "\\b(true|false|null)\\b"
+        },
+
+        "type-annotation": {
+            "comment": "a name after ':' is a type, which covers arguments, fields and return types",
+            "match": "(:)\\s*(ref\\s+)?([A-Za-z_][A-Za-z0-9_.]*)",
+            "captures": {
+                "1": { "name": "punctuation.separator.lens" },
+                "2": { "name": "storage.modifier.lens" },
+                "3": { "name": "entity.name.type.lens" }
+            }
+        },
+
+        "operator": {
+            "patterns": [
+                { "name": "keyword.operator.arrow.lens", "match": "->|=>|\\|>|<\\|" },
+                { "name": "keyword.operator.lens", "match": "\\*\\*|<:|:>|==|<=|>=|<>|\\?\\?|\\?\\.|\\?\\[|&&|\\|\\||\\^\\^|::|\\.\\.\\.|\\.\\." },
+                { "name": "keyword.operator.lens", "match": "[+\\-*/%&|^<>=~?]" }
+            ]
+        }
+    }
+}

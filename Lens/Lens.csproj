@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net47;netstandard2.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net47;netstandard2.0;net10.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Version>5.0.0</Version>
         <Authors>LENS authors</Authors>
@@ -17,7 +17,10 @@
     <Choose>
         <When Condition="'$(TargetFramework)' == 'net47'">
             <PropertyGroup>
-                <DefineConstants>NET_CLASSIC</DefineConstants>
+                <!-- NET_SYMBOLS marks a leg whose Reflection.Emit can describe where the IL came
+                     from. The netstandard surface has no such API at all, so a script compiled
+                     against it can be run but not debugged. -->
+                <DefineConstants>NET_CLASSIC;NET_SYMBOLS</DefineConstants>
             </PropertyGroup>
             <ItemGroup>
                 <Reference Include="Microsoft.CSharp" />
@@ -34,9 +37,11 @@
                 <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
             </ItemGroup>
         </When>
-        <When Condition="'$(TargetFramework)' == 'net8.0'">
+        <When Condition="'$(TargetFramework)' == 'net10.0'">
             <PropertyGroup>
-                <DefineConstants>NET_CORE</DefineConstants>
+                <!-- NET_MODERN marks the leg whose Reflection.Emit can write symbols: only a
+                     PersistedAssemblyBuilder can, and it exists on .NET 9 and later. -->
+                <DefineConstants>NET_CORE;NET_MODERN;NET_SYMBOLS</DefineConstants>
             </PropertyGroup>
         </When>
     </Choose>

@@ -35,13 +35,16 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (!IsConstant)
-            {
-                if (Resolve(ctx).Is<string>())
-                    return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
-            }
+            // folding gives the best code there is, but it can be switched off - and an operator
+            // whose meaning is a call rather than an opcode has to become that call either way
+            var folded = base.Expand(ctx, mustReturn);
+            if (folded != null)
+                return folded;
 
-            return base.Expand(ctx, mustReturn);
+            if (Resolve(ctx).Is<string>())
+                return Expr.Invoke(LeftOperand, "Replace", RightOperand, Expr.Str(""));
+
+            return null;
         }
 
         #endregion

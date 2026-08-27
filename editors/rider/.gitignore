@@ -1,0 +1,6 @@
+.gradle/
+build/
+.idea/
+
+# working directory of the IntelliJ Platform Gradle plugin: sandboxes, caches, downloaded SDKs
+.intellijPlatform/
