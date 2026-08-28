@@ -618,6 +618,27 @@ f 1";
             Test(src, 2, WhitelistingSystem());
         }
 
+        /// <summary>
+        /// A lambda whose argument types are not written out is typed as the compiler's own
+        /// Lambda&lt;...&gt; over UnspecifiedType until the call it is passed to says what the
+        /// arguments are. Those are support types like unit and null, not types the script named,
+        /// so no rule may be applied to them - a whitelist refused them for having no whitelisted
+        /// namespace, and a blacklist refused them for living under 'Lens'.
+        /// </summary>
+        [Test]
+        public void LambdasWithInferredArgumentsAreAllowed()
+        {
+            var src = @"
+use System.Linq
+
+new [3; 1; 2]
+    |> OrderBy x -> x
+    |> ToArray ()";
+
+            Test(src, new[] {1, 2, 3}, BlacklistingTypes("System.IO.File"));
+            Test(src, new[] {1, 2, 3}, WhitelistingSystem());
+        }
+
         [Test]
         public void AWhitelistAllowsStatementsWithNoValue()
         {

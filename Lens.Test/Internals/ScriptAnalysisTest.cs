@@ -70,6 +70,43 @@ a + 2"))
             }
         }
 
+        /// <summary>
+        /// Analysis binds a script without building an assembly, so a declared generic function has
+        /// no parameter builders and its type arguments are inferred from the declared signature
+        /// instead. That inference only read a naked 'T' and 'T[]', so a signature naming List&lt;T&gt;
+        /// left T unresolved - and the editor reported an error on a script that compiles and runs.
+        /// </summary>
+        [Test]
+        public void AGenericArgumentIsInferredThroughACompositeSignature()
+        {
+            using (var analysis = Analyze(@"
+fun firstOf<T>:T (items:List<T>) ->
+    items[0]
+
+firstOf (new [[""a""; ""b""; ""c""]])"))
+            {
+                Assert.IsEmpty(analysis.Diagnostics.Select(x => x.Message).ToArray());
+            }
+        }
+
+        /// <summary>
+        /// The type the call site passes need not name the definition the signature does: an
+        /// argument declared as an interface is given something that implements it.
+        /// </summary>
+        [Test]
+        public void AGenericArgumentIsInferredThroughAnImplementedInterface()
+        {
+            using (var analysis = Analyze(@"
+use System.Collections.Generic
+
+fun countOf<T>:int (items:IEnumerable<T>) -> 0
+
+countOf (new [[1; 2; 3]])"))
+            {
+                Assert.IsEmpty(analysis.Diagnostics.Select(x => x.Message).ToArray());
+            }
+        }
+
         [Test]
         public void SeveralIndependentErrorsAreAllReported()
         {

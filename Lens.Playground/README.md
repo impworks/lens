@@ -50,19 +50,18 @@ Railway sets, and falls back to 8080.
 
 ### Deploying to Railway
 
-Point a Railway service at this repository and leave the root directory at the repository root
-(not `Lens.Playground`, because the Dockerfile needs the `Lens` and `Lens.LanguageServer.Core`
-projects in its build context). `railway.json`, in the repository root, names the Dockerfile and
-the health check; it also selects the Dockerfile builder, so the Railpack default does not apply.
+The service is configured in Railway's own settings rather than by a file in the repository, as
+Config as Code is being retired. The settings that matter:
 
-Watch paths, if used, have to cover everything the image is built from:
-
-```
-/Lens.Playground/**
-/Lens/**
-/Lens.LanguageServer.Core/**
-/railway.json
-```
+- **Root directory**: the repository root, not `Lens.Playground`. The Dockerfile needs the `Lens`
+  and `Lens.LanguageServer.Core` projects in its build context, and a root directory of
+  `Lens.Playground` puts them outside it.
+- **Builder**: Dockerfile, with the path `Lens.Playground/Dockerfile`. The default is Railpack,
+  which has nothing to go on here.
+- **Health check**: `/index.html`, with a 30 second timeout.
+- **Watch paths**, if used, have to cover everything the image is built from, not just this
+  folder: `/Lens.Playground/**`, `/Lens/**`, `/Lens.LanguageServer.Core/**`. A change to the
+  compiler changes the playground, because the playground compiles Lens in the browser.
 
 ## The environment a script gets
 

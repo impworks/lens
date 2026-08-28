@@ -137,13 +137,20 @@ namespace Lens.Compiler
         /// Types that are allowed however the rules read.
         ///
         /// These are the compiler's own runtime support types. They surface as the type of an
-        /// ordinary expression - unit is the type of every statement that returns nothing - so a
-        /// whitelist that did not include them would refuse the first line of every script.
+        /// ordinary expression - unit is the type of every statement that returns nothing, and a
+        /// lambda whose argument types are not written out is a Lambda&lt;...&gt; over
+        /// UnspecifiedType until the call it is passed to says what they are - so a whitelist that
+        /// did not include them would refuse the first line of every script.
+        ///
+        /// The names are spelled without the arity suffix, which is how the whole Lambda family is
+        /// covered by a single entry: see <see cref="NormalizeTypeName"/>.
         /// </summary>
         private static readonly string[] CoreAllowedTypes =
         {
             "Lens.Compiler.UnitType",
-            "Lens.Compiler.NullType"
+            "Lens.Compiler.NullType",
+            "Lens.Compiler.UnspecifiedType",
+            "Lens.Compiler.Lambda"
         };
 
         #endregion
