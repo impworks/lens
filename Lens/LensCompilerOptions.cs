@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Lens.Compiler;
 
 namespace Lens
@@ -63,6 +63,12 @@ namespace Lens
 
         /// <summary>
         /// Checks whether the script should be compiled in a sandbox environment.
+        ///
+        /// Any mode other than Disabled also switches on a core set of restrictions the lists below
+        /// cannot lift: a script may not reach the compiler running it, may not reflect, and may not
+        /// load an assembly. Those three are ways around every other rule rather than capabilities
+        /// of their own, so they are not the host's to allow. See docs/safe-mode.md for what safe
+        /// mode does and, more importantly, what it does not do.
         /// Default = Disabled
         /// </summary>
         public SafeMode SafeMode = SafeMode.Disabled;
@@ -76,6 +82,17 @@ namespace Lens
         /// The list of namespaces that form a blacklist or a whitelist depending on safe mode.
         /// </summary>
         public List<string> SafeModeExplicitNamespaces = new List<string>();
+
+        /// <summary>
+        /// The list of members that may not be named by the script, as 'Namespace.Type::Member'.
+        ///
+        /// Unlike the two lists above, this one is always a deny list, whatever the safe mode is: a
+        /// whitelist of members would mean naming every method a script is allowed to call. A rule
+        /// here therefore subtracts from what the type rules allowed, and never adds to it. It
+        /// matches every overload of the name, and covers the member as reached through a derived
+        /// type as well as through the one it is declared on.
+        /// </summary>
+        public List<string> SafeModeExplicitMembers = new List<string>();
 
         /// <summary>
         /// The whitelisted or blacklisted subsystems for safe mode (networking, IO, etc).

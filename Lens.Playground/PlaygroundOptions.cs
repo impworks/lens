@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Reflection;
@@ -20,6 +20,10 @@ namespace Lens.Playground
     ///
     /// It is deliberately a list of types rather than of namespaces: blacklisting System.IO whole
     /// would take Stream and TextReader with it, and those are what HttpClient hands back.
+    ///
+    /// Reflection, assembly loading and the compiler's own types are not listed here because they
+    /// are not the playground's to allow: any safe mode denies those outright. See
+    /// docs/safe-mode.md.
     /// </summary>
     internal static class PlaygroundOptions
     {
@@ -43,19 +47,6 @@ namespace Lens.Playground
             "System.Environment",
             "System.AppDomain",
             "System.AppDomainManager"
-        };
-
-        /// <summary>
-        /// Namespaces a script has no business naming here.
-        ///
-        /// Emitting IL is how the playground runs the script in the first place, so the machinery
-        /// is present and would work; letting a script reach it is a way around every other line
-        /// of this file.
-        /// </summary>
-        private static readonly List<string> ForbiddenNamespaces = new List<string>
-        {
-            "System.Reflection.Emit",
-            "System.Runtime.Loader"
         };
 
         /// <summary>
@@ -85,7 +76,6 @@ namespace Lens.Playground
             {
                 SafeMode = SafeMode.Blacklist,
                 SafeModeExplicitTypes = ForbiddenTypes,
-                SafeModeExplicitNamespaces = ForbiddenNamespaces,
                 MeasureTime = true
             };
         }

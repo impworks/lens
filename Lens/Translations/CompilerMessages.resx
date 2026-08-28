@@ -729,4 +729,7 @@
   <data name="SafeModeIllegalReference" xml:space="preserve">
     <value>LE3203: The assembly '{0}' cannot be referenced by the script due to safe mode settings!</value>
   </data>
+  <data name="SafeModeIllegalMember" xml:space="preserve">
+    <value>LE3204: Member '{0}' of type '{1}' cannot be used in the script due to safe mode settings!</value>
+  </data>
 </root>

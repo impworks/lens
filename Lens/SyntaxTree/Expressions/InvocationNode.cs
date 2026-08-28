@@ -92,6 +92,8 @@ namespace Lens.SyntaxTree.Expressions
 
             ApplyLambdaArgTypes(ctx);
 
+            CheckMemberInSafeMode(ctx, binding.Method);
+
             return ResolvePartial(binding.Method, binding.Method.ReturnType, binding.ArgTypes);
         }
 

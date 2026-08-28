@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lens.Resolver;
 
 namespace Lens.Compiler
@@ -10,77 +9,35 @@ namespace Lens.Compiler
         #region Fields
 
         /// <summary>
-        /// The list of namespaces specified explicitly for safe mode.
+        /// The safe mode restrictions of this compilation, compiled out of the options.
         /// </summary>
-        private Dictionary<string, bool> _explicitNamespaces;
-
-        /// <summary>
-        /// The list of namespaces specified explicitly for safe mode.
-        /// </summary>
-        private Dictionary<string, bool> _explicitTypes;
+        private SafeModeRules _safeModeRules;
 
         #endregion
 
         #region Methods
 
         /// <summary>
-        /// Loads safe mode restrictions into the list of allowed namespaces and types.
+        /// Compiles the safe mode restrictions the options describe.
         /// </summary>
         private void InitSafeMode()
         {
-            if (Options.SafeMode == SafeMode.Disabled)
-                return;
-
-            Action<string> addNsp = nsp => _explicitNamespaces[nsp] = true;
-            Action<string> addType = type => _explicitTypes[type] = true;
-
-            _explicitNamespaces = Options.SafeModeExplicitNamespaces.ToDictionary(n => n, n => true);
-            _explicitTypes = Options.SafeModeExplicitTypes.ToDictionary(n => n, n => true);
-
-            if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Environment))
-            {
-                addNsp("System.Diagnostics");
-                addNsp("System.Runtime");
-
-                addType("System.AppDomain");
-                addType("System.AppDomainManager");
-                addType("System.Environment");
-                addType("System.GC");
-            }
-
-            if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.IO))
-            {
-                addNsp("System.IO");
-            }
-
-            if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Threading))
-            {
-                addNsp("System.Threading");
-            }
-
-            if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Reflection))
-            {
-                addNsp("System.Reflection");
-                addNsp("System.Runtime.Loader");
-
-                addType("System.AppDomain");
-                addType("System.AppDomainManager");
-                addType("System.Type");
-            }
-
-            if (Options.SafeModeExplicitSubsystems.HasFlag(SafeModeSubsystem.Network))
-            {
-                addNsp("System.Net");
-                addNsp("System.Web");
-            }
+            _safeModeRules = SafeModeRules.From(Options);
         }
 
         /// <summary>
         /// Checks if the type is allowed according to the safe mode restrictions.
+        ///
+        /// A type is more than its name, and the parts it is built out of are checked before the
+        /// name is: an array is as allowed as its element type, a constructed generic as its
+        /// definition and every one of its arguments.
         /// </summary>
         public bool IsTypeAllowed(TypeEntry type)
         {
-            if (Options.SafeMode == SafeMode.Disabled)
+            if (_safeModeRules.Mode == SafeMode.Disabled)
+                return true;
+
+            if (ReferenceEquals(type, null))
                 return true;
 
             // A generic parameter stands for a type rather than being one, so there is nothing here
@@ -91,17 +48,28 @@ namespace Lens.Compiler
             if (type.IsGenericParameter)
                 return true;
 
-            var genericChecks = !type.IsGenericType || type.GenericArguments.All(IsTypeAllowed);
-            if (!genericChecks)
-                return false;
+            // T[], ref T and T* are the same question about T, asked one level up. Answering it on
+            // the outer name instead would miss the type entirely: the full name of File[] is
+            // 'System.IO.File[]', which is not the name any rule about File is written with.
+            var element = type.ElementType;
+            if (!ReferenceEquals(element, null))
+                return IsTypeAllowed(element);
 
-            // An array of a generic parameter has no full name either - T[] is as unnamed as T is -
-            // and neither has a type nested in one. A missing name means no rule can match it, the
-            // same conclusion the overload below reaches for the same reason.
-            var exists = (type.FullName != null && _explicitTypes.ContainsKey(type.FullName))
-                         || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+            // a type the script declared is the script's own; the host types its fields and methods
+            // are built out of are checked where they appear, which is what the rules are about
+            if (type.IsDeclared)
+                return true;
 
-            return exists ^ Options.SafeMode == SafeMode.Blacklist;
+            foreach (var curr in type.GenericArguments)
+                if (!IsTypeAllowed(curr))
+                    return false;
+
+            // List<int> carries its arguments in its own full name, so it is the definition that
+            // has the name a rule is written with
+            var definition = type.GetGenericDefinition();
+            var fullName = (ReferenceEquals(definition, null) ? type : definition).FullName ?? type.FullName;
+
+            return _safeModeRules.IsNameAllowed(fullName, type.Namespace);
         }
 
         /// <summary>
@@ -113,13 +81,63 @@ namespace Lens.Compiler
         /// </summary>
         internal bool IsTypeAllowed(Type type)
         {
-            if (Options.SafeMode == SafeMode.Disabled)
+            if (_safeModeRules.Mode == SafeMode.Disabled)
                 return true;
 
-            var exists = (type.FullName != null && _explicitTypes.ContainsKey(type.FullName))
-                         || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+            if (type == null)
+                return true;
 
-            return exists ^ Options.SafeMode == SafeMode.Blacklist;
+            if (type.IsGenericParameter)
+                return true;
+
+            if (type.HasElementType)
+                return IsTypeAllowed(type.GetElementType());
+
+            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            {
+                foreach (var curr in type.GetGenericArguments())
+                    if (!IsTypeAllowed(curr))
+                        return false;
+
+                type = type.GetGenericTypeDefinition();
+            }
+
+            return _safeModeRules.IsNameAllowed(type.FullName, type.Namespace);
+        }
+
+        /// <summary>
+        /// Checks if a member may be named by the script.
+        ///
+        /// This is the question the type-level rules cannot answer. Type.GetType takes the name of
+        /// a type as a string and hands back a type, which means no rule about which types may be
+        /// named ever sees what came out of it; the only place to stop that is the call itself.
+        ///
+        /// Member rules subtract from what the type rules allowed and never add to it, in both
+        /// modes - a whitelist of members would mean naming every method a script is allowed to
+        /// call, which is not a list anyone maintains correctly.
+        /// </summary>
+        internal bool IsMemberAllowed(WrapperBase member)
+        {
+            if (_safeModeRules.Mode == SafeMode.Disabled || member == null)
+                return true;
+
+            return _safeModeRules.IsMemberAllowed(InheritanceNames(member.DeclaringType), member.Name);
+        }
+
+        /// <summary>
+        /// The names of a type and of everything it inherits from, so that a rule about
+        /// Object.GetType covers every expression the call can be written on.
+        /// </summary>
+        private static IEnumerable<string> InheritanceNames(TypeEntry type)
+        {
+            var curr = type;
+            while (!ReferenceEquals(curr, null))
+            {
+                var definition = curr.GetGenericDefinition();
+                yield return (ReferenceEquals(definition, null) ? curr : definition).FullName;
+
+                curr = curr.BaseType;
+            }
         }
 
         #endregion

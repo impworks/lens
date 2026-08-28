@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -206,7 +206,22 @@ namespace Lens.Compiler
             if (!Options.AllowExtensionMethods || type.IsDeclared || type.ContainsDeclared)
                 return new Dictionary<string, List<MethodInfo>>();
 
-            return _extensionResolver.EnumerateExtensionMethods(Resolver, type.Materialize());
+            var found = _extensionResolver.EnumerateExtensionMethods(Resolver, type.Materialize());
+            if (_safeModeRules.Mode == SafeMode.Disabled)
+                return found;
+
+            // the editor must offer what the compiler accepts: safe mode refuses an extension method
+            // whose declaring type is out of bounds, so a completion list that showed one would be
+            // offering a call that cannot be made
+            var allowed = new Dictionary<string, List<MethodInfo>>();
+            foreach (var pair in found)
+            {
+                var methods = pair.Value.Where(x => IsTypeAllowed(x.DeclaringType) && IsMemberAllowed(new MethodWrapper(x))).ToList();
+                if (methods.Count > 0)
+                    allowed[pair.Key] = methods;
+            }
+
+            return allowed;
         }
 
         #endregion

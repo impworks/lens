@@ -70,6 +70,10 @@ namespace Lens.SyntaxTree.ControlFlow
             if (!type.Is<Exception>() && !type.IsSubclassOf(TypeEntryCache.Of<Exception>()))
                 Error(CompilerMessages.CatchTypeNotException, type);
 
+            // a clause is a mention of the type like any other, and the node's own type is unit,
+            // so the check every node goes through would never look at it
+            CheckTypeInSafeMode(ctx, type);
+
             if (!string.IsNullOrEmpty(ExceptionVariable))
             {
                 var binding = ctx.BindingOf<Binding>(this);

@@ -298,6 +298,20 @@ namespace Lens.SyntaxTree
         }
 
         /// <summary>
+        /// Throws an error that the member the node bound to is not allowed in safe mode.
+        ///
+        /// Not every restriction can be expressed as one about types. Type.GetType is handed the
+        /// name of a type as a string, so whichever type comes back out of it was never named in
+        /// the script and no type rule can have an opinion about it; the call is the only place the
+        /// question can be asked.
+        /// </summary>
+        protected void CheckMemberInSafeMode(Context ctx, WrapperBase member)
+        {
+            if (!ctx.IsMemberAllowed(member))
+                Error(CompilerMessages.SafeModeIllegalMember, member.Name, member.DeclaringType);
+        }
+
+        /// <summary>
         /// Re-infers the lambda if argument types were not specified before.
         /// </summary>
         protected static void EnsureLambdaInferred(Context ctx, NodeBase canBeLambda, TypeEntry delegateType)

@@ -1895,5 +1895,14 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("SafeModeIllegalReference", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3204: Member &apos;{0}&apos; of type &apos;{1}&apos; cannot be used in the script due to safe mode settings!.
+        /// </summary>
+        public static string SafeModeIllegalMember {
+            get {
+                return ResourceManager.GetString("SafeModeIllegalMember", resourceCulture);
+            }
+        }
     }
 }

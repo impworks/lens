@@ -394,7 +394,15 @@ namespace Lens.Compiler
             if (!IsEmitting && (HasNoRuntimeType(type) || HasNoRuntimeType(argTypes) || HasNoRuntimeType(hints)))
                 throw new KeyNotFoundException();
 
-            return ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+            var method = ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+
+            // the receiver is checked wherever it came from, but the type the method is declared on
+            // is never named in the script at all - the whole point of an extension method - so
+            // this is the only place a rule about that type can be applied
+            if (!IsTypeAllowed(method.DeclaringType))
+                Error(CompilerMessages.SafeModeIllegalType, method.DeclaringType.FullName);
+
+            return method;
         }
 
         /// <summary>

@@ -42,6 +42,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             ResolveSelf(ctx);
 
+            CheckMemberInSafeMode(ctx, _field);
+            CheckMemberInSafeMode(ctx, _property);
+
             return TypeEntryCache.Of<UnitType>();
         }
 
