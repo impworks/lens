@@ -1,0 +1,26 @@
+use System.Linq
+
+let numbers = new [5; 3; 8; 1; 9; 2; 7]
+
+let evens = numbers
+    |> Where x -> x % 2 == 0
+    |> OrderBy x -> x
+    |> ToArray ()
+
+println $"evens: {string::Join "; " evens}"
+
+// arrays, lists, dictionaries, and tuples have shorthand creation syntax
+let list = new [["apples"; "pears"; "plums"]]
+let pricesDict = new { "apples" => 3; "pears" => 5; "plums" => 2 }
+
+for fruit in list do
+    println $"{fruit} costs {pricesDict[fruit]}"
+
+let total = list
+    |> Select f -> pricesDict[f]
+    |> Sum ()
+
+println $"total: {total}"
+
+numbers
+    |> Max ()

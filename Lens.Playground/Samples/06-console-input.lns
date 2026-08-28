@@ -1,0 +1,18 @@
+// Open the Input pane below the editor and put a few lines of text in it. The script reads
+// them as it would read a terminal, one line per readln.
+//
+// Try this input:
+//   Scott Pilgrim
+//   24
+
+let name = readln ()
+let age = readln ()
+
+if name == null then
+    println "Nothing to read - put something in the Input pane and run again."
+else
+    println $"Hello, {name}!"
+
+    if age <> null then
+        let years = int::Parse age
+        println $"In ten years you will be {years + 10}."

@@ -1,0 +1,40 @@
+// Functions and records can both take type parameters.
+
+use System.Linq
+
+fun id<T>:T (x:T) -> x
+
+// The type argument is inferred from the call, or given explicitly.
+println $"inferred: {id 42}"
+println $"explicit: {id<string> "hello"}"
+
+fun second<A, B>:B (a:A b:B) -> b
+
+println $"second: {second 1 "two"}"
+
+record Box<T>
+    Value : T
+
+let boxed = new Box<int> 42
+
+println $"boxed: {boxed.Value}"
+
+// Algebraic types are generic too.
+type Option<T>
+    Nothing
+    Just of T
+
+fun orElse<T>:T (o:Option<T> fallback:T) ->
+    match o with
+        case Just of x then x
+        case _ then fallback
+
+println $"just: {orElse (Just 7) 0}"
+println $"nothing: {orElse Nothing<int> 0}"
+
+// One thing to know in the browser: a collection of a type parameter has to be a list, not an
+// array, because the runtime here cannot build an array of a type that is still being compiled.
+fun firstOf<T>:T (items:List<T>) ->
+    items[0]
+
+firstOf (new [["a"; "b"; "c"]])

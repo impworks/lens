@@ -1,0 +1,14 @@
+// Requests are sent from your browser
+
+use System.Net.Http
+
+fun fetch:Task<string> (url:string) ->
+    let client = new HttpClient ()
+    await (client.GetStringAsync url)
+
+// await can be used in the top-level
+let todo = await (fetch "https://jsonplaceholder.typicode.com/todos/1")
+println $"the server said: {todo}"
+
+let fact = await (fetch "https://catfact.ninja/fact")
+println $"and a second request came back with {fact.Length} characters"

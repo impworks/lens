@@ -1,0 +1,47 @@
+# Caddy serves the playground as plain static files. There is no backend: the compiler is part
+# of the payload, so once the browser has it, nothing else is asked of this server.
+
+{
+	admin off
+
+	# Railway terminates TLS at its edge and forwards plain HTTP, so Caddy must not try to obtain
+	# a certificate of its own.
+	auto_https off
+}
+
+:{$PORT:8080} {
+	root * /srv
+
+	# Every asset name carries a content hash, so it can be cached for as long as the browser
+	# likes. index.html is the one file that must not be, or a deploy would never be picked up.
+	@immutable path /_framework/* /lib/monaco/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@html path / /index.html
+	header @html Cache-Control "no-cache"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	# The publish step writes a .br and a .gz beside every asset. Letting the file server use them
+	# is what turns a 27 MB runtime into an 8 MB download, and it costs no CPU per request.
+	# This form - rather than a rewrite - is the one that keeps the Content-Type of the original
+	# file, which the browser needs to accept a .wasm as WebAssembly and a .js as a module.
+	handle {
+		try_files {path} /index.html
+		file_server {
+			precompressed br gzip
+		}
+	}
+
+	# encode covers what has no precompressed twin, such as index.html after try_files.
+	encode zstd gzip
+
+	log {
+		output stdout
+		format console
+	}
+}

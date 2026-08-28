@@ -83,11 +83,24 @@ namespace Lens.Compiler
             if (Options.SafeMode == SafeMode.Disabled)
                 return true;
 
+            // A generic parameter stands for a type rather than being one, so there is nothing here
+            // for a rule to name: 'T' is whatever it is substituted with, and that substitution is
+            // what the generic argument check below asks about. Deciding it on its own would refuse
+            // every generic function and record under a whitelist, and it has no full name to look
+            // up under either mode.
+            if (type.IsGenericParameter)
+                return true;
+
             var genericChecks = !type.IsGenericType || type.GenericArguments.All(IsTypeAllowed);
             if (!genericChecks)
                 return false;
 
-            var exists = _explicitTypes.ContainsKey(type.FullName) || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+            // An array of a generic parameter has no full name either - T[] is as unnamed as T is -
+            // and neither has a type nested in one. A missing name means no rule can match it, the
+            // same conclusion the overload below reaches for the same reason.
+            var exists = (type.FullName != null && _explicitTypes.ContainsKey(type.FullName))
+                         || (type.Namespace != null && _explicitNamespaces.Keys.Any(k => type.Namespace.StartsWith(k)));
+
             return exists ^ Options.SafeMode == SafeMode.Blacklist;
         }
 

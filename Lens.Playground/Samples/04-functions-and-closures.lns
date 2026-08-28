@@ -1,0 +1,24 @@
+// functions are first class values
+fun twice:int (f:Func<int, int> x:int) ->
+    f (f x)
+
+// functions marked with "pure" cache the result based on arguments
+pure fun fib:int (n:int) ->
+    if n < 2 then
+        n
+    else
+        fib (n - 1) + fib (n - 2)
+
+println $"fib 30 = {fib 30}"
+
+// anonymous functions can closure local variables
+let factor = 3
+let scale = (x:int) -> x * factor
+println $"scaled: {scale 7}"
+
+// a local has to be declared before it is used, so this comes after 'scale'
+println $"twice scaled: {twice scale 2}"
+
+// using underscore as an argument creates a partially applied version of the function
+let greet = string::Concat "Hello, " _
+println (greet "world")

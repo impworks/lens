@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LENS Playground</title>
+    <meta name="description" content="Try LENS, a language for embeddable .NET scripting, in the browser. Nothing is sent anywhere: the compiler runs on this page." />
+    <base href="/" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<div id="app">
+    <header class="toolbar">
+        <div class="brand">
+            <span class="brand-name">LENS</span>
+            <span class="brand-tag">playground</span>
+        </div>
+
+        <button id="run" class="button primary" disabled>
+            <span class="button-label">Run</span>
+            <kbd>F8</kbd>
+        </button>
+
+        <label class="field">
+            <span class="field-label">Sample</span>
+            <select id="samples" disabled></select>
+        </label>
+
+        <button id="toggle-input" class="button" aria-pressed="false">Input</button>
+
+        <div class="spacer"></div>
+
+        <span id="status" class="status">Loading the compiler...</span>
+
+        <a class="link" href="https://github.com/impworks/lens" target="_blank" rel="noopener">GitHub</a>
+    </header>
+
+    <main class="panes">
+        <section class="pane editor-pane">
+            <div id="editor"></div>
+
+            <div id="input-pane" class="input-pane" hidden>
+                <div class="pane-head">
+                    <span>Standard input</span>
+                    <span class="pane-hint">read line by line by readln</span>
+                </div>
+                <textarea id="input" spellcheck="false" placeholder="One value per line."></textarea>
+            </div>
+        </section>
+
+        <section class="pane output-pane">
+            <div class="pane-head">
+                <span>Output</span>
+                <button id="clear" class="button ghost">Clear</button>
+            </div>
+            <div id="output" class="output" aria-live="polite"></div>
+        </section>
+    </main>
+</div>
+
+<div id="loader" class="loader">
+    <div class="loader-inner">
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+        <p>Fetching the .NET runtime and the LENS compiler.</p>
+        <p class="loader-note">This happens once, then the page works offline.</p>
+    </div>
+</div>
+
+<script src="lib/monaco/loader.js"></script>
+<script src="js/playground.js"></script>
+<script src="_framework/blazor.webassembly.js" autostart="true"></script>
+
+</body>
+</html>

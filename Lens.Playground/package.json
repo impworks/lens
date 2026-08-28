@@ -1,0 +1,9 @@
+{
+  "name": "lens-playground",
+  "version": "5.0.0",
+  "private": true,
+  "description": "Static assets for the LENS web playground. Only pulls in the Monaco editor.",
+  "dependencies": {
+    "monaco-editor": "0.52.2"
+  }
+}

@@ -232,6 +232,111 @@ System.Threading.ThreadPool::GetAvailableThreads (ref workThreads) (ref cpThread
             TestSubsystem(typeof(System.Net.Sockets.Socket), SafeModeSubsystem.Network, src);
         }
 
+        #region Generics
+
+        /// <summary>
+        /// A generic parameter has no full name, and safe mode used to hand that null straight to a
+        /// dictionary: every generic function failed with "Value cannot be null. (Parameter 'key')"
+        /// as soon as any safe mode was on.
+        /// </summary>
+        [Test]
+        public void GenericFunctionUnderBlacklist()
+        {
+            var src = @"
+fun id<T>:T (x:T) -> x
+id 42";
+
+            Test(src, 42, Blacklisting("System.IO"));
+        }
+
+        [Test]
+        public void GenericRecordUnderBlacklist()
+        {
+            var src = @"
+record Box<T>
+    Value: T
+
+let b = new Box<int> 42
+b.Value";
+
+            Test(src, 42, Blacklisting("System.IO"));
+        }
+
+        /// <summary>
+        /// An array of a generic parameter has no full name of its own either.
+        /// </summary>
+        [Test]
+        public void GenericArrayArgumentUnderBlacklist()
+        {
+            var src = @"
+fun firstOf<T>:T (items:T[]) -> items[0]
+firstOf (new [3; 4; 5])";
+
+            Test(src, 3, Blacklisting("System.IO"));
+        }
+
+        /// <summary>
+        /// A whitelist is the stricter reading, and the one that would refuse a placeholder if it
+        /// were weighed as though it were a type of its own.
+        /// </summary>
+        [Test]
+        public void GenericFunctionUnderWhitelist()
+        {
+            var opts = new LensCompilerOptions
+            {
+                SafeMode = SafeMode.Whitelist,
+                SafeModeExplicitNamespaces = new List<string> {"System"}
+            };
+
+            var src = @"
+fun id<T>:T (x:T) -> x
+id 42";
+
+            Test(src, 42, opts);
+        }
+
+        /// <summary>
+        /// The parameter being waved through must not wave through what it is substituted with.
+        /// </summary>
+        [Test]
+        public void GenericArgumentIsStillChecked()
+        {
+            var opts = new LensCompilerOptions
+            {
+                SafeMode = SafeMode.Blacklist,
+                SafeModeExplicitNamespaces = new List<string> {"System.Text"}
+            };
+
+            var src = @"
+use System.Text.RegularExpressions
+new List<Regex> ()
+";
+
+            try
+            {
+                Compile(src, opts);
+                Assert.Fail();
+            }
+            catch (LensCompilerException ex)
+            {
+                Assert.AreEqual(
+                    string.Format(CompilerMessages.SafeModeIllegalType, typeof(List<Regex>).FullName),
+                    ex.Message
+                );
+            }
+        }
+
+        private static LensCompilerOptions Blacklisting(string nsp)
+        {
+            return new LensCompilerOptions
+            {
+                SafeMode = SafeMode.Blacklist,
+                SafeModeExplicitNamespaces = new List<string> {nsp}
+            };
+        }
+
+        #endregion
+
         private void TestSubsystem(Type type, SafeModeSubsystem system, string code)
         {
             var opts = new LensCompilerOptions

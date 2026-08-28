@@ -219,6 +219,22 @@ because the host may have registered the assembly by itself already.
 
 Contributions are always welcome!
 
+### Try it in a browser
+
+There is a [web playground](Lens.Playground/README.md): a Monaco editor with the same highlighting,
+completion and diagnostics as the editor plugins, and F8 to run. The compiler, the language
+services and the .NET runtime are all compiled to WebAssembly and shipped with the page, so it runs
+entirely in the browser - there is no backend, and no script leaves the machine it was typed on.
+
+```
+dotnet run --project Lens.Playground                                 # locally
+docker build -f Lens.Playground/Dockerfile -t lens-playground .      # as a static site behind Caddy
+docker run --rm -p 8080:8080 lens-playground
+```
+
+Scripts there get LINQ, `HttpClient` and the network, console input and output, and no file system.
+The playground's README lists what a browser cannot offer and what to write instead.
+
 ### What NOT to expect
 
 Being designed as an embeddable language, LENS does not support some features that are better implemented in the language of the host application. Here is a list of features that you will *not* see any time soon:

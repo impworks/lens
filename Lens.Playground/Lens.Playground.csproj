@@ -1,0 +1,120 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+
+        <!--
+            LENS resolves types, methods and extension methods by reflection at run time, so the
+            trimmer cannot see what a user's script is going to name. Trimming this app would
+            remove exactly the API surface the playground exists to expose.
+        -->
+        <PublishTrimmed>false</PublishTrimmed>
+
+        <!-- The compiler emits IL at run time; the interpreter supports it, an AOT build does not. -->
+        <RunAOTCompilation>false</RunAOTCompilation>
+
+        <!-- Scripts format numbers and dates, so the invariant-only globalization mode is too narrow. -->
+        <InvariantGlobalization>false</InvariantGlobalization>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lens\Lens.csproj" />
+        <ProjectReference Include="..\Lens.LanguageServer.Core\Lens.LanguageServer.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Samples\*.lns" />
+    </ItemGroup>
+
+    <!--
+        The editor's folder is filled in by the build, not by the repository, so the SDK's own
+        wwwroot glob must not claim it.
+
+        The glob runs while the project is read, which is before the build has had a chance to add
+        or remove anything. Left alone it would carry whichever files a previous build happened to
+        leave behind - and a build that then deletes one of them fails, because an asset was
+        declared for a file that no longer exists. CollectMonaco declares what it actually copied.
+    -->
+    <ItemGroup>
+        <Content Remove="wwwroot\lib\**" />
+    </ItemGroup>
+
+    <!--
+        Monaco is taken from the npm package rather than a CDN: the playground is served as static
+        files from a container that may have no outbound network, and a script editor that only
+        works when a third-party host is reachable is not one.
+    -->
+    <Target Name="RestoreMonaco" BeforeTargets="CollectMonaco" Condition="!Exists('node_modules/monaco-editor/min/vs/loader.js')">
+        <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    </Target>
+
+    <!--
+        The editor is copied into wwwroot rather than referenced where npm left it.
+
+        A static web asset is looked up under the content root it was declared against, and for
+        this project that root is the source wwwroot folder - not the build output. Declaring the
+        files where npm put them produces a manifest entry pointing at a path that does not exist
+        there, which the development server answers with an empty body: a 200 that leaves the page
+        stuck with no editor and no failed request to explain why. Publishing happens to work
+        either way, which is precisely what makes the difference easy to miss.
+
+        The Remove before the Include is for the second build onwards, when wwwroot already holds
+        the files and the SDK's own glob has claimed them.
+    -->
+    <Target Name="CollectMonaco" BeforeTargets="BeforeBuild">
+        <ItemGroup>
+            <!--
+                Only the part of the package this page loads.
+
+                What is excluded is the editor's support for other languages: the grammars under
+                basic-languages, the JSON, CSS, HTML and TypeScript services under language, and the
+                translated messages. LENS registers its own language and the page is in English, so
+                none of it is ever requested - the editor loads these lazily, per language and per
+                locale, and there is no model here of any language but ours. Keeping them cost
+                fifteen megabytes in the image and the time to compress every one of them at publish.
+
+                The glob starts at min/vs rather than at each subfolder on purpose: RecursiveDir is
+                relative to the wildcard, so a narrower Include would flatten editor/ and base/ into
+                the root and break every path the loader resolves.
+            -->
+            <MonacoSource Include="node_modules/monaco-editor/min/vs/**/*"
+                          Exclude="node_modules/monaco-editor/min/vs/basic-languages/**/*;
+                                   node_modules/monaco-editor/min/vs/language/**/*;
+                                   node_modules/monaco-editor/min/vs/nls.messages.*.js" />
+
+            <MonacoExpected Include="@(MonacoSource->'wwwroot/lib/monaco/%(RecursiveDir)%(Filename)%(Extension)')" />
+
+            <!--
+                Whatever is in wwwroot but no longer in the set above: a copy left behind by an
+                earlier build made with a wider glob. Nothing deletes it otherwise, and it would go
+                on being published as though it were still wanted.
+            -->
+            <MonacoPresent Include="wwwroot/lib/monaco/**/*" />
+            <MonacoStale Include="@(MonacoPresent)" Exclude="@(MonacoExpected)" />
+        </ItemGroup>
+
+        <Delete Files="@(MonacoStale)" />
+
+        <Copy SourceFiles="@(MonacoSource)"
+              DestinationFiles="@(MonacoExpected)"
+              SkipUnchangedFiles="true" />
+
+        <RemoveDir Directories="wwwroot/lib/monaco/basic-languages;wwwroot/lib/monaco/language"
+                   Condition="Exists('wwwroot/lib/monaco/language')" />
+
+        <!-- exactly the files just copied, and nothing that happens to be lying beside them -->
+        <ItemGroup>
+            <Content Include="@(MonacoExpected)" />
+        </ItemGroup>
+    </Target>
+
+</Project>

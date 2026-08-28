@@ -288,3 +288,8 @@ __pycache__/
 *.xsd.cs
 # Assemblies saved by the net47 test run (AllowSave)
 _CompiledAssembly*.dll
+
+# LENS playground: the editor is restored from npm, and the published site is a build artefact
+Lens.Playground/node_modules/
+Lens.Playground/pub/
+Lens.Playground/wwwroot/lib/
