@@ -50,9 +50,19 @@ Railway sets, and falls back to 8080.
 
 ### Deploying to Railway
 
-Point a Railway service at this repository and set the root directory to the repository root
-(not to `Lens.Playground`, because the Dockerfile needs the `Lens` and `Lens.LanguageServer.Core`
-projects in its build context). `railway.json` names the Dockerfile and the health check.
+Point a Railway service at this repository and leave the root directory at the repository root
+(not `Lens.Playground`, because the Dockerfile needs the `Lens` and `Lens.LanguageServer.Core`
+projects in its build context). `railway.json`, in the repository root, names the Dockerfile and
+the health check; it also selects the Dockerfile builder, so the Railpack default does not apply.
+
+Watch paths, if used, have to cover everything the image is built from:
+
+```
+/Lens.Playground/**
+/Lens/**
+/Lens.LanguageServer.Core/**
+/railway.json
+```
 
 ## The environment a script gets
 
