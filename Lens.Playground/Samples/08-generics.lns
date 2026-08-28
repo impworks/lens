@@ -28,5 +28,5 @@ println $"just: {orElse (Just 7) 0}"
 println $"nothing: {orElse Nothing<int> 0}"
 
 // generic constraints
-fun foo<T = class & new> ->
+fun foo<T = class & new>:T ->
     new T ()
