@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+Project("{9A19103F-16F7-32BF-9EEC-2D1E9C67CDB4}") = "Lens.Rider.Backend", "Lens.Rider.Backend\Lens.Rider.Backend.csproj", "{4B1D5E4C-8C1E-4E39-9B0A-3F2A1D6C7E01}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B1D5E4C-8C1E-4E39-9B0A-3F2A1D6C7E01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B1D5E4C-8C1E-4E39-9B0A-3F2A1D6C7E01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B1D5E4C-8C1E-4E39-9B0A-3F2A1D6C7E01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B1D5E4C-8C1E-4E39-9B0A-3F2A1D6C7E01}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

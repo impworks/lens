@@ -1,4 +1,5 @@
-<idea-plugin>
+<!-- the plugin carries a ReSharper backend assembly, which the backend cannot load on the fly -->
+<idea-plugin require-restart="true">
     <id>org.lens.lang</id>
     <name>LENS</name>
     <vendor url="https://github.com/impworks/lens">LENS</vendor>
@@ -43,6 +44,9 @@
             Rider offers a breakpoint in a file only when a policy is registered for the language of
             its PSI file - see RiderBreakpointHost.isSupportedLanguage. The base policy allows every
             line, which is what a script whose debug information the host produced needs.
+
+            This answers canPutAt only. The variants that computeVariants then asks for come from
+            LensBreakpointVariantsProvider in the Lens.Rider.Backend assembly.
         -->
         <rider.debuggerSupportPolicy
             language="LENS"

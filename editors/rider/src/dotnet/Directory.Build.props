@@ -1,0 +1,36 @@
+<Project>
+    <!--
+        The backend half of the plugin is compiled against the ReSharper SDK that ships inside the
+        Rider being built against, which is a net8.0 surface - unlike the rest of the repository,
+        which is .NET 10. That is why this tree has its own build properties and its own solution.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+
+        <NoWarn>NU1701</NoWarn>
+
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+        <BaseIntermediateOutputPath>obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+        <DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
+        <OutputPath>bin\$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+    </PropertyGroup>
+
+    <!-- written by the "generateDotNetSdkProperties" Gradle task, which knows where the Rider SDK is -->
+    <Import
+        Project="$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props"
+        Condition="Exists('$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props')" />
+
+    <PropertyGroup>
+        <JetBrainsRiderRdBackendCommonReference>$(DotNetSdkPath)\Build\PackageReference.JetBrains.Rider.RdBackend.Common.Props</JetBrainsRiderRdBackendCommonReference>
+    </PropertyGroup>
+
+    <!-- without the generated props above there are no SDK references at all, so say why -->
+    <Target
+        Name="CheckForGradlePrepared"
+        BeforeTargets="CoreCompile"
+        Condition="!Exists('$(JetBrainsRiderRdBackendCommonReference)')">
+        <Error Text="Please run `./gradlew :prepare`" />
+    </Target>
+</Project>
