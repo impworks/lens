@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Lens.Compiler;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -597,6 +598,55 @@ pure fun broken:Task<int> ->
     await 1",
                 "LE3177",
                 2, 10, 2, 16
+            );
+        }
+
+        [Test]
+        public void ABrokenAwaitedExpressionIsReportedOnce()
+        {
+            // the state machine turns the await into a handful of statements that all mention the
+            // awaiter it declares, so a mistake in the awaited expression used to be followed by
+            // one complaint per generated statement about a name the script never contained
+            TestErrors(
+                @"
+use System.Threading.Tasks
+fun broken:Task (time:int) ->
+    println ""before""
+    await (Task::Delay ""x"")
+    println ""after""
+
+1",
+                CompilerMessages.TypeMethodArgumentsMismatch
+            );
+        }
+
+        [Test]
+        public void AwaitingSomethingThatIsNotAwaitableIsRejected()
+        {
+            // the state machine asks the expression for an awaiter, and letting that call report
+            // its own failure describes the mistake as a missing GetAwaiter - a name the script
+            // never contained, at a place it was never written
+            TestErrorAt(
+                "await 10",
+                "LE3206",
+                1, 7, 1, 9
+            );
+        }
+
+        [Test]
+        public void AResultOfTheWrongTypeIsReportedAtTheExpression()
+        {
+            // the result is handed to a completion source, and letting that call report the
+            // mismatch described it as a missing overload of TaskCompletionSource - at the first
+            // lexem of the file, since the call is not something the script contains
+            TestErrorAt(
+                @"
+use System.Threading.Tasks
+fun fetch:Task<int> ->
+    await (Task::Delay 1)
+    ""x""",
+                "LE3061",
+                5, 5, 5, 8
             );
         }
 

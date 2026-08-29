@@ -447,6 +447,52 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// Checks whether a type has a method of the given name, whatever its signature.
+        ///
+        /// This is what tells the two ways a call can fail apart: the type has nothing of that
+        /// name, or it has, and none of the overloads takes what the call passes. Resolution
+        /// itself cannot say which, because it reports both as a name that did not resolve.
+        /// </summary>
+        public bool HasMethodNamed(TypeEntry type, string name)
+        {
+            if (ReferenceEquals(type, null))
+                return false;
+
+            if (type.IsGenericParameter)
+                return ResolveConstraintsOf(type).Any(x => HasMethodNamed(x, name));
+
+            var declared = FindDeclaredType(type);
+            if (declared == null)
+            {
+                try
+                {
+                    return ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name).Any();
+                }
+                catch (KeyNotFoundException)
+                {
+                    return false;
+                }
+                catch (NotSupportedException)
+                {
+                    // a type that is still being built cannot be reflected over; the caller falls
+                    // back to the message that claims nothing about the overloads
+                    return false;
+                }
+            }
+
+            try
+            {
+                if (declared.Entity.ResolveMethodGroup(name).Any())
+                    return true;
+            }
+            catch (KeyNotFoundException)
+            {
+            }
+
+            return HasMethodNamed(declared.BaseType, name);
+        }
+
+        /// <summary>
         /// Finds an extension method for current type.
         /// </summary>
         public MethodWrapper ResolveExtensionMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver lambdaResolver = null)

@@ -142,6 +142,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
             catch (KeyNotFoundException)
             {
+                if (ctx.Scope.IsFaulted(Identifier))
+                    AbortQuietly(CompilerMessages.IdentifierNotFound, Identifier);
+
                 Error(CompilerMessages.IdentifierNotFound, Identifier);
             }
 

@@ -240,12 +240,15 @@ namespace Lens.Compiler
                 else if (last is AwaitNode)
                 {
                     var name = Ctx.Unique.TempVariableName();
+                    var value = Expr.Get(name);
+                    Lowerer.CopyLocation(last, value);
+
                     statements.Add(Expr.Var(name, last));
-                    statements.Add(SetResult(Expr.Get(name)));
+                    statements.Add(SetResult(new TypedValueNode(value, _resultSignature)));
                 }
                 else
                 {
-                    statements.Add(SetResult(last));
+                    statements.Add(SetResult(new TypedValueNode(last, _resultSignature)));
                 }
             }
 
@@ -282,7 +285,7 @@ namespace Lens.Compiler
             var awaiter = Ctx.Unique.TempVariableName();
             var readyLabel = new LabelRef("ready_" + point.State);
 
-            output.Add(Expr.Var(awaiter, Expr.Invoke(awaited, "GetAwaiter")));
+            output.Add(Expr.Var(awaiter, new GetAwaiterNode(awaited)));
             output.Add(new GotoNode(readyLabel, Expr.GetMember(Expr.Get(awaiter), "IsCompleted")));
             output.Add(SetState(Expr.Int(point.State)));
             output.Add(Expr.Invoke(Expr.Get(awaiter), "OnCompleted", ResumeCallback()));

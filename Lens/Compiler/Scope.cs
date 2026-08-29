@@ -36,6 +36,11 @@ namespace Lens.Compiler
         public Scope OuterScope;
 
         /// <summary>
+        /// The names declared in this scope whose declaration did not bind. See DeclareFaulted.
+        /// </summary>
+        private HashSet<string> _faultedNames;
+
+        /// <summary>
         /// Checks if the the scope is root for a particular method.
         /// </summary>
         public readonly ScopeKind Kind;
@@ -185,6 +190,39 @@ namespace Lens.Compiler
                 local.LocalBuilder = ctx.CurrentMethod.Generator.DeclareLocal(type.Materialize());
 
             return local;
+        }
+
+        /// <summary>
+        /// Marks a name whose declaration failed to bind.
+        ///
+        /// The name never gets declared, so every statement below that uses it would be reported
+        /// as naming something that does not exist - one mistake, told once where it is and then
+        /// again at every use. Remembering the name lets those uses fail without a word.
+        /// </summary>
+        public void DeclareFaulted(string name)
+        {
+            if (_faultedNames == null)
+                _faultedNames = new HashSet<string>();
+
+            _faultedNames.Add(name);
+        }
+
+        /// <summary>
+        /// Checks whether a name belongs to a declaration that failed to bind, here or anywhere
+        /// further out.
+        /// </summary>
+        public bool IsFaulted(string name)
+        {
+            var scope = this;
+            while (scope != null)
+            {
+                if (scope._faultedNames != null && scope._faultedNames.Contains(name))
+                    return true;
+
+                scope = scope.OuterScope;
+            }
+
+            return false;
         }
 
         /// <summary>

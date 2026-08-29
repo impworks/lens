@@ -272,6 +272,15 @@ namespace Lens.Compiler.Entities
             if (ReturnType.IsVoid() && actualType.IsVoid())
                 return;
 
+            // the two ways a body can disagree with its signature about whether there is a value at
+            // all. Naming the pseudotype that stands for the absence of one describes the mistake
+            // in terms of a type the script cannot even mention
+            if (ReturnType.IsVoid())
+                Context.Error(Body.Last(), CompilerMessages.ReturnValueFromVoidFunction);
+
+            if (actualType.IsVoid())
+                Context.Error(Body.Last(), CompilerMessages.ReturnValueRequired, ReturnType);
+
             if (!ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, actualType))
                 Context.Error(Body.Last(), CompilerMessages.ReturnTypeMismatch, ReturnType, actualType);
         }

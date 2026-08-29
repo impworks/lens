@@ -162,7 +162,7 @@ namespace Lens.SyntaxTree.Expressions
                 // a static call is out of options here: what is left is the extension method
                 // search, and that needs a receiver to hand over as argument zero
                 if (node.StaticType != null)
-                    Error(CompilerMessages.TypeStaticMethodNotFound, type, node.MemberName);
+                    ErrorMethodNotFound(ctx, type, node, binding.ArgTypes, CompilerMessages.TypeStaticMethodNotFound);
 
                 // the call is an extension method call after all: the receiver becomes argument
                 // zero, which is a binding result and does not touch the node's own argument list
@@ -211,13 +211,40 @@ namespace Lens.SyntaxTree.Expressions
                         ? CompilerMessages.TypeStaticMethodNotFound
                         : CompilerMessages.TypeMethodNotFound;
 
-                    Error(msg, type, node.MemberName);
+                    // the argument types the call was written with, rather than the ones the
+                    // extension method search rewrote them into
+                    ErrorMethodNotFound(ctx, type, node, oldArgTypes, msg);
                 }
             }
             catch (AmbiguousMatchException)
             {
                 Error(CompilerMessages.TypeMethodInvocationAmbiguous, type, node.MemberName);
             }
+        }
+
+        /// <summary>
+        /// Reports a call that bound to nothing, saying which of the two things went wrong: the
+        /// type has no member of that name at all, or it has, and none of its overloads accepts
+        /// what the call passes. The second is by far the more common mistake, and being told the
+        /// name does not exist sends the reader looking for the wrong thing.
+        /// </summary>
+        [ContractAnnotation("=> halt")]
+        private void ErrorMethodNotFound(Context ctx, TypeEntry type, GetMemberNode node, TypeEntry[] argTypes, string notFoundMessage)
+        {
+            if (ctx.HasMethodNamed(type, node.MemberName))
+                Error(CompilerMessages.TypeMethodArgumentsMismatch, type, node.MemberName, FormatArgumentTypes(argTypes));
+
+            Error(notFoundMessage, type, node.MemberName);
+        }
+
+        /// <summary>
+        /// Renders the argument types of a call the way a signature spells them.
+        /// </summary>
+        private static string FormatArgumentTypes(TypeEntry[] argTypes)
+        {
+            return argTypes == null || argTypes.Length == 0
+                ? "()"
+                : "(" + string.Join(", ", argTypes.Select(x => ReferenceEquals(x, null) ? "?" : x.ToString())) + ")";
         }
 
         /// <summary>

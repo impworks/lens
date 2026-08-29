@@ -468,6 +468,18 @@
   <data name="TypeStaticMethodNotFound" xml:space="preserve">
     <value>LE3120: Type '{0}' has no method named '{1}'!</value>
   </data>
+  <data name="TypeMethodArgumentsMismatch" xml:space="preserve">
+    <value>LE3205: Type '{0}' has no overload of method '{1}' that accepts arguments {2}!</value>
+  </data>
+  <data name="NotAwaitable" xml:space="preserve">
+    <value>LE3206: Expression of type '{0}' is not awaitable!</value>
+  </data>
+  <data name="ReturnValueFromVoidFunction" xml:space="preserve">
+    <value>LE3207: A function with no return type cannot return a value!</value>
+  </data>
+  <data name="ReturnValueRequired" xml:space="preserve">
+    <value>LE3208: A function of type '{0}' must return a value!</value>
+  </data>
   <data name="FieldRedefinition" xml:space="preserve">
     <value>LE3036: Type '{0}' already contains field named '{1}'!</value>
   </data>

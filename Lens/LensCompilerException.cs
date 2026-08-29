@@ -39,6 +39,13 @@ namespace Lens
         public LexemLocation? EndLocation { get; private set; }
 
         /// <summary>
+        /// Whether the problem is only a consequence of one that has already been reported, and
+        /// is therefore not worth telling the user about. Such an exception still aborts the unit
+        /// of analysis it was raised in - it just leaves no diagnostic behind.
+        /// </summary>
+        internal bool IsSuppressed { get; set; }
+
+        /// <summary>
         /// Full message with error positions.
         /// </summary>
         public string FullMessage

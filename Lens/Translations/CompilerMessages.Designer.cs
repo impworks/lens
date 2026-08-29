@@ -1438,6 +1438,42 @@ namespace Lens.Translations {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LE3205: Type &apos;{0}&apos; has no overload of method &apos;{1}&apos; that accepts arguments {2}!.
+        /// </summary>
+        public static string TypeMethodArgumentsMismatch {
+            get {
+                return ResourceManager.GetString("TypeMethodArgumentsMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3206: Expression of type &apos;{0}&apos; is not awaitable!.
+        /// </summary>
+        public static string NotAwaitable {
+            get {
+                return ResourceManager.GetString("NotAwaitable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3207: A function with no return type cannot return a value!.
+        /// </summary>
+        public static string ReturnValueFromVoidFunction {
+            get {
+                return ResourceManager.GetString("ReturnValueFromVoidFunction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3208: A function of type &apos;{0}&apos; must return a value!.
+        /// </summary>
+        public static string ReturnValueRequired {
+            get {
+                return ResourceManager.GetString("ReturnValueRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3121: The &apos;_&apos; identifier is special and cannot be used for arguments, variable names, and any other user-defined entities!.
         /// </summary>
         public static string UnderscoreName {

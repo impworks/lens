@@ -69,6 +69,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
                 catch (KeyNotFoundException)
                 {
+                    if (ctx.Scope.IsFaulted(Identifier))
+                        AbortQuietly(CompilerMessages.VariableNotFound, Identifier);
+
                     Error(CompilerMessages.VariableNotFound, Identifier);
                 }
             }

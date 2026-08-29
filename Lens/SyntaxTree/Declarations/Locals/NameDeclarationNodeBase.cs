@@ -62,11 +62,25 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
-            var type = Value != null
-                ? Value.Resolve(ctx)
-                : (ResolvedType ?? ctx.ResolveType(Type));
+            TypeEntry type;
 
-            ctx.CheckTypedExpression(Value, type);
+            try
+            {
+                type = Value != null
+                    ? Value.Resolve(ctx)
+                    : (ResolvedType ?? ctx.ResolveType(Type));
+
+                ctx.CheckTypedExpression(Value, type);
+            }
+            catch (LensCompilerException)
+            {
+                // there is no type, so there is no name either: mark it, or every use of it below
+                // would report the same mistake once more
+                if (Local == null)
+                    ctx.Scope.DeclareFaulted(Name);
+
+                throw;
+            }
 
             if (Local == null)
             {

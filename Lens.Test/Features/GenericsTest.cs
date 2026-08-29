@@ -141,7 +141,7 @@ fun add<T>:T (item:T arr:List<T>) ->
 
 add 1 (new [[2]])";
 
-            TestError(src, CompilerMessages.ReturnTypeMismatch);
+            TestError(src, CompilerMessages.ReturnValueRequired);
         }
 
         #endregion

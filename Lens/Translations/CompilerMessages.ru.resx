@@ -468,6 +468,18 @@
   <data name="TypeStaticMethodNotFound" xml:space="preserve">
     <value>LE3120: Тип '{0}' не содержит метод '{1}' с подходящим списком аргументов!</value>
   </data>
+  <data name="TypeMethodArgumentsMismatch" xml:space="preserve">
+    <value>LE3205: Тип '{0}' не содержит перегрузки метода '{1}', принимающей аргументы {2}!</value>
+  </data>
+  <data name="NotAwaitable" xml:space="preserve">
+    <value>LE3206: Выражение типа '{0}' нельзя ожидать через await!</value>
+  </data>
+  <data name="ReturnValueFromVoidFunction" xml:space="preserve">
+    <value>LE3207: Функция без типа возвращаемого значения не может возвращать значение!</value>
+  </data>
+  <data name="ReturnValueRequired" xml:space="preserve">
+    <value>LE3208: Функция типа '{0}' должна возвращать значение!</value>
+  </data>
   <data name="FieldRedefinition" xml:space="preserve">
     <value>LE3036: Тип '{0}' уже содержит поле '{1}'!</value>
   </data>

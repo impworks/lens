@@ -508,6 +508,32 @@ pure fun broken:IEnumerable<int> ->
         }
 
         [Test]
+        public void AYieldedValueOfTheWrongTypeIsReportedAtTheValue()
+        {
+            // the value is handed over by an assignment to a field of the machine, which the
+            // script never wrote: with no location of its own it reported at the first lexem
+            TestErrorAt(
+                @"
+fun foo:int~ ->
+    yield ""test""",
+                "LE3061",
+                3, 11, 3, 17
+            );
+        }
+
+        [Test]
+        public void AYieldedSequenceOfTheWrongTypeIsReportedAtTheSequence()
+        {
+            TestErrorAt(
+                @"
+fun foo:int~ ->
+    yield from (new [[""a""; ""b""]])",
+                "LE3061",
+                3, 16, 3, 34
+            );
+        }
+
+        [Test]
         public void YieldInsideLambdaIsRejected()
         {
             TestError(

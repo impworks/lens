@@ -289,6 +289,18 @@ namespace Lens.SyntaxTree
         }
 
         /// <summary>
+        /// Aborts binding the current statement without reporting anything, because whatever went
+        /// wrong here is a consequence of a mistake that has already been reported.
+        /// </summary>
+        [ContractAnnotation("=> halt")]
+        [DebuggerStepThrough]
+        protected void AbortQuietly(string message, params object[] args)
+        {
+            var msg = string.Format(message, args);
+            throw new LensCompilerException(msg, this) {IsSuppressed = true};
+        }
+
+        /// <summary>
         /// Throws an error that the current type is not alowed in safe mode.
         /// </summary>
         protected void CheckTypeInSafeMode(Context ctx, TypeEntry type)

@@ -426,7 +426,12 @@ namespace Lens.Compiler
             output.Add(Expr.Var(iterator, new GetEnumeratorNode(yielded)));
             output.Add(new LabelNode(beginLabel));
             output.Add(new GotoNode(endLabel, Expr.Invoke(Expr.Get(iterator), "MoveNext"), false));
-            Suspend(point => _emitYield(Expr.GetMember(Expr.Get(iterator), "Current"), point, output), output);
+            // the item comes out of an enumerator nobody wrote, so it is pointed at the sequence
+            // the script did write - an item of the wrong type is a mistake about that expression
+            var item = Expr.GetMember(Expr.Get(iterator), "Current");
+            CopyLocation(node.Expression, item);
+
+            Suspend(point => _emitYield(item, point, output), output);
             output.Add(new GotoNode(beginLabel));
             output.Add(new LabelNode(endLabel));
             output.Add(new DisposeNode(Expr.Get(iterator)));
@@ -860,7 +865,7 @@ namespace Lens.Compiler
 
         #region Helpers
 
-        private static void CopyLocation(LocationEntity from, LocationEntity to)
+        internal static void CopyLocation(LocationEntity from, LocationEntity to)
         {
             to.StartLocation = from.StartLocation;
             to.EndLocation = from.EndLocation;

@@ -190,7 +190,13 @@ namespace Lens.Compiler
         /// </summary>
         private void EmitYield(NodeBase value, ResumePoint point, List<NodeBase> output)
         {
-            output.Add(Expr.SetMember(Expr.This(), EntityNames.CurrentFieldName, value));
+            // a value that does not fit the sequence's element type is reported against this
+            // assignment, and the assignment is generated: without a location of its own the
+            // complaint lands on the first lexem of the file rather than on the yielded expression
+            var handover = Expr.SetMember(Expr.This(), EntityNames.CurrentFieldName, value);
+            Lowerer.CopyLocation(value, handover);
+
+            output.Add(handover);
             output.Add(SetState(Expr.Int(point.State)));
             output.Add(new GotoNode(Lowering.SuspendLabel, isLeave: true));
             output.Add(new LabelNode(point.Label));

@@ -312,7 +312,10 @@ namespace Lens.Compiler
             }
             catch (LensCompilerException ex)
             {
-                Diagnostics.Add(ex);
+                // the unit is aborted either way; a follow-up of something already reported just
+                // does not add a diagnostic of its own
+                if (!ex.IsSuppressed)
+                    Diagnostics.Add(ex);
             }
             finally
             {

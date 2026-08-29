@@ -126,6 +126,31 @@ countOf (new [[1; 2; 3]])"))
             }
         }
 
+        /// <summary>
+        /// A function that awaits is rewritten into a state machine, and the awaited expression
+        /// ends up inside a group of statements the script never contained. A mistake in it used
+        /// to be followed by complaints about the awaiter the rewrite declares - a name with no
+        /// location, which the editor pins to the first character of the file.
+        /// </summary>
+        [Test]
+        public void ABrokenAwaitedExpressionIsReportedOnlyWhereItIsWritten()
+        {
+            using (var analysis = Analyze(@"
+use System.Threading.Tasks
+fun delay:Task (time:int) ->
+    println ""before""
+    await (Task::Delay ""x"")
+    println ""after""
+
+1"))
+            {
+                var problem = analysis.Diagnostics.Single();
+
+                StringAssert.Contains("Delay", problem.Message);
+                Assert.AreEqual(5, problem.Span.Start.Line);
+            }
+        }
+
         [Test]
         public void SeveralIndependentErrorsAreAllReported()
         {
