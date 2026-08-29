@@ -63,10 +63,7 @@ the release. A failure anywhere before that leaves nothing behind.
 The Rider plugin
 ----------------
 
-It is not built by the workflow. Compiling against the Rider SDK costs a 3.6 GB
-download that unpacks to about 14 GB in the Gradle cache - past GitHub's 10 GB
-per-repository cache limit, so every run would pay for it again - and the result
-has to be uploaded to the JetBrains Marketplace by hand in any case.
+Currently not built by the pipeline - investigating the possible ways to avoid downloading the whole 14GB SDK.
 
 Everything else about it is intact: `build/Set-Version.ps1` still stamps
 `gradle.properties`, so a release build is

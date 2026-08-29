@@ -47,16 +47,7 @@ breakpoints may go on a line, so the plugin has a second, .NET half - see
 
 ## Building
 
-The build has to compile against a Rider SDK. Pointing it at an installed Rider is much faster than
-letting Gradle download one (the Rider SDK archive is around 4 GB):
-
-```
-cd editors/rider
-gradlew.bat -PriderPath="C:/Program Files/JetBrains/JetBrains Rider 2026.2" buildPlugin
-```
-
-Without `-PriderPath`, the SDK named by `riderVersion` in `gradle.properties` is downloaded from the
-JetBrains repository instead.
+The build has to compile against a Rider SDK.
 
 If the JDK on `PATH` is older than the one the target Rider needs, point Gradle at Rider's own:
 
