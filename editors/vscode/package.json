@@ -3,7 +3,7 @@
     "displayName": "LENS",
     "description": "Language support for LENS: highlighting, completion, diagnostics, navigation and rename.",
     "version": "5.0.0",
-    "publisher": "lens",
+    "publisher": "impworks",
     "license": "MIT",
     "repository": {
         "type": "git",

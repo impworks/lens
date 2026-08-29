@@ -1,6 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.Constants
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import kotlin.io.path.absolute
@@ -48,25 +47,9 @@ tasks.test {
     useJUnit()
 }
 
-// The newest Rider runs on Java 25, but a plugin compiled for it cannot be loaded by the 2025.x
-// releases this one still supports, so the bytecode is held at the level "sinceBuild" implies. The
-// IntelliJ Platform plugin raises both targets to whatever the platform being compiled against
-// uses, and does so late, which is why the values are put back afterwards.
-afterEvaluate {
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
-    }
-
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = JavaVersion.VERSION_21.toString()
-        targetCompatibility = JavaVersion.VERSION_21.toString()
-    }
-}
+// Every Rider from 2026.1 on runs on Java 25, so the bytecode level the IntelliJ Platform plugin
+// derives from the platform being compiled against is loadable everywhere "sinceBuild" allows.
+// Nothing has to be pinned back.
 
 intellijPlatform {
     pluginConfiguration {

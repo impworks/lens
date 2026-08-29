@@ -1,0 +1,239 @@
+name: Release
+
+# Run by hand from the Actions tab. Building a release is cheap and repeatable; putting one in
+# front of the public is not, so this workflow stops at a tagged GitHub release with every
+# artifact attached. Only NuGet is pushed automatically - the Visual Studio and VS Code listings
+# are updated by uploading the attached files by hand.
+#
+# The Rider plugin is deliberately not built here. Compiling against the Rider SDK costs a 3.6 GB
+# download that unpacks to 14 GB, which no cache on a hosted runner can hold, for an artifact that
+# has to be uploaded to the JetBrains Marketplace by hand anyway. It is built locally instead -
+# see editors/rider/README.md.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, for example 5.0.7. Leave empty to take the next unused number of the series in Directory.Build.props.'
+        required: false
+        type: string
+      dry_run:
+        description: 'Build everything and attach it to the run, but create no tag, no release and push nothing to NuGet.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  # Decides which version this run produces, and refuses to start if that version has been
+  # released already. Every other job reads the answer from here, so all artifacts carry the
+  # same number.
+  prepare:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      publish: ${{ steps.plan.outputs.publish }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # the next number is derived from the existing tags, so the whole history is needed
+          fetch-depth: 0
+
+      - id: plan
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          version="$INPUT_VERSION"
+
+          if [ -z "$version" ]; then
+            series=$(sed -n 's:.*<VersionSeries>\(.*\)</VersionSeries>.*:\1:p' Directory.Build.props | head -1)
+
+            if [ -z "$series" ]; then
+              echo "::error::No <VersionSeries> was found in Directory.Build.props."
+              exit 1
+            fi
+
+            # The tags are the record of what exists, which is what makes the numbering
+            # restartable: bumping the series to 5.1 finds no 5.1.* tag and starts again at 5.1.0.
+            series_pattern=${series//./\\.}
+            highest=$(git tag --list "$series.*" | sed -n "s/^$series_pattern\.\([0-9][0-9]*\)$/\1/p" | sort -n | tail -1)
+
+            if [ -z "$highest" ]; then
+              version="$series.0"
+            else
+              version="$series.$((highest + 1))"
+            fi
+          fi
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$version' is not a three part version."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            echo "::error::Tag $version already exists, so that version has been released. Bump the series or pass a different version."
+            exit 1
+          fi
+
+          publish='true'
+          [ "$INPUT_DRY_RUN" != 'true' ] || publish='false'
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Release $version"
+            echo
+            echo "- releasing: \`$publish\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # LENS is the only published package. Everything else in the repository is either an editor
+  # artifact or a project that only this repository references.
+  nuget:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack
+        run: dotnet pack Lens/Lens.csproj --configuration Release -p:Version=${{ needs.prepare.outputs.version }} --output artifacts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nuget
+          path: artifacts/*.nupkg
+
+  vscode:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Stamp the version
+        shell: pwsh
+        run: ./build/Set-Version.ps1 -Version ${{ needs.prepare.outputs.version }}
+
+      - name: Restore
+        working-directory: editors/vscode
+        run: npm ci
+
+      # "vsce package" runs the vscode:prepublish script, which publishes the language server into
+      # server\ and compiles the TypeScript, so no separate build step is needed here.
+      - name: Package
+        working-directory: editors/vscode
+        run: npx --no-install vsce package --out lens-lang-${{ needs.prepare.outputs.version }}.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode
+          path: editors/vscode/lens-lang-*.vsix
+
+  vs:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Stamp the version
+        shell: pwsh
+        run: ./build/Set-Version.ps1 -Version ${{ needs.prepare.outputs.version }}
+
+      # build.ps1 publishes the language server and then drives MSBuild, which it locates through
+      # vswhere - the same two steps a local build takes.
+      - name: Build the VSIX
+        shell: pwsh
+        run: ./editors/vs/build.ps1
+
+      # the built file has no version in its name, and all artifacts end up side by side on
+      # the release page
+      - name: Name the VSIX after the version
+        shell: pwsh
+        run: |
+          Move-Item `
+            'editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio.vsix' `
+            'editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio-${{ needs.prepare.outputs.version }}.vsix'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vs
+          path: editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio-*.vsix
+
+  # Nothing leaves the run until every artifact exists, so a broken leg cannot spend a version
+  # number or leave a release half populated.
+  release:
+    needs: [prepare, nuget, vscode, vs]
+    if: needs.prepare.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      # NuGet trusted publishing exchanges this token for a short lived API key, which is why no
+      # NuGet secret exists in this repository
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get a NuGet API key
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: impworks
+
+      - name: Publish to NuGet
+        run: |
+          dotnet nuget push 'artifacts/nuget/*.nupkg' \
+            --api-key '${{ steps.nuget-login.outputs.NUGET_API_KEY }}' \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      # The tag is written last: by this point every artifact is built and NuGet has accepted the
+      # packages, so the tag marks a version that really exists.
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --generate-notes \
+            $(find artifacts -type f | sort)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Lens.VisualStudio.8f2c1d4e-6b7a-4f31-9c05-7d2a5e1b93af" Version="5.0.0" Language="en-US" Publisher="LENS authors" />
+        <Identity Id="Lens.VisualStudio.8f2c1d4e-6b7a-4f31-9c05-7d2a5e1b93af" Version="5.0.0" Language="en-US" Publisher="impworks" />
         <DisplayName>LENS</DisplayName>
         <Description xml:space="preserve">Language support for LENS, the embeddable .NET scripting language: highlighting, completion, diagnostics, navigation and rename for .lns files.</Description>
         <License>LICENSE.md</License>

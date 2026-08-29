@@ -29,11 +29,12 @@ breakpoints may go on a line, so the plugin has a second, .NET half - see
 
 ## Prerequisites
 
-* **JetBrains Rider 2025.2 or newer.** The plugin uses the IntelliJ Platform LSP API, which only
+* **JetBrains Rider 2026.1 or newer.** The plugin uses the IntelliJ Platform LSP API, which only
   exists in the paid IDEs, and a Rider extension point for the breakpoint gutter. It will not load
-  in IntelliJ IDEA Community or Android Studio.
-* **A JDK matching the Rider you build against**, to run Gradle. Rider 2026.x is compiled for Java
-  25; the JBR that ships inside Rider itself is a full JDK and works:
+  in IntelliJ IDEA Community or Android Studio. 2026.1 is the first release in which every LSP
+  feature the plugin relies on exists - see [Known gaps](#known-gaps-against-the-vs-code-extension).
+* **A JDK 25 or newer**, to run Gradle. Rider 2026.x is compiled for Java 25, so an older JDK
+  cannot read the platform classes; the JBR that ships inside Rider itself is a full JDK and works:
   `C:\Program Files\JetBrains\JetBrains Rider <version>\jbr`.
 * **.NET SDK 10** on `PATH`, to build the language server that gets bundled into the plugin. Pass
   `-PbundleServer=false` to skip it. The same `dotnet` builds the ReSharper backend half, which
@@ -46,21 +47,12 @@ breakpoints may go on a line, so the plugin has a second, .NET half - see
 
 ## Building
 
-The build has to compile against a Rider SDK. Pointing it at an installed Rider is much faster than
-letting Gradle download one (the Rider SDK archive is around 4 GB):
-
-```
-cd editors/rider
-gradlew.bat -PriderPath="C:/Program Files/JetBrains/JetBrains Rider 2025.2" buildPlugin
-```
-
-Without `-PriderPath`, the SDK named by `riderVersion` in `gradle.properties` is downloaded from the
-JetBrains repository instead.
+The build has to compile against a Rider SDK.
 
 If the JDK on `PATH` is older than the one the target Rider needs, point Gradle at Rider's own:
 
 ```
-set JAVA_HOME=C:\Program Files\JetBrains\JetBrains Rider 2025.2\jbr
+set JAVA_HOME=C:\Program Files\JetBrains\JetBrains Rider 2026.2\jbr
 ```
 
 The result is an installable zip:
@@ -105,7 +97,7 @@ language server's.
 `Lens.Rider.Backend.sln` can be opened on its own, but only after
 
 ```
-gradlew.bat -PriderPath="C:/Program Files/JetBrains/JetBrains Rider 2025.2" prepare
+gradlew.bat -PriderPath="C:/Program Files/JetBrains/JetBrains Rider 2026.2" prepare
 ```
 
 which writes `build/DotNetSdkPath.Generated.props` and `src/dotnet/nuget.config`. Without them the
@@ -191,12 +183,10 @@ the gutter.
   Enter keeps the previous indent.
 * **Interpolation holes are not coloured as code.** The lexer treats an interpolated string as one
   token; the server's semantic tokens still colour the names inside it.
-* **Rider version differences.** The platform gained LSP features over time: document symbols (the
-  file structure) arrived in 2025.3 and rename in 2026.1. On Rider 2025.2 those two are unavailable
-  however the plugin is written; everything else works from 2025.2 onwards.
-* The plugin uses the pre-2026.1 LSP API names (`LspServerSupportProvider`,
-  `ProjectWideLspServerDescriptor`) on purpose. They are deprecated in the newest platform but are
-  the only ones that exist on the older Riders this plugin still supports.
+* The plugin still uses the pre-2026.1 LSP API names (`LspServerSupportProvider`,
+  `ProjectWideLspServerDescriptor`), which are deprecated in the current platform. They were the
+  only ones available while Rider 2025.2 was supported; now that `since-build` is 261 they can be
+  replaced with the current API, and that has not been done yet.
 * **The backend half has no automated tests.** `test` covers the lexer and the PSI on the JVM only;
   the backend is exercised by hand in `runIde`. A ReSharper test harness would be a bigger addition
   than the six small components it would be testing.
