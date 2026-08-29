@@ -2,8 +2,13 @@ name: Release
 
 # Run by hand from the Actions tab. Building a release is cheap and repeatable; putting one in
 # front of the public is not, so this workflow stops at a tagged GitHub release with every
-# artifact attached. Only NuGet is pushed automatically - the Visual Studio, VS Code and JetBrains
-# listings are updated by uploading the attached files by hand.
+# artifact attached. Only NuGet is pushed automatically - the Visual Studio and VS Code listings
+# are updated by uploading the attached files by hand.
+#
+# The Rider plugin is deliberately not built here. Compiling against the Rider SDK costs a 3.6 GB
+# download that unpacks to 14 GB, which no cache on a hosted runner can hold, for an artifact that
+# has to be uploaded to the JetBrains Marketplace by hand anyway. It is built locally instead -
+# see editors/rider/README.md.
 on:
   workflow_dispatch:
     inputs:
@@ -22,7 +27,7 @@ permissions:
 
 jobs:
   # Decides which version this run produces, and refuses to start if that version has been
-  # released already. Every other job reads the answer from here, so all four artifacts carry the
+  # released already. Every other job reads the answer from here, so all artifacts carry the
   # same number.
   prepare:
     runs-on: ubuntu-latest
@@ -89,8 +94,8 @@ jobs:
             echo "- releasing: \`$publish\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Both packages are built at the same version, which also pins the LENS dependency that
-  # LENS.LanguageServer.Core takes on it.
+  # LENS is the only published package. Everything else in the repository is either an editor
+  # artifact or a project that only this repository references.
   nuget:
     needs: prepare
     runs-on: windows-latest
@@ -103,9 +108,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Pack
-        run: |
-          dotnet pack Lens/Lens.csproj --configuration Release -p:Version=${{ needs.prepare.outputs.version }} --output artifacts
-          dotnet pack Lens.LanguageServer.Core/Lens.LanguageServer.Core.csproj --configuration Release -p:Version=${{ needs.prepare.outputs.version }} --output artifacts
+        run: dotnet pack Lens/Lens.csproj --configuration Release -p:Version=${{ needs.prepare.outputs.version }} --output artifacts
 
       - uses: actions/upload-artifact@v4
         with:
@@ -169,7 +172,7 @@ jobs:
         shell: pwsh
         run: ./editors/vs/build.ps1
 
-      # the built file has no version in its name, and all four artifacts end up side by side on
+      # the built file has no version in its name, and all artifacts end up side by side on
       # the release page
       - name: Name the VSIX after the version
         shell: pwsh
@@ -183,49 +186,10 @@ jobs:
           name: vs
           path: editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio-*.vsix
 
-  rider:
-    needs: prepare
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      # net8.0 for the ReSharper backend, net10.0 for the language server that is bundled with the
-      # plugin
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
-
-      # Rider 2026.x is compiled for Java 25, and an older JDK cannot read the platform classes the
-      # plugin is compiled against
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 25
-
-      - uses: gradle/actions/setup-gradle@v4
-
-      - name: Stamp the version
-        shell: pwsh
-        run: ./build/Set-Version.ps1 -Version ${{ needs.prepare.outputs.version }}
-
-      # No riderPath is set on the runner, so the Rider SDK is downloaded - well over a gigabyte,
-      # which is why this leg is the slow one.
-      - name: Build the plugin
-        working-directory: editors/rider
-        run: ./gradlew buildPlugin --no-daemon
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rider
-          path: editors/rider/build/distributions/*.zip
-
-  # Nothing leaves the run until all four artifacts exist, so a broken leg cannot spend a version
+  # Nothing leaves the run until every artifact exists, so a broken leg cannot spend a version
   # number or leave a release half populated.
   release:
-    needs: [prepare, nuget, vscode, vs, rider]
+    needs: [prepare, nuget, vscode, vs]
     if: needs.prepare.outputs.publish == 'true'
     runs-on: ubuntu-latest
 

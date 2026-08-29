@@ -72,7 +72,8 @@ Edit-File `
     -Pattern '("version"\s*:\s*")[^"]*(")' `
     -Replacement "`${1}$Version`${2}"
 
-# Not published by the workflow yet, but kept in step so a Rider release is a one-line change.
+# The Rider plugin is built locally rather than by the workflow, but its version is stamped from
+# the same place so that a release built by hand carries the same number as the rest.
 Edit-File `
     -Path 'editors/rider/gradle.properties' `
     -Pattern '(?m)^(pluginVersion=).*$' `

@@ -5,5 +5,6 @@ src/**
 scripts/**
 out/**/*.map
 tsconfig.json
+samples/**
 **/*.ts
 !server/**

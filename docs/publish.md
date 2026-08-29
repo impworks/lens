@@ -1,15 +1,19 @@
 How to publish a release
 ========================
 
-The `Release` workflow (`.github/workflows/release.yml`) builds all four
-artifacts, pushes the NuGet packages and leaves a tagged GitHub release with
-everything attached. It only ever runs when someone starts it from the Actions
-tab - not on a push, and not on a tag.
+The `Release` workflow (`.github/workflows/release.yml`) builds the artifacts,
+pushes the NuGet package and leaves a tagged GitHub release with everything
+attached. It only ever runs when someone starts it from the Actions tab - not on
+a push, and not on a tag.
 
 The marketplace listings are updated by hand, by downloading the files from the
 release and uploading them. Building a release is cheap and repeatable; putting
 one in front of the public is neither, and a marketplace upload cannot be taken
 back.
+
+The Rider plugin is the exception: it is not built by the workflow at all, and
+has to be built locally and attached to the release by hand - see
+[The Rider plugin](#the-rider-plugin).
 
 Versioning
 ----------
@@ -34,7 +38,7 @@ To restart the numbering, bump the series by hand:
 
 The next release then finds no `5.1.*` tag and produces `5.1.0`.
 
-A local build gets `<series>.0`, which is what the two NuGet projects use when
+A local build gets `<series>.0`, which is what the .NET projects use when
 nothing overrides them.
 
 Running a release
@@ -49,22 +53,40 @@ From the Actions tab, run `Release`. Both inputs are optional:
 
 A run builds, in parallel:
 
-* `LENS` and `LENS.LanguageServer.Core` NuGet packages
+* the `LENS` NuGet package
 * `lens-lang-<version>.vsix` for VS Code
 * `Lens.VisualStudio-<version>.vsix` for Visual Studio
-* `lens-rider-<version>.zip` for Rider
 
-The Rider leg is the slow one: no local Rider is pointed at on the runner, so
-the plugin is compiled against a downloaded SDK of well over a gigabyte.
-
-Only once all four have been built does the last job push to NuGet and create
+Only once all three have been built does the last job push to NuGet and create
 the release. A failure anywhere before that leaves nothing behind.
+
+The Rider plugin
+----------------
+
+It is not built by the workflow. Compiling against the Rider SDK costs a 3.6 GB
+download that unpacks to about 14 GB in the Gradle cache - past GitHub's 10 GB
+per-repository cache limit, so every run would pay for it again - and the result
+has to be uploaded to the JetBrains Marketplace by hand in any case.
+
+Everything else about it is intact: `build/Set-Version.ps1` still stamps
+`gradle.properties`, so a release build is
+
+```
+cd editors/rider
+gradlew.bat buildPlugin
+```
+
+after running `build/Set-Version.ps1 -Version <version>` from the repository
+root. The zip lands in `editors/rider/build/distributions/` and can be attached
+to the GitHub release by hand. See `editors/rider/README.md` for the build
+prerequisites.
 
 Where the version ends up
 -------------------------
 
-`LENS` and `LENS.LanguageServer.Core` are packed with `-p:Version`, which also
-pins the `LENS` dependency that `LENS.LanguageServer.Core` takes.
+`LENS` is packed with `-p:Version`. It is the only package that is published:
+`Lens.LanguageServer.Core` is marked `IsPackable=false`, because every consumer
+of it is in this repository and references the project directly.
 
 The other three manifests keep a version of their own, and
 `build/Set-Version.ps1` stamps them before their build. It edits the working
@@ -90,10 +112,6 @@ account's *Trusted Publishing* page. The policy names:
 * the repository, `impworks/lens`
 * the workflow file, `release.yml`
 
-A first release of a package that does not exist on nuget.org yet needs the
-policy to name the package as well, since there is no existing owner to check
-against.
-
 Publishing to the marketplaces
 ------------------------------
 
@@ -103,7 +121,7 @@ All three are manual, from the files attached to the GitHub release.
   <https://marketplace.visualstudio.com/manage/publishers/impworks>.
 * **VS Code** - upload `lens-lang-<version>.vsix` under the same publisher.
   The extension identifier is `impworks.lens-lang`.
-* **Rider** - upload `lens-rider-<version>.zip` at
-  <https://plugins.jetbrains.com/>. The first upload of a plugin has to be
-  manual in any case; JetBrains only accepts automated uploads for a plugin
-  that already exists there.
+* **Rider** - build the plugin locally as described above, then upload
+  `lens-rider-<version>.zip` at <https://plugins.jetbrains.com/>. The first
+  upload of a plugin has to be manual in any case; JetBrains only accepts
+  automated uploads for a plugin that already exists there.

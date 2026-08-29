@@ -3,12 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Authors>LENS authors</Authors>
-        <PackageId>LENS.LanguageServer.Core</PackageId>
-        <Description>Editor-agnostic language services for LENS: documents, positions, completion, navigation and rename. Contains no protocol code, so an LSP server and an in-process editor plugin can share it.</Description>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/impworks/lens</PackageProjectUrl>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
