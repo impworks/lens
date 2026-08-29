@@ -70,7 +70,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
                 // only local constants are cached
                 // because mutable variables could be closured later on
-                if (local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants)
+                if (local.IsConstant && local.IsImmutable && ctx.UnrollConstants)
                     _localConstant = local;
 
                 // reading the name is what settles a type that was still being worked out: every

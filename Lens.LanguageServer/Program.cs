@@ -36,6 +36,13 @@ namespace Lens.LanguageServer
                                         .SetMinimumLevel(logToStandardError ? LogLevel.Debug : LogLevel.Warning)
                                )
                                .WithServices(x => x.AddSingleton(service))
+                               .OnInitialize(
+                                   (_, request, _) =>
+                                       {
+                                           StaticCapabilities.Apply(request.Capabilities);
+                                           return Task.CompletedTask;
+                                       }
+                               )
                                .WithHandler<DocumentHandler>()
                                .WithHandler<CompletionHandler>()
                                .WithHandler<LensHoverHandler>()

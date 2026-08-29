@@ -79,7 +79,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
-            if (Condition.IsConstant && ctx.Options.UnrollConstants)
+            if (Condition.IsConstant && ctx.UnrollConstants)
             {
                 // result is known at compile time: just emit the corresponding branch's code
                 var node = Condition.ConstantValue ? (NodeBase) TrueAction : FalseAction;

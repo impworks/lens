@@ -1,0 +1,62 @@
+<!-- the plugin carries a ReSharper backend assembly, which the backend cannot load on the fly -->
+<idea-plugin require-restart="true">
+    <id>org.lens.lang</id>
+    <name>LENS</name>
+    <vendor url="https://github.com/impworks/lens">LENS</vendor>
+
+    <description><![CDATA[
+        Language support for <b>LENS</b> scripts (<code>.lns</code>) in JetBrains Rider.
+
+        <ul>
+            <li>Syntax highlighting, both lexical and from the compiler</li>
+            <li>Completion, diagnostics as you type, hover, go to definition, find usages and rename</li>
+            <li>File structure</li>
+            <li>Breakpoints in <code>.lns</code> files that were compiled with debug information</li>
+        </ul>
+
+        Everything but the lexical colouring is answered by <code>lens-language-server</code>, the
+        same language server the VS Code extension uses.
+    ]]></description>
+
+    <!-- the LSP API is only present in the paid IDEs, and the breakpoint hook is Rider's own -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.lsp</depends>
+    <depends>com.intellij.modules.rider</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="LENS"
+            language="LENS"
+            extensions="lns"
+            implementationClass="org.lens.rider.LensFileType"
+            fieldName="INSTANCE"/>
+
+        <lang.parserDefinition language="LENS" implementationClass="org.lens.rider.LensParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="LENS" implementationClass="org.lens.rider.LensSyntaxHighlighterFactory"/>
+        <lang.commenter language="LENS" implementationClass="org.lens.rider.LensCommenter"/>
+        <lang.braceMatcher language="LENS" implementationClass="org.lens.rider.LensBraceMatcher"/>
+        <colorSettingsPage implementation="org.lens.rider.LensColorSettingsPage"/>
+
+        <platform.lsp.serverSupportProvider implementation="org.lens.rider.LensLspServerSupportProvider"/>
+
+        <!--
+            Rider offers a breakpoint in a file only when a policy is registered for the language of
+            its PSI file - see RiderBreakpointHost.isSupportedLanguage. The base policy allows every
+            line, which is what a script whose debug information the host produced needs.
+
+            This answers canPutAt only. The variants that computeVariants then asks for come from
+            LensBreakpointVariantsProvider in the Lens.Rider.Backend assembly.
+        -->
+        <rider.debuggerSupportPolicy
+            language="LENS"
+            implementationClass="com.jetbrains.rider.debugger.RiderDebuggerSupportPolicy"/>
+
+        <applicationService serviceImplementation="org.lens.rider.LensSettings"/>
+        <applicationConfigurable
+            parentId="tools"
+            id="org.lens.rider.settings"
+            displayName="LENS"
+            instance="org.lens.rider.LensConfigurable"/>
+    </extensions>
+</idea-plugin>

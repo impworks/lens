@@ -158,6 +158,8 @@ namespace Lens
         {
             try
             {
+                _context.SetSource(src);
+
                 var lexer = Measure(() => new LensLexer(src), "Lexer");
                 var parser = Measure(() => new LensParser(lexer.Lexems), "Parser");
                 return Measure(() => compile(parser.Nodes), "Compiler");

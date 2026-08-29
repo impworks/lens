@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -27,6 +27,11 @@ namespace Lens.Analysis
         /// </summary>
         public IReadOnlyList<CompletionEntry> Complete(LexemLocation position)
         {
+            // a 'declare' block holds declarations and nothing else, so the only thing that may be
+            // written where one of them begins is the word that says which kind it is
+            if (IsCompletingDeclarationKeyword(position))
+                return CompleteDeclarationKeywords();
+
             // a 'use' directive names a namespace rather than an expression, and its dots separate
             // namespace segments rather than reaching a member of anything
             var namespacePrefix = FindNamespacePrefix(position);
@@ -44,6 +49,16 @@ namespace Lens.Analysis
             return newPrefix == null
                 ? CompleteNames(position)
                 : CompleteTypes(newPrefix);
+        }
+
+        /// <summary>
+        /// The words that may open an entry of a 'declare' block.
+        /// </summary>
+        private static IReadOnlyList<CompletionEntry> CompleteDeclarationKeywords()
+        {
+            return DeclarationKeywords
+                   .Select(x => new CompletionEntry(x, SymbolKind.Keyword, "keyword"))
+                   .ToArray();
         }
 
         /// <summary>
@@ -323,6 +338,82 @@ namespace Lens.Analysis
         #endregion
 
         #region Receiver resolution
+
+        /// <summary>
+        /// An indented line on which nothing has been written yet but the word that opens it.
+        /// </summary>
+        private static readonly Regex StatementStart = new Regex(
+            @"^(?<indent>[ \t]+)[A-Za-z_]*$",
+            RegexOptions.Compiled
+        );
+
+        /// <summary>
+        /// Whether the caret is where a 'declare' block expects the word that opens an entry.
+        ///
+        /// Read off the text like the other two special positions are, and for the same reason: a
+        /// half-written entry does not parse, so the block holding it is not in the tree while it
+        /// is being typed. What gives it away anyway is the layout - the caret is at the start of
+        /// an indented line, and the line enclosing that one is a 'declare'.
+        /// </summary>
+        private bool IsCompletingDeclarationKeyword(LexemLocation position)
+        {
+            var caret = IndexOf(position);
+            if (caret < 0)
+                return false;
+
+            var lineStart = caret;
+            while (lineStart > 0 && Source[lineStart - 1] != '\n')
+                lineStart--;
+
+            var match = StatementStart.Match(Source.Substring(lineStart, caret - lineStart));
+
+            return match.Success && OpensDeclarationBlock(lineStart, match.Groups["indent"].Value.Length);
+        }
+
+        /// <summary>
+        /// Whether the line enclosing an indented line is a 'declare'.
+        ///
+        /// The enclosing line is the nearest one above that is written further left: the lines in
+        /// between are entries of the same block, and a blank line belongs to no block at all.
+        /// </summary>
+        private bool OpensDeclarationBlock(int lineStart, int indent)
+        {
+            var end = lineStart;
+
+            while (end > 0)
+            {
+                // step back over the line break that ended the line above
+                end--;
+                if (end > 0 && Source[end - 1] == '\r')
+                    end--;
+
+                var start = end;
+                while (start > 0 && Source[start - 1] != '\n')
+                    start--;
+
+                var line = WithoutComment(Source.Substring(start, end - start));
+                end = start;
+
+                if (line.Trim().Length == 0)
+                    continue;
+
+                if (line.Length - line.TrimStart(' ', '\t').Length >= indent)
+                    continue;
+
+                return line.Trim() == "declare";
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// A line without the comment that may end it.
+        /// </summary>
+        private static string WithoutComment(string line)
+        {
+            var index = line.IndexOf("//", StringComparison.Ordinal);
+            return index < 0 ? line : line.Substring(0, index);
+        }
 
         /// <summary>
         /// A 'use' directive, with the namespace it names split into the part that is complete and
@@ -838,6 +929,15 @@ namespace Lens.Analysis
         /// <summary>
         /// The words that are always valid to write.
         /// </summary>
+        /// <summary>
+        /// The words that may open an entry of a 'declare' block, in the order a block is
+        /// usually written: a reference comes before the names it makes available.
+        /// </summary>
+        private static readonly string[] DeclarationKeywords =
+        {
+            "reference", "type", "fun", "var", "let"
+        };
+
         private static readonly string[] Keywords =
         {
             "declare", "use", "record", "type", "fun", "pure", "let", "var", "new", "if", "then",

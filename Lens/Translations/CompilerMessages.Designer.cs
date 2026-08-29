@@ -1852,6 +1852,15 @@ namespace Lens.Translations {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to LE3204: Debug information cannot be generated on this platform..
+        /// </summary>
+        public static string DebugNotSupported {
+            get {
+                return ResourceManager.GetString("DebugNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to LE3200: A compilation whose declarations provide the environment cannot emit code..
         /// </summary>
         public static string ProvideModeCannotEmit {

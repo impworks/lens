@@ -92,7 +92,7 @@ fun desribe:string (arr:object[]) ->
 
 ### Supported frameworks
 
-LENS targets `net47`, `netstandard2.0`, and `net8.0`.
+LENS targets `net47`, `netstandard2.0`, and `net10.0`.
 
 ### Why another language?
 
@@ -178,9 +178,15 @@ Please refer to the [Wiki](https://github.com/impworks/lens/wiki) for the comple
 
 ### Editor support
 
-There is a language server and a [VS Code extension](editors/vscode/README.md): syntax highlighting
-(from the compiler, not from a regular expression), completion, diagnostics as you type, hover,
+There is a language server and three editor plugins built on it: syntax highlighting (from the
+compiler, not from a regular expression), completion, diagnostics as you type, hover,
 go-to-definition, find-references, rename and an outline.
+
+| Editor | Plugin | Build |
+|---|---|---|
+| VS Code | [editors/vscode](editors/vscode/README.md) | `npm run package` |
+| Visual Studio | [editors/vs](editors/vs/README.md) | `editors/vs/build.ps1` |
+| Rider | [editors/rider](editors/rider/README.md) | `gradlew buildPlugin` |
 
 ```
 cd editors/vscode
@@ -191,9 +197,15 @@ npm run package          # produces lens-lang-5.0.0.vsix
 ```
 
 Install it with `code --install-extension lens-lang-5.0.0.vsix`, or open `editors/vscode` in VS Code
-and press F5 to run it without installing.
+and press F5 to run it without installing. The other two have their own READMEs, because each needs
+its own IDE's SDK to build and each has its own prerequisites.
 
-The server speaks the language server protocol over stdio, so any editor that can launch
+None of the three implements any of the language: they all launch the same `lens-language-server`
+and speak the language server protocol to it, so a feature added to the server appears in all of
+them. Each plugin is the part the protocol cannot express - registering `.lns` as a file type, and
+whatever its IDE demands beyond that.
+
+The server speaks the protocol over stdio, so any other editor that can launch
 `dotnet lens-language-server.dll` gets the same features. A plugin that would rather host the
 language services in-process can reference `Lens.LanguageServer.Core` and skip the protocol.
 
@@ -218,6 +230,79 @@ to the machine it was written on. A reference that does not resolve is a warning
 because the host may have registered the assembly by itself already.
 
 Contributions are always welcome!
+
+### Debugging a script
+
+A script can be compiled with debug information, so that a debugger attached to the host - Visual
+Studio, Rider - steps through the LENS source rather than through the code that calls it.
+
+```csharp
+var options = new LensCompilerOptions();
+options.DebugSettings.Enabled = true;
+options.DebugSettings.SourceFile = @"C:\scripts\pricing.lns";  // optional
+
+var compiler = new LensCompiler(options);
+var script = compiler.Compile(File.ReadAllText(@"C:\scripts\pricing.lns"));
+script();
+```
+
+Breakpoints, stepping, and inspecting locals and arguments all work. So do stack traces: an exception
+that escapes a script names the line of LENS that threw it, whether or not a debugger is attached.
+
+A script that lives in memory rather than on disk needs no file at all. Its text is stored inside the
+symbols by default (`DebugSettings.EmbedSource`), and the debugger reads the source from there - so a
+script built by the host, or read out of a database, is just as steppable as one on disk.
+
+To see it working, `ConsoleHost` runs a script file this way when given its path. Run it from your
+IDE with an argument, put a breakpoint in the `.lns` file, and the IDE stops there:
+
+```
+dotnet run --project ConsoleHost -- editors/vscode/samples/debugme.lns
+```
+
+Debug information costs a slower compilation and an unoptimized script, so it is off by default. When
+it is on, constants are not folded regardless of `UnrollConstants`: a name that has been folded away
+has no storage left for a debugger to show.
+
+The symbols name C# as the language the script is written in, because a debugger picks the evaluator
+behind its watch window and its hover tooltips by that name and none of them has one for LENS.
+Borrowing C#'s is what makes hovering over a variable show its value, and it holds for what a
+debugger is actually asked to evaluate - names of variables, fields and elements, which LENS spells
+as C# does. Set `DebugSettings.ReportAsCSharp = false` to have the symbols say LENS instead, which is
+honest and costs the tooltips.
+
+Supported on `net47` and on `net10.0`. It is *not* supported on `netstandard2.0`, whose surface has
+no API for writing symbols at all - a compilation that asks for them there is refused rather than
+quietly producing none.
+
+#### Where breakpoints can be set
+
+Whether an IDE lets you click a breakpoint into a `.lns` file is the IDE's decision about a file type
+it has never heard of, and nothing in the symbols can change it. Visual Studio offers the breakpoint
+margin in any text file, so breakpoints work there with no plugin at all. Rider offers it only for a
+language it knows, which is one of the things the [Rider plugin](editors/rider/README.md) registers.
+
+Hovering over a variable while stopped is likewise the editor's business rather than the symbols'.
+Visual Studio asks the text view for the expression under the cursor and shows nothing if no one
+answers, which is why stepping and the Locals window work without a plugin while tooltips do not -
+the [Visual Studio extension](editors/vs/README.md) is what answers.
+
+Neither IDE needs a plugin to *stop* in a script, though - a script can ask for the debugger itself,
+and stepping, locals and the call stack all work from there:
+
+```csharp
+use System.Diagnostics
+
+if Debugger::IsAttached then
+    Debugger::Break ()
+```
+
+Stepping into a script from host code works everywhere too: the debugger opens the script and follows
+it, whether or not it would have let you set the breakpoint by hand.
+
+One known limitation on .NET, from `PersistedAssemblyBuilder` and not present on .NET Framework: a
+generic type with a field whose type is an *array of its own type parameter* (`record Box<T>` with
+`Items: T[]`) cannot be compiled with debug information. Nothing else about generics is affected.
 
 ### What NOT to expect
 

@@ -63,14 +63,17 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (!IsConstant)
-            {
-                return Kind == LogicalOperatorKind.And
-                    ? Expr.If(LeftOperand, Expr.Block(Expr.Cast<bool>(RightOperand)), Expr.Block(Expr.False()))
-                    : Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
-            }
+            // folding gives the best code there is, but it can be switched off - and an operator
+            // whose meaning is a call rather than an opcode has to become that call either way
+            var folded = base.Expand(ctx, mustReturn);
+            if (folded != null)
+                return folded;
 
-            return base.Expand(ctx, mustReturn);
+            // there is no opcode for a short-circuiting operator: it is a branch, and stays one
+            // even when both its operands turned out to be constants
+            return Kind == LogicalOperatorKind.And
+                ? Expr.If(LeftOperand, Expr.Block(Expr.Cast<bool>(RightOperand)), Expr.Block(Expr.False()))
+                : Expr.If(LeftOperand, Expr.Block(Expr.True()), Expr.Block(Expr.Cast<bool>(RightOperand)));
         }
 
         protected override void EmitOperator(Context ctx)

@@ -334,6 +334,7 @@ namespace Lens.Compiler
                     // an implicit local invented while emitting already has its slot; declaring a
                     // second one for it wasted a slot per temporary
                     curr.LocalBuilder = gen.DeclareLocal(curr.Type.Materialize());
+                    ctx.DebugInfo?.NameLocal(curr.LocalBuilder, curr.Name);
                 }
             }
 
@@ -372,7 +373,7 @@ namespace Lens.Compiler
         /// </summary>
         private static bool IsUnrolledConstant(Context ctx, Local local)
         {
-            return local.IsConstant && local.IsImmutable && ctx.Options.UnrollConstants;
+            return local.IsConstant && local.IsImmutable && ctx.UnrollConstants;
         }
 
         /// <summary>

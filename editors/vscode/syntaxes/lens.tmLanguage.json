@@ -142,7 +142,8 @@
                     "match": "\\b(declare|use|record|type|fun|pure|let|var)\\b"
                 },
                 {
-                    "name": "keyword.operator.word.lens",
+                    "comment": "keyword.other rather than keyword.operator.word: Visual Studio colours everything under keyword.operator as an operator, which leaves these looking like plain text. They are keywords.",
+                    "name": "keyword.other.lens",
                     "match": "\\b(new|not|is|as|of|ref|typeof|default)\\b"
                 }
             ]

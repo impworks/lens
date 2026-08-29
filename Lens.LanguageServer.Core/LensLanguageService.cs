@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -296,14 +296,26 @@ namespace Lens.LanguageServer.Core
             // rather than trusted to
             var range = TextRange.Union(TextRange.FromSpan(item.Span), selection);
 
+            // an editor also rejects - and again drops the whole batch over - an entry with no
+            // name at all, which a declaration whose name is a string literal can have
+            var name = string.IsNullOrWhiteSpace(item.Name) ? DescribeNameless(item) : item.Name;
+
             return new OutlineEntry(
-                item.Name,
+                name,
                 item.Kind,
                 item.Detail,
                 range,
                 selection,
                 item.Children.Select(Convert).ToArray()
             );
+        }
+
+        /// <summary>
+        /// What to call an outline entry that has no name of its own.
+        /// </summary>
+        private static string DescribeNameless(OutlineItem item)
+        {
+            return string.IsNullOrWhiteSpace(item.Detail) ? item.Kind.ToString() : item.Detail;
         }
 
         private static readonly HashSet<string> Reserved = new HashSet<string>

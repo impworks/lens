@@ -57,9 +57,19 @@ namespace Lens
 
         /// <summary>
         /// Checks if operations on constants must be performed at compile time.
+        ///
+        /// Ignored when debug information is generated: a name that is unrolled has no storage and
+        /// no code, so a debugger could neither stop on it nor show what it holds.
+        ///
         /// Default = true.
         /// </summary>
         public bool UnrollConstants = true;
+
+        /// <summary>
+        /// What debug information the compilation produces, if any.
+        /// Default = none.
+        /// </summary>
+        public LensDebugSettings DebugSettings = new LensDebugSettings();
 
         /// <summary>
         /// Checks whether the script should be compiled in a sandbox environment.

@@ -61,7 +61,7 @@ namespace Lens.Compiler
             EmitCode();
             FinalizeAssembly();
 
-            return Activator.CreateInstance(ResolveType(EntityNames.MainTypeName).Materialize());
+            return CreateScriptInstance();
         }
 
         /// <summary>

@@ -53,7 +53,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             // condition is known to be false: do not emit the loop at all
-            if (Condition.IsConstant && condType.Is<bool>() && Condition.ConstantValue == false && ctx.Options.UnrollConstants)
+            if (Condition.IsConstant && condType.Is<bool>() && Condition.ConstantValue == false && ctx.UnrollConstants)
                 return saveLast ? (NodeBase) Expr.Default(loopType) : Expr.Unit();
 
             return base.Expand(ctx, mustReturn);
@@ -86,6 +86,14 @@ namespace Lens.SyntaxTree.ControlFlow
             }
 
             gen.MarkLabel(beginLabel);
+
+            // The condition is tested once per iteration, so it needs a position of its own: without
+            // one, stepping round the loop would appear to jump back into the last statement of the
+            // body rather than to the top of the loop.
+            //
+            // A loop a 'for' expanded into tests a condition nobody wrote, and falls back to the
+            // header of the 'for' - which is the line its author expects to return to.
+            ctx.DebugInfo?.MarkStatement(gen, Condition.StartLocation.Line > 0 ? (LocationEntity) Condition : this);
 
             Expr.Cast(Condition, typeof(bool)).Emit(ctx, true);
             gen.EmitConstant(false);
