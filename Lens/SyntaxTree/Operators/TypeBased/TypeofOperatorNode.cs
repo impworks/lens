@@ -29,6 +29,11 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
+            // the operand has to be checked here rather than being left to the check every node
+            // goes through: whatever type was named, this expression is of type System.Type, so
+            // that check only ever sees System.Type and never the name the script wrote
+            CheckTypeInSafeMode(ctx, Type ?? ctx.ResolveType(TypeSignature));
+
             return TypeEntryCache.Of(typeof(Type));
         }
 

@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/pub/
+Lens.Playground/pub/
+editors/
+docs/
+*.suo
+*.user
+.git/
+.vs/
+.idea/

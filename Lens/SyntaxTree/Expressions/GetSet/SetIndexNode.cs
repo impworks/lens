@@ -37,7 +37,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 try
                 {
-                    _indexer = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType.Materialize(), idxType.Materialize(), false);
+                    _indexer = ctx.ResolveIndexer(exprType, idxType, false);
                 }
                 catch (LensCompilerException ex)
                 {

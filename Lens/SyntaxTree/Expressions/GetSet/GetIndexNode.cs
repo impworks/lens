@@ -39,7 +39,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var idxType = Index.Resolve(ctx);
             try
             {
-                _getter = ReflectionHelper.ResolveIndexer(ctx.Resolver, exprType.Materialize(), idxType.Materialize(), true);
+                _getter = ctx.ResolveIndexer(exprType, idxType, true);
                 return _getter.ReturnType;
             }
             catch (LensCompilerException ex)

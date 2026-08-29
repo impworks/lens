@@ -340,8 +340,11 @@ namespace Lens.Compiler
         /// <summary>
         /// Reads the value of a type parameter off one argument of the call site.
         /// </summary>
-        private static void InferGenericArgument(TypeEntry declared, TypeEntry actual, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        private void InferGenericArgument(TypeEntry declared, TypeEntry actual, IList<GenericParameterEntity> parameters, TypeEntry[] values)
         {
+            if (ReferenceEquals(declared, null) || ReferenceEquals(actual, null))
+                return;
+
             var entity = (declared as GenericParameterEntry)?.Entity;
             if (entity != null)
             {
@@ -352,8 +355,69 @@ namespace Lens.Compiler
                 return;
             }
 
-            if (declared.IsArray && !ReferenceEquals(actual, null) && actual.IsArray)
+            if (declared.IsArray && actual.IsArray)
+            {
                 InferGenericArgument(declared.ElementType, actual.ElementType, parameters, values);
+                return;
+            }
+
+            InferGenericArgumentsOfInstantiation(declared, actual, parameters, values);
+        }
+
+        /// <summary>
+        /// Reads the values of the type parameters that a composite signature such as List&lt;T&gt;
+        /// or Dictionary&lt;string, T&gt; mentions, off the type the call site actually passed.
+        ///
+        /// The signature names a definition applied to arguments, so the values sit one level down:
+        /// whatever was passed names the same definition somewhere, and pairing the two argument
+        /// lists reads the parameters off it. 'Somewhere' is why the base types and the interfaces
+        /// are walked - a signature of IEnumerable&lt;T&gt; is routinely given a List.
+        /// </summary>
+        private void InferGenericArgumentsOfInstantiation(TypeEntry declared, TypeEntry actual, IList<GenericParameterEntity> parameters, TypeEntry[] values)
+        {
+            if (!declared.IsGenericType || declared.IsGenericTypeDefinition)
+                return;
+
+            var definition = declared.GetGenericDefinition();
+            if (ReferenceEquals(definition, null))
+                return;
+
+            var instantiation = FindInstantiation(actual, definition);
+            if (ReferenceEquals(instantiation, null))
+                return;
+
+            var declaredArgs = declared.GenericArguments;
+            var actualArgs = instantiation.GenericArguments;
+            var count = Math.Min(declaredArgs.Length, actualArgs.Length);
+
+            for (var idx = 0; idx < count; idx++)
+                InferGenericArgument(declaredArgs[idx], actualArgs[idx], parameters, values);
+        }
+
+        /// <summary>
+        /// The instantiation of the given definition that a type is, inherits or implements.
+        /// </summary>
+        private TypeEntry FindInstantiation(TypeEntry type, TypeEntry definition)
+        {
+            for (var curr = type; !ReferenceEquals(curr, null); curr = curr.BaseType)
+                if (IsInstantiationOf(curr, definition))
+                    return curr;
+
+            if (!definition.IsInterface)
+                return null;
+
+            foreach (var curr in type.GetInterfaces(Resolver))
+                if (IsInstantiationOf(curr, definition))
+                    return curr;
+
+            return null;
+        }
+
+        private static bool IsInstantiationOf(TypeEntry type, TypeEntry definition)
+        {
+            return type.IsGenericType
+                   && !type.IsGenericTypeDefinition
+                   && type.GetGenericDefinition() == definition;
         }
 
         /// <summary>
@@ -394,7 +458,15 @@ namespace Lens.Compiler
             if (!IsEmitting && (HasNoRuntimeType(type) || HasNoRuntimeType(argTypes) || HasNoRuntimeType(hints)))
                 throw new KeyNotFoundException();
 
-            return ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+            var method = ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+
+            // the receiver is checked wherever it came from, but the type the method is declared on
+            // is never named in the script at all - the whole point of an extension method - so
+            // this is the only place a rule about that type can be applied
+            if (!IsTypeAllowed(method.DeclaringType))
+                Error(CompilerMessages.SafeModeIllegalType, method.DeclaringType.FullName);
+
+            return method;
         }
 
         /// <summary>
@@ -794,6 +866,71 @@ namespace Lens.Compiler
 
                 AddMethodSource = () => MemberOfInstantiation(adder, instantiation),
                 RemoveMethodSource = () => MemberOfInstantiation(remover, instantiation)
+            };
+        }
+
+        /// <summary>
+        /// Resolves the indexer of a host type, given the type of the index expression.
+        ///
+        /// This is the same structural lookup as the members above, and exists for the same reason:
+        /// an indexer used to be resolved by reflecting on the materialized type, so indexing a
+        /// List&lt;T&gt; inside a generic function - a type whose argument is a parameter with no
+        /// builder yet - asked a type parameter to materialize before there was an assembly.
+        /// </summary>
+        public MethodWrapper ResolveIndexer(TypeEntry type, TypeEntry idxType, bool isGetter)
+        {
+            var instantiation = InstantiationOf(type);
+            var target = LookupTargetOf(type);
+
+            var candidates = new List<Tuple<MethodInfo, TypeEntry, int>>();
+
+            foreach (var pty in target.GetProperties())
+            {
+                var accessor = isGetter ? pty.GetGetMethod() : pty.GetSetMethod();
+                if (accessor == null)
+                    continue;
+
+                var idxArgs = pty.GetIndexParameters();
+                if (idxArgs.Length != 1)
+                    continue;
+
+                var argType = SubstituteIntoInstantiation(idxArgs[0].ParameterType, instantiation);
+
+                candidates.Add(new Tuple<MethodInfo, TypeEntry, int>(accessor, argType, argType.DistanceFrom(Resolver, idxType)));
+            }
+
+            candidates.Sort((x, y) => x.Item3.CompareTo(y.Item3));
+
+            if (candidates.Count == 0 || candidates[0].Item3 == int.MaxValue)
+                Error(
+                    isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
+                    type,
+                    idxType
+                );
+
+            if (candidates.Count > 1 && candidates[0].Item3 == candidates[1].Item3)
+                Error(
+                    CompilerMessages.IndexAmbigious,
+                    type,
+                    candidates[0].Item2,
+                    candidates[1].Item2,
+                    Environment.NewLine
+                );
+
+            var found = candidates[0].Item1;
+
+            return new MethodWrapper
+            {
+                Name = found.Name,
+                DeclaringType = type,
+
+                IsStatic = false,
+                IsVirtual = found.IsVirtual,
+
+                ArgumentTypes = found.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
+                ReturnType = SubstituteIntoInstantiation(found.ReturnType, instantiation),
+
+                MethodInfoSource = () => MemberOfInstantiation(found, instantiation)
             };
         }
 

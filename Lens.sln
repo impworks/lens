@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.LanguageServer.Core", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.LanguageServer", "Lens.LanguageServer\Lens.LanguageServer.csproj", "{69B8959D-3B17-4FAF-917C-E66EF3A21481}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lens.Playground", "Lens.Playground\Lens.Playground.csproj", "{9E230041-E776-4966-B78E-D64C4709B520}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,6 +139,22 @@ Global
 		{69B8959D-3B17-4FAF-917C-E66EF3A21481}.Release|x86.Build.0 = Release|Any CPU
 		{69B8959D-3B17-4FAF-917C-E66EF3A21481}.Release|x64.ActiveCfg = Release|Any CPU
 		{69B8959D-3B17-4FAF-917C-E66EF3A21481}.Release|x64.Build.0 = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|Mono.ActiveCfg = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|Mono.Build.0 = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|x86.Build.0 = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Debug|x64.Build.0 = Debug|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|Mono.ActiveCfg = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|Mono.Build.0 = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|x86.ActiveCfg = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|x86.Build.0 = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|x64.ActiveCfg = Release|Any CPU
+		{9E230041-E776-4966-B78E-D64C4709B520}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

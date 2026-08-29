@@ -230,6 +230,33 @@ namespace Lens.Compiler.Entities
                 ArgumentTypes = Arguments == null
                     ? new TypeEntry[0]
                     : Arguments.Values.Select(fa => fa.GetArgumentType(ctx)).ToArray();
+
+            // a signature names types the same way the body does, and safe mode has to see them
+            // here rather than at the first call: 'fun f:Forbidden' otherwise reports the problem
+            // wherever f happens to be used, and 'fun f (x:Forbidden)' not at all
+            CheckSignatureInSafeMode(ctx);
+        }
+
+        /// <summary>
+        /// Applies the safe mode restrictions to the types the signature names.
+        /// </summary>
+        private void CheckSignatureInSafeMode(Context ctx)
+        {
+            if (!ctx.IsTypeAllowed(ReturnType))
+                Fail(ReturnType);
+
+            foreach (var curr in ArgumentTypes)
+                if (!ctx.IsTypeAllowed(curr))
+                    Fail(curr);
+
+            void Fail(TypeEntry type)
+            {
+                var message = string.Format(CompilerMessages.SafeModeIllegalType, type.FullName);
+
+                throw Body == null
+                    ? new LensCompilerException(message)
+                    : new LensCompilerException(message, Body);
+            }
         }
 
         /// <summary>

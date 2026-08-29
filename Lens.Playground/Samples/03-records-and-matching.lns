@@ -1,0 +1,35 @@
+// A record is similar to a named tuple
+record Point
+    X : int
+    Y : int
+
+// A type defines an algebraic data type
+type Shape
+    Nowhere
+    Dot of Point
+    Line of Point
+
+fun describe:string (s:Shape) ->
+    match s with
+        case Dot of p when p.X == p.Y then $"a dot on the diagonal at {p.X}"
+        case Dot of p then $"a dot at {p.X},{p.Y}"
+        case Line of p then $"a line reaching {p.X},{p.Y}"
+        case _ then "nothing at all"
+
+// playground limitation: arrays of custom defined types are not supported by Mono :(
+let shapes = new [[
+    Nowhere
+    Dot (new Point 3 3)
+    Dot (new Point 1 4)
+    Line (new Point 9 2)
+]]
+
+for s in shapes do
+    println (describe s)
+
+describe (Dot (new Point 7 7))
+
+// records compare by value
+let a = new Point 1 2
+let b = new Point 1 2
+println $"a equals b: {a == b}"

@@ -81,6 +81,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_type != null)
                 CheckTypeInSafeMode(ctx, _type);
 
+            CheckMemberInSafeMode(ctx, _field);
+            CheckMemberInSafeMode(ctx, _property);
+            CheckMemberInSafeMode(ctx, _method);
+
             if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
                 return TypeEntryCache.Of<int>();
 

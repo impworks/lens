@@ -1,0 +1,35 @@
+use System.Linq
+
+fun isPrime:bool (n:int) ->
+    let divisors = Enumerable::Range 2 (n - 2)
+        |> Where d -> n % d == 0
+        |> Count ()
+
+    divisors == 0
+
+// T~ is short for IEnumerable<T>, just like T? is Nullable<T>
+fun primes:int~ (limit:int) ->
+    for candidate in 2..limit do
+        if isPrime candidate then
+            yield candidate
+
+let found = primes 60
+    |> ToArray ()
+
+println $"primes below 60: {string::Join ", " found}"
+
+// lazy iterator just like in C#, can define infinite sequences
+fun naturals:IEnumerable<int> ->
+    var current = 1
+    while true do
+        yield current
+        current = current + 1
+
+let firstTen = naturals ()
+    |> Take 10
+    |> Select x -> x * x
+    |> ToArray ()
+
+println $"first ten squares: {string::Join ", " firstTen}"
+
+found.Length

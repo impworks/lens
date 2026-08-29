@@ -1,0 +1,32 @@
+use System.Linq
+
+// generic function
+fun id<T>:T (x:T) -> x
+
+// The type argument is inferred from the call, or given explicitly.
+println $"inferred: {id 42}"
+println $"explicit: {id<string> "hello"}"
+
+// generic record
+record Box<T>
+    Value : T
+
+let boxed = new Box<int> 42
+println $"boxed: {boxed.Value}"
+
+// generic algebraic type
+type Option<T>
+    Nothing
+    Just of T
+
+fun orElse<T>:T (o:Option<T> fallback:T) ->
+    match o with
+        case Just of x then x
+        case _ then fallback
+
+println $"just: {orElse (Just 7) 0}"
+println $"nothing: {orElse Nothing<int> 0}"
+
+// generic constraints
+fun foo<T = class & new>:T ->
+    new T ()

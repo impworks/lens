@@ -1,0 +1,11 @@
+// Welcome to LENS playground!
+// Press F8 to run this script in your browser.
+
+let name = "world"
+println $"Hello, {name}!"
+
+for i in 1..5 do
+    println $"{i} squared is {i * i}"
+
+// The last expression in the script is returned as a result into the left panel.
+$"Greeted {name} and counted to 5"
