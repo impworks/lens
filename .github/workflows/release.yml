@@ -37,7 +37,7 @@ jobs:
       publish: ${{ steps.plan.outputs.publish }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # the next number is derived from the existing tags, so the whole history is needed
           fetch-depth: 0
@@ -101,16 +101,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
       - name: Pack
         run: dotnet pack Lens/Lens.csproj --configuration Release -p:Version=${{ needs.prepare.outputs.version }} --output artifacts
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nuget
           path: artifacts/*.nupkg
@@ -120,15 +120,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: editors/vscode/package-lock.json
 
@@ -146,7 +146,7 @@ jobs:
         working-directory: editors/vscode
         run: npx --no-install vsce package --out lens-lang-${{ needs.prepare.outputs.version }}.vsix
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vscode
           path: editors/vscode/lens-lang-*.vsix
@@ -156,9 +156,9 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -181,7 +181,7 @@ jobs:
             'editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio.vsix' `
             'editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio-${{ needs.prepare.outputs.version }}.vsix'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vs
           path: editors/vs/Lens.VisualStudio/bin/Release/net472/Lens.VisualStudio-*.vsix
@@ -200,13 +200,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
 

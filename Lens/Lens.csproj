@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFrameworks>net47;netstandard2.0;net10.0</TargetFrameworks>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Authors>LENS authors</Authors>
         <PackageId>LENS</PackageId>
         <Description>Language for Embeddable .NET Scripting</Description>
