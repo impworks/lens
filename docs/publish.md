@@ -54,8 +54,8 @@ From the Actions tab, run `Release`. Both inputs are optional:
 A run builds, in parallel:
 
 * the `LENS` NuGet package
-* `lens-lang-<version>.vsix` for VS Code
-* `Lens.VisualStudio-<version>.vsix` for Visual Studio
+* `LensLang-VSCode-<version>.vsix` for VS Code
+* `LensLang-VisualStudio-<version>.vsix` for Visual Studio
 
 Only once all three have been built does the last job push to NuGet and create
 the release. A failure anywhere before that leaves nothing behind.
@@ -114,11 +114,11 @@ Publishing to the marketplaces
 
 All three are manual, from the files attached to the GitHub release.
 
-* **Visual Studio** - upload `Lens.VisualStudio-<version>.vsix` at
+* **Visual Studio** - upload `LensLang-VisualStudio-<version>.vsix` at
   <https://marketplace.visualstudio.com/manage/publishers/impworks>.
-* **VS Code** - upload `lens-lang-<version>.vsix` under the same publisher.
+* **VS Code** - upload `LensLang-VSCode-<version>.vsix` under the same publisher.
   The extension identifier is `impworks.lens-lang`.
 * **Rider** - build the plugin locally as described above, then upload
-  `lens-rider-<version>.zip` at <https://plugins.jetbrains.com/>. The first
+  `LensLang-Rider-<version>.zip` at <https://plugins.jetbrains.com/>. The first
   upload of a plugin has to be manual in any case; JetBrains only accepts
   automated uploads for a plugin that already exists there.

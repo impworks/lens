@@ -75,7 +75,7 @@ workspace; open `demo.lns` in it and the extension is running.
 
 ```
 npm run package
-code --install-extension lens-lang-5.0.0.vsix
+code --install-extension LensLang-VSCode.vsix
 ```
 
 Then reload VS Code and open any `.lns` file, from any folder.

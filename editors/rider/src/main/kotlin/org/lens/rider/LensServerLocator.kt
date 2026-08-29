@@ -22,7 +22,7 @@ object LensServerLocator {
     /**
      * The directory the plugin is unpacked into, which is the name of the distribution.
      */
-    private const val PLUGIN_DIRECTORY = "lens-rider"
+    private const val PLUGIN_DIRECTORY = "LensLang-Rider"
 
     private const val ENVIRONMENT_VARIABLE = "LENS_LANGUAGE_SERVER"
 

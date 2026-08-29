@@ -1,7 +1,7 @@
 <!-- the plugin carries a ReSharper backend assembly, which the backend cannot load on the fly -->
 <idea-plugin require-restart="true">
     <id>org.lens.lang</id>
-    <name>LENS</name>
+    <name>LENS Language Support</name>
     <vendor url="https://github.com/impworks/lens">LENS</vendor>
 
     <description><![CDATA[

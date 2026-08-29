@@ -1,6 +1,6 @@
 {
-    "name": "lens-lang",
-    "displayName": "LENS",
+    "name": "lens-language",
+    "displayName": "LENS: .NET Script Language",
     "description": "Language support for LENS: highlighting, completion, diagnostics, navigation and rename.",
     "version": "5.0.0",
     "publisher": "impworks",
@@ -93,7 +93,7 @@
         "build-server": "dotnet publish ../../Lens.LanguageServer/Lens.LanguageServer.csproj -c Release -o server -p:SatelliteResourceLanguages=ru -p:DebugType=none -p:UseAppHost=false",
         "smoke-test": "node scripts/smoke-test.js server/lens-language-server.dll",
         "vscode:prepublish": "npm run build-server && npm run check-types && npm run bundle",
-        "package": "vsce package"
+        "package": "vsce package --out LensLang-VSCode.vsix"
     },
     "dependencies": {
         "vscode-languageclient": "^8.1.0"

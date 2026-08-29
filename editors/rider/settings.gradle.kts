@@ -1,4 +1,4 @@
-rootProject.name = "lens-rider"
+rootProject.name = "LensLang-Rider"
 
 pluginManagement {
     repositories {

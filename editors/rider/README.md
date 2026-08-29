@@ -58,11 +58,11 @@ set JAVA_HOME=C:\Program Files\JetBrains\JetBrains Rider 2026.2\jbr
 The result is an installable zip:
 
 ```
-editors/rider/build/distributions/lens-rider-<version>.zip
+editors/rider/build/distributions/LensLang-Rider-<version>.zip
 ```
 
-It contains the plugin jar, the backend assembly under `lens-rider/dotnet/` unless
-`-PbundleBackend=false` was passed, and the published language server under `lens-rider/server/`
+It contains the plugin jar, the backend assembly under `LensLang-Rider/dotnet/` unless
+`-PbundleBackend=false` was passed, and the published language server under `LensLang-Rider/server/`
 unless `-PbundleServer=false` was passed.
 
 ### Other useful tasks
@@ -85,7 +85,7 @@ unless `-PbundleServer=false` was passed.
 | backend | `src/dotnet/Lens.Rider.Backend` | teaches ReSharper that `.lns` is a source file, and answers breakpoint variants |
 
 The backend is a normal ReSharper plugin assembly. It is built by `compileDotNet` and copied into
-`lens-rider/dotnet/` of the plugin layout, which is where Rider's backend looks for the assemblies
+`LensLang-Rider/dotnet/` of the plugin layout, which is where Rider's backend looks for the assemblies
 of an installed plugin - nothing about it appears in `plugin.xml`.
 
 It deliberately knows almost nothing about LENS. There is a language, a project file type for the
