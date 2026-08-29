@@ -64,5 +64,37 @@ namespace Lens.Lexer
         public bool IsHole => Expression != null;
 
         #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Shifts a location produced by a nested lexer or parser to its real position in the outer source.
+        /// </summary>
+        public static LexemLocation Shift(LexemLocation location, LexemLocation origin)
+        {
+            if (location.Line == 0)
+                return location;
+
+            return new LexemLocation
+            {
+                Line = origin.Line + location.Line - 1,
+
+                // only the first line of a hole is horizontally offset by the hole's own position
+                Offset = location.Line == 1
+                    ? origin.Offset + location.Offset - 1
+                    : location.Offset
+            };
+        }
+
+        /// <summary>
+        /// Shifts a location produced by a nested lexer or parser of this hole to its real position
+        /// in the outer source.
+        /// </summary>
+        public LexemLocation Shift(LexemLocation location)
+        {
+            return Shift(location, StartLocation);
+        }
+
+        #endregion
     }
 }

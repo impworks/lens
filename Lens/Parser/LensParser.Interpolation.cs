@@ -82,8 +82,8 @@ namespace Lens.Parser
 
             foreach (var curr in lexems)
             {
-                curr.StartLocation = Shift(curr.StartLocation, part.StartLocation);
-                curr.EndLocation = Shift(curr.EndLocation, part.StartLocation);
+                curr.StartLocation = part.Shift(curr.StartLocation);
+                curr.EndLocation = part.Shift(curr.EndLocation);
             }
 
             var nodes = new LensParser(lexems).Nodes;
@@ -94,32 +94,13 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// Shifts a location produced by a nested parse to its real position in the outer source.
-        /// </summary>
-        private static LexemLocation Shift(LexemLocation location, LexemLocation origin)
-        {
-            if (location.Line == 0)
-                return location;
-
-            return new LexemLocation
-            {
-                Line = origin.Line + location.Line - 1,
-
-                // only the first line of a hole is horizontally offset by the hole's own position
-                Offset = location.Line == 1
-                    ? origin.Offset + location.Offset - 1
-                    : location.Offset
-            };
-        }
-
-        /// <summary>
         /// Rebinds an exception thrown by a nested parse to its real position in the outer source.
         /// </summary>
         private static LensCompilerException Shift(LensCompilerException ex, LexemLocation origin)
         {
             return ex.BindToLocation(
-                Shift(ex.StartLocation ?? default(LexemLocation), origin),
-                Shift(ex.EndLocation ?? default(LexemLocation), origin)
+                InterpolatedStringPart.Shift(ex.StartLocation ?? default(LexemLocation), origin),
+                InterpolatedStringPart.Shift(ex.EndLocation ?? default(LexemLocation), origin)
             );
         }
 

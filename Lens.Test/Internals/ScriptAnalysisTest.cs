@@ -493,6 +493,48 @@ size ()"))
         }
 
         [Test]
+        public void ANameInsideAnInterpolationHoleIsASymbol()
+        {
+            // the lexer hands the whole string over as one lexem, but the caret is on a name
+            using (var analysis = Analyze(@"
+let x = 1
+print $""{x}"""))
+            {
+                var atUse = analysis.FindSymbol(At(3, 10));
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual("x", atUse.Name);
+                Assert.AreEqual(SymbolKind.Local, atUse.Kind);
+                Assert.AreEqual(2, atUse.Declaration.Value.Start.Line);
+                Assert.AreEqual(2, atUse.References.Count);
+                Assert.IsTrue(atUse.CanRename);
+
+                // the declaration site answers with the same symbol
+                var atDeclaration = analysis.FindSymbol(At(2, 5));
+                Assert.AreEqual(atUse.References.Count, atDeclaration.References.Count);
+            }
+        }
+
+        [Test]
+        public void AGlobalUsedInsideAnInterpolationHoleIsAReference()
+        {
+            // renaming a function must not leave the mention inside a string behind
+            using (var analysis = Analyze(@"
+fun answer:int -> 42
+
+print $""{answer ()}"""))
+            {
+                var symbol = analysis.FindSymbol(At(2, 5));
+
+                Assert.IsNotNull(symbol);
+                Assert.AreEqual(SymbolKind.Function, symbol.Kind);
+                Assert.AreEqual(2, symbol.References.Count);
+                Assert.AreEqual(4, symbol.References[1].Start.Line);
+                Assert.AreEqual(10, symbol.References[1].Start.Offset);
+            }
+        }
+
+        [Test]
         public void ARecordFieldIsFoundThroughItsReceiver()
         {
             using (var analysis = Analyze(@"

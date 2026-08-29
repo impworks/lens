@@ -134,7 +134,7 @@ namespace Lens.Analysis
             if (index <= 0)
                 return null;
 
-            var previous = _lexer.Lexems[index - 1];
+            var previous = Lexems[index - 1];
             if (previous.Type != LexemType.Dot && previous.Type != LexemType.NullSafeDot && previous.Type != LexemType.DoubleСolon)
                 return null;
 
@@ -228,25 +228,25 @@ namespace Lens.Analysis
                 return null;
 
             var start = index;
-            while (start > 0 && IsSignatureLexem(_lexer.Lexems[start - 1].Type))
+            while (start > 0 && IsSignatureLexem(Lexems[start - 1].Type))
                 start--;
 
-            if (start == 0 || _lexer.Lexems[start - 1].Type != LexemType.New)
+            if (start == 0 || Lexems[start - 1].Type != LexemType.New)
                 return null;
 
             // the 'int' of 'new List<int>' is a question about int, not about the list
             for (var idx = start; idx < index; idx++)
             {
-                if (_lexer.Lexems[idx].Type == LexemType.Less)
+                if (Lexems[idx].Type == LexemType.Less)
                     return null;
             }
 
             var end = index;
-            while (end + 1 < _lexer.Lexems.Count && IsSignatureLexem(_lexer.Lexems[end + 1].Type))
+            while (end + 1 < Lexems.Count && IsSignatureLexem(Lexems[end + 1].Type))
                 end++;
 
-            var from = IndexOf(_lexer.Lexems[start].StartLocation);
-            var to = IndexOf(_lexer.Lexems[end].EndLocation);
+            var from = IndexOf(Lexems[start].StartLocation);
+            var to = IndexOf(Lexems[end].EndLocation);
 
             if (from < 0 || to <= from)
                 return null;
@@ -436,9 +436,9 @@ namespace Lens.Analysis
         /// </summary>
         private int IndexOfLexem(Lexem lexem)
         {
-            for (var i = 0; i < _lexer.Lexems.Count; i++)
+            for (var i = 0; i < Lexems.Count; i++)
             {
-                if (ReferenceEquals(_lexer.Lexems[i], lexem))
+                if (ReferenceEquals(Lexems[i], lexem))
                     return i;
             }
 
@@ -505,16 +505,16 @@ namespace Lens.Analysis
 
             var result = new List<TextSpan>();
 
-            for (var i = 0; i < _lexer.Lexems.Count; i++)
+            for (var i = 0; i < Lexems.Count; i++)
             {
-                var curr = _lexer.Lexems[i];
+                var curr = Lexems[i];
 
                 if (curr.Type != LexemType.Identifier || curr.Value != name)
                     continue;
 
                 if (i > 0)
                 {
-                    var previous = _lexer.Lexems[i - 1].Type;
+                    var previous = Lexems[i - 1].Type;
                     if (previous == LexemType.Dot || previous == LexemType.NullSafeDot || previous == LexemType.DoubleСolon)
                         continue;
                 }
@@ -890,7 +890,7 @@ namespace Lens.Analysis
         /// </summary>
         private TextSpan NarrowToName(TextSpan span, string name)
         {
-            foreach (var curr in _lexer.Lexems)
+            foreach (var curr in Lexems)
             {
                 if (curr.Type != LexemType.Identifier || curr.Value != name)
                     continue;

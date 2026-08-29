@@ -42,6 +42,7 @@ namespace Lens.Analysis
         private readonly LensParser _parser;
         private readonly Context _context;
 
+        private IReadOnlyList<Lexem> _lexems;
         private IReadOnlyList<ClassifiedToken> _tokens;
         private IReadOnlyList<OutlineItem> _outline;
         private bool _disposed;
@@ -297,6 +298,54 @@ namespace Lens.Analysis
         }
 
         /// <summary>
+        /// The lexem stream every question about a position is answered from.
+        ///
+        /// The lexer hands an interpolated string over as a single lexem, holes and all, because
+        /// that is what it is to the compiler: one call to string.Format. To an editor it is not -
+        /// the name inside a hole is a name like any other, and a caret on it asks the same
+        /// questions. So each hole is lexed again and its lexems are spliced in ahead of the string
+        /// they came from, at the positions they occupy in the outer source. Ahead, because a
+        /// lookup takes the first lexem covering the position and the string covers all of them.
+        /// </summary>
+        internal IReadOnlyList<Lexem> Lexems => _lexems ?? (_lexems = ExpandInterpolations());
+
+        /// <summary>
+        /// Splices the lexems of every interpolation hole into the stream.
+        /// </summary>
+        private IReadOnlyList<Lexem> ExpandInterpolations()
+        {
+            var result = new List<Lexem>();
+
+            foreach (var curr in _lexer.Lexems)
+            {
+                if (curr.Type == LexemType.InterpolatedString && curr.InterpolationParts != null)
+                    result.AddRange(curr.InterpolationParts.Where(x => x.IsHole).SelectMany(HoleLexems));
+
+                result.Add(curr);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// The lexems of a single hole, at their positions in the outer source.
+        /// </summary>
+        private static IEnumerable<Lexem> HoleLexems(InterpolatedStringPart hole)
+        {
+            // tolerant: a hole that does not lex is a hole somebody is still typing into, and the
+            // rest of the file is answerable regardless
+            var lexems = new LensLexer(hole.Expression, true).Lexems;
+
+            foreach (var curr in lexems)
+            {
+                if (curr.Type == LexemType.Eof)
+                    continue;
+
+                yield return new Lexem(curr.Type, hole.Shift(curr.StartLocation), hole.Shift(curr.EndLocation), curr.Value);
+            }
+        }
+
+        /// <summary>
         /// The lexem the caret is on or immediately after, if any.
         /// </summary>
         internal Lexem LexemAt(LexemLocation position)
@@ -312,7 +361,7 @@ namespace Lens.Analysis
         /// </summary>
         private Lexem FindLexem(LexemLocation position, bool inclusiveEnd)
         {
-            foreach (var curr in _lexer.Lexems)
+            foreach (var curr in Lexems)
             {
                 if (KindOf(curr.Type) == null)
                     continue;
