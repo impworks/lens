@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Lens.Lexer;
 using Lens.SyntaxTree.Declarations;
@@ -119,6 +119,11 @@ namespace Lens.Analysis
 
                 else if (curr is DeclaredTypeAlias alias)
                     target.Add(NarrowToName(SpanOf(curr), alias.Alias), TokenKind.Type);
+
+                // 'reference' is a contextual keyword: the lexer hands it over as an identifier
+                // like any other, and only the entry it opens says that it is not one
+                else if (curr is DeclaredReference)
+                    target.Add(NarrowToName(SpanOf(curr), "reference"), TokenKind.Keyword);
             }
         }
 

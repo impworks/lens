@@ -89,6 +89,20 @@ namespace Lens.Compiler
         internal LensCompilerOptions Options { get; }
 
         /// <summary>
+        /// Whether this compilation produces debug information.
+        /// </summary>
+        internal bool IsDebug => Options.DebugSettings.Enabled;
+
+        /// <summary>
+        /// Whether an operation on constants is performed at compile time.
+        ///
+        /// A debuggable script keeps its constants: a name that has been unrolled leaves nothing
+        /// behind for a debugger to stop on or to read, so the option the host set is overruled
+        /// rather than fought with everywhere a constant is folded.
+        /// </summary>
+        internal bool UnrollConstants => Options.UnrollConstants && !IsDebug;
+
+        /// <summary>
         /// Everything that has gone wrong so far.
         /// The compiler keeps analysing after an error, so this may hold more than one entry.
         /// </summary>
@@ -242,48 +256,6 @@ namespace Lens.Compiler
         /// The list of assemblies referenced by current script.
         /// </summary>
         internal readonly ReferencedAssemblyCache AssemblyCache;
-
-        private AssemblyBuilder _mainAssembly;
-        private ModuleBuilder _mainModule;
-
-        #endregion
-
-        #region Emit target
-
-        /// <summary>
-        /// Creates the assembly and module to emit into, unless that has already happened.
-        ///
-        /// Everything before this point is analysis, and used to be impossible to separate: the
-        /// constructor built an assembly whether or not anything was ever going to be emitted.
-        /// </summary>
-        private void EnsureEmitTarget()
-        {
-            if (_mainAssembly != null)
-                return;
-
-            AssemblyName an;
-            lock (typeof(Context))
-                an = new AssemblyName(Unique.AssemblyName());
-
-#if NET_CLASSIC
-            if (Options.AllowSave)
-            {
-                if (string.IsNullOrEmpty(Options.FileName))
-                    Options.FileName = an.Name + (Options.SaveAsExe ? ".exe" : ".dll");
-
-                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
-                _mainModule = _mainAssembly.DefineDynamicModule(an.Name, Options.FileName);
-            }
-            else
-            {
-                _mainAssembly = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndCollect);
-                _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
-            }
-#else
-            _mainAssembly = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndCollect);
-            _mainModule = _mainAssembly.DefineDynamicModule(an.Name);
-#endif
-        }
 
         #endregion
 

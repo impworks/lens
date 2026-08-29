@@ -185,6 +185,10 @@ namespace Lens.SyntaxTree.ControlFlow
                 if (!subReturn && curr.IsConstant)
                     continue;
 
+                // the position comes from the statement as it was written, not from whatever it was
+                // expanded into: an expansion is synthesized and has no place in the source
+                ctx.DebugInfo?.MarkStatement(gen, Statements[idx]);
+
                 curr.Emit(ctx, subReturn);
 
                 if (!subReturn && !retType.IsVoid())

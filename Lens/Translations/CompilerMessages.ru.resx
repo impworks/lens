@@ -730,6 +730,9 @@
     <value>LE3203: Настройки безопасного режима не позволяют подключить сборку '{0}'!</value>
   </data>
   <data name="SafeModeIllegalMember" xml:space="preserve">
-    <value>LE3204: Настройки безопасного режима не позволяют использовать член '{0}' типа '{1}'!</value>
+    <value>LE3204: Настройки безопасного режима не позволяют использовать элемент '{0}' типа '{1}'!</value>
+  </data>
+  <data name="DebugNotSupported" xml:space="preserve">
+    <value>LE3204: На этой платформе отладочная информация не может быть сгенерирована. Она поддерживается на .NET Framework 4.x и на .NET 10 или новее.</value>
   </data>
 </root>

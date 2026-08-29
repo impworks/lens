@@ -732,4 +732,7 @@
   <data name="SafeModeIllegalMember" xml:space="preserve">
     <value>LE3204: Member '{0}' of type '{1}' cannot be used in the script due to safe mode settings!</value>
   </data>
+  <data name="DebugNotSupported" xml:space="preserve">
+    <value>LE3204: Debug information cannot be generated on this platform. It is supported on .NET Framework 4.x and on .NET 10 or later.</value>
+  </data>
 </root>

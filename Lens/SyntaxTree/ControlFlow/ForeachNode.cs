@@ -123,7 +123,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 )
             );
 
-            var loop = Expr.While(
+            var loop = Loop(
                 Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
                 Expr.Block(
                     GetIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
@@ -177,7 +177,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 Expr.Set(idxVar, Expr.Int(0)),
                 Expr.Set(arrayVar, IterableExpression),
                 Expr.Set(lenVar, Expr.GetMember(Expr.Get(arrayVar), "Length")),
-                Expr.While(
+                Loop(
                     Expr.Less(
                         Expr.Get(idxVar),
                         Expr.Get(lenVar)
@@ -217,7 +217,7 @@ namespace Lens.SyntaxTree.ControlFlow
                         Expr.Sub(RangeEnd, Expr.Get(idxVar))
                     )
                 ),
-                Expr.While(
+                Loop(
                     Expr.NotEqual(Expr.Get(idxVar), RangeEnd),
                     Expr.Block(
                         GetIndexAssignment(Expr.Get(idxVar)),
@@ -232,6 +232,24 @@ namespace Lens.SyntaxTree.ControlFlow
                     )
                 )
             );
+        }
+
+        /// <summary>
+        /// Builds the loop this 'for' expands into, keeping the place in the source that the
+        /// 'for' itself occupies.
+        ///
+        /// The loop is otherwise anonymous: neither it nor the condition it tests was written by
+        /// anyone, so a debugger would have nothing to stop on once per iteration, and stepping
+        /// round the loop would look like standing still on its first statement.
+        /// </summary>
+        private WhileNode Loop(NodeBase condition, CodeBlockNode body)
+        {
+            var loop = Expr.While(condition, body);
+
+            loop.StartLocation = StartLocation;
+            loop.EndLocation = EndLocation;
+
+            return loop;
         }
 
         #endregion

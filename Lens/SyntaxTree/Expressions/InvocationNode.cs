@@ -132,8 +132,9 @@ namespace Lens.SyntaxTree.Expressions
                 }
                 catch (KeyNotFoundException)
                 {
-                    if (binding.InvocationSource == null)
-                        throw;
+                    // a static call has a field and a property left to try - either may hold a
+                    // delegate - but not the extension method paths further down, which pass the
+                    // receiver as argument zero and a static call has no receiver to pass
                 }
 
                 // resolve a callable field
@@ -157,6 +158,11 @@ namespace Lens.SyntaxTree.Expressions
                 catch (KeyNotFoundException)
                 {
                 }
+
+                // a static call is out of options here: what is left is the extension method
+                // search, and that needs a receiver to hand over as argument zero
+                if (node.StaticType != null)
+                    Error(CompilerMessages.TypeStaticMethodNotFound, type, node.MemberName);
 
                 // the call is an extension method call after all: the receiver becomes argument
                 // zero, which is a binding result and does not touch the node's own argument list

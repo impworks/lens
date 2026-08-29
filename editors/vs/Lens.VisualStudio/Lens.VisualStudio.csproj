@@ -1,0 +1,67 @@
+<!-- The SDK imports are spelled out rather than left to the Sdk attribute because the VSSDK targets
+     have to come after the C# ones, and an implicit Sdk.targets import always lands last. -->
+<Project>
+
+    <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+    <PropertyGroup>
+        <!-- devenv still runs on the desktop framework in VS 2022 and VS 2026 alike, so an in-process
+             MEF component has to be a net472 assembly no matter how new the IDE is -->
+        <TargetFramework>net472</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <RootNamespace>Lens.VisualStudio</RootNamespace>
+        <AssemblyName>Lens.VisualStudio</AssemblyName>
+        <Version>5.0.0</Version>
+        <IsPackable>false</IsPackable>
+        <!-- the VSIX carries the files it needs by hand, so the SDK's catch-all None glob would only
+             add every stray file in the folder to the project -->
+        <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- there is no VSPackage class here, only MEF parts and a hand written pkgdef, so a
+             generated one would be empty -->
+        <GeneratePkgDefFile>false</GeneratePkgDefFile>
+        <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+        <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+        <IncludeCopyLocalReferencesInVSIXContainer>false</IncludeCopyLocalReferencesInVSIXContainer>
+        <CreateVsixContainer>true</CreateVsixContainer>
+        <DeployExtension>false</DeployExtension>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- ExcludeAssets="runtime" throughout: every one of these assemblies already lives in the
+             Visual Studio install, and shipping our own copy would bind against the wrong version -->
+        <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.VisualStudio.LanguageServer.Client" Version="17.14.60" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2142" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- MEF attributes live in the desktop framework itself, not in any of the packages above -->
+        <Reference Include="System.ComponentModel.Composition" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="source.extension.vsixmanifest" SubType="Designer" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Grammars\lens.tmLanguage.json" IncludeInVSIX="true" VSIXSubPath="Grammars" />
+        <Content Include="Grammars\language-configuration.json" IncludeInVSIX="true" VSIXSubPath="Grammars" />
+        <Content Include="LensGrammars.pkgdef" IncludeInVSIX="true" />
+        <Content Include="LensSettings.json" IncludeInVSIX="true" />
+        <Content Include="..\LICENSE.md" Link="LICENSE.md" IncludeInVSIX="true" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- the language server is published into server\ by build.ps1 before the VSIX is built; a
+             build without it still succeeds, and the extension then falls back to the path in
+             LENS_LANGUAGE_SERVER -->
+        <Content Include="server\**\*" IncludeInVSIX="true" VSIXSubPath="server\%(RecursiveDir)" />
+    </ItemGroup>
+
+    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+    <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" />
+
+</Project>

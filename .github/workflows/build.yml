@@ -16,9 +16,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore Lens.sln
@@ -29,5 +27,18 @@ jobs:
       - name: Test (net47)
         run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net47 --logger "console;verbosity=normal"
 
-      - name: Test (net8.0)
-        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net8.0 --logger "console;verbosity=normal"
+      - name: Test (net10.0)
+        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net10.0 --logger "console;verbosity=normal"
+
+      # the debuggable backend builds the assembly a different way on .NET, so the whole suite is
+      # compiled that way too. RecordWithTypeParameterInField is left out: it needs a member of
+      # SomeGeneric<T[]>, which .NET 10's PersistedAssemblyBuilder cannot emit a reference to.
+      - name: Test with debug info (net10.0)
+        env:
+          LENS_DEBUG_ALL: "1"
+        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net10.0 --filter "FullyQualifiedName!~RecordWithTypeParameterInField" --logger "console;verbosity=normal"
+
+      - name: Test with debug info (net47)
+        env:
+          LENS_DEBUG_ALL: "1"
+        run: dotnet test Lens.Test/Lens.Test.csproj --configuration Release --no-build --framework net47 --logger "console;verbosity=normal"

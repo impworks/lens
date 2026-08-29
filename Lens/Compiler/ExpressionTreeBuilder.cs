@@ -394,7 +394,7 @@ namespace Lens.Compiler
 
             var argTypes = ctor.ArgumentTypes.Select(x => x.Materialize()).ToArray();
 
-            PushConstructor(ctor.ConstructorInfo);
+            PushConstructor(ctor.ConstructorInfo, argTypes);
             EmitArgumentArray(RealArguments(node.BoundArguments(_ctx), argTypes.Length), argTypes);
             Gen.EmitCall(FactoryNew);
 
@@ -861,21 +861,52 @@ namespace Lens.Compiler
             Gen.EmitCast(typeof(MethodInfo));
         }
 
-        private void PushConstructor(ConstructorInfo ctor)
+        /// <summary>
+        /// Pushes the constructor that a 'new' in an expression tree names.
+        ///
+        /// A constructor is looked up on its type at run time rather than named by a metadata token,
+        /// which is what the sibling methods here do. The token would be the direct way to say it,
+        /// but the builder that writes symbols cannot emit ldtoken for a constructor, and a
+        /// projection to an object is far too ordinary a query to be undebuggable. Looking it up
+        /// costs one reflection call while the tree is being built, and says exactly the same thing.
+        /// </summary>
+        private void PushConstructor(ConstructorInfo ctor, Type[] argumentTypes)
         {
-            Gen.Emit(OpCodes.Ldtoken, ctor);
+            PushType(ctor.DeclaringType);
 
-            if (ctor.DeclaringType != null && ctor.DeclaringType.IsGenericType)
+            Gen.EmitConstant((int) (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
+            Gen.EmitNull();
+
+            // the argument types come from the binder rather than from the constructor: a record's
+            // constructor belongs to a type this compilation is still building, and a builder
+            // answers nothing about itself until it has been created
+            PushTypeArray(argumentTypes);
+
+            Gen.EmitNull();
+
+            Gen.EmitCall(GetConstructorByArguments, isVirtual: true);
+        }
+
+        /// <summary>
+        /// Pushes an array of types, as the argument list a member is looked up by.
+        /// </summary>
+        private void PushTypeArray(Type[] types)
+        {
+            var local = DeclareTemp(typeof(Type[]));
+
+            Gen.EmitConstant(types.Length);
+            Gen.EmitCreateArray(typeof(Type));
+            Gen.EmitSaveLocal(local);
+
+            for (var idx = 0; idx < types.Length; idx++)
             {
-                Gen.EmitConstant(ctor.DeclaringType);
-                Gen.EmitCall(GetMethodFromHandleOfType);
-            }
-            else
-            {
-                Gen.EmitCall(GetMethodFromHandle);
+                Gen.EmitLoadLocal(local);
+                Gen.EmitConstant(idx);
+                PushType(types[idx]);
+                Gen.Emit(OpCodes.Stelem_Ref);
             }
 
-            Gen.EmitCast(typeof(ConstructorInfo));
+            Gen.EmitLoadLocal(local);
         }
 
         private void PushField(FieldInfo field)
@@ -944,6 +975,15 @@ namespace Lens.Compiler
         private static readonly MethodInfo GetMethodFromHandleOfType = typeof(MethodBase).GetMethod("GetMethodFromHandle", new[] {typeof(RuntimeMethodHandle), typeof(RuntimeTypeHandle)});
         private static readonly MethodInfo GetFieldFromHandle = typeof(FieldInfo).GetMethod("GetFieldFromHandle", new[] {typeof(RuntimeFieldHandle)});
         private static readonly MethodInfo GetFieldFromHandleOfType = typeof(FieldInfo).GetMethod("GetFieldFromHandle", new[] {typeof(RuntimeFieldHandle), typeof(RuntimeTypeHandle)});
+
+        /// <summary>
+        /// The overload that takes a binder and modifiers, rather than the short one: it is the only
+        /// spelling of the lookup that every target framework has.
+        /// </summary>
+        private static readonly MethodInfo GetConstructorByArguments = typeof(Type).GetMethod(
+            "GetConstructor",
+            new[] {typeof(BindingFlags), typeof(Binder), typeof(Type[]), typeof(ParameterModifier[])}
+        );
 
         private static readonly MethodInfo StringConcat = typeof(string).GetMethod("Concat", new[] {typeof(string), typeof(string)});
 

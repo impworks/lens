@@ -5,6 +5,8 @@ Welcome to the homepage for LENS embeddable compiler!
 
 LENS stands for "<b>L</b>anguage for <b>E</b>mbeddable .<b>N</b>ET <b>S</b>cripting".
 
+**[Try LENS out in the Playground!](https://lens-lang.up.railway.app)**
+
 ### A few examples of the syntax
 
 A basic script:
@@ -92,7 +94,7 @@ fun desribe:string (arr:object[]) ->
 
 ### Supported frameworks
 
-LENS targets `net47`, `netstandard2.0`, and `net8.0`.
+LENS targets `net47`, `netstandard2.0`, and `net10.0`.
 
 ### Why another language?
 
@@ -176,26 +178,10 @@ The compiler already supports the following features:
 
 Please refer to the [Wiki](https://github.com/impworks/lens/wiki) for the complete list of features.
 
-### Editor support
+### IDE support
 
-There is a language server and a [VS Code extension](editors/vscode/README.md): syntax highlighting
-(from the compiler, not from a regular expression), completion, diagnostics as you type, hover,
-go-to-definition, find-references, rename and an outline.
-
-```
-cd editors/vscode
-npm install
-npm run build-server
-npm run compile
-npm run package          # produces lens-lang-5.0.0.vsix
-```
-
-Install it with `code --install-extension lens-lang-5.0.0.vsix`, or open `editors/vscode` in VS Code
-and press F5 to run it without installing.
-
-The server speaks the language server protocol over stdio, so any editor that can launch
-`dotnet lens-language-server.dll` gets the same features. A plugin that would rather host the
-language services in-process can reference `Lens.LanguageServer.Core` and skip the protocol.
+LENS provides first-hand extensions for Visual Studio, VS Code, and Rider.
+All three support syntax highlighting, smart autocomplete, type checking, rename, go to definition, and debug support.
 
 Since a script's meaning depends on what the *host* registered, and an editor has no host, tell it
 with a `declare` block at the top of the file - the same block the compiler checks against the real
@@ -217,23 +203,39 @@ than pathed: `"System.Net.Http"` and `"System.Net.Http.dll"` both work, and neit
 to the machine it was written on. A reference that does not resolve is a warning and not an error,
 because the host may have registered the assembly by itself already.
 
-Contributions are always welcome!
+### Debugging a script
 
-### Try it in a browser
+A script can be compiled with debug information, so that the debugger can step through the script
+together with the host.
 
-There is a [web playground](Lens.Playground/README.md): a Monaco editor with the same highlighting,
-completion and diagnostics as the editor plugins, and F8 to run. The compiler, the language
-services and the .NET runtime are all compiled to WebAssembly and shipped with the page, so it runs
-entirely in the browser - there is no backend, and no script leaves the machine it was typed on.
+```csharp
+var options = new LensCompilerOptions();
+options.DebugSettings.Enabled = true;
+options.DebugSettings.SourceFile = @"C:\scripts\pricing.lns";  // optional
 
+var compiler = new LensCompiler(options);
+var script = compiler.Compile(File.ReadAllText(@"C:\scripts\pricing.lns"));
+script();
 ```
-dotnet run --project Lens.Playground                                 # locally
-docker build -f Lens.Playground/Dockerfile -t lens-playground .      # as a static site behind Caddy
-docker run --rm -p 8080:8080 lens-playground
-```
 
-Scripts there get LINQ, `HttpClient` and the network, console input and output, and no file system.
-The playground's README lists what a browser cannot offer and what to write instead.
+Supported debugging features:
+
+* Breakpoints
+* Stepping
+* Inspecting local variables and arguments
+
+A script that lives in memory rather than on disk needs no file at all. Its text is stored inside the
+symbols by default (`DebugSettings.EmbedSource`), and the debugger reads the source from there - so a
+script built by the host, or read out of a database, is just as steppable as one on disk.
+
+To force a script to break when starting:
+
+```fsharp
+use System.Diagnostics
+
+if Debugger::IsAttached then
+    Debugger::Break ()
+```
 
 ### What NOT to expect
 

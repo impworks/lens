@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Lens.Analysis;
 using Lens.SyntaxTree;
 using NUnit.Framework;
@@ -104,6 +104,25 @@ fun countOf<T>:int (items:IEnumerable<T>) -> 0
 countOf (new [[1; 2; 3]])"))
             {
                 Assert.IsEmpty(analysis.Diagnostics.Select(x => x.Message).ToArray());
+            }
+        }
+
+        [Test]
+        [TestCase("string::Fooo 1 2", TestName = "with arguments")]
+        [TestCase("string::Fooo ()", TestName = "with none")]
+        public void AMissingStaticMethodIsReportedWhereItIsCalled(string source)
+        {
+            // the lookup says 'not found' by throwing KeyNotFoundException, and letting that one
+            // out reaches the editor as 'the given key was not present in the dictionary' pinned
+            // to the first character of the file
+            using (var analysis = Analyze(source))
+            {
+                var problem = analysis.Diagnostics.Single();
+
+                StringAssert.Contains("Fooo", problem.Message);
+                Assert.AreEqual(1, problem.Span.Start.Line);
+                Assert.AreEqual(1, problem.Span.Start.Offset);
+                Assert.Greater(problem.Span.End.Offset, 1);
             }
         }
 
@@ -328,6 +347,22 @@ scale 2"))
                 AssertAll(byText["factor"], TokenKind.Parameter);
                 AssertAll(byText["p"], TokenKind.Variable);
                 AssertAll(byText["X"], TokenKind.Field);
+            }
+        }
+
+        [Test]
+        public void ReferenceIsAKeywordInsideADeclareBlock()
+        {
+            // the lexer has no such keyword - 'reference' is an ordinary identifier everywhere but
+            // the one line it opens, and an editor colours what it is told rather than what it can
+            // see for itself
+            using (var analysis = Analyze("declare\n    reference \"System.Xml\""))
+            {
+                var word = analysis.Tokens.Single(x => x.Text == "reference");
+
+                Assert.AreEqual(TokenKind.Keyword, word.Kind);
+                Assert.AreEqual(2, word.Span.Start.Line);
+                Assert.AreEqual(5, word.Span.Start.Offset);
             }
         }
 
@@ -1443,6 +1478,41 @@ var p = new "))
         }
 
         [Test]
+        [TestCase("declare\n    ", 2, 5, TestName = "nothing typed yet")]
+        [TestCase("declare\n    re", 2, 7, TestName = "a word half typed")]
+        [TestCase("declare // the environment\n    ", 2, 5, TestName = "a comment after the opening word")]
+        [TestCase("declare\n    fun a:int\n\n    ", 4, 5, TestName = "a blank line between the entries")]
+        public void OnlyDeclarationKeywordsAreOfferedInsideADeclareBlock(string source, int line, int offset)
+        {
+            using (var analysis = Analyze(source))
+            {
+                var entries = analysis.Complete(At(line, offset)).ToArray();
+
+                CollectionAssert.AreEquivalent(
+                    new[] {"reference", "type", "fun", "var", "let"},
+                    entries.Select(x => x.Label).ToArray()
+                );
+
+                foreach (var curr in entries)
+                    Assert.AreEqual(SymbolKind.Keyword, curr.Kind);
+            }
+        }
+
+        [Test]
+        public void NamesAreOfferedAgainOnceADeclarationHasBeenOpened()
+        {
+            // only the word that opens an entry is restricted: what follows it is a name, a type
+            // and a signature like anywhere else
+            using (var analysis = Analyze("declare\n    var x"))
+            {
+                var names = analysis.Complete(At(2, 10)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.DoesNotContain(names, "reference");
+                Assert.Greater(names.Length, 5);
+            }
+        }
+
+        [Test]
         public void ItemsAreOfferedInsideANewCollectionLiteral()
         {
             // 'new [' and 'new (' start a collection rather than name a type, and what goes in one
@@ -1505,6 +1575,19 @@ fun distance:int (p:Point) -> p.X + p.Y"))
 
                 Assert.AreEqual("distance", analysis.Outline[1].Name);
                 Assert.AreEqual(SymbolKind.Function, analysis.Outline[1].Kind);
+            }
+        }
+
+        [Test]
+        public void AnEmptyReferenceStillHasAnOutlineName()
+        {
+            // an editor refuses an outline entry with no name, and refuses the whole file's outline
+            // along with it - so the half-typed 'reference ""' must not produce one
+            using (var analysis = Analyze("declare\n    reference \"\""))
+            {
+                var entry = analysis.Outline.Single().Children.Single();
+
+                Assert.IsNotEmpty(entry.Name);
             }
         }
 

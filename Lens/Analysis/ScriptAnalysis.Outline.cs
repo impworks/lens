@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree.Declarations;
 using Lens.SyntaxTree.Declarations.Functions;
@@ -92,7 +92,12 @@ namespace Lens.Analysis
                 return new OutlineItem(alias.Alias, SymbolKind.HostType, alias.Type?.FullSignature, SpanOf(entry), NarrowToName(SpanOf(entry), alias.Alias), NoChildren);
 
             if (entry is DeclaredReference reference)
-                return new OutlineItem(reference.Path, SymbolKind.Keyword, "reference", SpanOf(entry), SpanOf(entry), NoChildren);
+            {
+                // an assembly path is a string literal and a string literal may be empty, but an
+                // outline entry has to be called something
+                var path = string.IsNullOrWhiteSpace(reference.Path) ? "reference" : reference.Path;
+                return new OutlineItem(path, SymbolKind.Keyword, "reference", SpanOf(entry), SpanOf(entry), NoChildren);
+            }
 
             return null;
         }

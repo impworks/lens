@@ -59,21 +59,24 @@ namespace Lens.SyntaxTree.Operators.Binary
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            if (!IsConstant)
-            {
-                var type = Resolve(ctx);
+            // folding gives the best code there is, but it can be switched off - and an operator
+            // whose meaning is a call rather than an opcode has to become that call either way
+            var folded = base.Expand(ctx, mustReturn);
+            if (folded != null)
+                return folded;
 
-                if (type.Is<string>())
-                    return StringExpand(ctx);
+            var type = Resolve(ctx);
 
-                if (type.IsArray)
-                    return ArrayExpand(ctx);
+            if (type.Is<string>())
+                return StringExpand(ctx);
 
-                if (type.Is<IEnumerable>() || type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
-                    return SeqExpand(ctx);
-            }
+            if (type.IsArray)
+                return ArrayExpand(ctx);
 
-            return base.Expand(ctx, mustReturn);
+            if (type.Is<IEnumerable>() || type.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>))))
+                return SeqExpand(ctx);
+
+            return null;
         }
 
         /// <summary>
@@ -86,15 +89,18 @@ namespace Lens.SyntaxTree.Operators.Binary
             var tmpIdx = ctx.Scope.DeclareImplicit(ctx, RightOperand.Resolve(ctx), false);
 
             // var sb = new StringBuilder();
-            // for _ in 1..N do
+            // for _ in 0..N do
             //    sb.Append (str)
             // str.ToString ()
+            //
+            // counted from zero, not from one: the upper bound of a range is not part of it, so
+            // starting at one would append the string one time too few
             return Expr.Block(
                 Expr.Let(tmpString, LeftOperand),
                 Expr.Let(tmpSb, Expr.New(typeof(StringBuilder))),
                 Expr.For(
                     tmpIdx,
-                    Expr.Int(1),
+                    Expr.Int(0),
                     RightOperand,
                     Expr.Block(
                         Expr.Invoke(

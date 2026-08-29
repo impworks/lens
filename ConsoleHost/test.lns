@@ -1,0 +1,17 @@
+var total = 0
+var i = 1
+
+fun square:int (x:int) ->
+    x * x
+
+while i <= 5 do
+    let s = square i
+    total = total + s
+    i = i + 1
+
+let x = new [ 1; 2; 3 ]
+let y = string::Join ";" x
+println y
+
+println "the sum of squares is {0}" total
+total

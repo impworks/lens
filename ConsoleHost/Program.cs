@@ -16,8 +16,14 @@ namespace ConsoleHost
 {
     internal class Program
     {
-        private static async Task Main()
+        private static async Task Main(string[] args)
         {
+            if (args.Length > 0)
+            {
+                await RunFile(args[0]);
+                return;
+            }
+
             PrintPreamble();
             WarmUp();
 
@@ -51,6 +57,46 @@ namespace ConsoleHost
                 {
                     PrintException("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Runs a script read from a file, compiled so that it can be debugged.
+        ///
+        /// This is the shortest way to see the debugging support work: run this host from an IDE
+        /// with the path to a script, put a breakpoint in the script itself, and the IDE stops
+        /// there. Which is also how a host that runs scripts off disk should be compiling them
+        /// while its author is still writing them.
+        /// </summary>
+        private static async Task RunFile(string path)
+        {
+            var fullPath = Path.GetFullPath(path);
+            if (!File.Exists(fullPath))
+            {
+                PrintException("Script not found!", fullPath);
+                return;
+            }
+
+            var source = File.ReadAllText(fullPath);
+            var options = new LensCompilerOptions
+            {
+                ScriptDirectory = Path.GetDirectoryName(fullPath)
+            };
+
+            options.DebugSettings.Enabled = true;
+            options.DebugSettings.SourceFile = fullPath;
+
+            try
+            {
+                PrintObject(await new LensCompiler(options).RunAsync(source));
+            }
+            catch (LensCompilerException ex)
+            {
+                PrintError(source, ex);
+            }
+            catch (Exception ex)
+            {
+                PrintException("An unexpected error has occured!", ex.Message + Environment.NewLine + ex.StackTrace);
             }
         }
 

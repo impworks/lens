@@ -1,0 +1,18 @@
+// Visual Studio finds TextMate grammars by scanning the folders registered as repositories, and
+// picks one whose declared file types match the file being opened - which is why the copy of the
+// grammar in Grammars\ carries a "fileTypes" entry that the VS Code copy does not need.
+[$RootKey$\TextMate\Repositories]
+"LENS"="$PackageFolder$\Grammars"
+
+// Brackets, comment characters and auto-closing pairs, keyed once by grammar scope and once by
+// content type: which of the two the editor asks by depends on how the file was opened.
+[$RootKey$\TextMate\LanguageConfiguration\GrammarMapping]
+"source.lens"="$PackageFolder$\Grammars\language-configuration.json"
+
+[$RootKey$\TextMate\LanguageConfiguration\ContentTypeMapping]
+"lens"="$PackageFolder$\Grammars\language-configuration.json"
+
+// Defaults for the settings the server reads. Visual Studio only surfaces these in Open Folder
+// workspaces, where the user overrides them in .vs\VSWorkspaceSettings.json.
+[$RootKey$\OpenFolder\Settings\VSWorkspaceSettings\Lens]
+@="$PackageFolder$\LensSettings.json"

@@ -42,7 +42,7 @@ namespace Lens.SyntaxTree.Operators
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            var result = IsConstant && ctx.Options.UnrollConstants
+            var result = IsConstant && ctx.UnrollConstants
                 ? Expr.Constant(ConstantValue)
                 : null;
 
