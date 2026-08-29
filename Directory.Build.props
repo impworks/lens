@@ -1,0 +1,15 @@
+<Project>
+
+    <PropertyGroup>
+        <!-- The single place the release series is written down. The patch number is assigned by
+             .github/workflows/release.yml, which reads this value and appends the next unused
+             patch; a local build gets ".0". Bump this to 5.1 to restart the numbering at 5.1.0. -->
+        <VersionSeries>5.0</VersionSeries>
+
+        <!-- Directory.Build.props is imported before the SDK fills in its own default, so an empty
+             value here means nothing on the command line set one. "dotnet pack -p:Version=x" still
+             wins, because Version takes precedence over VersionPrefix. -->
+        <VersionPrefix Condition="'$(VersionPrefix)' == ''">$(VersionSeries).0</VersionPrefix>
+    </PropertyGroup>
+
+</Project>
