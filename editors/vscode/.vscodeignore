@@ -1,5 +1,10 @@
+# out/extension.js is a bundle - esbuild inlines every runtime dependency into it, so the
+# node_modules tree is a build input and nothing more.
+node_modules/**
+package-lock.json
 .vscode/**
 .gitignore
+.vscodeignore
 *.vsix
 src/**
 scripts/**
@@ -7,4 +12,6 @@ out/**/*.map
 tsconfig.json
 samples/**
 **/*.ts
+
+# the language server is the point of the extension, so nothing above may exclude it
 !server/**

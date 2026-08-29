@@ -88,9 +88,11 @@
     "scripts": {
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "build-server": "dotnet publish ../../Lens.LanguageServer/Lens.LanguageServer.csproj -c Release -o server",
+        "check-types": "tsc --noEmit -p ./",
+        "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
+        "build-server": "dotnet publish ../../Lens.LanguageServer/Lens.LanguageServer.csproj -c Release -o server -p:SatelliteResourceLanguages=ru -p:DebugType=none -p:UseAppHost=false",
         "smoke-test": "node scripts/smoke-test.js server/lens-language-server.dll",
-        "vscode:prepublish": "npm run build-server && npm run compile",
+        "vscode:prepublish": "npm run build-server && npm run check-types && npm run bundle",
         "package": "vsce package"
     },
     "dependencies": {
@@ -98,8 +100,9 @@
     },
     "devDependencies": {
         "@types/node": "^18.19.0",
-        "@vscode/vsce": "^3.2.0",
         "@types/vscode": "^1.75.0",
+        "@vscode/vsce": "^3.2.0",
+        "esbuild": "^0.28.2",
         "typescript": "^5.4.0"
     }
 }
