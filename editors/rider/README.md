@@ -8,6 +8,10 @@ language server the VS Code extension launches. No language logic is duplicated 
 registers a file type, ships a lexer for immediate colouring, and hands the file to the server over
 the IntelliJ Platform LSP API.
 
+The one exception is the debugger. Rider asks its ReSharper backend, not the frontend, what
+breakpoints may go on a line, so the plugin has a second, .NET half - see
+[The two halves](#the-two-halves) and [Breakpoints](#breakpoints).
+
 ## Features
 
 | Feature | Where it comes from |
@@ -21,7 +25,7 @@ the IntelliJ Platform LSP API.
 | Rename | server |
 | File structure (outline) | server |
 | Comment/uncomment, brace matching | plugin |
-| Breakpoints in `.lns` files | the file type registration - see below |
+| Breakpoints in `.lns` files | the file type registration, plus the ReSharper backend half - see below |
 
 ## Prerequisites
 
@@ -32,7 +36,12 @@ the IntelliJ Platform LSP API.
   25; the JBR that ships inside Rider itself is a full JDK and works:
   `C:\Program Files\JetBrains\JetBrains Rider <version>\jbr`.
 * **.NET SDK 10** on `PATH`, to build the language server that gets bundled into the plugin. Pass
-  `-PbundleServer=false` to skip it.
+  `-PbundleServer=false` to skip it. The same `dotnet` builds the ReSharper backend half, which
+  targets `net8.0`; the targeting pack for it is restored from nuget.org on the first build. Pass
+  `-PbundleBackend=false` to skip that.
+* **A Rider containing `lib/DotNetSdkForRdPlugins`**, which is where the ReSharper SDK the backend
+  compiles against lives. Every regular Rider installation has it; the build fails at configuration
+  time, naming the path it expected, if the one given by `-PriderPath` does not.
 * Gradle is **not** needed - use the wrapper (`./gradlew`, `gradlew.bat`).
 
 ## Building
@@ -60,8 +69,9 @@ The result is an installable zip:
 editors/rider/build/distributions/lens-rider-<version>.zip
 ```
 
-It contains the plugin jar and, unless `-PbundleServer=false` was passed, the published language
-server under `lens-rider/server/`.
+It contains the plugin jar, the backend assembly under `lens-rider/dotnet/` unless
+`-PbundleBackend=false` was passed, and the published language server under `lens-rider/server/`
+unless `-PbundleServer=false` was passed.
 
 ### Other useful tasks
 
@@ -72,12 +82,43 @@ server under `lens-rider/server/`.
 | `verifyPlugin` | runs the JetBrains Plugin Verifier against the Rider given by `-PriderPath` |
 | `runIde` | starts a sandbox Rider with the plugin installed |
 | `publishLanguageServer` | runs `dotnet publish` for the server on its own |
+| `prepare` | generates what `src/dotnet` needs to be built or opened on its own |
+| `compileDotNet` | runs `dotnet build` for the backend half |
+
+## The two halves
+
+| Half | Where | What it does |
+| --- | --- | --- |
+| frontend | `src/main/kotlin` | file type, lexer, highlighter, LSP client, settings |
+| backend | `src/dotnet/Lens.Rider.Backend` | teaches ReSharper that `.lns` is a source file, and answers breakpoint variants |
+
+The backend is a normal ReSharper plugin assembly. It is built by `compileDotNet` and copied into
+`lens-rider/dotnet/` of the plugin layout, which is where Rider's backend looks for the assemblies
+of an installed plugin - nothing about it appears in `plugin.xml`.
+
+It deliberately knows almost nothing about LENS. There is a language, a project file type for the
+`.lns` extension, and a PSI so degenerate that the whole file is one token under one file node.
+That is the least the breakpoint machinery accepts (see below), and `.lns` files are kept out of
+ReSharper's caches and code model on top of it. Every real question about the language is still the
+language server's.
+
+`Lens.Rider.Backend.sln` can be opened on its own, but only after
+
+```
+gradlew.bat -PriderPath="C:/Program Files/JetBrains/JetBrains Rider 2025.2" prepare
+```
+
+which writes `build/DotNetSdkPath.Generated.props` and `src/dotnet/nuget.config`. Without them the
+project fails to build with *Please run `./gradlew :prepare`* rather than a wall of missing
+references.
 
 ## Installing
 
 In Rider: **Settings | Plugins | gear icon | Install Plugin from Disk...**, pick the zip, restart.
 
-The breakpoint extension point is not dynamic, so a restart is required rather than optional.
+The plugin declares `require-restart="true"`: the breakpoint extension point is not dynamic, and
+the backend assembly is loaded by the ReSharper process on startup, so a restart is required rather
+than optional.
 
 ## Finding the language server
 
@@ -113,15 +154,32 @@ nothing. This plugin supplies all three pieces the check needs:
 
 This is exactly what the bundled F# plugin does for `.fs`.
 
-What has **not** been observed working, and needs a debugging session to confirm: whether a
-breakpoint set this way actually binds and is hit. The payload Rider sends to the debugger worker is
-a document path plus offsets, and the worker resolves it against the sequence points in the PDB, so
-a script compiled with debug information should bind on file path alone. The risk is elsewhere:
-`DotNetLineBreakpointType.computeVariants` asks the ReSharper backend for the breakpoint variants on
-a line, and there is no backend language for `.lns`. If the gutter turns out to offer a breakpoint
-that never binds, the fix is the route Rider's own Unity plugin takes - subclass
-`DotNetLineBreakpointType` through its protected `(id, title)` constructor, return a single line-wide
-variant, and register a matching handler through `com.intellij.rider.debug.breakpoint.handler.factory`.
+Then, `DotNetLineBreakpointType.computeVariants` then asks the backend what
+breakpoints may go on the line, and `isCreationOfDefaultBreakpointVariantAllowed()` is `false` - no
+variants, no breakpoint. That request travels a long way:
+
+1. `RiderBreakpointHost.requestVariantsComputation` calls `getPossibleBreakpointVariants` over the
+   protocol;
+2. the backend's `DebuggerBreakpointVariantsHost` waits for the solution to load, commits the PSI,
+   and hands over to `BreakpointVariantsEnumerator`;
+3. the enumerator resolves the path with `FindProjectItemsByLocation` and needs an `IProjectFile`;
+4. it calls `GetPrimaryPsiFile()` on it and gives up if that is `null`;
+5. it looks a provider up by `psiFile.Language`.
+
+That is the whole reason the backend half exists, and why it has to go as far as building PSI:
+`LensProjectFileType` gets step 3 an `IProjectFile`, `LensLanguageService` gets step 4 a one-token
+tree, and `LensBreakpointVariantsProvider`, registered with `[Language(typeof(LensLanguage))]`, is
+what step 5 finds. It returns a single `LineBreakpoint`, which becomes a line-wide variant with no
+highlighted range - the same answer Rider gives for `.aspx`. Deciding that a line is blank, a
+comment or a statement is left to `canPutAt` and to the language server.
+
+Two consequences fall out of steps 2 and 3, and neither is something this plugin can change:
+
+* **The session needs a solution.** `RiderBreakpointHost` has no breakpoint helper without one, and
+  `DebuggerBreakpointVariantsHost` waits for startup to finish. In a folder-mode Rider the gutter
+  offers nothing.
+* **The file needs to be in the project model.** A `.lns` file that belongs to no project reaches
+  step 3 and stops there.
 
 Note that a script can always stop the debugger itself with `Debugger::Break ()`; this is only about
 the gutter.
@@ -139,3 +197,6 @@ the gutter.
 * The plugin uses the pre-2026.1 LSP API names (`LspServerSupportProvider`,
   `ProjectWideLspServerDescriptor`) on purpose. They are deprecated in the newest platform but are
   the only ones that exist on the older Riders this plugin still supports.
+* **The backend half has no automated tests.** `test` covers the lexer and the PSI on the JVM only;
+  the backend is exercised by hand in `runIde`. A ReSharper test harness would be a bigger addition
+  than the six small components it would be testing.
