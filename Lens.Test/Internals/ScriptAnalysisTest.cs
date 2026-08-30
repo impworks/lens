@@ -127,6 +127,39 @@ countOf (new [[1; 2; 3]])"))
         }
 
         /// <summary>
+        /// A cast that cannot be represented used to be reported only while emitting, which an
+        /// editor never does: the script failed to compile and the editor showed nothing.
+        /// </summary>
+        [Test]
+        public void AnImpossibleCastIsReportedWhereItIsWritten()
+        {
+            using (var analysis = Analyze(@"
+var foo = 2
+foo = (-> 1 + 2) as int"))
+            {
+                var problem = analysis.Diagnostics.Single();
+
+                StringAssert.Contains("LE3010", problem.Message);
+                Assert.AreEqual(3, problem.Span.Start.Line);
+            }
+        }
+
+        [Test]
+        public void ADelegateCastWithAMismatchedSignatureIsReportedByAnalysis()
+        {
+            using (var analysis = Analyze(@"
+use System
+var fx = (x:int) -> x.ToString ()
+fx as Func<int, int>"))
+            {
+                var problem = analysis.Diagnostics.Single();
+
+                StringAssert.Contains("LE3008", problem.Message);
+                Assert.AreEqual(4, problem.Span.Start.Line);
+            }
+        }
+
+        /// <summary>
         /// A function that awaits is rewritten into a state machine, and the awaited expression
         /// ends up inside a group of statements the script never contained. A mistake in it used
         /// to be followed by complaints about the awaiter the rewrite declares - a name with no

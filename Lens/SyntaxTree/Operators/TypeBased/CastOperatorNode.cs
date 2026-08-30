@@ -32,7 +32,88 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             if (fromType.IsNullableType() && !toType.IsNullableType())
                 return Expr.Cast(Expr.GetMember(Expression, "Value"), toType.Materialize());
 
+            // the cast is validated here rather than while emitting, because an editor binds the
+            // tree and never emits: a check that lives in EmitInternal is a check the editor
+            // cannot report
+            Validate(ctx, fromType, toType);
+
             return base.Expand(ctx, mustReturn);
+        }
+
+        /// <summary>
+        /// Reports the casts that have no representation, following the same case distinction the
+        /// emission below makes and stopping at the point where the two differ: what to generate.
+        /// </summary>
+        private void Validate(Context ctx, TypeEntry fromType, TypeEntry toType)
+        {
+            // a type parameter is boxed and unboxed, which is valid for every substitution
+            if (ctx.Resolver.IsDeclaredTypeParameter(fromType) || ctx.Resolver.IsDeclaredTypeParameter(toType))
+                return;
+
+            if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType, true))
+                return;
+
+            if (fromType.IsNumericType() && toType.IsNumericType(true))
+                return;
+
+            if (fromType.IsCallableType() && toType.IsCallableType())
+            {
+                ValidateDelegate(ctx, fromType, toType);
+                return;
+            }
+
+            if (fromType.Is<NullType>())
+            {
+                if (!toType.IsNullableType() && toType.IsValueType)
+                    Error(CompilerMessages.CastNullValueType, toType);
+
+                return;
+            }
+
+            if (toType.IsNullableType())
+            {
+                var underlying = toType.GetNullableUnderlyingType();
+                if (underlying != fromType && !(underlying.IsNumericType() && fromType.IsNumericType()))
+                    Error(fromType, toType);
+
+                return;
+            }
+
+            // upcast: boxing, a conversion operator or a plain castclass
+            if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType))
+                return;
+
+            if (fromType.IsExtendablyAssignableFrom(ctx.Resolver, toType))
+            {
+                // unbox, or a downcast between reference types
+                if ((fromType.Is<object>() && toType.IsValueType) || (!fromType.IsValueType && !toType.IsValueType))
+                    return;
+
+                if (ctx.ResolveConvertorToType(fromType, toType) == null)
+                    Error(fromType, toType);
+
+                return;
+            }
+
+            Error(fromType, toType);
+        }
+
+        /// <summary>
+        /// Checks that one delegate type's signature can stand for another's.
+        /// </summary>
+        private void ValidateDelegate(Context ctx, TypeEntry from, TypeEntry to)
+        {
+            var fromMethod = ctx.ResolveMethod(from, "Invoke");
+            var toMethod = ctx.ResolveMethod(to, "Invoke");
+
+            var fromArgs = fromMethod.ArgumentTypes;
+            var toArgs = toMethod.ArgumentTypes;
+
+            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
+                Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
+
+            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
+                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
         }
 
         #endregion
@@ -165,16 +246,10 @@ namespace Lens.SyntaxTree.Operators.TypeBased
 
             var toCtor = ctx.ResolveConstructor(to, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
             var fromMethod = ctx.ResolveMethod(from, "Invoke");
-            var toMethod = ctx.ResolveMethod(to, "Invoke");
 
-            var fromArgs = fromMethod.ArgumentTypes;
-            var toArgs = toMethod.ArgumentTypes;
-
-            if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
-                Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
-
-            if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
-                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
+            // a cast node that binding synthesized is emitted without ever being expanded, so the
+            // signatures are checked here as well as at bind time
+            ValidateDelegate(ctx, from, to);
 
             if (fromMethod.IsStatic)
                 gen.EmitNull();
