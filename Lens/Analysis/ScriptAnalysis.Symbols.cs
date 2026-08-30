@@ -485,7 +485,10 @@ namespace Lens.Analysis
 
             foreach (var curr in local.References)
             {
-                var span = SpanOf(curr);
+                // an assignment names the variable at its start and then goes on to span the whole
+                // statement - 'a = 2 as Int32' - so the name has to be picked out of it, or every
+                // position in the value would be taken for a mention of the variable
+                var span = NarrowToName(SpanOf(curr), local.Name);
                 if (!span.IsEmpty && !result.Any(x => SameSpan(x, span)))
                     result.Add(span);
             }

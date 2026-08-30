@@ -470,6 +470,39 @@ count + count"))
         }
 
         [Test]
+        public void AReassignmentNamesTheVariableOnlyWhereItIsWritten()
+        {
+            // the assignment node spans the whole statement, and the name it assigns to is only
+            // its first word: everything to the right of the '=' belongs to other names
+            using (var analysis = Analyze(@"
+record Point
+    X : int
+
+var p = new Point 1
+p = new Point 2"))
+            {
+                var variable = analysis.FindSymbol(At(6, 1));
+
+                Assert.IsNotNull(variable);
+                Assert.AreEqual("p", variable.Name);
+                Assert.AreEqual(SymbolKind.Local, variable.Kind);
+
+                foreach (var reference in variable.References)
+                {
+                    Assert.AreEqual(reference.Start.Line, reference.End.Line);
+                    Assert.AreEqual(1, reference.End.Offset - reference.Start.Offset);
+                }
+
+                var type = analysis.FindSymbol(At(6, 11));
+
+                Assert.IsNotNull(type);
+                Assert.AreEqual("Point", type.Name);
+                Assert.AreEqual(SymbolKind.Record, type.Kind);
+                Assert.AreEqual(2, type.Declaration.Value.Start.Line);
+            }
+        }
+
+        [Test]
         public void AnArgumentIsASymbolOfItsOwn()
         {
             using (var analysis = Analyze(@"
