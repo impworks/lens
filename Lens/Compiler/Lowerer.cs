@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lens.SyntaxTree;
@@ -357,9 +357,21 @@ namespace Lens.Compiler
         /// </summary>
         private CodeBlockNode LoopBody(ForeachNode node, NodeBase itemGetter)
         {
-            var assignment = node.Local == null
-                ? Expr.Let(node.VariableName, itemGetter)
-                : Expr.Set(node.Local, itemGetter) as NodeBase;
+            NodeBase assignment;
+
+            if (node.Local == null)
+            {
+                // the statement that declares the iteration variable is invented here, so the name
+                // it registers is told where the loop header spells it: an editor has nothing else
+                // to connect the header to the uses in the body
+                var declaration = Expr.Let(node.VariableName, itemGetter);
+                declaration.NameLocation = node.VariableLocation;
+                assignment = declaration;
+            }
+            else
+            {
+                assignment = Expr.Set(node.Local, itemGetter);
+            }
 
             // the frame is a loop frame, exactly as the node's own expansion makes it: a name
             // declared in a loop is a fresh name on every iteration, and a lambda that captures it

@@ -46,6 +46,17 @@ namespace Lens.SyntaxTree.Declarations.Locals
         public Local Declared { get; set; }
 
         /// <summary>
+        /// Where the name is written, when the declaration statement is not the place it is
+        /// written in.
+        ///
+        /// A loop lowered into a state machine declares its iteration variable through a statement
+        /// nobody wrote and that stands nowhere in the source, so the name it registers would be a
+        /// name with no declaration to point at - and renaming it would rewrite the uses in the
+        /// body and leave the header spelling the old name.
+        /// </summary>
+        public LocationEntity NameLocation { get; set; }
+
+        /// <summary>
         /// Type signature for non-initialized variables.
         /// </summary>
         public TypeSignature Type { get; set; }
@@ -106,7 +117,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
                     else
                     {
                         var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
-                        name.Declaration = this;
+                        name.Declaration = NameLocation ?? this;
 
                         if (Value != null && Value.IsConstant && ctx.UnrollConstants)
                         {

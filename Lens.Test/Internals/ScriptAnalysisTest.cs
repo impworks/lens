@@ -565,6 +565,78 @@ for i in 1..10 do
         }
 
         /// <summary>
+        /// A function that yields is rewritten into a state machine, and the loops inside it are
+        /// taken apart by that rewrite rather than expanded by the loop node itself. The statement
+        /// the rewrite invents to declare the iteration variable stands nowhere in the source, so
+        /// the name it declared used to have no declaration to point at: the header was not a
+        /// symbol at all, and renaming a use below it left the header spelling the old name.
+        /// </summary>
+        [Test]
+        public void ALoopVariableInsideAnIteratorIsTheSameSymbolInTheHeaderAndTheBody()
+        {
+            using (var analysis = Analyze(@"
+fun foo:int~ ->
+    for i in 1..10 do
+        yield i + 1"))
+            {
+                var atDeclaration = analysis.FindSymbol(At(3, 9));
+                var atUse = analysis.FindSymbol(At(4, 15));
+
+                Assert.IsNotNull(atDeclaration);
+                Assert.AreEqual("i", atDeclaration.Name);
+                Assert.AreEqual(SymbolKind.Local, atDeclaration.Kind);
+                Assert.AreEqual(3, atDeclaration.Declaration.Value.Start.Line);
+                Assert.AreEqual(9, atDeclaration.Declaration.Value.Start.Offset);
+                Assert.AreEqual(2, atDeclaration.References.Count);
+                Assert.IsTrue(atDeclaration.CanRename);
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual(atDeclaration.Declaration, atUse.Declaration);
+                Assert.AreEqual(2, atUse.References.Count);
+            }
+        }
+
+        [Test]
+        public void ALoopVariableInsideAnIteratorOverASequenceIsOneSymbol()
+        {
+            using (var analysis = Analyze(@"
+fun foo:int~ (xs:int[]) ->
+    for x in xs do
+        yield x"))
+            {
+                var atUse = analysis.FindSymbol(At(4, 15));
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual("x", atUse.Name);
+                Assert.AreEqual(3, atUse.Declaration.Value.Start.Line);
+                Assert.AreEqual(9, atUse.Declaration.Value.Start.Offset);
+                Assert.AreEqual(2, atUse.References.Count);
+            }
+        }
+
+        [Test]
+        public void ALoopVariableInsideAnAwaitingFunctionIsOneSymbol()
+        {
+            using (var analysis = Analyze(@"
+fun foo:Task<int> ->
+    for i in 1..10 do
+        let x = await (Task::FromResult 1)
+        println (i + x)
+    0"))
+            {
+                var atDeclaration = analysis.FindSymbol(At(3, 9));
+                var atUse = analysis.FindSymbol(At(5, 18));
+
+                Assert.IsNotNull(atDeclaration);
+                Assert.AreEqual(2, atDeclaration.References.Count);
+                Assert.IsTrue(atDeclaration.CanRename);
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual(atDeclaration.Declaration, atUse.Declaration);
+            }
+        }
+
+        /// <summary>
         /// The rewrite that turns an awaiting 'match' into a state machine invents a name to hold
         /// what the match produces, and gives it the location of the match - so that a debugger
         /// stepping over the read stops on the right line. It used to be offered as the name every
