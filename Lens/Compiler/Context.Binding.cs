@@ -56,10 +56,14 @@ namespace Lens.Compiler
         #region Scopes
 
         /// <summary>
-        /// Every local variable binding has declared, across every scope of the script.
+        /// Every local variable the script declares, across every scope of it.
         /// Each one carries where it was declared and every place that names it.
+        ///
+        /// The names the compiler invents are left out: they are declared in the same frames, and
+        /// they carry the locations of the constructs they were invented for, but no one wrote them
+        /// and there is nothing in the source they are the name of.
         /// </summary>
-        public IEnumerable<Local> LocalSymbols => _scopes.Values.SelectMany(x => x.Locals.Values);
+        public IEnumerable<Local> LocalSymbols => _scopes.Values.SelectMany(x => x.Locals.Values).Where(x => !x.IsSynthetic);
 
         /// <summary>
         /// Returns the scope frame of a code block, creating it on first request.

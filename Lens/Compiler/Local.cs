@@ -27,6 +27,10 @@ namespace Lens.Compiler
             // a name declared without a type is one whose type is still being worked out from the
             // values assigned to it
             IsTypeDeferred = type == null;
+
+            // every name the compiler invents is spelled with angle brackets, which no identifier
+            // the lexer accepts can contain
+            IsSynthetic = !string.IsNullOrEmpty(name) && name[0] == '<';
         }
 
         #endregion
@@ -37,6 +41,18 @@ namespace Lens.Compiler
         /// Variable name.
         /// </summary>
         public readonly string Name;
+
+        /// <summary>
+        /// Whether the compiler invented the name rather than the script writing it down.
+        ///
+        /// A temporary the lowering pass invents inherits the location of whatever it was invented
+        /// for - a match that produces a value gives its name the location of the match itself, so
+        /// that a debugger stepping over the read stops on the right line. That makes it look, to
+        /// anything that asks which name a position belongs to, like a name written across the
+        /// whole construct. It is not a name anyone can write, hover over or rename, so it is not
+        /// offered as one.
+        /// </summary>
+        public readonly bool IsSynthetic;
 
         /// <summary>
         /// Variable type.
@@ -107,6 +123,25 @@ namespace Lens.Compiler
         #region Deferred type
 
         /// <summary>
+        /// Whether an assignment to the name failed to bind, so that a type it was going to
+        /// contribute never arrived.
+        /// </summary>
+        private bool _isTypeFaulted;
+
+        /// <summary>
+        /// Records that an assignment to the name did not bind.
+        ///
+        /// The value it was assigning has no type, so it contributes none - and the name may end up
+        /// with no type at all through no fault of its own. Whatever went wrong there has been
+        /// reported already, and the read that finds nothing to settle the type on must not report
+        /// it a second time in words about a name the script never mentions.
+        /// </summary>
+        public void FaultType()
+        {
+            _isTypeFaulted = true;
+        }
+
+        /// <summary>
         /// Widens the name's type to also hold what is being assigned to it.
         /// </summary>
         public void ContributeType(TypeResolutionContext ctx, TypeEntry type)
@@ -129,7 +164,12 @@ namespace Lens.Compiler
                 return;
 
             if (Type == null)
-                throw new LensCompilerException(string.Format(CompilerMessages.DeferredNameNeverAssigned, Name));
+            {
+                throw new LensCompilerException(string.Format(CompilerMessages.DeferredNameNeverAssigned, Name))
+                {
+                    IsSuppressed = _isTypeFaulted
+                };
+            }
 
             IsTypeDeferred = false;
         }

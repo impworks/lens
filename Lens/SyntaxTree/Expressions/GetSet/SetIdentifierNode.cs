@@ -80,9 +80,21 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // assignment is one of the things that decides it
             if (nameInfo != null && nameInfo.IsTypeDeferred)
             {
-                var assignedType = Value.Resolve(ctx);
-                ctx.CheckTypedExpression(Value, assignedType, true);
-                nameInfo.ContributeType(ctx.Resolver, assignedType);
+                try
+                {
+                    var assignedType = Value.Resolve(ctx);
+                    ctx.CheckTypedExpression(Value, assignedType, true);
+                    nameInfo.ContributeType(ctx.Resolver, assignedType);
+                }
+                catch (LensCompilerException)
+                {
+                    // the value has no type, so it contributes none: remember that, or the read
+                    // that finds the name still without a type would report a mistake of its own
+                    // on top of the one that has just been reported here
+                    nameInfo.FaultType();
+                    throw;
+                }
+
                 return base.ResolveInternal(ctx, mustReturn);
             }
 

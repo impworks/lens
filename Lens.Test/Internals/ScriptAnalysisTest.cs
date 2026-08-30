@@ -151,6 +151,29 @@ fun delay:Task (time:int) ->
             }
         }
 
+        /// <summary>
+        /// A 'match' that produces a value and suspends somewhere inside is rewritten so that its
+        /// case bodies assign to a name the compiler invents, and that name has no type until an
+        /// assignment gives it one. A case body that does not bind gives it nothing, which used to
+        /// be reported as a second mistake - one about a name the script never mentions, pinned to
+        /// the whole 'match'.
+        /// </summary>
+        [Test]
+        public void ABrokenCaseBodyInAnAwaitingMatchIsReportedOnlyWhereItIsWritten()
+        {
+            using (var analysis = Analyze(@"
+match ""x"" with
+    case ""x"" then
+        let text = await (new System.Net.Http.HttpClient ()).GetStringAsync ""http://nowhere""
+        text.Foo"))
+            {
+                var problem = analysis.Diagnostics.Single();
+
+                StringAssert.Contains("Foo", problem.Message);
+                Assert.AreEqual(5, problem.Span.Start.Line);
+            }
+        }
+
         [Test]
         public void SeveralIndependentErrorsAreAllReported()
         {
@@ -472,6 +495,35 @@ for i in 1..10 do
                 Assert.AreEqual(2, symbol.Declaration.Value.Start.Line);
                 Assert.AreEqual(2, symbol.References.Count);
                 Assert.IsTrue(symbol.CanRename);
+            }
+        }
+
+        /// <summary>
+        /// The rewrite that turns an awaiting 'match' into a state machine invents a name to hold
+        /// what the match produces, and gives it the location of the match - so that a debugger
+        /// stepping over the read stops on the right line. It used to be offered as the name every
+        /// position inside the match belonged to, hiding the names actually written there.
+        /// </summary>
+        [Test]
+        public void ANameInsideAnAwaitingCaseBodyIsItsOwnSymbol()
+        {
+            using (var analysis = Analyze(@"
+match ""x"" with
+    case ""x"" then
+        let text = await (new System.Net.Http.HttpClient ()).GetStringAsync ""http://nowhere""
+        text.Length"))
+            {
+                var atDeclaration = analysis.FindSymbol(At(4, 13));
+                var atUse = analysis.FindSymbol(At(5, 9));
+
+                Assert.IsNotNull(atDeclaration);
+                Assert.AreEqual("text", atDeclaration.Name);
+                Assert.AreEqual(SymbolKind.Local, atDeclaration.Kind);
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual("text", atUse.Name);
+                Assert.AreEqual(atDeclaration.Declaration, atUse.Declaration);
+                Assert.AreEqual(2, atUse.References.Count);
             }
         }
 
