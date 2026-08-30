@@ -98,6 +98,29 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #endregion
 
+        #region Transform
+
+        /// <summary>
+        /// Marks the clause as the one being handled while its body is bound, so that a bare
+        /// 'throw' inside it knows it has something to rethrow.
+        /// </summary>
+        public override void Transform(Context ctx, bool mustReturn)
+        {
+            var backup = ctx.CurrentCatchBlock;
+            ctx.CurrentCatchBlock = this;
+
+            try
+            {
+                base.Transform(ctx, mustReturn);
+            }
+            finally
+            {
+                ctx.CurrentCatchBlock = backup;
+            }
+        }
+
+        #endregion
+
         #region Closures
 
         public override void AnalyzeClosures(Context ctx)

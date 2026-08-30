@@ -116,6 +116,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
             ResolveClosureReturnType(ctx);
 
             Body.AnalyzeClosures(ctx);
+
+            // the body has been bound and expanded by now, which is what the tree builder reads:
+            // this is the earliest point at which it can say whether the lambda has a tree form
+            var treeType = ctx.BindingOf<Binding>(this).ExpressionTreeType;
+            if (treeType != null)
+                new ExpressionTreeBuilder(ctx, this, treeType).Validate();
         }
 
         public override void EmitClosureEntities(Context ctx)

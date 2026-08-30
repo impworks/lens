@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -58,11 +58,54 @@ namespace Lens.Compiler
         /// </summary>
         private readonly Dictionary<string, LocalBuilder> _parameters;
 
-        private ILGenerator Gen => _ctx.CurrentMethod.Generator;
+        /// <summary>
+        /// Whether this walk is made for its diagnostics alone: nothing it writes is kept, and
+        /// the parts of it that would touch the assembly are skipped.
+        /// </summary>
+        private bool _isDryRun;
+
+        /// <summary>
+        /// The generator a dry run writes into, so that the walk below needs no knowledge of which
+        /// kind of run it is part of.
+        /// </summary>
+        private ILGenerator _scratchGenerator;
+
+        private ILGenerator Gen => _isDryRun ? _scratchGenerator : _ctx.CurrentMethod.Generator;
 
         #endregion
 
         #region Entry point
+
+        /// <summary>
+        /// Walks the body exactly as <see cref="Emit"/> does and reports what cannot be translated,
+        /// without producing anything.
+        ///
+        /// The rejections live in the walk itself and are inseparable from it - which of a node's
+        /// children are visited depends on how the node is translated - so the check is the walk
+        /// rather than a second copy of its judgement. An editor binds a script and never emits it,
+        /// and would otherwise be silent about a lambda no query provider could translate.
+        /// </summary>
+        public void Validate()
+        {
+            _isDryRun = true;
+            _scratchGenerator = new DynamicMethod("<validate>", typeof(void), Type.EmptyTypes).GetILGenerator();
+
+            try
+            {
+                Emit();
+            }
+            catch (LensCompilerException)
+            {
+                throw;
+            }
+            catch
+            {
+                // the throwaway generator cannot always take what the real one would - the token of
+                // a type the script itself declares, for one - and none of that is a statement
+                // about the script, so none of it is reported. The body is checked again in full
+                // when it is emitted for real.
+            }
+        }
 
         /// <summary>
         /// Emits the code that builds the tree and leaves it on the stack.
@@ -223,7 +266,10 @@ namespace Lens.Compiler
             if (type == typeof(NullType))
                 return TranslateNull(typeof(object));
 
-            node.Emit(_ctx, true);
+            // a dry run has no enclosing method to compute the value in
+            if (!_isDryRun)
+                node.Emit(_ctx, true);
+
             Box(type);
             PushType(type);
             Gen.EmitCall(FactoryConstant);
@@ -270,6 +316,11 @@ namespace Lens.Compiler
         /// </summary>
         private Type TranslateClosuredLocal(NodeBase node, Local local)
         {
+            // the closure class is built while emitting; what the check needs of a captured
+            // variable is its type, and binding already knows that
+            if (_isDryRun)
+                return local.Type.Materialize();
+
             var closureType = _ctx.Scope.EmitClosureInstance(_ctx, local);
             var field = _ctx.ResolveField(closureType, local.ClosureFieldName);
 
@@ -290,7 +341,10 @@ namespace Lens.Compiler
         {
             var type = node.Resolve(_ctx).Materialize();
 
-            node.Emit(_ctx, true);
+            // a dry run has no enclosing method to compute the value in
+            if (!_isDryRun)
+                node.Emit(_ctx, true);
+
             Box(type);
             PushType(type);
             Gen.EmitCall(FactoryConstant);

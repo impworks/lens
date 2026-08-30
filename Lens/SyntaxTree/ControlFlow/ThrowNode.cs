@@ -21,6 +21,32 @@ namespace Lens.SyntaxTree.ControlFlow
 
         #endregion
 
+        #region Resolve
+
+        protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
+        {
+            // what may be thrown is decided here rather than while emitting, because an editor
+            // binds the tree and never emits: a check that lives in EmitInternal is one the
+            // reader of a half-written script never sees
+            if (Expression == null)
+            {
+                // 'throw' on its own rethrows what is being handled, and outside a catch clause
+                // there is nothing for it to name
+                if (ctx.CurrentCatchBlock == null)
+                    Error(CompilerMessages.ThrowArgumentExpected);
+            }
+            else
+            {
+                var type = Expression.Resolve(ctx);
+                if (!TypeEntryCache.Of<Exception>().IsExtendablyAssignableFrom(ctx.Resolver, type))
+                    Error(Expression, CompilerMessages.ThrowTypeNotException, type);
+            }
+
+            return base.ResolveInternal(ctx, mustReturn);
+        }
+
+        #endregion
+
         #region Transform
 
         internal override IEnumerable<NodeChild> GetChildren()
@@ -47,18 +73,10 @@ namespace Lens.SyntaxTree.ControlFlow
 
             if (Expression == null)
             {
-                if (ctx.CurrentCatchBlock == null)
-                    Error(CompilerMessages.ThrowArgumentExpected);
-
                 gen.EmitRethrow();
             }
             else
             {
-                var type = Expression.Resolve(ctx);
-
-                if (!TypeEntryCache.Of<Exception>().IsExtendablyAssignableFrom(ctx.Resolver, type))
-                    Error(Expression, CompilerMessages.ThrowTypeNotException, type);
-
                 Expression.Emit(ctx, true);
                 gen.EmitThrow();
             }

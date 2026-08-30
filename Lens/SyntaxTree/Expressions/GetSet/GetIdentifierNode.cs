@@ -68,6 +68,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 if (Identifier != null)
                     local.Reference(this);
 
+                // an immutable local has no storage a callee could write back into: this is checked
+                // here rather than at emission, so that an editor - which binds but never emits -
+                // reports it too
+                if (local.IsImmutable && RefArgumentRequired)
+                    Error(CompilerMessages.ConstantByRef);
+
                 // only local constants are cached
                 // because mutable variables could be closured later on
                 if (local.IsConstant && local.IsImmutable && ctx.UnrollConstants)
@@ -138,6 +144,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             try
             {
                 _property = ctx.ResolveGlobalProperty(Identifier);
+
+                // checked here rather than while emitting, because an editor binds the tree and
+                // never emits: a check that lives in EmitInternal is one the reader never sees
+                if (!_property.HasGetter)
+                    Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
+
                 return TypeEntryCache.Of(_property.PropertyType);
             }
             catch (KeyNotFoundException)
@@ -215,9 +227,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var local = Local ?? ctx.Scope.FindLocal(Identifier);
             if (local != null)
             {
-                if (local.IsImmutable && RefArgumentRequired)
-                    Error(CompilerMessages.ConstantByRef);
-
                 if (local.IsClosured)
                     EmitGetClosured(ctx, local);
                 else
@@ -242,9 +251,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_property != null)
             {
                 var id = _property.PropertyId;
-                if (!_property.HasGetter)
-                    Error(CompilerMessages.GlobalPropertyNoGetter, Identifier);
-
                 var type = _property.PropertyType;
                 if (_property.GetterMethod != null)
                 {

@@ -40,6 +40,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             try
             {
                 _getter = ctx.ResolveIndexer(exprType, idxType, true);
+
+            // what may be passed by reference is decided here rather than while emitting, because
+            // an editor binds the tree and never emits: a check that lives in EmitInternal is one
+            // the reader of a half-written script never sees
+                // an indexer's getter hands back a copy, and there is no storage behind it for a
+                // callee to write into
+                if (RefArgumentRequired && _getter.ReturnType.IsValueType)
+                    Error(CompilerMessages.IndexerValuetypeRef, exprType, _getter.ReturnType);
+
                 return _getter.ReturnType;
             }
             catch (LensCompilerException ex)
@@ -102,11 +111,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void EmitCustom(Context ctx)
         {
-            var retType = _getter.ReturnType;
-
-            if (RefArgumentRequired && retType.IsValueType)
-                Error(CompilerMessages.IndexerValuetypeRef, Expression.Resolve(ctx), retType);
-
             var gen = ctx.CurrentMethod.Generator;
 
             var ptrExpr = Expression as IPointerProvider;

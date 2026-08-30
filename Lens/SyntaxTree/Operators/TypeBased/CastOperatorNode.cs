@@ -99,6 +99,17 @@ namespace Lens.SyntaxTree.Operators.TypeBased
         }
 
         /// <summary>
+        /// Checks a cast that is not written in the source but synthesized while emitting - an
+        /// argument being adapted to the parameter it is passed to, say. Binding builds one of
+        /// these on the side and asks it whether it would work, so that a cast the emitter would
+        /// reject is reported by an editor, which binds and never emits.
+        /// </summary>
+        internal void ValidateSynthesized(Context ctx)
+        {
+            Validate(ctx, Expression.Resolve(ctx), Resolve(ctx));
+        }
+
+        /// <summary>
         /// Checks that one delegate type's signature can stand for another's.
         /// </summary>
         private void ValidateDelegate(Context ctx, TypeEntry from, TypeEntry to)

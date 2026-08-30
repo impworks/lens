@@ -91,8 +91,22 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_field != null)
                 return _field.FieldType;
 
+            // what may be passed by reference is decided here rather than while emitting, because
+            // an editor binds the tree and never emits: a check that lives in EmitInternal is one
+            // the reader of a half-written script never sees
             if (_property != null)
+            {
+                // a getter hands back a copy, and there is no storage behind it for a callee to
+                // write into
+                if (_property.PropertyType.IsValueType && RefArgumentRequired)
+                    Error(CompilerMessages.PropertyValuetypeRef, _property.DeclaringType.Materialize(), MemberName, _property.PropertyType.Materialize());
+
                 return _property.PropertyType;
+            }
+
+            // naming a method builds a delegate on the spot, which likewise has no storage
+            if (RefArgumentRequired)
+                Error(CompilerMessages.MethodRef);
 
             return _method.ReturnType.IsVoid()
                 ? TypeEntryCache.Of(FunctionalHelper.CreateActionType(_method.ArgumentTypes.Select(x => x.Materialize()).ToArray()))
@@ -317,9 +331,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void EmitProperty(Context ctx, ILGenerator gen)
         {
-            if (_property.PropertyType.IsValueType && RefArgumentRequired)
-                Error(CompilerMessages.PropertyValuetypeRef, _property.DeclaringType.Materialize(), MemberName, _property.PropertyType.Materialize());
-
             gen.EmitCall(_property.Getter, _property.IsVirtual);
 
             if (ctx.IsPointerRequired(this))
@@ -335,9 +346,6 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void EmitMethod(Context ctx, ILGenerator gen)
         {
-            if (RefArgumentRequired)
-                Error(CompilerMessages.MethodRef);
-
             if (_isStatic)
                 gen.EmitNull();
 

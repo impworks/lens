@@ -33,6 +33,19 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (_itemType.Is<NullType>())
                 Error(CompilerMessages.ListTypeUnknown);
 
+            // every element is checked here rather than while emitting, because an editor binds
+            // the tree and never emits: a check that lives in EmitInternal is one the reader of a
+            // half-written script never sees
+            foreach (var curr in Expressions)
+            {
+                var currType = curr.Resolve(ctx);
+
+                ctx.CheckTypedExpression(curr, currType, true);
+
+                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
+                    Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
+            }
+
             return TypeEntryCache.Of(typeof(List<>)).MakeGeneric(ctx.Resolver, new[] {_itemType});
         }
 
@@ -74,13 +87,6 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             foreach (var curr in Expressions)
             {
-                var currType = curr.Resolve(ctx);
-
-                ctx.CheckTypedExpression(curr, currType, true);
-
-                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
-                    Error(curr, CompilerMessages.ListElementTypeMismatch, currType, _itemType);
-
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
                 Expr.Cast(curr, addMethod.ArgumentTypes[0].Materialize()).Emit(ctx, true);

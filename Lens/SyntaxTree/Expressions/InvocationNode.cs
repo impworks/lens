@@ -92,6 +92,8 @@ namespace Lens.SyntaxTree.Expressions
 
             ApplyLambdaArgTypes(ctx);
 
+            CheckArgumentRefness(ctx);
+
             CheckMemberInSafeMode(ctx, binding.Method);
 
             return ResolvePartial(binding.Method, binding.Method.ReturnType, binding.ArgTypes);
@@ -463,16 +465,10 @@ namespace Lens.SyntaxTree.Expressions
                 for (var idx = 0; idx < binding.Arguments.Count; idx++)
                 {
                     var arg = binding.Arguments[idx];
-                    var argRef = arg is IPointerProvider && (arg as IPointerProvider).RefArgumentRequired;
-                    var targetRef = destTypes[idx].IsByRef;
 
-                    if (argRef != targetRef)
-                    {
-                        if (argRef)
-                            Error(arg, CompilerMessages.ReferenceArgUnexpected);
-                        else
-                            Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].Materialize().GetElementType());
-                    }
+                    // binding has already checked that the argument is written the way the
+                    // parameter is declared, so the parameter alone says how it is passed
+                    var argRef = destTypes[idx].IsByRef;
 
                     var expr = argRef ? arg : Expr.Cast(arg, destTypes[idx].Materialize());
                     expr.Emit(ctx, true);

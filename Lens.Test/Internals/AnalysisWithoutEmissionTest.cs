@@ -1,5 +1,6 @@
-using System.Linq;
+﻿using System.Linq;
 using Lens.Compiler;
+using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Internals
@@ -17,6 +18,23 @@ namespace Lens.Test.Internals
             var ctx = new Context(new LensCompilerOptions());
             ctx.Analyze(Parse(src).ToList());
             return ctx;
+        }
+
+        /// <summary>
+        /// Asserts that analysis - which never emits - reported the given diagnostic.
+        /// </summary>
+        private static void AssertReports(Context ctx, string message)
+        {
+            var id = message.Substring(0, 6);
+
+            Assert.IsTrue(
+                ctx.Diagnostics.Any(d => d.Message.StartsWith(id)),
+                "Expected {0}, got: {1}",
+                message,
+                string.Join(" | ", ctx.Diagnostics.Select(d => d.Message))
+            );
+
+            Assert.IsFalse(ctx.HasEmitTarget);
         }
 
         [Test]
@@ -227,6 +245,106 @@ add 1 (new [[2]])");
 
             Assert.IsTrue(ctx.Diagnostics.HasErrors);
             Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAConstantPassedByReferenceReportsIt()
+        {
+            // the check used to live in the emission half only, so an editor - which never emits -
+            // showed nothing for a 'let' handed to a 'ref' parameter
+            var ctx = Analyze(@"
+let y = 1
+let x = int::TryParse ""x"" (ref y)");
+
+            Assert.IsTrue(ctx.Diagnostics.HasErrors);
+            Assert.IsTrue(ctx.Diagnostics.Any(d => d.Message == CompilerMessages.ConstantByRef));
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAConditionThatIsNotBooleanReportsIt()
+        {
+            var ctx = Analyze("if 1 then 2");
+
+            AssertReports(ctx, CompilerMessages.ConditionTypeMismatch);
+        }
+
+        [Test]
+        public void AnalysingAThrownNonExceptionReportsIt()
+        {
+            var ctx = Analyze("throw 1");
+
+            AssertReports(ctx, CompilerMessages.ThrowTypeNotException);
+        }
+
+        [Test]
+        public void AnalysingARethrowOutsideACatchClauseReportsIt()
+        {
+            var ctx = Analyze("throw");
+
+            AssertReports(ctx, CompilerMessages.ThrowArgumentExpected);
+        }
+
+        [Test]
+        public void AnalysingARethrowInsideACatchClauseReportsNothing()
+        {
+            // the clause a bare 'throw' belongs to used to be known only while emitting, and the
+            // check above is worth nothing if it fires on the one case that is legal
+            var ctx = Analyze(@"
+try
+    println ""a""
+catch
+    throw");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty);
+        }
+
+        [Test]
+        public void AnalysingADictionaryKeyOfTheWrongTypeReportsIt()
+        {
+            var ctx = Analyze(@"new {1 => 2; ""a"" => 3}");
+
+            AssertReports(ctx, CompilerMessages.DictionaryKeyTypeMismatch);
+        }
+
+        [Test]
+        public void AnalysingAPropertyPassedByReferenceReportsIt()
+        {
+            var ctx = Analyze(@"
+fun f (x:ref int) ->
+    x = 1
+
+var s = ""abc""
+f (ref s.Length)");
+
+            AssertReports(ctx, CompilerMessages.PropertyValuetypeRef);
+        }
+
+        [Test]
+        public void AnalysingAnIndexerPassedByReferenceReportsIt()
+        {
+            var ctx = Analyze(@"
+fun f (x:ref int) ->
+    x = 1
+
+var d = new {1 => 2}
+f (ref d[1])");
+
+            AssertReports(ctx, CompilerMessages.IndexerValuetypeRef);
+        }
+
+        [Test]
+        public void AnalysingALambdaThatReturnsTheWrongTypeReportsIt()
+        {
+            // overload resolution takes a lambda for any delegate of the same arity, and the
+            // signatures used to be reconciled only by the cast the emitter synthesizes
+            var ctx = Analyze(@"
+fun test:string (x:Func<int, int>) ->
+    (x 1).ToString ()
+
+test (a -> true)");
+
+            AssertReports(ctx, CompilerMessages.CastDelegateReturnTypesMismatch);
         }
 
         [Test]

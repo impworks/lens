@@ -225,6 +225,50 @@ namespace Lens.SyntaxTree.Expressions
         }
 
         /// <summary>
+        /// Checks that every argument is passed the way the parameter it lands on is declared: a
+        /// 'ref' parameter demands 'ref' at the call site, and a by-value one refuses it.
+        ///
+        /// This lives in binding rather than in emission, because an editor binds and never emits:
+        /// a check that only the emitter performs is one the reader never sees.
+        /// </summary>
+        protected void CheckArgumentRefness(Context ctx)
+        {
+            var binding = GetBinding(ctx);
+            var destTypes = GetWrapper(ctx).ArgumentTypes;
+
+            // an argument list of exactly one unit is the 'no arguments at all' spelling, and
+            // resolution has already dropped it from the argument types
+            if (binding.ArgTypes.Length == 0)
+                return;
+
+            var count = Math.Min(binding.Arguments.Count, Math.Min(binding.ArgTypes.Length, destTypes.Length));
+
+            // a variadic tail packs any number of arguments into the last parameter, so past the
+            // fixed ones an argument no longer has a parameter of its own to be compared with
+            if (GetWrapper(ctx).IsVariadic)
+                count = Math.Min(count, destTypes.Length - 1);
+
+            for (var idx = 0; idx < count; idx++)
+            {
+                // a partial application's placeholder is not an argument being passed at all
+                if (binding.ArgTypes[idx].Is<UnspecifiedType>())
+                    continue;
+
+                var arg = binding.Arguments[idx];
+                var argRef = arg is IPointerProvider provider && provider.RefArgumentRequired;
+                var targetRef = destTypes[idx].IsByRef;
+
+                if (argRef == targetRef)
+                    continue;
+
+                if (argRef)
+                    Error(arg, CompilerMessages.ReferenceArgUnexpected);
+                else
+                    Error(arg, CompilerMessages.ReferenceArgExpected, idx + 1, destTypes[idx].Materialize().GetElementType());
+            }
+        }
+
+        /// <summary>
         /// Apply inferred types to untyped lambda arguments.
         /// </summary>
         protected void ApplyLambdaArgTypes(Context ctx)
@@ -262,7 +306,20 @@ namespace Lens.SyntaxTree.Expressions
                     lambda.SetInferredArgumentTypes(ctx, actualWrapper.ArgumentTypes);
                 }
 
-                lambda.Resolve(ctx);
+                var actualType = lambda.Resolve(ctx);
+
+                // overload resolution accepts a lambda for any delegate of the same arity, leaving
+                // the signatures to be reconciled by the cast the emitter synthesizes around the
+                // argument. That cast is the only thing that ever notices a lambda returning the
+                // wrong type, so it is built here and asked whether it would work - an editor binds
+                // and never emits, and would otherwise see nothing wrong at all.
+                if (!expected.IsExpressionType() && actualType.IsCallableType() && expected.IsCallableType())
+                {
+                    var probe = Expr.Cast(lambda, expected);
+                    probe.StartLocation = lambda.StartLocation;
+                    probe.EndLocation = lambda.EndLocation;
+                    probe.ValidateSynthesized(ctx);
+                }
             }
         }
 

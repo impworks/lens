@@ -42,8 +42,23 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (_valueType.Is<NullType>() || _keyType.Is<NullType>())
                 Error(Expressions[0].Value, CompilerMessages.DictionaryTypeUnknown);
 
-            ctx.CheckTypedExpression(Expressions[0].Key, _keyType);
-            ctx.CheckTypedExpression(Expressions[0].Value, _valueType, true);
+            // every element is checked here rather than while emitting, because an editor binds
+            // the tree and never emits: a check that lives in EmitInternal is one the reader of a
+            // half-written script never sees
+            foreach (var curr in Expressions)
+            {
+                var currKeyType = curr.Key.Resolve(ctx);
+                var currValType = curr.Value.Resolve(ctx);
+
+                ctx.CheckTypedExpression(curr.Key, currKeyType);
+                ctx.CheckTypedExpression(curr.Value, currValType, true);
+
+                if (currKeyType != _keyType)
+                    Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);
+
+                if (!_valueType.IsExtendablyAssignableFrom(ctx.Resolver, currValType))
+                    Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _keyType, _valueType);
+            }
 
             return TypeEntryCache.Of(typeof(Dictionary<,>)).MakeGeneric(ctx.Resolver, new[] {_keyType, _valueType});
         }
@@ -97,18 +112,6 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             foreach (var curr in Expressions)
             {
-                var currKeyType = curr.Key.Resolve(ctx);
-                var currValType = curr.Value.Resolve(ctx);
-
-                ctx.CheckTypedExpression(curr.Key, currKeyType);
-                ctx.CheckTypedExpression(curr.Value, currValType, true);
-
-                if (currKeyType != _keyType)
-                    Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);
-
-                if (!_valueType.IsExtendablyAssignableFrom(ctx.Resolver, currValType))
-                    Error(curr.Value, CompilerMessages.DictionaryValueTypeMismatch, currValType, _keyType, _valueType);
-
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
 
                 curr.Key.Emit(ctx, true);

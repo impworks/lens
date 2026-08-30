@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using Lens.Analysis;
 using Lens.Compiler;
 using Lens.Translations;
 using NUnit.Framework;
@@ -350,6 +351,51 @@ users
             );
         }
 
+        [Test]
+        public void RejectedConstructsAreReportedWithoutEmitting()
+        {
+            // the tree builder is the emission half of a lambda body, so everything it rejects used
+            // to be invisible to an editor - which binds a script and never emits it. The same walk
+            // now runs while binding, and has to reach the same verdicts.
+            AssertAnalysisReports(
+                @"users.Where
+    <| u ->
+        let x = u.Age
+        x > 18",
+                CompilerMessages.ExpressionTreeBlockBody
+            );
+
+            AssertAnalysisReports(
+                @"users
+    |> Where u -> u.Manager?.Age > 18",
+                CompilerMessages.ExpressionTreeNullSafe
+            );
+
+            AssertAnalysisReports(
+                @"users
+    |> Where u -> ((x:int) -> x > 18) u.Age",
+                CompilerMessages.ExpressionTreeUnsupportedNode
+            );
+
+            AssertAnalysisReports(
+                @"users
+    |> Where u -> u.Name < ""b""",
+                CompilerMessages.ExpressionTreeUnsupportedOperator
+            );
+        }
+
+        [Test]
+        public void ATranslatableQueryIsAnalysedWithoutComplaint()
+        {
+            // the check above is worth nothing if the dry run reports the queries that do work
+            AssertAnalysisReports(
+                @"users
+    |> Where u -> u.Age > 18
+    |> Select u -> u.Name",
+                null
+            );
+        }
+
         #endregion
 
         #region Safe mode
@@ -396,6 +442,39 @@ users
         private static string[] Names(string src)
         {
             return (string[]) Run(src);
+        }
+
+        /// <summary>
+        /// Checks what the editor makes of a query: the analyzer binds the script and never emits
+        /// it, so a diagnostic it does not report is one the author never sees.
+        /// </summary>
+        private static void AssertAnalysisReports(string src, string message)
+        {
+            const string declaration = @"declare
+    let users : System.Linq.IQueryable<Lens.Test.Features.TreeUser>
+
+";
+
+            var analyzer = new ScriptAnalyzer();
+            analyzer.AddReference(typeof(TreeUser).Assembly);
+
+            using (var analysis = analyzer.Analyze(declaration + src))
+            {
+                var actual = analysis.Diagnostics.Select(x => x.Message).ToArray();
+
+                if (message == null)
+                {
+                    Assert.IsEmpty(actual, "Expected no diagnostics, got: {0}", string.Join(" | ", actual));
+                    return;
+                }
+
+                Assert.IsTrue(
+                    actual.Any(x => x.StartsWith(message.Substring(0, 6))),
+                    "Expected {0}, got: {1}",
+                    message,
+                    string.Join(" | ", actual)
+                );
+            }
         }
 
         private static void TestQueryError(string src, string message)

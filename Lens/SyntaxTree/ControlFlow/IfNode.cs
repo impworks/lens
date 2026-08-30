@@ -67,6 +67,18 @@ namespace Lens.SyntaxTree.ControlFlow
                 yield return new NodeChild(FalseAction);
         }
 
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            // the condition is checked here rather than while emitting, because an editor binds
+            // the tree and never emits: a check that lives in EmitInternal is one the reader of
+            // a half-written script never sees
+            var condType = Condition.Resolve(ctx);
+            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
+                Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
+
+            return base.Expand(ctx, mustReturn);
+        }
+
         #endregion
 
         #region Emit
@@ -74,10 +86,6 @@ namespace Lens.SyntaxTree.ControlFlow
         protected override void EmitInternal(Context ctx, bool mustReturn)
         {
             var gen = ctx.CurrentMethod.Generator;
-
-            var condType = Condition.Resolve(ctx);
-            if (!condType.IsExtendablyAssignableFrom(ctx.Resolver, TypeEntryCache.Of<bool>()))
-                Error(Condition, CompilerMessages.ConditionTypeMismatch, condType);
 
             if (Condition.IsConstant && ctx.UnrollConstants)
             {

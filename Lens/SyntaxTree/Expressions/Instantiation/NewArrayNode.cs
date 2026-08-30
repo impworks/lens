@@ -34,6 +34,19 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             if (_itemType.Is<NullType>())
                 Error(CompilerMessages.ArrayTypeUnknown);
 
+            // every element is checked here rather than while emitting, because an editor binds
+            // the tree and never emits: a check that lives in EmitInternal is one the reader of a
+            // half-written script never sees
+            foreach (var curr in Expressions)
+            {
+                var currType = curr.Resolve(ctx);
+
+                ctx.CheckTypedExpression(curr, currType, true);
+
+                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
+                    Error(curr, CompilerMessages.ArrayElementTypeMismatch, currType, _itemType);
+            }
+
             return _itemType.MakeArray(ctx.Resolver);
         }
 
@@ -72,13 +85,6 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
 
             for (var idx = 0; idx < count; idx++)
             {
-                var currType = Expressions[idx].Resolve(ctx);
-
-                ctx.CheckTypedExpression(Expressions[idx], currType, true);
-
-                if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
-                    Error(Expressions[idx], CompilerMessages.ArrayElementTypeMismatch, currType, _itemType);
-
                 gen.EmitLoadLocal(tmpVar.LocalBuilder);
                 gen.EmitConstant(idx);
 
