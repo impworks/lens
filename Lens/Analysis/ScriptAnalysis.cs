@@ -6,6 +6,7 @@ using Lens.Lexer;
 using Lens.Parser;
 using Lens.Resolver;
 using Lens.SyntaxTree;
+using Lens.Utils;
 
 namespace Lens.Analysis
 {
@@ -306,13 +307,16 @@ namespace Lens.Analysis
         /// questions. So each hole is lexed again and its lexems are spliced in ahead of the string
         /// they came from, at the positions they occupy in the outer source. Ahead, because a
         /// lookup takes the first lexem covering the position and the string covers all of them.
+        ///
+        /// A regex literal is the same story: the name of a named group is a variable the 'case'
+        /// declares, so it is spliced in as the identifier it is.
         /// </summary>
-        internal IReadOnlyList<Lexem> Lexems => _lexems ?? (_lexems = ExpandInterpolations());
+        internal IReadOnlyList<Lexem> Lexems => _lexems ?? (_lexems = ExpandLiterals());
 
         /// <summary>
-        /// Splices the lexems of every interpolation hole into the stream.
+        /// Splices the names written inside a literal into the stream.
         /// </summary>
-        private IReadOnlyList<Lexem> ExpandInterpolations()
+        private IReadOnlyList<Lexem> ExpandLiterals()
         {
             var result = new List<Lexem>();
 
@@ -321,10 +325,31 @@ namespace Lens.Analysis
                 if (curr.Type == LexemType.InterpolatedString && curr.InterpolationParts != null)
                     result.AddRange(curr.InterpolationParts.Where(x => x.IsHole).SelectMany(HoleLexems));
 
+                if (curr.Type == LexemType.Regex)
+                    result.AddRange(GroupNameLexems(curr));
+
                 result.Add(curr);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// The names the named groups of a regex literal declare, as the identifiers they are.
+        /// </summary>
+        private static IEnumerable<Lexem> GroupNameLexems(Lexem literal)
+        {
+            RegexLiteral.Split(literal.Value, out var pattern, out _);
+
+            foreach (var curr in RegexLiteral.NamedGroups(pattern, literal.StartLocation))
+            {
+                yield return new Lexem(
+                    LexemType.Identifier,
+                    curr.NameLocation.StartLocation,
+                    curr.NameLocation.EndLocation,
+                    curr.Name
+                );
+            }
         }
 
         /// <summary>

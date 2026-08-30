@@ -19,6 +19,7 @@ using Lens.SyntaxTree.Operators.TypeBased;
 using Lens.SyntaxTree.PatternMatching;
 using Lens.SyntaxTree.PatternMatching.Rules;
 using Lens.Translations;
+using Lens.Utils;
 
 namespace Lens.Parser
 {
@@ -1282,7 +1283,9 @@ namespace Lens.Parser
                 return null;
 
             var node = new ForeachNode();
-            node.VariableName = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected).Value;
+            var varName = Ensure(LexemType.Identifier, ParserMessages.VarIdentifierExpected);
+            node.VariableName = varName.Value;
+            node.VariableLocation = varName;
             Ensure(LexemType.In, ParserMessages.SymbolExpected, "in");
 
             var iter = Ensure(ParseLineExpr, ParserMessages.SequenceExpected);
@@ -1813,10 +1816,7 @@ namespace Lens.Parser
             if (!Peek(LexemType.Regex))
                 return null;
 
-            var raw = GetValue();
-            var trailPos = raw.LastIndexOf('#');
-            var value = raw.Substring(1, trailPos - 1);
-            var mods = raw.Substring(trailPos + 1);
+            RegexLiteral.Split(GetValue(), out var value, out var mods);
             return new MatchRegexNode {Value = value, Modifiers = mods};
         }
 

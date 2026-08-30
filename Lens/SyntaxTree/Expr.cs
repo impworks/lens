@@ -560,6 +560,14 @@ namespace Lens.SyntaxTree
             return new VarNode {Local = name, Type = type};
         }
 
+        /// <summary>
+        /// Declares a name that already exists - see <see cref="NameDeclarationNodeBase.Declared"/>.
+        /// </summary>
+        public static VarNode DeclareVar(Local name)
+        {
+            return new VarNode(name.Name) {Declared = name, ResolvedType = name.Type};
+        }
+
         public static MultiVarNode MultiVar(string[] names, TypeSignature type)
         {
             return new MultiVarNode {Names = names, Type = type};
@@ -573,6 +581,14 @@ namespace Lens.SyntaxTree
         public static LetNode Let(Local name, NodeBase expr)
         {
             return new LetNode {Local = name, Value = expr};
+        }
+
+        /// <summary>
+        /// Declares a name that has already been created, rather than making one of its own.
+        /// </summary>
+        public static LetNode DeclareLet(Local name, NodeBase expr)
+        {
+            return new LetNode(name.Name) {Declared = name, Value = expr};
         }
 
         public static WhileNode While(NodeBase condition, CodeBlockNode body)

@@ -237,7 +237,11 @@ namespace Lens.Lexer
         [DebuggerStepThrough]
         private Lexem TransformRegexLiteral(Lexem lex)
         {
-            return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, lex.Value.Replace(@"##", "#"));
+            // the delimiters must be kept intact: unescaping them as well
+            // would collapse an empty regex literal ("##") into a single "#"
+            RegexLiteral.Split(lex.Value, out var pattern, out var mods);
+
+            return new Lexem(LexemType.Regex, lex.StartLocation, lex.EndLocation, "#" + pattern.Replace(@"##", "#") + "#" + mods);
         }
 
         /// <summary>

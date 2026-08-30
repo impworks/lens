@@ -431,6 +431,51 @@ twice 1"))
         }
 
         [Test]
+        public void ALoopVariableIsTheSameSymbolInTheHeaderAndTheBody()
+        {
+            // the name a 'for' declares is not written by a declaration statement: the loop
+            // expands into one, and the name the expansion declares has to be the same name the
+            // body was bound against, or the header and the uses below it would be two symbols
+            using (var analysis = Analyze(@"
+for i in 1..10 do
+    println (i + i)"))
+            {
+                var atDeclaration = analysis.FindSymbol(At(2, 5));
+                var atUse = analysis.FindSymbol(At(3, 14));
+
+                Assert.IsNotNull(atDeclaration);
+                Assert.AreEqual(SymbolKind.Local, atDeclaration.Kind);
+                Assert.AreEqual(2, atDeclaration.Declaration.Value.Start.Line);
+                Assert.AreEqual(5, atDeclaration.Declaration.Value.Start.Offset);
+                Assert.AreEqual(3, atDeclaration.References.Count);
+                Assert.IsTrue(atDeclaration.CanRename);
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual(atDeclaration.Declaration, atUse.Declaration);
+                Assert.AreEqual(3, atUse.References.Count);
+            }
+        }
+
+        [Test]
+        public void ALoopVariableCapturedByALambdaIsStillOneSymbol()
+        {
+            using (var analysis = Analyze(@"
+for i in 1..10 do
+    let x = -> i
+    println (x ())"))
+            {
+                var symbol = analysis.FindSymbol(At(3, 16));
+
+                Assert.IsNotNull(symbol);
+                Assert.AreEqual("i", symbol.Name);
+                Assert.AreEqual(SymbolKind.Local, symbol.Kind);
+                Assert.AreEqual(2, symbol.Declaration.Value.Start.Line);
+                Assert.AreEqual(2, symbol.References.Count);
+                Assert.IsTrue(symbol.CanRename);
+            }
+        }
+
+        [Test]
         public void AFunctionIsFoundFromItsCallSite()
         {
             using (var analysis = Analyze(@"
@@ -512,6 +557,89 @@ print $""{x}"""))
                 // the declaration site answers with the same symbol
                 var atDeclaration = analysis.FindSymbol(At(2, 5));
                 Assert.AreEqual(atUse.References.Count, atDeclaration.References.Count);
+            }
+        }
+
+        [Test]
+        public void APatternBindingIsASymbolOfItsOwn()
+        {
+            using (var analysis = Analyze(@"
+match 1 with
+    case n when n > 0 then n
+    case _ then 0"))
+            {
+                var atUse = analysis.FindSymbol(At(3, 28));
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual("n", atUse.Name);
+                Assert.AreEqual(SymbolKind.Local, atUse.Kind);
+                Assert.AreEqual(3, atUse.Declaration.Value.Start.Line);
+                Assert.AreEqual(10, atUse.Declaration.Value.Start.Offset);
+                Assert.AreEqual(3, atUse.References.Count);
+                Assert.IsTrue(atUse.CanRename);
+
+                // the pattern itself answers with the same symbol
+                var atDeclaration = analysis.FindSymbol(At(3, 10));
+                Assert.AreEqual(atUse.References.Count, atDeclaration.References.Count);
+            }
+        }
+
+        [Test]
+        public void ARegexGroupNameIsASymbolOfItsOwn()
+        {
+            // the lexer hands the whole literal over as one lexem, but the name of a group is a
+            // variable the case declares, and nothing about it is different from 'case num:int'
+            using (var analysis = Analyze(@"
+match ""123"" with
+    case #(?<num:int>[0-9]+)# then num
+    case _ then 0"))
+            {
+                var atUse = analysis.FindSymbol(At(3, 36));
+
+                Assert.IsNotNull(atUse);
+                Assert.AreEqual("num", atUse.Name);
+                Assert.AreEqual(SymbolKind.Local, atUse.Kind);
+                Assert.AreEqual("var num : int", atUse.Detail);
+                Assert.AreEqual(3, atUse.Declaration.Value.Start.Line);
+                Assert.AreEqual(14, atUse.Declaration.Value.Start.Offset);
+                Assert.AreEqual(17, atUse.Declaration.Value.End.Offset);
+                Assert.AreEqual(2, atUse.References.Count);
+                Assert.IsTrue(atUse.CanRename);
+
+                // the name inside the literal answers with the same symbol
+                var atDeclaration = analysis.FindSymbol(At(3, 14));
+                Assert.AreEqual(atUse.References.Count, atDeclaration.References.Count);
+                Assert.AreEqual(atUse.Declaration, atDeclaration.Declaration);
+            }
+        }
+
+        [Test]
+        public void ARegexGroupNameIsLocatedThroughTheEscapedDelimitersBeforeIt()
+        {
+            // '##' is how a literal spells one '#', so every column after it is shifted by one
+            using (var analysis = Analyze(@"
+match ""#1"" with
+    case #a##(?<num:int>[0-9]+)# then num
+    case _ then 0"))
+            {
+                var symbol = analysis.FindSymbol(At(3, 17));
+
+                Assert.IsNotNull(symbol);
+                Assert.AreEqual("num", symbol.Name);
+                Assert.AreEqual(17, symbol.Declaration.Value.Start.Offset);
+            }
+        }
+
+        [Test]
+        public void ARegexGroupNameIsColouredAsAVariable()
+        {
+            using (var analysis = Analyze(@"
+match ""123"" with
+    case #(?<num:int>[0-9]+)# then num
+    case _ then 0"))
+            {
+                var token = analysis.Tokens.Single(x => x.Span.Start.Line == 3 && x.Span.Start.Offset == 36);
+                Assert.AreEqual(TokenKind.Variable, token.Kind);
             }
         }
 

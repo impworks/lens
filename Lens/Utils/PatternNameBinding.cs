@@ -1,4 +1,5 @@
 ﻿using Lens.Resolver;
+using Lens.SyntaxTree;
 
 namespace Lens.Utils
 {
@@ -9,10 +10,11 @@ namespace Lens.Utils
     {
         #region Constructor
 
-        public PatternNameBinding(string name, TypeEntry type)
+        public PatternNameBinding(string name, TypeEntry type, LocationEntity declaration = null)
         {
             Name = name;
             Type = type;
+            Declaration = declaration;
         }
 
         #endregion
@@ -28,6 +30,15 @@ namespace Lens.Utils
         /// The type corresponding to this name.
         /// </summary>
         public readonly TypeEntry Type;
+
+        /// <summary>
+        /// Where the name is written in the source.
+        ///
+        /// Deliberately absent from the equality below: two rules of the same 'case' bind the same
+        /// name in two places, and comparing their binding sets is how the compiler checks that
+        /// both alternatives bind the same names - a question the positions must not answer.
+        /// </summary>
+        public readonly LocationEntity Declaration;
 
         #endregion
 

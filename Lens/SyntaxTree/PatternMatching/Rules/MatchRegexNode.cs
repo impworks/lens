@@ -24,11 +24,6 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             {'c', RegexOptions.CultureInvariant}
         };
 
-        /// <summary>
-        /// Named group name's pattern.
-        /// </summary>
-        private static readonly Regex NamedGroupPattern = new Regex(@"\(\?<(?<name>[a-z0-9_]+)(?::(?<type>[a-z\0-9_]+))?>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-
         #endregion
 
         #region Fields
@@ -67,26 +62,23 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
         /// </summary>
         private void ParseValue(Context ctx)
         {
+            if (string.IsNullOrEmpty(Value))
+                Error(CompilerMessages.RegexSyntaxError);
+
             _namedGroups = new List<PatternNameBinding>();
-            var groups = NamedGroupPattern.Matches(Value);
-            foreach (Match group in groups)
+            foreach (var group in RegexLiteral.NamedGroups(Value, StartLocation))
             {
-                if (!group.Success)
-                    continue;
-
-                var name = group.Groups["name"].Value;
-                var type = group.Groups["type"].Value;
-
-                if (name == "_")
+                if (group.Name == "_")
                     Error(CompilerMessages.UnderscoreNameUsed);
 
                 // no type specified: assume string
-                if (string.IsNullOrEmpty(type))
+                if (group.TypeName == null)
                 {
-                    _namedGroups.Add(new PatternNameBinding(name, TypeEntryCache.Of<string>()));
+                    _namedGroups.Add(new PatternNameBinding(group.Name, TypeEntryCache.Of<string>(), group.NameLocation));
                     continue;
                 }
 
+                var type = group.TypeName;
                 var actualType = WrapError(
                     () => ctx.ResolveType(type),
                     CompilerMessages.RegexConverterTypeNotFound, type
@@ -97,10 +89,10 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
                     CompilerMessages.RegexConverterTypeIncompatible, type
                 );
 
-                _namedGroups.Add(new PatternNameBinding(name, actualType));
+                _namedGroups.Add(new PatternNameBinding(group.Name, actualType, group.NameLocation));
             }
 
-            _regex = NamedGroupPattern.Replace(Value, "(?<$1>");
+            _regex = RegexLiteral.StripTypes(Value);
 
             WrapError(() => new Regex(_regex), CompilerMessages.RegexSyntaxError);
         }

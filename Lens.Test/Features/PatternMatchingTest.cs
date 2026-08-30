@@ -554,6 +554,16 @@ match ""123"" with
         }
 
         [Test]
+        public void RegexEmpty()
+        {
+            var src = @"
+match ""123"" with
+    case ## then true
+";
+            TestError(src, CompilerMessages.RegexSyntaxError);
+        }
+
+        [Test]
         public void RegexUnknownModifier()
         {
             var src = @"

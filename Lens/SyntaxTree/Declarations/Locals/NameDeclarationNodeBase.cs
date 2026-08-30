@@ -31,9 +31,19 @@ namespace Lens.SyntaxTree.Declarations.Locals
         public string Name { get; set; }
 
         /// <summary>
-        /// Explicitly specified local variable.
+        /// Explicitly specified local variable, already present in a scope the declaration can see.
         /// </summary>
         public Local Local { get; set; }
+
+        /// <summary>
+        /// The name this declaration is to register, rather than making one of its own.
+        ///
+        /// A pattern binding is resolved against the body of its 'case' long before the block that
+        /// will hold the binding exists, so the uses the body records land on a name created at
+        /// that point. Handing that same name over here - instead of declaring a second one beside
+        /// it - is what makes 'case x then x' a single symbol an editor can rename.
+        /// </summary>
+        public Local Declared { get; set; }
 
         /// <summary>
         /// Type signature for non-initialized variables.
@@ -89,13 +99,20 @@ namespace Lens.SyntaxTree.Declarations.Locals
 
                 try
                 {
-                    var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
-                    name.Declaration = this;
-
-                    if (Value != null && Value.IsConstant && ctx.UnrollConstants)
+                    if (Declared != null)
                     {
-                        name.IsConstant = true;
-                        name.ConstantValue = Value.ConstantValue;
+                        ctx.Scope.DeclareLocal(Declared);
+                    }
+                    else
+                    {
+                        var name = ctx.Scope.DeclareLocal(Name, type, IsImmutable);
+                        name.Declaration = this;
+
+                        if (Value != null && Value.IsConstant && ctx.UnrollConstants)
+                        {
+                            name.IsConstant = true;
+                            name.ConstantValue = Value.ConstantValue;
+                        }
                     }
                 }
                 catch (LensCompilerException ex)

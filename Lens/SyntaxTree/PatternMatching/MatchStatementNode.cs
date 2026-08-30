@@ -52,6 +52,15 @@ namespace Lens.SyntaxTree.PatternMatching
         /// </summary>
         private PatternNameBinding[] _bindingSet;
 
+        /// <summary>
+        /// The names the bindings declare.
+        ///
+        /// They are created here rather than by the declarations the expansion emits, because the
+        /// body of the 'case' is resolved against them before that expansion exists - and a name
+        /// the body has already recorded its uses on is the only one an editor can answer with.
+        /// </summary>
+        private Local[] _locals;
+
         #endregion
 
         #region Resolve
@@ -77,12 +86,13 @@ namespace Lens.SyntaxTree.PatternMatching
             }
 
             _bindingSet = bindingSets[0];
+            _locals = new Local[0];
 
             if (_bindingSet.Length == 0)
                 return Expression.Resolve(ctx, mustReturn);
 
-            var locals = _bindingSet.Select(x => new Local(x.Name, x.Type)).ToArray();
-            return Scope.WithTempLocals(ctx, () => Expression.Resolve(ctx, mustReturn), locals);
+            _locals = _bindingSet.Select(x => new Local(x.Name, x.Type) {Declaration = x.Declaration}).ToArray();
+            return Scope.WithTempLocals(ctx, () => Expression.Resolve(ctx, mustReturn), _locals);
         }
 
         #endregion
@@ -108,8 +118,8 @@ namespace Lens.SyntaxTree.PatternMatching
                 return block;
 
             // declare variables
-            foreach (var binding in _bindingSet)
-                block.Add(Expr.Var(binding.Name, binding.Type));
+            foreach (var local in _locals)
+                block.Add(Expr.DeclareVar(local));
 
             foreach (var rule in MatchRules)
             {

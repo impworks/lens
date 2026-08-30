@@ -19,6 +19,11 @@ namespace Lens.SyntaxTree.ControlFlow
         public string VariableName { get; set; }
 
         /// <summary>
+        /// Where the loop variable's name is written, for an editor that has to point at it.
+        /// </summary>
+        public LocationEntity VariableLocation { get; set; }
+
+        /// <summary>
         /// Explicitly specified local variable.
         /// </summary>
         public Local Local { get; set; }
@@ -44,6 +49,7 @@ namespace Lens.SyntaxTree.ControlFlow
         public CodeBlockNode Body { get; set; }
 
         private TypeEntry _variableType;
+        private Local _variable;
         private TypeEntry _enumeratorType;
         private PropertyWrapper _currentProperty;
 
@@ -63,9 +69,13 @@ namespace Lens.SyntaxTree.ControlFlow
 
             if (Local == null)
             {
-                // variable must be defined: declare it in a temporary scope for pre-resolve state
-                var tmpVar = new Local(VariableName, _variableType);
-                return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx, mustReturn), tmpVar);
+                // the name the loop declares is created here rather than when the loop is
+                // expanded, because the body is bound here: the uses it records have to land on
+                // the very name the expansion goes on to declare, or the loop variable would be a
+                // name nobody mentions - which is a rename that changes the declaration and
+                // leaves every use of it behind
+                _variable = new Local(VariableName, _variableType) {Declaration = VariableLocation};
+                return Scope.WithTempLocals(ctx, () => Body.Resolve(ctx, mustReturn), _variable);
             }
 
             // index local specified explicitly: no need to account for it in pre-resolve
@@ -309,7 +319,7 @@ namespace Lens.SyntaxTree.ControlFlow
         private NodeBase GetIndexAssignment(NodeBase indexGetter)
         {
             return Local == null
-                ? Expr.Let(VariableName, indexGetter)
+                ? Expr.DeclareLet(_variable, indexGetter)
                 : Expr.Set(Local, indexGetter) as NodeBase;
         }
 
