@@ -185,10 +185,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
             // inside a state machine the closure class is the machine, and the instance the
             // delegate must be bound to is the receiver rather than a local
-            if (closure.ClosureIsThis)
-                gen.EmitLoadArgument(0);
-            else
-                gen.EmitLoadLocal(closure.ClosureVariable);
+            closure.EmitLoadClosure(ctx);
 
             gen.EmitLoadFunctionPointer(closureMethod.MethodInfo);
             gen.EmitCreateObject(ctor.ConstructorInfo);

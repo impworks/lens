@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -543,6 +543,97 @@ fun broken:IEnumerable<int> ->
         yield 1
     yield 2",
                 "LE3171"
+            );
+        }
+
+        #endregion
+
+        #region Closures over the loop variable
+
+        [Test]
+        public void LoopVariableCapturedByLambda()
+        {
+            Test(
+                @"
+fun foo:IEnumerable<int> ->
+    for y in 1..4 do
+        let x = (-> y)
+        yield x ()
+
+foo ()
+  |> Sum ()",
+                6
+            );
+        }
+
+        [Test]
+        public void LoopClosureSurvivesAYield()
+        {
+            // the lambda is made before the suspension and called after it: the iteration's closure
+            // has to be found again when MoveNext resumes into the middle of the loop
+            Test(
+                @"
+fun foo:IEnumerable<int> ->
+    for y in 1..4 do
+        let x = (-> y * 10)
+        yield y
+        yield x ()
+
+foo ()
+  |> Sum ()",
+                66
+            );
+        }
+
+        [Test]
+        public void EachIterationGetsItsOwnLoopClosure()
+        {
+            // every lambda must answer with its own iteration's value, not with the last one
+            Test(
+                @"
+fun foo:IEnumerable<Func<int>> ->
+    for y in 1..4 do
+        yield (-> y)
+
+foo ()
+  |> Select (f:Func<int> -> f ())
+  |> ToArray ()",
+                new[] {1, 2, 3}
+            );
+        }
+
+        [Test]
+        public void NestedLoopClosuresInsideAnIterator()
+        {
+            Test(
+                @"
+fun foo:IEnumerable<int> ->
+    for a in 1..3 do
+        for b in 10..12 do
+            let f = (-> a * 100 + b)
+            yield f ()
+
+foo ()
+  |> ToArray ()",
+                new[] {110, 111, 210, 211}
+            );
+        }
+
+        [Test]
+        public void LoopClosureCapturesTheIteratorArgument()
+        {
+            // the argument lives in the machine, the loop variable in the iteration's closure, and
+            // the lambda reaches both through the parent chain
+            Test(
+                @"
+fun foo:IEnumerable<int> (mult:int) ->
+    for y in 1..4 do
+        let f = (-> y * mult)
+        yield f ()
+
+foo 3
+  |> Sum ()",
+                18
             );
         }
 

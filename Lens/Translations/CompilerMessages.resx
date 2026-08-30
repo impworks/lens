@@ -666,9 +666,6 @@
   <data name="ResumePointInLambda" xml:space="preserve">
     <value>LE3171: A 'yield' or an 'await' is not allowed inside a lambda.</value>
   </data>
-  <data name="YieldLoopClosure" xml:space="preserve">
-    <value>LE3172: Variable '{0}' is declared inside a loop of a state machine function and captured by a lambda, which is not supported.</value>
-  </data>
   <data name="AwaitNotInAsync" xml:space="preserve">
     <value>LE3174: An 'await' can only appear in the body of a named function that returns a Task.</value>
   </data>

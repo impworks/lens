@@ -100,8 +100,25 @@ namespace Lens.Compiler
 
         /// <summary>
         /// The local variable in which the closure is saved.
+        /// Null when the closure lives in a state machine's field instead - see ClosureMachineField.
         /// </summary>
         public LocalBuilder ClosureVariable { get; private set; }
+
+        /// <summary>
+        /// The name of the state machine field in which the closure is saved, if the closure is
+        /// created inside a state machine.
+        ///
+        /// A local would not do: the frame does not survive a resume point, and a machine that
+        /// came back into the middle of a loop would find an empty slot where the iteration's
+        /// closure used to be. The instance goes into a field of the machine for the same reason
+        /// every other name that outlives a suspension does.
+        /// </summary>
+        public string ClosureMachineField { get; private set; }
+
+        /// <summary>
+        /// The state machine whose field holds this scope's closure, if any.
+        /// </summary>
+        private Scope _closureMachine;
 
         /// <summary>
         /// The closest scope that owns the closure which contains current closure.
@@ -315,17 +332,15 @@ namespace Lens.Compiler
                     // and it is deliberately the same mechanism: a name that is both captured and
                     // live across a resume point must end up in exactly one place, or a mutation
                     // through one view would be invisible through the other.
+                    //
+                    // A name that already belongs to a closure of its own - a loop makes one per
+                    // iteration - keeps it: what has to be one thing per iteration is that closure,
+                    // and it is the closure instance rather than the name that the machine carries
+                    // across a resume point. EmitSelf gives the instance a field for exactly that.
                     if (!curr.IsClosured)
                     {
                         curr.IsClosured = true;
                         curr.ClosureScope = machine;
-                    }
-                    else if (curr.ClosureScope != machine)
-                    {
-                        // the name lives in a closure of its own - a loop makes one per iteration -
-                        // and that closure is held in a local the machine cannot carry across a
-                        // resume point
-                        Context.Error(CompilerMessages.YieldLoopClosure, curr.Name);
                     }
                 }
 
@@ -401,8 +416,66 @@ namespace Lens.Compiler
                     ClosureType.CreateField(EntityNames.ParentScopeFieldName, parentType);
                 }
 
-                ClosureVariable = gen.DeclareLocal(ClosureInstanceType.Materialize());
+                // a closure created inside a state machine outlives the frame it was created in,
+                // so it is held where the machine's own names are held rather than in a local
+                _closureMachine = MachineOwner();
+                if (_closureMachine != null)
+                {
+                    ClosureMachineField = ctx.Unique.ClosureFieldName(EntityNames.ClosureInstanceFieldName);
+                    _closureMachine.ClosureType.CreateField(ClosureMachineField, ClosureInstanceType).Kind = TypeContentsKind.Closure;
+                }
+                else
+                {
+                    ClosureVariable = gen.DeclareLocal(ClosureInstanceType.Materialize());
+                }
             }
+        }
+
+        /// <summary>
+        /// Emits the code that loads this scope's own closure instance, wherever it is kept.
+        /// </summary>
+        public void EmitLoadClosure(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+
+            if (ClosureIsThis)
+            {
+                gen.EmitLoadArgument(0);
+                return;
+            }
+
+            if (ClosureMachineField == null)
+            {
+                gen.EmitLoadLocal(ClosureVariable);
+                return;
+            }
+
+            gen.EmitLoadArgument(0);
+            gen.EmitLoadField(ctx.ResolveField(_closureMachine.ClosureInstanceType, ClosureMachineField).FieldInfo);
+        }
+
+        /// <summary>
+        /// Emits whatever has to be on the stack underneath a closure instance for EmitSaveClosure
+        /// to store it: the machine that owns the field, or nothing at all for a local.
+        /// </summary>
+        public void EmitPrepareSaveClosure(Context ctx)
+        {
+            if (ClosureMachineField != null)
+                ctx.CurrentMethod.Generator.EmitLoadArgument(0);
+        }
+
+        /// <summary>
+        /// Emits the code that stores a closure instance from the top of the stack into wherever
+        /// this scope keeps it. Must be preceded by EmitPrepareSaveClosure.
+        /// </summary>
+        public void EmitSaveClosure(Context ctx)
+        {
+            var gen = ctx.CurrentMethod.Generator;
+
+            if (ClosureMachineField == null)
+                gen.EmitSaveLocal(ClosureVariable);
+            else
+                gen.EmitSaveField(ctx.ResolveField(_closureMachine.ClosureInstanceType, ClosureMachineField).FieldInfo);
         }
 
         /// <summary>
@@ -430,11 +503,7 @@ namespace Lens.Compiler
 
             if (scope == closure)
             {
-                if (closure.ClosureIsThis)
-                    gen.EmitLoadArgument(0);
-                else
-                    gen.EmitLoadLocal(closure.ClosureVariable);
-
+                closure.EmitLoadClosure(ctx);
                 return closure.ClosureInstanceType;
             }
 

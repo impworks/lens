@@ -130,24 +130,24 @@ namespace Lens.SyntaxTree.ControlFlow
             var gen = ctx.CurrentMethod.Generator;
 
             var type = scope.ClosureInstanceType;
-            var loc = scope.ClosureVariable;
 
             // create closure instance
             var closureCtor = ctx.ResolveConstructor(type, new TypeEntry[0]);
+            scope.EmitPrepareSaveClosure(ctx);
             gen.EmitCreateObject(closureCtor.ConstructorInfo);
-            gen.EmitSaveLocal(loc);
+            scope.EmitSaveClosure(ctx);
 
             // affix to parent
             if (scope.ClosureParent != null)
             {
-                gen.EmitLoadLocal(loc);
+                scope.EmitLoadClosure(ctx);
 
                 // a state machine's frame is the receiver, so a closure nested inside one affixes
                 // itself to 'this' just as a closure in another method does
-                if (scope.ClosureParentIsRemote || scope.ClosureParent.ClosureIsThis)
+                if (scope.ClosureParentIsRemote)
                     gen.EmitLoadArgument(0);
                 else
-                    gen.EmitLoadLocal(scope.ClosureParent.ClosureVariable);
+                    scope.ClosureParent.EmitLoadClosure(ctx);
 
                 gen.EmitSaveField(ctx.ResolveField(type, EntityNames.ParentScopeFieldName).FieldInfo);
             }
@@ -158,7 +158,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 if (!curr.IsClosured || curr.ArgumentId == null)
                     continue;
 
-                gen.EmitLoadLocal(loc);
+                scope.EmitLoadClosure(ctx);
                 gen.EmitLoadArgument(curr.ArgumentId.Value);
                 gen.EmitSaveField(ctx.ResolveField(type, curr.ClosureFieldName).FieldInfo);
             }

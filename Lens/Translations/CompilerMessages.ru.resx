@@ -666,9 +666,6 @@
   <data name="ResumePointInLambda" xml:space="preserve">
     <value>LE3171: Оператор 'yield' или 'await' недопустим внутри лямбды.</value>
   </data>
-  <data name="YieldLoopClosure" xml:space="preserve">
-    <value>LE3172: Переменная '{0}' объявлена внутри цикла функции-машины состояний и захвачена лямбдой, что не поддерживается.</value>
-  </data>
   <data name="AwaitNotInAsync" xml:space="preserve">
     <value>LE3174: Оператор 'await' может находиться только в теле именованной функции, возвращающей Task.</value>
   </data>

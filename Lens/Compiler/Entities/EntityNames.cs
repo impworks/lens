@@ -44,6 +44,12 @@
         public const string ClosureFieldNameTemplate = "<cf_{0}_{1}>";
 
         /// <summary>
+        /// The name a state machine's field is derived from when it holds a nested closure's
+        /// instance rather than a variable of its own.
+        /// </summary>
+        public const string ClosureInstanceFieldName = "frame";
+
+        /// <summary>
         /// The template for closure type names.
         /// </summary>
         public const string ClosureTypeNameTemplate = "<ct_{0}>";

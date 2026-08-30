@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,6 +57,26 @@ fun fetch:Task<int> ->
 
 fetch ()",
                 20
+            );
+        }
+
+        [Test]
+        public void LoopClosureSurvivesAnAwait()
+        {
+            // the lambda is made before the suspension and called after it: the iteration's closure
+            // has to be found again when MoveNext resumes into the middle of the loop
+            TestAsync(
+                @"
+fun fetch:Task<int> ->
+    var total = 0
+    for i in 1..5 do
+        let f = (-> i * 10)
+        var step = await (delay i)
+        total = total + step + f ()
+    total
+
+fetch ()",
+                120
             );
         }
 

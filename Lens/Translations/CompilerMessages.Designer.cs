@@ -1708,15 +1708,6 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE3172: Variable &apos;{0}&apos; is declared inside a loop of a state machine function and captured by a lambda, which is not supported..
-        /// </summary>
-        public static string YieldLoopClosure {
-            get {
-                return ResourceManager.GetString("YieldLoopClosure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to LE3174: An &apos;await&apos; can only appear in the body of a named function that returns a Task..
         /// </summary>
         public static string AwaitNotInAsync {
