@@ -18,57 +18,6 @@ namespace Lens.Resolver
         #region Various resolvers
 
         /// <summary>
-        /// Resolves an extension method by arguments.
-        /// </summary>
-        public static MethodWrapper ResolveExtensionMethod(TypeResolutionContext ctx, ExtensionMethodResolver resolver, Type type, string name, Type[] argTypes, Type[] hints, LambdaResolver lambdaResolver)
-        {
-            var method = resolver.ResolveExtensionMethod(ctx, type, name, argTypes);
-            var args = method.GetParameters();
-            var info = new MethodWrapper
-            {
-                Name = name,
-                DeclaringType = TypeEntryCache.Of(method.DeclaringType),
-
-                MethodInfo = method,
-                IsStatic = true,
-                IsVirtual = false,
-                ReturnType = TypeEntryCache.Of(method.ReturnType),
-                ArgumentTypes = args.Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray(),
-                IsPartiallyApplied = IsPartiallyApplied(argTypes),
-                IsVariadic = IsVariadic(method),
-            };
-
-            if (method.IsGenericMethod)
-            {
-                var expectedTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
-                var genericDefs = method.GetGenericArguments();
-
-                var extMethodArgs = argTypes.ToList();
-                extMethodArgs.Insert(0, type);
-
-                var genericValues = GenericHelper.ResolveMethodGenericsByArgs(
-                    ctx,
-                    expectedTypes,
-                    extMethodArgs.ToArray(),
-                    genericDefs,
-                    hints,
-                    lambdaResolver
-                );
-
-                info.GenericArguments = genericValues.Select(TypeEntryCache.Of).ToArray();
-                info.MethodInfo = info.MethodInfo.MakeGenericMethod(genericValues);
-                info.ReturnType = TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(info.ReturnType.Materialize(), genericDefs, genericValues));
-                info.ArgumentTypes = expectedTypes.Select(t => TypeEntryCache.Of(GenericHelper.ApplyGenericArguments(t, genericDefs, genericValues))).ToArray();
-            }
-            else if (hints != null)
-            {
-                Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
-            }
-
-            return info;
-        }
-
-        /// <summary>
         /// Resolves a group of methods by name.
         /// Only non-generic methods are returned!
         /// </summary>
@@ -235,10 +184,12 @@ namespace Lens.Resolver
         /// match against until the declaration has been emitted, and asking for one is what would
         /// force the assembly into existence.
         ///
-        /// Lambda inference is deliberately absent. A lambda reaches here already resolved into a
-        /// delegate type, because that is the only shape in which it can be matched structurally.
+        /// A lambda whose argument types the call site left out is matched through
+        /// <paramref name="lambdaResolver"/>: the parameter says what the lambda takes, the resolver
+        /// says what it then returns, and the return type is what a parameter such as the TKey of
+        /// OrderByDescending can only be read off.
         /// </summary>
-        public static TypeEntry[] InferGenericArguments(TypeResolutionContext ctx, TypeEntry[] parameters, TypeEntry[] expectedTypes, TypeEntry[] actualTypes, TypeEntry[] hints)
+        public static TypeEntry[] InferGenericArguments(TypeResolutionContext ctx, TypeEntry[] parameters, TypeEntry[] expectedTypes, TypeEntry[] actualTypes, TypeEntry[] hints, EntryLambdaResolver lambdaResolver = null)
         {
             if (hints != null && hints.Length != parameters.Length)
                 throw new ArgumentException(nameof(hints));
@@ -251,7 +202,7 @@ namespace Lens.Resolver
 
             var count = Math.Min(expectedTypes.Length, actualTypes.Length);
             for (var idx = 0; idx < count; idx++)
-                Unify(ctx, expectedTypes[idx], actualTypes[idx], parameters, values);
+                Unify(ctx, expectedTypes[idx], actualTypes[idx], parameters, values, lambdaResolver, idx);
 
             for (var idx = 0; idx < values.Length; idx++)
                 if (ReferenceEquals(values[idx], null))
@@ -264,7 +215,7 @@ namespace Lens.Resolver
         /// Matches an expected signature against the type actually passed, recording whatever the
         /// match says about the parameters being inferred.
         /// </summary>
-        private static void Unify(TypeResolutionContext ctx, TypeEntry expected, TypeEntry actual, TypeEntry[] parameters, TypeEntry[] values)
+        private static void Unify(TypeResolutionContext ctx, TypeEntry expected, TypeEntry actual, TypeEntry[] parameters, TypeEntry[] values, EntryLambdaResolver lambdaResolver = null, int position = -1)
         {
             if (ReferenceEquals(expected, null) || ReferenceEquals(actual, null))
                 return;
@@ -273,6 +224,14 @@ namespace Lens.Resolver
             // stands for, which is the shape the argument arrives in
             if (expected.IsExpressionType() && !actual.IsExpressionType())
                 expected = expected.UnwrapExpressionType();
+
+            // a lambda written without argument types is not a delegate yet, so there is nothing to
+            // match structurally: the parameter has to say what it takes before it can say anything
+            if (actual.IsLambdaType() && expected.IsCallableType())
+            {
+                UnifyLambda(ctx, expected, actual, parameters, values, lambdaResolver, position);
+                return;
+            }
 
             if (expected.IsGenericParameter)
             {
@@ -307,6 +266,81 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// Reads whatever a lambda argument says about the parameters being inferred.
+        ///
+        /// The lambda arrives with its own arguments still unspecified, which is exactly why it
+        /// cannot be matched against the parameter directly: 'x -> x.Stock' is a shape, not a type.
+        /// The parameter supplies the argument types, the resolver then types the body against them,
+        /// and the body's type is matched against what the parameter returns - which is the only
+        /// place a type argument mentioned solely in the return position can come from.
+        /// </summary>
+        private static void UnifyLambda(TypeResolutionContext ctx, TypeEntry expected, TypeEntry actual, TypeEntry[] parameters, TypeEntry[] values, EntryLambdaResolver lambdaResolver, int position)
+        {
+            if (lambdaResolver == null || position < 0)
+                return;
+
+            var expectedInfo = WrapDelegate(ctx, expected);
+            var actualInfo = WrapDelegate(ctx, actual);
+
+            var argTypes = new TypeEntry[actualInfo.ArgumentTypes.Length];
+            var count = Math.Min(expectedInfo.ArgumentTypes.Length, argTypes.Length);
+
+            for (var idx = 0; idx < count; idx++)
+            {
+                var expectedArg = expectedInfo.ArgumentTypes[idx];
+                var actualArg = actualInfo.ArgumentTypes[idx];
+
+                if (actualArg.Is<UnspecifiedType>())
+                {
+                    // the lambda did not say what it takes, so the parameter does - in the terms of
+                    // whatever has been inferred by now, which for an extension method is the
+                    // receiver and therefore everything this needs
+                    var inferred = ConstructedTypeEntry.SubstituteInto(ctx, expectedArg, parameters, values);
+
+                    if (MentionsUnresolved(inferred, parameters, values))
+                        throw new LensCompilerException(string.Format(CompilerMessages.LambdaArgGenericsUnresolved, expectedArg));
+
+                    argTypes[idx] = inferred;
+                }
+                else
+                {
+                    argTypes[idx] = actualArg;
+                    Unify(ctx, expectedArg, actualArg, parameters, values);
+                }
+            }
+
+            var returnType = lambdaResolver(position, argTypes);
+            Unify(ctx, expectedInfo.ReturnType, returnType, parameters, values);
+        }
+
+        /// <summary>
+        /// Whether a type still names a parameter whose value has not been worked out.
+        /// </summary>
+        private static bool MentionsUnresolved(TypeEntry type, TypeEntry[] parameters, TypeEntry[] values)
+        {
+            if (ReferenceEquals(type, null))
+                return false;
+
+            if (type.IsGenericParameter)
+            {
+                for (var idx = 0; idx < parameters.Length; idx++)
+                    if (TypeEntry.Same(parameters[idx], type))
+                        return ReferenceEquals(values[idx], null);
+
+                return false;
+            }
+
+            if (MentionsUnresolved(type.ElementType, parameters, values))
+                return true;
+
+            foreach (var curr in type.GenericArguments)
+                if (MentionsUnresolved(curr, parameters, values))
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>
         /// Finds the instantiation of a generic definition that a type is, inherits from or
         /// implements.
         /// </summary>
@@ -332,6 +366,51 @@ namespace Lens.Resolver
 
         /// <summary>
         /// Gets the information about a delegate by its type.
+        /// </summary>
+        public static MethodWrapper WrapDelegate(TypeResolutionContext ctx, TypeEntry type)
+        {
+            // Expression<TDelegate> describes the same signature as TDelegate does, and everything
+            // that asks a delegate for its shape wants that shape whichever of the two was spelled
+            type = type.UnwrapExpressionType();
+
+            if (!type.IsCallableType())
+                throw new ArgumentException(nameof(type));
+
+            // a delegate made only of host types is one reflection can answer for
+            if (!type.ContainsDeclared)
+                return WrapDelegate(ctx, type.Materialize());
+
+            // Func<SomeRecord, int> has no CLR type, but Func<,> does: Invoke is read off the
+            // definition and its signature rewritten into the instantiation's terms, exactly as a
+            // member of any other host instantiation is. Materializing instead would build the
+            // record's assembly, which is what analysis exists not to need.
+            var definition = type.GetGenericDefinition();
+            var invoke = definition?.Materialize().GetMethod("Invoke");
+            if (invoke == null)
+                throw new ArgumentException(nameof(type));
+
+            var parameters = definition.GenericArguments;
+            var arguments = type.GenericArguments;
+
+            return new MethodWrapper
+            {
+                Name = invoke.Name,
+                DeclaringType = type,
+
+                IsStatic = false,
+                IsVirtual = invoke.IsVirtual,
+
+                ArgumentTypes = invoke.GetParameters()
+                                      .Select(p => ConstructedTypeEntry.SubstituteInto(ctx, TypeEntryCache.Of(p.ParameterType), parameters, arguments))
+                                      .ToArray(),
+                ReturnType = ConstructedTypeEntry.SubstituteInto(ctx, TypeEntryCache.Of(invoke.ReturnType), parameters, arguments),
+
+                MethodInfoSource = () => GetMethodVersionForType(type.Materialize(), invoke)
+            };
+        }
+
+        /// <summary>
+        /// Returns a wrapper for a delegate type.
         /// </summary>
         public static MethodWrapper WrapDelegate(TypeResolutionContext ctx, Type type)
         {

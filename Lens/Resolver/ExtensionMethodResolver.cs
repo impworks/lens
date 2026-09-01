@@ -16,7 +16,7 @@ namespace Lens.Resolver
 
         public ExtensionMethodResolver(Dictionary<string, bool> namespaces, ReferencedAssemblyCache asmCache)
         {
-            _cache = new Dictionary<Type, Dictionary<string, List<MethodInfo>>>();
+            _cache = new Dictionary<TypeEntry, Dictionary<string, List<MethodInfo>>>();
             _namespaces = namespaces;
             _asmCache = asmCache;
         }
@@ -29,7 +29,7 @@ namespace Lens.Resolver
         /// Extension method cache for faster lookup.
         /// It is scoped to the current compilation, because the set of namespaces it depends on is.
         /// </summary>
-        private readonly Dictionary<Type, Dictionary<string, List<MethodInfo>>> _cache;
+        private readonly Dictionary<TypeEntry, Dictionary<string, List<MethodInfo>>> _cache;
 
         /// <summary>
         /// Namespaces where the types containing extension methods are looked for.
@@ -48,7 +48,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets an extension method by given arguments.
         /// </summary>
-        public MethodInfo ResolveExtensionMethod(TypeResolutionContext ctx, Type type, string name, Type[] args)
+        public MethodInfo ResolveExtensionMethod(TypeResolutionContext ctx, TypeEntry type, string name, TypeEntry[] args)
         {
             if (!_cache.ContainsKey(type))
                 _cache.Add(type, FindMethodsForType(ctx, type));
@@ -68,7 +68,7 @@ namespace Lens.Resolver
             if (applicable.Length == 0)
                 throw new KeyNotFoundException();
 
-            var receiverAndArgs = new[] {TypeEntryCache.Of(type)}.Concat(args.Select(TypeEntryCache.Of)).ToArray();
+            var receiverAndArgs = new[] {type}.Concat(args).ToArray();
             var best = TypeExtensions.BestCandidates(ctx, receiverAndArgs, applicable, c => c.Distance, c => c.ArgumentTypes);
 
             if (best.Length > 1)
@@ -81,7 +81,7 @@ namespace Lens.Resolver
         /// Returns every extension method applicable to a type, grouped by name.
         /// Completion needs the whole set, where a call site only ever needs one.
         /// </summary>
-        public Dictionary<string, List<MethodInfo>> EnumerateExtensionMethods(TypeResolutionContext ctx, Type type)
+        public Dictionary<string, List<MethodInfo>> EnumerateExtensionMethods(TypeResolutionContext ctx, TypeEntry type)
         {
             if (!_cache.ContainsKey(type))
                 _cache.Add(type, FindMethodsForType(ctx, type));
@@ -96,7 +96,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Returns the list of extension methods for given type.
         /// </summary>
-        private Dictionary<string, List<MethodInfo>> FindMethodsForType(TypeResolutionContext ctx, Type forType)
+        private Dictionary<string, List<MethodInfo>> FindMethodsForType(TypeResolutionContext ctx, TypeEntry forType)
         {
             var dict = new Dictionary<string, List<MethodInfo>>();
 
@@ -123,7 +123,7 @@ namespace Lens.Resolver
                                 continue;
 
                             var argType = method.GetParameters()[0].ParameterType;
-                            if (!TypeEntryCache.Of(argType).IsExtendablyAssignableFrom(ctx, TypeEntryCache.Of(forType)))
+                            if (!TypeEntryCache.Of(argType).IsExtendablyAssignableFrom(ctx, forType))
                                 continue;
 
                             if (!dict.ContainsKey(method.Name))
@@ -145,11 +145,11 @@ namespace Lens.Resolver
         /// <summary>
         /// Calculates the total distance for a list of arguments of an extension method.
         /// </summary>
-        private static int GetExtensionDistance(TypeResolutionContext ctx, MethodInfo method, Type type, Type[] args)
+        private static int GetExtensionDistance(TypeResolutionContext ctx, MethodInfo method, TypeEntry type, TypeEntry[] args)
         {
             var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-            var baseDist = TypeEntryCache.Of(methodArgs.First()).DistanceFrom(ctx, TypeEntryCache.Of(type));
-            var argsDist = TypeExtensions.TypeListDistance(ctx, args.Select(TypeEntryCache.Of), methodArgs.Skip(1).Select(TypeEntryCache.Of));
+            var baseDist = TypeEntryCache.Of(methodArgs.First()).DistanceFrom(ctx, type);
+            var argsDist = TypeExtensions.TypeListDistance(ctx, args, methodArgs.Skip(1).Select(TypeEntryCache.Of));
 
             if (baseDist == int.MaxValue || argsDist == int.MaxValue)
                 return int.MaxValue;

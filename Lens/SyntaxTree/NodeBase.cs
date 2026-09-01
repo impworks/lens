@@ -339,7 +339,7 @@ namespace Lens.SyntaxTree
             else if (!delegateType.IsCallableType())
                 return;
 
-            var wrapper = ReflectionHelper.WrapDelegate(ctx.Resolver, delegateType.Materialize());
+            var wrapper = ctx.WrapDelegate(delegateType);
             if (!wrapper.ReturnType.IsGenericParameter)
                 lambda.SetInferredReturnType(ctx, wrapper.ReturnType);
 

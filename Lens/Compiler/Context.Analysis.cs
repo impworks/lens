@@ -203,10 +203,10 @@ namespace Lens.Compiler
         /// </summary>
         internal Dictionary<string, List<MethodInfo>> ExtensionMethodsOf(TypeEntry type)
         {
-            if (!Options.AllowExtensionMethods || type.IsDeclared || type.ContainsDeclared)
+            if (!Options.AllowExtensionMethods)
                 return new Dictionary<string, List<MethodInfo>>();
 
-            var found = _extensionResolver.EnumerateExtensionMethods(Resolver, type.Materialize());
+            var found = _extensionResolver.EnumerateExtensionMethods(Resolver, type);
             if (_safeModeRules.Mode == SafeMode.Disabled)
                 return found;
 

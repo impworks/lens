@@ -315,4 +315,12 @@ namespace Lens.Resolver
     /// Callback type for lambda resolution.
     /// </summary>
     internal delegate Type LambdaResolver(int lambdaPosition, Type[] argTypes);
+
+    /// <summary>
+    /// Callback type for lambda resolution in the entry model.
+    ///
+    /// The same question as above, asked without a CLR type in sight: a lambda whose argument is a
+    /// record the script declared has a return type long before that record has an assembly.
+    /// </summary>
+    internal delegate TypeEntry EntryLambdaResolver(int lambdaPosition, TypeEntry[] argTypes);
 }

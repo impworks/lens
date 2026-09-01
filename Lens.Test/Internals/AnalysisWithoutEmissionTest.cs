@@ -348,12 +348,116 @@ test (a -> true)");
         }
 
         [Test]
+        public void AnalysingAnExtensionMethodOnAnArrayOfARecordBuildsNoAssembly()
+        {
+            // the extension method lookup used to be reflection over the referenced assemblies, so
+            // a receiver that has no CLR type until the assembly exists could not be looked up at
+            // all - and analysis reported the call as a method the type does not have, which is the
+            // form the README's own sample takes
+            var ctx = Analyze(@"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [
+    new Store ""A"" 10
+    new Store ""B"" 42
+]
+
+stores.OrderByDescending (x -> x.Stock)");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty, string.Join(" | ", ctx.Diagnostics.Select(d => d.Message)));
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAnExtensionMethodOnAListOfARecordBuildsNoAssembly()
+        {
+            var ctx = Analyze(@"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [[
+    new Store ""A"" 10
+    new Store ""B"" 42
+]]
+
+stores.OrderByDescending (x -> x.Stock)");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty, string.Join(" | ", ctx.Diagnostics.Select(d => d.Message)));
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingALambdaOverARecordBuildsNoAssembly()
+        {
+            // a lambda's own type is a Func over its arguments, and building that through
+            // reflection is what used to materialize the record the lambda takes
+            var ctx = Analyze(@"
+record Store
+    Name : string
+    Stock : int
+
+let f = (s:Store) -> s.Stock
+f (new Store ""A"" 10)");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty, string.Join(" | ", ctx.Diagnostics.Select(d => d.Message)));
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnalysingAGenericCallInferredThroughALambdaOverARecordBuildsNoAssembly()
+        {
+            // TOutput is named nowhere but the lambda's body, so inferring it means typing the body
+            // against the argument types the parameter supplies - in entry space, because the
+            // receiver is a list of something that has no CLR type yet
+            var ctx = Analyze(@"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [[new Store ""A"" 10]]
+stores.ConvertAll (x -> x.Stock)");
+
+            Assert.IsTrue(ctx.Diagnostics.IsEmpty, string.Join(" | ", ctx.Diagnostics.Select(d => d.Message)));
+            Assert.IsFalse(ctx.HasEmitTarget);
+        }
+
+        [Test]
         public void CompilingStillBuildsAnAssembly()
         {
             var ctx = new Context(new LensCompilerOptions());
             ctx.Compile(Parse("1 + 2").ToList());
 
             Assert.IsTrue(ctx.HasEmitTarget);
+        }
+
+        [Test]
+        public void AnExtensionMethodOnACollectionOfARecordStillRuns()
+        {
+            // the same call the two analysis tests above make, taken all the way through emission:
+            // the lookup they share now hands out a recipe for the MethodInfo rather than the
+            // MethodInfo itself, and this is what asks for it
+            Test(
+                @"
+record Store
+    Name : string
+    Stock : int
+
+let stores = new [[
+    new Store ""A"" 10
+    new Store ""B"" 42
+    new Store ""C"" 5
+]]
+
+var names = """"
+for s in stores.OrderByDescending (x -> x.Stock) do
+    names = names + s.Name
+
+names",
+                "BAC"
+            );
         }
     }
 }

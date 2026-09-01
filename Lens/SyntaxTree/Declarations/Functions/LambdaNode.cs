@@ -85,7 +85,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             }
 
             if (MustInferArgTypes)
-                return TypeEntryCache.Of(FunctionalHelper.CreateLambdaType(TypeEntry.Materialize(argTypes)));
+                return FunctionalHelper.CreateLambdaType(ctx.Resolver, argTypes.ToArray());
 
             var binding = ctx.BindingOf<Binding>(this);
             if (!binding.ArgumentsRegistered)
@@ -102,7 +102,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
             if (binding.ExpressionTreeType != null)
                 return binding.ExpressionTreeType;
 
-            return TypeEntryCache.Of(FunctionalHelper.CreateDelegateType(retType.Materialize(), TypeEntry.Materialize(argTypes)));
+            return FunctionalHelper.CreateDelegateType(ctx.Resolver, retType, argTypes.ToArray());
         }
 
         #endregion

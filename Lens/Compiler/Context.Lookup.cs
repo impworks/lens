@@ -208,7 +208,7 @@ namespace Lens.Compiler
         /// Resolves a method by its name and argument types. If generic arguments are passed, they are also applied.
         /// Generic arguments whose values can be inferred from argument types can be skipped.
         /// </summary>
-        public MethodWrapper ResolveMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver resolver = null)
+        public MethodWrapper ResolveMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver resolver = null, EntryLambdaResolver entryResolver = null)
         {
             // only the members of a parameter's constraints are available on it
             if (type.IsGenericParameter)
@@ -217,7 +217,7 @@ namespace Lens.Compiler
                 {
                     try
                     {
-                        return ResolveMethod(constraint, name, argTypes, hints, resolver);
+                        return ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
                     }
                     catch (KeyNotFoundException)
                     {
@@ -229,7 +229,7 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ResolveHostMethod(type, name, argTypes, hints, resolver);
+                return ResolveHostMethod(type, name, argTypes, hints, resolver, entryResolver);
 
             try
             {
@@ -263,7 +263,7 @@ namespace Lens.Compiler
             }
             catch (KeyNotFoundException)
             {
-                return ResolveMethod(declared.BaseType, name, argTypes, hints, resolver);
+                return ResolveMethod(declared.BaseType, name, argTypes, hints, resolver, entryResolver);
             }
         }
 
@@ -495,40 +495,58 @@ namespace Lens.Compiler
         /// <summary>
         /// Finds an extension method for current type.
         /// </summary>
-        public MethodWrapper ResolveExtensionMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver lambdaResolver = null)
+        public MethodWrapper ResolveExtensionMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints = null, LambdaResolver lambdaResolver = null, EntryLambdaResolver entryLambdaResolver = null)
         {
-            // the lookup is reflection over the referenced assemblies, so every type involved has to
-            // have a CLR type behind it. An analysis-only run has built no assembly, so a signature
-            // that mentions a declaration or a type parameter has nothing to materialize: there is
-            // no extension method to be found, which is what a caller expecting one is told
-            if (!IsEmitting && (HasNoRuntimeType(type) || HasNoRuntimeType(argTypes) || HasNoRuntimeType(hints)))
-                throw new KeyNotFoundException();
-
-            var method = ReflectionHelper.ResolveExtensionMethod(Resolver, _extensionResolver, type.Materialize(), name, TypeEntry.Materialize(argTypes), TypeEntry.Materialize(hints), lambdaResolver);
+            // the candidates are host methods of referenced assemblies, but the receiver need not be
+            // a host type: an extension method on a record the script declared, or on a list of one,
+            // is an ordinary call, and weighing it is what the entry model is for. The reflection
+            // path that used to be here could only be taken once an assembly existed, so analysis
+            // reported every such call as a method that does not exist.
+            var found = _extensionResolver.ResolveExtensionMethod(Resolver, type, name, argTypes);
+            var declaringType = TypeEntryCache.Of(found.DeclaringType);
 
             // the receiver is checked wherever it came from, but the type the method is declared on
             // is never named in the script at all - the whole point of an extension method - so
             // this is the only place a rule about that type can be applied
-            if (!IsTypeAllowed(method.DeclaringType))
-                Error(CompilerMessages.SafeModeIllegalType, method.DeclaringType.FullName);
+            if (!IsTypeAllowed(declaringType))
+                Error(CompilerMessages.SafeModeIllegalType, declaringType.FullName);
 
-            return method;
-        }
+            var parameters = found.GetParameters().Select(p => TypeEntryCache.Of(p.ParameterType)).ToArray();
+            var mw = new MethodWrapper
+            {
+                Name = name,
+                DeclaringType = declaringType,
 
-        /// <summary>
-        /// Whether a type cannot be turned into a CLR type before the assembly is emitted.
-        /// </summary>
-        private static bool HasNoRuntimeType(TypeEntry type)
-        {
-            return !ReferenceEquals(type, null) && type.ContainsDeclared;
-        }
+                IsStatic = true,
+                IsVirtual = false,
+                IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
+                IsVariadic = ReflectionHelper.IsVariadic(found),
 
-        /// <summary>
-        /// Whether any type in a list cannot be turned into a CLR type before the assembly is emitted.
-        /// </summary>
-        private static bool HasNoRuntimeType(TypeEntry[] types)
-        {
-            return types != null && types.Any(HasNoRuntimeType);
+                ArgumentTypes = parameters,
+                ReturnType = TypeEntryCache.Of(found.ReturnType),
+
+                MethodInfoSource = () => found
+            };
+
+            if (found.IsGenericMethod)
+            {
+                // the receiver is argument zero of the method being called, and inference has to see
+                // it as one: the TSource of an Enumerable overload is named nowhere else
+                var genericDefs = TypeEntryCache.Of(found.GetGenericArguments());
+                var actual = new[] {type}.Concat(argTypes).ToArray();
+                var values = InferGenerics(genericDefs, parameters, actual, hints, lambdaResolver, entryLambdaResolver);
+
+                mw.GenericArguments = values;
+                mw.ArgumentTypes = parameters.Select(x => SubstituteIntoInstantiation(x, genericDefs, values)).ToArray();
+                mw.ReturnType = SubstituteIntoInstantiation(mw.ReturnType, genericDefs, values);
+                mw.MethodInfoSource = () => found.MakeGenericMethod(TypeEntry.Materialize(values));
+            }
+            else if (hints != null)
+            {
+                Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
+            }
+
+            return mw;
         }
 
         /// <summary>
@@ -1011,7 +1029,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Resolves a method of a host type by name and argument types.
         /// </summary>
-        private MethodWrapper ResolveHostMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver)
+        private MethodWrapper ResolveHostMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver, EntryLambdaResolver entryLambdaResolver = null)
         {
             var instantiation = InstantiationOf(type);
             var found = ReflectionHelper.ResolveMethodByArgs(
@@ -1042,7 +1060,7 @@ namespace Lens.Compiler
             if (info.IsGenericMethod)
             {
                 var parameters = TypeEntryCache.Of(info.GetGenericArguments());
-                var values = InferMethodGenerics(found, parameters, argTypes, hints, lambdaResolver);
+                var values = InferGenerics(parameters, found.ArgumentTypes, argTypes, hints, lambdaResolver, entryLambdaResolver);
 
                 mw.GenericArguments = values;
                 mw.ArgumentTypes = found.ArgumentTypes.Select(x => SubstituteIntoInstantiation(x, parameters, values)).ToArray();
@@ -1096,26 +1114,27 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Works out the type arguments of a generic host method from the call site.
+        /// Works out the type arguments of a generic host call from the call site - an extension
+        /// method call included, where the receiver is argument zero.
         ///
         /// Two engines, and the choice between them is a question of what can be expressed rather
-        /// than of which half of the compilation is running. The CLR-side one infers through lambdas,
-        /// which is what a call like 'ConvertAll (x -> x * 2)' needs, but it can only match types the
-        /// CLR has; the entry-side one matches structurally and is the only one that can say anything
-        /// about a signature made of declarations.
+        /// than of which half of the compilation is running. The CLR-side one can only match types
+        /// the CLR has; the entry-side one matches structurally and is the only one that can say
+        /// anything about a signature made of declarations. Both infer through a lambda, each with
+        /// the resolver of its own kind.
         /// </summary>
-        private TypeEntry[] InferMethodGenerics(MethodLookupResult<MethodInfo> found, TypeEntry[] parameters, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver)
+        private TypeEntry[] InferGenerics(TypeEntry[] parameters, TypeEntry[] expectedTypes, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver, EntryLambdaResolver entryLambdaResolver)
         {
-            var declared = found.ArgumentTypes.Any(x => x != null && x.ContainsDeclared)
+            var declared = expectedTypes.Any(x => x != null && x.ContainsDeclared)
                            || argTypes.Any(x => x != null && x.ContainsDeclared)
                            || (hints != null && hints.Any(x => x != null && x.ContainsDeclared));
 
             if (declared)
-                return ReflectionHelper.InferGenericArguments(Resolver, parameters, found.ArgumentTypes, argTypes, hints);
+                return ReflectionHelper.InferGenericArguments(Resolver, parameters, expectedTypes, argTypes, hints, entryLambdaResolver);
 
             var values = GenericHelper.ResolveMethodGenericsByArgs(
                 Resolver,
-                TypeEntry.Materialize(found.ArgumentTypes),
+                TypeEntry.Materialize(expectedTypes),
                 TypeEntry.Materialize(argTypes),
                 TypeEntry.Materialize(parameters),
                 TypeEntry.Materialize(hints),
@@ -1163,8 +1182,20 @@ namespace Lens.Compiler
         public TypeEntry ResolveLambda(LambdaNode lambda, TypeEntry[] argTypes)
         {
             lambda.SetInferredArgumentTypes(this, argTypes);
-            var delegateType = lambda.Resolve(this);
-            return ReflectionHelper.WrapDelegate(Resolver, delegateType.Materialize()).ReturnType;
+            return WrapDelegate(lambda.Resolve(this)).ReturnType;
+        }
+
+        /// <summary>
+        /// The signature of a delegate type, without asking the CLR for one.
+        ///
+        /// Func&lt;SomeRecord, int&gt; is an ordinary delegate whose Invoke says exactly what the
+        /// call site needs to know, and the entry-side member lookup can read it off the definition
+        /// and rewrite it into the instantiation's terms. Going through reflection instead would
+        /// materialize the record, which is what analysis exists not to do.
+        /// </summary>
+        public MethodWrapper WrapDelegate(TypeEntry type)
+        {
+            return ReflectionHelper.WrapDelegate(Resolver, type);
         }
 
         /// <summary>

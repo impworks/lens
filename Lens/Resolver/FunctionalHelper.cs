@@ -322,6 +322,71 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// Creates a Func or Action depending on return type, in the entry model.
+        ///
+        /// The entry-side counterparts below exist for the same reason as the rest of the model: a
+        /// lambda over a record the script declared has a perfectly ordinary type - Func&lt;Store,
+        /// int&gt; - and building it through reflection would force the record's assembly into
+        /// existence, which is exactly what analysis must not do.
+        /// </summary>
+        public static TypeEntry CreateDelegateType(TypeResolutionContext ctx, TypeEntry returnType, params TypeEntry[] args)
+        {
+            return returnType.IsVoid()
+                ? CreateActionType(ctx, args)
+                : CreateFuncType(ctx, returnType, args);
+        }
+
+        /// <summary>
+        /// Creates a new function type with argument types applied, in the entry model.
+        /// </summary>
+        public static TypeEntry CreateFuncType(TypeResolutionContext ctx, TypeEntry returnType, params TypeEntry[] args)
+        {
+            if (args.Length > 16)
+                throw new LensCompilerException("Func<> can have up to 16 arguments!");
+
+            var arguments = new List<TypeEntry>(args) {returnType};
+            return TypeEntryCache.Of(FuncBaseTypes[args.Length]).MakeGeneric(ctx, arguments.ToArray());
+        }
+
+        /// <summary>
+        /// Creates a new action type with argument types applied, in the entry model.
+        /// </summary>
+        public static TypeEntry CreateActionType(TypeResolutionContext ctx, params TypeEntry[] args)
+        {
+            if (args.Length > 16)
+                throw new LensCompilerException("Action<> can have up to 16 arguments!");
+
+            if (args.Length == 0)
+                return TypeEntryCache.Of<Action>();
+
+            return TypeEntryCache.Of(ActionBaseTypes[args.Length - 1]).MakeGeneric(ctx, args);
+        }
+
+        /// <summary>
+        /// Creates a new lambda type with argument types applied, in the entry model.
+        /// </summary>
+        public static TypeEntry CreateLambdaType(TypeResolutionContext ctx, params TypeEntry[] args)
+        {
+            if (args.Length > 16)
+                throw new LensCompilerException("Lambda<> can have up to 16 arguments!");
+
+            // sic!
+            // no need for a special parameterless lambda
+            if (args.Length == 0)
+                return TypeEntryCache.Of<Func<UnspecifiedType>>();
+
+            return TypeEntryCache.Of(LambdaBaseTypes[args.Length - 1]).MakeGeneric(ctx, args);
+        }
+
+        /// <summary>
+        /// Wraps a delegate type into an <see cref="Expression{TDelegate}"/>, in the entry model.
+        /// </summary>
+        public static TypeEntry CreateExpressionType(TypeResolutionContext ctx, TypeEntry delegateType)
+        {
+            return TypeEntryCache.Of(typeof(Expression<>)).MakeGeneric(ctx, delegateType);
+        }
+
+        /// <summary>
         /// Creates a new tuple type with given argument types.
         /// </summary>
         public static Type CreateTupleType(params Type[] args)

@@ -474,8 +474,8 @@ namespace Lens.Resolver
             if (!varType.IsCallableType())
                 return int.MaxValue;
 
-            var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType.Materialize());
-            var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType.Materialize());
+            var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType);
+            var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType);
 
             if (varWrapper.ArgumentTypes.Length != exprWrapper.ArgumentTypes.Length)
                 return int.MaxValue;

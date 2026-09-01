@@ -124,7 +124,10 @@ namespace Lens.SyntaxTree.Expressions
                         node.MemberName,
                         binding.ArgTypes,
                         binding.TypeHints,
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize(),
+                        // the entry-side resolver is the one a receiver made of declarations needs:
+                        // List<SomeRecord> has no CLR type to infer through until it is emitted
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                     );
 
                     if (binding.Method.IsStatic)
@@ -204,7 +207,10 @@ namespace Lens.SyntaxTree.Expressions
                         node.MemberName,
                         oldArgTypes,
                         binding.TypeHints,
-                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize()
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, TypeEntryCache.Of(types)).Materialize(),
+                        // the receiver has become argument zero above, so both resolvers index the
+                        // same list; the entry-side one is what a receiver made of declarations needs
+                        (idx, types) => ctx.ResolveLambda(binding.Arguments[idx] as LambdaNode, types)
                     );
                 }
                 catch (KeyNotFoundException)

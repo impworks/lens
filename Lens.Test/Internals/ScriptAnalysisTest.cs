@@ -1277,6 +1277,20 @@ var = = ="))
         }
 
         [Test]
+        public void ExtensionMethodsAreOfferedOnACollectionOfADeclaredType()
+        {
+            // completion used to skip a receiver made of declarations outright, because the lookup
+            // behind it needed a CLR type that does not exist until the script is emitted
+            using (var analysis = Analyze("record Store\n    Stock : int\n\nvar xs = new [[new Store 1]]\nxs."))
+            {
+                var names = analysis.Complete(At(5, 4)).Select(x => x.Label).ToArray();
+
+                CollectionAssert.Contains(names, "Select");
+                CollectionAssert.Contains(names, "OrderByDescending");
+            }
+        }
+
+        [Test]
         public void StaticMembersAreOfferedAfterDoubleColon()
         {
             using (var analysis = Analyze("string::"))
