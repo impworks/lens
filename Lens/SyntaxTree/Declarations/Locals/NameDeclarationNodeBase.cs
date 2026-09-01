@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.Declarations.Locals
                     ? Value.Resolve(ctx)
                     : (ResolvedType ?? ctx.ResolveType(Type));
 
-                ctx.CheckTypedExpression(Value, type);
+                type = ctx.CheckTypedExpression(Value, type);
             }
             catch (LensCompilerException)
             {

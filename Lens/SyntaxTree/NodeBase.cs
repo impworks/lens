@@ -347,6 +347,20 @@ namespace Lens.SyntaxTree
 
             if (lambda.MustInferArgTypes)
                 lambda.SetInferredArgumentTypes(ctx, wrapper.ArgumentTypes);
+
+            // an expression tree is not a delegate the literal becomes, it is a tree built out of
+            // its body, and MakeExpressionTree above has already said so
+            if (delegateType.IsExpressionType())
+                return;
+
+            // the literal becomes the delegate the context named, so long as it can: a signature
+            // that does not fit settles into its own shape instead, and the conversion the context
+            // implies is then what reports the mismatch - which is the message that says what is
+            // actually wrong with it
+            if (delegateType.IsExtendablyAssignableFrom(ctx.Resolver, lambda.Resolve(ctx)))
+                lambda.SetTargetType(ctx, delegateType);
+            else
+                lambda.CommitToDefaultDelegate(ctx);
         }
 
         #endregion

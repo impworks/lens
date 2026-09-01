@@ -47,6 +47,12 @@ namespace Lens.SyntaxTree.Declarations.Functions
             public TypeEntry ExpressionTreeType;
 
             /// <summary>
+            /// The delegate the surrounding context wants this lambda to become, once something has
+            /// said which. Null while the literal is still uncommitted.
+            /// </summary>
+            public TypeEntry TargetType;
+
+            /// <summary>
             /// Whether the body's scope has already been given the lambda's arguments.
             ///
             /// Binding a lambda more than once is normal - its argument types arrive late, and so
@@ -71,7 +77,37 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
+            var argTypes = ResolveArgumentTypes(ctx);
+
+            if (MustInferArgTypes)
+                return FunctionalHelper.CreateLambdaType(ctx.Resolver, TypeEntryCache.Of<UnspecifiedType>(), argTypes);
+
+            var binding = ctx.BindingOf<Binding>(this);
+            var retType = ResolveBodyReturnType(ctx);
+
+            // an expression tree is typed by the parameter that asked for one, not by the body: the
+            // tree's return type may be wider than what the body produces, and the translation
+            // inserts the conversion the delegate needs
+            if (binding.ExpressionTreeType != null)
+                return binding.ExpressionTreeType;
+
+            // a lambda literal is not a delegate of any particular family until something says which:
+            // the same expression reaches a Func, a Converter and a Predicate. Until then it carries
+            // the shape it knows - its arguments and its result - and the delegate it becomes is
+            // whatever the context asks for, which is also what gets constructed at emission.
+            if (binding.TargetType == null)
+                return FunctionalHelper.CreateLambdaType(ctx.Resolver, MarkerResultOf(retType), argTypes);
+
+            return binding.TargetType;
+        }
+
+        /// <summary>
+        /// The declared types of the lambda's own arguments, noting whether any was left out.
+        /// </summary>
+        private TypeEntry[] ResolveArgumentTypes(Context ctx)
+        {
             var argTypes = new List<TypeEntry>();
+
             foreach (var curr in Arguments)
             {
                 if (curr.IsVariadic)
@@ -84,9 +120,27 @@ namespace Lens.SyntaxTree.Declarations.Functions
                     MustInferArgTypes = true;
             }
 
-            if (MustInferArgTypes)
-                return FunctionalHelper.CreateLambdaType(ctx.Resolver, argTypes.ToArray());
+            return argTypes.ToArray();
+        }
 
+        /// <summary>
+        /// The result type as the marker spells it.
+        ///
+        /// A body that produces nothing is spelled with LENS's own unit rather than with
+        /// System.Void, which the CLR refuses as a type argument - and the marker is a generic type
+        /// like any other. Everything that reads it asks IsVoid, which the two spellings share.
+        /// </summary>
+        private static TypeEntry MarkerResultOf(TypeEntry returnType)
+        {
+            return returnType.IsVoid() ? TypeEntryCache.Of<UnitType>() : returnType;
+        }
+
+        /// <summary>
+        /// What the body produces, which the literal knows as soon as its argument types are known -
+        /// and cannot know before, since the body is bound against them.
+        /// </summary>
+        private TypeEntry ResolveBodyReturnType(Context ctx)
+        {
             var binding = ctx.BindingOf<Binding>(this);
             if (!binding.ArgumentsRegistered)
             {
@@ -94,15 +148,7 @@ namespace Lens.SyntaxTree.Declarations.Functions
                 binding.ArgumentsRegistered = true;
             }
 
-            var retType = Body.Resolve(ctx);
-
-            // an expression tree is typed by the parameter that asked for one, not by the body: the
-            // tree's return type may be wider than what the body produces, and the translation
-            // inserts the conversion the delegate needs
-            if (binding.ExpressionTreeType != null)
-                return binding.ExpressionTreeType;
-
-            return FunctionalHelper.CreateDelegateType(ctx.Resolver, retType, argTypes.ToArray());
+            return Body.Resolve(ctx);
         }
 
         #endregion
@@ -111,6 +157,11 @@ namespace Lens.SyntaxTree.Declarations.Functions
 
         public override void AnalyzeClosures(Context ctx)
         {
+            // every context that had something to say about the delegate this lambda becomes has
+            // said it by now, so a literal still carrying its own shape is one nothing asked
+            // anything of, and falls back to the Func or Action it describes
+            CommitToDefaultDelegate(ctx);
+
             // validating the signature belongs here rather than in the emission half: the answer
             // does not depend on anything an assembly holds
             ResolveClosureReturnType(ctx);
@@ -180,11 +231,11 @@ namespace Lens.SyntaxTree.Declarations.Functions
                 return;
             }
 
-            // the delegate type is expressed in the terms of the enclosing method, while the
-            // backing method belongs to the closure class and may be generic in its parameters
-            var argTypes = Arguments.Select(x => x.GetArgumentType(ctx)).ToArray();
-            var type = FunctionalHelper.CreateDelegateType(Body.Resolve(ctx).Materialize(), TypeEntry.Materialize(argTypes));
-            var ctor = ctx.ResolveConstructor(TypeEntryCache.Of(type), new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
+            // the delegate the context asked for, constructed directly. Building the Func the
+            // lambda's own signature describes and converting it afterwards would allocate two
+            // delegates and call the body through both of them.
+            var type = Resolve(ctx);
+            var ctor = ctx.ResolveConstructor(type, new[] {TypeEntryCache.Of<object>(), TypeEntryCache.Of<IntPtr>()});
 
             var closure = ctx.Scope.ActiveClosure;
             var closureMethod = ctx.ResolveMethodGroup(closure.ClosureInstanceType, ctx.BindingOf<Binding>(this).Method.Name).Single();
@@ -237,6 +288,56 @@ namespace Lens.SyntaxTree.Declarations.Functions
         public void SetInferredReturnType(Context ctx, TypeEntry type)
         {
             ctx.BindingOf<Binding>(this).InferredReturnType = type;
+        }
+
+        /// <summary>
+        /// Declares which delegate the lambda is to become, because the context it appears in says
+        /// so: the parameter it is passed to, the location it is assigned to, the type it is cast to.
+        ///
+        /// From here on the literal resolves to that delegate and emission constructs that delegate,
+        /// rather than building the Func its own signature describes and converting it afterwards.
+        /// </summary>
+        public void SetTargetType(Context ctx, TypeEntry type)
+        {
+            var binding = ctx.BindingOf<Binding>(this);
+            if (binding.TargetType == type)
+                return;
+
+            binding.TargetType = type;
+
+            // the method the body compiles into returns what the delegate returns, which may be
+            // wider than what the body produces - a generic parameter is not a type the body can be
+            // held to, and inference is what settles it
+            var returnType = ReflectionHelper.WrapDelegate(ctx.Resolver, type).ReturnType;
+            if (!returnType.IsGenericParameter)
+                binding.InferredReturnType = returnType;
+
+            // the lambda was bound as an uncommitted literal, and its type is what changes
+            ctx.ResetExpressionType(this);
+        }
+
+        /// <summary>
+        /// Settles a lambda that nothing asked anything of: the delegate it becomes is the Func or
+        /// Action its own signature describes.
+        ///
+        /// This is where 'let f = (x:int) -> x + 1' gets a type. A literal whose argument types were
+        /// left out has no signature to fall back on - there is nothing left to infer them from -
+        /// and is refused here rather than at emission, which an editor never reaches.
+        /// </summary>
+        public void CommitToDefaultDelegate(Context ctx)
+        {
+            var binding = ctx.BindingOf<Binding>(this);
+            if (binding.TargetType != null || binding.ExpressionTreeType != null)
+                return;
+
+            if (MustInferArgTypes)
+            {
+                var unknown = Arguments.First(x => x.Type == TypeEntryCache.Of<UnspecifiedType>());
+                Error(CompilerMessages.LambdaArgTypeUnknown, unknown.Name);
+            }
+
+            var argTypes = Arguments.Select(x => x.GetArgumentType(ctx)).ToArray();
+            SetTargetType(ctx, FunctionalHelper.CreateDelegateType(ctx.Resolver, ResolveBodyReturnType(ctx), argTypes));
         }
 
         #endregion

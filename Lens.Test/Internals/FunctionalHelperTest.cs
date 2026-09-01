@@ -75,15 +75,21 @@ namespace Lens.Test.Internals
         [Test]
         public void CreateLambdaTypeTest()
         {
+            // the result type comes last, exactly as it does for Func
             Assert.AreEqual(
                 typeof(Lambda<int, string, TimeSpan>),
-                FunctionalHelper.CreateLambdaType(typeof(int), typeof(string), typeof(TimeSpan))
+                FunctionalHelper.CreateLambdaType(typeof(TimeSpan), typeof(int), typeof(string))
+            );
+
+            // a literal whose argument types were left out cannot know its result either
+            Assert.AreEqual(
+                typeof(Lambda<UnspecifiedType, UnspecifiedType>),
+                FunctionalHelper.CreateLambdaType(typeof(UnspecifiedType), typeof(UnspecifiedType))
             );
 
             Assert.AreEqual(typeof(Lambda<bool>), FunctionalHelper.CreateLambdaType(typeof(bool)));
-            Assert.AreEqual(typeof(Func<UnspecifiedType>), FunctionalHelper.CreateLambdaType());
 
-            Assert.Throws<LensCompilerException>(() => FunctionalHelper.CreateLambdaType(new Type[20]));
+            Assert.Throws<LensCompilerException>(() => FunctionalHelper.CreateLambdaType(typeof(int), new Type[20]));
         }
 
         [Test]

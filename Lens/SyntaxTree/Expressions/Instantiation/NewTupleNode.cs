@@ -35,10 +35,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             var types = new List<TypeEntry>();
             foreach (var curr in Expressions)
             {
-                var type = curr.Resolve(ctx);
-                ctx.CheckTypedExpression(curr, type);
-
-                types.Add(type);
+                types.Add(ctx.CheckTypedExpression(curr));
             }
 
             _types = types.ToArray();

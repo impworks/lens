@@ -242,7 +242,10 @@ namespace Lens.Resolver
             if (varType.IsExpressionType() && (exprType.IsLambdaType() || exprType.IsCallableType()))
                 return varType.GenericArguments[0].DistanceFrom(ctx, exprType, exactly);
 
-            if (exprType.IsLambdaType())
+            // a lambda literal reaches a parameter that wants a delegate by matching its signature.
+            // One that wants anything else - 'object', most often - takes it as the ordinary
+            // reference it is, which is what the inheritance walk below answers
+            if (exprType.IsLambdaType() && varType.IsCallableType())
                 return LambdaDistance(ctx, varType, exprType);
 
             if (varType.IsGenericType && exprType.IsGenericType)
@@ -471,16 +474,11 @@ namespace Lens.Resolver
         /// </summary>
         private static int LambdaDistance(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType)
         {
-            if (!varType.IsCallableType())
-                return int.MaxValue;
-
             var varWrapper = ReflectionHelper.WrapDelegate(ctx, varType);
             var exprWrapper = ReflectionHelper.WrapDelegate(ctx, exprType);
 
             if (varWrapper.ArgumentTypes.Length != exprWrapper.ArgumentTypes.Length)
                 return int.MaxValue;
-
-            // return type is not checked until lambda argument types are substituted
 
             var sum = 0;
             for (var idx = 0; idx < varWrapper.ArgumentTypes.Length; idx++)
@@ -495,7 +493,59 @@ namespace Lens.Resolver
                 sum += dist;
             }
 
-            return sum;
+            var returnDist = LambdaReturnDistance(ctx, varWrapper.ReturnType, exprWrapper.ReturnType);
+            if (returnDist == int.MaxValue)
+                return int.MaxValue;
+
+            return sum + returnDist;
+        }
+
+        /// <summary>
+        /// How far a lambda literal's result is from what a delegate returns.
+        ///
+        /// A literal written with its argument types knows what its body produces, and two overloads
+        /// may differ in nothing else - the selector of Sum is a Func to int, to long, to double and
+        /// to decimal, and which of them is meant is a question only the body can answer.
+        ///
+        /// Two answers are free: a literal written without argument types cannot have bound its body
+        /// yet and says UnspecifiedType, and a parameter returning a type argument is not a
+        /// constraint but the thing inference is about to work out.
+        ///
+        /// What is not free is a result that merely converts. A lambda is compiled into a method of
+        /// exactly one signature, so a body returning int does not make a Func&lt;object&gt; - there
+        /// is no boxing step to insert between the two - and matching it leniently here would accept
+        /// a call that emission cannot produce.
+        /// </summary>
+        private static int LambdaReturnDistance(TypeResolutionContext ctx, TypeEntry wanted, TypeEntry given)
+        {
+            if (ReferenceEquals(wanted, null) || ReferenceEquals(given, null))
+                return 0;
+
+            if (given.Is<UnspecifiedType>() || MentionsGenericParameter(wanted))
+                return 0;
+
+            return wanted.DistanceFrom(ctx, given, true);
+        }
+
+        /// <summary>
+        /// Whether a type is, or is built out of, a type argument that has yet to be worked out.
+        /// </summary>
+        private static bool MentionsGenericParameter(TypeEntry type)
+        {
+            if (ReferenceEquals(type, null))
+                return false;
+
+            if (type.IsGenericParameter)
+                return true;
+
+            if (MentionsGenericParameter(type.ElementType))
+                return true;
+
+            foreach (var curr in type.GenericArguments)
+                if (MentionsGenericParameter(curr))
+                    return true;
+
+            return false;
         }
 
         #endregion

@@ -39,9 +39,7 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             // half-written script never sees
             foreach (var curr in Expressions)
             {
-                var currType = curr.Resolve(ctx);
-
-                ctx.CheckTypedExpression(curr, currType, true);
+                var currType = ctx.CheckTypedExpression(curr, allowNull: true);
 
                 if (!_itemType.IsExtendablyAssignableFrom(ctx.Resolver, currType))
                     Error(curr, CompilerMessages.ArrayElementTypeMismatch, currType, _itemType);

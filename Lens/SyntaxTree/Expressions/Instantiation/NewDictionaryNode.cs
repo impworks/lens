@@ -47,11 +47,8 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
             // half-written script never sees
             foreach (var curr in Expressions)
             {
-                var currKeyType = curr.Key.Resolve(ctx);
-                var currValType = curr.Value.Resolve(ctx);
-
-                ctx.CheckTypedExpression(curr.Key, currKeyType);
-                ctx.CheckTypedExpression(curr.Value, currValType, true);
+                var currKeyType = ctx.CheckTypedExpression(curr.Key);
+                var currValType = ctx.CheckTypedExpression(curr.Value, allowNull: true);
 
                 if (currKeyType != _keyType)
                     Error(curr.Key, CompilerMessages.DictionaryKeyTypeMismatch, currKeyType, _keyType, _valueType);

@@ -319,6 +319,10 @@ namespace Lens.SyntaxTree.Expressions
                     probe.StartLocation = lambda.StartLocation;
                     probe.EndLocation = lambda.EndLocation;
                     probe.ValidateSynthesized(ctx);
+
+                    // the signatures agree, so the literal becomes the parameter's own delegate
+                    // rather than a Func the emitter would have to convert
+                    lambda.SetTargetType(ctx, expected);
                 }
             }
         }

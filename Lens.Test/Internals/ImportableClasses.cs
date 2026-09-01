@@ -69,6 +69,44 @@ namespace Lens.Test.Internals
         public virtual string VirtualValue { get; set; }
     }
 
+    /// <summary>
+    /// Reports what a lambda literal was actually compiled into, for the tests that care about the
+    /// shape of the delegate rather than about the value it produces.
+    /// </summary>
+    public static class DelegateShape
+    {
+        /// <summary>
+        /// The name of the delegate type a lambda arrived as.
+        /// </summary>
+        public static string NameOf(Converter<int, int> converter)
+        {
+            return converter.GetType().Name;
+        }
+
+        /// <summary>
+        /// Whether the delegate calls the lambda's body directly, rather than calling another
+        /// delegate that calls it. A lambda converted from a Func has that Func as its target.
+        /// </summary>
+        public static bool IsDirectConverter(Converter<int, int> converter)
+        {
+            return !(converter.Target is Delegate);
+        }
+
+        public static bool IsDirectPredicate(Predicate<int> predicate)
+        {
+            return !(predicate.Target is Delegate);
+        }
+    }
+
+    /// <summary>
+    /// A location of a delegate type that is neither a Func nor an Action, for the tests about what
+    /// a lambda literal becomes when it is assigned to one.
+    /// </summary>
+    public class ConverterHolder
+    {
+        public Converter<int, int> Convert;
+    }
+
     public interface IRestriction<T> { }
 
     public class RestrictionTest: IRestriction<int>, IRestriction<KeyValuePair<int, int>> { }

@@ -120,11 +120,15 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             var fromArgs = fromMethod.ArgumentTypes;
             var toArgs = toMethod.ArgumentTypes;
 
+            // an uncommitted lambda literal is named by the delegate its signature describes: the
+            // marker it actually carries is the compiler's own and means nothing to the reader
+            var fromName = from.AsNamedDelegate(ctx.Resolver);
+
             if (fromArgs.Length != toArgs.Length || toArgs.Select((ta, id) => !ta.IsExtendablyAssignableFrom(ctx.Resolver, fromArgs[id], true)).Any(x => x))
-                Error(CompilerMessages.CastDelegateArgTypesMismatch, from, to);
+                Error(CompilerMessages.CastDelegateArgTypesMismatch, fromName, to);
 
             if (!toMethod.ReturnType.IsExtendablyAssignableFrom(ctx.Resolver, fromMethod.ReturnType, true))
-                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, from, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
+                Error(CompilerMessages.CastDelegateReturnTypesMismatch, to, fromName, toMethod.ReturnType.Materialize(), fromMethod.ReturnType.Materialize());
         }
 
         #endregion

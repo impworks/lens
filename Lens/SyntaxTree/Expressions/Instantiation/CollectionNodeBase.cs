@@ -35,7 +35,9 @@ namespace Lens.SyntaxTree.Expressions.Instantiation
         {
             try
             {
-                var types = nodes.Select(n => n.Resolve(ctx)).ToArray();
+                // a lambda literal among the items has to settle before the items can be compared:
+                // the collection stores it as the delegate it becomes, and nothing here names one
+                var types = nodes.Select(n => ctx.SettleLambda(n)).ToArray();
                 return types.GetMostCommonType(ctx.Resolver);
             }
             catch (LensCompilerException ex)

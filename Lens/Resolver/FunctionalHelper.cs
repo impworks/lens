@@ -73,7 +73,8 @@ namespace Lens.Resolver
                 typeof(Lambda<,,,,,,,,,,,,>),
                 typeof(Lambda<,,,,,,,,,,,,,>),
                 typeof(Lambda<,,,,,,,,,,,,,,>),
-                typeof(Lambda<,,,,,,,,,,,,,,,>)
+                typeof(Lambda<,,,,,,,,,,,,,,,>),
+                typeof(Lambda<,,,,,,,,,,,,,,,,>),
             };
 
             TupleBaseTypes = new[]
@@ -297,20 +298,21 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        ///	Creates a new function type with argument types applied.
+        /// Creates the type of a lambda literal that has not been committed to a delegate yet.
         /// </summary>
-        public static Type CreateLambdaType(params Type[] args)
+        /// <param name="returnType">
+        /// What the body produces, or <see cref="UnspecifiedType"/> when the literal cannot say -
+        /// which is the case exactly when its argument types were left out, since the body cannot be
+        /// bound until they are known.
+        /// </param>
+        public static Type CreateLambdaType(Type returnType, params Type[] args)
         {
             if (args.Length > 16)
                 throw new LensCompilerException("Lambda<> can have up to 16 arguments!");
 
-            // sic!
-            // no need for a special parameterless lambda
-            if (args.Length == 0)
-                return typeof(Func<UnspecifiedType>);
-
-            var baseType = LambdaBaseTypes[args.Length - 1];
-            return baseType.MakeGenericType(args);
+            var baseType = LambdaBaseTypes[args.Length];
+            var argTypes = new List<Type>(args) {returnType};
+            return baseType.MakeGenericType(argTypes.ToArray());
         }
 
         /// <summary>
@@ -363,19 +365,34 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        /// Creates a new lambda type with argument types applied, in the entry model.
+        /// The delegate an uncommitted lambda literal's signature describes; anything else unchanged.
+        ///
+        /// The marker type is the compiler's own, and a diagnostic that named it would be telling
+        /// the reader about a type they cannot write and have never heard of. What they wrote is a
+        /// lambda taking these arguments and producing this result, which is a Func or an Action.
         /// </summary>
-        public static TypeEntry CreateLambdaType(TypeResolutionContext ctx, params TypeEntry[] args)
+        public static TypeEntry AsNamedDelegate(this TypeEntry type, TypeResolutionContext ctx)
+        {
+            if (!type.IsLambdaType())
+                return type;
+
+            var parts = type.GenericArguments;
+            var args = new TypeEntry[parts.Length - 1];
+            Array.Copy(parts, args, args.Length);
+
+            return CreateDelegateType(ctx, parts[parts.Length - 1], args);
+        }
+
+        /// <summary>
+        /// Creates the type of an uncommitted lambda literal, in the entry model.
+        /// </summary>
+        public static TypeEntry CreateLambdaType(TypeResolutionContext ctx, TypeEntry returnType, params TypeEntry[] args)
         {
             if (args.Length > 16)
                 throw new LensCompilerException("Lambda<> can have up to 16 arguments!");
 
-            // sic!
-            // no need for a special parameterless lambda
-            if (args.Length == 0)
-                return TypeEntryCache.Of<Func<UnspecifiedType>>();
-
-            return TypeEntryCache.Of(LambdaBaseTypes[args.Length - 1]).MakeGeneric(ctx, args);
+            var arguments = new List<TypeEntry>(args) {returnType};
+            return TypeEntryCache.Of(LambdaBaseTypes[args.Length]).MakeGeneric(ctx, arguments.ToArray());
         }
 
         /// <summary>

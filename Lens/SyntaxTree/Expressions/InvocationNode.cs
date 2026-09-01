@@ -319,7 +319,9 @@ namespace Lens.SyntaxTree.Expressions
         /// </summary>
         private void ResolveExpression(Context ctx, Binding binding, NodeBase node)
         {
-            var exprType = node.Resolve(ctx);
+            // nothing here names a delegate for a lambda literal to become - it is being called,
+            // not passed - so the literal settles into the delegate its own signature describes
+            var exprType = ctx.SettleLambda(node);
             if (!exprType.IsCallableType())
                 Error(CompilerMessages.TypeNotCallable, exprType);
 
