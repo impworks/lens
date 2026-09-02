@@ -4,6 +4,7 @@ using Lens.Compiler;
 using Lens.Lexer;
 using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
+using System.Linq;
 using Lens.Utils;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
@@ -219,27 +220,28 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 node.Expression = Expr.Get(tmpExpr);
             }
 
-            // must cache index?
-            if (!(node.Index is GetIdentifierNode || node.Index is ILiteralNode || node.Index.IsConstant))
+            // must cache the indexes? every dimension is read twice, so anything with a side
+            // effect - or merely worth computing once - is evaluated into a temporary first
+            for (var idx = 0; idx < node.Indexes.Count; idx++)
             {
-                var tmpIdx = ctx.Scope.DeclareImplicit(ctx, node.Index.Resolve(ctx), false);
-                body.Add(Expr.Set(tmpIdx, node.Index));
-                node.Index = Expr.Get(tmpIdx);
+                var curr = node.Indexes[idx];
+                if (curr is GetIdentifierNode || curr is ILiteralNode || curr.IsConstant)
+                    continue;
+
+                var tmpIdx = ctx.Scope.DeclareImplicit(ctx, curr.Resolve(ctx), false);
+                body.Add(Expr.Set(tmpIdx, curr));
+                node.Indexes[idx] = Expr.Get(tmpIdx);
             }
 
-            body.Add(
-                Expr.SetIdx(
-                    node.Expression,
-                    node.Index,
-                    _assignmentOperator(
-                        Expr.GetIdx(
-                            node.Expression,
-                            node.Index
-                        ),
-                        node.Value
-                    )
-                )
-            );
+            var getter = new GetIndexNode {Expression = node.Expression, Indexes = node.Indexes.ToList()};
+            var setter = new SetIndexNode
+            {
+                Expression = node.Expression,
+                Indexes = node.Indexes.ToList(),
+                Value = _assignmentOperator(getter, node.Value)
+            };
+
+            body.Add(setter);
 
             return body;
         }

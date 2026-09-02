@@ -1940,5 +1940,59 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("SafeModeIllegalMember", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3209: An array of type &apos;{0}&apos; has {1} dimension(s), but {2} index(es) were given!.
+        /// </summary>
+        public static string ArrayRankMismatch {
+            get {
+                return ResourceManager.GetString("ArrayRankMismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3210: A multidimensional array initializer must be rectangular: expected {0} item(s) in this row, but found {1}!.
+        /// </summary>
+        public static string MultiDimArrayNotRectangular {
+            get {
+                return ResourceManager.GetString("MultiDimArrayNotRectangular", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3211: A multidimensional array initializer must be rectangular: this item is nested {0} level(s) deep, while its neighbours are nested {1}!.
+        /// </summary>
+        public static string MultiDimArrayRaggedNesting {
+            get {
+                return ResourceManager.GetString("MultiDimArrayRaggedNesting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3212: Operator &apos;{0}&apos; cannot be applied to a multidimensional array of type &apos;{1}&apos;!.
+        /// </summary>
+        public static string MultiDimArrayOperator {
+            get {
+                return ResourceManager.GetString("MultiDimArrayOperator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3213: A multidimensional array of type &apos;{0}&apos; cannot be matched against an array pattern!.
+        /// </summary>
+        public static string MultiDimArrayPattern {
+            get {
+                return ResourceManager.GetString("MultiDimArrayPattern", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3214: An array must have at least one dimension!.
+        /// </summary>
+        public static string ArrayRankNotPositive {
+            get {
+                return ResourceManager.GetString("ArrayRankNotPositive", resourceCulture);
+            }
+        }
     }
 }

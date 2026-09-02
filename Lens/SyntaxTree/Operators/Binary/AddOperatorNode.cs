@@ -36,6 +36,11 @@ namespace Lens.SyntaxTree.Operators.Binary
 
             if (leftType == rightType)
             {
+                // concatenation writes the result with a vector's own instructions and there is no
+                // shape a rank > 1 result could take anyway: two 2x2 arrays do not add up to one
+                if (leftType.IsArray && !leftType.IsVectorArray)
+                    Error(CompilerMessages.MultiDimArrayOperator, "+", leftType);
+
                 if (leftType.IsArray || leftType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(typeof(Dictionary<,>))))
                     return leftType;
             }

@@ -124,7 +124,7 @@ namespace Lens.Resolver
             if (type.IsArray)
             {
                 var element = SubstituteInto(resolver, type.ElementType, parameters, arguments);
-                return Same(element, type.ElementType) ? type : element.MakeArray(resolver);
+                return Same(element, type.ElementType) ? type : element.MakeArray(resolver, type.ArrayRank);
             }
 
             if (type.IsByRef)

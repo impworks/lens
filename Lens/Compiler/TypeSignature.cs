@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Lens.SyntaxTree;
 
 namespace Lens.Compiler
@@ -34,6 +35,11 @@ namespace Lens.Compiler
         /// </summary>
         private static readonly string[] Postfixes = {"[]", "?", "~"};
 
+        /// <summary>
+        /// The multidimensional array postfix, as it is written in LENS: 'int[2d]'.
+        /// </summary>
+        private static readonly Regex RankPostfix = new Regex(@"\[[0-9]+d\]$", RegexOptions.Compiled);
+
         #endregion
 
         #region Fields
@@ -51,6 +57,7 @@ namespace Lens.Compiler
         /// <summary>
         /// Special postfix character:
         /// [] = array,
+        /// [Nd] = array of rank N, for N greater than one,
         /// ? = Nullable
         /// ~ = IEnumerable
         /// </summary>
@@ -84,6 +91,10 @@ namespace Lens.Compiler
             foreach (var postfix in Postfixes)
                 if (signature.EndsWith(postfix))
                     return new TypeSignature(null, postfix, Parse(signature.Substring(0, signature.Length - postfix.Length)));
+
+            var rankMatch = RankPostfix.Match(signature);
+            if (rankMatch.Success)
+                return new TypeSignature(null, rankMatch.Value, Parse(signature.Substring(0, signature.Length - rankMatch.Length)));
 
             var open = signature.IndexOf('<');
             if (open == -1)

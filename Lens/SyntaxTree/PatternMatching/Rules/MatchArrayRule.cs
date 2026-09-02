@@ -64,7 +64,14 @@ namespace Lens.SyntaxTree.PatternMatching.Rules
             _expressionType = expressionType;
 
             if (expressionType.IsArray)
+            {
+                // an array pattern reads its subject by a single index and slices it with a
+                // vector's own instructions; a rank > 1 array answers neither
+                if (!expressionType.IsVectorArray)
+                    Error(CompilerMessages.MultiDimArrayPattern, expressionType);
+
                 _elementType = expressionType.ElementType;
+            }
 
             else if (new[] {typeof(IEnumerable<>), typeof(IList<>)}.Any(t => expressionType.IsAppliedVersionOf(ctx.Resolver, TypeEntryCache.Of(t))))
                 _elementType = expressionType.GenericArguments[0];

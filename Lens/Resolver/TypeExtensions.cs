@@ -284,7 +284,8 @@ namespace Lens.Resolver
             if (IsDerivedFrom(exprType, varType, out int result))
                 return result;
 
-            if (varType.IsArray && exprType.IsArray)
+            // array covariance holds between arrays of the same shape only
+            if (varType.IsArray && exprType.IsArray && varType.ArrayRank == exprType.ArrayRank)
             {
                 var varElType = varType.ElementType;
                 var exprElType = exprType.ElementType;
@@ -636,13 +637,13 @@ namespace Lens.Resolver
                 return GetNumericOperationType(left, right) ?? TypeEntryCache.Of<object>();
 
             // arrays
-            if (left.IsArray && right.IsArray)
+            if (left.IsArray && right.IsArray && left.ArrayRank == right.ArrayRank)
             {
                 var leftElem = left.ElementType;
                 var rightElem = right.ElementType;
                 return leftElem.IsValueType || rightElem.IsValueType
                     ? TypeEntryCache.Of<object>()
-                    : GetMostCommonType(ctx, leftElem, rightElem).MakeArray(ctx);
+                    : GetMostCommonType(ctx, leftElem, rightElem).MakeArray(ctx, left.ArrayRank);
             }
 
             // inheritance

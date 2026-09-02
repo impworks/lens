@@ -59,6 +59,7 @@ namespace Lens.Resolver
         public override bool IsEnum => _type.IsEnum;
 
         public override bool IsArray => _type.IsArray;
+        public override int ArrayRank => _type.IsArray ? _type.GetArrayRank() : 0;
         public override bool IsByRef => _type.IsByRef;
         public override bool IsPointer => _type.IsPointer;
 

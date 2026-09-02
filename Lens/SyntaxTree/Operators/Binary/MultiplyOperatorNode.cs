@@ -38,7 +38,13 @@ namespace Lens.SyntaxTree.Operators.Binary
 
                 // array repetition
                 if (leftType.IsArray)
+                {
+                    // repetition lays the copies out end to end, which only a vector has room for
+                    if (!leftType.IsVectorArray)
+                        Error(CompilerMessages.MultiDimArrayOperator, "*", leftType);
+
                     return leftType;
+                }
 
                 // typed sequence repetition
                 var enumerable = leftType.ResolveImplementationOf(ctx.Resolver, TypeEntryCache.Of(typeof(IEnumerable<>)));

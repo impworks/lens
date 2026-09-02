@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
@@ -31,13 +32,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
-            var idxType = Index.Resolve(ctx);
+            var idxTypes = Indexes.Select(x => x.Resolve(ctx)).ToArray();
 
-            if (!exprType.IsArray)
+            if (exprType.IsArray)
+            {
+                if (Indexes.Count != exprType.ArrayRank)
+                    Error(CompilerMessages.ArrayRankMismatch, exprType, exprType.ArrayRank, Indexes.Count);
+            }
+            else
             {
                 try
                 {
-                    _indexer = ctx.ResolveIndexer(exprType, idxType, false);
+                    _indexer = ctx.ResolveIndexer(exprType, idxTypes, false);
                 }
                 catch (LensCompilerException ex)
                 {
@@ -46,11 +52,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var idxDestType = exprType.IsArray ? TypeEntryCache.Of<int>() : _indexer.ArgumentTypes[0];
-            var valDestType = exprType.IsArray ? exprType.ElementType : _indexer.ArgumentTypes[1];
+            var valDestType = exprType.IsArray ? exprType.ElementType : _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
 
-            if (!idxDestType.IsExtendablyAssignableFrom(ctx.Resolver, idxType))
-                Error(Index, CompilerMessages.ImplicitCastImpossible, idxType, idxDestType);
+            for (var idx = 0; idx < idxTypes.Length; idx++)
+            {
+                var idxDestType = exprType.IsArray ? TypeEntryCache.Of<int>() : _indexer.ArgumentTypes[idx];
+                if (!idxDestType.IsExtendablyAssignableFrom(ctx.Resolver, idxTypes[idx]))
+                    Error(Indexes[idx], CompilerMessages.ImplicitCastImpossible, idxTypes[idx], idxDestType);
+            }
 
             EnsureLambdaInferred(ctx, Value, valDestType);
             var valType = Value.Resolve(ctx);
@@ -67,11 +76,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Expression);
-            yield return new NodeChild(Index);
+
+            foreach (var curr in Indexes)
+                yield return new NodeChild(curr);
+
             yield return new NodeChild(Value);
         }
 
-        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression, Index, Value};
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression}.Concat(Indexes).Concat(new[] {Value}).ToArray();
 
         /// <summary>
         /// The object being indexed into is not a value the node consumes: were it evaluated ahead
@@ -87,8 +99,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var copy = Copy<SetIndexNode>();
             copy.Expression = operands[0];
-            copy.Index = operands[1];
-            copy.Value = operands[2];
+            copy.Indexes = operands.Skip(1).Take(operands.Count - 2).ToList();
+            copy.Value = operands[operands.Count - 1];
             return copy;
         }
 
@@ -115,9 +127,19 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             var itemType = exprType.ElementType.Materialize();
 
             Expression.Emit(ctx, true);
-            Expr.Cast(Index, typeof(int)).Emit(ctx, true);
+
+            foreach (var curr in Indexes)
+                Expr.Cast(curr, typeof(int)).Emit(ctx, true);
+
             Expr.Cast(Value, itemType).Emit(ctx, true);
-            gen.EmitSaveIndex(itemType);
+
+            if (exprType.ArrayRank == 1)
+            {
+                gen.EmitSaveIndex(itemType);
+                return;
+            }
+
+            gen.EmitCall(MultiDimArrays.SetterOf(ctx, exprType.Materialize()));
         }
 
         /// <summary>
@@ -129,12 +151,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             try
             {
-                var idxDest = _indexer.ArgumentTypes[0];
-                var valDest = _indexer.ArgumentTypes[1];
+                var valDest = _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
 
                 Expression.Emit(ctx, true);
 
-                Expr.Cast(Index, idxDest.Materialize()).Emit(ctx, true);
+                for (var idx = 0; idx < Indexes.Count; idx++)
+                    Expr.Cast(Indexes[idx], _indexer.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
+
                 Expr.Cast(Value, valDest.Materialize()).Emit(ctx, true);
 
                 gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
@@ -173,7 +196,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         public override string ToString()
         {
-            return string.Format("setidx({0} of {1} = {2})", Index, Expression, Value);
+            return string.Format("setidx({0} of {1} = {2})", string.Join(";", Indexes), Expression, Value);
         }
 
         #endregion

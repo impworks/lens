@@ -56,7 +56,7 @@ namespace Lens.Resolver
                 );
             }
 
-            if (source.IsArray && type.IsGenericType)
+            if (source.IsArray && source.GetArrayRank() == 1 && type.IsGenericType)
             {
                 return ApplyGenericArguments(
                     type,
@@ -81,7 +81,14 @@ namespace Lens.Resolver
             if (type.IsArray || type.IsByRef)
             {
                 var t = ApplyGenericArguments(type.GetElementType(), generics, values, throwNotFound);
-                return type.IsArray ? t.MakeArrayType() : t.MakeByRefType();
+
+                if (!type.IsArray)
+                    return t.MakeByRefType();
+
+                // MakeArrayType() and MakeArrayType(1) are different types: the substituted array
+                // must keep the shape the original had
+                var rank = type.GetArrayRank();
+                return rank == 1 ? t.MakeArrayType() : t.MakeArrayType(rank);
             }
 
             if (type.IsGenericParameter)

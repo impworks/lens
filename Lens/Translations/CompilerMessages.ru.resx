@@ -480,6 +480,24 @@
   <data name="ReturnValueRequired" xml:space="preserve">
     <value>LE3208: Функция типа '{0}' должна возвращать значение!</value>
   </data>
+  <data name="ArrayRankMismatch" xml:space="preserve">
+    <value>LE3209: Массив типа '{0}' имеет {1} измерений, но указано {2} индексов!</value>
+  </data>
+  <data name="MultiDimArrayNotRectangular" xml:space="preserve">
+    <value>LE3210: Инициализатор многомерного массива должен быть прямоугольным: ожидалось {0} элементов в строке, а найдено {1}!</value>
+  </data>
+  <data name="MultiDimArrayRaggedNesting" xml:space="preserve">
+    <value>LE3211: Инициализатор многомерного массива должен быть прямоугольным: вложенность этого элемента - {0}, а у соседних - {1}!</value>
+  </data>
+  <data name="MultiDimArrayOperator" xml:space="preserve">
+    <value>LE3212: Оператор '{0}' нельзя применить к многомерному массиву типа '{1}'!</value>
+  </data>
+  <data name="MultiDimArrayPattern" xml:space="preserve">
+    <value>LE3213: Многомерный массив типа '{0}' нельзя сопоставить с образцом массива!</value>
+  </data>
+  <data name="ArrayRankNotPositive" xml:space="preserve">
+    <value>LE3214: Массив должен иметь хотя бы одно измерение!</value>
+  </data>
   <data name="FieldRedefinition" xml:space="preserve">
     <value>LE3036: Тип '{0}' уже содержит поле '{1}'!</value>
   </data>

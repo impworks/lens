@@ -59,14 +59,14 @@ namespace Lens.Resolver
         /// <summary>
         /// Resolves an indexer property from a type by its argument.
         /// </summary>
-        public static MethodWrapper ResolveIndexer(TypeResolutionContext ctx, Type type, Type idxType, bool isGetter)
+        public static MethodWrapper ResolveIndexer(TypeResolutionContext ctx, Type type, Type[] idxTypes, bool isGetter)
         {
             if (type is TypeBuilder)
                 throw new NotSupportedException();
 
             try
             {
-                var indexer = ResolveIndexerProperty(ctx, type, idxType, isGetter, p => p);
+                var indexer = ResolveIndexerProperty(ctx, type, idxTypes, isGetter, p => p);
                 return new MethodWrapper(indexer);
             }
             catch (NotSupportedException)
@@ -75,7 +75,7 @@ namespace Lens.Resolver
                     throw;
 
                 var genType = type.GetGenericTypeDefinition();
-                var indexer = ResolveIndexerProperty(ctx, genType, idxType, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
+                var indexer = ResolveIndexerProperty(ctx, genType, idxTypes, isGetter, p => GenericHelper.ApplyGenericArguments(p, type));
                 var declType = ResolveActualDeclaringType(ctx, type, indexer.DeclaringType);
 
                 return new MethodWrapper
@@ -94,9 +94,10 @@ namespace Lens.Resolver
         /// <summary>
         /// Finds a property that can work as an index.
         /// </summary>
-        private static MethodInfo ResolveIndexerProperty(TypeResolutionContext ctx, Type type, Type idxType, bool isGetter, Func<Type, Type> typeProcessor)
+        private static MethodInfo ResolveIndexerProperty(TypeResolutionContext ctx, Type type, Type[] idxTypes, bool isGetter, Func<Type, Type> typeProcessor)
         {
-            var indexers = new List<Tuple<PropertyInfo, Type, int>>();
+            var indexers = new List<Tuple<PropertyInfo, Type[], int>>();
+            var passed = idxTypes.Select(TypeEntryCache.Of).ToArray();
 
             foreach (var pty in type.GetProperties())
             {
@@ -107,13 +108,16 @@ namespace Lens.Resolver
                     continue;
 
                 var idxArgs = pty.GetIndexParameters();
-                if (idxArgs.Length != 1)
+                if (idxArgs.Length != idxTypes.Length)
                     continue;
 
-                var argType = typeProcessor(idxArgs[0].ParameterType);
-                var distance = TypeEntryCache.Of(argType).DistanceFrom(ctx, TypeEntryCache.Of(idxType));
+                var argTypes = idxArgs.Select(p => typeProcessor(p.ParameterType)).ToArray();
 
-                indexers.Add(new Tuple<PropertyInfo, Type, int>(pty, argType, distance));
+                // the same summed distance overload resolution uses for methods: an indexer of
+                // several arguments is a method in every respect but its spelling
+                var distance = TypeExtensions.TypeListDistance(ctx, passed, argTypes.Select(TypeEntryCache.Of));
+
+                indexers.Add(new Tuple<PropertyInfo, Type[], int>(pty, argTypes, distance));
             }
 
             indexers.Sort((x, y) => x.Item3.CompareTo(y.Item3));
@@ -124,15 +128,15 @@ namespace Lens.Resolver
                         ? CompilerMessages.IndexGetterNotFound
                         : CompilerMessages.IndexSetterNotFound,
                     type,
-                    idxType
+                    string.Join("; ", idxTypes.Select(x => x.ToString()))
                 );
 
             if (indexers.Count > 1 && indexers[0].Item3 == indexers[1].Item3)
                 Error(
                     CompilerMessages.IndexAmbigious,
                     type,
-                    indexers[0].Item2,
-                    indexers[1].Item2,
+                    string.Join("; ", indexers[0].Item2.Select(x => x.ToString())),
+                    string.Join("; ", indexers[1].Item2.Select(x => x.ToString())),
                     Environment.NewLine
                 );
 
@@ -244,6 +248,9 @@ namespace Lens.Resolver
 
             if (expected.IsArray || expected.IsByRef)
             {
+                if (expected.IsArray && (!actual.IsArray || expected.ArrayRank != actual.ArrayRank))
+                    return;
+
                 Unify(ctx, expected.ElementType, actual.ElementType, parameters, values);
                 return;
             }

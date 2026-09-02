@@ -370,6 +370,11 @@ namespace ConsoleHost
                 return string.Format("{{ {0} }}", string.Join("; ", list));
             }
 
+            // before the sequence case: walking a rank > 1 array as a sequence hands back its
+            // cells in one flat run, which says nothing about the shape they are actually in
+            if (obj is Array array && array.Rank > 1)
+                return GetArrayRepresentation(array, new int[array.Rank], 0);
+
             if (obj is IEnumerable)
             {
                 var list = new List<string>();
@@ -396,6 +401,36 @@ namespace ConsoleHost
             return obj is double || obj is float
                 ? obj.ToString(CultureInfo.InvariantCulture)
                 : obj.ToString();
+        }
+
+        /// <summary>
+        /// Renders a multidimensional array one dimension at a time, so that its shape shows: a
+        /// 2x2 comes out as [ [ 1; 2 ]; [ 3; 4 ] ], the way its literal is written.
+        /// </summary>
+        private static string GetArrayRepresentation(Array array, int[] indexes, int dimension)
+        {
+            var list = new List<string>();
+            var isLast = dimension == array.Rank - 1;
+            var upper = array.GetUpperBound(dimension);
+
+            for (var idx = array.GetLowerBound(dimension); idx <= upper; idx++)
+            {
+                if (list.Count >= 50)
+                {
+                    list.Add("...");
+                    break;
+                }
+
+                indexes[dimension] = idx;
+
+                list.Add(
+                    isLast
+                        ? GetStringRepresentation(array.GetValue(indexes))
+                        : GetArrayRepresentation(array, indexes, dimension + 1)
+                );
+            }
+
+            return string.Format("[ {0} ]", string.Join("; ", list));
         }
 
         private static int GetIdent(string line)

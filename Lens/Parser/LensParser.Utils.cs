@@ -273,7 +273,7 @@ namespace Lens.Parser
             return new SetIndexNode
             {
                 Expression = node.Expression,
-                Index = node.Index
+                Indexes = node.Indexes
             };
         }
 

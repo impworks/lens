@@ -173,6 +173,10 @@ namespace Lens.Resolver
             if (postfix == "[]")
                 return type.MakeArray(_resolutionContext);
 
+            // 'int[2d]' and friends: the rank is part of the postfix, the way the language spells it
+            if (postfix.Length > 2 && postfix[0] == '[' && postfix[postfix.Length - 2] == 'd')
+                return type.MakeArray(_resolutionContext, int.Parse(postfix.Substring(1, postfix.Length - 3)));
+
             if (postfix == "~")
                 return TypeEntry.Generic(_resolutionContext, typeof(IEnumerable<>), type);
 

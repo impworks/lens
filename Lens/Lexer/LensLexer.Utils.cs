@@ -73,6 +73,7 @@ namespace Lens.Lexer
             new StaticLexemDefinition(">", LexemType.Greater),
             new StaticLexemDefinition("=", LexemType.Assign),
 
+            new StaticLexemDefinition("@[", LexemType.MultiDimSquareOpen),
             new StaticLexemDefinition("[", LexemType.SquareOpen),
             new StaticLexemDefinition("]", LexemType.SquareClose),
             new StaticLexemDefinition("(", LexemType.ParenOpen),

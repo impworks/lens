@@ -300,13 +300,15 @@ namespace Lens.Compiler
             var endLabel = NewLabel("endfor");
             var iterator = _ctx.Unique.TempVariableName();
 
-            output.Add(Expr.Var(iterator, new GetEnumeratorNode(Spill(node.IterableExpression, output))));
+            var sequence = Spill(node.IterableExpression, output);
+
+            output.Add(Expr.Var(iterator, new GetEnumeratorNode(sequence)));
             output.Add(new LabelNode(beginLabel));
             output.Add(new GotoNode(endLabel, Expr.Invoke(Expr.Get(iterator), "MoveNext"), false));
             output.Add(
                 LoopBody(
                     node,
-                    Expr.GetMember(Expr.Get(iterator), "Current")
+                    new GetEnumeratorItemNode(Expr.Get(iterator), sequence)
                 )
             );
             output.Add(new GotoNode(beginLabel));

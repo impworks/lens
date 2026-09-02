@@ -85,7 +85,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             CheckMemberInSafeMode(ctx, _property);
             CheckMemberInSafeMode(ctx, _method);
 
-            if (Expression != null && Expression.Resolve(ctx).IsArray && MemberName == "Length")
+            // a rank > 1 array answers Length through Array.Length like any other property:
+            // ldlen would read the bounds table instead of an element count
+            if (Expression != null && Expression.Resolve(ctx).IsVectorArray && MemberName == "Length")
                 return TypeEntryCache.Of<int>();
 
             if (_field != null)
@@ -138,7 +140,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                         : Expression.Resolve(ctx));
 
             // special case: array length
-            if (_type.IsArray && MemberName == "Length")
+            if (_type.IsVectorArray && MemberName == "Length")
             {
                 check();
                 return;
@@ -264,7 +266,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {
                 Expression.EmitNodeForAccess(ctx);
 
-                if (MemberName == "Length" && Expression.Resolve(ctx).IsArray)
+                if (MemberName == "Length" && Expression.Resolve(ctx).IsVectorArray)
                 {
                     gen.EmitGetArrayLength();
                     return;

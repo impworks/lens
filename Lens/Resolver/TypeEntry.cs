@@ -52,6 +52,17 @@ namespace Lens.Resolver
         public virtual bool IsPointer => false;
 
         /// <summary>
+        /// The number of dimensions of an array type, or 0 when the type is not an array.
+        /// </summary>
+        public virtual int ArrayRank => 0;
+
+        /// <summary>
+        /// Whether the type is a single-dimensional zero-based array: the only shape the
+        /// ldelem / stelem / ldlen opcodes can address.
+        /// </summary>
+        public bool IsVectorArray => IsArray && ArrayRank == 1;
+
+        /// <summary>
         /// Whether the type is an unsubstituted generic parameter.
         /// </summary>
         public virtual bool IsGenericParameter => false;
@@ -208,9 +219,13 @@ namespace Lens.Resolver
         /// Goes through the resolution context because the answer is a different kind of entry
         /// depending on the element: reflection can represent int[], but not SomeRecord[].
         /// </summary>
-        public TypeEntry MakeArray(TypeResolutionContext resolver)
+        /// <param name="rank">
+        /// The number of dimensions. Rank 1 is a vector; anything above it is a multidimensional
+        /// array, which is a different kind of type with different instructions behind it.
+        /// </param>
+        public TypeEntry MakeArray(TypeResolutionContext resolver, int rank = 1)
         {
-            return resolver.MakeArray(this);
+            return resolver.MakeArray(this, rank);
         }
 
         /// <summary>

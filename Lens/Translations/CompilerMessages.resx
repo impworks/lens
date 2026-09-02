@@ -480,6 +480,24 @@
   <data name="ReturnValueRequired" xml:space="preserve">
     <value>LE3208: A function of type '{0}' must return a value!</value>
   </data>
+  <data name="ArrayRankMismatch" xml:space="preserve">
+    <value>LE3209: An array of type '{0}' has {1} dimension(s), but {2} index(es) were given!</value>
+  </data>
+  <data name="MultiDimArrayNotRectangular" xml:space="preserve">
+    <value>LE3210: A multidimensional array initializer must be rectangular: expected {0} item(s) in this row, but found {1}!</value>
+  </data>
+  <data name="MultiDimArrayRaggedNesting" xml:space="preserve">
+    <value>LE3211: A multidimensional array initializer must be rectangular: this item is nested {0} level(s) deep, while its neighbours are nested {1}!</value>
+  </data>
+  <data name="MultiDimArrayOperator" xml:space="preserve">
+    <value>LE3212: Operator '{0}' cannot be applied to a multidimensional array of type '{1}'!</value>
+  </data>
+  <data name="MultiDimArrayPattern" xml:space="preserve">
+    <value>LE3213: A multidimensional array of type '{0}' cannot be matched against an array pattern!</value>
+  </data>
+  <data name="ArrayRankNotPositive" xml:space="preserve">
+    <value>LE3214: An array must have at least one dimension!</value>
+  </data>
   <data name="FieldRedefinition" xml:space="preserve">
     <value>LE3036: Type '{0}' already contains field named '{1}'!</value>
   </data>

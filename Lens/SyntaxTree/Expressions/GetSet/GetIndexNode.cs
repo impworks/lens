@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
 using Lens.Translations;
@@ -34,12 +35,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var exprType = Expression.Resolve(ctx);
             if (exprType.IsArray)
+            {
+                CheckArrayRank(exprType);
                 return exprType.ElementType;
+            }
 
-            var idxType = Index.Resolve(ctx);
+            var idxTypes = Indexes.Select(x => x.Resolve(ctx)).ToArray();
             try
             {
-                _getter = ctx.ResolveIndexer(exprType, idxType, true);
+                _getter = ctx.ResolveIndexer(exprType, idxTypes, true);
 
             // what may be passed by reference is decided here rather than while emitting, because
             // an editor binds the tree and never emits: a check that lives in EmitInternal is one
@@ -58,6 +62,19 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
         }
 
+        /// <summary>
+        /// Reports an index list that does not match the array's number of dimensions.
+        ///
+        /// This is checked while binding rather than while emitting, because an editor binds the
+        /// tree and never emits: a check that lives in EmitInternal is one the reader of a
+        /// half-written script never sees.
+        /// </summary>
+        private void CheckArrayRank(TypeEntry arrayType)
+        {
+            if (Indexes.Count != arrayType.ArrayRank)
+                Error(CompilerMessages.ArrayRankMismatch, arrayType, arrayType.ArrayRank, Indexes.Count);
+        }
+
         #endregion
 
         #region Transform
@@ -65,16 +82,18 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         internal override IEnumerable<NodeChild> GetChildren()
         {
             yield return new NodeChild(Expression);
-            yield return new NodeChild(Index);
+
+            foreach (var curr in Indexes)
+                yield return new NodeChild(curr);
         }
 
-        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression, Index};
+        internal override IReadOnlyList<NodeBase> Operands => new[] {Expression}.Concat(Indexes).ToArray();
 
         internal override NodeBase WithOperands(IReadOnlyList<NodeBase> operands)
         {
             var copy = Copy<GetIndexNode>();
             copy.Expression = operands[0];
-            copy.Index = operands[1];
+            copy.Indexes = operands.Skip(1).ToList();
             return copy;
         }
 
@@ -99,11 +118,25 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             var exprType = Expression.Resolve(ctx);
             var itemType = exprType.ElementType.Materialize();
+            var needsPointer = RefArgumentRequired || ctx.IsPointerRequired(this);
 
             Expression.Emit(ctx, true);
-            Expr.Cast(Index, typeof(int)).Emit(ctx, true);
 
-            gen.EmitLoadIndex(itemType, RefArgumentRequired || ctx.IsPointerRequired(this));
+            foreach (var curr in Indexes)
+                Expr.Cast(curr, typeof(int)).Emit(ctx, true);
+
+            if (exprType.ArrayRank == 1)
+            {
+                gen.EmitLoadIndex(itemType, needsPointer);
+                return;
+            }
+
+            var arrayType = exprType.Materialize();
+            gen.EmitCall(
+                needsPointer
+                    ? MultiDimArrays.AddressOf(ctx, arrayType)
+                    : MultiDimArrays.GetterOf(ctx, arrayType)
+            );
         }
 
         /// <summary>
@@ -124,7 +157,8 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             Expression.Emit(ctx, true);
 
-            Expr.Cast(Index, _getter.ArgumentTypes[0].Materialize()).Emit(ctx, true);
+            for (var idx = 0; idx < Indexes.Count; idx++)
+                Expr.Cast(Indexes[idx], _getter.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
 
             gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
         }
@@ -159,7 +193,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         public override string ToString()
         {
-            return string.Format("getidx({0} of {1})", Index, Expression);
+            return string.Format("getidx({0} of {1})", string.Join(";", Indexes), Expression);
         }
 
         #endregion

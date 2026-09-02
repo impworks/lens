@@ -64,6 +64,7 @@
         CurlyClose,
         SquareOpen,
         SquareClose,
+        MultiDimSquareOpen,
 
         // Operators
         Plus,

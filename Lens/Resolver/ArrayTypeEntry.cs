@@ -15,10 +15,14 @@ namespace Lens.Resolver
     {
         #region Constructor
 
-        internal ArrayTypeEntry(TypeResolutionContext resolver, TypeEntry element)
+        internal ArrayTypeEntry(TypeResolutionContext resolver, TypeEntry element, int rank = 1)
         {
+            if (rank < 1)
+                throw new ArgumentOutOfRangeException(nameof(rank));
+
             _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
             _element = element ?? throw new ArgumentNullException(nameof(element));
+            _rank = rank;
         }
 
         #endregion
@@ -27,16 +31,22 @@ namespace Lens.Resolver
 
         private readonly TypeResolutionContext _resolver;
         private readonly TypeEntry _element;
+        private readonly int _rank;
 
         private Type _materialized;
+
+        /// <summary>
+        /// The bracket suffix reflection would print for this rank: '[]', '[,]', '[,,]'.
+        /// </summary>
+        private string Suffix => "[" + new string(',', _rank - 1) + "]";
 
         #endregion
 
         #region Identity
 
-        public override string Name => _element.Name + "[]";
+        public override string Name => _element.Name + Suffix;
 
-        public override string FullName => _element.FullName == null ? null : _element.FullName + "[]";
+        public override string FullName => _element.FullName == null ? null : _element.FullName + Suffix;
 
         public override string Namespace => _element.Namespace;
 
@@ -45,6 +55,7 @@ namespace Lens.Resolver
         #region Classification
 
         public override bool IsArray => true;
+        public override int ArrayRank => _rank;
         public override bool IsValueType => false;
         public override bool IsClass => true;
         public override bool IsInterface => false;
@@ -64,6 +75,11 @@ namespace Lens.Resolver
 
         public override TypeEntry[] GetInterfaces(TypeResolutionContext resolver)
         {
+            // only a vector implements IEnumerable<T> and its friends: a rank > 1 array is an
+            // IEnumerable of nothing in particular, exactly as int[,] is
+            if (_rank > 1)
+                return TypeEntryCache.Of<int[,]>().GetInterfaces(resolver);
+
             // an array implements the same interfaces int[] does, over its own element type - which
             // is how the compiler has always answered this for arrays it could not reflect on
             var result = new List<TypeEntry>();
@@ -104,7 +120,11 @@ namespace Lens.Resolver
 
         public override Type Materialize()
         {
-            return _materialized ?? (_materialized = _element.Materialize().MakeArrayType());
+            // MakeArrayType() and MakeArrayType(1) are different types: the first is a vector,
+            // the second a rank-1 array with a lower bound, which nothing here ever wants
+            return _materialized ?? (_materialized = _rank == 1
+                       ? _element.Materialize().MakeArrayType()
+                       : _element.Materialize().MakeArrayType(_rank));
         }
 
         #endregion
@@ -115,12 +135,12 @@ namespace Lens.Resolver
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj is ArrayTypeEntry other && Same(_element, other._element);
+            return obj is ArrayTypeEntry other && _rank == other._rank && Same(_element, other._element);
         }
 
         public override int GetHashCode()
         {
-            return unchecked(_element.GetHashCode() * 397) ^ 1;
+            return unchecked((_element.GetHashCode() * 397) ^ _rank);
         }
 
         #endregion
@@ -129,7 +149,7 @@ namespace Lens.Resolver
 
         public override string ToString()
         {
-            return _element + "[]";
+            return _element + Suffix;
         }
 
         #endregion

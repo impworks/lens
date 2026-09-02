@@ -1,4 +1,7 @@
-﻿namespace Lens.SyntaxTree.Expressions.GetSet
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Lens.SyntaxTree.Expressions.GetSet
 {
     /// <summary>
     /// The base node for accessing array-like structures by index.
@@ -8,9 +11,22 @@
         #region Fields
 
         /// <summary>
-        /// Index expression.
+        /// Index expressions, in source order.
+        ///
+        /// There is more than one of them when a multidimensional array is addressed - 'a[1; 2]' -
+        /// or when an indexer that takes several arguments is invoked.
         /// </summary>
-        public NodeBase Index { get; set; }
+        public List<NodeBase> Indexes { get; set; } = new List<NodeBase>();
+
+        /// <summary>
+        /// The single index expression, for the overwhelmingly common one-dimensional case.
+        /// Assigning it replaces the whole list.
+        /// </summary>
+        public NodeBase Index
+        {
+            get => Indexes.Count > 0 ? Indexes[0] : null;
+            set => Indexes = new List<NodeBase> {value};
+        }
 
         #endregion
 
@@ -19,7 +35,8 @@
         protected bool Equals(IndexNodeBase other)
         {
             return Equals(Expression, other.Expression)
-                   && Equals(Index, other.Index)
+                   && Indexes.Count == other.Indexes.Count
+                   && Indexes.SequenceEqual(other.Indexes)
                    && IsNullSafe == other.IsNullSafe;
         }
 
@@ -36,7 +53,10 @@
             unchecked
             {
                 var hashCode = (Expression != null ? Expression.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Index != null ? Index.GetHashCode() : 0);
+
+                foreach (var curr in Indexes)
+                    hashCode = (hashCode * 397) ^ (curr != null ? curr.GetHashCode() : 0);
+
                 hashCode = (hashCode * 397) ^ IsNullSafe.GetHashCode();
                 return hashCode;
             }

@@ -355,7 +355,7 @@ namespace Lens.Compiler
                 return;
             }
 
-            if (declared.IsArray && actual.IsArray)
+            if (declared.IsArray && actual.IsArray && declared.ArrayRank == actual.ArrayRank)
             {
                 InferGenericArgument(declared.ElementType, actual.ElementType, parameters, values);
                 return;
@@ -941,12 +941,12 @@ namespace Lens.Compiler
         /// List&lt;T&gt; inside a generic function - a type whose argument is a parameter with no
         /// builder yet - asked a type parameter to materialize before there was an assembly.
         /// </summary>
-        public MethodWrapper ResolveIndexer(TypeEntry type, TypeEntry idxType, bool isGetter)
+        public MethodWrapper ResolveIndexer(TypeEntry type, TypeEntry[] idxTypes, bool isGetter)
         {
             var instantiation = InstantiationOf(type);
             var target = LookupTargetOf(type);
 
-            var candidates = new List<Tuple<MethodInfo, TypeEntry, int>>();
+            var candidates = new List<Tuple<MethodInfo, TypeEntry[], int>>();
 
             foreach (var pty in target.GetProperties())
             {
@@ -955,12 +955,14 @@ namespace Lens.Compiler
                     continue;
 
                 var idxArgs = pty.GetIndexParameters();
-                if (idxArgs.Length != 1)
+                if (idxArgs.Length != idxTypes.Length)
                     continue;
 
-                var argType = SubstituteIntoInstantiation(idxArgs[0].ParameterType, instantiation);
+                var argTypes = idxArgs.Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray();
 
-                candidates.Add(new Tuple<MethodInfo, TypeEntry, int>(accessor, argType, argType.DistanceFrom(Resolver, idxType)));
+                // the same summed distance overload resolution uses for methods: an indexer of
+                // several arguments is a method in every respect but its spelling
+                candidates.Add(new Tuple<MethodInfo, TypeEntry[], int>(accessor, argTypes, Lens.Resolver.TypeExtensions.TypeListDistance(Resolver, idxTypes, argTypes)));
             }
 
             candidates.Sort((x, y) => x.Item3.CompareTo(y.Item3));
@@ -969,15 +971,15 @@ namespace Lens.Compiler
                 Error(
                     isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
                     type,
-                    idxType
+                    JoinTypes(idxTypes)
                 );
 
             if (candidates.Count > 1 && candidates[0].Item3 == candidates[1].Item3)
                 Error(
                     CompilerMessages.IndexAmbigious,
                     type,
-                    candidates[0].Item2,
-                    candidates[1].Item2,
+                    JoinTypes(candidates[0].Item2),
+                    JoinTypes(candidates[1].Item2),
                     Environment.NewLine
                 );
 
@@ -996,6 +998,14 @@ namespace Lens.Compiler
 
                 MethodInfoSource = () => MemberOfInstantiation(found, instantiation)
             };
+        }
+
+        /// <summary>
+        /// Renders an index list the way LENS spells one, for a diagnostic to quote.
+        /// </summary>
+        private static string JoinTypes(TypeEntry[] types)
+        {
+            return string.Join("; ", types.Select(x => ReferenceEquals(x, null) ? "?" : x.ToString()));
         }
 
         /// <summary>

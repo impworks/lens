@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -53,6 +54,11 @@ namespace Lens.Playground
                 return "{ " + string.Join("; ", entries) + " }";
             }
 
+            // before the sequence case: walking a rank > 1 array as a sequence hands back its
+            // cells in one flat run, which says nothing about the shape they are actually in
+            if (obj is Array array && array.Rank > 1)
+                return FormatArray(array, new int[array.Rank], 0);
+
             if (obj is IEnumerable seq)
             {
                 var entries = new List<string>();
@@ -80,6 +86,36 @@ namespace Lens.Playground
                 return flt.ToString(CultureInfo.InvariantCulture);
 
             return obj.ToString();
+        }
+
+        /// <summary>
+        /// Renders a multidimensional array one dimension at a time, so that its shape shows: a
+        /// 2x2 comes out as [ [ 1; 2 ]; [ 3; 4 ] ], the way its literal is written.
+        /// </summary>
+        private static string FormatArray(Array array, int[] indexes, int dimension)
+        {
+            var entries = new List<string>();
+            var isLast = dimension == array.Rank - 1;
+            var upper = array.GetUpperBound(dimension);
+
+            for (var idx = array.GetLowerBound(dimension); idx <= upper; idx++)
+            {
+                if (entries.Count >= MaxItems)
+                {
+                    entries.Add("...");
+                    break;
+                }
+
+                indexes[dimension] = idx;
+
+                entries.Add(
+                    isLast
+                        ? Format(array.GetValue(indexes))
+                        : FormatArray(array, indexes, dimension + 1)
+                );
+            }
+
+            return "[ " + string.Join("; ", entries) + " ]";
         }
 
         /// <summary>

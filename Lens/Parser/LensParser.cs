@@ -151,7 +151,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// type                                        = namespace [ type_args ] { "[]" | "?" | "~" }
+        /// type                                        = namespace [ type_args ] { "[]" | "[" int "d" "]" | "?" | "~" }
         /// </summary>
         private TypeSignature ParseType()
         {
@@ -171,6 +171,15 @@ namespace Lens.Parser
                     Skip(2);
                 }
 
+                // 'int[2d]', 'int[3d]': the rank is spelled out. 'int[1d]' is another way of
+                // writing 'int[]', because a rank-1 array with a lower bound is not a type LENS
+                // can produce, and pretending otherwise would give '[1d]' a meaning nobody wants
+                else if (PeekArrayRank(out var rank, out var rankLength))
+                {
+                    node = new TypeSignature(null, rank == 1 ? "[]" : "[" + rank + "d]", node);
+                    Skip(rankLength);
+                }
+
                 // "?[" lexes as a null-safe indexer, but in a type signature it starts an array of nullables
                 else if (Peek(LexemType.NullSafeSquareOpen, LexemType.SquareClose))
                 {
@@ -187,6 +196,30 @@ namespace Lens.Parser
                 else
                     return node;
             }
+        }
+
+        /// <summary>
+        /// Checks whether the current position spells an array rank suffix - '[' int 'd' ']' -
+        /// and reports the rank along with the number of lexems it occupies.
+        ///
+        /// The lexer has no '2d' literal, so this is an int followed by the identifier 'd'.
+        /// </summary>
+        private bool PeekArrayRank(out int rank, out int length)
+        {
+            rank = 0;
+            length = 0;
+
+            if (!Peek(LexemType.SquareOpen, LexemType.Int, LexemType.Identifier, LexemType.SquareClose))
+                return false;
+
+            if (_lexems[_lexemId + 2].Value != "d")
+                return false;
+
+            if (!int.TryParse(_lexems[_lexemId + 1].Value, out rank) || rank < 1)
+                return false;
+
+            length = 4;
+            return true;
         }
 
         /// <summary>
@@ -1043,7 +1076,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// accessor_idx                                = ( "[" | "?[" ) line_expr "]"
+        /// accessor_idx                                = ( "[" | "?[" ) line_expr { ";" line_expr } "]"
         /// </summary>
         private GetIndexNode ParseAccessorIdx()
         {
@@ -1052,7 +1085,13 @@ namespace Lens.Parser
                 return null;
 
             var node = new GetIndexNode {IsNullSafe = isNullSafe};
-            node.Index = Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected);
+            node.Indexes = new List<NodeBase> {Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected)};
+
+            // a semicolon separates dimensions, the way it separates the items of any other
+            // bracketed list in the language
+            while (Check(LexemType.Semicolon))
+                node.Indexes.Add(Ensure(ParseLineExpr, ParserMessages.IndexExpressionExpected));
+
             Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, ']');
             return node;
         }
@@ -1338,6 +1377,7 @@ namespace Lens.Parser
 
             return Attempt(ParseNewTupleBlock)
                    ?? Attempt(ParseNewListBlock)
+                   ?? Attempt(ParseNewMultiDimArray)
                    ?? Attempt(ParseNewArrayBlock)
                    ?? Attempt(ParseNewDictBlock)
                    ?? Attempt(ParseNewObjectBlock) as NodeBase;
@@ -2258,6 +2298,7 @@ namespace Lens.Parser
 
             return Attempt(ParseNewTupleLine)
                    ?? Attempt(ParseNewListLine)
+                   ?? Attempt(ParseNewMultiDimArray)
                    ?? Attempt(ParseNewArrayLine)
                    ?? Attempt(ParseNewDictLine) as NodeBase;
         }
@@ -2328,6 +2369,77 @@ namespace Lens.Parser
             return node;
         }
 
+
+        /// <summary>
+        /// new_mdarray                                 = "@[" mdarray_items "]"
+        ///
+        /// Both the single-line and the indented form are parsed here, and either may be nested
+        /// inside the other: what distinguishes them is only how the items of a row are separated.
+        /// </summary>
+        private NewMultiDimArrayNode ParseNewMultiDimArray()
+        {
+            if (!Check(LexemType.MultiDimSquareOpen))
+                return null;
+
+            var node = new NewMultiDimArrayNode();
+            node.Items = ParseMultiDimArrayRow();
+
+            if (node.Items.Count == 0)
+                Error(ParserMessages.ArrayItem);
+
+            Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+
+            return node;
+        }
+
+        /// <summary>
+        /// mdarray_items                               = mdarray_item { ";" mdarray_item }
+        ///                                             | INDENT mdarray_item { NL mdarray_item } DEDENT
+        /// </summary>
+        private List<object> ParseMultiDimArrayRow()
+        {
+            var items = new List<object>();
+
+            if (Check(LexemType.Indent))
+            {
+                items.Add(ParseMultiDimArrayItem());
+
+                while (!Check(LexemType.Dedent))
+                {
+                    if (PeekAny(LexemType.CurlyClose, LexemType.SquareClose, LexemType.ParenClose))
+                        Error(ParserMessages.ClosingBraceNewLine);
+
+                    Ensure(LexemType.NewLine, ParserMessages.InitExpressionSeparatorExpected);
+                    items.Add(ParseMultiDimArrayItem());
+                }
+
+                return items;
+            }
+
+            items.Add(ParseMultiDimArrayItem());
+
+            while (Check(LexemType.Semicolon))
+                items.Add(ParseMultiDimArrayItem());
+
+            return items;
+        }
+
+        /// <summary>
+        /// mdarray_item                                = "[" mdarray_items "]" | line_expr
+        ///
+        /// A bare "[" starts nothing else in an expression - a list or an array literal both need
+        /// a "new" in front of them - so a row and an element are told apart by the bracket alone.
+        /// </summary>
+        private object ParseMultiDimArrayItem()
+        {
+            if (!Check(LexemType.SquareOpen))
+                return Ensure(ParseLineExpr, ParserMessages.InitExpressionExpected);
+
+            var nested = ParseMultiDimArrayRow();
+            Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
+            return nested;
+        }
+
         /// <summary>
         /// new_dict_line                               = "{" init_dict_expr_block "}"
         /// </summary>
@@ -2376,7 +2488,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// new_objarray_line                          = type "[" line_expr "]"
+        /// new_objarray_line                          = type "[" line_expr { ";" line_expr } "]"
         /// </summary>
         private NewObjectArrayNode ParseNewObjArrayLine()
         {
@@ -2389,7 +2501,11 @@ namespace Lens.Parser
 
             var node = new NewObjectArrayNode();
             node.TypeSignature = type;
-            node.Size = Ensure(ParseLineExpr, ParserMessages.ExpressionExpected);
+            node.Sizes = new List<NodeBase> {Ensure(ParseLineExpr, ParserMessages.ExpressionExpected)};
+
+            // 'new int[2;3]': one length per dimension, and the rank follows from how many there are
+            while (Check(LexemType.Semicolon))
+                node.Sizes.Add(Ensure(ParseLineExpr, ParserMessages.ExpressionExpected));
 
             Ensure(LexemType.SquareClose, ParserMessages.SymbolExpected, "]");
 

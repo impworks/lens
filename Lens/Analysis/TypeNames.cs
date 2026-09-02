@@ -43,8 +43,9 @@ namespace Lens.Analysis
             if (ReferenceEquals(type, null))
                 return Unknown;
 
+            // LENS spells a multidimensional array as 'int[2d]', and a vector as plain 'int[]'
             if (type.IsArray)
-                return Of(type.ElementType) + "[]";
+                return Of(type.ElementType) + (type.ArrayRank == 1 ? "[]" : "[" + type.ArrayRank + "d]");
 
             if (type.IsByRef)
                 return "ref " + Of(type.ElementType);
@@ -77,7 +78,7 @@ namespace Lens.Analysis
                 return Unknown;
 
             if (type.IsArray)
-                return Of(type.GetElementType(), parameters) + "[]";
+                return Of(type.GetElementType(), parameters) + (type.GetArrayRank() == 1 ? "[]" : "[" + type.GetArrayRank() + "d]");
 
             if (type.IsByRef)
                 return "ref " + Of(type.GetElementType(), parameters);

@@ -130,7 +130,7 @@ namespace Lens.Resolver
 
                     // an array parameter carries its element type, so 'T[]' against 'int[]'
                     // resolves T just like a constructed generic type would
-                    else if (expected.IsArray && actual.IsArray)
+                    else if (expected.IsArray && actual.IsArray && expected.GetArrayRank() == actual.GetArrayRank())
                     {
                         ResolveRecursive(
                             new[] {expected.GetElementType()},

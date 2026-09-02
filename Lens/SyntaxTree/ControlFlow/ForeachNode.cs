@@ -91,7 +91,7 @@ namespace Lens.SyntaxTree.ControlFlow
             if (IterableExpression != null)
             {
                 var type = IterableExpression.Resolve(ctx);
-                if (type.IsArray)
+                if (type.IsVectorArray)
                     return ExpandArray(ctx);
 
                 return ExpandEnumerable(ctx, mustReturn);
@@ -136,7 +136,7 @@ namespace Lens.SyntaxTree.ControlFlow
             var loop = Loop(
                 Expr.Invoke(Expr.Get(iteratorVar), "MoveNext"),
                 Expr.Block(
-                    GetIndexAssignment(Expr.GetMember(Expr.Get(iteratorVar), "Current")),
+                    GetIndexAssignment(CurrentItem(Expr.GetMember(Expr.Get(iteratorVar), "Current"))),
                     Body
                 )
             );
@@ -172,6 +172,19 @@ namespace Lens.SyntaxTree.ControlFlow
                 init,
                 loop
             );
+        }
+
+        /// <summary>
+        /// Narrows the enumerator's Current to the type the loop variable was given.
+        ///
+        /// The two differ only for a multidimensional array, whose enumerator is the untyped one
+        /// and hands back an object.
+        /// </summary>
+        private NodeBase CurrentItem(NodeBase current)
+        {
+            return _currentProperty != null && !_currentProperty.PropertyType.Equals(_variableType)
+                ? Expr.Cast(current, _variableType)
+                : current;
         }
 
         /// <summary>
@@ -272,8 +285,18 @@ namespace Lens.SyntaxTree.ControlFlow
         private void DetectEnumerableType(Context ctx)
         {
             var seqType = IterableExpression.Resolve(ctx);
+            if (seqType.IsVectorArray)
+            {
+                _variableType = seqType.ElementType;
+                return;
+            }
+
+            // a rank > 1 array is only a bare IEnumerable, but it still knows what it holds:
+            // the loop reads it through the untyped enumerator and unwraps every item
             if (seqType.IsArray)
             {
+                _enumeratorType = TypeEntryCache.Of<IEnumerator>();
+                _currentProperty = ctx.ResolveProperty(_enumeratorType, "Current");
                 _variableType = seqType.ElementType;
                 return;
             }

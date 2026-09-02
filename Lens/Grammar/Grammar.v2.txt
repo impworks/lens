@@ -4,7 +4,8 @@ stmt <NodeBase>                             = declare_block | use | record_def |
 
 // namespace & type signatures
 namespace <TypeSignature>                   = identifier { "." identifier }
-type <TypeSignature>                        = namespace [ type_args ] { "[]" | "?" | "~" }
+type <TypeSignature>                        = namespace [ type_args ] { "[]" | array_rank | "?" | "~" }
+array_rank                                  = "[" int "d" "]"
 type_args                                   = "<" type { "," type } ">"
 type_params <~TypeParameterDefinition>      = "<" type_param { "," type_param } ">"
 type_param <TypeParameterDefinition>        = identifier [ "=" type_constraints ]
@@ -63,7 +64,7 @@ get_expr <NodeBase>                         = atom { accessor }
 get_id_expr <GetIdentifierNode>             = identifier [ type_args ]
 get_stmbr_expr <GetMemberNode>              = type "::" identifier [ type_args ]
 accessor <NodeBase>                         = accessor_idx | accessor_mbr
-accessor_idx <GetIndexNode>                 = ( "[" | "?[" ) line_expr "]"
+accessor_idx <GetIndexNode>                 = ( "[" | "?[" ) line_expr { ";" line_expr } "]"
 accessor_mbr <GetMemberNode>                = ( "." | "?." ) identifier [ type_args ]
 
 // expression root
@@ -88,10 +89,13 @@ for_block <ForNode>                         = "for" identifier "in" line_expr [ 
 using_header <UsingNode>                    = "using" [ identifier "=" ] line_expr "do"
 
 // block initializers
-new_block_expr <NodeBase>                   = "new" ( new_tuple_block | new_array_block | new_list_block | new_dict_block | new_object_block )
+new_block_expr <NodeBase>                   = "new" ( new_tuple_block | new_array_block | new_list_block | new_mdarray | new_dict_block | new_object_block )
 new_tuple_block <NewTupleNode>              = "(" init_expr_block ")"
 new_list_block <NewListNode>                = "[" "[" init_expr_block "]" "]"
 new_array_block <NewArrayNode>              = "[" init_expr_block "]"
+new_mdarray <NewMultiDimArrayNode>          = "@[" mdarray_items "]"
+mdarray_items                               = mdarray_item { ";" mdarray_item } | INDENT mdarray_item { NL mdarray_item } DEDENT
+mdarray_item                                = "[" mdarray_items "]" | line_expr
 new_dict_block <NewDictionaryNode>          = "{" init_dict_expr_block "}"
 init_expr_block <~NodeBase>                 = INDENT line_expr { NL line_expr } DEDENT
 init_expr_dict_block                        = INDENT init_dict_expr { NL init_dict_expr } DEDENT
@@ -153,12 +157,12 @@ throw_stmt <ThrowNode>                      = "throw" [ line_expr ]
 
 // line initializers
 new_object_expr <NodeBase>                  = "new" ( new_objarray_line | new_object_line )
-new_collection_expr <NodeBase>              = "new" ( new_tuple_line | new_list_line | new_array_line | new_dict_line )
+new_collection_expr <NodeBase>              = "new" ( new_tuple_line | new_list_line | new_array_line | new_mdarray | new_dict_line )
 new_tuple_line <NewTupleNode>               = "(" init_expr_line ")"
 new_list_line <NewListNode>                 = "[" "[" init_expr_line "]" "]"
 new_array_line <NewArrayNode>               = "[" init_expr_line "]"
 new_dict_line <NewDictionaryNode>           = "{" init_dict_expr_line "}"
-new_objarray_line <NewObjectArrayNode>      = type "[" line_expr "]"
+new_objarray_line <NewObjectArrayNode>      = type "[" line_expr { ";" line_expr } "]"
 new_object_line <NewObjectNode>             = type [ invoke_line_args ]
 init_expr_line <~NodeBase>                  = line_expr { ";" line_expr }
 init_expr_dict_line <~NodeBase>             = init_dict_expr { ";" init_dict_expr }

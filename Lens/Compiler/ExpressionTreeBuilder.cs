@@ -361,7 +361,7 @@ namespace Lens.Compiler
             var declaring = node.BoundType;
 
             // arr.Length is not a member at all in the tree model
-            if (declaring != null && declaring.IsArray && node.MemberName == "Length")
+            if (declaring != null && declaring.IsVectorArray && node.MemberName == "Length")
             {
                 Translate(node.Expression);
                 Gen.EmitCall(FactoryArrayLength);
@@ -393,18 +393,25 @@ namespace Lens.Compiler
             var getter = node.BoundGetter;
             if (getter == null)
             {
+                var arrayType = node.Expression.Resolve(_ctx);
+                if (!arrayType.IsVectorArray)
+                {
+                    Error(node, CompilerMessages.ExpressionTreeUnsupportedNode, "multidimensional array access");
+                    return null;
+                }
+
                 Translate(node.Expression);
                 var indexType = Translate(node.Index);
                 Convert(indexType, typeof(int));
                 Gen.EmitCall(FactoryArrayIndex);
 
-                return node.Expression.Resolve(_ctx).ElementType.Materialize();
+                return arrayType.ElementType.Materialize();
             }
 
             // an indexer reads as a call to its getter, which is exactly the shape C# builds
             Translate(node.Expression);
             PushMethod(getter.MethodInfo);
-            EmitArgumentArray(new[] {node.Index}, getter.ArgumentTypes.Select(x => x.Materialize()).ToArray());
+            EmitArgumentArray(node.Indexes.ToArray(), getter.ArgumentTypes.Select(x => x.Materialize()).ToArray());
             Gen.EmitCall(FactoryCallInstance);
 
             return getter.ReturnType.Materialize();

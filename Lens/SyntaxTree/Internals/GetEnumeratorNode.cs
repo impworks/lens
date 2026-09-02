@@ -66,7 +66,8 @@ namespace Lens.SyntaxTree.Internals
         /// </summary>
         private TypeEntry GetElementType(Context ctx, TypeEntry seqType)
         {
-            if (seqType.IsArray)
+            // only a vector is an IEnumerable<T>; a rank > 1 array has to be read untyped
+            if (seqType.IsVectorArray)
                 return seqType.ElementType;
 
             var ifaces = seqType.GetInterfaces(ctx.Resolver);

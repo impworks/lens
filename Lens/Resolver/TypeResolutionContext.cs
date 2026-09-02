@@ -92,11 +92,16 @@ namespace Lens.Resolver
         /// <summary>
         /// Wraps a type into an array, in the entry model when the element needs it.
         /// </summary>
-        public TypeEntry MakeArray(TypeEntry element)
+        public TypeEntry MakeArray(TypeEntry element, int rank = 1)
         {
-            return element.ContainsDeclared
-                ? new ArrayTypeEntry(this, element)
-                : TypeEntryCache.Of(element.Materialize().MakeArrayType());
+            if (element.ContainsDeclared)
+                return new ArrayTypeEntry(this, element, rank);
+
+            var materialized = element.Materialize();
+
+            // MakeArrayType() and MakeArrayType(1) are different types: the first is a vector,
+            // the second a rank-1 array with a lower bound, which nothing here ever wants
+            return TypeEntryCache.Of(rank == 1 ? materialized.MakeArrayType() : materialized.MakeArrayType(rank));
         }
 
         /// <summary>
@@ -211,14 +216,23 @@ namespace Lens.Resolver
 
                 else if (type.IsArray)
                 {
-                    // replace interfaces of any array with element type
-                    var elem = type.GetElementType();
-                    ifaces = typeof(int[]).GetInterfaces();
-                    for (var idx = 0; idx < ifaces.Length; idx++)
+                    // only a vector implements the generic sequence interfaces; a rank > 1 array
+                    // implements exactly what int[,] does, and none of it mentions the element type
+                    if (type.GetArrayRank() > 1)
                     {
-                        var curr = ifaces[idx];
-                        if (curr.IsGenericType)
-                            ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
+                        ifaces = typeof(int[,]).GetInterfaces();
+                    }
+                    else
+                    {
+                        // replace interfaces of any array with element type
+                        var elem = type.GetElementType();
+                        ifaces = typeof(int[]).GetInterfaces();
+                        for (var idx = 0; idx < ifaces.Length; idx++)
+                        {
+                            var curr = ifaces[idx];
+                            if (curr.IsGenericType)
+                                ifaces[idx] = curr.GetGenericTypeDefinition().MakeGenericType(elem);
+                        }
                     }
                 }
 
