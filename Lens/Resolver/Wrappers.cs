@@ -110,6 +110,7 @@ namespace Lens.Resolver
 
             MethodInfo = info;
             IsVirtual = info.IsVirtual;
+            IsAbstract = info.IsAbstract;
             IsStatic = info.IsStatic;
             ReturnType = TypeEntryCache.Of(info.ReturnType);
 
@@ -135,6 +136,20 @@ namespace Lens.Resolver
         }
 
         public bool IsVirtual;
+
+        /// <summary>
+        /// Whether the method is a declaration with no body of its own: an interface member other than
+        /// a default implementation, or an abstract member of a class. What tells the two interface
+        /// members apart matters to <see cref="Compiler.Context.ResolveInterfaceMethod"/>.
+        /// </summary>
+        public bool IsAbstract;
+
+        /// <summary>
+        /// The generic parameter the method was reached through, when it is a static member of one of
+        /// that parameter's interface constraints. A call to one of those needs a 'constrained.' prefix
+        /// to say whose implementation is meant; null for every other call.
+        /// </summary>
+        public TypeEntry ConstrainedTo;
 
         public TypeEntry ReturnType;
         public TypeEntry[] GenericArguments;

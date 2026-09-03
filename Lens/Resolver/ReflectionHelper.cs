@@ -520,20 +520,23 @@ namespace Lens.Resolver
         #region Helpers
 
         /// <summary>
-        /// Returns the list of methods by name, flattening interface hierarchy.
+        /// Returns the methods a type declares under a given name, its base classes included.
+        ///
+        /// Members reached through an interface - one an interface inherits from another, or a
+        /// default implementation the implementing class did not override - are not among them:
+        /// reflection does not report those, and finding them means naming the interface the
+        /// member lives on, with its type arguments filled in. That is what
+        /// <see cref="Compiler.Context.ResolveInterfaceMethod"/> does. This used to flatten the
+        /// interface hierarchy here instead, by stripping the type arguments off every base
+        /// interface, and a member found that way was declared in terms of parameters that no
+        /// substitution could reach: IList&lt;int&gt;.Add was found taking a 'T', and
+        /// IDictionary&lt;string, int&gt;.Clear was emitted as a call to the open definition.
         /// </summary>
         public static IEnumerable<MethodInfo> GetMethodsByName(Type type, string name)
         {
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
-            var result = type.GetMethods(flags).Where(m => m.Name == name).ToArray();
-            if (type.IsInterface && !result.Any())
-                result = type.GetInterfaces()
-                             .Select(x => x.IsGenericType ? x.GetGenericTypeDefinition() : x)
-                             .SelectMany(x => GetMethodsByName(x, name))
-                             .ToArray();
-
-            return WithoutHiddenMethods(result);
+            return WithoutHiddenMethods(type.GetMethods(flags).Where(m => m.Name == name).ToArray());
         }
 
         /// <summary>

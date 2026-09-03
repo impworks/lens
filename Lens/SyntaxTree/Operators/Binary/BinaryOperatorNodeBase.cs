@@ -190,7 +190,7 @@ namespace Lens.SyntaxTree.Operators.Binary
             var ps = OverloadedMethod.ArgumentTypes;
             Expr.Cast(LeftOperand, ps[0].Materialize()).Emit(ctx, true);
             Expr.Cast(RightOperand, ps[1].Materialize()).Emit(ctx, true);
-            gen.EmitCall(OverloadedMethod.MethodInfo);
+            gen.EmitCall(OverloadedMethod.MethodInfo, constraint: OverloadedMethod.ConstrainedTo?.Materialize());
         }
 
         /// <summary>

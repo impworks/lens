@@ -485,7 +485,7 @@ namespace Lens.SyntaxTree.Expressions
 
             var sourceType = binding.InvocationSource?.Resolve(ctx);
             var isVirt = sourceType is { IsValueType: false };
-            gen.EmitCall(binding.Method.MethodInfo, isVirt);
+            gen.EmitCall(binding.Method.MethodInfo, isVirt, binding.Method.ConstrainedTo?.Materialize());
         }
 
         #endregion

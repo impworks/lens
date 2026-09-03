@@ -217,7 +217,16 @@ namespace Lens.Compiler
                 {
                     try
                     {
-                        return ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
+                        var found = ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
+
+                        // a static member of an interface constraint has no receiver to be dispatched
+                        // on, so the call site is the only place that knows whose implementation of it
+                        // is meant, and the constrained. prefix is how that reaches the IL. An
+                        // instance member needs none: its receiver carries the answer.
+                        if (found != null && constraint.IsInterface && found.IsStatic)
+                            found.ConstrainedTo = type;
+
+                        return found;
                     }
                     catch (KeyNotFoundException)
                     {
@@ -229,7 +238,16 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ResolveHostMethod(type, name, argTypes, hints, resolver, entryResolver);
+            {
+                try
+                {
+                    return ResolveHostMethod(type, name, argTypes, hints, resolver, entryResolver);
+                }
+                catch (KeyNotFoundException)
+                {
+                    return ResolveInterfaceMethod(type, name, argTypes, hints, resolver, entryResolver);
+                }
+            }
 
             try
             {
@@ -466,7 +484,8 @@ namespace Lens.Compiler
             {
                 try
                 {
-                    return ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name).Any();
+                    if (ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name).Any())
+                        return true;
                 }
                 catch (KeyNotFoundException)
                 {
@@ -478,6 +497,13 @@ namespace Lens.Compiler
                     // back to the message that claims nothing about the overloads
                     return false;
                 }
+
+                // a default implementation the type did not override is a method the type has, as far
+                // as anyone reading the diagnostic is concerned; an abstract or static member of an
+                // interface a class implements is not, for the reasons IsReachableThroughInterface
+                // spells out
+                return type.GetInterfaces(Resolver)
+                           .Any(x => HostMethodsNamed(x, name).Any(m => type.IsInterface || (!m.IsStatic && !m.IsAbstract)));
             }
 
             try
@@ -490,6 +516,27 @@ namespace Lens.Compiler
             }
 
             return HasMethodNamed(declared.BaseType, name);
+        }
+
+        /// <summary>
+        /// The methods a host type declares under a given name, or none when the type is not one
+        /// reflection will answer about at all. Only the diagnostic above asks the question this
+        /// loosely: resolution wants to know which of the two happened.
+        /// </summary>
+        private static IEnumerable<MethodInfo> HostMethodsNamed(TypeEntry type, string name)
+        {
+            try
+            {
+                return ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Enumerable.Empty<MethodInfo>();
+            }
+            catch (NotSupportedException)
+            {
+                return Enumerable.Empty<MethodInfo>();
+            }
         }
 
         /// <summary>
@@ -573,7 +620,32 @@ namespace Lens.Compiler
 
             var declared = FindDeclaredType(type);
             if (declared == null)
-                return ResolveHostMethodGroup(type, name);
+            {
+                var group = ResolveHostMethodGroup(type, name);
+                if (group.Any())
+                    return group;
+
+                // the group of a name the type only has through an interface: the first interface
+                // that has one is the group, for the same reason a single lookup takes the first
+                // interface that answers
+                foreach (var iface in type.GetInterfaces(Resolver))
+                {
+                    try
+                    {
+                        var inherited = ResolveHostMethodGroup(iface, name)
+                                        .Where(x => IsReachableThroughInterface(type, x))
+                                        .ToArray();
+
+                        if (inherited.Any())
+                            return inherited;
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                    }
+                }
+
+                return group;
+            }
 
             return declared.Entity.ResolveMethodGroup(name).Select(x => WrapMethod(declared, x));
         }
@@ -1037,6 +1109,83 @@ namespace Lens.Compiler
         }
 
         /// <summary>
+        /// Resolves a method the type has none of under that name itself, but reaches through one of
+        /// its interfaces: a default implementation an implementing class did not override, or - when
+        /// the type is an interface - a member it inherits from another interface.
+        ///
+        /// Each interface is asked in its instantiated form, and that is what makes the signature come
+        /// back in the receiver's own terms: ICollection&lt;KeyValuePair&lt;string, int&gt;&gt;.Clear
+        /// rather than the open definition's, and IAdditionOperators&lt;T, T, T&gt;.op_Addition rather
+        /// than one written in the TSelf and TOther of an interface nothing has substituted into.
+        ///
+        /// A member of the type itself always wins, because this runs only once the lookup on the type
+        /// has failed. Between two interfaces the more derived one wins - an interface that redeclares
+        /// what it inherits means its own declaration - and two unrelated interfaces offering the same
+        /// member are an ambiguity for the call site to settle with a cast, not for the compiler to
+        /// pick a side in.
+        /// </summary>
+        private MethodWrapper ResolveInterfaceMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver, EntryLambdaResolver entryLambdaResolver = null)
+        {
+            MethodWrapper found = null;
+            TypeEntry foundOn = null;
+
+            foreach (var iface in type.GetInterfaces(Resolver))
+            {
+                MethodWrapper curr;
+                try
+                {
+                    curr = ResolveHostMethod(iface, name, argTypes, hints, lambdaResolver, entryLambdaResolver);
+                }
+                catch (KeyNotFoundException)
+                {
+                    continue;
+                }
+
+                if (!IsReachableThroughInterface(type, curr))
+                    continue;
+
+                if (found == null)
+                {
+                    found = curr;
+                    foundOn = iface;
+                    continue;
+                }
+
+                // the declaration further down the interface hierarchy replaces the one it hides
+                if (foundOn.IsAssignableFrom(Resolver, iface))
+                {
+                    found = curr;
+                    foundOn = iface;
+                }
+                else if (!iface.IsAssignableFrom(Resolver, foundOn))
+                {
+                    throw new AmbiguousMatchException();
+                }
+            }
+
+            if (found == null)
+                throw new KeyNotFoundException();
+
+            return found;
+        }
+
+        /// <summary>
+        /// Whether a member found on an interface is one a receiver of the given type can reach.
+        ///
+        /// Everything an interface declares is reachable through the interface itself, and through a
+        /// generic parameter constrained to it. Through a class, only a default implementation is: an
+        /// abstract declaration is the class's own member under another name, and would have been
+        /// found on the class before this path was taken, while a static one - abstract or not - is
+        /// only ever reached through a type parameter, with the 'constrained.' prefix that says which
+        /// implementation is meant. A plain call to either is IL the runtime refuses, which is what
+        /// every 'a + b' on two ints turned into once Int32 came to implement IAdditionOperators.
+        /// </summary>
+        private static bool IsReachableThroughInterface(TypeEntry type, MethodWrapper method)
+        {
+            return type.IsInterface || (!method.IsStatic && !method.IsAbstract);
+        }
+
+        /// <summary>
         /// Resolves a method of a host type by name and argument types.
         /// </summary>
         private MethodWrapper ResolveHostMethod(TypeEntry type, string name, TypeEntry[] argTypes, TypeEntry[] hints, LambdaResolver lambdaResolver, EntryLambdaResolver entryLambdaResolver = null)
@@ -1058,6 +1207,7 @@ namespace Lens.Compiler
 
                 IsStatic = info.IsStatic,
                 IsVirtual = info.IsVirtual,
+                IsAbstract = info.IsAbstract,
                 IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
                 IsVariadic = ReflectionHelper.IsVariadic(info),
 
@@ -1171,6 +1321,7 @@ namespace Lens.Compiler
 
                                            IsStatic = m.IsStatic,
                                            IsVirtual = m.IsVirtual,
+                                           IsAbstract = m.IsAbstract,
                                            IsVariadic = ReflectionHelper.IsVariadic(m),
 
                                            ArgumentTypes = m.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),

@@ -92,7 +92,7 @@ namespace Lens.SyntaxTree.Operators.Unary
 
             var ps = OverloadedMethod.ArgumentTypes;
             Expr.Cast(Operand, ps[0].Materialize()).Emit(ctx, true);
-            gen.EmitCall(OverloadedMethod.MethodInfo);
+            gen.EmitCall(OverloadedMethod.MethodInfo, constraint: OverloadedMethod.ConstrainedTo?.Materialize());
         }
 
         protected abstract void EmitOperator(Context ctx);

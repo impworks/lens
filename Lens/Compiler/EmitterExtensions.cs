@@ -582,13 +582,20 @@ namespace Lens.Compiler
         }
 
         /// <summary>
-        /// Call a method.
+        /// Call a method, optionally prefixed with the type parameter whose implementation of it is
+        /// meant.
+        ///
+        /// The prefix is what makes an abstract interface member reachable through a type parameter:
+        /// the token it carries is the parameter itself, and the runtime picks the implementation the
+        /// parameter was substituted with. A static member is then dispatched with 'call' - there is
+        /// no receiver to dispatch on, and 'callvirt' with no object is not valid IL - while an
+        /// instance member takes the 'callvirt' the prefix exists to make legal.
         /// </summary>
         public static void EmitCall(this ILGenerator gen, MethodInfo method, bool isVirtual = false, Type constraint = null)
         {
             if (constraint != null)
             {
-                isVirtual = true;
+                isVirtual = !method.IsStatic;
                 gen.Emit(OpCodes.Constrained, constraint);
             }
 
