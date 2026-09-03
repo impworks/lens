@@ -1994,5 +1994,59 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("ArrayRankNotPositive", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3215: A value of type &apos;{0}&apos; cannot be converted to &apos;{1}&apos;: a ref struct cannot be boxed!.
+        /// </summary>
+        public static string RefStructBoxed {
+            get {
+                return ResourceManager.GetString("RefStructBoxed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3216: The ref struct type &apos;{0}&apos; cannot be used as a generic argument of &apos;{1}&apos;!.
+        /// </summary>
+        public static string RefStructGenericArgument {
+            get {
+                return ResourceManager.GetString("RefStructGenericArgument", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3217: The field &apos;{0}&apos; cannot be of the ref struct type &apos;{1}&apos;: only a ref struct may hold one!.
+        /// </summary>
+        public static string RefStructField {
+            get {
+                return ResourceManager.GetString("RefStructField", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3218: The variable &apos;{0}&apos; of the ref struct type &apos;{1}&apos; cannot be used inside a nested function: capturing it would put it into a field!.
+        /// </summary>
+        public static string RefStructClosured {
+            get {
+                return ResourceManager.GetString("RefStructClosured", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3219: The variable &apos;{0}&apos; of the ref struct type &apos;{1}&apos; cannot be used in an iterator or an async function: surviving a suspension point would put it into a field!.
+        /// </summary>
+        public static string RefStructInStateMachine {
+            get {
+                return ResourceManager.GetString("RefStructInStateMachine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to LE3220: An array of the ref struct type &apos;{0}&apos; cannot be created!.
+        /// </summary>
+        public static string RefStructArrayElement {
+            get {
+                return ResourceManager.GetString("RefStructArrayElement", resourceCulture);
+            }
+        }
     }
 }

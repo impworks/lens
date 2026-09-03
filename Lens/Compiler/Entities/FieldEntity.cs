@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Reflection.Emit;
 using Lens.Resolver;
+using Lens.Translations;
 
 namespace Lens.Compiler.Entities
 {
@@ -50,6 +51,17 @@ namespace Lens.Compiler.Entities
         {
             if (Type == null)
                 Type = ContainerType.Context.ResolveType(TypeSignature);
+
+            // a field is the one place a ref struct may not be stored, because the instance that
+            // holds it may outlive the frame the ref struct is confined to. Without this it is the
+            // record's generated equality members that fail, with a raw constraint-violation
+            // message from EqualityComparer naming neither the field nor the script.
+            //
+            // Only a field the script wrote down is reported here: the ones the compiler invents
+            // for a closure or a state machine are reported against the variable they hoist, which
+            // is somewhere the reader can actually look.
+            if (Type.IsByRefLike && Kind == TypeContentsKind.UserDefined)
+                Context.Error(TypeSignature, CompilerMessages.RefStructField, Name, Type);
         }
 
         /// <summary>

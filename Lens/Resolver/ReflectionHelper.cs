@@ -515,6 +515,64 @@ namespace Lens.Resolver
             }
         }
 
+        /// <summary>
+        /// The property that answers the question below on the frameworks that have one.
+        /// </summary>
+        private static readonly PropertyInfo ByRefLikeProperty = typeof(Type).GetProperty("IsByRefLike");
+
+        /// <summary>
+        /// The ref-struct-like types that predate the attribute and carry none: the runtime knew
+        /// about these three before the restriction had a name to be spelled with.
+        /// </summary>
+        private static readonly HashSet<string> LegacyByRefLikeTypes = new HashSet<string>
+        {
+            "System.TypedReference",
+            "System.ArgIterator",
+            "System.RuntimeArgumentHandle"
+        };
+
+        /// <summary>
+        /// Checks whether a type is a ref struct.
+        ///
+        /// Type.IsByRefLike only exists from .NET Core 2.0 and .NET Standard 2.1 onwards, and the
+        /// compiler is also built for frameworks that predate it. What the property reads on those
+        /// is the attribute the C# compiler stamps on a ref struct, so that is what is read here.
+        /// </summary>
+        public static bool IsByRefLikeType(this Type type)
+        {
+            if (type == null || !type.IsValueType)
+                return false;
+
+            if (ByRefLikeProperty != null)
+            {
+                try
+                {
+                    return (bool) ByRefLikeProperty.GetValue(type, null);
+                }
+                catch (Exception)
+                {
+                    // a builder answers nothing about itself, and nothing the script declares is a
+                    // ref struct anyway
+                    return false;
+                }
+            }
+
+            if (LegacyByRefLikeTypes.Contains(type.FullName))
+                return true;
+
+            try
+            {
+                foreach (var attr in type.GetCustomAttributes(false))
+                    if (attr.GetType().FullName == "System.Runtime.CompilerServices.IsByRefLikeAttribute")
+                        return true;
+            }
+            catch (Exception)
+            {
+            }
+
+            return false;
+        }
+
         #endregion
 
         #region Helpers

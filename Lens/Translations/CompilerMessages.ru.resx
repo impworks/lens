@@ -762,4 +762,22 @@
   <data name="DebugNotSupported" xml:space="preserve">
     <value>LE3204: На этой платформе отладочная информация не может быть сгенерирована. Она поддерживается на .NET Framework 4.x и на .NET 10 или новее.</value>
   </data>
+  <data name="RefStructBoxed" xml:space="preserve">
+    <value>LE3215: Значение типа '{0}' не может быть преобразовано в '{1}': ref-структура не может быть упакована!</value>
+  </data>
+  <data name="RefStructGenericArgument" xml:space="preserve">
+    <value>LE3216: Ref-структура '{0}' не может быть использована как типовой аргумент '{1}'!</value>
+  </data>
+  <data name="RefStructField" xml:space="preserve">
+    <value>LE3217: Поле '{0}' не может иметь тип ref-структуры '{1}': такое поле допустимо только в ref-структуре!</value>
+  </data>
+  <data name="RefStructClosured" xml:space="preserve">
+    <value>LE3218: Переменная '{0}' типа ref-структуры '{1}' не может использоваться во вложенной функции: захват поместил бы её в поле!</value>
+  </data>
+  <data name="RefStructInStateMachine" xml:space="preserve">
+    <value>LE3219: Переменная '{0}' типа ref-структуры '{1}' не может использоваться в итераторе или асинхронной функции: чтобы пережить точку приостановки, она была бы помещена в поле!</value>
+  </data>
+  <data name="RefStructArrayElement" xml:space="preserve">
+    <value>LE3220: Массив ref-структур '{0}' не может быть создан!</value>
+  </data>
 </root>

@@ -21,6 +21,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private MethodWrapper _indexer;
 
         /// <summary>
+        /// Whether the type has no index setter and the value is stored through the managed
+        /// pointer the getter returns, in which case <see cref="_indexer"/> is that getter.
+        /// </summary>
+        private bool _writesThroughRef;
+
+        /// <summary>
         /// Value to be assigned.
         /// </summary>
         public NodeBase Value { get; set; }
@@ -47,12 +53,25 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
                 catch (LensCompilerException ex)
                 {
-                    ex.BindToLocation(this);
-                    throw;
+                    // an indexer whose getter returns a managed pointer needs no setter: it hands
+                    // back the location of the element, and the assignment stores into it. This is
+                    // the only way a Span's element is written.
+                    _indexer = TryResolveByRefGetter(ctx, exprType, idxTypes);
+                    if (_indexer == null)
+                    {
+                        ex.BindToLocation(this);
+                        throw;
+                    }
+
+                    _writesThroughRef = true;
                 }
             }
 
-            var valDestType = exprType.IsArray ? exprType.ElementType : _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
+            var valDestType = exprType.IsArray
+                ? exprType.ElementType
+                : (_writesThroughRef
+                    ? _indexer.ReturnType.ElementType
+                    : _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1]);
 
             for (var idx = 0; idx < idxTypes.Length; idx++)
             {
@@ -67,6 +86,24 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 Error(Value, CompilerMessages.ImplicitCastImpossible, valType, valDestType);
 
             return base.ResolveInternal(ctx, mustReturn);
+        }
+
+        /// <summary>
+        /// Looks for an index getter that returns a managed pointer, which can stand in for the
+        /// setter the type does not have. Returns null when there is none, so that the error the
+        /// missing setter caused is the one reported.
+        /// </summary>
+        private static MethodWrapper TryResolveByRefGetter(Context ctx, TypeEntry exprType, TypeEntry[] idxTypes)
+        {
+            try
+            {
+                var getter = ctx.ResolveIndexer(exprType, idxTypes, true);
+                return getter.ReturnType.IsByRef ? getter : null;
+            }
+            catch (LensCompilerException)
+            {
+                return null;
+            }
         }
 
         #endregion
@@ -151,16 +188,28 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             try
             {
-                var valDest = _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
+                var valDest = _writesThroughRef
+                    ? _indexer.ReturnType.ElementType
+                    : _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
 
-                Expression.Emit(ctx, true);
+                // an indexer of a value type is an instance method like any other, and needs the
+                // receiver's address rather than a copy of it
+                Expression.EmitNodeForAccess(ctx);
 
                 for (var idx = 0; idx < Indexes.Count; idx++)
                     Expr.Cast(Indexes[idx], _indexer.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
 
+                // the location has to be under the value on the stack, so the getter is called
+                // before the value is evaluated
+                if (_writesThroughRef)
+                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
+
                 Expr.Cast(Value, valDest.Materialize()).Emit(ctx, true);
 
-                gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
+                if (_writesThroughRef)
+                    gen.EmitSaveObject(valDest.Materialize());
+                else
+                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
             }
             catch (LensCompilerException ex)
             {

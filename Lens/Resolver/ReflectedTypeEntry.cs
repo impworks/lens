@@ -62,6 +62,7 @@ namespace Lens.Resolver
         public override int ArrayRank => _type.IsArray ? _type.GetArrayRank() : 0;
         public override bool IsByRef => _type.IsByRef;
         public override bool IsPointer => _type.IsPointer;
+        public override bool IsByRefLike => _type.IsByRefLikeType();
 
         public override bool ContainsDeclared
         {

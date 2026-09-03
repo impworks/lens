@@ -456,7 +456,10 @@ namespace Lens.Compiler
             else if (itemType.IsClass || itemType.IsInterface)
                 gen.Emit(OpCodes.Ldind_Ref);
             else
-                throw new InvalidOperationException("Unknown type!");
+                // every remaining value type - a struct, an enum of an unusual base type, a
+                // generic parameter - is loaded by its own layout, which is what the counterpart
+                // EmitSaveObject does with stobj
+                gen.Emit(OpCodes.Ldobj, itemType);
         }
 
         /// <summary>

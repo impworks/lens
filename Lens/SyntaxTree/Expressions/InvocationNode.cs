@@ -96,7 +96,62 @@ namespace Lens.SyntaxTree.Expressions
 
             CheckMemberInSafeMode(ctx, binding.Method);
 
-            return ResolvePartial(binding.Method, binding.Method.ReturnType, binding.ArgTypes);
+            CheckGenericArgumentsRefness(binding.Method);
+
+            CheckReceiverRefness(ctx, binding);
+
+            // a member that returns 'T&' hands back a location rather than a value, and the call
+            // is an expression of type T: the pointer is dereferenced right after the call, below
+            return ResolvePartial(binding.Method, binding.Method.ReturnType.Dereferenced(), binding.ArgTypes);
+        }
+
+        /// <summary>
+        /// Reports a ref struct that has been inferred as, or given as, a type argument of the
+        /// call.
+        ///
+        /// The CLI forbids one absent an 'allows ref struct' anti-constraint, which the compiler
+        /// does not model, and a call site that instantiates a generic over one produces IL that
+        /// fails verification when it is first executed. Every route to a generic method - a
+        /// declared function, an imported one, one reached through an instantiation - ends up with
+        /// the arguments recorded on the wrapper, so they are checked here rather than at each.
+        /// </summary>
+        private void CheckGenericArgumentsRefness(MethodWrapper method)
+        {
+            var arguments = method.GenericArguments;
+            if (arguments == null)
+                return;
+
+            foreach (var curr in arguments)
+                if (!ReferenceEquals(curr, null) && curr.IsByRefLike)
+                    Error(CompilerMessages.RefStructGenericArgument, curr, method.Name);
+        }
+
+        /// <summary>
+        /// Reports a call on a ref struct receiver that reaches a member the ref struct does not
+        /// declare itself.
+        ///
+        /// Everything object and ValueType declare is reached by boxing the receiver, so calling
+        /// one on a ref struct that does not override it - ToString on a ref struct that has none
+        /// of its own - has no valid encoding at all. Nothing rejects the IL when it is written,
+        /// and the runtime aborts the process rather than throwing when the method first runs.
+        /// </summary>
+        private void CheckReceiverRefness(Context ctx, Binding binding)
+        {
+            var source = binding.InvocationSource;
+            if (source == null || binding.Method.IsStatic)
+                return;
+
+            var receiverType = source.Resolve(ctx);
+            if (!receiverType.IsByRefLike)
+                return;
+
+            // the wrapper's own DeclaringType is the type the lookup started from, not the type
+            // that declares the member, and only the latter says whether the receiver has to be
+            // boxed. Reading it off the MethodInfo is safe here and nowhere else: a ref struct is
+            // always a host type, so its members have one whether or not anything was emitted.
+            var declaringType = binding.Method.MethodInfo?.DeclaringType;
+            if (declaringType != null && !declaringType.IsValueType)
+                Error(CompilerMessages.RefStructBoxed, receiverType, TypeEntryCache.Of(declaringType));
         }
 
         /// <summary>
@@ -486,6 +541,12 @@ namespace Lens.SyntaxTree.Expressions
             var sourceType = binding.InvocationSource?.Resolve(ctx);
             var isVirt = sourceType is { IsValueType: false };
             gen.EmitCall(binding.Method.MethodInfo, isVirt, binding.Method.ConstrainedTo?.Materialize());
+
+            // the call left a managed pointer on the stack, and what the expression stands for is
+            // the value behind it
+            var returnType = binding.Method.ReturnType;
+            if (returnType.IsByRef)
+                gen.EmitLoadFromPointer(returnType.ElementType.Materialize());
         }
 
         #endregion

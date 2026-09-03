@@ -99,11 +99,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_property != null)
             {
                 // a getter hands back a copy, and there is no storage behind it for a callee to
-                // write into
-                if (_property.PropertyType.IsValueType && RefArgumentRequired)
+                // write into - unless it returns a managed pointer, which is a location and
+                // nothing else
+                if (_property.PropertyType.IsValueType && !_property.PropertyType.IsByRef && RefArgumentRequired)
                     Error(CompilerMessages.PropertyValuetypeRef, _property.DeclaringType.Materialize(), MemberName, _property.PropertyType.Materialize());
 
-                return _property.PropertyType;
+                return _property.PropertyType.Dereferenced();
             }
 
             // naming a method builds a delegate on the spot, which likewise has no storage
@@ -334,6 +335,17 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private void EmitProperty(Context ctx, ILGenerator gen)
         {
             gen.EmitCall(_property.Getter, _property.IsVirtual, _property.ConstrainedTo?.Materialize());
+
+            // a getter that returns a managed pointer has left the location of the value on the
+            // stack, which is what a caller asking for an address wants; anything else wants the
+            // value at it
+            if (_property.PropertyType.IsByRef)
+            {
+                if (!RefArgumentRequired && !ctx.IsPointerRequired(this))
+                    gen.EmitLoadFromPointer(_property.PropertyType.ElementType.Materialize());
+
+                return;
+            }
 
             if (ctx.IsPointerRequired(this))
             {

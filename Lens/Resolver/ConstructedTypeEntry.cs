@@ -59,6 +59,10 @@ namespace Lens.Resolver
         public override bool IsSealed => _definition.IsSealed;
         public override bool IsEnum => _definition.IsEnum;
 
+        // Span<SomeRecord> is a ref struct for the same reason Span<int> is: the property belongs
+        // to the definition, and no argument can take it away
+        public override bool IsByRefLike => _definition.IsByRefLike;
+
         public override bool IsGenericType => true;
         public override bool IsGenericTypeDefinition => false;
 

@@ -187,6 +187,19 @@ namespace Lens.Resolver
         }
 
         /// <summary>
+        /// Reports a ref struct standing for a type parameter.
+        ///
+        /// The CLI forbids it absent an 'allows ref struct' anti-constraint, which the compiler
+        /// does not model, and the instantiation is not something that fails when it is built: it
+        /// fails verification when the method that mentions it is first executed.
+        /// </summary>
+        private static void CheckRefStructArgument(TypeEntry value, object parameter)
+        {
+            if (!ReferenceEquals(value, null) && value.IsByRefLike)
+                throw new TypeMatchException(string.Format(CompilerMessages.RefStructGenericArgument, value, parameter));
+        }
+
+        /// <summary>
         /// Ensures that a single type argument satisfies the constraints of its placeholder, with
         /// both sides given as entries.
         /// </summary>
@@ -196,6 +209,8 @@ namespace Lens.Resolver
             // an unspecified argument is diagnosed by the caller; neither is checkable here
             if (ReferenceEquals(arg, null) || ReferenceEquals(value, null))
                 return;
+
+            CheckRefStructArgument(value, arg);
 
             // constraints of a LENS-declared parameter live in the compiler's own model, which the
             // parameter's entry carries
@@ -235,6 +250,8 @@ namespace Lens.Resolver
         /// </summary>
         private static void CheckEntityConstraint(TypeResolutionContext ctx, GenericParameterEntity entity, TypeEntry value, object owner)
         {
+            CheckRefStructArgument(value, entity.Name);
+
             if (entity.IsReferenceType && value.IsValueType)
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, entity.Name, owner));
 
@@ -257,6 +274,8 @@ namespace Lens.Resolver
         /// </summary>
         private static void CheckConstraint(TypeResolutionContext ctx, Type arg, Type value, object owner)
         {
+            CheckRefStructArgument(TypeEntryCache.Of(value), arg);
+
             // constraints of a LENS-declared parameter cannot be read back from an unfinished
             // builder, so the compiler's own model is the only reliable source for them
             var entity = ctx.FindConstraints(arg);
@@ -288,6 +307,8 @@ namespace Lens.Resolver
         /// </summary>
         private static void CheckEntityConstraint(TypeResolutionContext ctx, GenericParameterEntity entity, Type value, object owner)
         {
+            CheckRefStructArgument(TypeEntryCache.Of(value), entity.Name);
+
             if (entity.IsReferenceType && value.IsValueType)
                 throw new TypeMatchException(string.Format(CompilerMessages.GenericClassConstraintViolated, value, entity.Name, owner));
 

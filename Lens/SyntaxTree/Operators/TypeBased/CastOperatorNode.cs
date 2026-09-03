@@ -50,6 +50,12 @@ namespace Lens.SyntaxTree.Operators.TypeBased
             if (ctx.Resolver.IsDeclaredTypeParameter(fromType) || ctx.Resolver.IsDeclaredTypeParameter(toType))
                 return;
 
+            // said before anything else about the pair, because 'object' accepts every other
+            // value type and the reader would otherwise be told only that the two types are
+            // unrelated - which is not what is wrong with the cast
+            if (fromType.IsByRefLike && !toType.IsValueType && !toType.IsGenericParameter)
+                Error(CompilerMessages.RefStructBoxed, fromType, toType);
+
             if (toType.IsExtendablyAssignableFrom(ctx.Resolver, fromType, true))
                 return;
 

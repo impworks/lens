@@ -344,6 +344,20 @@ namespace Lens.Compiler
                     }
                 }
 
+                // hoisting is the one thing that cannot be done to a ref struct: the field it
+                // would go into outlives the frame the value is confined to. Left alone, the
+                // closure class is built and it is TypeLoad that objects, in words about a
+                // generated field and no place in the script at all.
+                if (curr.IsClosured && curr.Type?.IsByRefLike == true)
+                {
+                    Context.Error(
+                        curr.Declaration,
+                        machine != null ? CompilerMessages.RefStructInStateMachine : CompilerMessages.RefStructClosured,
+                        curr.Name,
+                        curr.Type
+                    );
+                }
+
                 if (curr.IsClosured && curr.ClosureFieldName == null)
                     curr.ClosureFieldName = ctx.Unique.ClosureFieldName(curr.Name);
             }

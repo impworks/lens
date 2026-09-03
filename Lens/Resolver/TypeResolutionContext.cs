@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Lens.Compiler.Entities;
+using Lens.Translations;
 
 namespace Lens.Resolver
 {
@@ -94,6 +95,12 @@ namespace Lens.Resolver
         /// </summary>
         public TypeEntry MakeArray(TypeEntry element, int rank = 1)
         {
+            // an array's elements live on the heap, which is the one place a ref struct may not
+            // be. Reflection.Emit reports this as "the element type is ByRef-like" from wherever
+            // the array happens to be created, naming no place in the script.
+            if (element.IsByRefLike)
+                throw new LensCompilerException(string.Format(CompilerMessages.RefStructArrayElement, element));
+
             if (element.ContainsDeclared)
                 return new ArrayTypeEntry(this, element, rank);
 

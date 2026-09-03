@@ -52,6 +52,18 @@ namespace Lens.Resolver
         public virtual bool IsPointer => false;
 
         /// <summary>
+        /// Whether the type is a ref struct: a value type that may hold a managed pointer and is
+        /// therefore confined to the evaluation stack.
+        ///
+        /// The CLI forbids one from being boxed, from standing for a generic argument, from being
+        /// the type of a field of anything that is not itself a ref struct, and from being an
+        /// array element. Each of those is diagnosed while binding, because every one of them
+        /// otherwise ends in a verification failure or a raw Reflection.Emit message that names
+        /// no place in the script.
+        /// </summary>
+        public virtual bool IsByRefLike => false;
+
+        /// <summary>
         /// The number of dimensions of an array type, or 0 when the type is not an array.
         /// </summary>
         public virtual int ArrayRank => 0;

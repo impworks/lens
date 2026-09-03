@@ -762,4 +762,22 @@
   <data name="DebugNotSupported" xml:space="preserve">
     <value>LE3204: Debug information cannot be generated on this platform. It is supported on .NET Framework 4.x and on .NET 10 or later.</value>
   </data>
+  <data name="RefStructBoxed" xml:space="preserve">
+    <value>LE3215: A value of type '{0}' cannot be converted to '{1}': a ref struct cannot be boxed!</value>
+  </data>
+  <data name="RefStructGenericArgument" xml:space="preserve">
+    <value>LE3216: The ref struct type '{0}' cannot be used as a generic argument of '{1}'!</value>
+  </data>
+  <data name="RefStructField" xml:space="preserve">
+    <value>LE3217: The field '{0}' cannot be of the ref struct type '{1}': only a ref struct may hold one!</value>
+  </data>
+  <data name="RefStructClosured" xml:space="preserve">
+    <value>LE3218: The variable '{0}' of the ref struct type '{1}' cannot be used inside a nested function: capturing it would put it into a field!</value>
+  </data>
+  <data name="RefStructInStateMachine" xml:space="preserve">
+    <value>LE3219: The variable '{0}' of the ref struct type '{1}' cannot be used in an iterator or an async function: surviving a suspension point would put it into a field!</value>
+  </data>
+  <data name="RefStructArrayElement" xml:space="preserve">
+    <value>LE3220: An array of the ref struct type '{0}' cannot be created!</value>
+  </data>
 </root>

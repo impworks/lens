@@ -49,11 +49,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // an editor binds the tree and never emits: a check that lives in EmitInternal is one
             // the reader of a half-written script never sees
                 // an indexer's getter hands back a copy, and there is no storage behind it for a
-                // callee to write into
-                if (RefArgumentRequired && _getter.ReturnType.IsValueType)
+                // callee to write into - unless it returns a managed pointer, which is a location
+                // and nothing else
+                if (RefArgumentRequired && _getter.ReturnType.IsValueType && !_getter.ReturnType.IsByRef)
                     Error(CompilerMessages.IndexerValuetypeRef, exprType, _getter.ReturnType);
 
-                return _getter.ReturnType;
+                return _getter.ReturnType.Dereferenced();
             }
             catch (LensCompilerException ex)
             {
@@ -155,12 +156,21 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 ptrExpr.RefArgumentRequired = RefArgumentRequired;
             }
 
-            Expression.Emit(ctx, true);
+            // an indexer of a value type is an instance method like any other, and needs the
+            // receiver's address rather than a copy of it
+            Expression.EmitNodeForAccess(ctx);
 
             for (var idx = 0; idx < Indexes.Count; idx++)
                 Expr.Cast(Indexes[idx], _getter.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
 
             gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
+
+            // a getter that returns a managed pointer has left the element's location on the
+            // stack, which is exactly what a caller asking for an address wants; anything else
+            // wants the value at it
+            var returnType = _getter.ReturnType;
+            if (returnType.IsByRef && !RefArgumentRequired && !ctx.IsPointerRequired(this))
+                gen.EmitLoadFromPointer(returnType.ElementType.Materialize());
         }
 
         #endregion

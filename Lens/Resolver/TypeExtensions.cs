@@ -140,6 +140,19 @@ namespace Lens.Resolver
             return type.IsNullableType() ? type.GenericArguments[0] : null;
         }
 
+        /// <summary>
+        /// Returns T for T&amp;, and the type itself for anything else.
+        ///
+        /// By-ref is not a type a LENS expression can have: a member that returns one hands back a
+        /// location, and what the expression that reads it stands for is the value at that
+        /// location. The pointer is dereferenced where the call is emitted, and every binding-time
+        /// question about the expression is asked of the type this returns.
+        /// </summary>
+        public static TypeEntry Dereferenced(this TypeEntry type)
+        {
+            return !ReferenceEquals(type, null) && type.IsByRef ? type.ElementType : type;
+        }
+
         #endregion
 
         #region Type distance
@@ -204,6 +217,13 @@ namespace Lens.Resolver
 
             if (varType.IsByRef)
                 return varType.ElementType == exprType ? 0 : int.MaxValue;
+
+            // a ref struct cannot become a value of a reference type, because that would box it.
+            // A type parameter is deliberately excluded: a ref struct cannot stand for one either,
+            // but the call site that infers it says so in words about the type argument, and
+            // stopping the inference here would only report that no overload accepts the value.
+            if (exprType.IsByRefLike && !varType.IsValueType && !varType.IsGenericParameter)
+                return int.MaxValue;
 
             if (!exactly)
             {
@@ -435,6 +455,16 @@ namespace Lens.Resolver
         /// </summary>
         private static int GenericParameterDistance(TypeResolutionContext ctx, TypeEntry varType, TypeEntry exprType, bool exactly = false)
         {
+            // a value being stored into a parameter is measured against that parameter's effective
+            // base type, which is 'object' for an unconstrained one - and a ref struct is not
+            // assignable to a reference type. That rule is deliberately not applied here: whether
+            // a ref struct may stand for the parameter is settled by constraint checking, which
+            // says which type argument is the problem, and applying it would instead drop the
+            // candidate from overload resolution and report that nothing accepts the value.
+            // The distance is the one an ordinary value type would have got.
+            if (varType.IsGenericParameter && exprType.IsByRefLike)
+                return 2;
+
             // generic parameter is on the same level of inheritance as the expression
             // therefore getting its parent type does not take a step
             var dist = varType.IsGenericParameter

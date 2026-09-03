@@ -30,6 +30,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private FieldWrapper _field;
 
         /// <summary>
+        /// Whether the property has no setter of its own and the value is stored through the
+        /// managed pointer its getter returns.
+        /// </summary>
+        private bool _writesThroughRef;
+
+        /// <summary>
         /// Value to be assigned.
         /// </summary>
         public NodeBase Value { get; set; }
@@ -74,7 +80,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 try
                 {
                     _property = ctx.ResolveProperty(type, MemberName);
-                    if (!_property.CanSet)
+
+                    // a property that returns a managed pointer needs no setter: it hands back the
+                    // location of the value, and the assignment stores into it
+                    _writesThroughRef = !_property.CanSet && _property.CanGet && _property.PropertyType.IsByRef;
+
+                    if (!_property.CanSet && !_writesThroughRef)
                         Error(CompilerMessages.PropertyNoSetter, MemberName, type);
 
                     _isStatic = _property.IsStatic;
@@ -87,7 +98,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 }
             }
 
-            var destType = _field != null ? _field.FieldType : _property.PropertyType;
+            var destType = DestinationType;
             EnsureLambdaInferred(ctx, Value, destType);
 
             var valType = Value.Resolve(ctx);
@@ -96,6 +107,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (!destType.IsExtendablyAssignableFrom(ctx.Resolver, valType))
                 Error(CompilerMessages.ImplicitCastImpossible, valType, destType);
         }
+
+        /// <summary>
+        /// The type of the values the member can hold.
+        /// </summary>
+        private TypeEntry DestinationType => _field != null
+            ? _field.FieldType
+            : _property.PropertyType.Dereferenced();
 
         #endregion
 
@@ -137,7 +155,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            var destType = _field != null ? _field.FieldType : _property.PropertyType;
+            var destType = DestinationType;
 
             if (!_isStatic)
             {
@@ -147,9 +165,16 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 Expression.EmitNodeForAccess(ctx);
             }
 
+            // the location has to be under the value on the stack, so the getter is called before
+            // the value is evaluated
+            if (_writesThroughRef)
+                gen.EmitCall(_property.Getter, _property.IsVirtual, _property.ConstrainedTo?.Materialize());
+
             Expr.Cast(Value, destType.Materialize()).Emit(ctx, true);
 
-            if (_field != null)
+            if (_writesThroughRef)
+                gen.EmitSaveObject(destType.Materialize());
+            else if (_field != null)
                 gen.EmitSaveField(_field.FieldInfo);
             else
                 gen.EmitCall(_property.Setter, _property.IsVirtual, _property.ConstrainedTo?.Materialize());
