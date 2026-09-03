@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 
@@ -212,6 +212,14 @@ namespace Lens.Resolver
     internal class PropertyWrapper : WrapperBase
     {
         public TypeEntry PropertyType;
+
+        /// <summary>
+        /// The generic parameter the property was reached through, when it is a static member of one
+        /// of that parameter's interface constraints. Its accessors need a 'constrained.' prefix to
+        /// say whose implementation is meant, exactly as <see cref="MethodWrapper.ConstrainedTo"/>
+        /// does for a call; null for every other access.
+        /// </summary>
+        public TypeEntry ConstrainedTo;
 
         private readonly LazyMember<MethodInfo> _getter = new LazyMember<MethodInfo>();
         private readonly LazyMember<MethodInfo> _setter = new LazyMember<MethodInfo>();

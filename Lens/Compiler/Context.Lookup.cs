@@ -139,6 +139,10 @@ namespace Lens.Compiler
         /// </summary>
         public FieldWrapper ResolveField(TypeEntry type, string name)
         {
+            // only the members of a parameter's constraints are available on it
+            if (type.IsGenericParameter)
+                return ResolveThroughConstraints(type, c => ResolveField(c, name));
+
             var declared = FindDeclaredType(type);
             if (declared == null)
                 return ResolveHostField(type, name);
@@ -163,6 +167,23 @@ namespace Lens.Compiler
         /// </summary>
         public PropertyWrapper ResolveProperty(TypeEntry type, string name)
         {
+            // only the members of a parameter's constraints are available on it
+            if (type.IsGenericParameter)
+            {
+                return ResolveThroughConstraints(type, constraint =>
+                {
+                    var found = ResolveProperty(constraint, name);
+
+                    // the same reason a static method of an interface constraint needs the
+                    // constrained. prefix: an accessor with no receiver has nothing to be dispatched
+                    // on, so the call site is the only place that knows whose implementation is meant
+                    if (found != null && constraint.IsInterface && found.IsStatic)
+                        found.ConstrainedTo = type;
+
+                    return found;
+                });
+            }
+
             if (FindDeclaredType(type) == null)
                 return ResolveHostProperty(type, name);
 
@@ -175,6 +196,10 @@ namespace Lens.Compiler
         /// </summary>
         public EventWrapper ResolveEvent(TypeEntry type, string name)
         {
+            // only the members of a parameter's constraints are available on it
+            if (type.IsGenericParameter)
+                return ResolveThroughConstraints(type, c => ResolveEvent(c, name));
+
             if (FindDeclaredType(type) == null)
                 return ResolveHostEvent(type, name);
 
@@ -213,27 +238,19 @@ namespace Lens.Compiler
             // only the members of a parameter's constraints are available on it
             if (type.IsGenericParameter)
             {
-                foreach (var constraint in ResolveConstraintsOf(type))
+                return ResolveThroughConstraints(type, constraint =>
                 {
-                    try
-                    {
-                        var found = ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
+                    var found = ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
 
-                        // a static member of an interface constraint has no receiver to be dispatched
-                        // on, so the call site is the only place that knows whose implementation of it
-                        // is meant, and the constrained. prefix is how that reaches the IL. An
-                        // instance member needs none: its receiver carries the answer.
-                        if (found != null && constraint.IsInterface && found.IsStatic)
-                            found.ConstrainedTo = type;
+                    // a static member of an interface constraint has no receiver to be dispatched
+                    // on, so the call site is the only place that knows whose implementation of it
+                    // is meant, and the constrained. prefix is how that reaches the IL. An
+                    // instance member needs none: its receiver carries the answer.
+                    if (found != null && constraint.IsInterface && found.IsStatic)
+                        found.ConstrainedTo = type;
 
-                        return found;
-                    }
-                    catch (KeyNotFoundException)
-                    {
-                    }
-                }
-
-                throw new KeyNotFoundException();
+                    return found;
+                });
             }
 
             var declared = FindDeclaredType(type);
@@ -603,20 +620,7 @@ namespace Lens.Compiler
         public IEnumerable<MethodWrapper> ResolveMethodGroup(TypeEntry type, string name)
         {
             if (type.IsGenericParameter)
-            {
-                foreach (var constraint in ResolveConstraintsOf(type))
-                {
-                    try
-                    {
-                        return ResolveMethodGroup(constraint, name);
-                    }
-                    catch (KeyNotFoundException)
-                    {
-                    }
-                }
-
-                throw new KeyNotFoundException();
-            }
+                return ResolveThroughConstraints(type, c => ResolveMethodGroup(c, name));
 
             var declared = FindDeclaredType(type);
             if (declared == null)
@@ -777,6 +781,30 @@ namespace Lens.Compiler
                 return new DeclaredTypeReference {Entity = definition.Entity, Resolver = Resolver, Instantiation = type};
 
             return null;
+        }
+
+        /// <summary>
+        /// Runs a member lookup against the constraints of a generic parameter and returns what the
+        /// first of them answers.
+        ///
+        /// Nothing is declared on the parameter itself, so every lookup on one - a method, a field,
+        /// a property, an event - has to walk the constraints, and a constraint that has no such
+        /// member says so by throwing. When none of them answers, the parameter has none either.
+        /// </summary>
+        private T ResolveThroughConstraints<T>(TypeEntry typeParameter, Func<TypeEntry, T> lookup)
+        {
+            foreach (var constraint in ResolveConstraintsOf(typeParameter))
+            {
+                try
+                {
+                    return lookup(constraint);
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+            }
+
+            throw new KeyNotFoundException();
         }
 
         /// <summary>
@@ -1015,6 +1043,30 @@ namespace Lens.Compiler
         /// </summary>
         public MethodWrapper ResolveIndexer(TypeEntry type, TypeEntry[] idxTypes, bool isGetter)
         {
+            // only the members of a parameter's constraints are available on it. Unlike the lookups
+            // above, a missing indexer is reported as an error rather than by throwing
+            // KeyNotFoundException, so the walk catches that instead, and reports against the
+            // parameter itself once every constraint has been tried.
+            if (type.IsGenericParameter)
+            {
+                foreach (var constraint in ResolveConstraintsOf(type))
+                {
+                    try
+                    {
+                        return ResolveIndexer(constraint, idxTypes, isGetter);
+                    }
+                    catch (LensCompilerException)
+                    {
+                    }
+                }
+
+                Error(
+                    isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
+                    type,
+                    JoinTypes(idxTypes)
+                );
+            }
+
             var instantiation = InstantiationOf(type);
             var target = LookupTargetOf(type);
 

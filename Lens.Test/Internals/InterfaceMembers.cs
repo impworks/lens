@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Lens.Test.Internals
 {
@@ -75,6 +75,50 @@ namespace Lens.Test.Internals
         public static Num Make(int value) => new Num {Value = value};
 
         public override string ToString() => Value.ToString();
+    }
+
+    /// <summary>
+    /// A read-only instance property, the property counterpart of IGreeter: it is only reachable
+    /// through the interface when the receiver is a constrained type parameter.
+    /// </summary>
+    public interface INamed
+    {
+        string Title { get; }
+    }
+
+    public class Knight : INamed
+    {
+        public string Title => "sir";
+    }
+
+    /// <summary>
+    /// A settable instance property, so that writing through a constraint is covered as well as
+    /// reading.
+    /// </summary>
+    public interface ICounted
+    {
+        int Count { get; set; }
+    }
+
+    public class Counter : ICounted
+    {
+        public int Count { get; set; }
+    }
+
+    /// <summary>
+    /// A static abstract property - the T::Zero half of generic math, as opposed to the T::Make
+    /// method IZeroed declares.
+    /// </summary>
+    public interface IHasZero<T> where T : IHasZero<T>
+    {
+        static abstract T Zero { get; }
+    }
+
+    public class Zed : IHasZero<Zed>
+    {
+        public static Zed Zero => new Zed();
+
+        public override string ToString() => "zed";
     }
 
     /// <summary>

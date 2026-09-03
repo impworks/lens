@@ -141,11 +141,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             if (!_isStatic)
             {
-                var exprType = Expression.Resolve(ctx);
-                if (Expression is IPointerProvider provider && exprType.IsStruct())
-                    ctx.RequirePointer(provider);
-
-                Expression.Emit(ctx, true);
+                // the same preparation a read of the member does: a struct receiver is addressed
+                // rather than copied, and a receiver whose type is a parameter is boxed, since only
+                // the members of its constraints can be reached on it
+                Expression.EmitNodeForAccess(ctx);
             }
 
             Expr.Cast(Value, destType.Materialize()).Emit(ctx, true);
@@ -153,7 +152,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             if (_field != null)
                 gen.EmitSaveField(_field.FieldInfo);
             else
-                gen.EmitCall(_property.Setter, true);
+                gen.EmitCall(_property.Setter, _property.IsVirtual, _property.ConstrainedTo?.Materialize());
         }
 
         #endregion

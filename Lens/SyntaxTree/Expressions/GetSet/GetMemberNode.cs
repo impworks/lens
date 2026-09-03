@@ -333,7 +333,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private void EmitProperty(Context ctx, ILGenerator gen)
         {
-            gen.EmitCall(_property.Getter, _property.IsVirtual);
+            gen.EmitCall(_property.Getter, _property.IsVirtual, _property.ConstrainedTo?.Materialize());
 
             if (ctx.IsPointerRequired(this))
             {

@@ -1,4 +1,4 @@
-using Lens.Translations;
+﻿using Lens.Translations;
 using NUnit.Framework;
 
 namespace Lens.Test.Features
@@ -117,6 +117,61 @@ l.Greet ()", CompilerMessages.TypeMethodInvocationAmbiguous);
 
         #endregion
 
+        #region Members of a constraint other than methods
+
+        [Test]
+        public void PropertyOnConstrainedParameter()
+        {
+            Test(@"
+use Lens.Test.Internals
+fun titleOf<T = INamed>:string (x:T) -> x.Title
+titleOf (new Knight ())", "sir");
+        }
+
+        [Test]
+        public void PropertyIsSettableOnConstrainedParameter()
+        {
+            Test(@"
+use Lens.Test.Internals
+fun bump<T = ICounted>:int (x:T) ->
+    x.Count = 5
+    0
+let c = new Counter ()
+bump c
+c.Count", 5);
+        }
+
+        [Test]
+        public void FieldOnConstrainedParameter()
+        {
+            // reached through the base type constraint rather than through an interface
+            Test(@"
+use Lens.Test.Internals
+fun valueOf<T = Num>:int (x:T) -> x.Value
+valueOf (Num::Make 4)", 4);
+        }
+
+        [Test]
+        public void IndexerOnConstrainedParameter()
+        {
+            Test(@"
+fun first<T = IList<int>>:int (x:T) -> x[0]
+var l = new List<int> ()
+l.Add 9
+first l", 9);
+        }
+
+        [Test]
+        public void MissingPropertyIsReported()
+        {
+            TestError(@"
+use Lens.Test.Internals
+fun titleOf<T = INamed>:string (x:T) -> x.Nope
+titleOf (new Knight ())", CompilerMessages.TypeIdentifierNotFound);
+        }
+
+        #endregion
+
         #region Static abstract members
 
         [Test]
@@ -134,6 +189,15 @@ fun mk<T = IZeroed<T>>:T (x:int) -> T::Make x
             Test(@"
 use Lens.Test.Internals
 (Num::Make 3).ToString ()", "3");
+        }
+
+        [Test]
+        public void StaticAbstractPropertyOnConstrainedParameter()
+        {
+            Test(@"
+use Lens.Test.Internals
+fun zero<T = IHasZero<T>>:T -> T::Zero
+(zero<Zed> ()).ToString ()", "zed");
         }
 
         [Test]
