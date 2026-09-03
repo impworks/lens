@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Lens.Translations;
 using NUnit.Framework;
@@ -316,6 +316,114 @@ fun test<T, T>:string (a:T) -> ""a""
 test 1";
 
             TestError(src, CompilerMessages.TypeParameterRedefinition);
+        }
+
+        #endregion
+
+        #region Instance members through a constraint
+
+        // A member of a constraint is called under the 'constrained. !T' prefix, on the receiver's
+        // address rather than on a boxed copy of it: one call site then serves every
+        // instantiation - the runtime dispatches directly for a value type and dereferences before
+        // the callvirt for a reference type - with no allocation. Every test here is written over
+        // a mutating member, because that is what tells the two apart: a call that went to a box
+        // leaves the parameter untouched and the script reads back the initial value.
+
+        [Test]
+        public void ConstraintMethodMutatesAValueTypeReceiver()
+        {
+            var src = @"
+use Lens.Test.Internals
+
+fun bump<T = IBumpable>:int (x:T) ->
+    x.Bump ()
+    x.Bump ()
+    x.Value
+
+bump (new Bumper ())";
+
+            Test(src, 2);
+        }
+
+        [Test]
+        public void ConstraintMethodMutatesAReferenceTypeReceiver()
+        {
+            var src = @"
+use Lens.Test.Internals
+
+fun bump<T = IBumpable>:int (x:T) ->
+    x.Bump ()
+    x.Bump ()
+    x.Value
+
+bump (new BumpBox ())";
+
+            Test(src, 2);
+        }
+
+        [Test]
+        public void ConstraintPropertyWrittenOnAValueTypeReceiver()
+        {
+            var src = @"
+use Lens.Test.Internals
+
+fun fill<T = ITotalled>:int (x:T) ->
+    x.Total = 7
+    x.Total
+
+fill (new Totals ())";
+
+            Test(src, 7);
+        }
+
+        [Test]
+        public void ConstraintIndexerOnAValueTypeReceiver()
+        {
+            var src = @"
+use Lens.Test.Internals
+
+fun fill<T = IIndexed>:int (x:T) ->
+    x[0] = 3
+    x[1] = 4
+    x[0] + x[1]
+
+fill (new Slots ())";
+
+            Test(src, 7);
+        }
+
+        [Test]
+        public void ConstraintEventSubscribedThroughAParameter()
+        {
+            var src = @"
+use Lens.Test.Internals
+
+fun listen<T = INotifier>:int (x:T) ->
+    var count = 0
+    let handler = ((s e) -> count = count + 1) as EventHandler
+    x.Notified += handler
+    x.Notify ()
+    x.Notify ()
+    x.Notified -= handler
+    x.Notify ()
+    count
+
+listen (new Notifier ())";
+
+            Test(src, 2);
+        }
+
+        [Test]
+        public void ObjectMemberOnAParameterWithNoConstraints()
+        {
+            // the last constraint every parameter has is 'object', and its members are reached the
+            // same way: a struct that overrides ToString answers from its own override, without
+            // being boxed first
+            var src = @"
+fun describe<T>:string (x:T) -> x.ToString ()
+describe 7";
+
+            Test(src, "7");
         }
 
         #endregion

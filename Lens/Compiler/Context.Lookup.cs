@@ -174,10 +174,7 @@ namespace Lens.Compiler
                 {
                     var found = ResolveProperty(constraint, name);
 
-                    // the same reason a static method of an interface constraint needs the
-                    // constrained. prefix: an accessor with no receiver has nothing to be dispatched
-                    // on, so the call site is the only place that knows whose implementation is meant
-                    if (found != null && constraint.IsInterface && found.IsStatic)
+                    if (found != null && NeedsConstrainedPrefix(constraint, found.IsStatic))
                         found.ConstrainedTo = type;
 
                     return found;
@@ -198,7 +195,19 @@ namespace Lens.Compiler
         {
             // only the members of a parameter's constraints are available on it
             if (type.IsGenericParameter)
-                return ResolveThroughConstraints(type, c => ResolveEvent(c, name));
+            {
+                return ResolveThroughConstraints(type, constraint =>
+                {
+                    var found = ResolveEvent(constraint, name);
+
+                    // an accessor is an instance method like any other, and is reached through the
+                    // parameter the same way - see NeedsConstrainedPrefix
+                    if (found != null && NeedsConstrainedPrefix(constraint, false))
+                        found.ConstrainedTo = type;
+
+                    return found;
+                });
+            }
 
             if (FindDeclaredType(type) == null)
                 return ResolveHostEvent(type, name);
@@ -242,11 +251,7 @@ namespace Lens.Compiler
                 {
                     var found = ResolveMethod(constraint, name, argTypes, hints, resolver, entryResolver);
 
-                    // a static member of an interface constraint has no receiver to be dispatched
-                    // on, so the call site is the only place that knows whose implementation of it
-                    // is meant, and the constrained. prefix is how that reaches the IL. An
-                    // instance member needs none: its receiver carries the answer.
-                    if (found != null && constraint.IsInterface && found.IsStatic)
+                    if (found != null && NeedsConstrainedPrefix(constraint, found.IsStatic))
                         found.ConstrainedTo = type;
 
                     return found;
@@ -791,6 +796,23 @@ namespace Lens.Compiler
         /// a property, an event - has to walk the constraints, and a constraint that has no such
         /// member says so by throwing. When none of them answers, the parameter has none either.
         /// </summary>
+        /// <summary>
+        /// Decides whether a member reached through a constraint of a type parameter has to be
+        /// called under the 'constrained. !T' prefix.
+        ///
+        /// An instance member always does: the receiver is the parameter's address rather than a
+        /// boxed copy of it (see <see cref="Utils.NodeExtensions.EmitNodeForAccess"/>), and the
+        /// prefix is what makes one call site serve both a value type and a reference type
+        /// substitution. A static member has no receiver to say whose implementation is meant, so
+        /// the prefix is the only thing that can - but only an interface can declare a static
+        /// member that is dispatched at all; a static member of a class constraint is an ordinary
+        /// call.
+        /// </summary>
+        private static bool NeedsConstrainedPrefix(TypeEntry constraint, bool isStatic)
+        {
+            return !isStatic || constraint.IsInterface;
+        }
+
         private T ResolveThroughConstraints<T>(TypeEntry typeParameter, Func<TypeEntry, T> lookup)
         {
             foreach (var constraint in ResolveConstraintsOf(typeParameter))
@@ -1053,7 +1075,14 @@ namespace Lens.Compiler
                 {
                     try
                     {
-                        return ResolveIndexer(constraint, idxTypes, isGetter);
+                        var accessor = ResolveIndexer(constraint, idxTypes, isGetter);
+
+                        // an indexer's accessor is an instance method like any other, and is
+                        // reached through the parameter the same way - see NeedsConstrainedPrefix
+                        if (accessor != null && NeedsConstrainedPrefix(constraint, accessor.IsStatic))
+                            accessor.ConstrainedTo = type;
+
+                        return accessor;
                     }
                     catch (LensCompilerException)
                     {

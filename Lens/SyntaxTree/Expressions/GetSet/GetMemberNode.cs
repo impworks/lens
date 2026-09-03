@@ -265,7 +265,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             if (!_isStatic)
             {
-                Expression.EmitNodeForAccess(ctx);
+                // a property reached through a constraint of a type parameter is called under the
+                // 'constrained.' prefix, and wants the receiver's address; a field and a method
+                // group - the latter becomes a delegate, whose constructor takes an object - want
+                // a reference instead
+                Expression.EmitNodeForAccess(ctx, _property?.ConstrainedTo != null);
 
                 if (MemberName == "Length" && Expression.Resolve(ctx).IsVectorArray)
                 {

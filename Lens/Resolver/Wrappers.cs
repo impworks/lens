@@ -145,9 +145,10 @@ namespace Lens.Resolver
         public bool IsAbstract;
 
         /// <summary>
-        /// The generic parameter the method was reached through, when it is a static member of one of
-        /// that parameter's interface constraints. A call to one of those needs a 'constrained.' prefix
-        /// to say whose implementation is meant; null for every other call.
+        /// The generic parameter the method was reached through, when the call to it needs a
+        /// 'constrained. !T' prefix: every instance member of a constraint, whose receiver is the
+        /// parameter's address, and a static member of an interface constraint, which has no
+        /// receiver to say whose implementation is meant. Null for every other call.
         /// </summary>
         public TypeEntry ConstrainedTo;
 
@@ -214,10 +215,9 @@ namespace Lens.Resolver
         public TypeEntry PropertyType;
 
         /// <summary>
-        /// The generic parameter the property was reached through, when it is a static member of one
-        /// of that parameter's interface constraints. Its accessors need a 'constrained.' prefix to
-        /// say whose implementation is meant, exactly as <see cref="MethodWrapper.ConstrainedTo"/>
-        /// does for a call; null for every other access.
+        /// The generic parameter the property was reached through, when its accessors need a
+        /// 'constrained. !T' prefix - exactly as <see cref="MethodWrapper.ConstrainedTo"/> does for
+        /// a call; null for every other access.
         /// </summary>
         public TypeEntry ConstrainedTo;
 
@@ -266,6 +266,13 @@ namespace Lens.Resolver
     internal class EventWrapper : WrapperBase
     {
         public TypeEntry EventHandlerType;
+
+        /// <summary>
+        /// The generic parameter the event was reached through, when its accessors need a
+        /// 'constrained. !T' prefix - exactly as <see cref="MethodWrapper.ConstrainedTo"/> does for
+        /// a call; null for every other subscription.
+        /// </summary>
+        public TypeEntry ConstrainedTo;
 
         private readonly LazyMember<MethodInfo> _addMethod = new LazyMember<MethodInfo>();
         private readonly LazyMember<MethodInfo> _removeMethod = new LazyMember<MethodInfo>();

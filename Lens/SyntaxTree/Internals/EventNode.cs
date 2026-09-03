@@ -62,12 +62,12 @@ namespace Lens.SyntaxTree.Internals
         {
             var gen = ctx.CurrentMethod.Generator;
 
-            _node.Expression?.EmitNodeForAccess(ctx);
+            _node.Expression?.EmitNodeForAccess(ctx, _event.ConstrainedTo != null);
 
             _callback.Emit(ctx, true);
 
             var method = _isSubscription ? _event.AddMethod : _event.RemoveMethod;
-            gen.EmitCall(method, true);
+            gen.EmitCall(method, true, _event.ConstrainedTo?.Materialize());
         }
 
         #endregion

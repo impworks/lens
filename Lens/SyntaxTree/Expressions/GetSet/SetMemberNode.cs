@@ -159,10 +159,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
             if (!_isStatic)
             {
-                // the same preparation a read of the member does: a struct receiver is addressed
-                // rather than copied, and a receiver whose type is a parameter is boxed, since only
-                // the members of its constraints can be reached on it
-                Expression.EmitNodeForAccess(ctx);
+                // the same preparation a read of the member does: a struct receiver, and a
+                // parameter's whose accessor is called under the 'constrained.' prefix, are
+                // addressed rather than copied; any other parameter is boxed, since only the
+                // members of its constraints can be reached on it
+                Expression.EmitNodeForAccess(ctx, _property?.ConstrainedTo != null);
             }
 
             // the location has to be under the value on the stack, so the getter is called before

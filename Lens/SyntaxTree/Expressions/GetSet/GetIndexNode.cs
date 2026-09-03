@@ -157,13 +157,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             // an indexer of a value type is an instance method like any other, and needs the
-            // receiver's address rather than a copy of it
-            Expression.EmitNodeForAccess(ctx);
+            // receiver's address rather than a copy of it - as does one reached through a
+            // constraint of a type parameter, which is called under the 'constrained.' prefix
+            Expression.EmitNodeForAccess(ctx, _getter.ConstrainedTo != null);
 
             for (var idx = 0; idx < Indexes.Count; idx++)
                 Expr.Cast(Indexes[idx], _getter.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
 
-            gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual);
+            gen.EmitCall(_getter.MethodInfo, _getter.IsVirtual, _getter.ConstrainedTo?.Materialize());
 
             // a getter that returns a managed pointer has left the element's location on the
             // stack, which is exactly what a caller asking for an address wants; anything else

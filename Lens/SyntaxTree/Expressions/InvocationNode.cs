@@ -520,7 +520,7 @@ namespace Lens.SyntaxTree.Expressions
             var gen = ctx.CurrentMethod.Generator;
             var binding = ctx.BindingOf<Binding>(this);
 
-            binding.InvocationSource?.EmitNodeForAccess(ctx);
+            binding.InvocationSource?.EmitNodeForAccess(ctx, binding.Method.ConstrainedTo != null);
 
             if (binding.ArgTypes.Length > 0)
             {

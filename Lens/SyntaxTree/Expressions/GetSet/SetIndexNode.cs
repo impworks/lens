@@ -193,8 +193,9 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     : _indexer.ArgumentTypes[_indexer.ArgumentTypes.Length - 1];
 
                 // an indexer of a value type is an instance method like any other, and needs the
-                // receiver's address rather than a copy of it
-                Expression.EmitNodeForAccess(ctx);
+                // receiver's address rather than a copy of it - as does one reached through a
+                // constraint of a type parameter, which is called under the 'constrained.' prefix
+                Expression.EmitNodeForAccess(ctx, _indexer.ConstrainedTo != null);
 
                 for (var idx = 0; idx < Indexes.Count; idx++)
                     Expr.Cast(Indexes[idx], _indexer.ArgumentTypes[idx].Materialize()).Emit(ctx, true);
@@ -202,14 +203,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                 // the location has to be under the value on the stack, so the getter is called
                 // before the value is evaluated
                 if (_writesThroughRef)
-                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
+                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual, _indexer.ConstrainedTo?.Materialize());
 
                 Expr.Cast(Value, valDest.Materialize()).Emit(ctx, true);
 
                 if (_writesThroughRef)
                     gen.EmitSaveObject(valDest.Materialize());
                 else
-                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual);
+                    gen.EmitCall(_indexer.MethodInfo, _indexer.IsVirtual, _indexer.ConstrainedTo?.Materialize());
             }
             catch (LensCompilerException ex)
             {
