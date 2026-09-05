@@ -168,6 +168,7 @@ The compiler already supports the following features:
 * [Extension methods](https://github.com/impworks/lens/wiki/Invoking-methods-and-functions#extension-methods) and LINQ
 * Async-await (in functions and at the top level of a script), iterators, `Expression<T>`
 * String interpolation: `$"a{expr}b"`, `$@"..."`, and format specifiers
+* Indices and ranges: `a[^1]` is the last item, `a[1..^1]` is everything but the ends
 * Overloaded operators support
 * [Partial function application](https://github.com/impworks/lens/wiki/Partial-application) and [function composition](https://github.com/impworks/lens/wiki/Function-composition)
 * Pattern matching (with [awesome regex support](https://github.com/impworks/lens/wiki/Pattern-Matching#9-regex-rule))

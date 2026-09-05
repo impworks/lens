@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
+using Lens.Stdlib;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -38,6 +39,12 @@ namespace Lens.SyntaxTree.Internals
 
         private TypeEntry _enumeratorType;
 
+        /// <summary>
+        /// Whether the sequence is a range, which holds two indices rather than any elements and
+        /// has to be walked rather than read.
+        /// </summary>
+        private bool _isRange;
+
         #endregion
 
         #region Resolve
@@ -45,6 +52,16 @@ namespace Lens.SyntaxTree.Internals
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var seqType = Sequence.Resolve(ctx);
+
+            // a loop over a range is a loop over the numbers between its two ends, and that is what
+            // this hands out an enumerator over: nothing else here can be told to walk one, because
+            // the shape the pass produced is a sequence and a range is not one
+            if (RangeTypes.IsRange(seqType))
+            {
+                _isRange = true;
+                _enumeratorType = TypeEntry.Generic(ctx.Resolver, typeof(IEnumerator<>), TypeEntryCache.Of<int>());
+                return _enumeratorType;
+            }
 
             var elementType = GetElementType(ctx, seqType);
             if (elementType != null)
@@ -97,9 +114,36 @@ namespace Lens.SyntaxTree.Internals
         {
             Resolve(ctx);
 
+            if (_isRange)
+                return ExpandRange(ctx);
+
             return Expr.Invoke(
                 Expr.Cast(Sequence, _enumerableType),
                 "GetEnumerator"
+            );
+        }
+
+        /// <summary>
+        /// Hands out an enumerator over the numbers a range spans.
+        ///
+        /// The range is read four times over - each of its bounds, and whether each of them is
+        /// counted from the end - so it goes into a name of its own first: what the pass spilled is
+        /// an expression, and one that need not be evaluated more than once.
+        /// </summary>
+        private NodeBase ExpandRange(Context ctx)
+        {
+            var rangeVar = ctx.Scope.DeclareImplicit(ctx, Sequence.Resolve(ctx), false);
+
+            return Expr.Block(
+                Expr.Set(rangeVar, Sequence),
+                Expr.Invoke(
+                    Expr.Invoke(
+                        Expr.GetMember(typeof(RangeHelper), nameof(RangeHelper.Enumerate)),
+                        RangeTypes.StartBasedBoundOf(Expr.Get(rangeVar), false),
+                        RangeTypes.StartBasedBoundOf(Expr.Get(rangeVar), true)
+                    ),
+                    "GetEnumerator"
+                )
             );
         }
 

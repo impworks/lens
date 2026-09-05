@@ -231,9 +231,6 @@
   <data name="NewlineSeparatorExpected" xml:space="preserve">
     <value>LE2038: Statements must be separated by newlines!</value>
   </data>
-  <data name="RangeEndExpected" xml:space="preserve">
-    <value>LE2039: Range end expression is expected!</value>
-  </data>
   <data name="RecordFieldIdentifierExpected" xml:space="preserve">
     <value>LE2040: Record field name must be an identifier!</value>
   </data>

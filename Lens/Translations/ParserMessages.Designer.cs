@@ -457,15 +457,6 @@ namespace Lens.Translations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LE2039: Range end expression is expected!.
-        /// </summary>
-        public static string RangeEndExpected {
-            get {
-                return ResourceManager.GetString("RangeEndExpected", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to LE2040: Record field name must be an identifier!.
         /// </summary>
         public static string RecordFieldIdentifierExpected {

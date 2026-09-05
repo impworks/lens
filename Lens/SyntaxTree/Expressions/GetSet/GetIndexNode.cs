@@ -20,6 +20,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// </summary>
         private MethodWrapper _getter;
 
+        /// <summary>
+        /// How an index of System.Index or System.Range is to be resolved against the length of
+        /// what is being indexed, or null when the index is an ordinary one.
+        /// </summary>
+        private IndexAccess _access;
+
         public bool RefArgumentRequired { get; set; }
 
         /// <summary>
@@ -34,6 +40,13 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
+
+            // an index of System.Index or System.Range is not an index the target itself
+            // understands, and the access it really makes is the one an integer would have made
+            _access = IndexAccess.Detect(ctx, exprType, Indexes, isGetter: true, owner: this);
+            if (_access != null)
+                return _access.ResultType;
+
             if (exprType.IsArray)
             {
                 CheckArrayRank(exprType);
@@ -79,6 +92,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         #endregion
 
         #region Transform
+
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            return _access?.ExpandGet(ctx, this);
+        }
 
         internal override IEnumerable<NodeChild> GetChildren()
         {

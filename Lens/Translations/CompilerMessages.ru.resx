@@ -780,4 +780,16 @@
   <data name="RefStructArrayElement" xml:space="preserve">
     <value>LE3220: Массив ref-структур '{0}' не может быть создан!</value>
   </data>
+  <data name="IndexFromEndNotSupported" xml:space="preserve">
+    <value>LE3221: Тип '{0}' не может быть проиндексирован с конца, так как ничто в нём не сообщает количество элементов!</value>
+  </data>
+  <data name="RangeIndexNotSupported" xml:space="preserve">
+    <value>LE3222: Тип '{0}' не может быть проиндексирован диапазоном!</value>
+  </data>
+  <data name="RangeIndexRef" xml:space="preserve">
+    <value>LE3223: Диапазон '{0}' не может быть передан по ссылке, так как это новая последовательность, а не ячейка памяти!</value>
+  </data>
+  <data name="ForeachRangeNotStartBased" xml:space="preserve">
+    <value>LE3224: Нельзя пройти по диапазону с опущенной или отсчитываемой от конца границей, так как границу не от чего отсчитывать!</value>
+  </data>
 </root>

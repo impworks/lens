@@ -2048,5 +2048,41 @@ namespace Lens.Translations {
                 return ResourceManager.GetString("RefStructArrayElement", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3221: Type &apos;{0}&apos; cannot be indexed from the end, because nothing on it says how many elements it holds!.
+        /// </summary>
+        public static string IndexFromEndNotSupported {
+            get {
+                return ResourceManager.GetString("IndexFromEndNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3222: Type &apos;{0}&apos; cannot be indexed by a range!.
+        /// </summary>
+        public static string RangeIndexNotSupported {
+            get {
+                return ResourceManager.GetString("RangeIndexNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3223: A range of &apos;{0}&apos; cannot be passed by reference, because it is a new sequence rather than a location!.
+        /// </summary>
+        public static string RangeIndexRef {
+            get {
+                return ResourceManager.GetString("RangeIndexRef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LE3224: A range with an omitted or end-based bound cannot be iterated over, because there is nothing for the bound to be counted from!.
+        /// </summary>
+        public static string ForeachRangeNotStartBased {
+            get {
+                return ResourceManager.GetString("ForeachRangeNotStartBased", resourceCulture);
+            }
+        }
     }
 }

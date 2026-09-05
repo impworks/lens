@@ -160,9 +160,13 @@ namespace Lens.SyntaxTree.Expressions
         private void ResolveGetMember(Context ctx, Binding binding, GetMemberNode node)
         {
             binding.InvocationSource = node.Expression;
+
+            // a static access names its type either as a signature the script wrote or as a type
+            // the compiler already has in hand, and a lowering that calls a known method of a known
+            // type does the latter
             var type = binding.InvocationSource != null
                 ? binding.InvocationSource.Resolve(ctx)
-                : ctx.ResolveType(node.StaticType);
+                : (node.StaticTypeInfo ?? ctx.ResolveType(node.StaticType));
 
             CheckTypeInSafeMode(ctx, type);
 

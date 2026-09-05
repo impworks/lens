@@ -780,4 +780,16 @@
   <data name="RefStructArrayElement" xml:space="preserve">
     <value>LE3220: An array of the ref struct type '{0}' cannot be created!</value>
   </data>
+  <data name="IndexFromEndNotSupported" xml:space="preserve">
+    <value>LE3221: Type '{0}' cannot be indexed from the end, because nothing on it says how many elements it holds!</value>
+  </data>
+  <data name="RangeIndexNotSupported" xml:space="preserve">
+    <value>LE3222: Type '{0}' cannot be indexed by a range!</value>
+  </data>
+  <data name="RangeIndexRef" xml:space="preserve">
+    <value>LE3223: A range of '{0}' cannot be passed by reference, because it is a new sequence rather than a location!</value>
+  </data>
+  <data name="ForeachRangeNotStartBased" xml:space="preserve">
+    <value>LE3224: A range with an omitted or end-based bound cannot be iterated over, because there is nothing for the bound to be counted from!</value>
+  </data>
 </root>

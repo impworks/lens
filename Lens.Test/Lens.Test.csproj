@@ -27,6 +27,12 @@
              Windows PDBs and has no such reader in the box. What the table has to say is the same
              on both platforms, so it is checked on the one that can read it. -->
         <Compile Remove="Features\DebugSequencePointsTest.cs" />
+
+        <!-- System.Index and System.Range arrived with .NET Core 3.0 and are not in the .NET
+             Framework box. The syntax that names them is resolved by name and works wherever the
+             types do, which on this leg is only where the host has brought them along - so there
+             is nothing here for the suite to run against. -->
+        <Compile Remove="Features\IndexAndRangeTest.cs" />
     </ItemGroup>
 
     <!-- the end-to-end check that a LENS query really does reach a database is worth a dependency,

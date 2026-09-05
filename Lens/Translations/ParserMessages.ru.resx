@@ -225,9 +225,6 @@
   <data name="NewlineSeparatorExpected" xml:space="preserve">
     <value>LE2038: Выражения должны располагаться на новых строках!</value>
   </data>
-  <data name="RangeEndExpected" xml:space="preserve">
-    <value>LE2039: Ожидается выражение-конец диапазона!</value>
-  </data>
   <data name="RecordFieldIdentifierExpected" xml:space="preserve">
     <value>LE2040: Имя поля записи должно быть идентификатором!</value>
   </data>

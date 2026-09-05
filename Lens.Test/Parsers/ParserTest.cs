@@ -441,6 +441,85 @@ fun hypo:double (a:int b:int) ->
         }
 
         [Test]
+        public void GetIndexFromEnd()
+        {
+            var src = "a = b[^2]";
+            var result = Expr.Set(
+                "a",
+                Expr.GetIdx(
+                    Expr.Get("b"),
+                    Expr.FromEnd(Expr.Int(2))
+                )
+            );
+
+            TestParser(src, result);
+        }
+
+        [Test]
+        public void GetIndexByRange()
+        {
+            var src = "a = b[1..^1]";
+            var result = Expr.Set(
+                "a",
+                Expr.GetIdx(
+                    Expr.Get("b"),
+                    Expr.Range(Expr.Int(1), Expr.FromEnd(Expr.Int(1)))
+                )
+            );
+
+            TestParser(src, result);
+        }
+
+        [Test]
+        public void GetIndexByRangeWithoutBounds()
+        {
+            var src = "a = b[..]";
+            var result = Expr.Set(
+                "a",
+                Expr.GetIdx(
+                    Expr.Get("b"),
+                    Expr.Range(null, null)
+                )
+            );
+
+            TestParser(src, result);
+        }
+
+        /// <summary>
+        /// A range binds looser than every operator, so both of its bounds are whole expressions.
+        /// </summary>
+        [Test]
+        public void RangeOfExpressions()
+        {
+            var src = "a = b + 1..c - 1";
+            var result = Expr.Set(
+                "a",
+                Expr.Range(
+                    Expr.Add(Expr.Get("b"), Expr.Int(1)),
+                    Expr.Sub(Expr.Get("c"), Expr.Int(1))
+                )
+            );
+
+            TestParser(src, result);
+        }
+
+        /// <summary>
+        /// The lexem an index counted from the end is written with is the one bitwise xor is
+        /// written with, and between two operands it is still the operator.
+        /// </summary>
+        [Test]
+        public void BitXorIsNotAnIndex()
+        {
+            var src = "a = b ^ c";
+            var result = Expr.Set(
+                "a",
+                Expr.BitXor(Expr.Get("b"), Expr.Get("c"))
+            );
+
+            TestParser(src, result);
+        }
+
+        [Test]
         public void MultilineLambda()
         {
             var src = @"

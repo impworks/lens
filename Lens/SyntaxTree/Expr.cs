@@ -371,6 +371,16 @@ namespace Lens.SyntaxTree
             };
         }
 
+        public static IndexFromEndNode FromEnd(NodeBase offset)
+        {
+            return new IndexFromEndNode {Operand = offset};
+        }
+
+        public static RangeNode Range(NodeBase start, NodeBase end)
+        {
+            return new RangeNode {Start = start, End = end};
+        }
+
         #endregion
 
         #region Expressions

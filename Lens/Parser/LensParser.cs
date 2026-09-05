@@ -1314,7 +1314,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// for_block                                   = "for" identifier "in" line_expr [ ".." line_expr ] "do"
+        /// for_header                                  = "for" identifier "in" line_expr "do"
         /// </summary>
         private ForeachNode ParseForHeader()
         {
@@ -1328,10 +1328,17 @@ namespace Lens.Parser
             Ensure(LexemType.In, ParserMessages.SymbolExpected, "in");
 
             var iter = Ensure(ParseLineExpr, ParserMessages.SequenceExpected);
-            if (Check(LexemType.DoubleDot))
+
+            // 'for i in 1..5' is the loop over the numbers between two ends, not a loop over a
+            // range value: the header knows both of its ends already, and telling it so is what
+            // keeps a descending range, and a range of longs, working as they always have. A range
+            // the header cannot take apart - one bound left out, or a value that arrives from
+            // elsewhere - is left to the loop to make sense of.
+            var range = iter as RangeNode;
+            if (range != null && range.Start != null && range.End != null)
             {
-                node.RangeStart = iter;
-                node.RangeEnd = Ensure(ParseLineExpr, ParserMessages.RangeEndExpected);
+                node.RangeStart = range.Start;
+                node.RangeEnd = range.End;
             }
             else
             {
@@ -2013,7 +2020,7 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// line_expr                                   = await_expr | if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_typecheck_expr
+        /// line_expr                                   = await_expr | if_line | while_line | for_line | using_line | throw_stmt | new_object_line | typeop_expr | line_range_expr
         /// </summary>
         private NodeBase ParseLineExpr()
         {
@@ -2025,7 +2032,28 @@ namespace Lens.Parser
                    ?? Attempt(ParseThrowStmt)
                    ?? Attempt(ParseNewObjectExpr)
                    ?? Attempt(ParseTypeopExpr)
-                   ?? Attempt(ParseLineTypecheckExpr);
+                   ?? Attempt(ParseLineRangeExpr);
+        }
+
+        /// <summary>
+        /// line_range_expr                             = [ line_typecheck_expr ] ".." [ line_typecheck_expr ] | line_typecheck_expr
+        ///
+        /// The range binds looser than every operator, as it does in C#: 'a+1..b-1' is the one
+        /// range between the two sums rather than a sum of a range.
+        /// </summary>
+        private NodeBase ParseLineRangeExpr()
+        {
+            if (Check(LexemType.DoubleDot))
+                return new RangeNode {End = Attempt(ParseLineTypecheckExpr)};
+
+            var start = Attempt(ParseLineTypecheckExpr);
+            if (start == null)
+                return null;
+
+            if (!Check(LexemType.DoubleDot))
+                return start;
+
+            return new RangeNode {Start = start, End = Attempt(ParseLineTypecheckExpr)};
         }
 
         /// <summary>
@@ -2111,12 +2139,28 @@ namespace Lens.Parser
         }
 
         /// <summary>
-        /// line_base_expr                              = line_invoke_base_expr | get_expr
+        /// line_base_expr                              = index_from_end_expr | line_invoke_base_expr | get_expr
         /// </summary>
         private NodeBase ParseLineBaseExpr()
         {
-            return Attempt(ParseLineInvokeBaseExpr)
+            return Attempt(ParseIndexFromEndExpr)
+                   ?? Attempt(ParseLineInvokeBaseExpr)
                    ?? Attempt(ParseGetExpr);
+        }
+
+        /// <summary>
+        /// index_from_end_expr                         = "^" get_expr
+        ///
+        /// The same lexem spells bitwise xor, and the two never compete: an operand is parsed here
+        /// only once the binary operator that could have consumed the lexem has looked at it and
+        /// found it at the start of an operand rather than between two of them.
+        /// </summary>
+        private IndexFromEndNode ParseIndexFromEndExpr()
+        {
+            if (!Check(LexemType.BitXor))
+                return null;
+
+            return new IndexFromEndNode {Operand = Ensure(ParseGetExpr, ParserMessages.ExpressionExpected)};
         }
 
         /// <summary>

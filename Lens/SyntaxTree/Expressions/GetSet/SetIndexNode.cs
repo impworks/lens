@@ -27,6 +27,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         private bool _writesThroughRef;
 
         /// <summary>
+        /// How an index of System.Index or System.Range is to be resolved against the length of
+        /// what is being indexed, or null when the index is an ordinary one.
+        /// </summary>
+        private IndexAccess _access;
+
+        /// <summary>
         /// Value to be assigned.
         /// </summary>
         public NodeBase Value { get; set; }
@@ -38,6 +44,22 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
             var exprType = Expression.Resolve(ctx);
+
+            // an index of System.Index or System.Range is not an index the target itself
+            // understands: a single element is stored where an integer would have stored it, and a
+            // whole segment is replaced by the sequence of values assigned to it
+            _access = IndexAccess.Detect(ctx, exprType, Indexes, isGetter: false, owner: this);
+            if (_access != null)
+            {
+                EnsureLambdaInferred(ctx, Value, _access.ResultType);
+
+                var assigned = Value.Resolve(ctx);
+                if (!_access.ResultType.IsExtendablyAssignableFrom(ctx.Resolver, assigned))
+                    Error(Value, CompilerMessages.ImplicitCastImpossible, assigned, _access.ResultType);
+
+                return base.ResolveInternal(ctx, mustReturn);
+            }
+
             var idxTypes = Indexes.Select(x => x.Resolve(ctx)).ToArray();
 
             if (exprType.IsArray)
@@ -109,6 +131,11 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         #endregion
 
         #region Transform
+
+        protected override NodeBase Expand(Context ctx, bool mustReturn)
+        {
+            return _access?.ExpandSet(ctx, this);
+        }
 
         internal override IEnumerable<NodeChild> GetChildren()
         {

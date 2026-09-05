@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lens.Compiler;
 using Lens.Resolver;
+using Lens.SyntaxTree.Expressions.Instantiation;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -53,16 +54,38 @@ namespace Lens.SyntaxTree.ControlFlow
         private TypeEntry _enumeratorType;
         private PropertyWrapper _currentProperty;
 
+        /// <summary>
+        /// The type of the range the loop is handed, when it is handed one rather than a sequence.
+        /// </summary>
+        private TypeEntry _rangeType;
+
         #endregion
 
         #region Resolve
 
         protected override TypeEntry ResolveInternal(Context ctx, bool mustReturn)
         {
+            CheckRangeBounds();
+
             if (IterableExpression != null)
-                DetectEnumerableType(ctx);
+            {
+                // a range is not a sequence - it holds two indices and no elements - but it is what
+                // the two ends of a loop are, and a loop over one walks the numbers between them
+                var iterableType = IterableExpression.Resolve(ctx);
+                if (RangeTypes.IsRange(iterableType))
+                {
+                    _rangeType = iterableType;
+                    _variableType = TypeEntryCache.Of<int>();
+                }
+                else
+                {
+                    DetectEnumerableType(ctx);
+                }
+            }
             else
+            {
                 DetectRangeType(ctx);
+            }
 
             if (VariableName != null && ctx.Scope.FindLocal(VariableName) != null)
                 throw new LensCompilerException(string.Format(CompilerMessages.VariableDefined, VariableName));
@@ -90,6 +113,9 @@ namespace Lens.SyntaxTree.ControlFlow
         {
             if (IterableExpression != null)
             {
+                if (_rangeType != null)
+                    return ExpandRangeValue(ctx);
+
                 var type = IterableExpression.Resolve(ctx);
                 if (type.IsVectorArray)
                     return ExpandArray(ctx);
@@ -97,7 +123,7 @@ namespace Lens.SyntaxTree.ControlFlow
                 return ExpandEnumerable(ctx, mustReturn);
             }
 
-            return ExpandRange(ctx);
+            return ExpandRange(ctx, RangeStart, RangeEnd);
         }
 
         internal override IEnumerable<NodeChild> GetChildren()
@@ -223,25 +249,47 @@ namespace Lens.SyntaxTree.ControlFlow
         }
 
         /// <summary>
+        /// Expands the foreach loop if it iterates over a range handed to it as a value.
+        ///
+        /// Both of the range's bounds are settled before the loop starts, and both have to be
+        /// counted from the start: a range on its own is not applied to anything, so there is
+        /// nothing for a bound counted from the end to be counted from. Which one was written is
+        /// only known once it is there, so that is where it is refused.
+        /// </summary>
+        private NodeBase ExpandRangeValue(Context ctx)
+        {
+            var rangeVar = ctx.Scope.DeclareImplicit(ctx, _rangeType, false);
+            var startVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
+            var endVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
+
+            return Expr.Block(
+                Expr.Set(rangeVar, IterableExpression),
+                Expr.Set(startVar, RangeTypes.StartBasedBoundOf(Expr.Get(rangeVar), false)),
+                Expr.Set(endVar, RangeTypes.StartBasedBoundOf(Expr.Get(rangeVar), true)),
+                ExpandRange(ctx, Expr.Get(startVar), Expr.Get(endVar))
+            );
+        }
+
+        /// <summary>
         /// Expands the foreach loop if it iterates over a numeric range.
         /// </summary>
-        private NodeBase ExpandRange(Context ctx)
+        private NodeBase ExpandRange(Context ctx, NodeBase rangeStart, NodeBase rangeEnd)
         {
             var signVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
             var idxVar = ctx.Scope.DeclareImplicit(ctx, _variableType, false);
 
             return Expr.Block(
-                Expr.Set(idxVar, RangeStart),
+                Expr.Set(idxVar, rangeStart),
                 Expr.Set(
                     signVar,
                     Expr.Invoke(
                         "Math",
                         "Sign",
-                        Expr.Sub(RangeEnd, Expr.Get(idxVar))
+                        Expr.Sub(rangeEnd, Expr.Get(idxVar))
                     )
                 ),
                 Loop(
-                    Expr.NotEqual(Expr.Get(idxVar), RangeEnd),
+                    Expr.NotEqual(Expr.Get(idxVar), rangeEnd),
                     Expr.Block(
                         GetIndexAssignment(Expr.Get(idxVar)),
                         Body,
@@ -278,6 +326,38 @@ namespace Lens.SyntaxTree.ControlFlow
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// Reports a bound of the range the loop walks that it can be seen not to have.
+        ///
+        /// A loop walks the numbers between two ends and is applied to nothing, so a bound counted
+        /// from the end has nothing to be counted from, and one left out is not there to begin
+        /// with. Where the range is written out, that is visible here; where it arrives as a value,
+        /// only the value knows, and it is refused when it gets there.
+        /// </summary>
+        private void CheckRangeBounds()
+        {
+            var range = IterableExpression as RangeNode;
+            if (range != null)
+            {
+                CheckRangeBound(range.Start, range);
+                CheckRangeBound(range.End, range);
+            }
+            else if (IterableExpression == null)
+            {
+                CheckRangeBound(RangeStart, this);
+                CheckRangeBound(RangeEnd, this);
+            }
+        }
+
+        /// <summary>
+        /// Reports a bound written as '^k', or not written at all.
+        /// </summary>
+        private void CheckRangeBound(NodeBase bound, LocationEntity fallback)
+        {
+            if (bound == null || bound is IndexFromEndNode)
+                Error(bound ?? fallback, CompilerMessages.ForeachRangeNotStartBased);
+        }
 
         /// <summary>
         /// Calculates the variable type and other required values for enumeration of an IEnumerable`1.
