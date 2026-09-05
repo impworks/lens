@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Lens.Compiler;
 using Lens.Lexer;
+using Lens.Resolver;
 using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
 using System.Linq;
@@ -44,9 +45,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         /// <summary>
         /// Map of lexems to corresponding node constructors (for expansion).
+        /// Must have an entry for every lexem the parser accepts before the '=' of a shorthand
+        /// assignment - see LensParser.BinaryOperators - since any of them reaches the constructor.
         /// </summary>
         private static readonly Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>> OperatorLookups = new Dictionary<LexemType, Func<NodeBase, NodeBase, NodeBase>>
         {
+            {LexemType.BitAnd, Expr.BitAnd},
+            {LexemType.BitOr, Expr.BitOr},
+            {LexemType.BitXor, Expr.BitXor},
             {LexemType.And, Expr.And},
             {LexemType.Or, Expr.Or},
             {LexemType.Xor, Expr.Xor},
@@ -58,6 +64,28 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             {LexemType.Multiply, Expr.Mult},
             {LexemType.Remainder, Expr.Mod},
             {LexemType.Power, Expr.Pow},
+        };
+
+        /// <summary>
+        /// Map of lexems to the names of the instance compound assignment operators declared for
+        /// them. Such an operator mutates its target in place, so an expression that has one is not
+        /// read, combined and written back.
+        /// '&amp;&amp;=' and '||=' are absent on purpose: they only sometimes evaluate their
+        /// right-hand side, and a call would always evaluate it. '**=' has no metadata name.
+        /// </summary>
+        private static readonly Dictionary<LexemType, string> InPlaceOperatorNames = new Dictionary<LexemType, string>
+        {
+            {LexemType.BitAnd, "op_BitwiseAndAssignment"},
+            {LexemType.BitOr, "op_BitwiseOrAssignment"},
+            {LexemType.BitXor, "op_ExclusiveOrAssignment"},
+            {LexemType.Xor, "op_ExclusiveOrAssignment"},
+            {LexemType.ShiftLeft, "op_LeftShiftAssignment"},
+            {LexemType.ShiftRight, "op_RightShiftAssignment"},
+            {LexemType.Plus, "op_AdditionAssignment"},
+            {LexemType.Minus, "op_SubtractionAssignment"},
+            {LexemType.Divide, "op_DivisionAssignment"},
+            {LexemType.Multiply, "op_MultiplicationAssignment"},
+            {LexemType.Remainder, "op_ModulusAssignment"},
         };
 
         #endregion
@@ -88,7 +116,7 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
             if (Expression is SetIdentifierNode)
-                return ExpandIdentifier(Expression as SetIdentifierNode);
+                return ExpandIdentifier(ctx, Expression as SetIdentifierNode);
 
             if (Expression is SetMemberNode)
             {
@@ -110,8 +138,12 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         /// Expands short assignment to an identifier:
         /// x += 1
         /// </summary>
-        private NodeBase ExpandIdentifier(SetIdentifierNode node)
+        private NodeBase ExpandIdentifier(Context ctx, SetIdentifierNode node)
         {
+            var inPlace = ExpandInPlace(ctx, Expr.Get(node.Identifier), node.Value);
+            if (inPlace != null)
+                return inPlace;
+
             return Expr.Set(
                 node.Identifier,
                 _assignmentOperator(
@@ -119,6 +151,35 @@ namespace Lens.SyntaxTree.Expressions.GetSet
                     node.Value
                 )
             );
+        }
+
+        /// <summary>
+        /// Attempts to expand the expression into a call to the instance compound assignment
+        /// operator of the target's own type, which updates the target in place.
+        /// Returns null when the type declares no such operator, leaving the read-modify-write
+        /// expansion to say what the shorthand means.
+        /// </summary>
+        private NodeBase ExpandInPlace(Context ctx, NodeBase target, NodeBase value)
+        {
+            if (!InPlaceOperatorNames.TryGetValue(_operatorType, out var name))
+                return null;
+
+            MethodWrapper method;
+            try
+            {
+                method = ctx.ResolveMethod(target.Resolve(ctx), name, new[] {value.Resolve(ctx)});
+            }
+            catch
+            {
+                return null;
+            }
+
+            // a static or value-returning member of that name is an ordinary method that happens to
+            // be named like an operator: only the instance void one carries the operator's meaning
+            if (method == null || method.IsStatic || !method.ReturnType.IsVoid())
+                return null;
+
+            return Expr.Invoke(target, name, value);
         }
 
         /// <summary>
@@ -156,6 +217,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // type::name += value
             if (node.StaticType != null)
             {
+                var inPlaceStatic = ExpandInPlace(ctx, Expr.GetMember(node.StaticType, node.MemberName), node.Value);
+                if (inPlaceStatic != null)
+                    return inPlaceStatic;
+
                 return Expr.SetMember(
                     node.StaticType,
                     node.MemberName,
@@ -172,6 +237,10 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // simple case: no need to cache expression
             if (node.Expression is SetIdentifierNode)
             {
+                var inPlaceSimple = ExpandInPlace(ctx, Expr.GetMember(node.Expression, node.MemberName), node.Value);
+                if (inPlaceSimple != null)
+                    return inPlaceSimple;
+
                 return Expr.SetMember(
                     node.Expression,
                     node.MemberName,
@@ -188,6 +257,15 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             // (x + y).name += value
             // must cache (x + y) to a local variable to prevent double execution
             var tmpVar = ctx.Scope.DeclareImplicit(ctx, node.Expression.Resolve(ctx), false);
+            var inPlaceCached = ExpandInPlace(ctx, Expr.GetMember(Expr.Get(tmpVar), node.MemberName), node.Value);
+            if (inPlaceCached != null)
+            {
+                return Expr.Block(
+                    Expr.Set(tmpVar, node.Expression),
+                    inPlaceCached
+                );
+            }
+
             return Expr.Block(
                 Expr.Set(tmpVar, node.Expression),
                 Expr.SetMember(
@@ -234,6 +312,14 @@ namespace Lens.SyntaxTree.Expressions.GetSet
             }
 
             var getter = new GetIndexNode {Expression = node.Expression, Indexes = node.Indexes.ToList()};
+
+            var inPlace = ExpandInPlace(ctx, getter, node.Value);
+            if (inPlace != null)
+            {
+                body.Add(inPlace);
+                return body;
+            }
+
             var setter = new SetIndexNode
             {
                 Expression = node.Expression,
