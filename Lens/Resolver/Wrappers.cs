@@ -92,6 +92,35 @@ namespace Lens.Resolver
         public bool IsPartiallyResolved;
         public bool IsVariadic;
         public TypeEntry[] ArgumentTypes;
+
+        /// <summary>
+        /// The trailing parameters the call site left out, in declaration order, each with the
+        /// value its default says. Null when the call spells every argument, which is every call
+        /// to anything the script itself declares.
+        /// </summary>
+        public OmittedArgument[] OmittedArguments;
+    }
+
+    /// <summary>
+    /// A parameter the call site left out, and what the callee declared to be passed for it.
+    /// </summary>
+    internal class OmittedArgument
+    {
+        public OmittedArgument(object value, TypeEntry type)
+        {
+            Value = value;
+            Type = type;
+        }
+
+        /// <summary>
+        /// The default value, as metadata records it. Null stands for the type's own default.
+        /// </summary>
+        public readonly object Value;
+
+        /// <summary>
+        /// The type of the parameter it is passed to.
+        /// </summary>
+        public readonly TypeEntry Type;
     }
 
     /// <summary>

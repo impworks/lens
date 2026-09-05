@@ -159,9 +159,14 @@ namespace Lens.Resolver
         /// <param name="list">List of method-like entitites.</param>
         /// <param name="argsGetter">A function that gets method entity arguments.</param>
         /// <param name="argTypes">Desired argument types.</param>
-        public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isVariadicGetter, TypeEntry[] argTypes)
+        /// <param name="optionalCountGetter">
+        /// Says how many of a candidate's trailing parameters declare a default value, and may
+        /// therefore be left out at the call site. Null where nothing in the list can have one:
+        /// LENS has no syntax for a default, so nothing the script declares does.
+        /// </param>
+        public static MethodLookupResult<T> ResolveMethodByArgs<T>(TypeResolutionContext ctx, IEnumerable<T> list, Func<T, TypeEntry[]> argsGetter, Func<T, bool> isVariadicGetter, TypeEntry[] argTypes, Func<T, int> optionalCountGetter = null)
         {
-            var applicable = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x)))
+            var applicable = list.Select(x => TypeExtensions.ArgumentDistance(ctx, argTypes, argsGetter(x), x, isVariadicGetter(x), optionalCountGetter?.Invoke(x) ?? 0))
                                  .Where(rec => rec.Distance != int.MaxValue)
                                  .ToArray();
 
@@ -471,6 +476,105 @@ namespace Lens.Resolver
         {
             var args = method.GetParameters();
             return args.Length > 0 && args[args.Length - 1].IsDefined(typeof(ParamArrayAttribute), true);
+        }
+
+        /// <summary>
+        /// Counts the trailing parameters that declare a default value, and may therefore be left
+        /// out at the call site.
+        ///
+        /// A param array is not one of them - it is the variadic tail, which has a mechanism of its
+        /// own - so the count starts at the parameter before it.
+        /// </summary>
+        public static int OptionalArgumentCount(MethodBase method)
+        {
+            return OptionalArgumentCount(method.GetParameters());
+        }
+
+        /// <summary>
+        /// Counts the trailing parameters of a signature that declare a default value.
+        ///
+        /// An indexer is asked about its index parameters rather than about its accessor's, whose
+        /// last one is the value being stored and is no part of the index at all.
+        /// </summary>
+        public static int OptionalArgumentCount(ParameterInfo[] args)
+        {
+            var last = args.Length - 1;
+
+            if (last >= 0 && args[last].IsDefined(typeof(ParamArrayAttribute), true))
+                last--;
+
+            var count = 0;
+            for (var idx = last; idx >= 0; idx--)
+            {
+                if (!IsOptionalParameter(args[idx]))
+                    break;
+
+                count++;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Checks whether a parameter says what to pass when the call site leaves it out.
+        ///
+        /// An '[Optional]' parameter that carries no value of its own does not: what a caller is
+        /// meant to hand it is Missing.Value, which means one thing to a COM interop stub and
+        /// nothing at all to anything else, so such a parameter is refused rather than guessed at.
+        /// So is a default no constant can be spelled with - the DateTime and the nullable struct
+        /// that reach metadata as an attribute rather than as a value.
+        /// </summary>
+        private static bool IsOptionalParameter(ParameterInfo parameter)
+        {
+            var type = parameter.ParameterType;
+
+            if (!parameter.IsOptional || type.IsByRef || type.IsPointer)
+                return false;
+
+            object value;
+            try
+            {
+                value = parameter.DefaultValue;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            if (value is DBNull || value is Missing)
+                return false;
+
+            // 'default' of anything at all is a value the compiler can produce for itself
+            if (value == null)
+                return true;
+
+            return IsSpellableConstant(type);
+        }
+
+        /// <summary>
+        /// Whether a value of the type can be written out as a constant in IL.
+        /// </summary>
+        private static bool IsSpellableConstant(Type type)
+        {
+            if (type.IsEnum)
+                return true;
+
+            return type == typeof(string) || type == typeof(decimal) || (type.IsPrimitive && type != typeof(IntPtr) && type != typeof(UIntPtr));
+        }
+
+        /// <summary>
+        /// The value a parameter says to pass when the call site leaves it out.
+        /// </summary>
+        public static object DefaultValueOf(ParameterInfo parameter)
+        {
+            try
+            {
+                return parameter.DefaultValue;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using Lens.Resolver;
+using Lens.SyntaxTree.Internals;
 
 namespace Lens.SyntaxTree.Expressions.GetSet
 {
@@ -26,6 +28,27 @@ namespace Lens.SyntaxTree.Expressions.GetSet
         {
             get => Indexes.Count > 0 ? Indexes[0] : null;
             set => Indexes = new List<NodeBase> {value};
+        }
+
+        #endregion
+
+        #region Transform
+
+        /// <summary>
+        /// The index list an access spells, followed by the defaults of the trailing index
+        /// parameters it leaves out - or null when it leaves none out.
+        ///
+        /// An indexer is a method in every respect but its spelling, and a default index is filled
+        /// in exactly as a default argument is: the access is rewritten into the one that names
+        /// every index, and everything after that sees an ordinary access.
+        /// </summary>
+        protected List<NodeBase> IndexesWithDefaults(MethodWrapper accessor)
+        {
+            var omitted = accessor?.OmittedArguments;
+            if (omitted == null || omitted.Length == 0)
+                return null;
+
+            return Indexes.Concat(omitted.Select(x => (NodeBase) new DefaultArgumentNode(x.Value, x.Type))).ToList();
         }
 
         #endregion

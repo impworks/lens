@@ -492,6 +492,19 @@ users
         /// <summary>
         /// Compares the tree LENS builds for a predicate against the one C# builds for the same one.
         /// </summary>
+        /// <summary>
+        /// A call in a tree that leaves its trailing arguments out carries the defaults as
+        /// constants, exactly as the one C# builds for the same call does.
+        /// </summary>
+        [Test]
+        public void CallWithOmittedArgumentsBecomesATree()
+        {
+            AssertStringProjection(
+                "u -> Lens.Test.Internals.Optionals::Opt u.Age",
+                u => Internals.Optionals.Opt(u.Age, 5, "z")
+            );
+        }
+
         private static void AssertPredicate(string lens, Expression<Func<TreeUser, bool>> expected)
         {
             AssertLambda("Where", lens, expected);

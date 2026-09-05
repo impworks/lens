@@ -12,6 +12,7 @@ using Lens.SyntaxTree.Declarations.Locals;
 using Lens.SyntaxTree.Expressions;
 using Lens.SyntaxTree.Expressions.GetSet;
 using Lens.SyntaxTree.Expressions.Instantiation;
+using Lens.SyntaxTree.Internals;
 using Lens.SyntaxTree.Literals;
 using Lens.SyntaxTree.Operators;
 using Lens.SyntaxTree.Operators.Binary;
@@ -411,7 +412,8 @@ namespace Lens.Compiler
             // an indexer reads as a call to its getter, which is exactly the shape C# builds
             Translate(node.Expression);
             PushMethod(getter.MethodInfo);
-            EmitArgumentArray(node.Indexes.ToArray(), getter.ArgumentTypes.Select(x => x.Materialize()).ToArray());
+            var indexTypes = getter.ArgumentTypes.Select(x => x.Materialize()).ToArray();
+            EmitArgumentArray(RealArguments(getter, node.Indexes, indexTypes.Length), indexTypes);
             Gen.EmitCall(FactoryCallInstance);
 
             return getter.ReturnType.Materialize();
@@ -441,7 +443,7 @@ namespace Lens.Compiler
                 Translate(source);
 
             PushMethod(method.MethodInfo);
-            EmitArgumentArray(RealArguments(arguments, argTypes.Length), argTypes);
+            EmitArgumentArray(RealArguments(method, arguments, argTypes.Length), argTypes);
             Gen.EmitCall(isStatic ? FactoryCallStatic : FactoryCallInstance);
 
             return method.ReturnType.Materialize();
@@ -456,7 +458,7 @@ namespace Lens.Compiler
             var argTypes = ctor.ArgumentTypes.Select(x => x.Materialize()).ToArray();
 
             PushConstructor(ctor.ConstructorInfo, argTypes);
-            EmitArgumentArray(RealArguments(node.BoundArguments(_ctx), argTypes.Length), argTypes);
+            EmitArgumentArray(RealArguments(ctor, node.BoundArguments(_ctx), argTypes.Length), argTypes);
             Gen.EmitCall(FactoryNew);
 
             return ctor.DeclaringType.Materialize();
@@ -885,12 +887,26 @@ namespace Lens.Compiler
         /// <summary>
         /// Drops the unit pseudoargument a parameterless call carries.
         /// </summary>
-        private static IList<NodeBase> RealArguments(IList<NodeBase> arguments, int expectedCount)
+        /// <summary>
+        /// The arguments a call passes, the defaults of the parameters it leaves out included.
+        ///
+        /// The tree is built from what binding settled on rather than from what the call expanded
+        /// into - the expansion has no receiver-as-argument-zero rewrite in it - so the defaults an
+        /// omitted argument stands for are filled in here as well.
+        /// </summary>
+        private static IList<NodeBase> RealArguments(CallableWrapperBase callable, IList<NodeBase> arguments, int expectedCount)
         {
-            if (expectedCount == 0 && arguments.Count == 1 && arguments[0] is UnitNode)
-                return new NodeBase[0];
+            var omitted = callable.OmittedArguments;
+            var omittedCount = omitted?.Length ?? 0;
 
-            return arguments;
+            var supplied = expectedCount - omittedCount == 0 && arguments.Count == 1 && arguments[0] is UnitNode
+                ? new List<NodeBase>()
+                : new List<NodeBase>(arguments);
+
+            if (omittedCount > 0)
+                supplied.AddRange(omitted.Select(x => (NodeBase) new DefaultArgumentNode(x.Value, x.Type)));
+
+            return supplied;
         }
 
         private void Box(Type type)

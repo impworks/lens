@@ -48,7 +48,7 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets an extension method by given arguments.
         /// </summary>
-        public MethodInfo ResolveExtensionMethod(TypeResolutionContext ctx, TypeEntry type, string name, TypeEntry[] args)
+        public MethodInfo ResolveExtensionMethod(TypeResolutionContext ctx, TypeEntry type, string name, TypeEntry[] args, out int omittedCount)
         {
             if (!_cache.ContainsKey(type))
                 _cache.Add(type, FindMethodsForType(ctx, type));
@@ -61,7 +61,7 @@ namespace Lens.Resolver
             // the receiver is a parameter like any other here, so that the tie between Queryable's
             // overload and Enumerable's - which differ in the receiver above all - can be decided
             var applicable = methods.Where(m => m.Name == name)
-                                    .Select(mi => new Candidate(mi, GetExtensionDistance(ctx, mi, type, args), Signature(mi)))
+                                    .Select(mi => Weigh(ctx, mi, type, args))
                                     .Where(c => c.Distance != int.MaxValue)
                                     .ToArray();
 
@@ -74,6 +74,7 @@ namespace Lens.Resolver
             if (best.Length > 1)
                 throw new AmbiguousMatchException();
 
+            omittedCount = best[0].OmittedCount;
             return best[0].Method;
         }
 
@@ -143,18 +144,29 @@ namespace Lens.Resolver
         }
 
         /// <summary>
-        /// Calculates the total distance for a list of arguments of an extension method.
+        /// Weighs one extension method against the call, receiver included.
         /// </summary>
-        private static int GetExtensionDistance(TypeResolutionContext ctx, MethodInfo method, TypeEntry type, TypeEntry[] args)
+        private static Candidate Weigh(TypeResolutionContext ctx, MethodInfo method, TypeEntry type, TypeEntry[] args)
         {
-            var methodArgs = method.GetParameters().Select(p => p.ParameterType).ToArray();
-            var baseDist = TypeEntryCache.Of(methodArgs.First()).DistanceFrom(ctx, type);
-            var argsDist = TypeExtensions.TypeListDistance(ctx, args, methodArgs.Skip(1).Select(TypeEntryCache.Of));
+            var signature = Signature(method);
+            var parameters = method.GetParameters();
+
+            // the receiver is parameter zero and is always supplied, so what the call may leave out
+            // is counted among the parameters after it
+            var declared = parameters.Length - 1;
+            var omitted = declared - args.Length;
+
+            if (omitted > 0 && omitted > ReflectionHelper.OptionalArgumentCount(parameters))
+                return new Candidate(method, int.MaxValue, signature, 0);
+
+            var baseDist = signature[0].DistanceFrom(ctx, type);
+            var argsDist = TypeExtensions.TypeListDistance(ctx, args, signature.Skip(1).Take(args.Length));
 
             if (baseDist == int.MaxValue || argsDist == int.MaxValue)
-                return int.MaxValue;
+                return new Candidate(method, int.MaxValue, signature, 0);
 
-            return baseDist + argsDist;
+            // a call that leaves an argument out is a worse match than one that spells it
+            return new Candidate(method, baseDist + argsDist + Math.Max(omitted, 0), signature, Math.Max(omitted, 0));
         }
 
         /// <summary>
@@ -174,16 +186,22 @@ namespace Lens.Resolver
         /// </summary>
         private class Candidate
         {
-            public Candidate(MethodInfo method, int distance, TypeEntry[] argumentTypes)
+            public Candidate(MethodInfo method, int distance, TypeEntry[] argumentTypes, int omittedCount)
             {
                 Method = method;
                 Distance = distance;
                 ArgumentTypes = argumentTypes;
+                OmittedCount = omittedCount;
             }
 
             public readonly MethodInfo Method;
             public readonly int Distance;
             public readonly TypeEntry[] ArgumentTypes;
+
+            /// <summary>
+            /// How many of the trailing parameters the call leaves out.
+            /// </summary>
+            public readonly int OmittedCount;
         }
 
         #endregion

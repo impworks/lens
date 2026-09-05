@@ -5,6 +5,8 @@ using Lens.Compiler;
 using Lens.Resolver;
 using Lens.SyntaxTree.Declarations.Functions;
 using Lens.SyntaxTree.Expressions.GetSet;
+using Lens.SyntaxTree.Internals;
+using Lens.SyntaxTree.Literals;
 using Lens.Translations;
 using Lens.Utils;
 
@@ -160,6 +162,16 @@ namespace Lens.SyntaxTree.Expressions
                 return Expr.Lambda(argDefs, RecreateSelfWithArgs(argExprs));
             }
 
+            // a call that leaves the trailing arguments out is written out as the one that spells
+            // them, so that everything after this point sees a call like any other. The values come
+            // from the callee's own declaration, and nothing but the parameter's type is used to
+            // spell them: what metadata records for a byte, an enum or a char is an integer.
+            if (wrapper.OmittedArguments != null && wrapper.OmittedArguments.Length > 0)
+            {
+                var defaults = wrapper.OmittedArguments.Select(x => (NodeBase) new DefaultArgumentNode(x.Value, x.Type));
+                return RecreateSelfWithArgs(SuppliedArguments().Concat(defaults));
+            }
+
             if (wrapper.IsVariadic)
             {
                 var srcTypes = binding.ArgTypes;
@@ -195,6 +207,19 @@ namespace Lens.SyntaxTree.Expressions
             }
 
             return base.Expand(ctx, mustReturn);
+        }
+
+        /// <summary>
+        /// The arguments the call actually spells.
+        ///
+        /// An argument list of exactly one unit is how a call with no arguments at all is written,
+        /// and it stands for nothing that is passed: anything appended to the list replaces it.
+        /// </summary>
+        private IEnumerable<NodeBase> SuppliedArguments()
+        {
+            return Arguments.Count == 1 && Arguments[0] is UnitNode
+                ? Enumerable.Empty<NodeBase>()
+                : Arguments;
         }
 
         /// <summary>

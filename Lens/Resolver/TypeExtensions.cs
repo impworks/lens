@@ -865,15 +865,29 @@ namespace Lens.Resolver
         /// <summary>
         /// Gets total distance between two sets of argument types.
         /// </summary>
-        public static MethodLookupResult<T> ArgumentDistance<T>(TypeResolutionContext ctx, IEnumerable<TypeEntry> passedTypes, TypeEntry[] actualTypes, T method, bool isVariadic)
+        /// <param name="optionalCount">
+        /// How many of the trailing parameters declare a default value, and may therefore be left
+        /// out at the call site.
+        /// </param>
+        public static MethodLookupResult<T> ArgumentDistance<T>(TypeResolutionContext ctx, IEnumerable<TypeEntry> passedTypes, TypeEntry[] actualTypes, T method, bool isVariadic, int optionalCount = 0)
         {
+            var passed = passedTypes as TypeEntry[] ?? passedTypes.ToArray();
+
+            // the parameters the call site has to spell itself: everything but a trailing param
+            // array, which packs whatever is left, and the trailing ones that declare a default
+            var requiredCount = actualTypes.Length - (isVariadic ? 1 : 0);
+            var omitted = requiredCount - passed.Length;
+
+            if (omitted > 0)
+                return OmittedArgumentDistance(ctx, passed, actualTypes, method, isVariadic, optionalCount, omitted);
+
             if (!isVariadic)
-                return new MethodLookupResult<T>(method, TypeListDistance(ctx, passedTypes, actualTypes), actualTypes);
+                return new MethodLookupResult<T>(method, TypeListDistance(ctx, passed, actualTypes), actualTypes);
 
             var simpleCount = actualTypes.Length - 1;
-            var variadicArgs = passedTypes.Skip(simpleCount).ToArray();
+            var variadicArgs = passed.Skip(simpleCount).ToArray();
 
-            var simpleDistance = TypeListDistance(ctx, passedTypes.Take(simpleCount), actualTypes.Take(simpleCount));
+            var simpleDistance = TypeListDistance(ctx, passed.Take(simpleCount), actualTypes.Take(simpleCount));
             var variadicDistance = VariadicArgumentDistance(ctx, variadicArgs, actualTypes[simpleCount]);
             var distance = simpleDistance == int.MaxValue || variadicDistance == int.MaxValue ? int.MaxValue : simpleDistance + variadicDistance;
 
@@ -882,6 +896,27 @@ namespace Lens.Resolver
             var isExpanded = !(variadicArgs.Length == 1 && variadicArgs[0] == actualTypes[simpleCount]);
 
             return new MethodLookupResult<T>(method, distance, actualTypes, isExpanded);
+        }
+
+        /// <summary>
+        /// Weighs a candidate the call site does not supply every argument of.
+        ///
+        /// It applies when every parameter left out declares a default, and it applies worse than
+        /// one whose arguments are all spelled - the same rule, and for the same reason, as the one
+        /// that makes a param array being packed lose to one being passed.
+        /// </summary>
+        private static MethodLookupResult<T> OmittedArgumentDistance<T>(TypeResolutionContext ctx, TypeEntry[] passed, TypeEntry[] actualTypes, T method, bool isVariadic, int optionalCount, int omitted)
+        {
+            if (omitted > optionalCount)
+                return new MethodLookupResult<T>(method, int.MaxValue, actualTypes);
+
+            var distance = TypeListDistance(ctx, passed, actualTypes.Take(passed.Length));
+            if (distance == int.MaxValue)
+                return new MethodLookupResult<T>(method, int.MaxValue, actualTypes);
+
+            // nothing is left over for a param array, so the call builds an empty one - which is a
+            // packing like any other and is charged for as one
+            return new MethodLookupResult<T>(method, distance + omitted + (isVariadic ? 1 : 0), actualTypes, isVariadic, omitted);
         }
 
         /// <summary>

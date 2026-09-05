@@ -9,12 +9,13 @@ namespace Lens.Resolver
     {
         #region Constructor
 
-        public MethodLookupResult(T method, int dist, TypeEntry[] args, bool isExpanded = false)
+        public MethodLookupResult(T method, int dist, TypeEntry[] args, bool isExpanded = false, int omittedCount = 0)
         {
             Method = method;
             Distance = dist;
             ArgumentTypes = args;
             IsExpanded = isExpanded;
+            OmittedCount = omittedCount;
         }
 
         #endregion
@@ -41,6 +42,12 @@ namespace Lens.Resolver
         /// the arguments, rather than passed as one.
         /// </summary>
         public readonly bool IsExpanded;
+
+        /// <summary>
+        /// How many of the trailing parameters the call site left out, to be filled in from the
+        /// defaults they declare.
+        /// </summary>
+        public readonly int OmittedCount;
 
         #endregion
     }

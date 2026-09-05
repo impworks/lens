@@ -571,7 +571,7 @@ namespace Lens.Compiler
             // is an ordinary call, and weighing it is what the entry model is for. The reflection
             // path that used to be here could only be taken once an assembly existed, so analysis
             // reported every such call as a method that does not exist.
-            var found = _extensionResolver.ResolveExtensionMethod(Resolver, type, name, argTypes);
+            var found = _extensionResolver.ResolveExtensionMethod(Resolver, type, name, argTypes, out var omittedCount);
             var declaringType = TypeEntryCache.Of(found.DeclaringType);
 
             // the receiver is checked wherever it came from, but the type the method is declared on
@@ -603,7 +603,10 @@ namespace Lens.Compiler
                 // it as one: the TSource of an Enumerable overload is named nowhere else
                 var genericDefs = TypeEntryCache.Of(found.GetGenericArguments());
                 var actual = new[] {type}.Concat(argTypes).ToArray();
-                var values = InferGenerics(genericDefs, parameters, actual, hints, lambdaResolver, entryLambdaResolver);
+
+                // a parameter the call site left out says nothing about what the type arguments are
+                var supplied = omittedCount > 0 ? parameters.Take(actual.Length).ToArray() : parameters;
+                var values = InferGenerics(genericDefs, supplied, actual, hints, lambdaResolver, entryLambdaResolver);
 
                 mw.GenericArguments = values;
                 mw.ArgumentTypes = parameters.Select(x => SubstituteIntoInstantiation(x, genericDefs, values)).ToArray();
@@ -614,6 +617,8 @@ namespace Lens.Compiler
             {
                 Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
             }
+
+            mw.OmittedArguments = OmittedArgumentsOf(found, mw.ArgumentTypes, omittedCount);
 
             return mw;
         }
@@ -1099,7 +1104,7 @@ namespace Lens.Compiler
             var instantiation = InstantiationOf(type);
             var target = LookupTargetOf(type);
 
-            var candidates = new List<Tuple<MethodInfo, TypeEntry[], int>>();
+            var candidates = new List<IndexerCandidate>();
 
             foreach (var pty in target.GetProperties())
             {
@@ -1108,35 +1113,44 @@ namespace Lens.Compiler
                     continue;
 
                 var idxArgs = pty.GetIndexParameters();
-                if (idxArgs.Length != idxTypes.Length)
+
+                // an indexer whose trailing index parameters declare defaults is addressable by
+                // fewer indices than it has, exactly as a method is callable by fewer arguments
+                var omitted = idxArgs.Length - idxTypes.Length;
+                if (omitted < 0 || omitted > ReflectionHelper.OptionalArgumentCount(idxArgs))
                     continue;
 
                 var argTypes = idxArgs.Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray();
 
                 // the same summed distance overload resolution uses for methods: an indexer of
                 // several arguments is a method in every respect but its spelling
-                candidates.Add(new Tuple<MethodInfo, TypeEntry[], int>(accessor, argTypes, Lens.Resolver.TypeExtensions.TypeListDistance(Resolver, idxTypes, argTypes)));
+                var distance = Lens.Resolver.TypeExtensions.TypeListDistance(Resolver, idxTypes, argTypes.Take(idxTypes.Length));
+                if (distance != int.MaxValue)
+                    distance += omitted;
+
+                candidates.Add(new IndexerCandidate(pty, accessor, argTypes, distance, omitted));
             }
 
-            candidates.Sort((x, y) => x.Item3.CompareTo(y.Item3));
+            candidates.Sort((x, y) => x.Distance.CompareTo(y.Distance));
 
-            if (candidates.Count == 0 || candidates[0].Item3 == int.MaxValue)
+            if (candidates.Count == 0 || candidates[0].Distance == int.MaxValue)
                 Error(
                     isGetter ? CompilerMessages.IndexGetterNotFound : CompilerMessages.IndexSetterNotFound,
                     type,
                     JoinTypes(idxTypes)
                 );
 
-            if (candidates.Count > 1 && candidates[0].Item3 == candidates[1].Item3)
+            if (candidates.Count > 1 && candidates[0].Distance == candidates[1].Distance)
                 Error(
                     CompilerMessages.IndexAmbigious,
                     type,
-                    JoinTypes(candidates[0].Item2),
-                    JoinTypes(candidates[1].Item2),
+                    JoinTypes(candidates[0].IndexTypes),
+                    JoinTypes(candidates[1].IndexTypes),
                     Environment.NewLine
                 );
 
-            var found = candidates[0].Item1;
+            var best = candidates[0];
+            var found = best.Accessor;
 
             return new MethodWrapper
             {
@@ -1145,12 +1159,61 @@ namespace Lens.Compiler
 
                 IsStatic = false,
                 IsVirtual = found.IsVirtual,
+                OmittedArguments = OmittedIndicesOf(best),
 
                 ArgumentTypes = found.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
                 ReturnType = SubstituteIntoInstantiation(found.ReturnType, instantiation),
 
                 MethodInfoSource = () => MemberOfInstantiation(found, instantiation)
             };
+        }
+
+        /// <summary>
+        /// One indexer weighed against the indices an access supplies.
+        /// </summary>
+        private class IndexerCandidate
+        {
+            public IndexerCandidate(PropertyInfo property, MethodInfo accessor, TypeEntry[] indexTypes, int distance, int omittedCount)
+            {
+                Property = property;
+                Accessor = accessor;
+                IndexTypes = indexTypes;
+                Distance = distance;
+                OmittedCount = omittedCount;
+            }
+
+            public readonly PropertyInfo Property;
+            public readonly MethodInfo Accessor;
+
+            /// <summary>
+            /// The declared types of the index parameters, in the receiver's own terms.
+            /// </summary>
+            public readonly TypeEntry[] IndexTypes;
+
+            public readonly int Distance;
+
+            /// <summary>
+            /// How many of the trailing indices the access leaves out.
+            /// </summary>
+            public readonly int OmittedCount;
+        }
+
+        /// <summary>
+        /// The defaults an access fills in for the trailing indices it does not supply.
+        /// </summary>
+        private static OmittedArgument[] OmittedIndicesOf(IndexerCandidate candidate)
+        {
+            if (candidate.OmittedCount <= 0)
+                return null;
+
+            var parameters = candidate.Property.GetIndexParameters();
+            var first = parameters.Length - candidate.OmittedCount;
+
+            var result = new OmittedArgument[candidate.OmittedCount];
+            for (var idx = 0; idx < candidate.OmittedCount; idx++)
+                result[idx] = new OmittedArgument(ReflectionHelper.DefaultValueOf(parameters[first + idx]), candidate.IndexTypes[first + idx]);
+
+            return result;
         }
 
         /// <summary>
@@ -1172,7 +1235,8 @@ namespace Lens.Compiler
                 LookupTargetOf(type).GetConstructors(),
                 c => c.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
                 ReflectionHelper.IsVariadic,
-                argTypes
+                argTypes,
+                ReflectionHelper.OptionalArgumentCount
             );
 
             var ctor = found.Method;
@@ -1184,6 +1248,7 @@ namespace Lens.Compiler
 
                 IsPartiallyApplied = ReflectionHelper.IsPartiallyApplied(argTypes),
                 IsVariadic = ReflectionHelper.IsVariadic(ctor),
+                OmittedArguments = OmittedArgumentsOf(ctor, found.ArgumentTypes, found.OmittedCount),
 
                 ConstructorInfoSource = () => MemberOfInstantiation(ctor, instantiation)
             };
@@ -1277,7 +1342,8 @@ namespace Lens.Compiler
                 ReflectionHelper.GetMethodsByName(LookupTargetOf(type), name),
                 m => m.GetParameters().Select(p => SubstituteIntoInstantiation(p.ParameterType, instantiation)).ToArray(),
                 ReflectionHelper.IsVariadic,
-                argTypes
+                argTypes,
+                ReflectionHelper.OptionalArgumentCount
             );
 
             var info = found.Method;
@@ -1301,7 +1367,12 @@ namespace Lens.Compiler
             if (info.IsGenericMethod)
             {
                 var parameters = TypeEntryCache.Of(info.GetGenericArguments());
-                var values = InferGenerics(parameters, found.ArgumentTypes, argTypes, hints, lambdaResolver, entryLambdaResolver);
+
+                // a parameter the call site left out says nothing about what the type arguments
+                // are, and inference matches the two lists off against each other position by
+                // position: it is shown only the parameters the call actually supplies
+                var supplied = found.OmittedCount > 0 ? found.ArgumentTypes.Take(argTypes.Length).ToArray() : found.ArgumentTypes;
+                var values = InferGenerics(parameters, supplied, argTypes, hints, lambdaResolver, entryLambdaResolver);
 
                 mw.GenericArguments = values;
                 mw.ArgumentTypes = found.ArgumentTypes.Select(x => SubstituteIntoInstantiation(x, parameters, values)).ToArray();
@@ -1313,9 +1384,33 @@ namespace Lens.Compiler
                 Error(CompilerMessages.GenericArgsToNonGenericMethod, name);
             }
 
+            mw.OmittedArguments = OmittedArgumentsOf(info, mw.ArgumentTypes, found.OmittedCount);
+
             CheckFixedParameters(mw, argTypes);
 
             return mw;
+        }
+
+        /// <summary>
+        /// The defaults a call fills in for the trailing parameters it does not supply.
+        ///
+        /// The types come from the signature the lookup settled on rather than from reflection, so
+        /// that a parameter declared in terms of a generic argument is the type the call made of
+        /// it: the 'T x = default' of a List&lt;string&gt; member takes a string.
+        /// </summary>
+        private static OmittedArgument[] OmittedArgumentsOf(MethodBase method, TypeEntry[] argumentTypes, int count)
+        {
+            if (count <= 0)
+                return null;
+
+            var parameters = method.GetParameters();
+            var first = parameters.Length - (ReflectionHelper.IsVariadic(method) ? 1 : 0) - count;
+
+            var result = new OmittedArgument[count];
+            for (var idx = 0; idx < count; idx++)
+                result[idx] = new OmittedArgument(ReflectionHelper.DefaultValueOf(parameters[first + idx]), argumentTypes[first + idx]);
+
+            return result;
         }
 
         /// <summary>

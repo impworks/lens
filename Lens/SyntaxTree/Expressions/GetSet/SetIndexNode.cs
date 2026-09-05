@@ -134,7 +134,22 @@ namespace Lens.SyntaxTree.Expressions.GetSet
 
         protected override NodeBase Expand(Context ctx, bool mustReturn)
         {
-            return _access?.ExpandSet(ctx, this);
+            if (_access != null)
+                return _access.ExpandSet(ctx, this);
+
+            var indexes = IndexesWithDefaults(_indexer);
+            if (indexes == null)
+                return null;
+
+            return new SetIndexNode
+            {
+                Expression = Expression,
+                Indexes = indexes,
+                Value = Value,
+                IsNullSafe = IsNullSafe,
+                StartLocation = StartLocation,
+                EndLocation = EndLocation
+            };
         }
 
         internal override IEnumerable<NodeChild> GetChildren()
